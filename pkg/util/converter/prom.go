@@ -412,7 +412,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 			histogram.yMin.Labels = valueField.Labels
 			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
-				Type: "histogram-prom-experimental",
+				Type: "heatmap-cells-sparse",
 			}
 			if frame.Name == data.TimeSeriesValueFieldName {
 				frame.Name = "" // only set the name if useful

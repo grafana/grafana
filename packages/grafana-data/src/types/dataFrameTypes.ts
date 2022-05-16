@@ -30,5 +30,5 @@ export enum DataFrameType {
    *
    *  @private
    */
-  ExperimentalSparseHistogram = 'histogram-prom-experimental',
+  SparseHeatmap = 'heatmap-cells-sparse',
 }

@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -71,7 +71,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -88,9 +88,9 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_api_v1_cardinality_label_values",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw"
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_cardinality_label_values"
             }
           },
           {
@@ -139,7 +139,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -207,7 +207,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -275,7 +275,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -343,7 +343,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -360,9 +360,9 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_api_v1_query",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw"
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_query"
             }
           },
           {
@@ -411,7 +411,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -479,7 +479,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -547,7 +547,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -615,7 +615,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -683,7 +683,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -751,7 +751,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -819,7 +819,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -836,9 +836,9 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_v1_rules",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw"
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_v1_rules"
             }
           },
           {
@@ -887,7 +887,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -955,7 +955,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1023,7 +1023,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1091,7 +1091,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1108,9 +1108,9 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_api_v1_query",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw-internal"
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_query"
             }
           },
           {
@@ -1159,7 +1159,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1227,7 +1227,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1295,7 +1295,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1312,9 +1312,9 @@
               "frame": "float64"
             },
             "labels": {
+              "cluster": "dev-us-central-0",
               "job": "cortex-dev-01/cortex-gw-internal",
-              "route": "api_prom_push",
-              "cluster": "dev-us-central-0"
+              "route": "api_prom_push"
             }
           },
           {
@@ -1363,7 +1363,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1431,7 +1431,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1499,7 +1499,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
@@ -1567,7 +1567,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {

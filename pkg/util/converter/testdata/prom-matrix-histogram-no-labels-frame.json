@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "histogram-prom-experimental"
+          "type": "heatmap-cells-sparse"
         },
         "fields": [
           {
