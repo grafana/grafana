@@ -68,6 +68,19 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			expectedCode: http.StatusCreated,
 		},
 		{
+			desc:   "should be ok to create serviceaccount with role",
+			body:   map[string]interface{}{"name": "New SA", "role": "Editor"},
+			wantID: "sa-new-sa",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusCreated,
+		},
+		{
 			desc:      "not ok - duplicate name",
 			body:      map[string]interface{}{"name": "New SA"},
 			wantError: "service account name already in use",

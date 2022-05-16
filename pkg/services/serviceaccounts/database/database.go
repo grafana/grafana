@@ -51,6 +51,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
 
+	// TODO: want to refactor so that we can retrieve a specific role for a created user
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:     newuser.Id,
 		Name:   newuser.Name,
