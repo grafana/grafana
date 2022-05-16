@@ -309,7 +309,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for groupKey, rules := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
-			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", folder)
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", groupKey.NamespaceUID)
 			continue
 		}
 		namespace := folder.Title
@@ -582,7 +582,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		RuleGroup:     groupKey.RuleGroup,
 	}
 	if err := ruleStore.ListAlertRules(ctx, q); err != nil {
-		return nil, fmt.Errorf("failed to query database for rules in the group %#v: %w", groupKey, err)
+		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
 	}
 	existingGroupRules := q.Result
 

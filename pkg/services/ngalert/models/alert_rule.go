@@ -174,6 +174,10 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
+func (k AlertRuleGroupKey) String() string {
+	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
+}
+
 func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
