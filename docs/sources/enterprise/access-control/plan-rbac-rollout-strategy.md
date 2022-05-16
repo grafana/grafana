@@ -213,7 +213,7 @@ roles:
 To prevent a Grafana Admin from creating users and inviting them to join an organization. You have to [update a basic role permissions]({{< ref "./manage-rbac-roles.md#update-a-basic-role-permissions" >}}).
 The permissions to remove are:
 
-| action          | scope     |
+| Action          | Scope     |
 | --------------- | --------- |
 | `users:create`  |           |
 | `org.users:add` | `users:*` |
