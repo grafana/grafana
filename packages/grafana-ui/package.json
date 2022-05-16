@@ -89,7 +89,7 @@
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
-    "tslib": "2.3.1",
+    "tslib": "2.4.0",
     "uplot": "1.6.20",
     "uuid": "8.3.2"
   },
@@ -174,7 +174,7 @@
     "style-loader": "3.3.1",
     "terser-webpack-plugin": "5.3.1",
     "ts-loader": "8.0.11",
-    "typescript": "4.4.4",
+    "typescript": "4.6.4",
     "webpack": "5.72.0",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
