@@ -175,7 +175,7 @@ roles:
 | `roles:write`  | `permissions:type:delegate` |
 | `roles:delete` | `permissions:type:delegate` |
 
-> **Note:** any user or service account with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
+> **Note:** Any user or service account with the ability to modify roles can only create, update, or delete roles with permissions they have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have or with a subset of them.
 
 ### Enable viewers to create reports
 
