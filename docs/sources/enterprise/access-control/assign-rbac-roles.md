@@ -144,7 +144,7 @@ teams:
         global: true
 ```
 
-**Note**: The roles don't have to be defined in the provisioning configuration files to be assigned. As long as they exist in the database, they are assignable.
+> **Note**: The roles don't have to be defined in the provisioning configuration files to be assigned. If roles exist in the database, they can be assigned.
 
 **Remove a role assignment from a team:**
 
