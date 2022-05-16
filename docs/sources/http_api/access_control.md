@@ -955,7 +955,7 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Reset basic roles permissions to factory
+## Reset basic roles to their default
 
 `POST /api/access-control/roles/factory-reset`
 

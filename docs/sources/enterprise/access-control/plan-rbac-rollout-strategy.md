@@ -88,7 +88,7 @@ We've compiled the following permissions rollout scenarios based on current Graf
 ### Limit viewer, editor, or admin permissions
 
 1. Review the list of permissions associated with the basic role.
-1. [Change the permissions of the basic role]({{< relref "manage-rbac-roles.md#update-a-basic-role-permissions" >}}).
+1. [Change the permissions of the basic role]({{< relref "manage-rbac-roles.md#update-basic-role-permissions" >}}).
 
 ### Allow only members of one team to manage Alerts
 
@@ -148,7 +148,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 ### Enable an editor to create custom roles
 
-By default, only a Grafana Server Admin can create and manage custom roles. If you want your `Editors` to do the same, [update the `Editor` basic role permissions]({{< ref "./manage-rbac-roles.md#update-a-basic-role-permissions" >}}). There are two ways to achieve this:
+By default, only a Grafana Server Admin can create and manage custom roles. If you want your `Editors` to do the same, [update the `Editor` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
 - Add the `fixed:roles:writer` role permissions to the `basic:editor` role using the `role > from` list of your provisioning file:
 
@@ -179,7 +179,7 @@ roles:
 
 ### Enable viewers to create reports
 
-If you want your `Viewers` to create reports, [update the `Viewer` basic role permissions]({{< ref "./manage-rbac-roles.md#update-a-basic-role-permissions" >}}). There are two ways to achieve this:
+If you want your `Viewers` to create reports, [update the `Viewer` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
 - Add the `fixed:reports:writer` role permissions to the `basic:viewer` role using the `role > from` list of your provisioning file:
 
@@ -210,7 +210,7 @@ roles:
 
 ### Prevent a Grafana Admin from creating and inviting users
 
-To prevent a Grafana Admin from creating users and inviting them to join an organization. You have to [update a basic role permissions]({{< ref "./manage-rbac-roles.md#update-a-basic-role-permissions" >}}).
+To prevent a Grafana Admin from creating users and inviting them to join an organization. You have to [update a basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}).
 The permissions to remove are:
 
 | Action          | Scope     |

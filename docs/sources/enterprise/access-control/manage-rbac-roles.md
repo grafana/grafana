@@ -113,13 +113,13 @@ File-based provisioning is one method you can use to create custom roles.
 | `orgId`       | Identifies the organization to which the role belongs. The [default org ID]({{< relref "../../administration/configuration#auto_assign_org_id" >}}) is used if you do not specify `orgId`.                                                                                                                                                                                                                                                         |
 | `global`      | Global roles are not associated with any specific organization, which means that you can reuse them across all organizations. This setting overrides `orgId`.                                                                                                                                                                                                                                                                                      |
 | `displayName` | Human-friendly text that is displayed in the UI. Role display name cannot be longer than 190 ASCII-based characters. For fixed roles, the display name is shown as specified. If you do not set a display name the display name replaces `':'` (a colon) with `' '` (a space).                                                                                                                                                                     |
-| `description` | Human-friendly text that describes the permissions a role provides.                                                                                                                                                                                                                                                                                                                                                                                 |
+| `description` | Human-friendly text that describes the permissions a role provides.                                                                                                                                                                                                                                                                                                                                                                                |
 | `group`       | Organizes roles in the role picker.                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `version`     | A positive integer that defines the current version of the role. When you update a role, you can either omit the version field to increment the previous value by 1, or set a new version which must be larger than the previous version.                                                                                                                                                                                                          |
 | `hidden`      | Hidden roles do not appear in the role picker.                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `state`       | State of the role. Defaults to `present`, but if set to `absent` the role will be removed.                                                                                                                                                                                                                                                                                                                                                         |
 | `force`       | Can be used in addition to state `absent`, to force the removal of a role and all its assignments.                                                                                                                                                                                                                                                                                                                                                 |
-| `from`        | An optional list of roles from which you want to copy permissions.                                                                                                                                                                                                                                                                                                                                                                                           |
+| `from`        | An optional list of roles from which you want to copy permissions.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `permissions` | Provides users access to Grafana resources. For a list of permissions, refer to [RBAC permissions actions and scopes]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}). If you do not know which permissions to assign, you can create and assign roles without any permissions as a placeholder. Using the `from` attribute, you can specify additional permissions or permissions to remove by adding a `state` to your permission list. |
 
 1. Reload the provisioning configuration file.
@@ -270,15 +270,16 @@ If the default basic role definitions do not meet your requirements, you can cha
    | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
    | `name`                | The name of the basic role you want to update. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`               | Identifies the organization to which the role belongs. `global` can be used instead to specify it's a global role.                        |
-   | `version`             | Identifies the version of the role, which prevents overwriting newer changes.                                                                     |
-   | `from`                | List of roles from which to copy permissions.                                                                                                   |
-   | `permissions > state` | The state of the permission. You can set it to `absent` to ensure its exclusion from the copy list.                                       |
+   | `version`             | Identifies the version of the role, which prevents overwriting newer changes.                                                             |
+   | `from`                | List of roles from which to copy permissions.                                                                                             |
+   | `permissions > state` | The state of the permission. You can set it to `absent` to ensure it exclusion from the copy list.                                        |
 
 1. Reload the provisioning configuration file.
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example modifies the `Grafana Admin` basic role permissions.
+
 - Permissions to list, grant, and revoke roles to teams are removed.
 - Permission to read and write Grafana folders is added.
 
@@ -312,13 +313,13 @@ roles:
 ```
 
 > **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
-> <br/> > **Note**: Make sure to **increment** the role version for the changes to be accounted for.
+> <br/> **Note**: Make sure to **increment** the role version for the changes to be accounted for.
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}) for more details.
 
-## Reset basic roles permissions
+## Reset basic roles to their default
 
-This section describes how to reset the basic roles permissions to defaults:
+This section describes how to reset the basic roles to their default:
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -334,14 +335,14 @@ This section describes how to reset the basic roles permissions to defaults:
          - name: 'basic:grafana_admin'
            global: true
        permissions:
-         # Permission allowing to reset basic roles to factory
+         # Permission allowing to reset basic roles
          - action: 'roles:write'
           scope: 'permissions:type:escalate'
    ```
 
    **Note**: This permission has not been granted to any basic roles by default, since it could allow in some cases, privilege escalations.
 
-1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to factory. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-permissions-to-factory" >}}) for more details.
+1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
