@@ -157,8 +157,8 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		if err != nil {
 			if errors.Is(err, secrets.ErrDataKeyNotFound) {
 				s.currentDataKey, err = s.newDataKey(ctx, keyName, scope, sess)
-				s.mtx.Unlock()
 				if err != nil {
+					s.mtx.Unlock()
 					s.log.Error("Failed to generate new data key", "error", err, "name", keyName)
 					return nil, err
 				}
