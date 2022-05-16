@@ -24,7 +24,7 @@ The following example includes the base64 username:password Basic Authorization.
 
 Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../http_api/access_control.md#get-a-role" >}}).
 
-If you want to see the permissions associated to basic roles, their uid follows this mapping:
+To see the permissions associated with basic roles, refer to the following basic role UIDs:
 | Basic role | UID |
 |-----------------|-----------------------|
 | `Viewer` | `basic_viewer` |
