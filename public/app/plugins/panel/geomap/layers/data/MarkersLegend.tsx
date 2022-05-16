@@ -160,8 +160,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-top: 5px;
   `,
   legendSymbol: css`
-    height: 15px;
-    width: 15px;
+    height: 18px;
+    width: 18px;
     margin: auto;
   `,
   colorScaleWrapper: css`
