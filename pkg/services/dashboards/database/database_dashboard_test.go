@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -278,9 +279,15 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search for dashboard folder", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
-			Title:        "1 test dash folder",
-			OrgId:        1,
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			Title: "1 test dash folder",
+			OrgId: 1,
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -296,9 +303,15 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to limit search", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			Limit:        1,
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			OrgId: 1,
+			Limit: 1,
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -311,10 +324,19 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search beyond limit using paging", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			Limit:        1,
-			Page:         2,
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			OrgId: 1,
+			Limit: 1,
+			Page:  2,
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {
+						dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
+						dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
+					},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -327,10 +349,16 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to filter by tag and type", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			Type:         "dash-db",
-			Tags:         []string{"prod"},
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			OrgId: 1,
+			Type:  "dash-db",
+			Tags:  []string{"prod"},
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -343,9 +371,15 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search for a dashboard folder's children", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			FolderIds:    []int64{savedFolder.Id},
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			OrgId:     1,
+			FolderIds: []int64{savedFolder.Id},
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -365,7 +399,13 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
+			SignedInUser: &models.SignedInUser{
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
 		}
 
 		err := sqlStore.SearchDashboards(context.Background(), &query)
@@ -396,8 +436,15 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.FindPersistedDashboardsQuery{
-			SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
-			IsStarred:    true,
+			SignedInUser: &models.SignedInUser{
+				UserId:  10,
+				OrgId:   1,
+				OrgRole: models.ROLE_EDITOR,
+				Permissions: map[int64]map[string][]string{
+					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+				},
+			},
+			IsStarred: true,
 		}
 		err = sqlStore.SearchDashboards(context.Background(), &query)
 
@@ -435,27 +482,41 @@ func TestDashboard_SortingOptions(t *testing.T) {
 	assert.NotZero(t, dashA.Id)
 	assert.Less(t, dashB.Id, dashA.Id)
 	qNoSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		SignedInUser: &models.SignedInUser{
+			OrgId:   1,
+			UserId:  1,
+			OrgRole: models.ROLE_ADMIN,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+			},
+		},
 	}
-	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoSort)
+	results, err := sqlStore.FindDashboards(context.Background(), qNoSort)
 	require.NoError(t, err)
-	require.Len(t, dashboards, 2)
-	assert.Equal(t, dashA.Id, dashboards[0].ID)
-	assert.Equal(t, dashB.Id, dashboards[1].ID)
+	require.Len(t, results, 2)
+	assert.Equal(t, dashA.Id, results[0].ID)
+	assert.Equal(t, dashB.Id, results[1].ID)
 
 	qSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		SignedInUser: &models.SignedInUser{
+			OrgId:   1,
+			UserId:  1,
+			OrgRole: models.ROLE_ADMIN,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+			},
+		},
 		Sort: models.SortOption{
 			Filter: []models.SortOptionFilter{
 				searchstore.TitleSorter{Descending: true},
 			},
 		},
 	}
-	dashboards, err = sqlStore.FindDashboards(context.Background(), qSort)
+	results, err = sqlStore.FindDashboards(context.Background(), qSort)
 	require.NoError(t, err)
-	require.Len(t, dashboards, 2)
-	assert.Equal(t, dashB.Id, dashboards[0].ID)
-	assert.Equal(t, dashA.Id, dashboards[1].ID)
+	require.Len(t, results, 2)
+	assert.Equal(t, dashB.Id, results[0].ID)
+	assert.Equal(t, dashA.Id, results[1].ID)
 
 }
 
@@ -465,14 +526,28 @@ func TestDashboard_Filter(t *testing.T) {
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		SignedInUser: &models.SignedInUser{
+			OrgId:   1,
+			UserId:  1,
+			OrgRole: models.ROLE_ADMIN,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+			},
+		},
 	}
-	dashboards, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
+	results, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
 	require.NoError(t, err)
-	require.Len(t, dashboards, 2)
+	require.Len(t, results, 2)
 
 	qFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{OrgId: 1, UserId: 1, OrgRole: models.ROLE_ADMIN},
+		SignedInUser: &models.SignedInUser{
+			OrgId:   1,
+			UserId:  1,
+			OrgRole: models.ROLE_ADMIN,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
+			},
+		},
 		Filters: []interface{}{
 			searchstore.TitleFilter{
 				Dialect: sqlStore.Dialect,
@@ -480,10 +555,10 @@ func TestDashboard_Filter(t *testing.T) {
 			},
 		},
 	}
-	dashboards, err = sqlStore.FindDashboards(context.Background(), qFilter)
+	results, err = sqlStore.FindDashboards(context.Background(), qFilter)
 	require.NoError(t, err)
-	require.Len(t, dashboards, 1)
-	assert.Equal(t, dashB.Id, dashboards[0].ID)
+	require.Len(t, results, 1)
+	assert.Equal(t, dashB.Id, results[0].ID)
 
 }
 
