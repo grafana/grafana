@@ -50,7 +50,7 @@ You can use RBAC to modify the permissions associated with any basic role, which
 
 > **Note:** You must assign each Grafana user a basic role.
 
-To interact with the API and view or modify basic roles permissions, refer to the following mapping:
+To interact with the API and view or modify basic roles permissions, refer to the following table that maps basic role names to the associated UID:
 | Basic role | UID |
 |-----------------|-----------------------|
 | `Viewer` | `basic_viewer` |
