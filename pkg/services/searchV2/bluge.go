@@ -235,7 +235,7 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, s *StandardSearchService, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
+func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
 	// Folder listing structure
@@ -261,7 +261,7 @@ func doSearchQuery(ctx context.Context, s *StandardSearchService, reader *bluge.
 
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(newPermissionFilter(filter, s.logger))
+	fullQuery.AddMust(newPermissionFilter(filter, logger))
 
 	// Only show dashboard / folders
 	if len(q.Kind) > 0 {
@@ -360,7 +360,7 @@ func doSearchQuery(ctx context.Context, s *StandardSearchService, reader *bluge.
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		s.logger.Error("error executing search: %v", err)
+		logger.Error("error executing search: %v", err)
 		response.Error = err
 		return response
 	}
@@ -452,7 +452,7 @@ func doSearchQuery(ctx context.Context, s *StandardSearchService, reader *bluge.
 			return true
 		})
 		if err != nil {
-			s.logger.Error("error loading stored fields: %v", err)
+			logger.Error("error loading stored fields: %v", err)
 			response.Error = err
 			return response
 		}

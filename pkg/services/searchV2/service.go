@@ -123,5 +123,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s, reader, filter, q)
+	return doSearchQuery(ctx, s.logger, reader, filter, q)
 }

@@ -1,95 +1,92 @@
 package searchV2
 
-//
-//import (
-//	"context"
-//	"testing"
-//
-//	"github.com/grafana/grafana/pkg/services/store"
-//	"github.com/stretchr/testify/require"
-//)
-//
-//type testDashboardLoader struct {
-//	dashboards []dashboard
-//}
-//
-//func (t *testDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
-//	return t.dashboards, nil
-//}
-//
-//func TestDashboardIndexCreate(t *testing.T) {
-//	dashboardLoader := &testDashboardLoader{
-//		dashboards: []dashboard{
-//			{
-//				uid: "1",
-//			},
-//		},
-//	}
-//	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{})
-//	require.NotNil(t, index)
-//	dashboards, err := index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 1)
-//
-//	dashboardLoader.dashboards = []dashboard{
-//		{
-//			uid: "2",
-//		},
-//	}
-//	err = index.applyDashboardEvent(context.Background(), 1, "2", "")
-//	require.NoError(t, err)
-//	dashboards, err = index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 2)
-//}
-//
-//func TestDashboardIndexUpdate(t *testing.T) {
-//	dashboardLoader := &testDashboardLoader{
-//		dashboards: []dashboard{
-//			{
-//				uid:  "1",
-//				slug: "test",
-//			},
-//		},
-//	}
-//	index := newDashboardIndex(dashboardLoader, nil)
-//	require.NotNil(t, index)
-//	dashboards, err := index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 1)
-//
-//	dashboardLoader.dashboards = []dashboard{
-//		{
-//			uid:  "1",
-//			slug: "updated",
-//		},
-//	}
-//	err = index.applyDashboardEvent(context.Background(), 1, "1", "")
-//	require.NoError(t, err)
-//	dashboards, err = index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 1)
-//	require.Equal(t, "updated", dashboards[0].slug)
-//}
-//
-//func TestDashboardIndexDelete(t *testing.T) {
-//	dashboardLoader := &testDashboardLoader{
-//		dashboards: []dashboard{
-//			{
-//				uid: "1",
-//			},
-//		},
-//	}
-//	index := newDashboardIndex(dashboardLoader, nil)
-//	require.NotNil(t, index)
-//	dashboards, err := index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 1)
-//
-//	dashboardLoader.dashboards = []dashboard{}
-//	err = index.applyDashboardEvent(context.Background(), 1, "1", "")
-//	require.NoError(t, err)
-//	dashboards, err = index.getDashboards(context.Background(), 1)
-//	require.NoError(t, err)
-//	require.Len(t, dashboards, 0)
-//}
+import (
+	"context"
+	"flag"
+	"path/filepath"
+	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/searchV2/extract"
+	"github.com/grafana/grafana/pkg/services/store"
+
+	"github.com/blugelabs/bluge"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/stretchr/testify/require"
+)
+
+type testDashboardLoader struct {
+	dashboards []dashboard
+}
+
+func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ string) ([]dashboard, error) {
+	return t.dashboards, nil
+}
+
+var testLogger = log.New("index-test-logger")
+
+var testAllowAllFilter = func(uid string) bool {
+	return true
+}
+
+var testDisallowAllFilter = func(uid string) bool {
+	return false
+}
+
+var update = flag.Bool("update", false, "update golden files")
+
+func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) *bluge.Reader {
+	t.Helper()
+	dashboardLoader := &testDashboardLoader{
+		dashboards: dashboards,
+	}
+	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{})
+	require.NotNil(t, index)
+	numDashboards, err := index.buildOrgIndex(context.Background(), 1)
+	require.NoError(t, err)
+	require.Equal(t, len(dashboardLoader.dashboards), numDashboards)
+	reader, ok := index.getOrgReader(1)
+	require.True(t, ok)
+	return reader
+}
+
+func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery) {
+	t.Helper()
+	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query)
+	goldenFile := filepath.Join("testdata", fileName)
+	err := experimental.CheckGoldenDataResponse(goldenFile, resp, *update)
+	require.NoError(t, err)
+}
+
+var testDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "test",
+		},
+	},
+	{
+		id:  2,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "boom",
+		},
+	},
+}
+
+func TestDashboardIndex(t *testing.T) {
+	t.Run("basic-search", func(t *testing.T) {
+		reader := initTestIndexFromDashes(t, testDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "boom"},
+		)
+	})
+
+	t.Run("basic-filter", func(t *testing.T) {
+		reader := initTestIndexFromDashes(t, testDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testDisallowAllFilter,
+			DashboardQuery{Query: "boom"},
+		)
+	})
+}
