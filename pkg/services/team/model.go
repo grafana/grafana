@@ -9,6 +9,7 @@ import (
 
 // Typed errors
 var (
+	ErrTeamMemberAlreadyAdded               = errors.New("User is already added to this team")
 	ErrTeamNotFound                         = errors.New("team not found")
 	ErrTeamNameTaken                        = errors.New("team name is taken")
 	ErrTeamMemberNotFound                   = errors.New("team member not found")
@@ -106,9 +107,67 @@ type IsAdminOfTeamsQuery struct {
 	Result       bool
 }
 
+// TeamMember model
+type TeamMember struct {
+	Id         int64
+	OrgId      int64
+	TeamId     int64
+	UserId     int64
+	External   bool // Signals that the membership has been created by an external systems, such as LDAP
+	Permission models.PermissionType
+
+	Created time.Time
+	Updated time.Time
+}
+
+// ---------------------
+// COMMANDS
+
+type AddTeamMemberCommand struct {
+	UserId     int64                 `json:"userId" binding:"Required"`
+	OrgId      int64                 `json:"-"`
+	TeamId     int64                 `json:"-"`
+	External   bool                  `json:"-"`
+	Permission models.PermissionType `json:"-"`
+}
+
 type UpdateTeamMemberCommand struct {
 	UserId     int64                 `json:"-"`
 	OrgId      int64                 `json:"-"`
 	TeamId     int64                 `json:"-"`
+	Permission models.PermissionType `json:"permission"`
+}
+
+type RemoveTeamMemberCommand struct {
+	OrgId  int64 `json:"-"`
+	UserId int64
+	TeamId int64
+}
+
+// ----------------------
+// QUERIES
+
+type GetTeamMembersQuery struct {
+	OrgId        int64
+	TeamId       int64
+	UserId       int64
+	External     bool
+	SignedInUser *models.SignedInUser
+}
+
+// ----------------------
+// Projections and DTOs
+
+type TeamMemberDTO struct {
+	OrgID      int64                 `json:"orgId" xorm:"org_id"`
+	TeamId     int64                 `json:"teamId"`
+	UserId     int64                 `json:"userId"`
+	External   bool                  `json:"-"`
+	AuthModule string                `json:"auth_module"`
+	Email      string                `json:"email"`
+	Name       string                `json:"name"`
+	Login      string                `json:"login"`
+	AvatarUrl  string                `json:"avatarUrl"`
+	Labels     []string              `json:"labels"`
 	Permission models.PermissionType `json:"permission"`
 }

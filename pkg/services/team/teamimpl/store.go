@@ -28,7 +28,7 @@ type store interface {
 	// operations on team member
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
-	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error
+	GetMemberDetails(ctx context.Context, query *team.GetTeamMembersQuery, withPermission bool) ([]*team.TeamMemberDTO, error)
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
 }
 
@@ -316,6 +316,78 @@ func (ss *sqlStore) ListByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	return &result, err
 }
 
+// When withPermission is set to true, GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
+// When withPermission is set to false, GetTeamMembers return a list of memberships to teams granted to a user
+// If external is specified, only memberships provided by an external auth provider will be listed
+// This function doesn't perform any accesscontrol filtering.
+func (ss *sqlStore) GetMemberDetails(ctx context.Context, query *team.GetTeamMembersQuery, withPermission bool) ([]*team.TeamMemberDTO, error) {
+	var acFilter *ac.SQLFilter
+	result := make([]*team.TeamMemberDTO, 0)
+	if withPermission {
+		acFilter = &ac.SQLFilter{}
+		var err error
+
+		// With accesscontrol we filter out users based on the SignedInUser's permissions
+		// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
+		// If the signed in user is not set no member will be returned
+		if !ac.IsDisabled(ss.Cfg) {
+			sqlID := fmt.Sprintf("%s.%s", ss.dialect.Quote("user"), ss.dialect.Quote("id"))
+			*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
+			if err != nil {
+				return result, err
+			}
+		}
+	}
+
+	err := ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+		sess := dbSess.Table("team_member")
+		sess.Join("INNER", ss.dialect.Quote("user"),
+			fmt.Sprintf("team_member.user_id=%s.%s", ss.dialect.Quote("user"), ss.dialect.Quote("id")),
+		)
+
+		if acFilter != nil {
+			sess.Where(acFilter.Where, acFilter.Args...)
+		}
+
+		// Join with only most recent auth module
+		authJoinCondition := `(
+		SELECT id from user_auth
+			WHERE user_auth.user_id = team_member.user_id
+			ORDER BY user_auth.created DESC `
+		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.dialect.Limit(1) + ")"
+		sess.Join("LEFT", "user_auth", authJoinCondition)
+
+		if query.OrgId != 0 {
+			sess.Where("team_member.org_id=?", query.OrgId)
+		}
+		if query.TeamId != 0 {
+			sess.Where("team_member.team_id=?", query.TeamId)
+		}
+		if query.UserId != 0 {
+			sess.Where("team_member.user_id=?", query.UserId)
+		}
+		if query.External {
+			sess.Where("team_member.external=?", ss.dialect.BooleanStr(true))
+		}
+		sess.Cols(
+			"team_member.org_id",
+			"team_member.team_id",
+			"team_member.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"team_member.external",
+			"team_member.permission",
+			"user_auth.auth_module",
+		)
+		sess.Asc("user.login", "user.email")
+
+		err := sess.Find(&result)
+		return err
+	})
+	return result, err
+}
+
 // AddTeamMember adds a user to a team
 func (ss *sqlStore) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 	return ss.db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -487,90 +559,6 @@ func isLastAdmin(sess *sqlstore.DBSession, orgId int64, teamId int64, userId int
 	}
 
 	return false, err
-}
-
-// GetUserTeamMemberships return a list of memberships to teams granted to a user
-// If external is specified, only memberships provided by an external auth provider will be listed
-// This function doesn't perform any accesscontrol filtering.
-func (ss *sqlStore) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
-	query := &models.GetTeamMembersQuery{
-		OrgId:    orgID,
-		UserId:   userID,
-		External: external,
-		Result:   []*models.TeamMemberDTO{},
-	}
-	err := ss.getTeamMembers(ctx, query, nil)
-	return query.Result, err
-}
-
-// GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
-func (ss *sqlStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	acFilter := &ac.SQLFilter{}
-	var err error
-
-	// With accesscontrol we filter out users based on the SignedInUser's permissions
-	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
-	// If the signed in user is not set no member will be returned
-	if !ac.IsDisabled(ss.Cfg) {
-		sqlID := fmt.Sprintf("%s.%s", ss.dialect.Quote("user"), ss.dialect.Quote("id"))
-		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
-		if err != nil {
-			return err
-		}
-	}
-
-	return ss.getTeamMembers(ctx, query, acFilter)
-}
-
-// getTeamMembers return a list of members for the specified team
-func (ss *sqlStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
-		query.Result = make([]*models.TeamMemberDTO, 0)
-		sess := dbSess.Table("team_member")
-		sess.Join("INNER", ss.dialect.Quote("user"),
-			fmt.Sprintf("team_member.user_id=%s.%s", ss.dialect.Quote("user"), ss.dialect.Quote("id")),
-		)
-
-		if acUserFilter != nil {
-			sess.Where(acUserFilter.Where, acUserFilter.Args...)
-		}
-
-		// Join with only most recent auth module
-		authJoinCondition := `(
-		SELECT id from user_auth
-			WHERE user_auth.user_id = team_member.user_id
-			ORDER BY user_auth.created DESC `
-		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.dialect.Limit(1) + ")"
-		sess.Join("LEFT", "user_auth", authJoinCondition)
-
-		if query.OrgId != 0 {
-			sess.Where("team_member.org_id=?", query.OrgId)
-		}
-		if query.TeamId != 0 {
-			sess.Where("team_member.team_id=?", query.TeamId)
-		}
-		if query.UserId != 0 {
-			sess.Where("team_member.user_id=?", query.UserId)
-		}
-		if query.External {
-			sess.Where("team_member.external=?", ss.dialect.BooleanStr(true))
-		}
-		sess.Cols(
-			"team_member.org_id",
-			"team_member.team_id",
-			"team_member.user_id",
-			"user.email",
-			"user.name",
-			"user.login",
-			"team_member.external",
-			"team_member.permission",
-			"user_auth.auth_module",
-		)
-		sess.Asc("user.login", "user.email")
-
-		err := sess.Find(&query.Result)
-		return err
-	})
 }
 
 func (ss *sqlStore) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {

@@ -89,6 +89,11 @@ func (s *Service) GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembers
 	return s.store.GetTeamMembers(ctx, cmd)
 }
 
-func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
-	return s.store.GetUserTeamMemberships(ctx, orgID, userID, external)
+func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
+	query := &team.GetTeamMembersQuery{
+		OrgId:    orgID,
+		UserId:   userID,
+		External: external,
+	}
+	return s.store.GetMemberDetails(ctx, query, false)
 }
