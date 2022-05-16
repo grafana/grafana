@@ -208,12 +208,9 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 
 	// Explicit UID lookup (stars etc)
 	if len(q.UIDs) > 0 {
-		count := len(q.UIDs) + 3
 		bq := bluge.NewBooleanQuery()
-		for i, v := range q.UIDs {
-			bq.AddShould(bluge.NewTermQuery(v).
-				SetField(documentFieldUID).
-				SetBoost(float64(count - i)))
+		for _, v := range q.UIDs {
+			bq.AddShould(bluge.NewTermQuery(v).SetField(documentFieldUID))
 		}
 		fullQuery.AddMust(bq)
 		hasConstraints = true
