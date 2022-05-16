@@ -24,4 +24,11 @@ export enum DataFrameType {
 
   /** Directory listing */
   DirectoryListing = 'directory-listing',
+
+  /**
+   *  WIP sparse heatmap support
+   *
+   *  @private
+   */
+  ExperimentalSparseHistogram = 'histogram-prom-experimental',
 }
