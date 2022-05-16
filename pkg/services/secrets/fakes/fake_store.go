@@ -52,11 +52,9 @@ func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey 
 	return nil
 }
 
-func (f FakeSecretsStore) DisableDataKeysByName(_ context.Context, name string) error {
-	for id, key := range f.store {
-		if key.Name == name {
-			f.store[id].Active = false
-		}
+func (f FakeSecretsStore) DisableDataKeys(_ context.Context) error {
+	for id := range f.store {
+		f.store[id].Active = false
 	}
 	return nil
 }

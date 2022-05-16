@@ -101,10 +101,10 @@ func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKe
 	return err
 }
 
-func (ss *SecretsStoreImpl) DisableDataKeysByName(ctx context.Context, name string) error {
+func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(dataKeysTable).
-			Where("name = ?", name).
+			Where("active = ?", ss.sqlStore.Dialect.BooleanStr(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
 
 		return err

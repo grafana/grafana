@@ -404,20 +404,13 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	name := s.currentDataKey.Name
-	scope := s.currentDataKey.Scope
-
-	err := s.store.DisableDataKeysByName(ctx, name)
+	err := s.store.DisableDataKeys(ctx)
 	if err != nil {
 		s.log.Error("Failed to disable active data keys while rotating data key", "error", err)
 		return err
 	}
 
-	s.currentDataKey, err = s.newDataKey(ctx, name, scope, nil)
-	if err != nil {
-		s.log.Error("Failed to rotate data key", "error", err)
-		return err
-	}
+	s.currentDataKey = nil
 
 	return nil
 }
