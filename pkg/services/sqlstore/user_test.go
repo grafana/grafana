@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +17,10 @@ import (
 func TestUserDataAccess(t *testing.T) {
 
 	ss := InitTestDB(t)
+	user := &models.SignedInUser{
+		OrgId:       1,
+		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
+	}
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
 		cmd := models.CreateUserCommand{
@@ -131,7 +134,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		// Return the first page of users and a total count
-		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3}
+		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: user}
 		err := ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -139,7 +142,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		// Return the second page of users and a total count
-		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3}
+		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -147,28 +150,28 @@ func TestUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		// Return list of users matching query on user name
-		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
-		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
-		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
-		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -176,7 +179,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 0)
 
 		// Return list of users matching query on email
-		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -184,7 +187,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		// Return list of users matching query on login name
-		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3}
+		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -204,7 +207,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		isDisabled := false
-		query := models.SearchUsersQuery{IsDisabled: &isDisabled}
+		query := models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
 		err := ss.SearchUsers(context.Background(), &query)
 		require.Nil(t, err)
 
@@ -251,7 +254,7 @@ func TestUserDataAccess(t *testing.T) {
 		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
-		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
+		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId, User: user}
 		err = ss.GetOrgUsersForTest(context.Background(), query1)
 		require.Nil(t, err)
 
@@ -314,7 +317,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled = true
-		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled}
+		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), query5)
 
 		require.Nil(t, err)
@@ -339,7 +342,7 @@ func TestUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
-		ss := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+		ss := InitTestDB(t)
 		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
@@ -380,7 +383,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled := false
-		query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
+		query := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), query)
 
 		require.Nil(t, err)
@@ -411,7 +414,7 @@ func TestUserDataAccess(t *testing.T) {
 		err := ss.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
-		query := models.SearchUsersQuery{}
+		query := models.SearchUsersQuery{SignedInUser: user}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)

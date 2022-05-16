@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   Portal,
@@ -16,7 +16,7 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapData, prepareHeatmapData } from './fields';
+import { prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
@@ -76,7 +76,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   );
 
   // ugh
-  const dataRef = useRef<HeatmapData>(info);
+  const dataRef = useRef(info);
   dataRef.current = info;
 
   const builder = useMemo(() => {
@@ -103,13 +103,15 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       return null;
     }
 
-    const field = info.heatmap.fields[2];
-    const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+    let heatmapType = dataRef.current?.heatmap?.meta?.type;
+    let countFieldIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
+    const countField = info.heatmap.fields[countFieldIdx];
+
+    const { min, max } = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
 
     let hoverValue: number | undefined = undefined;
     if (hover && info.heatmap.fields) {
-      const countField = info.heatmap.fields[2];
-      hoverValue = countField?.values.get(hover.index);
+      hoverValue = countField.values.get(hover.index);
     }
 
     return (
