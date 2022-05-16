@@ -74,7 +74,6 @@ export const AnnotationQueryEditor = (props: Props) => {
     1000,
     [text, onChange]
   );
-  // console.log('title ==== ', title);
 
   return (
     <>
