@@ -85,7 +85,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   }
 
   let first = frames[0];
-  if (first.meta?.type === DataFrameType.ExperimentalSparseHistogram) {
+  if (first.meta?.type === DataFrameType.HeatmapSparse) {
     return getSparseHeatmapData(first, exemplars, theme);
   }
 
@@ -165,7 +165,7 @@ const getSparseHeatmapData = (
   exemplars: DataFrame | undefined,
   theme: GrafanaTheme2
 ): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.ExperimentalSparseHistogram) {
+  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
     return {
       warning: 'Expected sparse heatmap format',
       heatmap: frame,
