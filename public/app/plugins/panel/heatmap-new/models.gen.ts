@@ -30,7 +30,7 @@ export interface HeatmapColorOptions {
   fill: string; // when opacity mode, the target color
   scale: HeatmapColorScale; // for opacity mode
   exponent: number; // when scale== sqrt
-  steps: number; // 2-256
+  steps: number; // 2-128
 
   // Clamp the colors to the value range
   field?: string;
@@ -80,7 +80,7 @@ export const defaultPanelOptions: PanelOptions = {
     show: true,
     yHistogram: false,
   },
-  cellGap: 3,
+  cellGap: 1,
 };
 
 export interface PanelFieldConfig extends HideableFieldConfig {

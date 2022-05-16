@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -226,7 +225,7 @@ func authorizeRuleChanges(namespace *models.Folder, change *changes, evaluator f
 		Delete: change.Delete,
 	}
 
-	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
+	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid)
 	if len(change.Delete) > 0 {
 		var allowedToDelete []*ngmodels.AlertRule
 		for _, rule := range change.Delete {

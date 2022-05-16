@@ -39,12 +39,11 @@ const inputFrame: DataFrame = {
     {
       name: 'labels',
       type: FieldType.string,
-      config: {
-        custom: {
-          json: true,
-        },
-      },
-      values: new ArrayVector(['{ "level": "info", "code": "41🌙" }', '{ "level": "error", "code": "41🌙" }']),
+      config: {},
+      values: new ArrayVector([
+        { level: 'info', code: '41🌙' },
+        { level: 'error', code: '41🌙' },
+      ]),
     },
     {
       name: 'tsNs',
@@ -156,5 +155,31 @@ describe('loki backendResultTransformer', () => {
     expect(
       result.data[0].fields.filter((field: Field) => field.name === 'derived1' && field.type === 'string').length
     ).toBe(1);
+  });
+
+  it('handle loki parsing errors', () => {
+    const clonedFrame = cloneDeep(inputFrame);
+    clonedFrame.fields[2] = {
+      name: 'labels',
+      type: FieldType.string,
+      config: {},
+      values: new ArrayVector([
+        { level: 'info', code: '41🌙', __error__: 'LogfmtParserErr' },
+        { level: 'error', code: '41🌙' },
+      ]),
+    };
+    const response: DataQueryResponse = { data: [clonedFrame] };
+
+    const result = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+        },
+      ],
+      []
+    );
+    expect(result.data[0]?.meta?.custom?.error).toBe('Error when parsing some of the logs');
   });
 });
