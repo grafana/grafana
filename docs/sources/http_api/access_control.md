@@ -963,10 +963,6 @@ Reset basic roles permissions to their default.
 
 #### Required permissions
 
-<!-- TODO rephrase double negation might be hard to understand -->
-
-`permissions:type:escalate` scope does not ensure that users don't acquire more permissions with the reset.
-
 | Action      | Scope                     |
 | ----------- | ------------------------- |
 | roles:write | permissions:type:escalate |
