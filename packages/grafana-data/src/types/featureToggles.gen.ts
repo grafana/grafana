@@ -38,7 +38,6 @@ export interface FeatureToggles {
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
-  validatedQueries?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;
