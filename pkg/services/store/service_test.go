@@ -10,11 +10,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+var (
+	dummyUser = &models.SignedInUser{OrgId: 1}
 )
 
 func TestListFiles(t *testing.T) {
@@ -34,14 +39,16 @@ func TestListFiles(t *testing.T) {
 		}).setReadOnly(true).setBuiltin(true),
 	}
 
-	store := newStandardStorageService(roots)
-	frame, err := store.List(context.Background(), nil, "public/testdata")
+	store := newStandardStorageService(roots, func(orgId int64) []storageRuntime {
+		return make([]storageRuntime, 0)
+	})
+	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
 	err = experimental.CheckGoldenFrame(path.Join("testdata", "public_testdata.golden.txt"), frame, true)
 	require.NoError(t, err)
 
-	file, err := store.Read(context.Background(), nil, "public/testdata/js_libraries.csv")
+	file, err := store.Read(context.Background(), dummyUser, "public/testdata/js_libraries.csv")
 	require.NoError(t, err)
 	require.NotNil(t, file)
 
@@ -61,7 +68,7 @@ func TestUpload(t *testing.T) {
 		Value: map[string][]string{},
 		File:  map[string][]*multipart.FileHeader{},
 	}
-	res, err := s.Upload(context.Background(), nil, testForm)
+	res, err := s.Upload(context.Background(), dummyUser, testForm)
 	require.NoError(t, err)
 	assert.Equal(t, res.path, "upload")
 }
