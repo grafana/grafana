@@ -165,7 +165,7 @@ roles:
       - action: 'users:create'
 ```
 
-The following example creates a global role based on other fixed roles. The `from` option contains the roles we want to
+The following example creates a global role based on other fixed roles. The `from` option contains the roles from which we want to
 copy permissions from. The permission `state: absent` option allows to specify permissions to exclude from the copy.
 
 ```yaml
