@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createMockDatasource } from '../__mocks__/datasource';
-import { createMockQuery } from '../__mocks__/query';
+import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
+import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
 
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 
