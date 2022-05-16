@@ -11,7 +11,7 @@ weight = 9
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Please refer to the [permissions]({{< relref "#preview-visibility">}}) section to learn about issues with data source permissions before enabling the feature.
 
-Dashboard previews bring life to all dashboard list pages. Besides looking pretty, they can serve as an overview of all available dashboards, or as a tool to quickly find the right dashboard in case the dashboard names aren't enough on their own.
+Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard in case the dashboard names aren't enough on their own.
 
 Grafana users are not forced to use previews. Each user can choose to disable them and go back to the usual look and feel of list views. We save the choice in the browser's local storage to make it persistent across sessions.
 
