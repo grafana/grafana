@@ -1700,7 +1700,7 @@ Enter a comma-separated list of plugin identifiers to hide in the plugin catalog
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+Refer to [Grafana Live configuration documentation]({{< relref "../live/set-up-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 
@@ -1729,7 +1729,7 @@ allowed_origins = "https://*.example.com"
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
 
-For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ### ha_engine_address
 
