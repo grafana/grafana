@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -31,9 +31,8 @@ const node: NavModelItem = {
 
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onTagFilterChange, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery(
-    {}
-  );
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
+    useSearchQuery({});
   const [showManage, setShowManage] = useState(false); // grid vs list view
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -62,6 +61,17 @@ export default function SearchPage() {
 
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
+  const toggleSelection = useCallback(
+    (kind: string, uid: string) => {
+      const current = searchSelection.isSelected(kind, uid);
+      if (kind === 'folder') {
+        // ??? also select all children?
+      }
+      setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
+    },
+    [searchSelection]
+  );
+
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
@@ -76,16 +86,12 @@ export default function SearchPage() {
     return getGrafanaSearcher().tags(q);
   };
 
-  const onTagSelected = (tag: string) => {
-    onTagFilterChange([...new Set(query.tag as string[]).add(tag)]);
-  };
-
-  const toggleSelection = (kind: string, uid: string) => {
-    const current = searchSelection.isSelected(kind, uid);
-    if (kind === 'folder') {
-      // ??? also select all children?
-    }
-    setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
+  // function to update items when dashboards or folders are moved or deleted
+  const onChangeItemsList = async () => {
+    // clean up search selection
+    setSearchSelection(newSearchSelection());
+    // trigger again the search to the backend
+    onQueryChange(inputValue);
   };
 
   const renderResults = () => {
@@ -122,7 +128,7 @@ export default function SearchPage() {
 
     const selection = showManage ? searchSelection.isSelected : undefined;
     if (layout === SearchLayout.Folders) {
-      return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagSelected} />;
+      return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagAdd} />;
     }
 
     return (
@@ -135,7 +141,7 @@ export default function SearchPage() {
               selectionToggle: toggleSelection,
               width: width,
               height: height,
-              onTagSelected: onTagSelected,
+              onTagSelected: onTagAdd,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
             };
 
@@ -174,7 +180,7 @@ export default function SearchPage() {
         </InlineFieldRow>
 
         {Boolean(searchSelection.items.size > 0) ? (
-          <ManageActions items={searchSelection.items} />
+          <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
         ) : (
           <ActionRow
             onLayoutChange={(v) => {
