@@ -50,10 +50,9 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add name column into data_keys", migrator.NewAddColumnMigration(
 		dataKeysV1,
 		&migrator.Column{
-			Name:    "name",
-			Type:    migrator.DB_NVarchar,
-			Length:  100,
-			Default: "\"\"",
+			Name:   "name",
+			Type:   migrator.DB_NVarchar,
+			Length: 100,
 		},
 	))
 
