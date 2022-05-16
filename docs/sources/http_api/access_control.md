@@ -957,9 +957,9 @@ Content-Type: application/json; charset=UTF-8
 
 ## Reset basic roles to their default
 
-`POST /api/access-control/roles/factory-reset`
+`POST /api/access-control/roles/hard-reset`
 
-Reset basic roles permissions to factory default.
+Reset basic roles permissions to their default.
 
 #### Required permissions
 
