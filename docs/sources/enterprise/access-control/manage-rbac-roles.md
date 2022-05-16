@@ -316,7 +316,7 @@ roles:
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}) for more details.
 
-## Reset basic roles permissions to factory
+## Reset basic roles permissions
 
 This section describes how to reset the basic roles permissions to factory defaults:
 
