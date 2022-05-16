@@ -12,6 +12,11 @@ import { Button, InlineField, InlineFieldRow, Input, useStyles } from '@grafana/
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
+  queries: TraceToMetricQuery[];
+}
+
+export interface TraceToMetricQuery {
+  name?: string;
   query: string;
 }
 
@@ -66,27 +71,76 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField
-          label="Query"
-          labelWidth={26}
-          tooltip="The Prometheus query that will run when navigating from a trace to metrics"
-          grow
-        >
-          <Input
+      {options.jsonData.tracesToMetrics?.queries?.map((query, i) => (
+        <div key={i} className={styles.queryRow}>
+          <InlineField label="Name" labelWidth={10}>
+            <Input
+              label="Name"
+              type="text"
+              allowFullScreen
+              value={query.name}
+              onChange={(e) => {
+                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
+                newQueries[i].name = e.currentTarget.value;
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                  ...options.jsonData.tracesToMetrics,
+                  queries: newQueries,
+                });
+              }}
+            />
+          </InlineField>
+          <InlineField
             label="Query"
-            type="text"
-            allowFullScreen
-            value={options.jsonData.tracesToMetrics?.query}
-            onChange={(e) => {
+            labelWidth={10}
+            tooltip="The Prometheus query that will run when navigating from a trace to metrics"
+            grow
+          >
+            <Input
+              label="Query"
+              type="text"
+              allowFullScreen
+              value={query.query}
+              onChange={(e) => {
+                let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
+                newQueries[i].query = e.currentTarget.value;
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                  ...options.jsonData.tracesToMetrics,
+                  queries: newQueries,
+                });
+              }}
+            />
+          </InlineField>
+
+          <Button
+            variant="destructive"
+            title="Remove query"
+            icon="times"
+            type="button"
+            onClick={() => {
+              let newQueries = options.jsonData.tracesToMetrics?.queries.slice();
+              newQueries?.splice(i, 1);
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
-                query: e.currentTarget.value,
+                queries: newQueries,
               });
             }}
           />
-        </InlineField>
-      </InlineFieldRow>
+        </div>
+      ))}
+
+      <Button
+        variant="secondary"
+        icon="plus"
+        type="button"
+        onClick={() => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            queries: [...(options.jsonData.tracesToMetrics?.queries ?? []), { query: '' }],
+          });
+        }}
+      >
+        Add query
+      </Button>
     </div>
   );
 }
@@ -99,5 +153,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   row: css`
     label: row;
     align-items: baseline;
+  `,
+  queryRow: css`
+    display: flex;
   `,
 });
