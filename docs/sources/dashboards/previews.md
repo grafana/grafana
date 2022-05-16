@@ -45,9 +45,9 @@ In case you see any warnings after clicking on the toggle, check [Grafana server
 
 The dashboard previews crawler is a background process that:
 
-1. [Prepares a list of dashboards to visit](#preparing-the-dashboard-list)
-2. [Visits and takes a screenshot of each dashboard](#rendering-previews)
-3. [Saves the screenshots in persistent storage](#saving-previews)
+- [Prepares a list of dashboards to visit](#preparing-the-dashboard-list)
+- [Visits and takes a screenshot of each dashboard](#rendering-previews)
+- [Saves the screenshots in persistent storage](#saving-previews)
 
 The crawler can be configured via the main config file:
 
