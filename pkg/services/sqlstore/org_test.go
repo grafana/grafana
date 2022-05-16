@@ -172,7 +172,12 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 
 			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: ""}
+				query := models.SearchUsersQuery{Query: "", SignedInUser: &models.SignedInUser{
+					OrgId: 1,
+					Permissions: map[int64]map[string][]string{
+						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
+					},
+				}}
 				err := sqlStore.SearchUsers(context.Background(), &query)
 
 				require.NoError(t, err)
