@@ -252,7 +252,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// base64 decode key
 	// We always need to try old key format first otherwise we'll invalidate all keys
-	// begining with "gl_"
+	// beginning with "gl_"
 	var (
 		apikey *models.ApiKey
 		errKey error
