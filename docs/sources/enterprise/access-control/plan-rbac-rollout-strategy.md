@@ -199,7 +199,7 @@ roles:
 
 > **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
 
-- Or add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
 
 | Action                 | Scope                           |
 | ---------------------- | ------------------------------- |
