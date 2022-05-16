@@ -295,7 +295,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         fill: {
           values: (u, seriesIdx) => {
             let countFacetIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
-            return countsToFills(u, u.data[seriesIdx][countFacetIdx] as unknown as number[], palette);
+            return countsToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette);
           },
           index: palette,
         },
@@ -582,7 +582,7 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const countsToFills = (u: uPlot, counts: number[], palette: string[]) => {
+export const countsToFills = (counts: number[], palette: string[]) => {
   // TODO: integrate 1e-9 hideThreshold?
   const hideThreshold = 0;
 
