@@ -12,10 +12,10 @@ import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
 
-const TYPE_COLUMN_WIDTH = 130;
+const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
 const LOCATION_COLUMN_WIDTH = 200;
-const TAGS_COLUMN_WIDTH = 200;
+const TAGS_COLUMN_WIDTH = 300;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -111,14 +111,7 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  // Show tags if we have any
-  if (access.tags) {
-    width = TAGS_COLUMN_WIDTH;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
-    availableWidth -= width;
-  }
-
-  width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
+  width = Math.max(availableWidth - TAGS_COLUMN_WIDTH, LOCATION_COLUMN_WIDTH);
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
   if (meta?.locationInfo) {
     columns.push({
@@ -152,7 +145,10 @@ export const generateColumns = (
       Header: 'Location',
       width,
     });
+    availableWidth -= width;
   }
+
+  columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
 
   return columns;
 };
@@ -282,14 +278,11 @@ function makeTagsColumn(
   return {
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
-      if (tags) {
-        return (
-          <div {...p.cellProps} className={p.cellStyle}>
-            <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
-          </div>
-        );
-      }
-      return null;
+      return tags ? (
+        <div {...p.cellProps} className={p.cellStyle}>
+          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+        </div>
+      ) : null;
     },
     id: `column-tags`,
     field: field,
