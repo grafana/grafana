@@ -83,7 +83,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           />
           <DocumentedFunction
             name="inf, infn, nan, and null"
-            description="The inf for infinity positive, infn for infinity negative, nan, and null functions all return a single scalar value that matches its name"
+            description="The inf for infinity positive, infn for infinity negative, nan, and null functions all return a single scalar value that matches its name."
           />
           <DocumentedFunction
             name="round"
