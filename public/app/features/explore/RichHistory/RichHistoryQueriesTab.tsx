@@ -248,9 +248,9 @@ export function RichHistoryQueriesTab(props: Props) {
               </div>
             );
           })}
-        {!config.queryHistoryEnabled && (
-          <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
-        )}
+        <div className={styles.footer}>
+          {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
+        </div>
       </div>
     </div>
   );
