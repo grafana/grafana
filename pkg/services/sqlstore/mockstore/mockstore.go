@@ -20,7 +20,6 @@ type SQLStoreMock struct {
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
-	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
 	ExpectedDashboardVersion       *models.DashboardVersion
 	ExpectedDashboardVersions      []*models.DashboardVersion
@@ -464,11 +463,6 @@ func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgU
 
 func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	query.Result = m.ExpectedDashboard
-	return m.ExpectedError
 }
 
 func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
