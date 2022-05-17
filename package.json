@@ -203,7 +203,7 @@
     "jest": "27.5.1",
     "jest-canvas-mock": "2.4.0",
     "jest-date-mock": "1.0.8",
-    "jest-fail-on-console": "2.3.0",
+    "jest-fail-on-console": "2.4.1",
     "jest-junit": "13.1.0",
     "jest-matcher-utils": "27.5.1",
     "jest-mock-console": "1.2.3",
