@@ -7796,15 +7796,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/ts-command-line@npm:4.10.7":
-  version: 4.10.7
-  resolution: "@rushstack/ts-command-line@npm:4.10.7"
+"@rushstack/ts-command-line@npm:4.11.0":
+  version: 4.11.0
+  resolution: "@rushstack/ts-command-line@npm:4.11.0"
   dependencies:
     "@types/argparse": 1.0.38
     argparse: ~1.0.9
     colors: ~1.2.1
     string-argv: ~0.3.1
-  checksum: 0c57867e5ea14b9296db403c2979995fe4bdeae3787331fc2d8faa18ee612b5fbcf989afcf5e30bc7f01cfe62003d451b29fc65fdda0790b95f3aacd72d41918
+  checksum: 966692b5738d198130d6a8f01f819dfa95dccaf7a8e4c2f9d76d36205790584e827afb18f837703f07bfe93faa3b705c81e682888a4aef0da350758c7c6582d1
   languageName: node
   linkType: hard
 
