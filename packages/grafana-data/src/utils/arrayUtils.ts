@@ -12,7 +12,7 @@ export function moveItemImmutably<T>(arr: T[], from: number, to: number) {
  * Null/undefined/empty string values are always sorted to the end regardless of the sort order provided
  */
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-const defaultCompare = (a: number, b: number) => (a > b ? 1 : a < b ? -1 : 0);
+const defaultCompare = (a: number, b: number) => a - b;
 
 export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
   return (a: any, b: any) => {
