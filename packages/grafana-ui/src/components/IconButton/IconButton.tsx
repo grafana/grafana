@@ -154,7 +154,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
       }
     `,
     icon: css`
-      margin-bottom: 0;
       vertical-align: baseline;
       display: flex;
     `,

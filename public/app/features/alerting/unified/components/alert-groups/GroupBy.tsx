@@ -32,7 +32,6 @@ export const GroupBy = ({ className, groups, groupBy, onGroupingChange }: Props)
           onGroupingChange(items.map(({ value }) => value as string));
         }}
         options={labelKeyOptions}
-        menuShouldPortal
       />
     </div>
   );

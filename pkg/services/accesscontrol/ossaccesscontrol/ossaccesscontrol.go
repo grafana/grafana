@@ -11,13 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles,
+func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(features, provider)
+	s := ProvideOSSAccessControl(features, cfg, provider)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -31,13 +32,14 @@ func ProvideService(features featuremgmt.FeatureToggles,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		features:       features,
+		cfg:            cfg,
 		provider:       provider,
 		log:            log.New("accesscontrol"),
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
-		roles:          accesscontrol.BuildMacroRoleDefinitions(),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
 	return s
@@ -47,6 +49,7 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 type OSSAccessControlService struct {
 	log            log.Logger
 	features       featuremgmt.FeatureToggles
+	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
 	provider       accesscontrol.PermissionsProvider
 	registrations  accesscontrol.RegistrationList
@@ -54,10 +57,10 @@ type OSSAccessControlService struct {
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.features == nil {
+	if ac.cfg == nil {
 		return true
 	}
-	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
+	return !ac.cfg.RBACEnabled
 }
 
 func (ac *OSSAccessControlService) GetUsageStats(_ context.Context) map[string]interface{} {
@@ -141,9 +144,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if macroRole, ok := ac.roles[builtin]; ok {
-			for i := range macroRole.Permissions {
-				permissions = append(permissions, &macroRole.Permissions[i])
+		if basicRole, ok := ac.roles[builtin]; ok {
+			for i := range basicRole.Permissions {
+				permissions = append(permissions, &basicRole.Permissions[i])
 			}
 		}
 	}
@@ -184,8 +187,8 @@ func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for br := range accesscontrol.BuiltInRolesWithParents(builtInRoles) {
-		if macroRole, ok := ac.roles[br]; ok {
-			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		if basicRole, ok := ac.roles[br]; ok {
+			basicRole.Permissions = append(basicRole.Permissions, role.Permissions...)
 		} else {
 			ac.log.Error("Unknown builtin role", "builtInRole", br)
 		}

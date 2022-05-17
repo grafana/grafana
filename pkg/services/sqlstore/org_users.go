@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -110,7 +109,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", ss.Dialect.Quote("user")))
 		whereParams = append(whereParams, ss.Dialect.BooleanStr(false))
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
+		if ss.Cfg.IsEnterprise && !accesscontrol.IsDisabled(ss.Cfg) && query.User != nil {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
@@ -175,7 +174,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", ss.Dialect.Quote("user"), ss.Dialect.BooleanStr(false)))
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !accesscontrol.IsDisabled(ss.Cfg) {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
@@ -251,6 +250,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			"DELETE FROM org_user WHERE org_id=? and user_id=?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
 			"DELETE FROM team_member WHERE org_id=? and user_id = ?",
+			"DELETE FROM query_history_star WHERE org_id=? and user_id = ?",
 		}
 
 		for _, sql := range deletes {

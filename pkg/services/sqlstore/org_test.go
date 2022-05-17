@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -19,6 +20,11 @@ import (
 func TestAccountDataAccess(t *testing.T) {
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
+		testUser := &models.SignedInUser{
+			Permissions: map[int64]map[string][]string{
+				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
+			},
+		}
 
 		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
 			var err error
@@ -109,6 +115,7 @@ func TestAccountDataAccess(t *testing.T) {
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
 			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
+			testUser.OrgId = ac1.OrgId
 			require.NoError(t, err)
 			_, err = sqlStore.CreateUser(context.Background(), ac2cmd)
 			require.NoError(t, err)
@@ -117,6 +124,7 @@ func TestAccountDataAccess(t *testing.T) {
 				query := models.SearchOrgUsersQuery{
 					OrgID: ac1.OrgId,
 					Page:  1,
+					User:  testUser,
 				}
 				err = sqlStore.SearchOrgUsers(context.Background(), &query)
 
@@ -129,6 +137,7 @@ func TestAccountDataAccess(t *testing.T) {
 					OrgID: ac1.OrgId,
 					Limit: 1,
 					Page:  1,
+					User:  testUser,
 				}
 				err = sqlStore.SearchOrgUsers(context.Background(), &query)
 
@@ -163,7 +172,12 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 
 			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: ""}
+				query := models.SearchUsersQuery{Query: "", SignedInUser: &models.SignedInUser{
+					OrgId: 1,
+					Permissions: map[int64]map[string][]string{
+						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
+					},
+				}}
 				err := sqlStore.SearchUsers(context.Background(), &query)
 
 				require.NoError(t, err)

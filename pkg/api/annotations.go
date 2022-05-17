@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -350,6 +351,26 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	return response.Success("Annotations deleted")
 }
 
+func (hs *HTTPServer) GetAnnotationByID(c *models.ReqContext) response.Response {
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	repo := annotations.GetRepository()
+
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	if resp != nil {
+		return resp
+	}
+
+	if annotation.Email != "" {
+		annotation.AvatarUrl = dtos.GetGravatarUrl(annotation.Email)
+	}
+
+	return response.JSON(200, annotation)
+}
+
 func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
@@ -456,7 +477,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.ScopeAttributeResolver
 			OrgId: orgID,
 			Permissions: map[int64]map[string][]string{
 				orgID: {
-					accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				},
 			},
