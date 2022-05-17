@@ -215,6 +215,10 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 
 // MergeMeta will merge actions matching prefix of second metadata into first
 func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
+	if first == nil {
+		first = Metadata{}
+	}
+
 	for key := range second {
 		if strings.HasPrefix(key, prefix) {
 			first[key] = true

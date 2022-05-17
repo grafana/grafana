@@ -73,20 +73,39 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		return response.JSON(http.StatusOK, searchQuery.Result)
 	}
 
+	return hs.searchHitsWithMetadata(c, searchQuery.Result)
+}
+
+func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
+	folderUIDs := make(map[string]bool, 0)
+	dashboardUIDs := make(map[string]bool, 0)
+	parentUIDs := make(map[string]bool, 0)
+
+	for _, hit := range hits {
+		if hit.Type == models.DashHitFolder {
+			folderUIDs[hit.UID] = true
+		} else {
+			dashboardUIDs[hit.UID] = true
+			parentUIDs[hit.FolderUID] = true
+		}
+	}
+
+	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folderUIDs)
+	parentMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, parentUIDs)
+	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
+
 	// search hit with access control metadata attached
 	type hitWithMeta struct {
 		*models.Hit
 		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	}
-	hitsWithMeta := make([]hitWithMeta, 0, len(searchQuery.Result))
-	for _, hit := range searchQuery.Result {
+	hitsWithMeta := make([]hitWithMeta, 0, len(hits))
+	for _, hit := range hits {
 		var meta accesscontrol.Metadata
 		if hit.Type == models.DashHitFolder {
-			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeFoldersPrefix, hit.UID)
+			meta = folderMeta[hit.UID]
 		} else {
-			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeDashboardsPrefix, hit.UID)
-			folderMeta := hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeFoldersPrefix, hit.FolderUID)
-			meta = accesscontrol.MergeMeta("dashboards", meta, folderMeta)
+			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], parentMeta[hit.FolderUID])
 		}
 		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
 	}

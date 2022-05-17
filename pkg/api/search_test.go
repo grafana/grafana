@@ -23,11 +23,17 @@ func TestHTTPServer_Search(t *testing.T) {
 		ExpectedResult: models.HitList{
 			{ID: 1, UID: "folder1", Title: "folder1", Type: models.DashHitFolder},
 			{ID: 2, UID: "folder2", Title: "folder2", Type: models.DashHitFolder},
+			{ID: 3, UID: "dash3", Title: "dash3", FolderUID: "folder2", Type: models.DashHitDB},
 		},
 	}
 
 	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *models.SignedInUser, options accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-		return []*accesscontrol.Permission{{Action: "folders:read", Scope: "folders:*"}, {Action: "folders:write", Scope: "folders:uid:folder2"}}, nil
+		return []*accesscontrol.Permission{
+			{Action: "folders:read", Scope: "folders:*"},
+			{Action: "folders:write", Scope: "folders:uid:folder2"},
+			{Action: "dashboards:read", Scope: "dashboards:*"},
+			{Action: "dashboards:write", Scope: "folders:uid:folder2"},
+		}, nil
 	}
 
 	type withMeta struct {
@@ -45,10 +51,15 @@ func TestHTTPServer_Search(t *testing.T) {
 			if r.ID == 1 {
 				assert.Len(t, r.AccessControl, 1)
 				assert.True(t, r.AccessControl[dashboards.ActionFoldersRead])
-			} else {
-				assert.Len(t, r.AccessControl, 2)
+			} else if r.ID == 2 {
+				assert.Len(t, r.AccessControl, 3)
 				assert.True(t, r.AccessControl[dashboards.ActionFoldersRead])
 				assert.True(t, r.AccessControl[dashboards.ActionFoldersWrite])
+				assert.True(t, r.AccessControl[dashboards.ActionDashboardsWrite])
+			} else if r.ID == 3 {
+				assert.Len(t, r.AccessControl, 2)
+				assert.True(t, r.AccessControl[dashboards.ActionDashboardsRead])
+				assert.True(t, r.AccessControl[dashboards.ActionDashboardsWrite])
 			}
 		}
 	})
