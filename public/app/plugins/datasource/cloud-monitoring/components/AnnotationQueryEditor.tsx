@@ -38,6 +38,7 @@ export const defaultQuery: (datasource: CloudMonitoringDatasource) => MetricQuer
   query: '',
   crossSeriesReducer: 'REDUCE_NONE',
   perSeriesAligner: AlignmentTypes.ALIGN_NONE,
+  alignmentPeriod: 'grafana-auto',
 });
 
 export const AnnotationQueryEditor = (props: Props) => {
