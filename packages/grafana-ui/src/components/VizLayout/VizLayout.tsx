@@ -81,13 +81,24 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     size.height = height;
   }
 
+  const scrollbarStyle: CSSProperties = {
+    overflow: 'scroll',
+    maxHeight: '100%',
+  };
+
+  if (placement === 'right' && legend.props.width) {
+    scrollbarStyle.width = legend.props.width;
+  }
+
   return (
     <div style={containerStyle}>
       <div tabIndex={0} className={styles.viz}>
         {size && children(size.width, size.height)}
       </div>
       <div style={legendStyle} ref={legendRef}>
-        <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
+        <div style={scrollbarStyle}>
+          <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
+        </div>
       </div>
     </div>
   );
@@ -115,6 +126,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
+  width?: number;
 }
 
 /**
