@@ -33,7 +33,7 @@ export const ConfigEditor = (props: Props) => {
     <>
       {options.access === 'direct' && (
         <Alert title="Error" severity="error">
-          Browser access mode in the Elasticsearch datasource is not available anymore. Please switch to server access
+          Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access
           mode.
         </Alert>
       )}
