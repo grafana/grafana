@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -31,6 +32,14 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
+type ExtendDocumentFunc func(dash dashboard, doc *bluge.Document) error
+type ResponseProcessorFunc func(field string, value []byte) bool
+
+type DashboardIndexExtender interface {
+	GetDocumentExtender(orgID int64, dashboards []dashboard) ExtendDocumentFunc
+	GetResponseProcessor(frame *data.Frame) ResponseProcessorFunc
+}
+
 type dashboard struct {
 	id       int64
 	uid      string
@@ -50,6 +59,7 @@ type dashboardIndex struct {
 	eventStore   eventStore
 	logger       log.Logger
 	buildSignals chan int64
+	extenders    []DashboardIndexExtender
 }
 
 func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
@@ -60,6 +70,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		perOrgWriter: map[int64]*bluge.Writer{},
 		logger:       log.New("dashboardIndex"),
 		buildSignals: make(chan int64),
+		extenders:    []DashboardIndexExtender{},
 	}
 }
 
@@ -124,7 +135,12 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 	orgSearchIndexLoadTime := time.Since(started)
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
-	reader, writer, err := initIndex(dashboards, i.logger)
+	documentExtenders := make([]ExtendDocumentFunc, len(i.extenders))
+	for _, extender := range i.extenders {
+		documentExtenders = append(documentExtenders, extender.GetDocumentExtender(orgID, dashboards))
+	}
+
+	reader, writer, err := initIndex(dashboards, i.logger, documentExtenders)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}

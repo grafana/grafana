@@ -53,6 +53,10 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 	return s.dashboardIndex.run(ctx)
 }
 
+func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
+	s.dashboardIndex.extenders = append(s.dashboardIndex.extenders, ext)
+}
+
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
 	// TODO: get user & user's permissions from the request context
 

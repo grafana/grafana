@@ -31,7 +31,7 @@ const (
 	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
 )
 
-func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge.Writer, error) {
+func initIndex(dashboards []dashboard, logger log.Logger, extenders []ExtendDocumentFunc) (*bluge.Reader, *bluge.Writer, error) {
 	writer, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening writer: %v", err)
@@ -50,6 +50,9 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 			continue
 		}
 		doc := getFolderDashboardDoc(dash)
+		if err := extendDoc(dash, doc, extenders); err != nil {
+			return nil, nil, err
+		}
 		batch.Insert(doc)
 		uid := dash.uid
 		if uid == "" {
@@ -66,12 +69,18 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 		folderUID := folderIdLookup[dash.folderID]
 		location := folderUID
 		doc := getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash, doc, extenders); err != nil {
+			return nil, nil, err
+		}
 		batch.Insert(doc)
 
 		// Index each panel in dashboard.
 		location += "/" + dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
+			if err := extendDoc(dash, doc, extenders); err != nil {
+				return nil, nil, err
+			}
 			batch.Insert(panelDoc)
 		}
 	}
@@ -91,6 +100,15 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 
 	logger.Info("Finish building index", "totalElapsed", time.Since(start))
 	return reader, writer, err
+}
+
+func extendDoc(dash dashboard, doc *bluge.Document, extenders []ExtendDocumentFunc) error {
+	for _, extend := range extenders {
+		if err := extend(dash, doc); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getFolderDashboardDoc(dash dashboard) *bluge.Document {
