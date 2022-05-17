@@ -27,7 +27,7 @@ Supported Elasticsearch versions:
 
 | Name      | Description                                                                                                           |
 | --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries.                                 |
+| `Name`    | Data source name. This is how you refer to the data source in panels and queries.                                 |
 | `Default` | Data source is pre-selected for new panels.                                                |
 | `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                         |
 | `Access`  | Do not use Access. Use "Server (default)" or the datasource won't function. |
