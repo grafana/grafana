@@ -493,7 +493,7 @@ function getApmTable(
     if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
       df.fields.push({
         ...rateTrend[0].fields[2],
-        name: 'Trend (Rate)',
+        name: ' ',
         labels: null,
         config: {
           color: {
@@ -502,6 +502,7 @@ function getApmTable(
           custom: {
             displayMode: 'lcd-gauge',
           },
+          decimals: 3,
         },
       });
     }
@@ -526,15 +527,16 @@ function getApmTable(
     if (errorRateTrend.length > 0 && errorRateTrend[0].fields?.length > 2) {
       df.fields.push({
         ...errorRateTrend[0].fields[2],
-        name: 'Trend (Error Rate)',
+        name: '  ',
         labels: null,
         config: {
           color: {
-            mode: 'continuous-BlPu',
+            mode: 'continuous-RdYlGr',
           },
           custom: {
             displayMode: 'lcd-gauge',
           },
+          decimals: 3,
         },
       });
     }
@@ -542,7 +544,7 @@ function getApmTable(
     if (duration.length > 0 && duration[0].fields?.length > 1) {
       df.fields.push({
         ...duration[0].fields[1],
-        name: 'Duration',
+        name: 'Duration (p90)',
         config: {
           links: [
             makePromLink(
@@ -552,6 +554,7 @@ function getApmTable(
               durationMetric.instant
             ),
           ],
+          unit: 'ms',
         },
       });
     }
@@ -637,7 +640,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
+        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),
