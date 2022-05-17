@@ -6938,10 +6938,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@opentelemetry/semantic-conventions@npm:1.0.1"
-  checksum: c17dd6494185587b92eb2147114e280c29ecdc1cec081adc4cf02919c04ed63ed0d96a6a1247b8147536b985ec376804327be5b7aca868aa3890d428ac2c6cc7
+"@opentelemetry/semantic-conventions@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.2.0"
+  checksum: ba8ebaaecab15e7aff26b59e028e9ceb73eba2fda6c8c3b9957277d66205a56781ab2a5d1f7bf321b92e0ca44d3e247336665ac4ccaef195455f838cbcab44ff
   languageName: node
   linkType: hard
 
@@ -20907,7 +20907,7 @@ __metadata:
     "@microsoft/api-extractor": 7.23.0
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
-    "@opentelemetry/semantic-conventions": 1.0.1
+    "@opentelemetry/semantic-conventions": 1.2.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
     "@popperjs/core": 2.11.4
     "@react-aria/button": 3.4.3
