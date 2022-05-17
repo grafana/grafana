@@ -11800,6 +11800,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@visx/group@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/group@npm:2.10.0"
+  dependencies:
+    "@types/react": "*"
+    classnames: ^2.3.1
+    prop-types: ^15.6.2
+  peerDependencies:
+    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 4774fb8d62f68948e45cb214acf025d4f0be1a4d80be11d7771dcd63f7e054710df2a05bc66c5b0d57bf33755c834f5d6033b11c0a360681ca166e32342292f2
+  languageName: node
+  linkType: hard
+
 "@visx/point@npm:2.6.0":
   version: 2.6.0
   resolution: "@visx/point@npm:2.6.0"
@@ -20993,7 +21006,7 @@ __metadata:
     "@typescript-eslint/parser": 5.22.0
     "@visx/event": 2.6.0
     "@visx/gradient": 2.10.0
-    "@visx/group": 2.1.0
+    "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0
     "@visx/tooltip": 2.8.0
