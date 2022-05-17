@@ -70,7 +70,21 @@ export async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> 
     field.display = getDisplayProcessor({ field, theme: config.theme2 });
   }
 
-  const meta = first.meta?.custom as SearchResultMeta;
+  // Make sure the object exists
+  if (!first.meta?.custom) {
+    first.meta = {
+      ...first.meta,
+      custom: {
+        count: first.length,
+        max_score: 1,
+      },
+    };
+  }
+
+  const meta = first.meta.custom as SearchResultMeta;
+  if (!meta.locationInfo) {
+    meta.locationInfo = {};
+  }
   const view = new DataFrameView<DashboardQueryResult>(first);
   return {
     totalRows: meta.count ?? first.length,

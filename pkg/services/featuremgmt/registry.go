@@ -128,12 +128,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "validatedQueries",
-			Description:     "only execute the query saved in a panel",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:            "publicDashboards",
 			Description:     "enables public access to dashboards",
 			State:           FeatureStateAlpha,
