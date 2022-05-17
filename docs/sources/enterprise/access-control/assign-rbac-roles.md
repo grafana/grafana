@@ -74,7 +74,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 **Before you begin:**
 
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- [Enable role provisioning]({{< relref "./rbac-provisioning#rbac-provisioning" >}})
 - Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}})
 
 </br>
@@ -174,7 +174,7 @@ If you want to extend the permissions of a basic role, and you identify a fixed 
 
 **Before you begin:**
 
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- [Enable role provisioning]({{< relref "./rbac-provisioning.md" >}})
 - Determine which fixed role you want to add to a basic role
 
 </br>
@@ -214,7 +214,7 @@ If you want to extend the permissions of a basic role, and assigning fixed roles
 
 **Before you begin:**
 
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- [Enable role provisioning]({{< relref "./rbac-provisioning.md" >}})
 - [Add a custom role]({{< relref "./manage-rbac-roles#create-custom-role" >}})
 
 </br>
