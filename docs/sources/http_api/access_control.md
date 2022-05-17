@@ -959,6 +959,9 @@ Content-Type: application/json; charset=UTF-8
 
 `POST /api/access-control/roles/hard-reset`
 
+`permissions:type:escalate` scope enables users to reset basic roles permissions
+which might exceed the permissions of callers.
+
 Reset basic roles permissions to their default.
 
 #### Required permissions
@@ -970,7 +973,7 @@ Reset basic roles permissions to their default.
 #### Example request
 
 ```http
-POST /api/access-control/roles/factory-reset
+POST /api/access-control/roles/hard-reset
 Accept: application/json
 Content-Type: application/json
 
