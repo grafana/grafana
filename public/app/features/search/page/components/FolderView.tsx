@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
+import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
 import { SearchResultsProps } from '../components/SearchResultsTable';
 
@@ -26,7 +27,7 @@ export const FolderView = ({
     const folders: DashboardSection[] = [
       { title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent' },
       { title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred' },
-      { title: 'General', url: '/dashboards', kind: 'folder', uid: 'general' }, // not sure why this is not in the index
+      { title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID }, // not sure why this is not in the index
     ];
     for (const row of rsp.view) {
       folders.push({
