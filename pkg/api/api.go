@@ -391,6 +391,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
+			// Deprecated: used to convert internal IDs to UIDs
+			dashboardRoute.Get("/ids/:ids", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)), hs.GetDashboardUIDs)
+
 			// Deprecated: use /uid/:uid API instead.
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
@@ -430,9 +433,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
-
-		// Validated query
-		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
