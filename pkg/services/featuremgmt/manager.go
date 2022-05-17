@@ -184,15 +184,3 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 
 	return &FeatureManager{enabled: enabled}
 }
-
-// GetEnabledFlagNames returns a string array of enabled keys
-func (fm *FeatureManager) GetEnabledFlagNames() []string {
-	featureStrings := make([]string, len(fm.enabled))
-
-	i := 0
-	for k := range fm.enabled {
-		featureStrings[i] = k
-		i++
-	}
-	return featureStrings
-}
