@@ -85,6 +85,8 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			MetricDefinition:    azJSONModel.MetricDefinition,
 			ResourceName:        azJSONModel.ResourceName,
 		}
+
+		azJSONModel.DimensionFilters = MigrateDimensionFilters(azJSONModel.DimensionFilters)
 		azureURL := ub.BuildMetricsURL()
 
 		resourceName := azJSONModel.ResourceName
@@ -129,10 +131,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
 			for i, filter := range azJSONModel.DimensionFilters {
-				if filter.Operator != "eq" && filter.Filter == "*" {
+				if len(filter.Filters) == 0 {
 					dimSB.WriteString(fmt.Sprintf("%s eq '*'", filter.Dimension))
 				} else {
-					dimSB.WriteString(filter.String())
+					dimSB.WriteString(filter.ConstructFiltersString())
 				}
 				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")

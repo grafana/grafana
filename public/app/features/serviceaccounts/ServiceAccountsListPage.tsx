@@ -62,7 +62,7 @@ const ServiceAccountsListPage = ({
   query,
   filters,
   serviceAccountToRemove,
-}: Props) => {
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -84,6 +84,7 @@ const ServiceAccountsListPage = ({
       fetchACOptions();
     }
   };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>

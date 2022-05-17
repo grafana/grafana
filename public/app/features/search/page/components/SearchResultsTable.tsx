@@ -1,93 +1,62 @@
+/* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
-import { DataFrame, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
-import { LocationInfo } from '../../service';
-import { SearchLayout } from '../../types';
+import { QueryResponse } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
-type Props = {
-  data: DataFrame;
+export type SearchResultsProps = {
+  response: QueryResponse;
   width: number;
   height: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
-  layout: SearchLayout;
-  tags: string[];
-  onTagFilterChange: (tags: string[]) => void;
-  onDatasourceChange: (datasource?: string) => void;
+  onTagSelected: (tag: string) => void;
+  onDatasourceChange?: (datasource?: string) => void;
 };
 
 export type TableColumn = Column & {
   field?: Field;
 };
 
-export interface FieldAccess {
-  uid: string; // the item UID
-  kind: string; // panel, dashboard, folder
-  name: string;
-  description: string;
-  url: string; // link to value (unique)
-  type: string; // graph
-  tags: string[];
-  location: LocationInfo[]; // the folder name
-  score: number;
-
-  // Count info
-  panelCount: number;
-  datasource: DataSourceRef[];
-}
-
-const skipHREF = new Set(['column-checkbox', 'column-datasource']);
+const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = ({
-  data,
+  response,
   width,
   height,
-  tags,
   selection,
   selectionToggle,
-  layout,
-  onTagFilterChange,
+  onTagSelected,
   onDatasourceChange,
-}: Props) => {
+}: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
   const memoizedData = useMemo(() => {
-    if (!data.fields.length) {
+    if (!response?.view?.dataFrame.fields.length) {
       return [];
     }
     // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
     // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-    return Array(data.length).fill(0);
-  }, [data]);
+    return Array(response.totalRows).fill(0);
+  }, [response]);
 
   // React-table column definitions
-  const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
-    const isDashboardList = layout === SearchLayout.Folders;
-    return generateColumns(
-      access,
-      isDashboardList,
-      width,
-      selection,
-      selectionToggle,
-      styles,
-      tags,
-      onTagFilterChange,
-      onDatasourceChange
-    );
-  }, [layout, access, width, styles, tags, selection, selectionToggle, onTagFilterChange, onDatasourceChange]);
+    return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
+  }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
@@ -104,38 +73,33 @@ export const SearchResultsTable = ({
       const row = rows[rowIndex];
       prepareRow(row);
 
-      const url = access.fields.url?.values.get(rowIndex);
-
+      const url = response.view.fields.url?.values.get(rowIndex);
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
-            const body = (
+            return (
               <TableCell
                 key={index}
                 tableStyles={tableStyles}
                 cell={cell}
                 columnIndex={index}
                 columnCount={row.cells.length}
+                userProps={{ href: url }}
               />
-            );
-            if (skipHREF.has(cell.column.id)) {
-              return body;
-            }
-
-            return (
-              <a href={url} key={index} className={styles.cellWrapper}>
-                {body}
-              </a>
             );
           })}
         </div>
       );
     },
-    [rows, prepareRow, access.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
+    [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
   );
 
+  if (!rows.length) {
+    return <div className={styles.noData}>No data</div>;
+  }
+
   return (
-    <div {...getTableProps()} style={{ width }} aria-label={'Search result table'} role="table">
+    <div {...getTableProps()} aria-label="Search result table" role="table">
       <div>
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -156,19 +120,25 @@ export const SearchResultsTable = ({
       </div>
 
       <div {...getTableBodyProps()}>
-        {rows.length > 0 ? (
-          <FixedSizeList
-            height={height}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            className={styles.tableBody}
-          >
-            {RenderRow}
-          </FixedSizeList>
-        ) : (
-          <div className={styles.noData}>No data</div>
-        )}
+        <InfiniteLoader
+          isItemLoaded={response.isItemLoaded}
+          itemCount={rows.length}
+          loadMoreItems={response.loadMoreItems}
+        >
+          {({ onItemsRendered, ref }) => (
+            <FixedSizeList
+              ref={ref}
+              onItemsRendered={onItemsRendered}
+              height={height - HEADER_HEIGHT}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width="100%"
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          )}
+        </InfiniteLoader>
       </div>
     </div>
   );
@@ -188,19 +158,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     table: css`
       width: 100%;
     `,
-    tableBody: css`
-      overflow: 'hidden auto';
-    `,
     cellIcon: css`
       display: flex;
       align-items: center;
     `,
     cellWrapper: css`
-      div {
-        border-right: none;
-        &:hover {
-          box-shadow: none;
-        }
+      border-right: none;
+      &:hover {
+        box-shadow: none;
       }
     `,
     headerCell: css`
@@ -209,13 +174,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     headerRow: css`
       background-color: ${theme.colors.background.secondary};
-      height: 36px;
+      height: ${HEADER_HEIGHT}px;
       align-items: center;
     `,
     rowContainer: css`
       label: row;
       &:hover {
         background-color: ${rowHoverBg};
+      }
+
+      &:not(:hover) div[role='cell'] {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     `,
     typeIcon: css`

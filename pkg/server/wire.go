@@ -34,6 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -250,6 +252,12 @@ var wireBasicSet = wire.NewSet(
 	cmreg.ProvideRegistry,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	ossaccesscontrol.ProvideTeamPermissions,
+	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
+	ossaccesscontrol.ProvideFolderPermissions,
+	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
+	ossaccesscontrol.ProvideDashboardPermissions,
+	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 )
 
 var wireSet = wire.NewSet(

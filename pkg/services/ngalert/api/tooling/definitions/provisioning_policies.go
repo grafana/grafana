@@ -8,7 +8,7 @@ package definitions
 //       200: Route
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/policies provisioning RoutePostPolicyTree
+// swagger:route PUT /api/provisioning/policies provisioning RoutePutPolicyTree
 //
 // Sets the notification policy tree.
 //
@@ -19,7 +19,7 @@ package definitions
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:parameters RoutePostPolicyTree
+// swagger:parameters RoutePutPolicyTree
 type Policytree struct {
 	// in:body
 	Body Route
