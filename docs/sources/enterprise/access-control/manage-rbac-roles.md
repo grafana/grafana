@@ -19,10 +19,6 @@ This section includes instructions for how to view permissions associated with r
 You can use the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available basic role assignments.
 The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
-**Before you begin:**
-
-- [Enable role-based access control]({{< relref "./enable-rbac-and-provisioning#enable-rback" >}}).
-
 The following example includes the base64 username:password Basic Authorization. You cannot use authorization tokens in the request.
 
 **Example request**
@@ -149,7 +145,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}}).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions actions and scopes]({{< relref "./custom-role-actions-scopes.md" >}}).
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-rbac" >}}).
+- [Enable role provisioning]({{< relref "./rbac-provisioning" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
