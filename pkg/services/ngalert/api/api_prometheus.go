@@ -22,7 +22,6 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-// PrometheusSrv provides rule and alert status for Grafana-managed alerts with a Prometheus-compatible api.
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
@@ -32,7 +31,6 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
-// Returns the statuses for Grafana-managed Alerts.
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -208,7 +206,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alert := &apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
-				State:       string(alertState.State),
+				State:       alertState.State.String(),
 				ActiveAt:    &activeAt,
 				Value:       valString,
 			}

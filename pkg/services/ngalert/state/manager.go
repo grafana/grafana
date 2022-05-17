@@ -110,7 +110,7 @@ func (st *Manager) Warm(ctx context.Context) {
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
 				Labels:               lbs,
-				State:                entry.CurrentState,
+				State:                &entry.CurrentState,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
@@ -178,8 +178,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	oldState := currentState.State
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
-
-	// This switch may transform the state of the result.
 	switch result.State {
 	case eval.Normal:
 		currentState.resultNormal(alertRule, result)
@@ -241,30 +239,22 @@ func translateInstanceState(state ngModels.InstanceState) eval.State {
 		return eval.Alerting
 	case state.Type == ngModels.InstanceStateNormal:
 		return eval.Normal
-	case ngModels.InstanceStatePending,
-		ngModels.InstanceStatePendingError,
-		ngModels.InstanceStatePendingNoData:
-		return eval.Pending
-	case ngModels.InstanceStateNoData:
-		return eval.NoData
-	case ngModels.InstanceStateError:
-		return eval.Error
 	default:
 		return eval.Error
 	}
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state, previousState ngModels.InstanceState) {
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state, previousState *ngModels.InstanceState) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
 
 	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state)
+	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state.String())
 
 	item := &annotations.Item{
 		AlertId:   alertRule.ID,
 		OrgId:     alertRule.OrgID,
-		PrevState: string(previousState),
-		NewState:  string(state),
+		PrevState: previousState.String(),
+		NewState:  state.String(),
 		Text:      annotationText,
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
@@ -320,7 +310,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 
 			if s.State.Type == ngModels.InstanceStateFiring {
 				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
-					ngModels.InstanceState{
+					&ngModels.InstanceState{
 						Type:   ngModels.InstanceStateNormal,
 						Reason: ngModels.InstanceReasonNormal,
 					},

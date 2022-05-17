@@ -76,6 +76,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
+		State:              &ngModels.InstanceState{},
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt

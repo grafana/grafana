@@ -15,17 +15,10 @@ import (
 )
 
 type State struct {
-	AlertRuleUID string
-	OrgID        int64
-	CacheId      string
-
-	// Final evaluation state for an Alert Instance, taking into account
-	// transformation rules in the Alert Rule
-	State ngModels.InstanceStateType
-
-	// The initially evaluated state, before any transformations are applied.
-	Reason eval.State
-
+	AlertRuleUID         string
+	OrgID                int64
+	CacheId              string
+	State                *ngModels.InstanceState
 	Resolved             bool
 	Results              []Evaluation
 	LastEvaluationString string
@@ -65,7 +58,7 @@ func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
-	a.State = ngModels.InstanceState{
+	a.State = &ngModels.InstanceState{
 		Type:   ngModels.InstanceStateNormal,
 		Reason: ngModels.InstanceReasonNormal,
 	}
@@ -142,9 +135,6 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			a.State.Type = derivedState
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
-			a.State = ngModels.InstanceStateFiringError
-		} else {
-			a.State = ngModels.InstanceStatePendingError
 		}
 	default:
 		// For is observed when Alerting is chosen for the alert state
@@ -193,7 +183,7 @@ func (a *State) Equals(b *State) bool {
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
 		a.Labels.String() == b.Labels.String() &&
-		a.State == b.State &&
+		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&

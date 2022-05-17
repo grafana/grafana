@@ -98,13 +98,17 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertIn
 		if err != nil {
 			return err
 		}
+		stateString, err := cmd.State.MarshalJSON()
+		if err != nil {
+			return err
+		}
 
 		alertInstance := &models.AlertInstance{
 			RuleOrgID:         cmd.RuleOrgID,
 			RuleUID:           cmd.RuleUID,
 			Labels:            cmd.Labels,
 			LabelsHash:        labelsHash,
-			CurrentState:      cmd.State,
+			CurrentState:      *cmd.State,
 			CurrentStateSince: cmd.CurrentStateSince,
 			CurrentStateEnd:   cmd.CurrentStateEnd,
 			LastEvalTime:      cmd.LastEvalTime,
@@ -114,7 +118,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertIn
 			return err
 		}
 
-		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, string(stateString), alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
 		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
 			"alert_instance",

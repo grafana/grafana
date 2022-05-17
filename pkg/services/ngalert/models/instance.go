@@ -13,7 +13,7 @@ type AlertInstance struct {
 	RuleUID           string `xorm:"rule_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
-	CurrentState      InstanceState
+	CurrentState      InstanceState `xorm:"current_state"`
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
@@ -30,26 +30,40 @@ type InstanceState struct {
 	Reason InstanceReasonType `json:"reason"`
 }
 
-func (i InstanceState) IsValid() bool {
+func (i *InstanceState) IsValid() bool {
 	return i.Type.IsValid() && i.Reason.IsValid()
 }
 
-func (i InstanceState) Equals(j InstanceState) bool {
+func (i *InstanceState) Equals(j *InstanceState) bool {
 	return i.Type == j.Type && i.Reason == j.Reason
 }
 
-func (i InstanceState) String() string {
+func (i *InstanceState) String() string {
 	output := string(i.Type)
 
 	if i.Reason != InstanceReasonNormal {
 
 		// Don't attach the Reason for Error or NoData types - the reason should always be error or nodata.
 		if i.Type != InstanceStateError && i.Type != InstanceStateNoData {
-			output = output + fmt.Sprintf(" (%+v)", i.Reason)
+			// Only attach reason if it's set.
+			if len(i.Reason) > 0 {
+				output = output + fmt.Sprintf(" (%+v)", i.Reason)
+			}
 		}
 	}
 
 	return output
+}
+
+// InstanceStateType implements FromDB and ToDB by reusing its json marshalling code. FromDB and ToDB are used by xorm.
+func (i *InstanceState) ToDB() ([]byte, error) {
+	// We don't actually use this function and instead manually generate the
+	// JSON string and set it. Since we use a hand-generated SQL query for setting, xorm doesn't // call this func.
+	return nil, fmt.Errorf("database serialization of ngAlerting Instance state is not implemented")
+}
+
+func (i *InstanceState) FromDB(b []byte) error {
+	return i.UnmarshalJSON(b)
 }
 
 // InstanceStateType implements json.Marshaler and json.Unmarshaler so we can
@@ -162,7 +176,7 @@ type SaveAlertInstanceCommand struct {
 	RuleOrgID         int64
 	RuleUID           string
 	Labels            InstanceLabels
-	State             InstanceState
+	State             *InstanceState
 	LastEvalTime      time.Time
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
@@ -193,7 +207,7 @@ type ListAlertInstancesQueryResult struct {
 	RuleUID           string         `xorm:"rule_uid" json:"ruleUid"`
 	Labels            InstanceLabels `json:"labels"`
 	LabelsHash        string         `json:"labeHash"`
-	CurrentState      InstanceState  `json:"currentState"`
+	CurrentState      InstanceState  `xorm:"current_state" json:"currentState"`
 	CurrentStateSince time.Time      `json:"currentStateSince"`
 	CurrentStateEnd   time.Time      `json:"currentStateEnd"`
 	LastEvalTime      time.Time      `json:"lastEvalTime"`
