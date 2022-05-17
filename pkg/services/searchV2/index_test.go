@@ -139,3 +139,50 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		)
 	})
 }
+
+var testPrefixDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "Archer Data",
+		},
+	},
+	{
+		id:  2,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "Document Sync",
+		},
+	},
+}
+
+func TestDashboardIndex_PrefixSearch(t *testing.T) {
+	t.Run("prefix-search-beginning", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Arch"},
+		)
+	})
+
+	t.Run("prefix-search-middle", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Syn"},
+		)
+	})
+
+	t.Run("prefix-search-beginning-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "arch"},
+		)
+	})
+
+	t.Run("prefix-search-middle-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "syn"},
+		)
+	})
+}
