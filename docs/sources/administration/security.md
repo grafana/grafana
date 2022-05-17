@@ -1,8 +1,8 @@
 +++
-title = "Security"
+aliases = ["/docs/grafana/latest/administration/security/", "/docs/grafana/latest/installation/security/"]
 description = "Security Docs"
 keywords = ["grafana", "security", "documentation"]
-aliases = ["/docs/grafana/latest/installation/security/"]
+title = "Security"
 weight = 500
 +++
 

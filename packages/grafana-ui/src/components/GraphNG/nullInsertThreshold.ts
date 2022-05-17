@@ -13,7 +13,8 @@ export function applyNullInsertThreshold(
   frame: DataFrame,
   refFieldName?: string | null,
   refFieldPseudoMax: number | null = null,
-  insertMode: InsertMode = INSERT_MODES.threshold
+  insertMode: InsertMode = INSERT_MODES.threshold,
+  thorough = true
 ): DataFrame {
   if (frame.length === 0) {
     return frame;
@@ -49,7 +50,14 @@ export function applyNullInsertThreshold(
 
     const frameValues = frame.fields.map((field) => field.values.toArray());
 
-    const filledFieldValues = nullInsertThreshold(refValues, frameValues, threshold, refFieldPseudoMax, insertMode);
+    const filledFieldValues = nullInsertThreshold(
+      refValues,
+      frameValues,
+      threshold,
+      refFieldPseudoMax,
+      insertMode,
+      thorough
+    );
 
     if (filledFieldValues === frameValues) {
       return frame;
@@ -77,7 +85,9 @@ function nullInsertThreshold(
   threshold: number,
   // will insert a trailing null when refFieldPseudoMax > last datapoint + threshold
   refFieldPseudoMax: number | null = null,
-  getInsertValue: InsertMode
+  getInsertValue: InsertMode,
+  // will insert the value at every missing interval
+  thorough: boolean
 ) {
   const len = refValues.length;
   let prevValue: number = refValues[0];
@@ -86,8 +96,14 @@ function nullInsertThreshold(
   for (let i = 1; i < len; i++) {
     const curValue = refValues[i];
 
-    if (curValue - prevValue > threshold) {
+    while (curValue - prevValue > threshold) {
       refValuesNew.push(getInsertValue(prevValue, curValue, threshold));
+
+      prevValue += threshold;
+
+      if (!thorough) {
+        break;
+      }
     }
 
     refValuesNew.push(curValue);

@@ -21,6 +21,7 @@ type ProvisioningSrv struct {
 	policies            NotificationPolicyService
 	contactPointService ContactPointService
 	templates           TemplateService
+	muteTimings         MuteTimingService
 }
 
 type ContactPointService interface {
@@ -39,6 +40,10 @@ type TemplateService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p alerting_models.Provenance) error
+}
+
+type MuteTimingService interface {
+	GetMuteTimings(ctx context.Context, orgID int64) ([]apimodels.MuteTiming, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -152,4 +157,26 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.R
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTiming(c *models.ReqContext) response.Response {
+	name := web.Params(c.Req)[":name"]
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	for _, timing := range timings {
+		if name == timing.Name {
+			return response.JSON(http.StatusOK, timing)
+		}
+	}
+	return response.Empty(http.StatusNotFound)
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.Response {
+	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, timings)
 }

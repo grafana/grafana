@@ -1,7 +1,7 @@
 +++
-title = "Dashboard Folders"
+aliases = ["/docs/grafana/latest/dashboards/dashboard-folders/", "/docs/grafana/latest/reference/dashboard_folders/"]
 keywords = ["grafana", "dashboard", "dashboard folders", "folder", "folders", "documentation", "guide"]
-aliases = ["/docs/grafana/latest/reference/dashboard_folders/"]
+title = "Dashboard Folders"
 weight = 6
 +++
 

@@ -1,7 +1,8 @@
 +++
-title = "Provisioning Azure Monitor"
+aliases = ["/docs/grafana/latest/datasources/azuremonitor/provisioning/"]
 description = "Template to provision the Azure Monitor data source"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
+title = "Provisioning Azure Monitor"
 weight = 2
 +++
 

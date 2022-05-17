@@ -58,3 +58,11 @@ func (f *ForkedProvisioningApi) forkRoutePutTemplate(ctx *models.ReqContext, bod
 func (f *ForkedProvisioningApi) forkRouteDeleteTemplate(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteDeleteTemplate(ctx)
 }
+
+func (f *ForkedProvisioningApi) forkRouteGetMuteTiming(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetMuteTiming(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRouteGetMuteTimings(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetMuteTimings(ctx)
+}

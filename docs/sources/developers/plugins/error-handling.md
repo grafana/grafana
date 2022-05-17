@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/error-handling/"]
 title = "Error handling"
 +++
 

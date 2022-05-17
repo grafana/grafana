@@ -1,11 +1,13 @@
 ---
-title: 'API keys in Grafana'
-menuTitle: 'API keys'
-description: 'This section contains information about API keys in Grafana'
-weight: 300
+aliases:
+  - /docs/grafana/latest/administration/api-keys/
+description: This section contains information about API keys in Grafana
 keywords:
   - API keys
   - Service accounts
+menuTitle: API keys
+title: API keys in Grafana
+weight: 300
 ---
 
 # API keys in Grafana

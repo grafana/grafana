@@ -1,8 +1,8 @@
 +++
-title = "HTTP Snapshot API "
+aliases = ["/docs/grafana/latest/http_api/snapshot/"]
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "snapshot"]
-aliases = ["/docs/grafana/latest/http_api/snapshot/"]
+title = "HTTP Snapshot API "
 +++
 
 # Snapshot API
