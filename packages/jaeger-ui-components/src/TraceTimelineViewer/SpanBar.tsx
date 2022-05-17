@@ -150,7 +150,7 @@ function SpanBar({
       onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
-      data-test-id="SpanBar--wrapper"
+      data-testid="SpanBar--wrapper"
     >
       <div
         aria-label={label}
@@ -161,11 +161,11 @@ function SpanBar({
           width: toPercent(viewEnd - viewStart),
         }}
       >
-        <div className={cx(styles.label, labelClassName)} data-test-id="SpanBar--label">
+        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
           {label}
         </div>
       </div>
-      <div>
+      <div data-testid="popover">
         {Object.keys(logGroups).map((positionKey) => (
           <Popover
             key={positionKey}

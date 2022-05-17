@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mount } from 'enzyme';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
@@ -76,24 +76,26 @@ describe('<SpanBar>', () => {
   };
 
   it('renders without exploding', () => {
-    const wrapper = mount(<SpanBar {...props} />);
-    expect(wrapper).toBeDefined();
-    const { onMouseOver, onMouseLeave } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
-    const labelElm = wrapper.find('[data-test-id="SpanBar--label"]');
-    expect(labelElm.text()).toBe(shortLabel);
-    act(() => {
-      onMouseOver();
-    });
-    expect(labelElm.text()).toBe(longLabel);
-    act(() => {
-      onMouseLeave();
-    });
-    expect(labelElm.text()).toBe(shortLabel);
+    render(<SpanBar {...props} />);
+    let { getByText } = within(screen.getByTestId('SpanBar--label'));
+    expect(getByText(shortLabel)).toBeInTheDocument();
+
+    expect(screen.getByTestId('SpanBar--wrapper')).toBeInTheDocument();
+    fireEvent.mouseOver(screen.getByTestId('SpanBar--wrapper'));
+
+    expect(screen.getByTestId('SpanBar--label')).toBeInTheDocument();
+    within(screen.getByTestId('SpanBar--label'));
+    expect(getByText(longLabel)).toBeInTheDocument();
+    fireEvent.mouseLeave(screen.getByTestId('SpanBar--wrapper'));
+
+    within(screen.getByTestId('SpanBar--label'));
+    expect(getByText(shortLabel)).toBeInTheDocument();
   });
 
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
-    const wrapper = mount(<SpanBar {...props} />);
-    expect(wrapper.find(Popover).length).toEqual(2);
+    render(<SpanBar {...props} />);
+    expect(screen.getByTestId('popover')).toBeInTheDocument();
+    expect(screen.getByTestId('popover').querySelectorAll('div')).toHaveLength(2);
   });
 });
