@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -95,13 +96,14 @@ func TestGetDashboardVersion(t *testing.T) {
 		require.Equal(t, query.DashboardId, savedDash.Id)
 		require.Equal(t, query.Version, savedDash.Version)
 
-		dashCmd := &models.Dashboard{
+		dashCmd := &models.GetDashboardQuery{
 			Uid:   savedDash.Uid,
 			OrgId: savedDash.OrgId,
 		}
-		err = getDashboard(t, sqlStore, dashCmd)
+		dashStore := dashdb.ProvideDashboardStore(sqlStore)
+		err = dashStore.GetDashboard(context.Background(), dashCmd)
 		require.Nil(t, err)
-		eq := reflect.DeepEqual(dashCmd.Data, query.Result.Data)
+		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 		require.Equal(t, true, eq)
 	})
 
@@ -220,22 +222,5 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		require.GreaterOrEqual(t, len(query.Result), versionsToKeep)
 		// Ensure we haven't deleted more than perBatch * maxBatches rows
 		require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
-	})
-}
-
-func getDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard) error {
-	t.Helper()
-	return sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		has, err := sess.Get(dashboard)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
-		}
-
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
-		return nil
 	})
 }
