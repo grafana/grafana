@@ -11775,15 +11775,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/gradient@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/gradient@npm:2.1.0"
+"@visx/gradient@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/gradient@npm:2.10.0"
   dependencies:
     "@types/react": "*"
     prop-types: ^15.5.7
   peerDependencies:
-    react: ^16.0.0-0 || ^17.0.0-0
-  checksum: fe5a121c3e4b52d525dbfa3b4dd437ae31046f02cb14d5e74a402b12eaf8dabbc2873388e464f73b03169f5d3cb9434166d5836f339ebe4716c7314489f560b2
+    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 30b1a0d0f30685c4c53795a6c4a4b0c88f290a6606205867c9b611f35ad122fa92bc4e5992674276972d698518aabecf7411ed2e71e0583c24f2ac8fdbb0f08f
   languageName: node
   linkType: hard
 
@@ -20992,7 +20992,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 5.22.0
     "@typescript-eslint/parser": 5.22.0
     "@visx/event": 2.6.0
-    "@visx/gradient": 2.1.0
+    "@visx/gradient": 2.10.0
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0

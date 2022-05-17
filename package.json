@@ -284,7 +284,7 @@
     "@sentry/utils": "6.19.1",
     "@types/react-resizable": "^1.7.4",
     "@visx/event": "2.6.0",
-    "@visx/gradient": "2.1.0",
+    "@visx/gradient": "2.10.0",
     "@visx/group": "2.1.0",
     "@visx/scale": "2.2.2",
     "@visx/shape": "2.4.0",
