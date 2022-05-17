@@ -136,7 +136,7 @@ export class ElasticDatasource
   ): Observable<any> {
     if (!this.isProxyAccess) {
       const error = new Error(
-        'Browser access mode in the Elasticsearch datasource is not available anymore. Please switch to server access mode.'
+        'Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.'
       );
       return throwError(() => error);
     }
