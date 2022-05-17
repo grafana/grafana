@@ -3,12 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"strings"
 	"testing"
@@ -61,7 +61,7 @@ func TestApiRetrieveConfig(t *testing.T) {
 			response := callAPI(
 				sc.server,
 				http.MethodGet,
-				fmt.Sprintf("/api/dashboards/uid/1/public-config"),
+				"/api/dashboards/uid/1/public-config",
 				nil,
 				t,
 			)
@@ -70,13 +70,12 @@ func TestApiRetrieveConfig(t *testing.T) {
 
 			if test.expectedHttpResponse == http.StatusOK {
 				var pdcResp models.PublicDashboardConfig
-				json.Unmarshal(response.Body.Bytes(), &pdcResp)
+				err := json.Unmarshal(response.Body.Bytes(), &pdcResp)
+				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardConfigResult, &pdcResp)
 			}
-
 		})
 	}
-
 }
 
 func TestApiPersistsValue(t *testing.T) {
@@ -118,7 +117,7 @@ func TestApiPersistsValue(t *testing.T) {
 			response := callAPI(
 				sc.server,
 				http.MethodPost,
-				fmt.Sprintf("/api/dashboards/uid/1/public-config"),
+				"/api/dashboards/uid/1/public-config",
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
@@ -131,7 +130,6 @@ func TestApiPersistsValue(t *testing.T) {
 				val, _ := respJSON.Get("isPublic").Bool()
 				assert.Equal(t, true, val)
 			}
-
 		})
 	}
 }

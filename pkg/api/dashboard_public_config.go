@@ -12,7 +12,6 @@ import (
 
 // Sets sharing configuration for dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
-
 	pdc, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
 
 	if errors.Is(err, models.ErrDashboardNotFound) {

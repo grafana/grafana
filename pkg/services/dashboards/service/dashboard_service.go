@@ -3,11 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -18,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"strings"
+	"time"
 )
 
 var (
@@ -344,7 +342,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *m.SaveDa
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
 func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-
 	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
 	if err != nil {
 		return nil, err
@@ -356,7 +353,6 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *m.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-
 	cmd := models.SavePublicDashboardConfigCommand{
 		Uid:                   dto.Uid,
 		OrgId:                 dto.OrgId,
