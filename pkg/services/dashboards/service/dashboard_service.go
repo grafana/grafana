@@ -481,3 +481,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 
 	return nil
 }
+
+func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return dr.dashboardStore.GetDashboard(ctx, query)
+}
