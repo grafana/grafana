@@ -114,7 +114,11 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	}
 
 	frame.Meta.Stats = parseStats(frame.Meta.Custom)
-	frame.Meta.Custom = nil
+	// TODO: when we get a real frame-type in grafana-plugin-sdk-go,
+	// move this to frame.Meta.FrameType
+	frame.Meta.Custom = map[string]string{
+		"frameType": "LabeledTimeValues",
+	}
 
 	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
 

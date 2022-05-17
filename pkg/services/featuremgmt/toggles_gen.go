@@ -71,10 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrol
-	// Support robust access control
-	FlagAccesscontrol = "accesscontrol"
-
 	// FlagAccesscontrolBuiltins
 	// Simplify access control builtin roles
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
@@ -98,10 +94,6 @@ const (
 	// FlagDisableHttpRequestHistogram
 	// Do not create histograms for http requests
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
-
-	// FlagValidatedQueries
-	// only execute the query saved in a panel
-	FlagValidatedQueries = "validatedQueries"
 
 	// FlagPublicDashboards
 	// enables public access to dashboards

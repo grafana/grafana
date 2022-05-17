@@ -95,11 +95,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:            "accesscontrol-builtins",
 			Description:     "Simplify access control builtin roles",
 			State:           FeatureStateAlpha,
@@ -131,12 +126,6 @@ var (
 			Name:        "disable_http_request_histogram",
 			Description: "Do not create histograms for http requests",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:            "validatedQueries",
-			Description:     "only execute the query saved in a panel",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:            "publicDashboards",

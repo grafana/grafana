@@ -2777,9 +2777,11 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3024,6 +3026,46 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Get a specific dashboard version using UID.",
+        "operationId": "getDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3754,15 +3796,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -10758,7 +10800,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -11211,7 +11253,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
