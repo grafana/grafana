@@ -11878,17 +11878,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/bounds@npm:2.1.2":
-  version: 2.1.2
-  resolution: "@visx/bounds@npm:2.1.2"
+"@visx/bounds@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/bounds@npm:2.10.0"
   dependencies:
     "@types/react": "*"
     "@types/react-dom": "*"
     prop-types: ^15.5.10
   peerDependencies:
-    react: ^16.0.0-0 || ^17.0.0-0
-    react-dom: ^16.0.0-0 || ^17.0.0-0
-  checksum: cd013c105d95d44bf29f570e26e63a466d8e9212861d9a92e818d239f6dbf8f0efa049556cbb4bbf1b849e730d63aaeeb5c9f7a013e1c6912db2243fa8e90b69
+    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+    react-dom: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 804eb348095771df9273068c6cbd35dccdef25c3722cc6b30f8f5a39bd06624cdec852af0904cf9cf000cb6648ac9c9f15403834050e36ba9a39a62f6986c3f8
   languageName: node
   linkType: hard
 
@@ -11980,19 +11980,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.8.0":
-  version: 2.8.0
-  resolution: "@visx/tooltip@npm:2.8.0"
+"@visx/tooltip@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/tooltip@npm:2.10.0"
   dependencies:
     "@types/react": "*"
-    "@visx/bounds": 2.1.2
+    "@visx/bounds": 2.10.0
     classnames: ^2.3.1
     prop-types: ^15.5.10
     react-use-measure: ^2.0.4
   peerDependencies:
-    react: ^16.8.0-0 || ^17.0.0-0
-    react-dom: ^16.8.0-0 || ^17.0.0-0
-  checksum: 0c55f1b6b1fae4a6631d1f0eb3f6340754ef839e17d64fd41259aed75634f954b2e7df67040a3103eb7fd088e481d4f38b76d7e231eaddb6e7d63a7639e0bf3a
+    react: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
+    react-dom: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 06ca4b6a7c95a11234c30dbf962c39c2270336f53cc83b4fcadc79c42d3658b6b53c2c94c5faf69cdf6f2edfc1cbfb070b2f3a03900888a81530dcb30c2b5c41
   languageName: node
   linkType: hard
 
@@ -21133,7 +21133,7 @@ __metadata:
     "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.10.0
-    "@visx/tooltip": 2.8.0
+    "@visx/tooltip": 2.10.0
     "@welldone-software/why-did-you-render": 6.2.3
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.6
     angular: 1.8.2
