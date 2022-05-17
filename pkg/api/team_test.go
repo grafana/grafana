@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -180,7 +179,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, cfg, featuremgmt.WithFeatures())
+	sc := setupHTTPServerWithCfg(t, true, false, cfg)
 
 	setInitCtxSignedInEditor(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))

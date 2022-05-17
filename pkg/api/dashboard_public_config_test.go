@@ -50,7 +50,7 @@ func TestApiRetrieveConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 
-			sc := setupHTTPServerWithMockDb(t, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
+			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
 				PublicDashboardConfigResult: test.publicDashboardConfigResult,
@@ -107,7 +107,7 @@ func TestApiPersistsValue(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			sc := setupHTTPServerWithMockDb(t, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
+			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
 				PublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: true},

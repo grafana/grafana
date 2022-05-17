@@ -328,7 +328,12 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 }
 
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg(), featuremgmt.WithFeatures())
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg())
+}
+
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, featuremgmt.WithFeatures())
 }
 
 func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, features *featuremgmt.FeatureManager) accessControlScenarioContext {
@@ -340,15 +345,8 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl, enableAccessC
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock(), features)
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, features *featuremgmt.FeatureManager) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, features)
-}
-
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	t.Helper()
-
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	if enableAccessControl {
 		cfg.RBACEnabled = true
@@ -383,11 +381,9 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
 		acmock = accesscontrolmock.New()
-
-		if !features.IsEnabled("accesscontrol") {
+		if !enableAccessControl {
 			acmock = acmock.WithDisabled()
 		}
-
 		hs.AccessControl = acmock
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
