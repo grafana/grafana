@@ -54,14 +54,14 @@ func hack_wrap(Handler) http.HandlerFunc
 // validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
 // When the handler is also potential to be any built-in inject.FastInvoker,
 // it wraps the handler automatically to have some performance gain.
-func validateAndWrapHandler(h Handler) Handler {
+func validateAndWrapHandler(h Handler) http.Handler {
 	return hack_wrap(h)
 }
 
 // validateAndWrapHandlers preforms validation and wrapping for each input handler.
 // It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler) []Handler {
-	wrappedHandlers := make([]Handler, len(handlers))
+func validateAndWrapHandlers(handlers []Handler) []http.Handler {
+	wrappedHandlers := make([]http.Handler, len(handlers))
 	for i, h := range handlers {
 		wrappedHandlers[i] = validateAndWrapHandler(h)
 	}
@@ -72,7 +72,7 @@ func validateAndWrapHandlers(handlers []Handler) []Handler {
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	handlers []Handler
+	handlers []http.Handler
 
 	urlPrefix string // For suburl support.
 	*Router
@@ -138,15 +138,15 @@ func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 		c.MapTo(rw, (*http.ResponseWriter)(nil))
 		c.Next()
 	})
-	m.handlers = append(m.handlers, Handler(middleware(next)))
+	m.handlers = append(m.handlers, middleware(next))
 }
 
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
-	handler = validateAndWrapHandler(handler)
-	m.handlers = append(m.handlers, handler)
+	h := validateAndWrapHandler(handler)
+	m.handlers = append(m.handlers, h)
 }
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {

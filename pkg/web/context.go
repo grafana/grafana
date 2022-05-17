@@ -37,7 +37,7 @@ func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, erro
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
 	Injector
-	handlers []Handler
+	handlers []http.Handler
 	index    int
 
 	*Router
