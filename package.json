@@ -170,7 +170,7 @@
     "@typescript-eslint/parser": "5.22.0",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
     "autoprefixer": "10.4.4",
-    "axios": "0.26.1",
+    "axios": "0.27.2",
     "babel-jest": "27.5.1",
     "babel-loader": "8.2.4",
     "babel-plugin-angularjs-annotate": "0.10.0",
