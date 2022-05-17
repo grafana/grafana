@@ -11,6 +11,8 @@ aliases = ["/docs/grafana/latest/http_api/folder_dashboard_search/"]
 
 `GET /api/search/`
 
+> Note: When using [Role-based access control]({{< relref "../enterprise/access-control" >}}), search results will contain only dashboards and folders which you have access to.
+
 Query parameters:
 
 - **query** – Search Query
