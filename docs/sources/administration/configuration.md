@@ -1924,4 +1924,4 @@ Set this to `true` to disable loading other custom base maps and hide them in th
 
 ## [rbac]
 
-Refer to [Role based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for detailed instructions.
+Refer to [Role-based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for more information.
