@@ -41,10 +41,8 @@ import {
   apmMetrics,
   totalsMetric,
   rateMetric,
-  rateTrendMetric,
   durationMetric,
   errorRateMetric,
-  errorRateTrendMetric,
 } from './graphTransform';
 import {
   transformTrace,
@@ -454,14 +452,8 @@ function getApmTable(
     const rate = responses[0].data.filter((x) => {
       return x.refId === rateMetric.query;
     });
-    const rateTrend = responses[0].data.filter((x) => {
-      return x.refId === rateTrendMetric.query;
-    });
     const errorRate = responses[0].data.filter((x) => {
       return x.refId === errorRateMetric.query;
-    });
-    const errorRateTrend = responses[0].data.filter((x) => {
-      return x.refId === errorRateTrendMetric.query;
     });
     const duration = responses[0].data.filter((x) => {
       return x.refId === durationMetric.query;
@@ -488,11 +480,9 @@ function getApmTable(
           ],
         },
       });
-    }
 
-    if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
       df.fields.push({
-        ...rateTrend[0].fields[2],
+        ...rate[0].fields[2],
         name: ' ',
         labels: null,
         config: {
@@ -522,11 +512,9 @@ function getApmTable(
           ],
         },
       });
-    }
 
-    if (errorRateTrend.length > 0 && errorRateTrend[0].fields?.length > 2) {
       df.fields.push({
-        ...errorRateTrend[0].fields[2],
+        ...errorRate[0].fields[2],
         name: '  ',
         labels: null,
         config: {

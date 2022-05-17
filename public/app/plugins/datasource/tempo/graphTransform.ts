@@ -140,18 +140,9 @@ export const rateMetric = {
   query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{REPLACE_STRING}[$__range] @ end())) by (span_name))',
   instant: true,
 };
-export const rateTrendMetric = {
-  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{REPLACE_STRING}[$__range])) by (span_name))',
-  instant: true,
-};
 export const errorRateMetric = {
   query:
     'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",REPLACE_STRING}[$__range] @ end())) by (span_name))',
-  instant: true,
-};
-export const errorRateTrendMetric = {
-  query:
-    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",REPLACE_STRING}[$__range])) by (span_name))',
   instant: true,
 };
 export const durationMetric = {
@@ -170,7 +161,7 @@ export const serviceMapMetrics = [
   // 'traces_service_graph_untagged_spans_total',
 ];
 
-export const apmMetrics = [rateMetric, rateTrendMetric, errorRateMetric, errorRateTrendMetric, durationMetric];
+export const apmMetrics = [rateMetric, errorRateMetric, durationMetric];
 
 /**
  * Map response from multiple prometheus metrics into a node graph data frames with nodes and edges.
