@@ -207,9 +207,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+    const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
+      ? 'Microsoft.Storage/storageAccounts'
+      : metricDefinition;
     let url =
       `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
-      `$filter=resourceType eq '${metricDefinition}'&` +
+      `$filter=resourceType eq '${validMetricDefinition}'&` +
       `api-version=${this.listByResourceGroupApiVersion}`;
     if (skipToken) {
       url += `&$skiptoken=${skipToken}`;

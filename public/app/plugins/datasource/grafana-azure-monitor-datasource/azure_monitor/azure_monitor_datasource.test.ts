@@ -1,3 +1,5 @@
+import { startsWith } from 'lodash';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -447,10 +449,13 @@ describe('AzureMonitorDatasource', () => {
 
         beforeEach(() => {
           ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+            const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
+              ? 'Microsoft.Storage/storageAccounts'
+              : metricDefinition;
             const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
             expect(path).toBe(
               basePath +
-                `/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`
+                `/${resourceGroup}/resources?$filter=resourceType eq '${validMetricDefinition}'&api-version=2021-04-01`
             );
             return Promise.resolve(response);
           });
