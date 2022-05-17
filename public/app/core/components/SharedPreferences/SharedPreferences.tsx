@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { t, Trans } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { NavLinkDTO, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   Button,
@@ -32,6 +32,9 @@ export interface State {
   theme: string;
   timezone: string;
   weekStart: string;
+  navbar: {
+    savedItems: NavLinkDTO[];
+  };
   dashboards: DashboardSearchHit[];
 }
 
@@ -54,6 +57,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       dashboards: [],
+      navbar: {
+        savedItems: [],
+      },
     };
   }
 
@@ -89,13 +95,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
       theme: prefs.theme,
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
+      navbar: prefs.navbar,
       dashboards: [defaultDashboardHit, ...dashboards],
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone, weekStart } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone, weekStart });
+    const { homeDashboardId, theme, timezone, weekStart, navbar } = this.state;
+    await this.service.update({ homeDashboardId, theme, timezone, weekStart, navbar });
     window.location.reload();
   };
 

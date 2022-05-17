@@ -12,4 +12,8 @@ export class PreferencesService {
   load(): Promise<UserPreferencesDTO> {
     return backendSrv.get<UserPreferencesDTO>(`/api/${this.resourceUri}/preferences`);
   }
+
+  patch(preferences: Partial<UserPreferencesDTO>): Promise<any> {
+    return backendSrv.patch(`/api/${this.resourceUri}/preferences`, preferences);
+  }
 }
