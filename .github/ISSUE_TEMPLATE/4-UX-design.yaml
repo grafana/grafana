@@ -31,11 +31,11 @@ body:
         - …
     validations:
       required: false
-- type: textarea
-  attributes:
-    label: Deliverables
-    description: Add a checklist of deliverables here. You can later add links to each deliverable.
-    value: |
-        - Figma mockup
-        - Miro board
-        - …
+  - type: textarea
+    attributes:
+      label: Deliverables
+      description: Add a checklist of deliverables here. You can later add links to each deliverable.
+      value: |
+          - Figma mockup
+          - Miro board
+          - …
