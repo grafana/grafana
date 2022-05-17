@@ -311,7 +311,7 @@ export class Scene {
     return targetElements;
   };
 
-  handleMouseEvent = (e: any) => {
+  handleMouseEvent = (e: MouseEvent) => {
     e.preventDefault();
     this.contextMenu.anchorPoint = { x: e.pageX, y: e.pageY };
     this.contextMenu.isMenuVisible = true;
@@ -399,7 +399,7 @@ export class Scene {
       // just for one element for now
       if (targets.length === 1) {
         const element = targets[0];
-        element.addEventListener('contextmenu', (ev) => this.handleMouseEvent(ev));
+        element.addEventListener('contextmenu', (ev) => this.handleMouseEvent(ev as MouseEvent));
       }
 
       if (event.isDragStart) {
@@ -484,6 +484,7 @@ export class Scene {
         y={this.contextMenu.anchorPoint.y}
         onClose={this.closeContextMenu}
         renderMenuItems={this.renderMenuItems}
+        focusOnOpen={false}
       />
     );
   };
