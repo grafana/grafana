@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -328,15 +327,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
 	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg())
-}
-
-func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	// Use a new conf
-	cfg := setting.NewCfg()
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = setting.NewCfg()
-
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock())
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
