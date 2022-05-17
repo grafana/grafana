@@ -7,7 +7,7 @@ weight = 9
 
 # Dashboard previews
 
-{{< figure  max-width="950px" src="/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
+{{< video-embed src="/static/img/docs/dashboards/previews.webm" max-width="950px" >}}
 
 Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard when the dashboard names aren't enough on their own.
 
@@ -34,8 +34,7 @@ enable = dashboardPreviews
 
 Verify that your setup was successful in the dashboard search page. You should see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of the page.
 
-{{< figure src="/static/img/docs/dashboards/previews-successful-setup.jpg"
-max-width="950px" animated-gif="/static/img/docs/dashboards/previews-successful-setup.gif" >}}
+{{< video-embed src="/static/img/docs/dashboards/previews-successful-setup.webm" max-width="950px" >}}
 
 The first crawler run should begin approximately five minutes after restarting the Grafana instance.
 
@@ -51,7 +50,7 @@ The dashboard previews crawler is a background process that:
 - [Visits and takes a screenshot of each dashboard](#rendering-previews)
 - [Saves the screenshots in persistent storage](#saving-previews)
 
-The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../../administration/configuration.md#dashboard_previews" >}}) for more details.
+The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../administration/configuration.md#dashboard_previews" >}}) for more details.
 
 ### Preparing the dashboard list
 
