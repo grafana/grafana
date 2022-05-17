@@ -134,8 +134,6 @@ func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 		} else {
 			c.Resp = NewResponseWriter(req.Method, rw)
 		}
-		c.Map(req)
-		c.MapTo(rw, (*http.ResponseWriter)(nil))
 		c.Next()
 	})
 	m.handlers = append(m.handlers, middleware(next))
@@ -151,17 +149,13 @@ func (m *Macaron) Use(handler Handler) {
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		Injector: NewInjector(),
 		handlers: m.handlers,
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
 	}
-	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.Map(c)
-	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
-	c.Map(req)
-	c.Req = req
+
+	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	return c
 }
 

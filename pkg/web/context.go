@@ -36,7 +36,6 @@ func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, erro
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	Injector
 	handlers []http.Handler
 	index    int
 
@@ -46,12 +45,12 @@ type Context struct {
 	template *template.Template
 }
 
-func (ctx *Context) handler() Handler {
+func (ctx *Context) handler() http.Handler {
 	if ctx.index < len(ctx.handlers) {
 		return ctx.handlers[ctx.index]
 	}
 	if ctx.index == len(ctx.handlers) {
-		return func() {}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	}
 	panic("invalid index for context handler")
 }
@@ -72,6 +71,11 @@ func (ctx *Context) run() {
 			return
 		}
 	}
+}
+
+func (ctx *Context) Invoke(h http.Handler) ([]reflect.Value, error) {
+	h.ServeHTTP(ctx.Resp, ctx.Req)
+	return nil, nil
 }
 
 // RemoteAddr returns more real IP address.
