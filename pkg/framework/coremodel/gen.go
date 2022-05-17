@@ -161,6 +161,7 @@ func generateGo(path string, ls linsrc) error {
 		SkipFmt:       true,
 		UserTemplates: map[string]string{
 			"imports.tmpl": fmt.Sprintf(tmplImports, ls.relpath),
+			"typedef.tmpl": tmplTypedef,
 		},
 	})
 	if err != nil {
@@ -366,3 +367,12 @@ func TestSchemaAssignability(t *testing.T) {
 	}
 }
 `))
+
+var tmplTypedef = `{{range .Types}}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
+`

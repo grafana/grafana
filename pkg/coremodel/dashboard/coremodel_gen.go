@@ -150,6 +150,9 @@ const (
 )
 
 // Dashboard defines model for dashboard.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type Model struct {
 	Annotations *struct {
 		List []ModelAnnotationQuery `json:"list"`
@@ -233,16 +236,28 @@ type Model struct {
 }
 
 // DashboardGraphTooltip defines model for Dashboard.GraphTooltip.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelGraphTooltip int
 
 // Theme of dashboard.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelStyle string
 
 // Timezone of dashboard,
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelTimezone string
 
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelAnnotationQuery struct {
 	BuiltIn int `json:"builtIn"`
 
@@ -282,10 +297,16 @@ type ModelAnnotationQuery struct {
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
 // 2 for shared crosshair AND shared tooltip.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelDashboardCursorSync int
 
 // FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 // TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelDashboardLink struct {
 	AsDropdown  bool                   `json:"asDropdown"`
 	Icon        *string                `json:"icon,omitempty"`
@@ -300,9 +321,15 @@ type ModelDashboardLink struct {
 }
 
 // DashboardDashboardLinkType defines model for DashboardDashboardLink.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelDashboardLinkType string
 
 // TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelFieldColor struct {
 	// Stores the fixed color value if mode is fixed
 	FixedColor *string `json:"fixedColor,omitempty"`
@@ -315,31 +342,52 @@ type ModelFieldColor struct {
 }
 
 // TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelFieldColorModeId string
 
 // TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelFieldColorSeriesByMode string
 
 // DashboardGraphPanel defines model for dashboard.GraphPanel.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelGraphPanel struct {
 	// Support for legacy graph and heatmap panels.
 	Type ModelGraphPanelType `json:"type"`
 }
 
 // Support for legacy graph and heatmap panels.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelGraphPanelType string
 
 // DashboardHeatmapPanel defines model for dashboard.HeatmapPanel.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelHeatmapPanel struct {
 	Type ModelHeatmapPanelType `json:"type"`
 }
 
 // DashboardHeatmapPanelType defines model for DashboardHeatmapPanel.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelHeatmapPanelType string
 
 // Dashboard panels. Panels are canonically defined inline
 // because they share a version timeline with the dashboard
 // schema; they do not evolve independently.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelPanel struct {
 	// The datasource used in all targets.
 	Datasource *struct {
@@ -501,9 +549,15 @@ type ModelPanel struct {
 
 // Direction to repeat in if 'repeat' is set.
 // "h" for horizontal, "v" for vertical.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelPanelRepeatDirection string
 
 // Row panel
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelRowPanel struct {
 	Collapsed bool `json:"collapsed"`
 
@@ -538,6 +592,9 @@ type ModelRowPanel struct {
 }
 
 // DashboardRowPanelType defines model for DashboardRowPanel.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelRowPanelType string
 
 // Schema for panel targets is specified by datasource
@@ -547,9 +604,15 @@ type ModelRowPanelType string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelTarget map[string]interface{}
 
 // TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelThreshold struct {
 	// TODO docs
 	Color string `json:"color"`
@@ -565,6 +628,9 @@ type ModelThreshold struct {
 }
 
 // DashboardThresholdsConfig defines model for dashboard.ThresholdsConfig.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelThresholdsConfig struct {
 	Mode ModelThresholdsConfigMode `json:"mode"`
 
@@ -585,13 +651,22 @@ type ModelThresholdsConfig struct {
 }
 
 // DashboardThresholdsConfigMode defines model for DashboardThresholdsConfig.Mode.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelThresholdsConfigMode string
 
 // DashboardThresholdsMode defines model for dashboard.ThresholdsMode.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelThresholdsMode string
 
 // TODO docs
 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelTransformation struct {
 	Id      string                 `json:"id"`
 	Options map[string]interface{} `json:"options"`
@@ -601,6 +676,9 @@ type ModelTransformation struct {
 // TODO docs
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelVariableModel struct {
 	Label *string                `json:"label,omitempty"`
 	Name  string                 `json:"name"`
@@ -608,11 +686,17 @@ type ModelVariableModel struct {
 }
 
 // DashboardVariableModelType defines model for DashboardVariableModel.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelVariableModelType string
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO this implies some wider pattern/discriminated union, probably?
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
+// For public, stable Go types, see https://github.com/grafana/grodkit
 type ModelVariableType string
 
 var (
