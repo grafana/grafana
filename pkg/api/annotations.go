@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -40,9 +41,24 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get annotations", err)
 	}
 
+	// since there are several annotations per dashboard, we can cache dashboard uid
+	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
+		}
+
+		if item.DashboardId != 0 {
+			if val, ok := dashboardCache[item.DashboardId]; ok {
+				item.DashboardUID = val
+			} else {
+				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
+				err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+				if err == nil && query.Result != nil {
+					item.DashboardUID = &query.Result.Uid
+					dashboardCache[item.DashboardId] = &query.Result.Uid
+				}
+			}
 		}
 	}
 
@@ -61,6 +77,15 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PostAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	// overwrite dashboardId when dashboardUID is not empty
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
 	}
 
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
@@ -264,6 +289,14 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
+	}
+
 	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
 		err := &AnnotationError{message: "DashboardId and PanelId are both required for mass delete"}
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -316,6 +349,26 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	}
 
 	return response.Success("Annotations deleted")
+}
+
+func (hs *HTTPServer) GetAnnotationByID(c *models.ReqContext) response.Response {
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	repo := annotations.GetRepository()
+
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	if resp != nil {
+		return resp
+	}
+
+	if annotation.Email != "" {
+		annotation.AvatarUrl = dtos.GetGravatarUrl(annotation.Email)
+	}
+
+	return response.JSON(200, annotation)
 }
 
 func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Response {
@@ -424,7 +477,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.ScopeAttributeResolver
 			OrgId: orgID,
 			Permissions: map[int64]map[string][]string{
 				orgID: {
-					accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				},
 			},

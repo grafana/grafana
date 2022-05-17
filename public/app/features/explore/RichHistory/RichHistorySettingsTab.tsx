@@ -79,12 +79,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         className="space-between"
       >
         <div className={styles.input}>
-          <Select
-            menuShouldPortal
-            value={selectedOption}
-            options={retentionPeriodOptions}
-            onChange={onChangeRetentionPeriod}
-          ></Select>
+          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
         </div>
       </Field>
       <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">

@@ -82,7 +82,9 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onChangeAlertma
               )}
             </FieldArray>
             <div>
-              <Button onSubmit={() => onSubmit}>Add Alertmanagers</Button>
+              <Button type="submit" onSubmit={() => onSubmit}>
+                Add Alertmanagers
+              </Button>
             </div>
           </div>
         )}

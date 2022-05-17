@@ -2,6 +2,7 @@ import { DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
 import { afterEach, beforeEach } from '../../../test/lib/common';
+import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
@@ -10,6 +11,17 @@ import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalSt
 import { DataSourceSrvMock, RichHistoryStorageWarning } from './RichHistoryStorage';
 
 const key = 'grafana.explore.richHistory';
+
+const dsMock = new DatasourceSrv();
+dsMock.init(
+  {
+    // @ts-ignore
+    'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
+    // @ts-ignore
+    'name-of-dev-test-2': { uid: 'dev-test-2', name: 'name-of-dev-test-2' },
+  },
+  ''
+);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

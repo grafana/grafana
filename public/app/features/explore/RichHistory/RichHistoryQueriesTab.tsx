@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -19,6 +20,7 @@ import RichHistoryCard from './RichHistoryCard';
 export interface Props {
   queries: RichHistoryQuery[];
   totalQueries: number;
+  loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
@@ -122,6 +124,7 @@ export function RichHistoryQueriesTab(props: Props) {
   const {
     queries,
     totalQueries,
+    loading,
     richHistorySearchFilters,
     updateFilters,
     clearRichHistoryResults,
@@ -166,6 +169,7 @@ export function RichHistoryQueriesTab(props: Props) {
    * are keys and arrays with queries that belong to that headings are values.
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
+  const sortOrderOptions = getSortOrderOptions();
 
   return (
     <div className={styles.container}>
@@ -196,7 +200,6 @@ export function RichHistoryQueriesTab(props: Props) {
           {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect
               className={styles.multiselect}
-              menuShouldPortal
               options={listOfDatasources.map((ds) => {
                 return { value: ds.name, label: ds.name };
               })}
@@ -217,41 +220,46 @@ export function RichHistoryQueriesTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              menuShouldPortal
-              value={getSortOrderOptions().filter((order) => order.value === richHistorySearchFilters.sortOrder)}
-              options={getSortOrderOptions()}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
+              options={sortOrderOptions}
               placeholder="Sort queries by"
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
-        {Object.keys(mappedQueriesToHeadings).map((heading) => {
-          return (
-            <div key={heading}>
-              <div className={styles.heading}>
-                {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+
+        {loading && <span>Loading results...</span>}
+
+        {!loading &&
+          Object.keys(mappedQueriesToHeadings).map((heading) => {
+            return (
+              <div key={heading}>
+                <div className={styles.heading}>
+                  {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                </div>
+                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                  const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+                  return (
+                    <RichHistoryCard
+                      query={q}
+                      key={q.id}
+                      exploreId={exploreId}
+                      dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                      isRemoved={idx === -1}
+                    />
+                  );
+                })}
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-                return (
-                  <RichHistoryCard
-                    query={q}
-                    key={q.id}
-                    exploreId={exploreId}
-                    dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                    isRemoved={idx === -1}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
+            );
+          })}
         {queries.length && queries.length !== totalQueries ? (
           <div>
             Showing {queries.length} of {totalQueries}. <Button onClick={loadMoreRichHistory}>Load more</Button>
           </div>
         ) : null}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        <div className={styles.footer}>
+          {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
+        </div>
       </div>
     </div>
   );

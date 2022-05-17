@@ -1,14 +1,17 @@
 import { RichHistoryQuery } from '../../types';
+import { of } from 'rxjs';
+
+import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 import { DataSourceSrvMock } from './RichHistoryStorage';
 
-const getMock = jest.fn();
+const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: getMock,
+    fetch: fetchMock,
   }),
   getDataSourceSrv: () => DataSourceSrvMock,
 }));
@@ -17,6 +20,8 @@ describe('RichHistoryRemoteStorage', () => {
   let storage: RichHistoryRemoteStorage;
 
   beforeEach(() => {
+    fetchMock.mockReset();
+
     storage = new RichHistoryRemoteStorage();
   });
 
@@ -40,13 +45,19 @@ describe('RichHistoryRemoteStorage', () => {
         queries: expectedViewModel.queries,
       },
     ];
-    getMock.mockReturnValue({
-      result: {
-        queryHistory: returnedDTOs,
-      },
-    });
     const search = 'foo';
     const datasourceFilters = ['name-of-uid1', 'name-of-uid2'];
+    fetchMock.mockReturnValue(
+      of({
+        data: {
+          result: {
+            queryHistory: returnedDTOs,
+          },
+        },
+      })
+    );
+    const search = 'foo';
+    const datasourceFilters = ['name-of-ds1', 'name-of-ds2'];
     const sortOrder = SortOrder.Descending;
     const starred = true;
     const from = 100;
@@ -56,9 +67,11 @@ describe('RichHistoryRemoteStorage', () => {
 
     const items = await storage.getRichHistory({ search, datasourceFilters, sortOrder, starred, to, from });
 
-    expect(getMock).toBeCalledWith(
-      `/api/query-history?datasourceUid=uid1&datasourceUid=uid2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`
-    );
+    expect(fetchMock).toBeCalledWith({
+      method: 'GET',
+      url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
+      requestId: 'query-history-get-all',
+    });
     expect(items).toMatchObject([expectedViewModel]);
   });
 });

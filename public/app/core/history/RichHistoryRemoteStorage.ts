@@ -1,4 +1,6 @@
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
+
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DataQuery } from '../../../../packages/grafana-data';
@@ -14,6 +16,13 @@ export type RichHistoryRemoteStorageDTO = {
   starred: boolean;
   comment: string;
   queries: DataQuery[];
+};
+
+type RichHistoryRemoteStorageResultsPayloadDTO = {
+  result: {
+    queryHistory: RichHistoryRemoteStorageDTO[];
+    totalCount: number;
+  };
 };
 
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
@@ -39,9 +48,19 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 
   async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
-    const queryHistory = await getBackendSrv().get(`/api/query-history?${params}`);
-    const richHistory = (queryHistory.result.queryHistory || []).map(fromDTO);
-    const total = queryHistory.result.totalCount || 0;
+
+    const queryHistory = await lastValueFrom(
+      getBackendSrv().fetch({
+        method: 'GET',
+        url: `/api/query-history?${params}`,
+        // to ensure any previous requests are cancelled
+        requestId: 'query-history-get-all',
+      })
+    );
+
+    const data = queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO;
+    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const total = data.result.totalCount || 0;
 
     return { richHistory, total };
   }

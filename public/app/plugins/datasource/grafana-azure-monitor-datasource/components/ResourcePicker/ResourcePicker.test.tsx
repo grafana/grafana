@@ -7,6 +7,7 @@ import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
+  mockSearchResults,
 } from '../../__mocks__/resourcePickerRows';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
@@ -22,17 +23,18 @@ const singleResourceSelectionURI =
 
 const noop: any = () => {};
 function createMockResourcePickerData() {
-  const mockDatasource = new ResourcePickerData(createMockInstanceSetttings());
+  const mockResourcePicker = new ResourcePickerData(createMockInstanceSetttings());
 
-  mockDatasource.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
-  mockDatasource.getResourceGroupsBySubscriptionId = jest
+  mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
+  mockResourcePicker.getResourceGroupsBySubscriptionId = jest
     .fn()
     .mockResolvedValue(createMockResourceGroupsBySubscription());
-  mockDatasource.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
-  mockDatasource.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
-  mockDatasource.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
+  mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
+  mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
+  mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
+  mockResourcePicker.search = jest.fn().mockResolvedValue(mockSearchResults());
 
-  return mockDatasource;
+  return mockResourcePicker;
 }
 
 const defaultProps = {
@@ -78,7 +80,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(resourceGroupCheckboxes[1]).toBeChecked();
   });
 
-  it('should show a resource as selected if there is one saved', async () => {
+  it('should show scroll down to a resource and mark it as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
     const resourceCheckboxes = await screen.findAllByLabelText('db-server');
     expect(resourceCheckboxes.length).toBe(2);
@@ -109,7 +111,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(await screen.findByLabelText('A Great Resource Group')).toBeInTheDocument();
   });
 
-  it('should call onApply with a new subscription uri when a user selects it', async () => {
+  it('should call onApply with a new subscription uri when a user clicks on the checkbox in the row', async () => {
     const onApply = jest.fn();
     render(<ResourcePicker {...defaultProps} onApply={onApply} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
@@ -122,7 +124,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledWith('/subscriptions/def-123');
   });
 
-  it('should call onApply with a new subscription uri when a user types it', async () => {
+  it('should call onApply with a new subscription uri when a user types it in the selection box', async () => {
     const onApply = jest.fn();
     render(<ResourcePicker {...defaultProps} onApply={onApply} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
@@ -140,6 +142,87 @@ describe('AzureMonitor ResourcePicker', () => {
 
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith('/subscriptions/def-123');
+  });
+
+  it('renders a search field which show search results when there are results', async () => {
+    render(<ResourcePicker {...defaultProps} />);
+    const searchRow1 = screen.queryByLabelText('search-result');
+    expect(searchRow1).not.toBeInTheDocument();
+
+    const searchField = await screen.findByLabelText('resource search');
+    expect(searchField).toBeInTheDocument();
+
+    await userEvent.type(searchField, 'sea');
+
+    const searchRow2 = await screen.findByLabelText('search-result');
+    expect(searchRow2).toBeInTheDocument();
+  });
+
+  it('renders no results if there are no search results', async () => {
+    const rpd = createMockResourcePickerData();
+    rpd.search = jest.fn().mockResolvedValue([]);
+
+    render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
+
+    const searchField = await screen.findByLabelText('resource search');
+    expect(searchField).toBeInTheDocument();
+
+    await userEvent.type(searchField, 'some search that has no results');
+
+    const noResults = await screen.findByText('No resources found');
+    expect(noResults).toBeInTheDocument();
+  });
+
+  it('renders a loading state while waiting for search results', async () => {
+    const rpd = createMockResourcePickerData();
+    rpd.search = jest.fn().mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          return resolve(mockSearchResults());
+        }, 1); // purposely slow down call by a tick so as to force a loading state
+      });
+    });
+
+    render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
+
+    const searchField = await screen.findByLabelText('resource search');
+    expect(searchField).toBeInTheDocument();
+
+    await userEvent.type(searchField, 'sear');
+
+    const loading = await screen.findByText('Loading...');
+    expect(loading).toBeInTheDocument();
+
+    const searchResult = await screen.findByLabelText('search-result');
+    expect(searchResult).toBeInTheDocument();
+
+    const loadingAfterResults = screen.queryByText('Loading...');
+    expect(loadingAfterResults).not.toBeInTheDocument();
+  });
+
+  it('resets result when the user clears their search', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={noResourceURI} />);
+    const subscriptionCheckboxBeforeSearch = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckboxBeforeSearch).toBeInTheDocument();
+
+    const searchRow1 = screen.queryByLabelText('search-result');
+    expect(searchRow1).not.toBeInTheDocument();
+
+    const searchField = await screen.findByLabelText('resource search');
+    expect(searchField).toBeInTheDocument();
+
+    await userEvent.type(searchField, 'sea');
+
+    const searchRow2 = await screen.findByLabelText('search-result');
+    expect(searchRow2).toBeInTheDocument();
+
+    const subscriptionCheckboxAfterSearch = screen.queryByLabelText('Primary Subscription');
+    expect(subscriptionCheckboxAfterSearch).not.toBeInTheDocument();
+
+    await userEvent.clear(searchField);
+
+    const subscriptionCheckboxAfterClear = await screen.findByLabelText('Primary Subscription');
+    expect(subscriptionCheckboxAfterClear).toBeInTheDocument();
   });
 
   describe('when rendering resource picker without any selectable entry types', () => {
