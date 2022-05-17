@@ -71,15 +71,20 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	}
 	logger := log.New("previews_service")
 
-	logger.Info("initialized thumb", "settings", cfg.DashboardPreviews)
 	thumbnailRepo := newThumbnailRepo(store)
 
 	canRunCrawler := true
+
+	authSetupStarted := time.Now()
 	crawlerAuth, err := authSetupService.Setup(context.Background())
+
 	if err != nil {
-		logger.Error("failed to setup auth for the dashboard previews crawler", "err", err)
+		logger.Error("Crawler auth setup failed", "err", err, "crawlerAuthSetupTime", time.Since(authSetupStarted))
 		canRunCrawler = false
+	} else {
+		logger.Info("Crawler auth setup complete", "crawlerAuthSetupTime", time.Since(authSetupStarted))
 	}
+
 	t := &thumbService{
 		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews),

@@ -1,11 +1,11 @@
 +++
-title = "Migrating legacy alerts"
-description = "Enable Grafana alerts"
+title = "Migrating legacy dashboard alerts"
+description = "Migrate legacy dashboard alerts"
 weight = 114
 aliases = ["/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
 +++
 
-# Migrating legacy alerts to Grafana alerting
+# Migrating legacy dashboard alerts
 
 When Grafana alerting is enabled or Grafana is upgraded to the latest version, existing legacy dashboard alerts migrate in a format compatible with the Grafana alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
 
@@ -21,10 +21,6 @@ Notification channels are migrated to an Alertmanager configuration with the app
 
 Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 Silences (expiring after one year) are created for all paused dashboard alerts.
-
-### Limitation
-
-Grafana alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch alerting rules from all other supported data sources at this time.
 
 ## Disable Grafana alerts
 

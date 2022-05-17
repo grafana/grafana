@@ -1368,9 +1368,11 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := dashboardservice.ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, dashAlertService,
-		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		cfg, dashboardStore, dashAlertService,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -1382,13 +1384,15 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, permissionsServices)
 	ac := acmock.New()
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, permissionsServices, ac, nil)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	features := featuremgmt.WithFeatures()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions)
+	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
@@ -1481,17 +1485,18 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 
 		features := featuremgmt.WithFeatures()
-		permissionsServices := acmock.NewPermissionsServicesMock()
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
 
 		dashboardService := dashboardservice.ProvideDashboardService(
 			cfg, dashboardStore, &alerting.DashAlertExtractorService{},
-			features, permissionsServices,
+			features, folderPermissions, dashboardPermissions,
 		)
 		ac := acmock.New()
 
 		folderService := dashboardservice.ProvideFolderService(
 			cfg, dashboardService, dashboardStore, nil,
-			features, permissionsServices, ac, nil,
+			features, folderPermissions, ac, nil,
 		)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
