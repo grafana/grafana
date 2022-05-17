@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -41,8 +40,6 @@ func (hs *HTTPServer) SavePublicDashboard(c *models.ReqContext) response.Respons
 	}
 
 	pdc, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
-
-	fmt.Println("err:", err)
 
 	if errors.Is(err, models.ErrDashboardNotFound) {
 		return response.Error(http.StatusNotFound, "dashboard not found", err)
