@@ -78,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css`
       display: flex;
       flex-direction: column;
+      overflow: auto;
 
       > ul {
         list-style: none;
