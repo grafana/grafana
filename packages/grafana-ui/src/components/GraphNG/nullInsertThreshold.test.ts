@@ -59,9 +59,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold(df);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
+    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
   });
 
   test('should insert nulls at +threshold between adjacent > threshold: 2', () => {
@@ -93,9 +93,9 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold(df);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
+    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
   });
 
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
@@ -110,9 +110,21 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = applyNullInsertThreshold(df, null, 13);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10, 11]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8, null]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c', null]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8, null]);
+    expect(result.fields[2].values.toArray()).toStrictEqual([
+      'a',
+      null,
+      'b',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'c',
+      null,
+    ]);
 
     // should work for frames with 1 datapoint
     const df2 = new MutableDataFrame({
