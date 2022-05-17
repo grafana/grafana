@@ -5,16 +5,38 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+type ExtendDashboardFunc func(uid string, doc *bluge.Document) error
+type FramerFunc func(field string, value []byte) bool
+
+type QueryExtender interface {
+	GetFramer(frame *data.Frame) FramerFunc
+}
+
+type DocumentExtender interface {
+	GetDashboardExtender(orgID int64, uids []string) ExtendDashboardFunc
+}
+
+type DashboardIndexExtender interface {
+	GetDocumentExtender() DocumentExtender
+	GetQueryExtender() QueryExtender
+}
+
 type NoopExtender struct{}
 
-func (n NoopExtender) GetDocumentExtender(_ int64, _ []string) ExtendDocumentFunc {
-	return func(uid string, doc *bluge.Document) error {
-		return nil
-	}
+func (n NoopExtender) GetDocumentExtender() DocumentExtender {
+	return &NoopDocumentExtender{}
 }
 
 func (n NoopExtender) GetQueryExtender() QueryExtender {
 	return &NoopQueryExtender{}
+}
+
+type NoopDocumentExtender struct{}
+
+func (n NoopDocumentExtender) GetDashboardExtender(_ int64, _ []string) ExtendDashboardFunc {
+	return func(uid string, doc *bluge.Document) error {
+		return nil
+	}
 }
 
 type NoopQueryExtender struct{}

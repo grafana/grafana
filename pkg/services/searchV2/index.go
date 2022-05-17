@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -30,18 +29,6 @@ type dashboardLoader interface {
 type eventStore interface {
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
-}
-
-type ExtendDocumentFunc func(uid string, doc *bluge.Document) error
-type FramerFunc func(field string, value []byte) bool
-
-type DashboardIndexExtender interface {
-	GetDocumentExtender(orgID int64, uids []string) ExtendDocumentFunc
-	GetQueryExtender() QueryExtender
-}
-
-type QueryExtender interface {
-	GetFramer(frame *data.Frame) FramerFunc
 }
 
 type dashboard struct {
@@ -144,9 +131,9 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		uids = append(uids, d.uid)
 	}
 
-	documentExtender := i.extender.GetDocumentExtender(orgID, uids)
+	dashboardExtender := i.extender.GetDocumentExtender().GetDashboardExtender(orgID, uids)
 
-	reader, writer, err := initIndex(dashboards, i.logger, documentExtender)
+	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
