@@ -13,7 +13,7 @@ weight = 9
 
 Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard in case the dashboard names aren't enough on their own.
 
-Grafana users are not forced to use previews. Each user can choose to disable them and go back to the usual look and feel of list views. We save the choice in the browser's local storage to make it persistent across sessions.
+Dashboard previews are an opt-in feature and it is disabled by default. If your administrator has enabled the feature (link to config section), then you can use the following procedure to enable it in the Grafana UI. Grafana saves your choice in the browser's local storage to make it persistent across sessions.
 
 - [Enable dashboard previews](#enable-dashboard-previews)
 - [About the dashboard previews crawler](#about-the-dashboard-previews-crawler)
