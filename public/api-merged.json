@@ -3631,9 +3631,11 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3641,6 +3643,14 @@
             "name": "DashboardID",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           }
         ],
         "responses": {
@@ -3664,9 +3674,11 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3715,9 +3727,11 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3962,6 +3976,46 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Get a specific dashboard version using UID.",
+        "operationId": "getDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4692,15 +4746,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -9552,7 +9606,7 @@
         }
       }
     },
-    "/v1/rule/test/{DatasourceID}": {
+    "/v1/rule/test/{DatasourceUID}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": ["application/json"],
@@ -9561,10 +9615,9 @@
         "operationId": "RouteTestRuleConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           },
@@ -13670,7 +13723,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -14754,7 +14807,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Receiver": {
       "type": "object",
@@ -14970,6 +15023,17 @@
         "$ref": "#/definitions/DataResponse"
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
+    "RestoreDashboardVersionCommand": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "RevokeAuthTokenCmd": {
       "type": "object",
@@ -17701,6 +17765,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17709,9 +17774,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",

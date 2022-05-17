@@ -1,7 +1,8 @@
 +++
-title = "Application Insights deprecation"
+aliases = ["/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/"]
 description = "Template to provision the Azure Monitor data source"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
+title = "Application Insights deprecation"
 weight = 999
 +++
 

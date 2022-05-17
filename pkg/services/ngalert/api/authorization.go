@@ -90,9 +90,9 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Lotex Rules testing
-	case http.MethodPost + "/api/v1/rule/test/{DatasourceID}":
+	case http.MethodPost + "/api/v1/rule/test/{DatasourceUID}":
 		fallback = middleware.ReqSignedIn
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Alert Instances and Silences
 
@@ -181,7 +181,9 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/provisioning/policies",
 		http.MethodGet + "/api/provisioning/contact-points",
 		http.MethodGet + "/api/provisioning/templates",
-		http.MethodGet + "/api/provisioning/templates/{name}":
+		http.MethodGet + "/api/provisioning/templates/{name}",
+		http.MethodGet + "/api/provisioning/mute-timings",
+		http.MethodGet + "/api/provisioning/mute-timings/{name}":
 		return middleware.ReqSignedIn
 
 	case http.MethodPut + "/api/provisioning/policies",
