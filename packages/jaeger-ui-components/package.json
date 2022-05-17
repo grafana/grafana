@@ -22,7 +22,7 @@
     "@types/tinycolor2": "1.4.3",
     "enzyme": "3.11.0",
     "sinon": "13.0.1",
-    "typescript": "4.4.4"
+    "typescript": "4.6.4"
   },
   "dependencies": {
     "@emotion/css": "11.7.1",
@@ -47,7 +47,7 @@
     "react-icons": "2.2.7",
     "reselect": "4.1.5",
     "tinycolor2": "1.4.2",
-    "tslib": "2.3.1",
+    "tslib": "2.4.0",
     "tween-functions": "^1.2.0"
   }
 }
