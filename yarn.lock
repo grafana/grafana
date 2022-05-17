@@ -4328,7 +4328,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-router-dom: ^5.2.0
     ts-loader: 8.0.11
-    tslib: 2.3.1
+    tslib: 2.4.0
     webpack: 5.58.1
   languageName: unknown
   linkType: soft
@@ -4408,8 +4408,8 @@ __metadata:
     rxjs: 7.5.5
     sinon: 13.0.1
     tinycolor2: 1.4.2
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
     uplot: 1.6.20
     xss: 1.0.11
   languageName: unknown
@@ -4427,8 +4427,8 @@ __metadata:
     rollup: 2.70.1
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
   languageName: unknown
   linkType: soft
 
@@ -4466,8 +4466,8 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     tracelib: 1.0.1
     ts-loader: 6.2.1
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
     uuid: 8.3.2
     webpack: 5.72.0
     yaml: ^1.8.3
@@ -4573,8 +4573,8 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.5
     systemjs: 0.20.19
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
   languageName: unknown
   linkType: soft
 
@@ -4591,8 +4591,8 @@ __metadata:
     rollup: 2.70.1
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
   languageName: unknown
   linkType: soft
 
@@ -4702,8 +4702,8 @@ __metadata:
     ts-jest: 26.4.4
     ts-loader: 6.2.1
     ts-node: 9.0.0
-    tslib: 2.3.1
-    typescript: 4.4.3
+    tslib: 2.4.0
+    typescript: 4.6.4
     url-loader: ^2.0.1
     webpack: 4.41.5
   bin:
@@ -4861,8 +4861,8 @@ __metadata:
     terser-webpack-plugin: 5.3.1
     tinycolor2: 1.4.2
     ts-loader: 8.0.11
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
     uplot: 1.6.20
     uuid: 8.3.2
     webpack: 5.72.0
@@ -4998,9 +4998,9 @@ __metadata:
     reselect: 4.1.5
     sinon: 13.0.1
     tinycolor2: 1.4.2
-    tslib: 2.3.1
+    tslib: 2.4.0
     tween-functions: ^1.2.0
-    typescript: 4.4.4
+    typescript: 4.6.4
   languageName: unknown
   linkType: soft
 
@@ -21330,8 +21330,8 @@ __metadata:
     ts-jest: 27.1.3
     ts-loader: 9.2.6
     ts-node: 10.7.0
-    tslib: 2.3.1
-    typescript: 4.4.4
+    tslib: 2.4.0
+    typescript: 4.6.4
     uplot: 1.6.20
     uuid: 8.3.2
     vendor: "link:./public/vendor"
@@ -36297,10 +36297,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2.3.1, tslib@npm:^2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "tslib@npm:2.3.1"
-  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
+"tslib@npm:2.4.0":
+  version: 2.4.0
+  resolution: "tslib@npm:2.4.0"
+  checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
   languageName: node
   linkType: hard
 
@@ -36308,6 +36308,13 @@ __metadata:
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "tslib@npm:2.3.1"
+  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
   languageName: node
   linkType: hard
 
@@ -36494,16 +36501,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.4.3":
-  version: 4.4.3
-  resolution: "typescript@npm:4.4.3"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 05823f21796d450531a7e4ab299715d38fd9ded0e4ce7400876053f4b5166ca3dde7a68cecfe72d9086039f03c0b6edba36516fb10ed83c5837d9600532ea4c2
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.4.4":
   version: 4.4.4
   resolution: "typescript@npm:4.4.4"
@@ -36511,6 +36508,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 89ecb8436bb48ef5594d49289f5f89103071716b6e4844278f4fb3362856e31203e187a9c76d205c3f0b674d221a058fd28310dbcbcf5d95e9a57229bb5203f1
+  languageName: node
+  linkType: hard
+
+"typescript@npm:4.6.4":
+  version: 4.6.4
+  resolution: "typescript@npm:4.6.4"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: e7bfcc39cd4571a63a54e5ea21f16b8445268b9900bf55aee0e02ad981be576acc140eba24f1af5e3c1457767c96cea6d12861768fb386cf3ffb34013718631a
   languageName: node
   linkType: hard
 
@@ -36534,16 +36541,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.4.3#~builtin<compat/typescript>":
-  version: 4.4.3
-  resolution: "typescript@patch:typescript@npm%3A4.4.3#~builtin<compat/typescript>::version=4.4.3&hash=bda367"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 33a916819907e819430802c50405f18c187448d678696a81545f494a7ec16207f8c15340c945df62109bd1d951091a9f15f3d2eb931a3c889f962c8509017697
-  languageName: node
-  linkType: hard
-
 "typescript@patch:typescript@4.4.4#~builtin<compat/typescript>":
   version: 4.4.4
   resolution: "typescript@patch:typescript@npm%3A4.4.4#~builtin<compat/typescript>::version=4.4.4&hash=bda367"
@@ -36551,6 +36548,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 3d1b04449662193544b81d055479d03b4c5dca95f1a82f8922596f089d894c9fefbe16639d1d9dfe26a7054419645530cef44001bc17aed1fe1eb3c237e9b3c7
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@4.6.4#~builtin<compat/typescript>":
+  version: 4.6.4
+  resolution: "typescript@patch:typescript@npm%3A4.6.4#~builtin<compat/typescript>::version=4.6.4&hash=bda367"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 1cb434fbc637d347be90e3a0c6cd05e33c38f941713c8786d3031faf1842c2c148ba91d2fac01e7276b0ae3249b8633f1660e32686cc7a8c6a8fd5361dc52c66
   languageName: node
   linkType: hard
 
