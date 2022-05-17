@@ -4,8 +4,8 @@ import "github.com/aws/aws-sdk-go/service/cloudwatch"
 
 // queryRowResponse represents the GetMetricData response for a query row in the query editor.
 type queryRowResponse struct {
+	partialDataSet         map[string]*cloudwatch.MetricDataResult
 	ErrorCodes             map[string]bool
-	Labels                 []string
 	HasArithmeticError     bool
 	ArithmeticErrorMessage string
 	Metrics                []*cloudwatch.MetricDataResult
@@ -22,7 +22,6 @@ func newQueryRowResponse() queryRowResponse {
 			maxMatchingResultsExceeded: false},
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
-		Labels:                 []string{},
 		Metrics:                []*cloudwatch.MetricDataResult{},
 	}
 }
@@ -38,7 +37,6 @@ func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult)
 		return
 	}
 
-	q.Labels = append(q.Labels, *mdr.Label)
 	q.Metrics = append(q.Metrics, mdr)
 	q.StatusCode = *mdr.StatusCode
 	if *mdr.StatusCode == "PartialData" {

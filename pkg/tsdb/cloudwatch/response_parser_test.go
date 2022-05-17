@@ -34,7 +34,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
 		t.Run("should have two labels", func(t *testing.T) {
-			assert.Len(t, aggregatedResponse[idA].Labels, 2)
 			assert.Len(t, aggregatedResponse[idA].Metrics, 2)
 		})
 		t.Run("should have points for label1 taken from both getMetricDataOutputs", func(t *testing.T) {
@@ -79,7 +78,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
 		t.Run("should have one label", func(t *testing.T) {
-			assert.Len(t, aggregatedResponse[idA].Labels, 1)
 			assert.Len(t, aggregatedResponse[idA].Metrics, 1)
 		})
 		t.Run("should have points for label1 taken from both MetricDataResults", func(t *testing.T) {
@@ -116,7 +114,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Expand dimension value using exact match", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb1", "lb2"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -181,7 +178,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Expand dimension value using substring", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb1 Sum", "lb2 Average"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -245,7 +241,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Expand dimension value using wildcard", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb3", "lb4"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -305,7 +300,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb3"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -345,7 +339,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb3"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -388,7 +381,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Should only expand certain fields when using SQL queries", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb3"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -433,7 +425,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
-			Labels: []string{"lb"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -484,7 +475,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("buildDataFrames should use response label as frame name when dynamic label is enabled", func(t *testing.T) {
 		response := &queryRowResponse{
-			Labels: []string{"some response label"},
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Label:      aws.String("some response label"),
