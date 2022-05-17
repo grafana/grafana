@@ -198,15 +198,10 @@ func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string
 		return nil, err
 	}
 
-	key, err := h.SQLStore.GetAPIKeyByHash(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
+	return h.SQLStore.GetAPIKeyByHash(ctx, hash)
 }
 
-func (h *ContextHandler) getAPIKey(reqContext *models.ReqContext, keyString string) (*models.ApiKey, error) {
+func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
 		return nil, err
@@ -214,7 +209,7 @@ func (h *ContextHandler) getAPIKey(reqContext *models.ReqContext, keyString stri
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := h.SQLStore.GetApiKeyByName(reqContext.Req.Context(), &keyQuery); err != nil {
+	if err := h.SQLStore.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
 
@@ -257,7 +252,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
 		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
 	} else {
-		apikey, errKey = h.getAPIKey(reqContext, keyString) // decode legacy api key
+		apikey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
 	}
 
 	if errKey != nil {

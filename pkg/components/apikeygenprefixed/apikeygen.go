@@ -71,7 +71,6 @@ func New(serviceID string) (KeyGenResult, error) {
 }
 
 func Decode(keyString string) (*PrefixedKey, error) {
-	key := &PrefixedKey{}
 	if !strings.HasPrefix(keyString, GrafanaPrefix) {
 		return nil, &ErrInvalidApiKey{}
 	}
@@ -81,10 +80,11 @@ func Decode(keyString string) (*PrefixedKey, error) {
 		return nil, &ErrInvalidApiKey{}
 	}
 
-	key.ServiceID = strings.TrimPrefix(parts[0], GrafanaPrefix)
-	key.Secret = parts[1]
-	key.Checksum = parts[2]
-
+	key := &PrefixedKey{
+		ServiceID: strings.TrimPrefix(parts[0], GrafanaPrefix),
+		Secret:    parts[1],
+		Checksum:  parts[2],
+	}
 	if key.CalculateChecksum() != key.Checksum {
 		return nil, &ErrInvalidApiKey{}
 	}
