@@ -21,11 +21,11 @@ Panel: {
                 PanelOptions: {
                     // anything for now
                     ...
-                }
+                } @cuetsy(kind="interface")
                 PanelFieldConfig: {
                     // anything for now
                     ...
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

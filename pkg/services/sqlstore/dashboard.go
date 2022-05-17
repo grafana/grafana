@@ -4,10 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"xorm.io/xorm"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -74,7 +76,7 @@ func (ss *SQLStore) FindDashboards(ctx context.Context, query *models.FindPersis
 		},
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+	if !accesscontrol.IsDisabled(ss.Cfg) {
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
 			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
@@ -223,13 +225,19 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 
 func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 {
+		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
 			return models.ErrCommandValidationFailed
 		}
 
 		var dashboards = make([]*models.Dashboard, 0)
+		var session *xorm.Session
+		if len(query.DashboardIds) > 0 {
+			session = dbSession.In("id", query.DashboardIds)
+		} else {
+			session = dbSession.In("uid", query.DashboardUIds)
+		}
 
-		err := dbSession.In("id", query.DashboardIds).Find(&dashboards)
+		err := session.Find(&dashboards)
 		query.Result = dashboards
 		return err
 	})

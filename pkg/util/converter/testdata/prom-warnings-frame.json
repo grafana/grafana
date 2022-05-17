@@ -4,6 +4,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -52,6 +55,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -100,6 +106,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -155,6 +164,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -210,6 +222,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
