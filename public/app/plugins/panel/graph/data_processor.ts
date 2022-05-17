@@ -11,7 +11,6 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { colors } from '@grafana/ui';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 
@@ -38,9 +37,6 @@ export class DataProcessor {
       if (!timeField) {
         continue;
       }
-
-      series = applyNullInsertThreshold(series, timeField.name);
-      timeField = getTimeField(series).timeField!; // use updated length
 
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];

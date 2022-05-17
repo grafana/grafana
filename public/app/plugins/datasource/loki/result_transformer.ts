@@ -20,6 +20,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import TableModel from 'app/core/table_model';
 
 import { renderLegendFormat } from '../prometheus/legend';
@@ -482,19 +483,21 @@ export function rangeQueryResponseToDataFrames(
   scopedVars: ScopedVars
 ): DataFrame[] {
   const series = rangeQueryResponseToTimeSeries(response, query, target, scopedVars);
-  const frames = series.map((s) => toDataFrame(s));
+  let frames = series.map((s) => toDataFrame(s));
 
   const { step } = query;
 
   if (step != null) {
     const intervalMs = step * 1000;
 
-    frames.forEach((frame) => {
+    frames = frames.map((frame) => {
       frame.fields.forEach((field) => {
         if (field.type === FieldType.time) {
           field.config.interval = intervalMs;
         }
       });
+
+      return applyNullInsertThreshold(frame, null, query.end);
     });
   }
 

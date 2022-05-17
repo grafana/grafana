@@ -8,7 +8,6 @@ import {
 } from '@grafana/schema';
 
 import { FIXED_UNIT } from './GraphNG';
-import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
@@ -43,9 +42,6 @@ function applySpanNullsThresholds(frame: DataFrame) {
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
-  // apply null insertions at interval
-  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
-
   let numBarSeries = 0;
 
   frames.forEach((frame) => {

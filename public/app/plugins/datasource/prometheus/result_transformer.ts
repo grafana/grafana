@@ -23,6 +23,7 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 
 import { renderLegendFormat } from './legend';
 import {
@@ -109,7 +110,8 @@ export function transformV2(
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
     const df = {
-      ...dataFrame,
+      // insert null values omitted intervals
+      ...applyNullInsertThreshold(dataFrame, null, request.range?.to.valueOf()),
       meta: {
         ...dataFrame.meta,
         preferredVisualisationType: 'graph',

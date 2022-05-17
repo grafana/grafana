@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -16,6 +16,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 import { queryMetricTree } from './metricTree';
@@ -97,7 +98,14 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         ...options,
         targets: backendQueries,
       };
-      streams.push(super.query(backendOpts));
+      streams.push(
+        super.query(backendOpts).pipe(
+          map((r) => {
+            r.data = r.data.map((f: DataFrame) => applyNullInsertThreshold(f, null, options.range?.to.valueOf()));
+            return r;
+          })
+        )
+      );
     }
 
     if (streams.length === 0) {
@@ -218,7 +226,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
       const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
         const f = toDataFrame(v);
         f.refId = target.refId;
-        return f;
+        return applyNullInsertThreshold(f, null, options.range?.to.valueOf());
       });
       return of({ data, state: LoadingState.Done }).pipe(delay(100));
     } catch (ex) {
