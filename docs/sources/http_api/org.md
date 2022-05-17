@@ -17,7 +17,7 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 `GET /api/org/`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -53,7 +53,7 @@ Content-Type: application/json
 Returns all org users within the current organization.
 Accessible to users with org admin role.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -99,7 +99,7 @@ Accessible to users with org admin role, admin in any folder or admin of any tea
 Mainly used by Grafana UI for providing list of users when adding team members and
 when editing folder/dashboard permissions.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -135,7 +135,7 @@ Content-Type: application/json
 
 `PATCH /api/org/users/:userId`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 
 `DELETE /api/org/users/:userId`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -199,7 +199,7 @@ Content-Type: application/json
 
 `PUT /api/org`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -235,7 +235,7 @@ Content-Type: application/json
 
 Adds a global user to the current organization.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -280,7 +280,7 @@ is called `admin` and has permission to use this API).
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -322,7 +322,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -364,7 +364,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -407,7 +407,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -449,7 +449,7 @@ Content-Type: application/json
 Update Organization, fields _Address 1_, _Address 2_, _City_ are not implemented yet.
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -484,7 +484,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -514,7 +514,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -555,7 +555,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -591,7 +591,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -626,7 +626,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

@@ -11,7 +11,7 @@ aliases = ["/docs/grafana/latest/http_api/user/"]
 
 `GET /api/users?perpage=10&page=1`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -66,7 +66,7 @@ Content-Type: application/json
 
 `GET /api/users/search?perpage=10&page=1&query=mygraf`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -127,7 +127,7 @@ Content-Type: application/json
 
 `GET /api/users/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -173,7 +173,7 @@ Content-Type: application/json
 
 `GET /api/users/lookup?loginOrEmail=user@mygraf.com`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -228,7 +228,7 @@ Content-Type: application/json
 
 `PUT /api/users/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -267,7 +267,7 @@ Content-Type: application/json
 
 `GET /api/users/:id/orgs`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -305,7 +305,7 @@ Content-Type: application/json
 
 `GET /api/users/:id/teams`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

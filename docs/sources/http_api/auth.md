@@ -76,6 +76,14 @@ curl example:
 
 `GET /api/auth/keys`
 
+**Required permissions**
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
+| Action         | Scope |
+| -------------- | ----- |
+| apikeys:create | n/a   |
+
 **Example Request**:
 
 ```http
@@ -113,6 +121,14 @@ Content-Type: application/json
 ## Create API Key
 
 `POST /api/auth/keys`
+
+#### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
+| Action         | Scope |
+| -------------- | ----- |
+| apikeys:create | n/a   |
 
 **Example Request**:
 

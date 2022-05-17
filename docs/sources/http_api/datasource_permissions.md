@@ -23,7 +23,7 @@ The permission levels for the permission field:
 
 Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -68,7 +68,7 @@ Status codes:
 
 Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -113,7 +113,7 @@ Status codes:
 
 Gets all existing permissions for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -184,7 +184,7 @@ Status codes:
 
 Adds a user permission for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -258,7 +258,7 @@ Status codes:
 
 Removes the permission with the given `permissionId` for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

@@ -11,7 +11,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 `GET /api/serviceaccounts/search?perpage=10&page=1&query=myserviceaccount`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -78,7 +78,7 @@ Content-Type: application/json
 
 `POST /api/serviceaccounts`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -126,7 +126,7 @@ Content-Type: application/json
 
 `GET /api/serviceaccounts/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 
 `PATCH /api/serviceaccounts/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -221,7 +221,7 @@ Content-Type: application/json
 
 `GET /api/serviceaccounts/:id/tokens`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -263,7 +263,7 @@ Content-Type: application/json
 
 `POST /api/serviceaccounts/:id/tokens`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -304,7 +304,7 @@ Content-Type: application/json
 
 `DELETE /api/serviceaccounts/:id/tokens/:tokenId`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

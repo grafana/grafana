@@ -13,7 +13,7 @@ aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
 
 `GET /api/teams/:teamId/groups`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -55,7 +55,7 @@ Status Codes:
 
 `POST /api/teams/:teamId/groups`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -97,7 +97,7 @@ Status Codes:
 
 `DELETE /api/teams/:teamId/groups/:groupId`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

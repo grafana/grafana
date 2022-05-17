@@ -11,7 +11,7 @@ aliases = ["/docs/grafana/latest/http_api/datasource/"]
 
 `GET /api/datasources`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -67,7 +67,7 @@ Content-Type: application/json
 
 `GET /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -123,7 +123,7 @@ Content-Type: application/json
 
 `GET /api/datasources/uid/:uid`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -179,7 +179,7 @@ Content-Type: application/json
 
 `GET /api/datasources/name/:name`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -235,7 +235,7 @@ Content-Type: application/json
 
 `GET /api/datasources/id/:name`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -269,7 +269,7 @@ Content-Type: application/json
 
 `POST /api/datasources`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -417,7 +417,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 `PUT /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -497,7 +497,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -529,7 +529,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/uid/:uid`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -564,7 +564,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/name/:datasourceName`
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

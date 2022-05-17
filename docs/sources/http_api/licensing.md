@@ -17,7 +17,7 @@ Licensing is only available in Grafana Enterprise. Read more about [Grafana Ente
 
 Checks if a valid license is available.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -57,7 +57,7 @@ Status codes:
 
 Manually ask license issuer for a new token.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -117,7 +117,7 @@ Status Codes:
 
 Removes the license stored in the Grafana database.
 
-### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

@@ -24,7 +24,7 @@ or
 
 `GET /api/teams/search?name=myteam`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -87,7 +87,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 `GET /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -133,7 +133,7 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 `POST /api/teams`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -178,7 +178,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 `PUT /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -221,7 +221,7 @@ Status Codes:
 
 `DELETE /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -258,7 +258,7 @@ Status Codes:
 
 `GET /api/teams/:teamId/members`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -311,7 +311,7 @@ Status Codes:
 
 `POST /api/teams/:teamId/members`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -353,7 +353,7 @@ Status Codes:
 
 `DELETE /api/teams/:teamId/members/:userId`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -390,7 +390,7 @@ Status Codes:
 
 `GET /api/teams/:teamId/preferences`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -424,7 +424,7 @@ Content-Type: application/json
 
 `PUT /api/teams/:teamId/preferences`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 

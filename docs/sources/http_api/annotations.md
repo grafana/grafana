@@ -13,7 +13,7 @@ This is the API documentation for the new Grafana Annotations feature released i
 
 `GET /api/annotations?from=1506676478816&to=1507281278816&tags=tag1&tags=tag2&limit=100`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -102,7 +102,7 @@ The format for `time` and `timeEnd` should be epoch numbers in millisecond resol
 
 `POST /api/annotations`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -150,7 +150,7 @@ format (string with multiple tags being separated by a space).
 
 `POST /api/annotations/graphite`
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -191,7 +191,7 @@ Content-Type: application/json
 
 Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the [Patch Annotation](#patch-annotation) operation.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -236,7 +236,7 @@ Updates one or more properties of an annotation that matches the specified id.
 
 This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -275,7 +275,7 @@ Content-Type: application/json
 
 Deletes the annotation that matches the specified id.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
@@ -309,7 +309,7 @@ Content-Type: application/json
 
 Find all the event tags created in the annotations.
 
-#### Required permissions
+**Required permissions**
 
 [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
