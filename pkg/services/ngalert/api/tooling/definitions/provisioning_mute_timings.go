@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /api/provisioning/mute-timings provisioning RouteGetMuteTimings
+// swagger:route GET /api/provisioning/v1/mute-timings provisioning RouteGetMuteTimings
 //
 // Get all the mute timings.
 //
@@ -8,7 +8,7 @@ package definitions
 //       200: MuteTimings
 //       400: ValidationError
 
-// swagger:route GET /api/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
+// swagger:route GET /api/provisioning/v1/mute-timings/{name} provisioning RouteGetMuteTiming
 //
 // Get a mute timing.
 //

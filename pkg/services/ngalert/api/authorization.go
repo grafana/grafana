@@ -179,6 +179,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
+<<<<<<< HEAD
 	case http.MethodGet + "/api/provisioning/policies",
 		http.MethodGet + "/api/provisioning/contact-points",
 		http.MethodGet + "/api/provisioning/templates",
@@ -201,6 +202,22 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/provisioning/alert-rules/{UID}",
 		http.MethodPut + "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+=======
+	case http.MethodGet + "/api/provisioning/v1/policies",
+		http.MethodGet + "/api/provisioning/v1/contact-points",
+		http.MethodGet + "/api/provisioning/v1/templates",
+		http.MethodGet + "/api/provisioning/v1/templates/{name}",
+		http.MethodGet + "/api/provisioning/v1/mute-timings",
+		http.MethodGet + "/api/provisioning/v1/mute-timings/{name}":
+		return middleware.ReqSignedIn
+
+	case http.MethodPut + "/api/provisioning/v1/policies",
+		http.MethodPost + "/api/provisioning/v1/contact-points",
+		http.MethodPut + "/api/provisioning/v1/contact-points/{ID}",
+		http.MethodDelete + "/api/provisioning/v1/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/v1/templates/{name}",
+		http.MethodDelete + "/api/provisioning/v1/templates/{name}":
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 		return middleware.ReqEditorRole
 	}
 

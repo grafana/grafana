@@ -46,7 +46,7 @@ func TestProvisioning(t *testing.T) {
 	})
 
 	t.Run("when provisioning notification policies", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s/api/provisioning/policies", grafanaListedAddr)
+		url := fmt.Sprintf("http://%s/api/provisioning/v1/policies", grafanaListedAddr)
 		body := `
 		{
 			"receiver": "grafana-default-email",
@@ -138,7 +138,7 @@ func TestProvisioning(t *testing.T) {
 	})
 
 	t.Run("when provisioning contactpoints", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s/api/provisioning/contact-points", grafanaListedAddr)
+		url := fmt.Sprintf("http://%s/api/provisioning/v1/contact-points", grafanaListedAddr)
 		body := `
 		{
 			"name": "my-contact-point",
@@ -231,7 +231,7 @@ func TestProvisioning(t *testing.T) {
 	})
 
 	t.Run("when provisioning templates", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s/api/provisioning/templates", grafanaListedAddr)
+		url := fmt.Sprintf("http://%s/api/provisioning/v1/templates", grafanaListedAddr)
 
 		t.Run("un-authenticated GET should 401", func(t *testing.T) {
 			req := createTestRequest("GET", url, "", "")
@@ -275,7 +275,7 @@ func TestProvisioning(t *testing.T) {
 	})
 
 	t.Run("when provisioning mute timings", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s/api/provisioning/mute-timings", grafanaListedAddr)
+		url := fmt.Sprintf("http://%s/api/provisioning/v1/mute-timings", grafanaListedAddr)
 
 		t.Run("un-authenticated GET should 401", func(t *testing.T) {
 			req := createTestRequest("GET", url, "", "")

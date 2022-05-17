@@ -3466,6 +3466,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3517,9 +3518,7 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
@@ -5058,6 +5057,7 @@
    }
   },
   "/api/provisioning/contact-points": {
+  "/api/provisioning/v1/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "responses": {
@@ -5113,7 +5113,7 @@
     ]
    }
   },
-  "/api/provisioning/contact-points/{UID}": {
+  "/api/provisioning/v1/contact-points/{ID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5188,54 +5188,7 @@
     ]
    }
   },
-  "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutAlertRuleGroup",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "FolderUID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "path",
-      "name": "Group",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "AlertRuleGroup",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Update the interval of a rule group.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/mute-timings": {
+  "/api/provisioning/v1/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -5291,32 +5244,7 @@
     ]
    }
   },
-  "/api/provisioning/mute-timings/{name}": {
-   "delete": {
-    "operationId": "RouteDeleteMuteTiming",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     }
-    ],
-    "responses": {
-     "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     }
-    },
-    "summary": "Delete a mute timing.",
-    "tags": [
-     "provisioning"
-    ]
-   },
+  "/api/provisioning/v1/mute-timings/{name}": {
    "get": {
     "operationId": "RouteGetMuteTiming",
     "parameters": [
@@ -5390,7 +5318,7 @@
     ]
    }
   },
-  "/api/provisioning/policies": {
+  "/api/provisioning/v1/policies": {
    "get": {
     "operationId": "RouteGetPolicyTree",
     "responses": {
@@ -5446,7 +5374,7 @@
     ]
    }
   },
-  "/api/provisioning/templates": {
+  "/api/provisioning/v1/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5469,7 +5397,7 @@
     ]
    }
   },
-  "/api/provisioning/templates/{name}": {
+  "/api/provisioning/v1/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [

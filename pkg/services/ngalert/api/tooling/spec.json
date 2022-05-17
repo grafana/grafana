@@ -1251,6 +1251,7 @@
       }
     },
     "/api/provisioning/contact-points": {
+    "/api/provisioning/v1/contact-points": {
       "get": {
         "tags": [
           "provisioning"
@@ -1306,7 +1307,7 @@
         }
       }
     },
-    "/api/provisioning/contact-points/{UID}": {
+    "/api/provisioning/v1/contact-points/{ID}": {
       "put": {
         "consumes": [
           "application/json"
@@ -1428,7 +1429,7 @@
         }
       }
     },
-    "/api/provisioning/mute-timings": {
+    "/api/provisioning/v1/mute-timings": {
       "get": {
         "tags": [
           "provisioning"
@@ -1484,7 +1485,7 @@
         }
       }
     },
-    "/api/provisioning/mute-timings/{name}": {
+    "/api/provisioning/v1/mute-timings/{name}": {
       "get": {
         "tags": [
           "provisioning"
@@ -1583,7 +1584,7 @@
         }
       }
     },
-    "/api/provisioning/policies": {
+    "/api/provisioning/v1/policies": {
       "get": {
         "tags": [
           "provisioning"
@@ -1639,7 +1640,7 @@
         }
       }
     },
-    "/api/provisioning/templates": {
+    "/api/provisioning/v1/templates": {
       "get": {
         "tags": [
           "provisioning"
@@ -1662,7 +1663,7 @@
         }
       }
     },
-    "/api/provisioning/templates/{name}": {
+    "/api/provisioning/v1/templates/{name}": {
       "get": {
         "tags": [
           "provisioning"
@@ -5849,6 +5850,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5901,8 +5903,6 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {

@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /api/provisioning/policies provisioning RouteGetPolicyTree
+// swagger:route GET /api/provisioning/v1/policies provisioning RouteGetPolicyTree
 //
 // Get the notification policy tree.
 //
@@ -8,7 +8,7 @@ package definitions
 //       200: Route
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/policies provisioning RoutePutPolicyTree
+// swagger:route PUT /api/provisioning/v1/policies provisioning RoutePutPolicyTree
 //
 // Sets the notification policy tree.
 //

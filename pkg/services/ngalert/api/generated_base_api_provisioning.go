@@ -141,6 +141,7 @@ func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) respons
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
 			api.authorize(http.MethodDelete, "/api/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
@@ -156,11 +157,19 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/provisioning/contact-points/{UID}",
+=======
+			toMacaronPath("/api/provisioning/v1/contact-points/{ID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/v1/contact-points/{ID}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/provisioning/v1/contact-points/{ID}",
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 				srv.RouteDeleteContactpoints,
 				m,
 			),
 		)
 		group.Delete(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/mute-timings/{name}"),
 			api.authorize(http.MethodDelete, "/api/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
@@ -173,14 +182,19 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 		group.Delete(
 			toMacaronPath("/api/provisioning/templates/{name}"),
 			api.authorize(http.MethodDelete, "/api/provisioning/templates/{name}"),
+=======
+			toMacaronPath("/api/provisioning/v1/templates/{name}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/v1/templates/{name}"),
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/templates/{name}",
+				"/api/provisioning/v1/templates/{name}",
 				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
 		group.Get(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
 			api.authorize(http.MethodGet, "/api/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
@@ -193,64 +207,69 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 		group.Get(
 			toMacaronPath("/api/provisioning/contact-points"),
 			api.authorize(http.MethodGet, "/api/provisioning/contact-points"),
+=======
+			toMacaronPath("/api/provisioning/v1/contact-points"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/contact-points"),
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/contact-points",
+				"/api/provisioning/v1/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/mute-timings/{name}"),
-			api.authorize(http.MethodGet, "/api/provisioning/mute-timings/{name}"),
+			toMacaronPath("/api/provisioning/v1/mute-timings/{name}"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/mute-timings/{name}",
+				"/api/provisioning/v1/mute-timings/{name}",
 				srv.RouteGetMuteTiming,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/mute-timings"),
-			api.authorize(http.MethodGet, "/api/provisioning/mute-timings"),
+			toMacaronPath("/api/provisioning/v1/mute-timings"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/mute-timings"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/mute-timings",
+				"/api/provisioning/v1/mute-timings",
 				srv.RouteGetMuteTimings,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodGet, "/api/provisioning/policies"),
+			toMacaronPath("/api/provisioning/v1/policies"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/policies"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/policies",
+				"/api/provisioning/v1/policies",
 				srv.RouteGetPolicyTree,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates/{name}"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates/{name}"),
+			toMacaronPath("/api/provisioning/v1/templates/{name}"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates/{name}",
+				"/api/provisioning/v1/templates/{name}",
 				srv.RouteGetTemplate,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates"),
+			toMacaronPath("/api/provisioning/v1/templates"),
+			api.authorize(http.MethodGet, "/api/provisioning/v1/templates"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates",
+				"/api/provisioning/v1/templates",
 				srv.RouteGetTemplates,
 				m,
 			),
 		)
 		group.Post(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/alert-rules"),
 			api.authorize(http.MethodPost, "/api/provisioning/alert-rules"),
 			metrics.Instrument(
@@ -263,9 +282,13 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 		group.Post(
 			toMacaronPath("/api/provisioning/contact-points"),
 			api.authorize(http.MethodPost, "/api/provisioning/contact-points"),
+=======
+			toMacaronPath("/api/provisioning/v1/contact-points"),
+			api.authorize(http.MethodPost, "/api/provisioning/v1/contact-points"),
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/contact-points",
+				"/api/provisioning/v1/contact-points",
 				srv.RoutePostContactpoints,
 				m,
 			),
@@ -301,16 +324,25 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/contact-points/{UID}"),
 			api.authorize(http.MethodPut, "/api/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/provisioning/contact-points/{UID}",
+=======
+			toMacaronPath("/api/provisioning/v1/contact-points/{ID}"),
+			api.authorize(http.MethodPut, "/api/provisioning/v1/contact-points/{ID}"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/provisioning/v1/contact-points/{ID}",
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 				srv.RoutePutContactpoint,
 				m,
 			),
 		)
 		group.Put(
+<<<<<<< HEAD
 			toMacaronPath("/api/provisioning/mute-timings/{name}"),
 			api.authorize(http.MethodPut, "/api/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
@@ -323,19 +355,23 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 		group.Put(
 			toMacaronPath("/api/provisioning/policies"),
 			api.authorize(http.MethodPut, "/api/provisioning/policies"),
+=======
+			toMacaronPath("/api/provisioning/v1/policies"),
+			api.authorize(http.MethodPut, "/api/provisioning/v1/policies"),
+>>>>>>> 8211e8193e (Add version segment to all provisioning routes)
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/policies",
+				"/api/provisioning/v1/policies",
 				srv.RoutePutPolicyTree,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/templates/{name}"),
-			api.authorize(http.MethodPut, "/api/provisioning/templates/{name}"),
+			toMacaronPath("/api/provisioning/v1/templates/{name}"),
+			api.authorize(http.MethodPut, "/api/provisioning/v1/templates/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/templates/{name}",
+				"/api/provisioning/v1/templates/{name}",
 				srv.RoutePutTemplate,
 				m,
 			),
