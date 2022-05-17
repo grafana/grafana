@@ -179,6 +179,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
               values[i] = replace;
             }
           }
+          delete field.state?.calcs;
         }
       }
 
