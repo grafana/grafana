@@ -3,15 +3,16 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"strings"
-	"testing"
 )
 
 func TestApiRetrieveConfig(t *testing.T) {
@@ -49,7 +50,6 @@ func TestApiRetrieveConfig(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
@@ -79,7 +79,6 @@ func TestApiRetrieveConfig(t *testing.T) {
 }
 
 func TestApiPersistsValue(t *testing.T) {
-
 	testCases := []struct {
 		name                 string
 		dashboardUid         string

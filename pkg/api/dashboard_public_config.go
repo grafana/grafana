@@ -3,11 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
-	"net/http"
 )
 
 // Sets sharing configuration for dashboard
