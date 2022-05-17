@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,9 +28,11 @@ func TestDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
+	var starService star.Service
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
+		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
@@ -423,15 +427,15 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
 		setup()
 		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
-		err := sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
-			DashboardId: starredDash.Id,
-			UserId:      10,
+		err := starService.Add(context.Background(), &star.StarDashboardCommand{
+			DashboardID: starredDash.Id,
+			UserID:      10,
 		})
 		require.NoError(t, err)
 
-		err = sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
-			DashboardId: savedDash.Id,
-			UserId:      1,
+		err = starService.Add(context.Background(), &star.StarDashboardCommand{
+			DashboardID: savedDash.Id,
+			UserID:      1,
 		})
 		require.NoError(t, err)
 
