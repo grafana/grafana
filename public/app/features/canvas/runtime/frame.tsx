@@ -82,7 +82,7 @@ export class FrameState extends ElementState {
       vals.push(child);
     }
     this.elements = vals;
-    this.scene.save(false);
+    this.scene.save();
     this.reinitializeMoveable();
   }
 
