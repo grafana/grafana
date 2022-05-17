@@ -17,7 +17,7 @@ This is the API documentation for the new Grafana Annotations feature released i
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action           | Scope                   |
 | ---------------- | ----------------------- |
@@ -106,7 +106,7 @@ The format for `time` and `timeEnd` should be epoch numbers in millisecond resol
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action             | Scope                   |
 | ------------------ | ----------------------- |
@@ -154,7 +154,7 @@ format (string with multiple tags being separated by a space).
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action             | Scope                         |
 | ------------------ | ----------------------------- |
@@ -195,7 +195,7 @@ Updates all properties of an annotation that matches the specified id. To only u
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action            | Scope                   |
 | ----------------- | ----------------------- |
@@ -240,7 +240,7 @@ This operation currently supports updating of the `text`, `tags`, `time` and `ti
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action            | Scope                   |
 | ----------------- | ----------------------- |
@@ -279,7 +279,7 @@ Deletes the annotation that matches the specified id.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action             | Scope                   |
 | ------------------ | ----------------------- |
@@ -313,7 +313,7 @@ Find all the event tags created in the annotations.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#annotation-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
 | Action           | Scope |
 | ---------------- | ----- |
