@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mount, shallow } from 'enzyme';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 import SpanBarRow from './SpanBarRow';
-import { SpanLinksMenu } from './SpanLinks';
-import SpanTreeOffset from './SpanTreeOffset';
 
 jest.mock('./SpanTreeOffset', () => {
   // eslint-disable-next-line react/display-name
@@ -63,24 +61,24 @@ describe('<SpanBarRow>', () => {
   beforeEach(() => {
     props.onDetailToggled.mockReset();
     props.onChildrenToggled.mockReset();
-    wrapper = mount(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...props} />);
   });
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
+    expect(screen).toBeDefined();
   });
 
   it('escalates detail toggling', () => {
     const { onDetailToggled } = props;
     expect(onDetailToggled.mock.calls.length).toBe(0);
-    wrapper.find('div[data-test-id="span-view"]').prop('onClick')();
+    fireEvent.click(screen.getByTestId('span-view'));
     expect(onDetailToggled.mock.calls).toEqual([[spanID]]);
   });
 
   it('escalates children toggling', () => {
     const { onChildrenToggled } = props;
     expect(onChildrenToggled.mock.calls.length).toBe(0);
-    wrapper.find(SpanTreeOffset).prop('onClick')();
+    fireEvent.click(screen.getByTestId('span-tree-offset'));
     expect(onChildrenToggled.mock.calls).toEqual([[spanID]]);
   });
 
@@ -107,7 +105,7 @@ describe('<SpanBarRow>', () => {
       ],
     });
 
-    const spanRow = shallow(
+    render(
       <SpanBarRow
         {...props}
         span={span}
@@ -115,12 +113,8 @@ describe('<SpanBarRow>', () => {
           traceLinks: [{ href: 'href' }, { href: 'href' }],
         })}
       />
-    )
-      .dive()
-      .dive()
-      .dive();
-    const menu = spanRow.find(SpanLinksMenu);
-    expect(menu.length).toEqual(1);
+    );
+    expect(screen.getAllByTestId('span-row')).toHaveLength(1);
   });
 
   it('render referenced to by single span', () => {
@@ -139,7 +133,7 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(
+    render(
       <SpanBarRow
         {...props}
         span={span}
@@ -147,13 +141,13 @@ describe('<SpanBarRow>', () => {
           traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
         })}
       />
-    )
-      .dive()
-      .dive()
-      .dive();
-    const menu = spanRow.find(`a[href="href"]`);
-    expect(menu.length).toEqual(1);
-    expect(menu.at(0).text()).toEqual('This span is referenced by another span');
+    );
+    //const menu = spanRow.find(`a[href="href"]`);
+    //expect(menu.length).toEqual(1);
+    //expect(menu.at(0).text()).toEqual('This span is referenced by another span');
+    expect(screen.getAllByTestId('a-href')).toHaveLength(1);
+    const { getByText } = within(screen.getByTestId('a-href'));
+    expect(getByText('This span is referenced by another span')).toBeInTheDocument();
   });
 
   it('render referenced to by multiple span', () => {
@@ -180,7 +174,7 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(
+    render(
       <SpanBarRow
         {...props}
         span={span}
@@ -188,11 +182,7 @@ describe('<SpanBarRow>', () => {
           traceLinks: [{ href: 'href' }, { href: 'href' }],
         })}
       />
-    )
-      .dive()
-      .dive()
-      .dive();
-    const menu = spanRow.find(SpanLinksMenu);
-    expect(menu.length).toEqual(1);
+    );
+    expect(screen.getAllByTestId('span-row')).toHaveLength(1);
   });
 });

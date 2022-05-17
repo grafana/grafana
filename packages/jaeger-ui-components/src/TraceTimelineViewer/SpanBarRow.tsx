@@ -430,14 +430,15 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               nameWrapperMatchingFilter: isMatchingFilter,
             })}
           >
-            <SpanTreeOffset
-              childrenVisible={isChildrenExpanded}
-              span={span}
-              onClick={isParent ? this._childrenToggle : undefined}
-              hoverIndentGuideIds={hoverIndentGuideIds}
-              addHoverIndentGuideId={addHoverIndentGuideId}
-              removeHoverIndentGuideId={removeHoverIndentGuideId}
-            />
+            <div data-testid="span-tree-offset" onClick={isParent ? this._childrenToggle : undefined}>
+              <SpanTreeOffset
+                childrenVisible={isChildrenExpanded}
+                span={span}
+                hoverIndentGuideIds={hoverIndentGuideIds}
+                addHoverIndentGuideId={addHoverIndentGuideId}
+                removeHoverIndentGuideId={removeHoverIndentGuideId}
+              />
+            </div>
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
@@ -492,6 +493,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
 
                   return (
                     <a
+                      data-testid="a-href"
                       href={link.href}
                       // Needs to have target otherwise preventDefault would not work due to angularRouter.
                       target={'_blank'}
@@ -525,6 +527,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
           })}
           data-test-id="span-view"
+          data-testid="span-view"
           style={{ cursor: 'pointer' }}
           width={1 - columnDivision}
           onClick={this._detailToggle}

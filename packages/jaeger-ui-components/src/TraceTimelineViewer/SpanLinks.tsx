@@ -78,7 +78,7 @@ export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <>
+    <div data-testid="span-row">
       <button
         onClick={(e) => {
           setIsMenuOpen(true);
@@ -101,7 +101,7 @@ export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
           y={menuPosition.y}
         />
       ) : null}
-    </>
+    </div>
   );
 };
 
