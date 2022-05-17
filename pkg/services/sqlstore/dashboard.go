@@ -293,28 +293,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 	})
 }
 
-type DashboardSlugDTO struct {
-	Slug string
-}
-
-func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-		var slug = DashboardSlugDTO{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = slug.Slug
-		return nil
-	})
-}
-
 func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
