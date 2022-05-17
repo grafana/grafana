@@ -250,20 +250,22 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
-	// base64 decode key
-	// We always need to try old key format first otherwise we'll invalidate all keys
-	// beginning with "gl_"
 	var (
 		apikey *models.ApiKey
 		errKey error
 	)
-	apikey, errKey = h.getAPIKey(reqContext, keyString)
-	if errKey != nil && strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
-		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString)
+	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
+		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
+	} else {
+		apikey, errKey = h.getAPIKey(reqContext, keyString) // decode legacy api key
 	}
 
 	if errKey != nil {
-		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidAPIKey, errKey)
+		status := http.StatusInternalServerError
+		if errors.Is(errKey, apikeygen.ErrInvalidApiKey) {
+			status = http.StatusUnauthorized
+		}
+		reqContext.JsonApiErr(status, InvalidAPIKey, errKey)
 		return true
 	}
 
@@ -273,7 +275,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		getTime = time.Now
 	}
 	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		reqContext.JsonApiErr(401, "Expired API key", nil)
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Expired API key", nil)
 		return true
 	}
 
