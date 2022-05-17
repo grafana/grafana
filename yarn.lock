@@ -4372,7 +4372,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 14.1.1
+    "@testing-library/user-event": 14.2.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
@@ -4555,7 +4555,7 @@ __metadata:
     "@sentry/browser": 6.19.1
     "@testing-library/dom": 8.13.0
     "@testing-library/react": 12.1.4
-    "@testing-library/user-event": 14.1.1
+    "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 27.4.1
@@ -4762,7 +4762,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 14.1.1
+    "@testing-library/user-event": 14.2.0
     "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.1.0
@@ -9539,12 +9539,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:14.1.1":
-  version: 14.1.1
-  resolution: "@testing-library/user-event@npm:14.1.1"
+"@testing-library/user-event@npm:14.2.0":
+  version: 14.2.0
+  resolution: "@testing-library/user-event@npm:14.2.0"
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: dd02aecbde64002aa3c58392137672156101fc3bb821f43db99e3c652e6a6d34b3eb29b2524eb41ad2a317cfdff6ab2e88d7027605d88dccaacf4f07a08dc7a9
+  checksum: b34f19bbfe938d03778831b9c083d451c53f983f6f6c0db05a572b71ba5323c4125097bb4b8c97595bc9b946610d2c2f65cf1e113f047eed7a3078f28a1027e2
   languageName: node
   linkType: hard
 
@@ -21072,7 +21072,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 7.0.2
-    "@testing-library/user-event": 14.1.1
+    "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
     "@types/classnames": 2.3.0
