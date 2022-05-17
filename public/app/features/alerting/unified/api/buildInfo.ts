@@ -18,7 +18,11 @@ import { fetchTestRulerRulesGroup } from './ruler';
  * Prometheus and Mimir expose a `buildinfo` endpoint, Cortex does not.
  * Mimir reports which "features" are enabled or available via the buildinfo endpoint, Prometheus does not.
  */
-export async function discoverDataSourceFeatures(dsSettings: { url: string; name: string, type: string }): Promise<PromApiFeatures> {
+export async function discoverDataSourceFeatures(dsSettings: {
+  url: string;
+  name: string;
+  type: string;
+}): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 
   if (type !== 'prometheus' && type !== 'loki') {
