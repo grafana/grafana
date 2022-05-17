@@ -15,7 +15,7 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope                     |
 | -------------------- | ------------------------- |
@@ -82,7 +82,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -130,7 +130,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -173,7 +173,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -225,7 +225,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -267,7 +267,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -308,7 +308,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#service-account-api) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |

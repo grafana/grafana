@@ -7,6 +7,8 @@ aliases = ["/docs/grafana/latest/http_api/authentication/"]
 
 # Authentication API
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control]({{< relref "../enterprise/access-control" >}}) for more information.
+
 ## Tokens
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
@@ -78,7 +80,7 @@ curl example:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -124,7 +126,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |

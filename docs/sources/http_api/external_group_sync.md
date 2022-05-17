@@ -9,13 +9,15 @@ aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
 
 > External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control]({{< relref "../enterprise/access-control" >}}) for more information.
+
 ## Get External Groups
 
 `GET /api/teams/:teamId/groups`
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -57,7 +59,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -99,7 +101,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |

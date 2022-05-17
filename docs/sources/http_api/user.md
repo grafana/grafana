@@ -15,7 +15,7 @@ aliases = ["/docs/grafana/latest/http_api/user/"]
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -70,7 +70,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -131,7 +131,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -177,7 +177,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -232,7 +232,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -271,7 +271,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -309,7 +309,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#user-api) for an explanation.
+See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
 | Action           | Scope    |
 | ---------------- | -------- |

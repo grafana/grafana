@@ -28,7 +28,7 @@ or
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -91,7 +91,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -137,7 +137,7 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -182,7 +182,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -225,7 +225,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action       | Scope    |
 | ------------ | -------- |
@@ -262,7 +262,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -315,7 +315,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -357,7 +357,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -394,7 +394,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -428,7 +428,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#team-api) for an explanation.
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |

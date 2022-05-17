@@ -15,7 +15,7 @@ aliases = ["/docs/grafana/latest/http_api/datasource/"]
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action           | Scope          |
 | ---------------- | -------------- |
@@ -71,7 +71,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action           | Scope                                                                        |
 | ---------------- | ---------------------------------------------------------------------------- |
@@ -127,7 +127,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action           | Scope                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------- |
@@ -183,7 +183,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action           | Scope                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------- |
@@ -239,7 +239,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action              | Scope                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -273,7 +273,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action             | Scope |
 | ------------------ | ----- |
@@ -421,7 +421,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action            | Scope                                                                        |
 | ----------------- | ---------------------------------------------------------------------------- |
@@ -501,7 +501,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action             | Scope                                                                        |
 | ------------------ | ---------------------------------------------------------------------------- |
@@ -533,7 +533,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action             | Scope                                                                                  |
 | ------------------ | -------------------------------------------------------------------------------------- |
@@ -568,7 +568,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction](#data-source-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
 | Action             | Scope                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------- |

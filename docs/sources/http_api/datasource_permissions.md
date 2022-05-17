@@ -27,7 +27,7 @@ Enables permissions for the data source with the given `id`. No one except Org A
 
 **Required permissions**
 
-See note in the [introduction](#data-source-permissions-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -72,7 +72,7 @@ Disables permissions for the data source with the given `id`. All existing permi
 
 **Required permissions**
 
-See note in the [introduction](#data-source-permissions-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -117,7 +117,7 @@ Gets all existing permissions for the data source with the given `id`.
 
 **Required permissions**
 
-See note in the [introduction](#data-source-permissions-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
 | Action                       | Scope                                                                        |
 | ---------------------------- | ---------------------------------------------------------------------------- |
@@ -188,7 +188,7 @@ Adds a user permission for the data source with the given `id`.
 
 **Required permissions**
 
-See note in the [introduction](#data-source-permissions-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -262,7 +262,7 @@ Removes the permission with the given `permissionId` for the data source with th
 
 **Required permissions**
 
-See note in the [introduction](#data-source-permissions-api) for an explanation.
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |

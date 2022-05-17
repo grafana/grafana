@@ -25,7 +25,7 @@ Generate and send a report. This API waits for the report to be generated before
 
 #### Required permissions
 
-See note in the [introduction](#reporting-api) for an explanation.
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
