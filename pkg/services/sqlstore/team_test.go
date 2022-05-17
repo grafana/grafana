@@ -244,11 +244,11 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
-				t.Logf("service account id: %s", serviceAccount.Id)
+				t.Logf("service account id: %d", serviceAccount.Id)
 				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: false}
 				err = sqlStore.GetTeamMembers(context.Background(), query)
 				require.NoError(t, err)
-				t.Logf("result number: %d", query.Result)
+				t.Logf("result number: %v+", query.Result)
 				require.Equal(t, len(query.Result), 1)
 			})
 
