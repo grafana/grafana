@@ -77,8 +77,8 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
-	folderUIDs := make(map[string]bool, 0)
-	dashboardUIDs := make(map[string]bool, 0)
+	folderUIDs := make(map[string]bool)
+	dashboardUIDs := make(map[string]bool)
 
 	for _, hit := range hits {
 		if hit.Type == models.DashHitFolder {
