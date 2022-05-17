@@ -589,7 +589,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 			OrgId: c.SignedInUser.OrgId,
 			Uid:   dashUID,
 		}
-		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
 			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
 		}
 		dashID = q.Result.Id
