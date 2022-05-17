@@ -74,7 +74,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 **Before you begin:**
 
-- [Enable role provisioning]({{< relref "./rbac-provisioning#rbac-provisioning" >}})
+- See [Role provisioning]({{< relref "./rbac-provisioning#rbac-provisioning" >}})
 - Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}})
 
 </br>

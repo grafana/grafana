@@ -1,5 +1,5 @@
 ---
-title: 'Manage RBAC roles'
+title: 'Manage Grafana RBAC roles'
 menuTitle: 'Manage RBAC roles'
 description: 'Learn how to view permissions associated with roles, create custom roles, and update and delete roles in Grafana.'
 aliases:

@@ -45,6 +45,11 @@ Your current data source permissions will keep working as expected, but you'll b
 
 SAML authentication is not affected by an expired license.
 
+### Role-based access control (RBAC)
+
+- Creating, updating and deleting custom roles is not available.
+- Modifying permissions for custom roles is not available.
+
 ### Reporting
 
 - You're unable to configure new reports or generate previews.
