@@ -32,6 +32,7 @@ type CurrentUser struct {
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
 	LightTheme                 bool               `json:"lightTheme"`
+	FusebitTheme               bool               `json:"fusebitTheme"`
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`

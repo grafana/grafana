@@ -39,7 +39,7 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
 
   if (colors.mode === 'dark') {
     hues = getDarkHues();
-  } else if (colors.mode === 'light') {
+  } else if (colors.mode === 'light' || 'fusebit') {
     hues = getLightHues();
   }
 

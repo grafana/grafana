@@ -83,7 +83,12 @@ const copyFiles = () => {
 };
 
 const copySassFiles = () => {
-  const files = ['_variables.generated.scss', '_variables.dark.generated.scss', '_variables.light.generated.scss'];
+  const files = [
+    '_variables.generated.scss',
+    '_variables.dark.generated.scss',
+    '_variables.light.generated.scss',
+    '_variables.fusebit.generated.scss',
+  ];
   return useSpinner(`Copy scss files ${files.join(', ')} files`, async () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
     const promises = files.map((file) => {

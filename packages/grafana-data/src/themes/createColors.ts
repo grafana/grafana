@@ -4,7 +4,7 @@ import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';
 
 /** @internal */
-export type ThemeColorsMode = 'light' | 'dark';
+export type ThemeColorsMode = 'light' | 'dark' | 'fusebit';
 
 /** @internal */
 export interface ThemeColorsBase<TColor> {
@@ -26,7 +26,6 @@ export interface ThemeColorsBase<TColor> {
   };
 
   background: {
-    fusebit: string;
     /** Dashboard and body background */
     canvas: string;
     /** Primary content pane background (panels etc) */
@@ -214,9 +213,88 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    fusebit: palette.fusebit.lightBlueHover,
-    canvas: palette.fusebit.white,
+    canvas: palette.white,
     primary: palette.white,
+    secondary: palette.gray100,
+  };
+
+  action = {
+    hover: `rgba(${this.blackBase}, 0.12)`,
+    selected: `rgba(${this.blackBase}, 0.08)`,
+    hoverOpacity: 0.08,
+    focus: `rgba(${this.blackBase}, 0.12)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.04)`,
+    disabledText: this.text.disabled,
+    disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
+  };
+
+  contrastThreshold = 3;
+  hoverFactor = 0.03;
+  tonalOffset = 0.2;
+}
+
+class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
+  mode: ThemeColorsMode = 'fusebit';
+
+  blackBase = '36, 41, 46';
+
+  primary = {
+    main: palette.blueLightMain,
+    border: palette.blueLightText,
+    text: palette.blueLightText,
+  };
+
+  text = {
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
+    link: this.primary.text,
+    maxContrast: palette.black,
+  };
+
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
+
+  secondary = {
+    main: `rgba(${this.blackBase}, 0.16)`,
+    shade: `rgba(${this.blackBase}, 0.20)`,
+    contrastText: `rgba(${this.blackBase},  1)`,
+    text: this.text.primary,
+    border: this.border.strong,
+  };
+
+  info = {
+    main: palette.blueLightMain,
+    text: palette.blueLightText,
+  };
+
+  error = {
+    main: palette.redLightMain,
+    text: palette.redLightText,
+    border: palette.redLightText,
+  };
+
+  success = {
+    main: palette.greenLightMain,
+    text: palette.greenLightText,
+  };
+
+  warning = {
+    main: palette.orangeLightMain,
+    text: palette.orangeLightText,
+  };
+
+  background = {
+    canvas: palette.fusebit.white,
+    primary: palette.fusebit.lightBlue,
     secondary: palette.gray100,
   };
 
@@ -243,7 +321,11 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
-  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
+  const fusebit = new FusebitColors();
+  let base: DarkColors | LightColors | FusebitColors = (colors.mode ?? 'dark') === 'dark' ? dark : light;
+  if (colors.mode === 'fusebit') {
+    base = fusebit;
+  }
   const {
     primary = base.primary,
     secondary = base.secondary,
@@ -278,10 +360,11 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.border = color.text;
     }
     if (!color.shade) {
-      color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+      color.shade =
+        base.mode === 'light' || 'fusebit' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = base.mode === 'light' || 'fusebit' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);

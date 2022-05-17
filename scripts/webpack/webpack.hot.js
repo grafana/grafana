@@ -16,6 +16,7 @@ module.exports = merge(common, {
     app: ['./public/app/index.ts'],
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
+    fusebit: './public/sass/grafana.fusebit.scss',
   },
 
   watchOptions: {
@@ -84,7 +85,7 @@ module.exports = merge(common, {
       hash: true,
       inject: false,
       chunksSortMode: 'none',
-      excludeChunks: ['dark', 'light'],
+      excludeChunks: ['dark', 'light', 'fusebit'],
     }),
     new ReactRefreshWebpackPlugin(),
     new DefinePlugin({

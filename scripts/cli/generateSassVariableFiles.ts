@@ -1,11 +1,13 @@
 import * as fs from 'fs';
 import { darkThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.dark.scss.tmpl';
 import { lightThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.light.scss.tmpl';
+import { fusebitThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.fusebit.scss.tmpl';
 import { commonThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.scss.tmpl';
 import { createTheme } from '@grafana/data';
 
 const darkThemeVariablesPath = __dirname + '/../../public/sass/_variables.dark.generated.scss';
 const lightThemeVariablesPath = __dirname + '/../../public/sass/_variables.light.generated.scss';
+const fusebitThemeVariablesPath = __dirname + '/../../public/sass/_variables.fusebit.generated.scss';
 const defaultThemeVariablesPath = __dirname + '/../../public/sass/_variables.generated.scss';
 
 const writeVariablesFile = async (path: string, data: string) => {
@@ -23,11 +25,13 @@ const writeVariablesFile = async (path: string, data: string) => {
 const generateSassVariableFiles = async () => {
   const darkTheme = createTheme();
   const lightTheme = createTheme({ colors: { mode: 'light' } });
+  const fusebitTheme = createTheme({ colors: { mode: 'fusebit' } });
 
   try {
     await Promise.all([
       writeVariablesFile(darkThemeVariablesPath, darkThemeVarsTemplate(darkTheme)),
       writeVariablesFile(lightThemeVariablesPath, lightThemeVarsTemplate(lightTheme)),
+      writeVariablesFile(fusebitThemeVariablesPath, fusebitThemeVarsTemplate(fusebitTheme)),
       writeVariablesFile(defaultThemeVariablesPath, commonThemeVarsTemplate(darkTheme)),
     ]);
     console.log('\nSASS variable files generated');
