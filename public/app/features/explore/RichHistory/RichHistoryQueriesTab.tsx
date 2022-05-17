@@ -165,6 +165,7 @@ export function RichHistoryQueriesTab(props: Props) {
    * are keys and arrays with queries that belong to that headings are values.
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
+  const sortOrderOptions = getSortOrderOptions();
 
   return (
     <div className={styles.container}>
@@ -215,8 +216,8 @@ export function RichHistoryQueriesTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              value={getSortOrderOptions().filter((order) => order.value === richHistorySearchFilters.sortOrder)}
-              options={getSortOrderOptions()}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
+              options={sortOrderOptions}
               placeholder="Sort queries by"
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
