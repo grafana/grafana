@@ -105,7 +105,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   constructor(options: GrafanaBootConfig) {
-    this.theme2 = createTheme({ colors: { mode: 'fusebit' } });
+    let mode: any = options.bootData.user.lightTheme
+      ? 'light'
+      : options.bootData.user.fusebitTheme
+      ? 'fusebit'
+      : 'dark';
+    this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
 
     const defaults = {

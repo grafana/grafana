@@ -132,7 +132,6 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    fusebit: palette.gray10,
     canvas: palette.gray05,
     primary: palette.gray10,
     secondary: palette.gray15,
