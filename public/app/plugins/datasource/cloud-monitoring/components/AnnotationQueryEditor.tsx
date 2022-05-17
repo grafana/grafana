@@ -9,7 +9,7 @@ import CloudMonitoringDatasource from '../datasource';
 import {
   EditorMode,
   MetricKind,
-  MetricQuery,
+  AnnotationMetricQuery,
   CloudMonitoringOptions,
   CloudMonitoringQuery,
   AlignmentTypes,
@@ -21,7 +21,7 @@ import { AnnotationsHelp, QueryEditorRow } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-export const defaultQuery: (datasource: CloudMonitoringDatasource) => MetricQuery = (datasource) => ({
+export const defaultQuery: (datasource: CloudMonitoringDatasource) => AnnotationMetricQuery = (datasource) => ({
   editorMode: EditorMode.Visual,
   projectName: datasource.getDefaultProject(),
   projects: [],
@@ -53,7 +53,7 @@ export const AnnotationQueryEditor = (props: Props) => {
     options: datasource.getVariables().map(toOption),
   };
 
-  const handleQueryChange = (metricQuery: MetricQuery) => onChange({ ...query, metricQuery });
+  const handleQueryChange = (metricQuery: AnnotationMetricQuery) => onChange({ ...query, metricQuery });
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
   };

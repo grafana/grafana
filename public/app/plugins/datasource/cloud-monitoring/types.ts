@@ -129,6 +129,9 @@ export interface MetricQuery extends BaseQuery {
   preprocessor?: PreprocessorType;
   // To disable the graphPeriod, it should explictly be set to 'disabled'
   graphPeriod?: 'disabled' | string;
+}
+
+export interface AnnotationMetricQuery extends MetricQuery {
   title?: string;
   text?: string;
 }
@@ -145,7 +148,7 @@ export interface SLOQuery extends BaseQuery {
 export interface CloudMonitoringQuery extends DataQuery {
   datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
-  metricQuery: MetricQuery;
+  metricQuery: MetricQuery | AnnotationMetricQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
   type: string;
