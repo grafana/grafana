@@ -827,7 +827,7 @@ export class PrometheusDatasource
 
   async getBuildInfo() {
     try {
-      const buildInfo = await discoverDataSourceFeatures(this);
+      const buildInfo = await discoverDataSourceFeatures({ url: this.url, name: this.name, type: 'prometheus' });
       return buildInfo;
     } catch (error) {
       // We don't want to break the rest of functionality if build info does not work correctly

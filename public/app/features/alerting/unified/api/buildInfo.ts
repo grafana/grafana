@@ -21,13 +21,9 @@ import { fetchTestRulerRulesGroup } from './ruler';
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: string;
+  type: 'prometheus' | 'loki';
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
-
-  if (type !== 'prometheus' && type !== 'loki') {
-    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
-  }
 
   // The current implementation of Loki's build info endpoint is useless
   // So, it's better to skip fetching it for Loki and go Cortex path
@@ -86,6 +82,10 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
   const { url, name, type } = dsConfig;
   if (!url) {
     throw new Error(`The data souce url cannot be empty.`);
+  }
+
+  if (type !== 'prometheus' && type !== 'loki') {
+    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
   }
 
   return discoverDataSourceFeatures({ name, url, type });
