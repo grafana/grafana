@@ -1064,7 +1064,6 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string, mock *dashboards.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
-		mockSQLStore := mockstore.NewSQLStoreMock()
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1078,7 +1077,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.sqlStore = mockSQLStore
+		sc.sqlStore = sqlStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
