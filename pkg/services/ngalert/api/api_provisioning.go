@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -44,7 +43,7 @@ type NotificationPolicyService interface {
 }
 
 type MuteTimingService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTiming, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]apimodels.MuteTiming, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
