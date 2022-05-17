@@ -3,13 +3,18 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
-const defaultPins = ((config.bootData?.navTree as NavModelItem[]) ?? []).map((n) => n.id).join(',');
-const storedPins = (window.localStorage.getItem('pinnedNavItems') ?? defaultPins).split(',');
+import { PreferencesService } from '../services/PreferencesService';
+
+const savedItems = ((config.bootData?.navTree as NavModelItem[]) ?? []).find((n) => n.id === 'saved-items');
+const savedItemsIds = savedItems?.children?.map((n) => n.id);
 
 export const initialState: NavModelItem[] = ((config.bootData?.navTree ?? []) as NavModelItem[]).map(
   (n: NavModelItem) => ({
     ...n,
-    hideFromNavbar: n.id === undefined || !storedPins.includes(n.id),
+    children: n.children?.map((child) => ({
+      ...child,
+      isSavedItem: savedItemsIds?.includes(child.id),
+    })),
   })
 );
 
@@ -18,15 +23,25 @@ const navTreeSlice = createSlice({
   initialState,
   reducers: {
     togglePin: (state, action: PayloadAction<{ id: string }>) => {
-      const navItemIndex = state.findIndex((navItem) => navItem.id === action.payload.id);
-      state[navItemIndex].hideFromNavbar = !state[navItemIndex].hideFromNavbar;
-      window.localStorage.setItem(
-        'pinnedNavItems',
-        state
-          .filter((n) => !n.hideFromNavbar)
-          .map((n) => n.id)
-          .join(',')
-      );
+      const nav = state
+        .flatMap((navItem) => (navItem.id === 'saved-items' ? [] : navItem.children))
+        .find((navItem) => navItem?.id === action.payload.id);
+      if (nav) {
+        nav.isSavedItem = !nav.isSavedItem;
+        const savedItems = state.find((navItem) => navItem.id === 'saved-items');
+        if (savedItems) {
+          savedItems.children = nav.isSavedItem
+            ? [...(savedItems.children || []), nav]
+            : savedItems.children?.filter((navItem) => navItem.id !== action.payload.id);
+        }
+        // Persist new savedItems
+        const service = new PreferencesService('user');
+        service.patch({
+          navbar: {
+            savedItems: savedItems?.children || [],
+          },
+        });
+      }
     },
   },
 });
