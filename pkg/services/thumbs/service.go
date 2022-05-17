@@ -71,7 +71,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	}
 	logger := log.New("previews_service")
 
-	logger.Info("initialized thumb", "settings", cfg.DashboardPreviews)
 	thumbnailRepo := newThumbnailRepo(store)
 
 	canRunCrawler := true
@@ -85,7 +84,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	} else {
 		logger.Info("Crawler auth setup complete", "crawlerAuthSetupTime", time.Since(authSetupStarted))
 	}
-	
+
 	t := &thumbService{
 		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews),
