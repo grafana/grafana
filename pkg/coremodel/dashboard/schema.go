@@ -27,7 +27,7 @@ var (
 const HandoffSchemaVersion = 36
 
 // Lineage returns the Thema lineage representing Grafana dashboards. The
-// lineage is the canonical specification of the current datasource schema, all
+// lineage is the canonical specification of the current dashboard schema, all
 // prior schema versions, and the mappings that allow migration between schema
 // versions.
 //

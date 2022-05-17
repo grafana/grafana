@@ -1,5 +1,9 @@
 package coremodel
 
+// Generates all code derived from coremodel Thema lineages that's used directly
+// by both the frontend and backend.
+//go:generate go run gen.go
+
 import (
 	"github.com/grafana/thema"
 )
