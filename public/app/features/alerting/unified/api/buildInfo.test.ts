@@ -2,7 +2,7 @@ import { of, throwError } from 'rxjs';
 
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { fetchDataSourceBuildInfo } from './buildInfo';
+import { discoverDataSourceFeatures } from './buildInfo';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
@@ -36,7 +36,7 @@ describe('buildInfo', () => {
         })
       );
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Prometheus' });
+      const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Prometheus' });
 
       expect(response.application).toBe(PromApplication.Prometheus);
       expect(response.features.rulerApiEnabled).toBe(false);
@@ -63,7 +63,7 @@ describe('buildInfo', () => {
           })
         );
 
-        const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Prometheus' });
+        const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Prometheus' });
 
         expect(response.application).toBe(PromApplication.Mimir);
         expect(response.features.rulerApiEnabled).toBe(rulerApiEnabled);
@@ -89,9 +89,9 @@ describe('buildInfo', () => {
       });
       mocks.fetchRules.mockResolvedValue([]);
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Cortex' });
+      const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Cortex' });
 
-      expect(response.application).toBe(PromApplication.Cortex);
+      expect(response.application).toBe(PromApplication.Lotex);
       expect(response.features.rulerApiEnabled).toBe(false);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -111,9 +111,9 @@ describe('buildInfo', () => {
       mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Cortex' });
+      const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Cortex' });
 
-      expect(response.application).toBe(PromApplication.Cortex);
+      expect(response.application).toBe(PromApplication.Lotex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
