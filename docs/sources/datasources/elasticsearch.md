@@ -25,12 +25,12 @@ Supported Elasticsearch versions:
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-| Name      | Description                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `Name`    | Data source name. This is how you refer to the data source in panels and queries.                                 |
-| `Default` | Data source is pre-selected for new panels.                                                |
-| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                         |
-| `Access`  | Do not use Access. Use "Server (default)" or the datasource won't function. |
+| Name      | Description                                                                       |
+| --------- | --------------------------------------------------------------------------------- |
+| `Name`    | Data source name. This is how you refer to the data source in panels and queries. |
+| `Default` | Data source is pre-selected for new panels.                                       |
+| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                     |
+| `Access`  | Do not use Access. Use "Server (default)" or the datasource won't function.       |
 
 ### Index settings
 
