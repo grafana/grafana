@@ -7,8 +7,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,91 +39,107 @@ var (
 
 func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("when some values missing should apply default on insert", func(t *testing.T) {
-		store := &spyStore{}
+		dsService := getDataSourceService(t)
 		orgStore := &mockOrgStore{ExpectedOrg: &models.Org{Id: 1}}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
 		}
 
-		require.Equal(t, len(store.inserted), 1)
-		require.Equal(t, store.inserted[0].OrgId, int64(1))
-		require.Equal(t, store.inserted[0].Access, models.DsAccess("proxy"))
-		require.Equal(t, store.inserted[0].Name, "My datasource name")
-		require.Equal(t, store.inserted[0].Uid, "P2AD1F727255C56BA")
+		query := &models.GetDataSourceQuery{OrgId: 1, Uid: "P2AD1F727255C56BA"}
+		err = dsService.GetDataSource(context.Background(), query)
+		require.NoError(t, err)
+
+		require.NotNil(t, query.Result)
+		require.Equal(t, int64(1), query.Result.OrgId)
+		require.Equal(t, models.DsAccess("proxy"), query.Result.Access)
+		require.Equal(t, "My datasource name", query.Result.Name)
+		require.Equal(t, "P2AD1F727255C56BA", query.Result.Uid)
 	})
 
 	t.Run("when some values missing should not change UID when updates", func(t *testing.T) {
-		store := &spyStore{
-			items: []*models.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
-		}
+		dsService := getDataSourceService(t)
+		existingDatasource := &models.AddDataSourceCommand{Name: "My datasource name", OrgId: 1, Uid: util.GenerateShortUID()}
+		dsService.AddDataSource(context.Background(), existingDatasource)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
 		}
 
-		require.Equal(t, len(store.deleted), 0)
-		require.Equal(t, len(store.inserted), 0)
-		require.Equal(t, len(store.updated), 1)
-		require.Equal(t, "", store.updated[0].Uid) // XORM will not update the field if its value is default
+		query := &models.GetDataSourceQuery{Id: 1}
+		err = dsService.GetDataSource(context.Background(), query)
+		require.NoError(t, err)
+
+		require.Equal(t, existingDatasource.Uid, query.Result.Uid) // XORM will not update the field if its value is default
 	})
 
 	t.Run("no datasource in database", func(t *testing.T) {
-		store := &spyStore{}
+		dsService := getDataSourceService(t)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
 		}
 
-		require.Equal(t, len(store.deleted), 0)
-		require.Equal(t, len(store.inserted), 2)
-		require.Equal(t, len(store.updated), 0)
+		query := &models.GetDataSourcesQuery{}
+		err = dsService.GetDataSources(context.Background(), query)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(query.Result))
 	})
 
 	t.Run("One datasource in database with same name should update one datasource", func(t *testing.T) {
-		store := &spyStore{items: []*models.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
+		dsService := getDataSourceService(t)
+		existingDatasource := &models.AddDataSourceCommand{Name: "Graphite", OrgId: 1, Uid: util.GenerateShortUID()}
+		dsService.AddDataSource(context.Background(), existingDatasource)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
 		}
 
-		require.Equal(t, len(store.deleted), 0)
-		require.Equal(t, len(store.inserted), 1)
-		require.Equal(t, len(store.updated), 1)
+		query := &models.GetDataSourceQuery{Id: 1}
+		err = dsService.GetDataSource(context.Background(), query)
+		require.NoError(t, err)
+
+		require.NotEqual(t, existingDatasource.Uid, query.Result.Uid)
 	})
 
 	t.Run("Two datasources with is_default should raise error", func(t *testing.T) {
-		store := &spyStore{}
+		dsService := getDataSourceService(t)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
-		require.Equal(t, err, ErrInvalidConfigToManyDefault)
+		require.Equal(t, ErrInvalidConfigToManyDefault, err)
 	})
 
 	t.Run("Multiple datasources in different organizations with isDefault in each organization should not raise error", func(t *testing.T) {
-		store := &spyStore{}
+		dsService := getDataSourceService(t)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
 		require.NoError(t, err)
-		require.Equal(t, len(store.inserted), 4)
-		require.True(t, store.inserted[0].IsDefault)
-		require.Equal(t, store.inserted[0].OrgId, int64(1))
-		require.True(t, store.inserted[2].IsDefault)
-		require.Equal(t, store.inserted[2].OrgId, int64(2))
+
+		query := &models.GetDataSourcesQuery{}
+		err = dsService.GetDataSources(context.Background(), query)
+		require.NoError(t, err)
+
+		require.Equal(t, 4, len(query.Result))
+		require.True(t, query.Result[0].IsDefault)
+		require.Equal(t, query.Result[0].OrgId, int64(1))
+		require.True(t, query.Result[2].IsDefault)
+		require.Equal(t, query.Result[2].OrgId, int64(2))
 	})
 
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
-		store := &spyStore{}
+		dsService := getDataSourceService(t)
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), deleteOneDatasource)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -127,9 +153,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
+		dsService := getDataSourceService(t)
 		store := &spyStore{items: []*models.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -141,9 +168,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
+		dsService := getDataSourceService(t)
 		store := &spyStore{items: []*models.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		dc := newDatasourceProvisioner(logger, dsService, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -223,6 +251,21 @@ func TestDatasourceAsConfig(t *testing.T) {
 		validateDatasource(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
 	})
+}
+
+func getDataSourceService(t *testing.T) datasources.DataSourceService {
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsStore := kvstore.SetupTestService(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+
+	mockedPermissions := acmock.NewMockedPermissionsService()
+	mockedPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{
+		{Actions: []string{"datasources:read", "datasources:write"}},
+	}, nil)
+
+	dsService := dsservice.ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), mockedPermissions)
+
+	return dsService
 }
 
 func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
