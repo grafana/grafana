@@ -98,7 +98,7 @@ function makeRandomPoint() {
 
 function getRandomLogItem(counter, timestamp) {
   const randomText = `${Math.trunc(Math.random() * 1000 * 1000 * 1000)}`;
-  const maybeAnsiText = Math.random() < 0.5 ? 'with ANSI \u001B[31mpart of the text\u001B[0m' : '';
+  const maybeAnsiText = Math.random() < 0.5 ? 'with ANSI \u001b[31mpart of the text\u001b[0m' : '';
   return {
     '@timestamp': timestamp.toISOString(),
     line: `log text ${maybeAnsiText} [${randomText}]`,
