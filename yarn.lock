@@ -6938,10 +6938,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@opentelemetry/semantic-conventions@npm:1.0.1"
-  checksum: c17dd6494185587b92eb2147114e280c29ecdc1cec081adc4cf02919c04ed63ed0d96a6a1247b8147536b985ec376804327be5b7aca868aa3890d428ac2c6cc7
+"@opentelemetry/semantic-conventions@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.2.0"
+  checksum: ba8ebaaecab15e7aff26b59e028e9ceb73eba2fda6c8c3b9957277d66205a56781ab2a5d1f7bf321b92e0ca44d3e247336665ac4ccaef195455f838cbcab44ff
   languageName: node
   linkType: hard
 
@@ -10879,7 +10879,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-window@npm:1.8.5":
+"@types/react-window-infinite-loader@npm:^1":
+  version: 1.0.6
+  resolution: "@types/react-window-infinite-loader@npm:1.0.6"
+  dependencies:
+    "@types/react": "*"
+    "@types/react-window": "*"
+  checksum: d4648dfb44614e4f0137d7b77eb1868b0c5252f451a78edfc4520e508157ce7687d4b7d9efd6df8f01e72e0d92224338b8c8d934220f32a3081b528599a25829
+  languageName: node
+  linkType: hard
+
+"@types/react-window@npm:*, @types/react-window@npm:1.8.5":
   version: 1.8.5
   resolution: "@types/react-window@npm:1.8.5"
   dependencies:
@@ -11765,15 +11775,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/gradient@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@visx/gradient@npm:2.1.0"
+"@visx/gradient@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/gradient@npm:2.10.0"
   dependencies:
     "@types/react": "*"
     prop-types: ^15.5.7
   peerDependencies:
-    react: ^16.0.0-0 || ^17.0.0-0
-  checksum: fe5a121c3e4b52d525dbfa3b4dd437ae31046f02cb14d5e74a402b12eaf8dabbc2873388e464f73b03169f5d3cb9434166d5836f339ebe4716c7314489f560b2
+    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 30b1a0d0f30685c4c53795a6c4a4b0c88f290a6606205867c9b611f35ad122fa92bc4e5992674276972d698518aabecf7411ed2e71e0583c24f2ac8fdbb0f08f
   languageName: node
   linkType: hard
 
@@ -11787,6 +11797,19 @@ __metadata:
   peerDependencies:
     react: ^16.0.0-0 || ^17.0.0-0
   checksum: 949567b6de4d3a5c39c24c72bed8b25a153da8d2a2bac776abd248c6f9bae26704be6a6fbf4a03138c0ed482ebcf98c58fb5d1b20fd5e1480e3c81b2e67e9052
+  languageName: node
+  linkType: hard
+
+"@visx/group@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/group@npm:2.10.0"
+  dependencies:
+    "@types/react": "*"
+    classnames: ^2.3.1
+    prop-types: ^15.6.2
+  peerDependencies:
+    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 4774fb8d62f68948e45cb214acf025d4f0be1a4d80be11d7771dcd63f7e054710df2a05bc66c5b0d57bf33755c834f5d6033b11c0a360681ca166e32342292f2
   languageName: node
   linkType: hard
 
@@ -11811,16 +11834,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/shape@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@visx/shape@npm:2.4.0"
+"@visx/shape@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@visx/shape@npm:2.10.0"
   dependencies:
     "@types/d3-path": ^1.0.8
     "@types/d3-shape": ^1.3.1
     "@types/lodash": ^4.14.172
     "@types/react": "*"
     "@visx/curve": 2.1.0
-    "@visx/group": 2.1.0
+    "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
     classnames: ^2.3.1
     d3-path: ^1.0.5
@@ -11828,8 +11851,8 @@ __metadata:
     lodash: ^4.17.21
     prop-types: ^15.5.10
   peerDependencies:
-    react: ^16.3.0-0 || ^17.0.0-0
-  checksum: ab68e5db959de09695001ded2a694f9958b30318ac81d123815872e258392d1cf3c7a40cb4b4049f4e64ca4432d10059093057e5310edb9f35736c0dbdb06aea
+    react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 789ab5675ef51d19f276c70ccb71855f73dccc0afb2319be9d0cb719d5f29da8406d77f5f078bb7275bb52a8027739b2867f045980cdc4e1f8d4170b0e77afa2
   languageName: node
   linkType: hard
 
@@ -20897,7 +20920,7 @@ __metadata:
     "@microsoft/api-extractor": 7.23.0
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
-    "@opentelemetry/semantic-conventions": 1.0.1
+    "@opentelemetry/semantic-conventions": 1.2.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
     "@popperjs/core": 2.11.4
     "@react-aria/button": 3.4.3
@@ -20969,6 +20992,7 @@ __metadata:
     "@types/react-transition-group": 4.4.4
     "@types/react-virtualized-auto-sizer": 1.0.1
     "@types/react-window": 1.8.5
+    "@types/react-window-infinite-loader": ^1
     "@types/redux-mock-store": 1.0.3
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.9
@@ -20981,10 +21005,10 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 5.22.0
     "@typescript-eslint/parser": 5.22.0
     "@visx/event": 2.6.0
-    "@visx/gradient": 2.1.0
+    "@visx/gradient": 2.10.0
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
-    "@visx/shape": 2.4.0
+    "@visx/shape": 2.10.0
     "@visx/tooltip": 2.8.0
     "@welldone-software/why-did-you-render": 6.2.3
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.6
@@ -21048,7 +21072,7 @@ __metadata:
     immer: 9.0.12
     immutable: 4.0.0
     jest: 27.5.1
-    jest-canvas-mock: 2.3.1
+    jest-canvas-mock: 2.4.0
     jest-date-mock: 1.0.8
     jest-fail-on-console: 2.3.0
     jest-junit: 13.1.0
@@ -21067,7 +21091,6 @@ __metadata:
     lru-cache: 7.9.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
-    minisearch: 5.0.0-beta1
     moment: 2.29.2
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
@@ -21122,6 +21145,7 @@ __metadata:
     react-use: 17.3.2
     react-virtualized-auto-sizer: 1.0.6
     react-window: 1.8.6
+    react-window-infinite-loader: ^1.0.7
     redux: 4.1.2
     redux-mock-store: 1.5.4
     redux-thunk: 2.4.1
@@ -23427,13 +23451,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-canvas-mock@npm:2.3.1":
-  version: 2.3.1
-  resolution: "jest-canvas-mock@npm:2.3.1"
+"jest-canvas-mock@npm:2.4.0":
+  version: 2.4.0
+  resolution: "jest-canvas-mock@npm:2.4.0"
   dependencies:
     cssfontparser: ^1.2.1
     moo-color: ^1.0.2
-  checksum: 82606d348cf4f671af098dcebac19c98643fc5896c6e1af24b572b8e477e7bee18e4c65e0aee8d72d3af88511eba265e12001c6fb72c319d7efe15a6ba23b58b
+  checksum: feda3c9a3301dc8f1ce3eee3d6cd944d3e2f50d713f1a3f159bdd85b88b275871c400dc0a4a50d14b36eef347dde2d7223e50d1109501b80668d87253712675e
   languageName: node
   linkType: hard
 
@@ -26629,13 +26653,6 @@ __metadata:
   dependencies:
     yallist: ^4.0.0
   checksum: 8b410b9a5bd99ceb9d63c895891d1c30511791fdc7b717da4cf9403ca2419bc57af63b8485ffdaa421ef6cff56f63ae0b2f5135f8df502d21296e8c91460ebf9
-  languageName: node
-  linkType: hard
-
-"minisearch@npm:5.0.0-beta1":
-  version: 5.0.0-beta1
-  resolution: "minisearch@npm:5.0.0-beta1"
-  checksum: 7c5ba8b2d1b52df0724e69183306b4204ae4cdc0102813da7f12a8f90a7b4efe7add4c54814ec1bb63f8bd5be599373af9055e0d68ceeef3d225f0a2c7637699
   languageName: node
   linkType: hard
 
@@ -31891,6 +31908,16 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
   checksum: 81270e9d328e9b779515f42b6aa8dea2f21097f69fc776906d6b7d31ada03706d34408a6318baf59531f180402fbf74fdb9928ab65d53442a134b7ee5ba01265
+  languageName: node
+  linkType: hard
+
+"react-window-infinite-loader@npm:^1.0.7":
+  version: 1.0.7
+  resolution: "react-window-infinite-loader@npm:1.0.7"
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
+    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
+  checksum: 5c11a8958274f79a44672e9b76ca9bfe2ba09d9f6d1c747827f0a2c3da96e423bb059d033ffd866efa94ed8989b405ee7b9c002b11281ca0697eb7ed73caf85e
   languageName: node
   linkType: hard
 
