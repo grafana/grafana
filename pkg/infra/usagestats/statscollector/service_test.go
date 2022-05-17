@@ -121,6 +121,24 @@ func TestFeatureUsageStats(t *testing.T) {
 
 func TestCollectingUsageStats(t *testing.T) {
 	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "2.0.0",
+			}),
+		},
+		{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": "70.1.1",
+			}),
+		},
+	}
+
 	s := createService(t, &setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
@@ -130,7 +148,8 @@ func TestCollectingUsageStats(t *testing.T) {
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
-	}, sqlStore)
+	}, sqlStore,
+		withDatasources(mockDatasourceService{datasources: sqlStore.ExpectedDataSources}))
 
 	s.startTime = time.Now().Add(-1 * time.Minute)
 
