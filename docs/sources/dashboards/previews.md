@@ -9,9 +9,9 @@ weight = 9
 
 {{< figure  max-width="950px" src="/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
 
-> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
-
 Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard in case the dashboard names aren't enough on their own.
+
+> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
 Grafana users are not forced to use previews. Each user can choose to disable them and go back to the usual look and feel of list views. We save the choice in the browser's local storage to make it persistent across sessions.
 
@@ -58,7 +58,7 @@ The crawler can be configured via the main config file. Check the [dashboard pre
 During the initial crawler run, the list contains all dashboards across all organizations.
 During subsequent runs, the list will have fewer elements. It will only contain dashboards that:
 
-- are brand-new
+- are new
 - have changed since taking their last preview
 - haven't changed, but the crawler failed to take their preview during the initial run
 
@@ -66,7 +66,7 @@ Modifying a dashboard is the only way of refreshing that dashboard's preview; pr
 
 ### Rendering previews
 
-The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is then instructed to open the dashboard in _kiosk mode, take a screenshot, and scale it down to a small, 320 x 240px thumbnail. The following dashboard in [Grafana play] is an example of kiosk mode(https://play.grafana.org/playlists/play/1?kiosk)).
+The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is then instructed to open the dashboard in kiosk mode, take a screenshot, and scale it down to a small, 320 x 240px thumbnail. The following dashboard in Grafana Play is an example of kiosk mode: https://play.grafana.org/playlists/play/1?kiosk.
 
 Multiple render requests are issued concurrently to improve performance. The maximum number of concurrent requests can be configured via the `dashboard_previews.crawler.thread_count` config option.
 Use the new [contextPerRenderKey]({{< relref "../image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
