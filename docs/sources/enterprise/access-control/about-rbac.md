@@ -11,8 +11,6 @@ weight: 10
 Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.
 RBAC extends Grafana basic roles that are included in Grafana OSS, and enables you more granular control of users’ actions.
 
-> **Note:** RBAC is in beta, so you can expect changes in future releases.
-
 By using RBAC you can provide users with permissions that extend the permissions available with basic roles. For example, you can use RBAC to:
 
 - Modify existing basic roles: for example, enable an editor to create reports
