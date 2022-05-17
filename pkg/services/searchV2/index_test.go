@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 )
@@ -22,14 +21,6 @@ type testDashboardLoader struct {
 
 func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ string) ([]dashboard, error) {
 	return t.dashboards, nil
-}
-
-type testQueryExtender struct{}
-
-func (t testQueryExtender) GetFramer(_ *data.Frame) FramerFunc {
-	return func(field string, value []byte) bool {
-		return true
-	}
 }
 
 var testLogger = log.New("index-test-logger")
@@ -49,7 +40,7 @@ func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIn
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{})
+	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{}, &NoopExtender{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), 1)
 	require.NoError(t, err)
@@ -63,7 +54,7 @@ func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIn
 
 func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery) {
 	t.Helper()
-	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, &testQueryExtender{})
+	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, &NoopQueryExtender{})
 	goldenFile := filepath.Join("testdata", fileName)
 	err := experimental.CheckGoldenDataResponse(goldenFile, resp, *update)
 	require.NoError(t, err)

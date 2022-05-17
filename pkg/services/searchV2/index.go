@@ -66,7 +66,7 @@ type dashboardIndex struct {
 	extender     DashboardIndexExtender
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DashboardIndexExtender) *dashboardIndex {
 	return &dashboardIndex{
 		loader:       dashLoader,
 		eventStore:   evStore,
@@ -74,7 +74,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		perOrgWriter: map[int64]*bluge.Writer{},
 		logger:       log.New("dashboardIndex"),
 		buildSignals: make(chan int64),
-		extender:     nil,
+		extender:     extender,
 	}
 }
 
@@ -144,14 +144,8 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		uids = append(uids, d.uid)
 	}
 
-	// default document extender
-	documentExtender := func(uid string, doc *bluge.Document) error {
-		return nil
-	}
+	documentExtender := i.extender.GetDocumentExtender(orgID, uids)
 
-	if i.extender != nil {
-		documentExtender = i.extender.GetDocumentExtender(orgID, uids)
-	}
 	reader, writer, err := initIndex(dashboards, i.logger, documentExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)

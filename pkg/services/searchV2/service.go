@@ -26,10 +26,12 @@ type StandardSearchService struct {
 
 	logger         log.Logger
 	dashboardIndex *dashboardIndex
+	extender       DashboardIndexExtender
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
-	return &StandardSearchService{
+	extender := &NoopExtender{}
+	s := &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
 		ac:  ac,
@@ -37,9 +39,11 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore),
+		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore, extender),
 		logger:         log.New("searchV2"),
+		extender:       extender,
 	}
+	return s
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
@@ -54,6 +58,7 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
+	s.extender = ext
 	s.dashboardIndex.extender = ext
 }
 
@@ -127,5 +132,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, reader, filter, q, s.dashboardIndex.extender.GetQueryExtender())
+	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender())
 }
