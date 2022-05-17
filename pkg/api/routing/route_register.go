@@ -156,10 +156,6 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handl
 		}
 	}
 
-	// if os.Getenv(hack.EnvHandlerSummary) != "" {
-	// 	fmt.Println(hack.Summary(method, pattern, handlers))
-	// }
-
 	rr.routes = append(rr.routes, route{
 		method:   method,
 		pattern:  fullPattern,
