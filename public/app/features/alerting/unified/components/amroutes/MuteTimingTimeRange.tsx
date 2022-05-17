@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { MuteTimingFields } from '../../types/mute-timing-form';
-import { Field, InlineFieldRow, InlineField, Input, Button, IconButton, useStyles2 } from '@grafana/ui';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
+import { Field, InlineFieldRow, InlineField, Input, Button, IconButton, useStyles2 } from '@grafana/ui';
+
+import { MuteTimingFields } from '../../types/mute-timing-form';
 
 interface Props {
   intervalIndex: number;

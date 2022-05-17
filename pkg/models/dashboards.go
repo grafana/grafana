@@ -435,8 +435,9 @@ type GetDashboardTagsQuery struct {
 }
 
 type GetDashboardsQuery struct {
-	DashboardIds []int64
-	Result       []*Dashboard
+	DashboardIds  []int64
+	DashboardUIds []string
+	Result        []*Dashboard
 }
 
 type GetDashboardPermissionsForUserQuery struct {

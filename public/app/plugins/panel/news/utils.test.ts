@@ -1,6 +1,7 @@
-import { feedToDataFrame } from './utils';
-import { Feed, NewsItem } from './types';
 import { DataFrameView } from '@grafana/data';
+
+import { Feed, NewsItem } from './types';
+import { feedToDataFrame } from './utils';
 
 describe('news', () => {
   test('convert RssFeed to DataFrame', () => {

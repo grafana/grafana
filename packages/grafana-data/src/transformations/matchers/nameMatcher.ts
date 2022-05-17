@@ -1,8 +1,9 @@
-import { Field, DataFrame } from '../../types/dataFrame';
-import { FieldMatcherID, FrameMatcherID } from './ids';
-import { FieldMatcherInfo, FrameMatcherInfo, FieldMatcher } from '../../types/transformations';
-import { stringToJsRegex } from '../../text/string';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { stringToJsRegex } from '../../text/string';
+import { Field, DataFrame } from '../../types/dataFrame';
+import { FieldMatcherInfo, FrameMatcherInfo, FieldMatcher } from '../../types/transformations';
+
+import { FieldMatcherID, FrameMatcherID } from './ids';
 
 export interface RegexpOrNamesMatcherOptions {
   pattern?: string;

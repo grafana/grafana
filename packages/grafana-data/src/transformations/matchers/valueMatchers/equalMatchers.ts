@@ -1,6 +1,7 @@
 import { Field } from '../../../types/dataFrame';
 import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
+
 import { BasicValueMatcherOptions } from './types';
 
 const isEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {

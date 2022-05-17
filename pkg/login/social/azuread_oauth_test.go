@@ -296,6 +296,22 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "Fetch empty role when strict attribute role is true and no role claims returned",
+			fields: fields{
+				roleAttributeStrict: true,
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

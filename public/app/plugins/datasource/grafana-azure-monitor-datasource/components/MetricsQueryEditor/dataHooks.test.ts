@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+
 import {
   DataHook,
   updateSubscriptions,
@@ -247,11 +248,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
       .fn()
       .mockResolvedValue([opt('Web server', 'web-server'), opt('Job server', 'job-server')]);
 
-    datasource.getMetricNames = jest
+    datasource.azureMonitorDatasource.getMetricNames = jest
       .fn()
       .mockResolvedValue([opt('Percentage CPU', 'percentage-cpu'), opt('Free memory', 'free-memory')]);
 
-    datasource.getMetricNamespaces = jest
+    datasource.azureMonitorDatasource.getMetricNamespaces = jest
       .fn()
       .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
   });
@@ -313,6 +314,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },
@@ -326,6 +328,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },
@@ -340,6 +343,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },

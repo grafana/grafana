@@ -1,16 +1,17 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
 
-import Page from 'app/core/components/Page/Page';
-import OrgProfile from './OrgProfile';
-import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { loadOrganization, updateOrganization } from './state/actions';
-import { AccessControlAction, Organization, StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { setOrganizationName } from './state/reducers';
+import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/core';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { AccessControlAction, Organization, StoreState } from 'app/types';
+
+import OrgProfile from './OrgProfile';
+import { loadOrganization, updateOrganization } from './state/actions';
+import { setOrganizationName } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;

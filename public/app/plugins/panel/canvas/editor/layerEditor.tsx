@@ -1,17 +1,20 @@
 import { get as lodashGet } from 'lodash';
-import { optionBuilder } from './options';
+
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
-import { InstanceState } from '../CanvasPanel';
-import { LayerElementListEditor } from './LayerElementListEditor';
-import { GroupState } from 'app/features/canvas/runtime/group';
-import { Scene } from 'app/features/canvas/runtime/scene';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { Scene } from 'app/features/canvas/runtime/scene';
+import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+
+import { InstanceState } from '../CanvasPanel';
+
+import { LayerElementListEditor } from './LayerElementListEditor';
 import { PlacementEditor } from './PlacementEditor';
+import { optionBuilder } from './options';
 
 export interface LayerEditorProps {
   scene: Scene;
-  layer: GroupState;
+  layer: FrameState;
   selected: ElementState[];
 }
 
@@ -19,12 +22,12 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
   const { selected, scene } = opts;
 
   if (!scene.currentLayer) {
-    scene.currentLayer = scene.root as GroupState;
+    scene.currentLayer = scene.root as FrameState;
   }
 
   if (selected) {
     for (const element of selected) {
-      if (element instanceof GroupState) {
+      if (element instanceof FrameState) {
         scene.currentLayer = element;
         break;
       }
@@ -54,6 +57,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         }
         const c = setOptionImmutably(options, path, value);
         scene.currentLayer?.onChange(c);
+        scene.currentLayer?.updateData(scene.context);
       },
     }),
 
@@ -81,7 +85,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
           category: ['Layout'],
           id: 'content',
           path: '__', // not used
-          name: 'Anchor',
+          name: 'Constraints',
           editor: PlacementEditor,
           settings: {
             scene: opts.scene,

@@ -1,7 +1,9 @@
-import React, { FC, MouseEvent } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, MouseEvent } from 'react';
+
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Card, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { AnnoOptions } from './types';
 
 interface Props extends Pick<PanelProps<AnnoOptions>, 'options'> {

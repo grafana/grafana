@@ -11,6 +11,11 @@ weight = 325
 Grafana ships with advanced support for Elasticsearch. You can do many types of simple or complex Elasticsearch queries to
 visualize logs or metrics stored in Elasticsearch. You can also annotate your graphs with log events stored in Elasticsearch.
 
+Supported Elasticsearch versions:
+
+- v7.10+
+- v8.0+ (experimental)
+
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.

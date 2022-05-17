@@ -1,18 +1,22 @@
-import React, { ReactNode } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React, { ReactNode } from 'react';
+import { Provider } from 'react-redux';
+
+import { DataQuery } from '@grafana/data';
+import { locationService, setEchoSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { Echo } from 'app/core/services/echo/Echo';
+import * as initDashboard from 'app/features/dashboard/state/initDashboard';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreState } from 'app/types';
-import { Provider } from 'react-redux';
-import { AddToDashboard } from '.';
-import * as api from './addToDashboard';
-import { locationService, setEchoSrv } from '@grafana/runtime';
-import * as initDashboard from 'app/features/dashboard/state/initDashboard';
-import { DataQuery } from '@grafana/data';
+
 import { createEmptyQueryResponse } from '../state/utils';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchItemType } from 'app/features/search/types';
-import { Echo } from 'app/core/services/echo/Echo';
+
+import * as api from './addToDashboard';
+
+import { AddToDashboard } from '.';
 
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({
@@ -28,7 +32,7 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
 };
 
 const openModal = async () => {
-  userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
+  await userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
 
   expect(await screen.findByRole('dialog', { name: 'Add panel to dashboard' })).toBeInTheDocument();
 };
@@ -44,7 +48,7 @@ describe('AddToDashboardButton', () => {
     const button = await screen.findByRole('button', { name: /add to dashboard/i });
     expect(button).toBeDisabled();
 
-    userEvent.click(button);
+    await userEvent.click(button);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -71,7 +75,7 @@ describe('AddToDashboardButton', () => {
 
       await openModal();
 
-      userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+      await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -86,7 +90,7 @@ describe('AddToDashboardButton', () => {
 
         await openModal();
 
-        userEvent.click(screen.getByRole('button', { name: /open$/i }));
+        await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
         await waitForAddToDashboardResponse();
 
@@ -105,7 +109,7 @@ describe('AddToDashboardButton', () => {
 
         await openModal();
 
-        userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+        await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
         await waitForAddToDashboardResponse();
 
@@ -124,7 +128,7 @@ describe('AddToDashboardButton', () => {
 
           await openModal();
 
-          userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+          await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
           await waitForAddToDashboardResponse();
 
@@ -138,7 +142,7 @@ describe('AddToDashboardButton', () => {
 
           await openModal();
 
-          userEvent.click(screen.getByRole('button', { name: /open$/i }));
+          await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
           await waitForAddToDashboardResponse();
 
@@ -157,7 +161,7 @@ describe('AddToDashboardButton', () => {
 
         expect(screen.queryByRole('combobox', { name: /dashboard/ })).not.toBeInTheDocument();
 
-        userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
+        await userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
         expect(screen.getByRole('combobox', { name: /dashboard/ })).toBeInTheDocument();
       });
 
@@ -168,9 +172,9 @@ describe('AddToDashboardButton', () => {
 
         await openModal();
 
-        userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
+        await userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
 
-        userEvent.click(screen.getByRole('button', { name: /open$/i }));
+        await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
         await waitForAddToDashboardResponse();
 
         expect(locationService.push).not.toHaveBeenCalled();
@@ -203,16 +207,16 @@ describe('AddToDashboardButton', () => {
 
           await openModal();
 
-          userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
+          await userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
 
-          userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
+          await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
           await waitFor(async () => {
             await screen.findByLabelText('Select option');
           });
-          userEvent.click(screen.getByLabelText('Select option'));
+          await userEvent.click(screen.getByLabelText('Select option'));
 
-          userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+          await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
           await waitFor(async () => {
             expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -246,16 +250,16 @@ describe('AddToDashboardButton', () => {
 
           await openModal();
 
-          userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
+          await userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
 
-          userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
+          await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
           await waitFor(async () => {
             await screen.findByLabelText('Select option');
           });
-          userEvent.click(screen.getByLabelText('Select option'));
+          await userEvent.click(screen.getByLabelText('Select option'));
 
-          userEvent.click(screen.getByRole('button', { name: /open$/i }));
+          await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
           await waitFor(async () => {
             expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -281,7 +285,7 @@ describe('AddToDashboardButton', () => {
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-      userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+      await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
       await waitFor(async () => {
         expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -300,7 +304,7 @@ describe('AddToDashboardButton', () => {
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-      userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+      await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
       await waitFor(async () => {
         expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -328,16 +332,16 @@ describe('AddToDashboardButton', () => {
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-      userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
+      await userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
 
-      userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
+      await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
 
       await waitFor(async () => {
         await screen.findByLabelText('Select option');
       });
-      userEvent.click(screen.getByLabelText('Select option'));
+      await userEvent.click(screen.getByLabelText('Select option'));
 
-      userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+      await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
       await waitFor(async () => {
         expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -352,7 +356,7 @@ describe('AddToDashboardButton', () => {
       await openModal();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-      userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
+      await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
       await waitFor(async () => {
         expect(await screen.findByRole('alert')).toBeInTheDocument();

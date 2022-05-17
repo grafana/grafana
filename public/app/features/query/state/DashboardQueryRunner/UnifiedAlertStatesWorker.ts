@@ -1,14 +1,16 @@
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { from, Observable } from 'rxjs';
-import { getBackendSrv } from '@grafana/runtime';
 import { catchError, map } from 'rxjs/operators';
-import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
-import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-alerting-dto';
+
 import { AlertState, AlertStateInfo } from '@grafana/data';
-import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { AccessControlAction } from 'app/types';
+import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-alerting-dto';
+
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
+import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
 
 export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
   // maps dashboard uid to wether it has alert rules.

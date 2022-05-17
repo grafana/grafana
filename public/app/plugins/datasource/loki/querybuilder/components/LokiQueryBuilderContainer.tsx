@@ -1,12 +1,14 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
-import { buildVisualQueryFromString } from '../parsing';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { LokiVisualQuery } from '../types';
+
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { QueryPreview } from './QueryPreview';
-import { LokiVisualQuery } from '../types';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Props {
   query: LokiQuery;

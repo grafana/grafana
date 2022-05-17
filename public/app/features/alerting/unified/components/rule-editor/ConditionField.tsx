@@ -1,8 +1,11 @@
+import { last } from 'lodash';
+import React, { FC, useEffect, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
+
 import { SelectableValue } from '@grafana/data';
 import { Field, InputControl, Select } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import React, { FC, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+
 import { RuleFormValues } from '../../types/rule-form';
 
 export const ConditionField: FC = () => {
@@ -26,15 +29,29 @@ export const ConditionField: FC = () => {
     [queries]
   );
 
+  const expressions = useMemo(() => {
+    return queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
+  }, [queries]);
+
+  // automatically use the last expression when new expressions have been added
+  useEffect(() => {
+    const lastExpression = last(expressions);
+    if (lastExpression) {
+      setValue('condition', lastExpression.refId, { shouldValidate: true });
+    }
+  }, [expressions, setValue]);
+
   // reset condition if option no longer exists or if it is unset, but there are options available
   useEffect(() => {
-    const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
-    if (condition && !options.find(({ value }) => value === condition)) {
-      setValue('condition', expressions.length ? expressions[expressions.length - 1].refId : null);
-    } else if (!condition && expressions.length) {
-      setValue('condition', expressions[expressions.length - 1].refId);
+    const lastExpression = last(expressions);
+    const conditionExists = options.find(({ value }) => value === condition);
+
+    if (condition && !conditionExists) {
+      setValue('condition', lastExpression?.refId ?? null);
+    } else if (!condition && lastExpression) {
+      setValue('condition', lastExpression.refId, { shouldValidate: true });
     }
-  }, [condition, options, queries, setValue]);
+  }, [condition, expressions, options, setValue]);
 
   return (
     <Field
@@ -47,7 +64,6 @@ export const ConditionField: FC = () => {
         name="condition"
         render={({ field: { onChange, ref, ...field } }) => (
           <Select
-            menuShouldPortal
             aria-label="Condition"
             {...field}
             width={42}

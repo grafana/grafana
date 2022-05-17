@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
-import React from 'react';
+
 import { TempoJsonData } from '../datasource';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
@@ -37,19 +39,21 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
             }
           />
         </InlineField>
-        <Button
-          type={'button'}
-          variant={'secondary'}
-          size={'sm'}
-          fill={'text'}
-          onClick={() => {
-            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
-              datasourceUid: undefined,
-            });
-          }}
-        >
-          Clear
-        </Button>
+        {options.jsonData.serviceMap?.datasourceUid ? (
+          <Button
+            type={'button'}
+            variant={'secondary'}
+            size={'sm'}
+            fill={'text'}
+            onClick={() => {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
+                datasourceUid: undefined,
+              });
+            }}
+          >
+            Clear
+          </Button>
+        ) : null}
       </InlineFieldRow>
     </div>
   );

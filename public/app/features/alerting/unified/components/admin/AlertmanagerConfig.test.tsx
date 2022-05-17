@@ -1,34 +1,38 @@
+import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { getAllDataSources } from '../../utils/config';
+import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
+import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
+
 import {
   fetchAlertManagerConfig,
   deleteAlertManagerConfig,
   updateAlertManagerConfig,
   fetchStatus,
 } from '../../api/alertmanager';
-import { configureStore } from 'app/store/configureStore';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import AlertmanagerConfig from './AlertmanagerConfig';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
-import { render, waitFor } from '@testing-library/react';
-import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 import {
+  disableRBAC,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
+import { getAllDataSources } from '../../utils/config';
+import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
-import { contextSrv } from 'app/core/services/context_srv';
-import store from 'app/core/store';
-import userEvent from '@testing-library/user-event';
-import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
+
+import AlertmanagerConfig from './AlertmanagerConfig';
 
 jest.mock('../../api/alertmanager');
 jest.mock('../../api/grafana');
@@ -91,6 +95,7 @@ describe('Admin config', () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     contextSrv.isGrafanaAdmin = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
+    disableRBAC();
   });
 
   it('Reset alertmanager config', async () => {
@@ -104,8 +109,8 @@ describe('Admin config', () => {
 
     await renderAdminPage(dataSources.alertManager.name);
 
-    userEvent.click(await ui.resetButton.find());
-    userEvent.click(ui.confirmButton.get());
+    await userEvent.click(await ui.resetButton.find());
+    await userEvent.click(ui.confirmButton.get());
     await waitFor(() => expect(mocks.api.deleteAlertManagerConfig).toHaveBeenCalled());
     expect(ui.confirmButton.query()).not.toBeInTheDocument();
   });
@@ -132,12 +137,12 @@ describe('Admin config', () => {
     await renderAdminPage(dataSources.alertManager.name);
     const input = await ui.configInput.find();
     expect(input.value).toEqual(JSON.stringify(defaultConfig, null, 2));
-    userEvent.clear(input);
+    await userEvent.clear(input);
     // What is this regex replace doing? in userEvent v13, '{' and '[' are special characters.
     // To get the literal character, you have to escape them by typing '{{' or '[['.
     // See https://github.com/testing-library/user-event/issues/584.
-    userEvent.type(input, JSON.stringify(newConfig, null, 2).replace(/[{[]/g, '$&$&'));
-    userEvent.click(ui.saveButton.get());
+    await userEvent.type(input, JSON.stringify(newConfig, null, 2).replace(/[{[]/g, '$&$&'));
+    await userEvent.click(ui.saveButton.get());
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
     expect(input.value).toEqual(JSON.stringify(newConfig, null, 2));

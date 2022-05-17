@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
 import React from 'react';
+
 import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
 import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
+
 import {
   configMapHandlers,
   evaluteFieldMappings,
@@ -9,7 +12,6 @@ import {
   FieldToConfigMapping,
   lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
-import { capitalize } from 'lodash';
 
 export interface Props {
   frame: DataFrame;
@@ -73,7 +75,6 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
             <td className={styles.labelCell}>{row.fieldName}</td>
             <td className={styles.selectCell} data-testid={`${row.fieldName}-config-key`}>
               <Select
-                menuShouldPortal
                 options={configProps}
                 value={row.configOption}
                 placeholder={row.placeholder}

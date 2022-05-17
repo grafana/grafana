@@ -26,7 +26,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points provisioning RoutePutContactpoints
+// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -48,7 +48,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:parameters RoutePostContactpoints RoutePutContactpoints
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {
 	// in:body
 	Body EmbeddedContactPoint
@@ -66,7 +66,7 @@ type EmbeddedContactPoint struct {
 	Type                  string           `json:"type" binding:"required"`
 	Settings              *simplejson.Json `json:"settings" binding:"required"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Provenance            string           `json:"provanance"`
+	Provenance            string           `json:"provenance"`
 }
 
 const RedactedValue = "[REDACTED]"

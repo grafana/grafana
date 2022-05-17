@@ -1,6 +1,7 @@
-import store from 'app/core/store';
 import { filter, isArray, isNumber } from 'lodash';
+
 import config from 'app/core/config';
+import store from 'app/core/store';
 
 export class ImpressionSrv {
   constructor() {}
@@ -27,7 +28,8 @@ export class ImpressionSrv {
     store.set(impressionsKey, JSON.stringify(impressions));
   }
 
-  getDashboardOpened() {
+  /** Returns an array of internal (numeric) dashboard IDs */
+  getDashboardOpened(): number[] {
     let impressions = store.get(this.impressionKey()) || '[]';
 
     impressions = JSON.parse(impressions);

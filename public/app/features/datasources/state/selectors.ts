@@ -1,4 +1,5 @@
 import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
+
 import { DataSourcesState } from '../../../types/datasources';
 
 export const getDataSources = (state: DataSourcesState) => {

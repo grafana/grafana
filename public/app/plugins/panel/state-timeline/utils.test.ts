@@ -1,5 +1,6 @@
 import { ArrayVector, createTheme, FieldType, ThresholdsMode, toDataFrame } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
+
 import {
   findNextStateIndex,
   fmtDuration,

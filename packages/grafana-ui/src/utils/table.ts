@@ -1,6 +1,7 @@
-import { Field, LinkModel } from '@grafana/data';
 import { MouseEventHandler } from 'react';
 import { Row } from 'react-table';
+
+import { Field, LinkModel } from '@grafana/data';
 
 /**
  * @internal

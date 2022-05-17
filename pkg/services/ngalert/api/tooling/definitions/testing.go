@@ -26,7 +26,7 @@ import (
 //     Responses:
 //       200: TestRuleResponse
 
-// swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
 //
 // Test a rule against external data source ruler
 //
