@@ -1,8 +1,8 @@
 +++
-title = "Annotations"
+aliases = ["/docs/grafana/latest/features/panels/anotations/", "/docs/grafana/latest/panels/visualizations/annotations/", "/docs/grafana/latest/visualizations/annotations/"]
 description = "Annotations visualization documentation"
 keywords = ["grafana", "Annotations", "panel", "documentation"]
-aliases = ["/docs/grafana/latest/features/panels/anotations/", "/docs/grafana/latest/panels/visualizations/annotations/"]
+title = "Annotations"
 weight = 105
 +++
 

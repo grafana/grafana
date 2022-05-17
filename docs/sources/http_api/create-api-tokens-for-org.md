@@ -1,7 +1,7 @@
 +++
-title = "API Tutorial: Create API tokens and dashboards for an organization"
+aliases = ["/docs/grafana/latest/http_api/create-api-tokens-for-org/", "/docs/grafana/latest/tutorials/api_org_token_howto/"]
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
-aliases =["/docs/grafana/latest/tutorials/api_org_token_howto/"]
+title = "API Tutorial: Create API tokens and dashboards for an organization"
 weight = 150
 +++
 

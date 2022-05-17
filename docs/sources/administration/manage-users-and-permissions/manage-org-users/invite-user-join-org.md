@@ -1,6 +1,6 @@
 +++
-title = "Invite a user to join an organization"
 aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org/"]
+title = "Invite a user to join an organization"
 weight = 10
 +++
 

@@ -1,9 +1,9 @@
 +++
-title = "Grafana Mimir or Loki rule groups and namespaces"
+aliases = ["/docs/grafana/latest/alerting/alerting-rules/edit-mimir-loki-namespace-group/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/"]
 description = "Edit Grafana Mimir or Loki rule groups and namespaces"
 keywords = ["grafana", "alerting", "guide", "group", "namespace", "grafana mimir", "loki"]
+title = "Grafana Mimir or Loki rule groups and namespaces"
 weight = 405
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/"]
 +++
 
 # Grafana Mimir or Loki rule groups and namespaces

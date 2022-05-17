@@ -1,7 +1,8 @@
 +++
-title = "Auditing"
+aliases = ["/docs/grafana/latest/enterprise/auditing/"]
 description = "Auditing"
 keywords = ["grafana", "auditing", "audit", "logs"]
+title = "Auditing"
 weight = 1100
 +++
 

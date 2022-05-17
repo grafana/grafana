@@ -1,7 +1,8 @@
 +++
-title = "Google Cloud KMS"
+aliases = ["/docs/grafana/latest/enterprise/enterprise-encryption/using-google-cloud-kms-to-encrypt-database-secrets/"]
 description = "Using Google Cloud KMS to encrypt database secrets"
 keywords = ["grafana", "Google Cloud KMS integration"]
+title = "Google Cloud KMS"
 weight = 3
 +++
 
