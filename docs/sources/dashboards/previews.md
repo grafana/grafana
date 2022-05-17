@@ -9,7 +9,7 @@ weight = 9
 
 {{< figure  max-width="950px" src="/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
 
-> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Please refer to the [permissions]({{< relref "#preview-visibility">}}) section to learn about issues with data source permissions before enabling the feature.
+> **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
 Dashboard previews provide an overview of all available dashboards. They help you quickly find the right dashboard in case the dashboard names aren't enough on their own.
 
