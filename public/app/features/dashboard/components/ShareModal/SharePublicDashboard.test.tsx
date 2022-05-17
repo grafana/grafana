@@ -67,9 +67,9 @@ describe('SharePublic', () => {
 
     await waitFor(() => screen.getByText('Link'));
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).toHaveTextContent('Share Public Dashboard');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Public Dashboard');
 
-    fireEvent.click(screen.getByText('Share Public Dashboard'));
+    fireEvent.click(screen.getByText('Public Dashboard'));
 
     await waitFor(() => screen.getByText('Enabled'));
   });
