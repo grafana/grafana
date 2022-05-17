@@ -24,12 +24,13 @@ The following example includes the base64 username:password Basic Authorization.
 
 Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../http_api/access_control.md#get-a-role" >}}).
 
-To see the permissions associated with basic roles, refer to the following basic role UIDs:
-| Basic role | UID |
-|-----------------|-----------------------|
-| `Viewer` | `basic_viewer` |
-| `Editor` | `basic_editor` |
-| `Admin` | `basic_admin` |
+<span id="basic-role-uid-mapping">To see the permissions associated with basic roles, refer to the following basic role UIDs</span>:
+
+| Basic role      | UID                   |
+| --------------- | --------------------- |
+| `Viewer`        | `basic_viewer`        |
+| `Editor`        | `basic_editor`        |
+| `Admin`         | `basic_admin`         |
 | `Grafana Admin` | `basic_grafana_admin` |
 
 **Example request**
