@@ -443,6 +443,10 @@ type Cfg struct {
 	QueryHistoryEnabled bool
 
 	DashboardPreviews DashboardPreviewsSettings
+
+	// Access Control
+	RBACEnabled         bool
+	RBACPermissionCache bool
 }
 
 type CommandLineArgs struct {
@@ -925,6 +929,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readAccessControlSettings(iniFile, cfg)
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
@@ -1349,6 +1354,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	return nil
+}
+
+func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
+	rbac := iniFile.Section("rbac")
+	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {

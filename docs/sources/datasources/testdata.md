@@ -1,7 +1,7 @@
 +++
-title = "TestData"
+aliases = ["/docs/grafana/latest/datasources/testdata/", "/docs/grafana/latest/features/datasources/testdata/"]
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
-aliases = ["/docs/grafana/latest/features/datasources/testdata"]
+title = "TestData"
 weight = 1500
 +++
 

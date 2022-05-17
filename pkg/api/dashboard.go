@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -557,9 +558,25 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	var dashID int64
+
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
+	} else {
+		q := models.GetDashboardQuery{
+			OrgId: c.SignedInUser.OrgId,
+			Uid:   dashUID,
+		}
+		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
+		}
+		dashID = q.Result.Id
 	}
 
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
@@ -586,6 +603,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	dashVersionMeta := &models.DashboardVersionMeta{
 		Id:            query.Result.Id,
 		DashboardId:   query.Result.DashboardId,
+		DashboardUID:  dashUID,
 		Data:          query.Result.Data,
 		ParentVersion: query.Result.ParentVersion,
 		RestoredFrom:  query.Result.RestoredFrom,
@@ -726,4 +744,25 @@ func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	}
 
 	c.JSON(http.StatusOK, query.Result)
+}
+
+// GetDashboardUIDs converts internal ids to UIDs
+func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
+	ids := strings.Split(web.Params(c.Req)[":ids"], ",")
+	uids := make([]string, 0, len(ids))
+
+	q := &models.GetDashboardRefByIdQuery{}
+	for _, idstr := range ids {
+		id, err := strconv.ParseInt(idstr, 10, 64)
+		if err != nil {
+			continue
+		}
+		q.Id = id
+		err = hs.SQLStore.GetDashboardUIDById(c.Req.Context(), q)
+		if err != nil {
+			continue
+		}
+		uids = append(uids, q.Result.Uid)
+	}
+	c.JSON(http.StatusOK, uids)
 }

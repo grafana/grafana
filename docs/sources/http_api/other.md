@@ -1,8 +1,8 @@
 +++
-title = "Other HTTP API "
+aliases = ["/docs/grafana/latest/http_api/other/"]
 description = "Grafana Other HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "other"]
-aliases = ["/docs/grafana/latest/http_api/other/"]
+title = "Other HTTP API "
 +++
 
 # Frontend Settings API

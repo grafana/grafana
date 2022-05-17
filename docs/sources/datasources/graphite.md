@@ -1,8 +1,8 @@
 +++
-title = "Graphite"
+aliases = ["/docs/grafana/latest/datasources/graphite/", "/docs/grafana/latest/features/datasources/graphite/"]
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/graphite"]
+title = "Graphite"
 weight = 600
 +++
 
