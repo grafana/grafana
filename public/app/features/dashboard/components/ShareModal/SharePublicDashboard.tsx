@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { Button, Field, Switch } from '@grafana/ui';
+import { Button, Field, Switch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -14,9 +14,6 @@ import {
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {}
-
-// 1. write test for dashboardCanBePublic
-// 2. figure out how to disable the switch
 
 export const SharePublicDashboard = (props: Props) => {
   const [publicDashboardConfig, setPublicDashboardConfig] = useState<PublicDashboardConfig>({ isPublic: false });
@@ -33,7 +30,6 @@ export const SharePublicDashboard = (props: Props) => {
   }, [dashboardUid]);
 
   const onSavePublicConfig = () => {
-    // verify dashboard can be public
     if (!dashboardCanBePublic(props.dashboard)) {
       dispatch(notifyApp(createErrorNotification('This dashboard cannot be made public')));
       return;
@@ -50,7 +46,14 @@ export const SharePublicDashboard = (props: Props) => {
 
   return (
     <>
+      {!dashboardCanBePublic(props.dashboard) && (
+        <Alert severity="warning" title="dashboard cannot be public">
+          This dashboard cannot be made public because it has template variables
+        </Alert>
+      )}
+
       <p className="share-modal-info-text">Public Dashboard Configuration</p>
+
       <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
         <Switch
           id="share-current-time-range"
