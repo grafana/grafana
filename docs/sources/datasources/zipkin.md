@@ -1,8 +1,8 @@
 +++
-title = "Zipkin"
+aliases = ["/docs/grafana/latest/datasources/zipkin/"]
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
+title = "Zipkin"
 weight = 1600
 +++
 
