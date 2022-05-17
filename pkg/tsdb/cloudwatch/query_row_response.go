@@ -14,6 +14,7 @@ type queryRowResponse struct {
 
 func newQueryRowResponse() queryRowResponse {
 	return queryRowResponse{
+		partialDataSet: make(map[string]*cloudwatch.MetricDataResult),
 		ErrorCodes: map[string]bool{
 			maxMetricsExceeded:         false,
 			maxQueryTimeRangeExceeded:  false,
@@ -26,13 +27,13 @@ func newQueryRowResponse() queryRowResponse {
 	}
 }
 
-func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult, partialDataSet map[string]*cloudwatch.MetricDataResult) {
-	if partialData, ok := partialDataSet[*mdr.Label]; ok {
+func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult) {
+	if partialData, ok := q.partialDataSet[*mdr.Label]; ok {
 		partialData.Timestamps = append(partialData.Timestamps, mdr.Timestamps...)
 		partialData.Values = append(partialData.Values, mdr.Values...)
 		q.StatusCode = *mdr.StatusCode
 		if *mdr.StatusCode != "PartialData" {
-			delete(partialDataSet, *mdr.Label)
+			delete(q.partialDataSet, *mdr.Label)
 		}
 		return
 	}
@@ -41,7 +42,7 @@ func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult,
 	q.Metrics = append(q.Metrics, mdr)
 	q.StatusCode = *mdr.StatusCode
 	if *mdr.StatusCode == "PartialData" {
-		partialDataSet[*mdr.Label] = mdr
+		q.partialDataSet[*mdr.Label] = mdr
 	}
 }
 
