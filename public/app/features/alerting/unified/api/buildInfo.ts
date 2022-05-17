@@ -26,7 +26,8 @@ export async function discoverDataSourceFeatures(dsSettings: {
   const { url, name, type } = dsSettings;
 
   // The current implementation of Loki's build info endpoint is useless
-  // So, it's better to skip fetching it for Loki and go Cortex path
+  // because it doesn't provide information about Loki's available features (e.g. Ruler API)
+  // It's better to skip fetching it for Loki and go the Cortex path (manual discovery)
   const buildInfoResponse = type === 'prometheus' ? await fetchPromBuildInfo(url) : undefined;
 
   // check if the component returns buildinfo
