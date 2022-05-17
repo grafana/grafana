@@ -1,6 +1,6 @@
 name: UX design issue
 description: Create an issue for delivering wireframes, mockups or other design solutions.
-title: ""
+title: "UX: "
 labels: ["type/ux"]
 body:
   - type: input
