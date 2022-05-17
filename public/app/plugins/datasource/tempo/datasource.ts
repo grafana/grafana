@@ -450,12 +450,9 @@ function secondServiceMapQuery(
   tempoDatasourceUid: string
 ) {
   const spanNames = firstResponses.data[0][0].data[0].fields[1].values.toArray().join('|');
-  const errorRateMetricWithFilter = buildExpr(errorRateMetric.query, '{span_name=~"' + spanNames + '"}');
+  const errorRateMetricWithFilter = buildExpr(errorRateMetric, '{span_name=~"' + spanNames + '"}');
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmMetricsRequest(
-    [{ ...errorRateMetric, query: errorRateMetricWithFilter }, durationMetric],
-    request
-  );
+  serviceMapRequest.targets = makeApmMetricsRequest([errorRateMetricWithFilter, durationMetric], request);
 
   return queryServiceMapPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
@@ -497,13 +494,13 @@ function getApmTable(
   //   df = toDataFrame([]);
   // } else {
   const rate = firstResponse.data[0][0].data.filter((x: { refId: string }) => {
-    return x.refId === rateMetric.query;
+    return x.refId === rateMetric;
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateMetricWithFilter;
   });
   const duration = secondResponse.data.filter((x) => {
-    return x.refId === durationMetric.query;
+    return x.refId === durationMetric;
   });
 
   df.fields = [];
@@ -518,16 +515,13 @@ function getApmTable(
       name: 'Rate',
       config: {
         links: [
-          makePromLink(
-            rateMetric.query,
-            buildExpr(rateMetric.query, request.targets[0].serviceMapQuery),
-            datasourceUid,
-            rateMetric.instant
-          ),
+          makePromLink(rateMetric, buildExpr(rateMetric, request.targets[0].serviceMapQuery), datasourceUid, false),
         ],
       },
     });
 
+    // const spanNames = firstResponses.data[0][0].data[0].fields[1].values.toArray().join('|');
+    // const errorRateMetricWithFilter = buildExpr(errorRateMetric.query, '{span_name=~"' + spanNames + '"}');
     df.fields.push({
       ...rate[0].fields[2],
       name: ' ',
@@ -551,10 +545,10 @@ function getApmTable(
       config: {
         links: [
           makePromLink(
-            errorRateMetric.query,
-            buildExpr(errorRateMetric.query, request.targets[0].serviceMapQuery),
+            errorRateMetric,
+            buildExpr(errorRateMetric, request.targets[0].serviceMapQuery),
             datasourceUid,
-            errorRateMetric.instant
+            false
           ),
         ],
       },
@@ -583,10 +577,10 @@ function getApmTable(
       config: {
         links: [
           makePromLink(
-            durationMetric.query,
-            buildExpr(durationMetric.query, request.targets[0].serviceMapQuery),
+            durationMetric,
+            buildExpr(durationMetric, request.targets[0].serviceMapQuery),
             datasourceUid,
-            durationMetric.instant
+            false
           ),
         ],
         unit: 'ms',
@@ -621,6 +615,8 @@ function makePromLink(title: string, metric: string, datasourceUid: string, inst
     internal: {
       query: {
         expr: metric,
+        range: !instant,
+        exemplar: !instant,
         instant: instant,
       } as PromQuery,
       datasourceUid,
@@ -659,9 +655,9 @@ function buildExpr(metric: string, serviceMapQuery: string | undefined) {
 function makeApmMetricsRequest(apmMetrics: any[], options: DataQueryRequest<TempoQuery>) {
   const metrics = apmMetrics.map((metric) => {
     return {
-      refId: metric.query,
-      expr: buildExpr(metric.query, options.targets[0].serviceMapQuery),
-      instant: metric.instant,
+      refId: metric,
+      expr: buildExpr(metric, options.targets[0].serviceMapQuery),
+      instant: true,
     };
   });
   return metrics;
