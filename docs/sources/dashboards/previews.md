@@ -66,7 +66,7 @@ Modifying a dashboard is the only way of refreshing that dashboard's preview; pr
 
 ### Rendering previews
 
-The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is instructed to open the dashboard in _kiosk mode_ ([Grafana play example of kiosk mode](https://play.grafana.org/playlists/play/1?kiosk)), take a screenshot, and scale it down to a small, 320 x 240px thumbnail.
+The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is then instructed to open the dashboard in _kiosk mode, take a screenshot, and scale it down to a small, 320 x 240px thumbnail. The following dashboard in [Grafana play] is an example of kiosk mode(https://play.grafana.org/playlists/play/1?kiosk)).
 
 Multiple render requests are issued concurrently to improve performance. The maximum number of concurrent requests can be configured via the `dashboard_previews.crawler.thread_count` config option.
 Use the new [contextPerRenderKey]({{< relref "../image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
