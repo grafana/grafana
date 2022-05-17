@@ -18818,9 +18818,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:26.1.2":
-  version: 26.1.2
-  resolution: "eslint-plugin-jest@npm:26.1.2"
+"eslint-plugin-jest@npm:26.2.2":
+  version: 26.2.2
+  resolution: "eslint-plugin-jest@npm:26.2.2"
   dependencies:
     "@typescript-eslint/utils": ^5.10.0
   peerDependencies:
@@ -18831,7 +18831,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 1d74e143a78681906d9ab3c3bd7c213f869fe6385f75c325ff2fe3da3b4181a25545c30d42850cf4904f89a43aad9d41b5fd4c06daffdb3f0ec383d8d4d7bac0
+  checksum: c1299a0bb465196d3c8a26ee892e29398b91bb741fe69ac6b19b54096f795142a152355ca520d80c778fb588ba2282a7c625ef204c17fe65ee94709d16970d46
   languageName: node
   linkType: hard
 
@@ -20282,14 +20282,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:10.0.1":
-  version: 10.0.1
-  resolution: "fs-extra@npm:10.0.1"
+"fs-extra@npm:10.1.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
   dependencies:
     graceful-fs: ^4.2.0
     jsonfile: ^6.0.1
     universalify: ^2.0.0
-  checksum: c1faaa5eb9e1c5c7c7ff09f966e93922ecb068ae1b04801cfc983ef05fcc1f66bfbb8d8d0b745c910014c7a2e7317fb6cf3bfe7390450c1157e3cc1a218f221d
+  checksum: dc94ab37096f813cc3ca12f0f1b5ad6744dfed9ed21e953d72530d103cea193c2f81584a39e9dee1bea36de5ee66805678c0dddc048e8af1427ac19c00fffc50
   languageName: node
   linkType: hard
 
@@ -21209,7 +21209,7 @@ __metadata:
     eslint: 8.11.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-import: ^2.26.0
-    eslint-plugin-jest: 26.1.2
+    eslint-plugin-jest: 26.2.2
     eslint-plugin-jsdoc: 38.0.6
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.29.4
@@ -21222,7 +21222,7 @@ __metadata:
     file-loader: 6.2.0
     file-saver: 2.0.5
     fork-ts-checker-webpack-plugin: 7.2.1
-    fs-extra: 10.0.1
+    fs-extra: 10.1.0
     glob: 7.2.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
@@ -21236,8 +21236,8 @@ __metadata:
     jest: 27.5.1
     jest-canvas-mock: 2.4.0
     jest-date-mock: 1.0.8
-    jest-fail-on-console: 2.3.0
-    jest-junit: 13.1.0
+    jest-fail-on-console: 2.4.1
+    jest-junit: 13.2.0
     jest-matcher-utils: 27.5.1
     jest-mock-console: 1.2.3
     jquery: 3.6.0
@@ -21247,7 +21247,7 @@ __metadata:
     kbar: ^0.1.0-beta.30
     lerna: ^4.0.0
     lezer-promql: 0.22.0
-    lint-staged: 12.3.7
+    lint-staged: 12.4.1
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 7.9.0
@@ -23960,12 +23960,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-fail-on-console@npm:2.3.0":
-  version: 2.3.0
-  resolution: "jest-fail-on-console@npm:2.3.0"
+"jest-fail-on-console@npm:2.4.1":
+  version: 2.4.1
+  resolution: "jest-fail-on-console@npm:2.4.1"
   dependencies:
     chalk: ^4.1.0
-  checksum: b0ce97a5f6bc11226a1eecb9406c98e42ce5e7197310019f3cb27495b43cc1d01aaee36b094ea46a23deffcb62b246ddccd5dfdefe525b72d8dad2c9f1f634ee
+  checksum: 50ad738df0d0137fb546ccfa7a36a3967cbbcd424bcabf8b02210cf9d06e6a7a7417d469bc67658ba642be79d84f0fec9f6dcccda38eca99fc005740e3b22376
   languageName: node
   linkType: hard
 
@@ -24113,15 +24113,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-junit@npm:13.1.0":
-  version: 13.1.0
-  resolution: "jest-junit@npm:13.1.0"
+"jest-junit@npm:13.2.0":
+  version: 13.2.0
+  resolution: "jest-junit@npm:13.2.0"
   dependencies:
     mkdirp: ^1.0.4
     strip-ansi: ^6.0.1
     uuid: ^8.3.2
     xml: ^1.0.1
-  checksum: a12ec522012cf9d0e97d4c665d8ca05b97dc3d25ef3cd0dbba2b095da4b68e1cabac9751a2718a9593b55c620a2b980e0b6c7dd7d33dfc4b73193bc67b9c9ae0
+  checksum: 0a42447e0c9ae689ae43275944a72587216cb028d45f2bd54bfc9e7e38f90bb03caa571e58ac16fba44c121c7c5f6ae766c50833851f23153f7430b1b3b317c2
   languageName: node
   linkType: hard
 
@@ -25549,9 +25549,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lint-staged@npm:12.3.7":
-  version: 12.3.7
-  resolution: "lint-staged@npm:12.3.7"
+"lint-staged@npm:12.4.1":
+  version: 12.4.1
+  resolution: "lint-staged@npm:12.4.1"
   dependencies:
     cli-truncate: ^3.1.0
     colorette: ^2.0.16
@@ -25569,7 +25569,7 @@ __metadata:
     yaml: ^1.10.2
   bin:
     lint-staged: bin/lint-staged.js
-  checksum: b595097556880eb2ab7ce2cf105047f6f22525ccfd608fbdc63ab243259aa36a26949576fadff673748fb885e7cb37ad3f4471d964ad54c1205d57a58999ba24
+  checksum: b57183b537064cda6caef6679918bf271903145f7c28d09567e918b8b13094048b579f8df808ea590dbd7ea2ec332327c5e372cf3d77e85b7b0254f6541ce4c3
   languageName: node
   linkType: hard
 

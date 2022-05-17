@@ -25,6 +25,7 @@ const (
 	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
+	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
 	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
@@ -170,6 +171,25 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
+
+		for _, xform := range panel.Transformer {
+			doc.AddField(bluge.NewKeywordField(documentFieldTransformer, xform).Aggregatable())
+		}
+
+		for _, ds := range panel.Datasource {
+			if ds.UID != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
+			if ds.Type != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
+		}
 
 		docs = append(docs, doc)
 	}

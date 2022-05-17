@@ -28,16 +28,23 @@ interface SectionHeaderProps {
   selectionToggle?: SelectionToggle;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
+  renderStandaloneBody?: boolean; // render the body on its own
 }
 
-export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle, onTagSelected, selection }) => {
+export const FolderSection: FC<SectionHeaderProps> = ({
+  section,
+  selectionToggle,
+  onTagSelected,
+  selection,
+  renderStandaloneBody,
+}) => {
   const editable = selectionToggle != null;
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected, editable);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(getSectionStorageKey(section.title), false);
 
   const results = useAsync(async () => {
-    if (!sectionExpanded) {
+    if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([] as DashboardSectionItem[]);
     }
     let folderUid: string | undefined = section.uid;
@@ -143,6 +150,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       );
     });
   };
+
+  // Skip the folder wrapper
+  if (renderStandaloneBody) {
+    return <div>{renderResults()}</div>;
+  }
 
   return (
     <CollapsableSection

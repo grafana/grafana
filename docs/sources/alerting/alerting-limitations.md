@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/alerting/alerting-limitations/"]
 title = "Limitations"
 weight = 552
-aliases = ["/docs/grafana/latest/alerting/alerting-limitations/"]
 +++
 
 # Limitations

@@ -203,7 +203,13 @@ func TestAccountDataAccess(t *testing.T) {
 					err = sqlStore.UpdateOrgUser(context.Background(), &updateCmd)
 					require.NoError(t, err)
 
-					orgUsersQuery := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					orgUsersQuery := models.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						User: &models.SignedInUser{
+							OrgId:       ac1.OrgId,
+							Permissions: map[int64]map[string][]string{ac1.OrgId: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+						},
+					}
 					err = sqlStore.GetOrgUsers(context.Background(), &orgUsersQuery)
 					require.NoError(t, err)
 
@@ -233,7 +239,13 @@ func TestAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Can get organization users", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					query := models.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						User: &models.SignedInUser{
+							OrgId:       ac1.OrgId,
+							Permissions: map[int64]map[string][]string{ac1.OrgId: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+						},
+					}
 					err := sqlStore.GetOrgUsers(context.Background(), &query)
 
 					require.NoError(t, err)
@@ -245,6 +257,10 @@ func TestAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgId,
 						Query: "ac1",
+						User: &models.SignedInUser{
+							OrgId:       ac1.OrgId,
+							Permissions: map[int64]map[string][]string{ac1.OrgId: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+						},
 					}
 					err := sqlStore.GetOrgUsers(context.Background(), &query)
 
@@ -258,6 +274,10 @@ func TestAccountDataAccess(t *testing.T) {
 						OrgId: ac1.OrgId,
 						Query: "ac",
 						Limit: 1,
+						User: &models.SignedInUser{
+							OrgId:       ac1.OrgId,
+							Permissions: map[int64]map[string][]string{ac1.OrgId: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+						},
 					}
 					err := sqlStore.GetOrgUsers(context.Background(), &query)
 
@@ -338,7 +358,13 @@ func TestAccountDataAccess(t *testing.T) {
 					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
 					require.NoError(t, err)
 
-					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					query := models.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						User: &models.SignedInUser{
+							OrgId:       ac1.OrgId,
+							Permissions: map[int64]map[string][]string{ac1.OrgId: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+						},
+					}
 					err = sqlStore.GetOrgUsers(context.Background(), &query)
 					require.NoError(t, err)
 					// require.Equal(t, len(query.Result), 3)
