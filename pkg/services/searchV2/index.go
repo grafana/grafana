@@ -37,6 +37,10 @@ type FramerFunc func(field string, value []byte) bool
 
 type DashboardIndexExtender interface {
 	GetDocumentExtender(orgID int64, uids []string) ExtendDocumentFunc
+	GetQueryExtender() QueryExtender
+}
+
+type QueryExtender interface {
 	GetFramer(frame *data.Frame) FramerFunc
 }
 

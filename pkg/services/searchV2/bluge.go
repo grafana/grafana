@@ -264,7 +264,7 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender DashboardIndexExtender) *backend.DataResponse {
+func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
 	// Folder listing structure
@@ -455,10 +455,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			// 	vals[field] = string(value)
 			// }
 
-			if !ext(field, value) {
-				return false
-			}
-
 			switch field {
 			case documentFieldUID:
 				uid = string(value)
@@ -476,6 +472,10 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 				ds_uids = append(ds_uids, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
+			default:
+				if !ext(field, value) {
+					return false
+				}
 			}
 			return true
 		})

@@ -127,5 +127,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, reader, filter, q, s.dashboardIndex.extender)
+	return doSearchQuery(ctx, s.logger, reader, filter, q, s.dashboardIndex.extender.GetQueryExtender())
 }
