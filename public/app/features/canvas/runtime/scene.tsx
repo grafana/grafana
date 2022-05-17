@@ -6,6 +6,7 @@ import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { locationService } from '@grafana/runtime/src';
 import { ContextMenu, MenuItem, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
@@ -70,6 +71,8 @@ export class Scene {
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
   contextMenu: ContextMenuState;
+
+  isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -451,7 +454,7 @@ export class Scene {
       <>
         <MenuItem
           label="Delete"
-          onClick={(e) => {
+          onClick={() => {
             this.contextMenuAction(LayerActionID.Delete);
             this.closeContextMenu();
           }}
@@ -459,7 +462,7 @@ export class Scene {
         />
         <MenuItem
           label="Duplicate"
-          onClick={(e) => {
+          onClick={() => {
             this.contextMenuAction(LayerActionID.Duplicate);
             this.closeContextMenu();
           }}
@@ -467,7 +470,7 @@ export class Scene {
         />
         <MenuItem
           label="Bring to front"
-          onClick={(e) => {
+          onClick={() => {
             this.contextMenuAction(LayerActionID.MoveTop);
             this.closeContextMenu();
           }}
@@ -475,7 +478,7 @@ export class Scene {
         />
         <MenuItem
           label="Send to back"
-          onClick={(e) => {
+          onClick={() => {
             this.contextMenuAction(LayerActionID.MoveBottom);
             this.closeContextMenu();
           }}
@@ -503,10 +506,11 @@ export class Scene {
   };
 
   render() {
+    const canSeeContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
-        {this.contextMenu.isMenuVisible && this.renderContextMenu()}
+        {this.contextMenu.isMenuVisible && canSeeContextMenu && this.renderContextMenu()}
       </div>
     );
   }
