@@ -558,9 +558,25 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	var dashID int64
+
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
+	} else {
+		q := models.GetDashboardQuery{
+			OrgId: c.SignedInUser.OrgId,
+			Uid:   dashUID,
+		}
+		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
+		}
+		dashID = q.Result.Id
 	}
 
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
@@ -587,6 +603,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	dashVersionMeta := &models.DashboardVersionMeta{
 		Id:            query.Result.Id,
 		DashboardId:   query.Result.DashboardId,
+		DashboardUID:  dashUID,
 		Data:          query.Result.Data,
 		ParentVersion: query.Result.ParentVersion,
 		RestoredFrom:  query.Result.RestoredFrom,

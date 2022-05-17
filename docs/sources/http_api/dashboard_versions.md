@@ -67,6 +67,8 @@ Status Codes:
 
 ## Get dashboard version
 
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new get dashboard version API](#get-dashboard-version-by-dashboard-uid).
+
 `GET /api/dashboards/id/:dashboardId/versions/:version`
 
 Get the dashboard version with the given version, for the dashboard with the given id.
@@ -90,6 +92,119 @@ Content-Length: 1300
 {
   "id": 1,
   "dashboardId": 1,
+  "parentVersion": 0,
+  "restoredFrom": 0,
+  "version": 1,
+  "created": "2017-04-26T17:18:38-04:00",
+  "message": "Initial save",
+  "data": {
+    "annotations": {
+      "list": [
+
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "hideControls": false,
+    "id": 1,
+    "links": [
+
+    ],
+    "rows": [
+      {
+        "collapse": false,
+        "height": "250px",
+        "panels": [
+
+        ],
+        "repeat": null,
+        "repeatIteration": null,
+        "repeatRowId": null,
+        "showTitle": false,
+        "title": "Dashboard Row",
+        "titleSize": "h6"
+      }
+    ],
+    "schemaVersion": 14,
+    "style": "dark",
+    "tags": [
+
+    ],
+    "templating": {
+      "list": [
+
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "timezone": "browser",
+    "title": "test",
+    "version": 1
+  },
+  "createdBy": "admin"
+}
+```
+
+Status Codes:
+
+- **200** - Ok
+- **401** - Unauthorized
+- **404** - Dashboard version not found
+
+## Get dashboard version by dashboard UID
+
+`GET /api/dashboards/uid/:uid/versions/:version`
+
+Get the dashboard version with the given version, for the dashboard with the given UID.
+
+**Example request for getting a dashboard version**:
+
+```http
+GET /api/dashboards/id/1/versions/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response**:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 1300
+
+{
+  "id": 1,
+  "dashboardId": 1,
+  "uid": "QA7wKklGz",
   "parentVersion": 0,
   "restoredFrom": 0,
   "version": 1,
