@@ -19,20 +19,20 @@ type usageGauge struct {
 
 var (
 	infoPanelUsage = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "panel_type_usage_info",
-		Help:      "info metric that exposes how often each panel type is used",
+		Name:      "panel_type_usage",
+		Help:      "a metric indicating how many panels across all dashboards use each plugin panel type",
 		Namespace: "grafana",
 	}, []string{"name", "orgId"})
 
 	infoDatasourceUsage = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "datasource_usage_info",
-		Help:      "info metric that exposes how often each datasource type is used",
+		Name:      "panel_datasource_usage",
+		Help:      "indicates how many panels across all dashboards reference each datasource type",
 		Namespace: "grafana",
 	}, []string{"name", "orgId"})
 
 	infoTransformerUsage = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "transformer_usage_info",
-		Help:      "info metric that exposes how often each transformer type is used",
+		Name:      "panel_transformer_usage",
+		Help:      "indicates how many panels use each transformer type",
 		Namespace: "grafana",
 	}, []string{"name", "orgId"})
 

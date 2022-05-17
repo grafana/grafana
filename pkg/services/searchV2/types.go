@@ -21,7 +21,6 @@ type DashboardQuery struct {
 	Tags         []string     `json:"tags,omitempty"`
 	Kind         []string     `json:"kind,omitempty"`
 	UIDs         []string     `json:"uid,omitempty"`
-	IDs          []int64      `json:"id,omitempty"`      // deprecated -- but will convert internal ID to UIDs
 	Explain      bool         `json:"explain,omitempty"` // adds details on why document matched
 	Facet        []FacetField `json:"facet,omitempty"`
 	SkipLocation bool         `json:"skipLocation,omitempty"`

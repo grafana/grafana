@@ -68,6 +68,11 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
   }
 
+  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
+  if (sparseCellsHeatmap) {
+    return getSparseHeatmapData(sparseCellsHeatmap, exemplars, theme);
+  }
+
   // Find a well defined heatmap
   let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (scanlinesHeatmap) {
@@ -84,12 +89,8 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     };
   }
 
-  let first = frames[0];
-  if (first.meta?.type === DataFrameType.HeatmapSparse) {
-    return getSparseHeatmapData(first, exemplars, theme);
-  }
-
   if (source === HeatmapSourceMode.Data) {
+    let first = frames[0];
     if (first.meta?.type !== DataFrameType.HeatmapScanlines) {
       first = bucketsToScanlines(frames[0]);
     }

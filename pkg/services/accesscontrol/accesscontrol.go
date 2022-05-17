@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -237,5 +236,5 @@ func extractPrefixes(prefix string) (string, string, bool) {
 }
 
 func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol)
+	return !cfg.RBACEnabled
 }
