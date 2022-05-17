@@ -2,9 +2,11 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import React, { createRef } from 'react';
 
+import { DataFrameType } from '@grafana/data';
 import { VizTooltipContainer } from '@grafana/ui';
 
 import { ComplexDataHoverView } from './components/ComplexDataHoverView';
+import { DataHoverView } from './components/DataHoverView';
 import { HeatmapHoverPayload } from './types';
 
 interface Props {
@@ -17,6 +19,14 @@ export const HeatmapHoverView = ({ ttip, onClose, isOpen }: Props) => {
   const ref = createRef<HTMLElement>();
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
   const { dialogProps } = useDialog({}, ref);
+
+  if (ttip?.data?.meta?.type === DataFrameType.HeatmapSparse) {
+    return (
+      <div>
+        <DataHoverView data={ttip?.data!} rowIndex={ttip?.hover.index} />
+      </div>
+    );
+  }
 
   return (
     <>

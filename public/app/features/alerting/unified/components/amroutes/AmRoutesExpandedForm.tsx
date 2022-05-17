@@ -45,15 +45,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
-  const [overrideTimings, setOverrideTimings] = useState(
-    !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
-  );
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, register, errors, setValue }) => (
+      {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
@@ -169,7 +166,10 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             />
           </Field>
           {overrideGrouping && (
-            <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+            <Field
+              label="Group by"
+              description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+            >
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
@@ -193,17 +193,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             </Field>
           )}
           <Field label="Override general timings">
-            <Switch
-              id="override-timings-toggle"
-              value={overrideTimings}
-              onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
-            />
+            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
           </Field>
-          {overrideTimings && (
+          {watch().overrideTimings && (
             <>
               <Field
                 label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
@@ -215,7 +211,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group wait value"
                         />
                       )}
@@ -243,7 +238,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               </Field>
               <Field
                 label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
@@ -255,7 +250,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group interval value"
                         />
                       )}
@@ -295,7 +289,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Repeat interval value"
                         />
                       )}

@@ -64,7 +64,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 			id := *r.Id
 			label := *r.Label
 
-			response := newQueryRowResponse(id)
+			response := newQueryRowResponse()
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
