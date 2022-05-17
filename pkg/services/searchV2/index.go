@@ -33,11 +33,11 @@ type eventStore interface {
 }
 
 type ExtendDocumentFunc func(uid string, doc *bluge.Document) error
-type ResponseProcessorFunc func(field string, value []byte) bool
+type FramerFunc func(field string, value []byte) bool
 
 type DashboardIndexExtender interface {
 	GetDocumentExtender(orgID int64, uids []string) ExtendDocumentFunc
-	GetResponseProcessor(frame *data.Frame) ResponseProcessorFunc
+	GetFramer(frame *data.Frame) FramerFunc
 }
 
 type dashboard struct {
@@ -59,7 +59,7 @@ type dashboardIndex struct {
 	eventStore   eventStore
 	logger       log.Logger
 	buildSignals chan int64
-	extenders    []DashboardIndexExtender
+	extender     DashboardIndexExtender
 }
 
 func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
@@ -70,7 +70,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		perOrgWriter: map[int64]*bluge.Writer{},
 		logger:       log.New("dashboardIndex"),
 		buildSignals: make(chan int64),
-		extenders:    []DashboardIndexExtender{},
+		extender:     nil,
 	}
 }
 
@@ -140,12 +140,15 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		uids = append(uids, d.uid)
 	}
 
-	documentExtenders := make([]ExtendDocumentFunc, len(i.extenders))
-	for _, extender := range i.extenders {
-		documentExtenders = append(documentExtenders, extender.GetDocumentExtender(orgID, uids))
+	// default document extender
+	documentExtender := func(uid string, doc *bluge.Document) error {
+		return nil
 	}
 
-	reader, writer, err := initIndex(dashboards, i.logger, documentExtenders)
+	if i.extender != nil {
+		documentExtender = i.extender.GetDocumentExtender(orgID, uids)
+	}
+	reader, writer, err := initIndex(dashboards, i.logger, documentExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}

@@ -54,7 +54,7 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
-	s.dashboardIndex.extenders = append(s.dashboardIndex.extenders, ext)
+	s.dashboardIndex.extender = ext
 }
 
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
