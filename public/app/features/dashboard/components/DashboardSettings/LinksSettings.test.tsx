@@ -146,6 +146,7 @@ describe('LinksSettings', () => {
     expect(screen.queryByText('Type')).toBeInTheDocument();
     expect(screen.queryByText('Title')).toBeInTheDocument();
     expect(screen.queryByText('With tags')).toBeInTheDocument();
+    expect(screen.queryByText('Apply')).toBeInTheDocument();
 
     expect(screen.queryByText('Url')).not.toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).not.toBeInTheDocument();
@@ -153,8 +154,8 @@ describe('LinksSettings', () => {
 
     await userEvent.click(screen.getByText('Dashboards'));
     expect(screen.queryAllByText('Dashboards')).toHaveLength(2);
-    expect(screen.queryByText('Link')).toBeVisible();
 
+    expect(screen.queryByText('Link')).toBeVisible();
     await userEvent.click(screen.getByText('Link'));
 
     expect(screen.queryByText('URL')).toBeInTheDocument();
@@ -163,9 +164,7 @@ describe('LinksSettings', () => {
 
     await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
     await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'New Dashboard Link');
-    await userEvent.click(
-      within(screen.getByRole('heading', { name: /dashboard links edit/i })).getByText(/dashboard links/i)
-    );
+    await userEvent.click(screen.getByText('Apply'));
 
     expect(getTableBodyRows().length).toBe(links.length + 1);
     expect(within(getTableBody()).queryByText('New Dashboard Link')).toBeInTheDocument();
@@ -173,9 +172,7 @@ describe('LinksSettings', () => {
     await userEvent.click(screen.getAllByText(links[0].type)[0]);
     await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
     await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'The first dashboard link');
-    await userEvent.click(
-      within(screen.getByRole('heading', { name: /dashboard links edit/i })).getByText(/dashboard links/i)
-    );
+    await userEvent.click(screen.getByText('Apply'));
 
     expect(within(getTableBody()).queryByText(links[0].title)).not.toBeInTheDocument();
     expect(within(getTableBody()).queryByText('The first dashboard link')).toBeInTheDocument();

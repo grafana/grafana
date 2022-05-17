@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
 
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
@@ -41,18 +41,18 @@ type LinkSettingsEditProps = {
   onGoBack: () => void;
 };
 
-export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard }) => {
+export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard, onGoBack }) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
-  const onUpdate = (link: DashboardLink) => {
+  const onUpdate = () => {
     const links = [...dashboard.links];
-    links.splice(editLinkIdx, 1, link);
+    links.splice(editLinkIdx, 1, linkSettings);
     dashboard.links = links;
-    setLinkSettings(link);
+    onGoBack();
   };
 
   const onTagsChange = (tags: any[]) => {
-    onUpdate({ ...linkSettings, tags: tags });
+    setLinkSettings({ ...linkSettings, tags: tags });
   };
 
   const onTypeChange = (selectedItem: SelectableValue) => {
@@ -66,16 +66,16 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
       update.tags = [];
     }
 
-    onUpdate(update);
+    setLinkSettings(update);
   };
 
   const onIconChange = (selectedItem: SelectableValue) => {
-    onUpdate({ ...linkSettings, icon: selectedItem.value });
+    setLinkSettings({ ...linkSettings, icon: selectedItem.value });
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
     const target = ev.currentTarget;
-    onUpdate({
+    setLinkSettings({
       ...linkSettings,
       [target.name]: target.type === 'checkbox' ? target.checked : target.value,
     });
@@ -142,6 +142,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
           />
         </Field>
       </CollapsableSection>
+      <Button onClick={onUpdate}>Apply</Button>
     </div>
   );
 };
