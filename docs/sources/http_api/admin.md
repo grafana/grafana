@@ -11,6 +11,8 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control]({{< relref "../enterprise/access-control" >}}) for more information.
+
 ## Fetch settings
 
 `GET /api/admin/settings`
@@ -19,7 +21,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action        | Scope                                                                               |
 | ------------- | ----------------------------------------------------------------------------------- |
@@ -191,7 +193,7 @@ This endpoint only supports changes to `auth.saml` configuration.
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action         | Scope                                                                               |
 | -------------- | ----------------------------------------------------------------------------------- |
@@ -245,7 +247,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action            | Scope |
 | ----------------- | ----- |
@@ -327,7 +329,7 @@ Create new user. Only works with Basic Authentication (username and password). S
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -369,7 +371,7 @@ Change password for a specific user.
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                | Scope           |
 | --------------------- | --------------- |
@@ -402,7 +404,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                   | Scope           |
 | ------------------------ | --------------- |
@@ -435,7 +437,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -503,7 +505,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
@@ -562,7 +564,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                 | Scope           |
 | ---------------------- | --------------- |
@@ -602,7 +604,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -647,7 +649,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action              | Scope                      | Provision entity |
 | ------------------- | -------------------------- | ---------------- |

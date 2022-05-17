@@ -7,13 +7,15 @@ aliases = ["/docs/grafana/latest/http_api/user/"]
 
 # User API
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control]({{< relref "../enterprise/access-control" >}}) for more information.
+
 ## Search Users
 
 `GET /api/users?perpage=10&page=1`
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -68,7 +70,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -129,7 +131,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -175,7 +177,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -230,7 +232,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -269,7 +271,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -307,7 +309,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#user-api) for an explanation.
 
 | Action           | Scope    |
 | ---------------- | -------- |

@@ -16,6 +16,8 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control]({{< relref "../enterprise/access-control" >}}) for more information.
+
 ## Team Search With Paging
 
 `GET /api/teams/search?perpage=50&page=1&query=myteam`
@@ -26,7 +28,7 @@ or
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -89,7 +91,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -135,7 +137,7 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -180,7 +182,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -223,7 +225,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action       | Scope    |
 | ------------ | -------- |
@@ -260,7 +262,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -313,7 +315,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -355,7 +357,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -392,7 +394,7 @@ Status Codes:
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -426,7 +428,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+See note in the [introduction](#team-api) for an explanation.
 
 | Action      | Scope    |
 | ----------- | -------- |
