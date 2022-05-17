@@ -49,26 +49,7 @@ The dashboard previews crawler is a background process that:
 - [Visits and takes a screenshot of each dashboard](#rendering-previews)
 - [Saves the screenshots in persistent storage](#saving-previews)
 
-The crawler can be configured via the main config file:
-
-```ini
-[dashboard_previews.crawler]
-# Number of dashboards rendered in parallel. Default is 6.
-thread_count =
-
-# Timeout passed down to the Image Renderer plugin. It is used in two separate places within a single rendering request:
-# First during the initial navigation to the dashboard and then when waiting for all the panels to load. Default is 20s.
-# This setting should be expressed as a duration. Examples: 10s (seconds), 1m (minutes).
-rendering_timeout =
-
-# Maximum duration of a single crawl. Default is 1h.
-# This setting should be expressed as a duration. Examples: 10s (seconds), 1m (minutes).
-max_crawl_duration =
-
-# Minimum interval between two subsequent scheduler runs. Default is 12h.
-# This setting should be expressed as a duration. Examples: 10s (seconds), 1m (minutes).
-scheduler_interval =
-```
+The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../../administration/configuration.md#dashboard_previews" >}}) for more details.
 
 ### Preparing the dashboard list
 

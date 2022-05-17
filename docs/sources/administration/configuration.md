@@ -1924,6 +1924,24 @@ Set this to `true` to disable loading other custom base maps and hide them in th
 
 ## [dashboard_previews]
 
+### [crawler]
+
 > **Note:** This feature is available in Grafana v9.0 and later versions.
+
+#### thread_count
+
+Number of dashboards rendered in parallel. Default is 6
+
+#### rendering_timeout
+
+Timeout passed down to the Image Renderer plugin. It is used in two separate places within a single rendering request - during the initial navigation to the dashboard, and when waiting for all the panels to load. Default is 20s.
+
+#### max_crawl_duration
+
+Maximum duration of a single crawl. Default is 1h.
+
+#### scheduler_interval
+
+Minimum interval between two subsequent scheduler runs. Default is 12h.
 
 Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.
