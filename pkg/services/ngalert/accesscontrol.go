@@ -125,16 +125,10 @@ var (
 			DisplayName: "Notifications Editor",
 			Description: "Can add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionAlertingNotificationsCreate,
-				},
-				{
-					Action: accesscontrol.ActionAlertingNotificationsUpdate,
-				},
-				{
-					Action: accesscontrol.ActionAlertingNotificationsDelete,
+					Action: accesscontrol.ActionAlertingNotificationsWrite,
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
