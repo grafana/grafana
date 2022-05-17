@@ -7,16 +7,13 @@ aliases = ["/docs/grafana/latest/http_api/datasource/"]
 
 # Data source API
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
-
 ## Get all data sources
 
 `GET /api/datasources`
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope          |
 | ---------------- | -------------- |
@@ -72,7 +69,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope                                                                        |
 | ---------------- | ---------------------------------------------------------------------------- |
@@ -128,7 +125,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------- |
@@ -184,7 +181,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------- |
@@ -240,7 +237,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action              | Scope                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -274,7 +271,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action             | Scope |
 | ------------------ | ----- |
@@ -422,7 +419,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action            | Scope                                                                        |
 | ----------------- | ---------------------------------------------------------------------------- |
@@ -502,7 +499,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action             | Scope                                                                        |
 | ------------------ | ---------------------------------------------------------------------------- |
@@ -534,7 +531,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action             | Scope                                                                                  |
 | ------------------ | -------------------------------------------------------------------------------------- |
@@ -569,7 +566,7 @@ Content-Type: application/json
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action             | Scope                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------- |

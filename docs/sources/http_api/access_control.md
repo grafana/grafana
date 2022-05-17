@@ -20,6 +20,8 @@ Returns an indicator to check if role-based access control is enabled or not.
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 | Action               | Scope                  |
 | -------------------- | ---------------------- |
 | status:accesscontrol | services:accesscontrol |
@@ -67,6 +69,8 @@ Query Parameters:
 - `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -125,6 +129,8 @@ Content-Type: application/json; charset=UTF-8
 Get a role for the given UID.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -216,6 +222,8 @@ Content-Type: application/json; charset=UTF-8
 Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed roles]({{< relref "../enterprise/access-control/about-rbac#fixed-roles" >}}) can't be created.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
@@ -314,6 +322,8 @@ Content-Type: application/json; charset=UTF-8
 Update the role with the given UID, and it's permissions with the given UID. The operation is idempotent and all permissions of the role will be replaced with what is in the request. You would need to increment the version of the role with each update, otherwise the request will fail.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to update a custom role which allows to do that. This is done to prevent escalation of privileges.
@@ -421,6 +431,8 @@ Delete a role with the given UID, and it's permissions. If the role is assigned 
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to delete a custom role which allows to do that.
 
@@ -476,6 +488,8 @@ Query Parameters:
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 | Action           | Scope                |
 | ---------------- | -------------------- |
 | users.roles:list | users:id:`<user ID>` |
@@ -524,6 +538,8 @@ Lists the permissions that a given user has.
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 | Action                 | Scope                |
 | ---------------------- | -------------------- |
 | users.permissions:list | users:id:`<user ID>` |
@@ -571,6 +587,8 @@ For bulk updates consider
 [Set user role assignments]({{< ref "#set-user-role-assignments" >}}).
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
@@ -630,6 +648,8 @@ For bulk updates consider
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
@@ -683,6 +703,8 @@ If you want to add or remove a single role, consider using
 instead.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
@@ -750,6 +772,8 @@ Query Parameters:
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 | Action           | Scope                |
 | ---------------- | -------------------- |
 | teams.roles:list | teams:id:`<team ID>` |
@@ -799,6 +823,8 @@ Assign a role to a specific team.
 For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-assignments" >}}).
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.
@@ -855,6 +881,8 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.```
 
@@ -902,6 +930,8 @@ If you want to add or remove a single role, consider using
 instead.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role to a team which will allow to do that. This is done to prevent escalation of privileges.
@@ -970,6 +1000,8 @@ Query Parameters:
 - `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action             | Scope    |
 | ------------------ | -------- |
@@ -1043,6 +1075,8 @@ Creates a new built-in role assignment.
 
 #### Required permissions
 
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
+
 `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
 
@@ -1100,6 +1134,8 @@ Content-Type: application/json; charset=UTF-8
 Deletes a built-in role assignment (for one of _Viewer_, _Editor_, _Admin_, or _Grafana Admin_) to the role with the provided UID.
 
 #### Required permissions
+
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to remove a built-in role assignment which allows to do that.

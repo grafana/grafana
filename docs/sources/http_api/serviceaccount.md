@@ -7,16 +7,13 @@ aliases = ["/docs/grafana/latest/http_api/serviceaccount/"]
 
 # Service account API
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
-
 ## Search service accounts with Paging
 
 `GET /api/serviceaccounts/search?perpage=10&page=1&query=myserviceaccount`
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action               | Scope                     |
 | -------------------- | ------------------------- |
@@ -83,7 +80,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -131,7 +128,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -174,7 +171,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -226,7 +223,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -268,7 +265,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -309,7 +306,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope              |
 | --------------------- | ------------------ |

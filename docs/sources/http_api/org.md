@@ -11,9 +11,6 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
-
 ## Current Organization API
 
 ### Get current Organization
@@ -22,7 +19,7 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action    | Scope |
 | --------- | ----- |
@@ -58,7 +55,7 @@ Accessible to users with org admin role.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -104,7 +101,7 @@ when editing folder/dashboard permissions.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -140,7 +137,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope    |
 | --------------------- | -------- |
@@ -174,7 +171,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope    |
 | ---------------- | -------- |
@@ -204,7 +201,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope |
 | ---------- | ----- |
@@ -240,7 +237,7 @@ Adds a global user to the current organization.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action        | Scope    |
 | ------------- | -------- |
@@ -285,7 +282,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action    | Scope |
 | --------- | ----- |
@@ -327,7 +324,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action    | Scope | Note                           |
 | --------- | ----- | ------------------------------ |
@@ -369,7 +366,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action      | Scope | Note                           |
 | ----------- | ----- | ------------------------------ |
@@ -412,7 +409,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action    | Scope | Note                           |
 | --------- | ----- | ------------------------------ |
@@ -454,7 +451,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope |
 | ---------- | ----- |
@@ -489,7 +486,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action      | Scope |
 | ----------- | ----- |
@@ -519,7 +516,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -560,7 +557,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action        | Scope    |
 | ------------- | -------- |
@@ -596,7 +593,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                | Scope    |
 | --------------------- | -------- |
@@ -631,7 +628,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope    |
 | ---------------- | -------- |

@@ -16,9 +16,6 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
-> Refer to specific endpoints to understand what permissions are required.
-
 ## Team Search With Paging
 
 `GET /api/teams/search?perpage=50&page=1&query=myteam`
@@ -29,7 +26,7 @@ or
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -92,7 +89,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -138,7 +135,7 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -183,7 +180,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action      | Scope    |
 | ----------- | -------- |
@@ -226,7 +223,7 @@ Status Codes:
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action       | Scope    |
 | ------------ | -------- |
@@ -263,7 +260,7 @@ Status Codes:
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -316,7 +313,7 @@ Status Codes:
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -358,7 +355,7 @@ Status Codes:
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -395,7 +392,7 @@ Status Codes:
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action     | Scope    |
 | ---------- | -------- |
@@ -429,7 +426,7 @@ Content-Type: application/json
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action      | Scope    |
 | ----------- | -------- |

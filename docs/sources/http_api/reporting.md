@@ -11,9 +11,6 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 > Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-> If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
-
 ## Send a report
 
 > Only available in Grafana Enterprise v7.0+.
@@ -26,7 +23,7 @@ Generate and send a report. This API waits for the report to be generated before
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action       | Scope |
 | ------------ | ----- |

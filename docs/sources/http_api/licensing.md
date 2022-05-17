@@ -9,9 +9,6 @@ aliases = ["/docs/grafana/latest/http_api/licensing/"]
 
 Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-Refer to specific resources to understand what permissions are required.
-
 ## Check license availability
 
 > **Note:** Available in Grafana Enterprise v7.4+.
@@ -22,7 +19,7 @@ Checks if a valid license is available.
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -62,7 +59,7 @@ Manually ask license issuer for a new token.
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope |
 | ---------------- | ----- |
@@ -122,7 +119,7 @@ Removes the license stored in the Grafana database.
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action           | Scope |
 | ---------------- | ----- |

@@ -9,9 +9,6 @@ aliases = ["/docs/grafana/latest/http_api/datasourcepermissions/"]
 
 > The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
-
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 
 Permissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.
@@ -28,7 +25,7 @@ Enables permissions for the data source with the given `id`. No one except Org A
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -73,7 +70,7 @@ Disables permissions for the data source with the given `id`. All existing permi
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -118,7 +115,7 @@ Gets all existing permissions for the data source with the given `id`.
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                       | Scope                                                                        |
 | ---------------------------- | ---------------------------------------------------------------------------- |
@@ -189,7 +186,7 @@ Adds a user permission for the data source with the given `id`.
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
@@ -263,7 +260,7 @@ Removes the permission with the given `permissionId` for the data source with th
 
 ### Required permissions
 
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+[RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}})
 
 | Action                        | Scope                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------- |
