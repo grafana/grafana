@@ -6703,10 +6703,7 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "$ref": "#/responses/Accepted"
           },
           "400": {
             "description": "ValidationError",
@@ -6732,10 +6729,7 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "$ref": "#/responses/Accepted"
           },
           "400": {
             "description": "ValidationError",
@@ -6752,21 +6746,9 @@
         "tags": ["provisioning"],
         "summary": "Delete a contact point.",
         "operationId": "RouteDeleteContactpoints",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "ContactPointUID should be the contact point UID identifier",
-            "name": "ID",
-            "in": "path",
-            "required": true
-          }
-        ],
         "responses": {
           "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "$ref": "#/responses/Accepted"
           },
           "400": {
             "description": "ValidationError",
@@ -6813,10 +6795,7 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "$ref": "#/responses/Accepted"
           },
           "400": {
             "description": "ValidationError",
@@ -6834,7 +6813,7 @@
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
-            "$ref": "#/responses/MessageTemplateResponse"
+            "$ref": "#/responses/MessageTemplate"
           },
           "400": {
             "description": "ValidationError",
@@ -6850,21 +6829,12 @@
         "tags": ["provisioning"],
         "summary": "Get a message template.",
         "operationId": "RouteGetTemplate",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Template ID",
-            "name": "ID",
-            "in": "path",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
-            "$ref": "#/responses/MessageTemplateResponse"
+            "$ref": "#/responses/MessageTemplate"
           },
           "404": {
-            "$ref": "#/responses/NotFoundResponse"
+            "$ref": "#/responses/NotFound"
           }
         }
       }
@@ -13561,18 +13531,6 @@
         "$ref": "#/definitions/Matcher"
       }
     },
-    "MessageTemplate": {
-      "type": "object",
-      "properties": {
-        "Name": {
-          "type": "string"
-        },
-        "Template": {
-          "type": "string"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -16402,8 +16360,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16436,7 +16395,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -17728,6 +17687,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17736,9 +17696,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",
@@ -17830,18 +17788,6 @@
     }
   },
   "responses": {
-    "MessageTemplateResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/MessageTemplate"
-        }
-      }
-    },
-    "NotFoundResponse": {
-      "description": ""
-    },
     "SMTPNotEnabledError": {
       "description": ""
     },
