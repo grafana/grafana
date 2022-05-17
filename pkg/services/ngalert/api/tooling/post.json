@@ -3391,11 +3391,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3568,6 +3569,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3578,9 +3580,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -5614,7 +5614,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/{DatasourceID}": {
+  "/api/v1/rule/test/{DatasourceUID}": {
    "post": {
     "consumes": [
      "application/json"
@@ -5623,12 +5623,11 @@
     "operationId": "RouteTestRuleConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource identifier",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      },
      {
       "in": "body",

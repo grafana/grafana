@@ -162,6 +162,7 @@ export default function SearchPage() {
         className={css`
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         `}
       >
         <Input
@@ -215,6 +216,7 @@ export default function SearchPage() {
 const getStyles = (theme: GrafanaTheme2) => ({
   searchInput: css`
     margin-bottom: 6px;
+    min-height: ${theme.spacing(4)};
   `,
   unsupported: css`
     padding: 10px;

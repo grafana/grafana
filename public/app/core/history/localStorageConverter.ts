@@ -1,6 +1,3 @@
-import { find } from 'lodash';
-
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { RichHistoryQuery } from '../../types';
@@ -8,11 +5,7 @@ import { RichHistoryQuery } from '../../types';
 import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 
 export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
-  const datasource = find(
-    getDataSourceSrv().getList(),
-    (settings: DataSourceInstanceSettings) => settings.name === dto.datasourceName
-  );
-
+  const datasource = getDataSourceSrv().getInstanceSettings(dto.datasourceName);
   return {
     id: dto.ts.toString(),
     createdAt: dto.ts,
@@ -25,10 +18,7 @@ export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
 };
 
 export const toDTO = (richHistoryQuery: RichHistoryQuery): RichHistoryLocalStorageDTO => {
-  const datasource = find(
-    getDataSourceSrv().getList(),
-    (settings: DataSourceInstanceSettings) => settings.uid === richHistoryQuery.datasourceUid
-  );
+  const datasource = getDataSourceSrv().getInstanceSettings({ uid: richHistoryQuery.datasourceUid });
 
   if (!datasource) {
     throw new Error('Datasource not found.');
