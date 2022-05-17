@@ -30,145 +30,212 @@ const (
 	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
 )
 
-func initBlugeIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, error) {
-	config := bluge.InMemoryOnlyConfig()
-
-	// open an index writer using the configuration
-	writer, err := bluge.OpenWriter(config)
+func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge.Writer, error) {
+	writer, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
-		return nil, fmt.Errorf("error opening writer: %v", err)
+		return nil, nil, fmt.Errorf("error opening writer: %v", err)
 	}
-	defer func() {
-		err = writer.Close()
-		if err != nil {
-			logger.Error("Error closing bluge writer", "error", err)
-		}
-	}()
-
-	start := time.Now()
-
-	logger.Info("Loading dashboards for bluge index", "elapsed", time.Since(start), "numDashboards", len(dashboards))
-	label := time.Now()
+	// Not closing Writer here since we use it later while processing dashboard change events.
 
 	batch := bluge.NewBatch()
 
-	// First index the folders
+	start := time.Now()
+	label := start
+
+	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
-	for _, dashboard := range dashboards {
-		if !dashboard.isFolder {
+	for _, dash := range dashboards {
+		if !dash.isFolder {
 			continue
 		}
-		uid := dashboard.uid
-		url := fmt.Sprintf("/dashboards/f/%s/%s", dashboard.uid, dashboard.slug)
+		doc := getFolderDashboardDoc(dash)
+		batch.Insert(doc)
+		uid := dash.uid
 		if uid == "" {
 			uid = "general"
-			url = "/dashboards"
-			dashboard.info.Title = "General"
-			dashboard.info.Description = ""
-
-			// ARRRG, why is this not in the final index?!!
 		}
-
-		doc := bluge.NewDocument(uid).
-			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
-			AddField(bluge.NewTextField(documentFieldName, dashboard.info.Title).StoreValue().SearchTermPositions()).
-			AddField(bluge.NewTextField(documentFieldDescription, dashboard.info.Description).SearchTermPositions())
-
-		batch.Insert(doc)
-
-		folderIdLookup[dashboard.id] = uid
+		folderIdLookup[dash.id] = uid
 	}
 
-	// Then each dashboard
-	for _, dashboard := range dashboards {
-		if dashboard.isFolder {
+	// Then each dashboard.
+	for _, dash := range dashboards {
+		if dash.isFolder {
 			continue
 		}
-
-		url := fmt.Sprintf("/d/%s/%s", dashboard.uid, dashboard.slug)
-		folderUID := folderIdLookup[dashboard.folderID]
+		folderUID := folderIdLookup[dash.folderID]
 		location := folderUID
-
-		// Dashboard document
-		doc := bluge.NewDocument(dashboard.uid).
-			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
-			AddField(bluge.NewTextField(documentFieldName, dashboard.info.Title).StoreValue().SearchTermPositions()).
-			AddField(bluge.NewTextField(documentFieldDescription, dashboard.info.Description).SearchTermPositions())
-
-		// Add legacy ID (for lookup by internal ID)
-		doc.AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dashboard.id)))
-
-		for _, tag := range dashboard.info.Tags {
-			doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
-				StoreValue().
-				Aggregatable().
-				SearchTermPositions())
-		}
-
-		for _, ds := range dashboard.info.Datasource {
-			if ds.UID != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
-			}
-			if ds.Type != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
-			}
-		}
-
-		// TODO: enterprise, add dashboard sorting fields
-
+		doc := getNonFolderDashboardDoc(dash, location)
 		batch.Insert(doc)
 
-		location += "/" + dashboard.uid
-
-		// Now add a doc for each panel
-		for _, panel := range dashboard.info.Panels {
-			uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
-			purl := url
-			if panel.Type != "row" {
-				purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
-			}
-
-			doc := bluge.NewDocument(uid).
-				AddField(bluge.NewKeywordField(documentFieldURL, purl).StoreValue()).
-				AddField(bluge.NewTextField(documentFieldName, panel.Title).StoreValue().SearchTermPositions()).
-				AddField(bluge.NewTextField(documentFieldDescription, panel.Description).SearchTermPositions()).
-				AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
-				AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
-				AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
-
-			batch.Insert(doc)
+		// Index each panel in dashboard.
+		location += "/" + dash.uid
+		docs := getDashboardPanelDocs(dash, location)
+		for _, panelDoc := range docs {
+			batch.Insert(panelDoc)
 		}
 	}
-
-	logger.Info("Inserting documents into bluge batch", "elapsed", time.Since(label))
+	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
 	label = time.Now()
 
 	err = writer.Batch(batch)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	logger.Info("Finish writing batch", "elapsed", time.Since(label))
 
 	reader, err := writer.Reader()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	logger.Info("Inserting batch into bluge writer", "elapsed", time.Since(label))
-	logger.Info("Finish building bluge index", "totalElapsed", time.Since(start))
-	return reader, err
+	logger.Info("Finish building index", "totalElapsed", time.Since(start))
+	return reader, writer, err
+}
+
+func getFolderDashboardDoc(dash dashboard) *bluge.Document {
+	uid := dash.uid
+	url := fmt.Sprintf("/dashboards/f/%s/%s", dash.uid, dash.slug)
+	if uid == "" {
+		uid = "general"
+		url = "/dashboards"
+		dash.info.Title = "General"
+		dash.info.Description = ""
+	}
+
+	return bluge.NewDocument(uid).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
+		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
+		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions()).
+		// Add legacy ID (for lookup by internal ID)
+		AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)).Aggregatable().StoreValue())
+}
+
+func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
+	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
+
+	// Dashboard document
+	doc := bluge.NewDocument(dash.uid).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
+		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
+
+	// Add legacy ID (for lookup by internal ID)
+	doc.AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)))
+
+	for _, tag := range dash.info.Tags {
+		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
+			StoreValue().
+			Aggregatable().
+			SearchTermPositions())
+	}
+
+	for _, ds := range dash.info.Datasource {
+		if ds.UID != "" {
+			doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
+				StoreValue().
+				Aggregatable().
+				SearchTermPositions())
+		}
+		if ds.Type != "" {
+			doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
+				StoreValue().
+				Aggregatable().
+				SearchTermPositions())
+		}
+	}
+
+	// TODO: enterprise, add dashboard sorting fields
+
+	return doc
+}
+
+func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
+	var docs []*bluge.Document
+	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
+	for _, panel := range dash.info.Panels {
+		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
+		purl := url
+		if panel.Type != "row" {
+			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		}
+
+		doc := bluge.NewDocument(uid).
+			AddField(bluge.NewKeywordField(documentFieldURL, purl).StoreValue()).
+			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
+			AddField(bluge.NewTextField(documentFieldName, panel.Title).StoreValue().SearchTermPositions()).
+			AddField(bluge.NewTextField(documentFieldDescription, panel.Description).SearchTermPositions()).
+			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
+			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
+
+		docs = append(docs, doc)
+	}
+	return docs
+}
+
+func getDashboardFolderUID(reader *bluge.Reader, folderID int64) (string, error) {
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(strconv.FormatInt(folderID, 10)).SetField(documentFieldInternalID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindFolder)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	req.WithStandardAggregations()
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return "", err
+	}
+	var uid string
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				uid = string(value)
+			}
+			return true
+		})
+		if err != nil {
+			return "", err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return uid, err
+}
+
+func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
+	var panelIDs []string
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	req.WithStandardAggregations()
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				panelIDs = append(panelIDs, string(value))
+			}
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return panelIDs, err
 }
 
 //nolint: gocyclo
-func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
+func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
 	// Folder listing structure
@@ -194,7 +261,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(newPermissionFilter(filter, s.logger))
+	fullQuery.AddMust(newPermissionFilter(filter, logger))
 
 	// Only show dashboard / folders
 	if len(q.Kind) > 0 {
@@ -208,19 +275,12 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 
 	// Explicit UID lookup (stars etc)
 	if len(q.UIDs) > 0 {
+		count := len(q.UIDs) + 3
 		bq := bluge.NewBooleanQuery()
-		for _, v := range q.UIDs {
-			bq.AddShould(bluge.NewTermQuery(v).SetField(documentFieldUID))
-		}
-		fullQuery.AddMust(bq)
-		hasConstraints = true
-	}
-
-	// Legacy lookup by internal ID
-	if len(q.IDs) > 0 {
-		bq := bluge.NewBooleanQuery()
-		for _, v := range q.IDs {
-			bq.AddShould(bluge.NewTermQuery(fmt.Sprintf("%d", v)).SetField(documentFieldInternalID))
+		for i, v := range q.UIDs {
+			bq.AddShould(bluge.NewTermQuery(v).
+				SetField(documentFieldUID).
+				SetBoost(float64(count - i)))
 		}
 		fullQuery.AddMust(bq)
 		hasConstraints = true
@@ -293,7 +353,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		s.logger.Error("error executing search: %v", err)
+		logger.Error("error executing search: %v", err)
 		response.Error = err
 		return response
 	}
@@ -330,9 +390,9 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 	fTags.Name = "tags"
 	fExplain.Name = "explain"
 
-	frame := data.NewFrame("Query results", fScore, fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
+	frame := data.NewFrame("Query results", fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
 	if q.Explain {
-		frame.Fields = append(frame.Fields, fExplain)
+		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
 
 	locationItems := make(map[string]bool, 50)
@@ -385,12 +445,11 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 			return true
 		})
 		if err != nil {
-			s.logger.Error("error loading stored fields: %v", err)
+			logger.Error("error loading stored fields: %v", err)
 			response.Error = err
 			return response
 		}
 
-		fScore.Append(match.Score)
 		fKind.Append(kind)
 		fUID.Append(uid)
 		fPType.Append(ptype)
@@ -422,6 +481,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 		}
 
 		if q.Explain {
+			fScore.Append(match.Score)
 			if match.Explanation != nil {
 				js, _ := json.Marshal(&match.Explanation)
 				jsb := json.RawMessage(js)
@@ -439,9 +499,12 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 	aggs := documentMatchIterator.Aggregations()
 
 	header := &customMeta{
-		Count:    aggs.Count(), // Total cound
-		MaxScore: aggs.Metric("max_score"),
+		Count: aggs.Count(), // Total cound
 	}
+	if q.Explain {
+		header.MaxScore = aggs.Metric("max_score")
+	}
+
 	if len(locationItems) > 0 && !q.SkipLocation {
 		header.Locations = getLocationLookupInfo(ctx, reader, locationItems)
 	}
