@@ -111,6 +111,8 @@ export function RichHistoryStarredTab(props: Props) {
     return <span>Loading...</span>;
   }
 
+  const sortOrderOptions = getSortOrderOptions();
+
   return (
     <div className={styles.container}>
       <div className={styles.containerContent}>
@@ -138,8 +140,8 @@ export function RichHistoryStarredTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              value={getSortOrderOptions().filter((order) => order.value === richHistorySearchFilters.sortOrder)}
-              options={getSortOrderOptions()}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
+              options={sortOrderOptions}
               placeholder="Sort queries by"
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
