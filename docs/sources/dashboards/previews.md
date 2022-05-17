@@ -13,7 +13,7 @@ Dashboard previews provide an overview of all available dashboards. They help yo
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
-You can view dashboard previews only when the feature is enabled for your instance. It is an opt-in feature that is, by default, disabled. If your administrator enables the feature (link to config section), then you can use the following procedure to view previews in the Grafana UI. Grafana saves your choice in the browser's local storage to make it persistent across sessions.
+You can view dashboard previews only when the feature is enabled for your instance. It is an opt-in feature that is, by default, disabled. You can view the previews in the Grafana UI after clicking on the _Show previews_ toggle once the administrator enables the feature following the procedure described below.
 
 - [Enable dashboard previews](#enable-dashboard-previews)
 - [About the dashboard previews crawler](#about-the-dashboard-previews-crawler)
