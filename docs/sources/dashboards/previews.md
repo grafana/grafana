@@ -89,7 +89,7 @@ In an Enterprise Grafana instance with RBAC enabled, the crawler uses [service a
 
 {{< figure src="/static/img/docs/dashboards/previews-service-account.png" max-width="950px" >}}
 
-Service accounts are created per organization. They are visible in the service account configuration tab, and their names follow `dashboard-previews-crawler-{organization_id}` convention.
+Service accounts are created per organization. They are visible in the service account configuration tab, and use the following naming convention: `dashboard-previews-crawler-{organization_id}`.
 
 ### Preview visibility
 
