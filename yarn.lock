@@ -4802,7 +4802,7 @@ __metadata:
     core-js: 3.21.1
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 3.4.1
-    csstype: 3.0.11
+    csstype: 3.1.0
     d3: 5.15.0
     date-fns: 2.28.0
     enzyme: 3.11.0
@@ -16820,10 +16820,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:3.0.11":
-  version: 3.0.11
-  resolution: "csstype@npm:3.0.11"
-  checksum: 95e56abfe9ca219ae065acb4e43f61771a03170eed919127f558dfa168240867aba7629c8d98a201a0dd06d9a5ce82686f0570031c928516c61816adbc7c877f
+"csstype@npm:3.1.0":
+  version: 3.1.0
+  resolution: "csstype@npm:3.1.0"
+  checksum: 644e986cefab86525f0b674a06889cfdbb1f117e5b7d1ce0fc55b0423ecc58807a1ea42ecc75c4f18999d14fc42d1d255f84662a45003a52bb5840e977eb2ffd
   languageName: node
   linkType: hard
 
