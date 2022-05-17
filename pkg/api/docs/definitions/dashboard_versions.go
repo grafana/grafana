@@ -35,6 +35,21 @@ import (
 //
 // Get a specific dashboard version.
 //
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
+//
+// Get a specific dashboard version using UID.
+//
 // Responses:
 // 200: dashboardVersionResponse
 // 401: unauthorisedError
@@ -76,7 +91,7 @@ type DashboardIdParam struct {
 	DashboardID int64
 }
 
-// swagger:parameters getDashboardVersion
+// swagger:parameters getDashboardVersion getDashboardVersionByUID
 type DashboardVersionIdParam struct {
 	// in:path
 	DashboardVersionID int64

@@ -1,7 +1,8 @@
 +++
-title = "Request security"
+aliases = ["/docs/grafana/latest/enterprise/request-security/"]
 description = "Grafana Enterprise request security"
 keywords = ["grafana", "security", "enterprise"]
+title = "Request security"
 weight = 400
 +++
 

@@ -4,7 +4,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 
-import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 export interface FetchPromRulesFilter {
   dashboardUID: string;
@@ -24,7 +24,7 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
       const params = prepareRulesFilterQueryParams(searchParams, filter);
 
       return {
-        url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+        url: `/api/prometheus/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules`,
         params: params,
       };
     },

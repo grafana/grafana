@@ -1,12 +1,11 @@
 ---
-title: 'Assign Grafana RBAC roles'
-menuTitle: 'Assign RBAC roles'
-description: 'Learn how to assign RBAC roles to users and teams in Grafana.'
 aliases:
-  [
-    '/docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-user-role-assignments/',
-    '/docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/',
-  ]
+  - /docs/grafana/latest/enterprise/access-control/assign-rbac-roles/
+  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/
+  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-user-role-assignments/
+description: Learn how to assign RBAC roles to users and teams in Grafana.
+menuTitle: Assign RBAC roles
+title: Assign Grafana RBAC roles
 weight: 40
 ---
 
@@ -79,70 +78,46 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 </br>
 
-**To assign a fixed role to a team:**
+**To assign a role to a team:**
 
 1. Open the YAML configuration file.
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute | Description                                                                                                                    |
-   | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-   | `name`    | Enter the name of the fixed role.                                                                                              |
-   | `global`  | Enter `true`. Because fixed roles are global, you must specify the global attribute. You cannot change fixed role definitions. |
-   | `teams`   | Enter the team or teams to which you are adding the fixed role.                                                                |
-   | `orgId`   | Because teams belong to organizations, you must add the `orgId` value.                                                         |
+   | Attribute                | Description                                                                                                                                                                                                     |
+   | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                                                |
+   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                              |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                              |
+   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                            |
+   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes.md">}}) |
+   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                                |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                          |
+   | `teams > name`           | Enter the name of the team.                                                                                                                                                                                     |
+   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                                     |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                                     |
+   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                                            |
+
+   For more information about managing custom roles, refer to [Create custom roles using provisioning]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}).
 
 1. Reload the provisioning configuration file.
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
-The following example assigns the `users:writer` fixed role to the `user editors` and `user admins` teams:
+The following example creates the `custom:users:writer` role and assigns it to the `user writers` and `user admins` teams along with the `fixed:users:writer` role:
+
+The following example:
+
+- Creates the `custom:users:writer` role.
+- Assigns the `custom:users:writer` role and the `fixed:users:writer` role to the `user admins` and `user writers` teams.
 
 ```yaml
 # config file version
-apiVersion: 1
+apiVersion: 2
 
 # Roles to insert/update in the database
 roles:
-  - name: fixed:users:writer
-    global: true
-    teams:
-      - name: 'user editors'
-        orgId: 1
-      - name: 'user admins'
-        orgId: 1
-```
-
-</br>
-
-**To assign a custom role to a team:**
-
-1. Open the YAML configuration file.
-
-1. Refer to the following table to add attributes and values.
-
-   | Attribute     | Description                                                                                                                                                                                                                                                  |
-   | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-   | `name`        | Enter the name of the custom role.                                                                                                                                                                                                                           |
-   | `version`     | Enter the custom role version number. Assignments are updated if the version of the role is greater then or equal to the version number stored internally. If you are updating a role assignment, you are not required to increment the role version number. |
-   | `global`      | Enter `true` or `false`                                                                                                                                                                                                                                      |
-   | `permissions` | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
-   | `teams`       | Enter the team or teams to which you are adding the custom role.                                                                                                                                                                                             |
-   | `orgId`       | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                                                                       |
-
-1. Reload the provisioning configuration file.
-
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
-
-The following example assigns the `custom:users:writer` role to the `user editors` and `user admins` teams:
-
-```yaml
-# config file version
-apiVersion: 1
-
-# Roles to insert/update in the database
-roles:
-  - name: custom:users:writer
+  - name: 'custom:users:writer'
     description: 'List/update other users in the organization'
     version: 1
     global: true
@@ -151,139 +126,73 @@ roles:
         scope: 'users:*'
       - action: 'org.users:write'
         scope: 'users:*'
-    teams:
-      - name: 'user editors'
-        orgId: 1
-      - name: 'user admins'
-        orgId: 1
+
+# Assignments to teams
+teams:
+  - name: 'user writers'
+    orgId: 1
+    roles:
+      # Custom role assignment
+      - name: 'custom:users:writer'
+        global: true
+      # Fixed role assignment
+      - name: 'fixed:users:writer'
+        global: true
+  - name: 'user admins'
+    orgId: 1
+    roles:
+      - name: 'custom:users:writer'
+        global: true
+      - name: 'fixed:users:writer'
+        global: true
 ```
 
-> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
+> **Note**: The roles don't have to be defined in the provisioning configuration files to be assigned. If roles exist in the database, they can be assigned.
 
-## Assign a fixed or custom role to a basic role
+**Remove a role assignment from a team:**
 
-If you want to extend the permissions of a basic role, you can modify it by adding a fixed role or a basic role to it.
+If you want to remove an assignment from a team, add `state: absent` to the `teams > roles` section, and reload the configuration file.
 
-You can also remove fixed or custom roles from basic roles. For example, you can remove the `fixed:users:writer` fixed role from the Administrator basic role if you would prefer that administrators not manage users. Learn more in the topic [remove a fixed role from a basic role]({{< relref "manage-rbac-roles.md#remove-a-fixed-role-from-a-basic-role" >}}).
+The following example:
 
-### Assign a fixed role to a basic role using provisioning
-
-If you want to extend the permissions of a basic role, and you identify a fixed role that meets your permission requirements, you can assign a fixed role to a basic role.
-
-</br>
-
-**Before you begin:**
-
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
-- Determine which fixed role you want to add to a basic role
-
-</br>
-
-**To add a fixed role to a basic role:**
-
-1. Open the YAML configuration file and locate the `addDefaultAssignments` section.
-
-1. Refer to the following table to add attributes and values.
-
-   | Attribute     | Description                       |
-   | ------------- | --------------------------------- |
-   | `builtInRole` | Enter the name of the basic role. |
-   | `fixedRole`   | Enter the name of the fixed role. |
-
-1. Reload the provisioning configuration file.
-
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
-
-The following example restores a default basic and fixed role assignment.
+- Creates the `custom:users:writer` role
+- Assigns the `custom:users:writer` role and the `fixed:users:writer` role to the `user admins` team
+- Removes the `custom:users:writer` and the `fixed:users:writer` assignments from the `user writers` team, if those assignments exist.
 
 ```yaml
 # config file version
-apiVersion: 1
-
-# list of default basic role assignments that should be added back
-addDefaultAssignments:
-  - builtInRole: 'Admin'
-    fixedRole: 'fixed:reporting:admin:read'
-```
-
-### Assign a custom role to a basic role using provisioning
-
-If you want to extend the permissions of a basic role, and assigning fixed roles to the basic role does not meet your permission requirements, you can create a custom role and assign that role to a basic role.
-
-</br>
-
-**Before you begin:**
-
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
-- [Add a custom role]({{< relref "./manage-rbac-roles#create-custom-role" >}})
-
-</br>
-
-**To assign a custom role to a basic role:**
-
-1. Open the YAML configuration file and locate the `builtInRoles` section.
-
-1. Refer to the following table to add attributes and values.
-
-   | Attribute      | Description                                                                                                                                                                                                                                                  |
-   | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-   | `name`         | Enter the name of the custom role.                                                                                                                                                                                                                           |
-   | `version`      | Enter the custom role version number. Assignments are updated if the version of the role is greater than or equal to the version number stored internally. If you are updating a role assignment, you are not required to increment the role version number. |
-   | `orgId`        | If you do not enter an `orgId`, it inherits the `orgId` from `role`. For global roles the default `orgId` is used. `orgId` in the `role` and in the assignment must be the same for non-global roles.                                                        |
-   | `permissions`  | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
-   | `builtInRoles` | Enter the `name` of an organization role, for example `Viewer`, `Editor`, or `Admin`, or enter `Grafana Admin`.                                                                                                                                              |
-
-1. Reload the provisioning configuration file.
-
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
-
-The following example assigns the `users:editor` custom role to the basic editor and admin roles.
-
-```yaml
-# config file version
-apiVersion: 1
+apiVersion: 2
 
 # Roles to insert/update in the database
 roles:
-  - name: custom:users:editor
-    description: 'This role allows users to list/create/update other users in the organization'
+  - name: 'custom:users:writer'
+    description: 'List/update other users in the organization'
     version: 1
-    orgId: 1
+    global: true
     permissions:
-      - action: 'users:read'
+      - action: 'org.users:read'
         scope: 'users:*'
-      - action: 'users:write'
+      - action: 'org.users:write'
         scope: 'users:*'
-      - action: 'users:create'
-        scope: 'users:*'
-    builtInRoles:
-      - name: 'Editor'
-      - name: 'Admin'
+
+# Assignments to teams
+teams:
+  - name: 'user writers'
+    orgId: 1
+    roles:
+      - name: 'fixed:users:writer'
+        global: true
+        state: 'absent' # Remove assignment
+      - name: 'custom:users:writer'
+        global: true
+        state: 'absent' # Remove assignment
+  - name: 'user admins'
+    orgId: 1
+    roles:
+      - name: 'fixed:users:writer'
+        global: true
+      - name: 'custom:users:writer'
+        global: true
 ```
 
-## Assign a custom role to a basic role using the HTTP API
-
-As an alternative to assigning roles using the role picker or provisioning, you can use the Grafana HTTP API to assign fixed and custom roles to users and teams. For more information about the HTTP API, refer to the [RBAC HTTP API documentation]({{< relref "../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
-
-The following example shows you how to assign a custom role to a basic role using the HTTP API.
-
-**Example request**
-
-```
-curl --location --request POST '<grafana_url>/api/access-control/builtin-roles' \
---header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "roleUid": "jZrmlLCkGksdka",
-    "builtinRole": "Viewer",
-    "global": true
-}'
-```
-
-**Example response**
-
-```
-{
-    "message": "Built-in role grant added"
-}
-```
+> **Note**: The roles don't have to be defined in the provisioning configuration files to be revoked. If roles exist in the database, they can be revoked.

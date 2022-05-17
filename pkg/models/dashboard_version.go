@@ -34,6 +34,7 @@ type DashboardVersion struct {
 type DashboardVersionMeta struct {
 	Id            int64            `json:"id"`
 	DashboardId   int64            `json:"dashboardId"`
+	DashboardUID  string           `json:"uid"`
 	ParentVersion int              `json:"parentVersion"`
 	RestoredFrom  int              `json:"restoredFrom"`
 	Version       int              `json:"version"`

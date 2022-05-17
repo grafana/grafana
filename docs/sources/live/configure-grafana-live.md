@@ -1,7 +1,8 @@
 +++
-title = "Configure Grafana Live"
+aliases = ["/docs/grafana/latest/live/configure-grafana-live/"]
 description = "Grafana Live configuration guide"
 keywords = ["Grafana", "live", "guide", "websocket"]
+title = "Configure Grafana Live"
 weight = 120
 +++
 

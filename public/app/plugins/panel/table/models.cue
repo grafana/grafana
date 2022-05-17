@@ -27,8 +27,8 @@ Panel: {
                     showHeader: bool | *true
                     showTypeIcons: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
-                }
-                PanelFieldConfig: ui.TableFieldOptions
+                } @cuetsy(kind="interface")
+                PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
             },
         ]
     ]

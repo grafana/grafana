@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/plugins/"]
 title = "Plugins"
 weight = 160
 +++

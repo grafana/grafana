@@ -1,8 +1,8 @@
 +++
-title = "User HTTP API "
+aliases = ["/docs/grafana/latest/http_api/user/"]
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/docs/grafana/latest/http_api/user/"]
+title = "User HTTP API "
 +++
 
 # User API

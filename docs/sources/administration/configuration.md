@@ -1,8 +1,8 @@
 +++
-title = "Configuration"
+aliases = ["/docs/grafana/latest/administration/configuration/", "/docs/grafana/latest/installation/configuration/"]
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/latest/installation/configuration/"]
+title = "Configuration"
 weight = 150
 +++
 

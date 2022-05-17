@@ -1,6 +1,7 @@
 +++
-title = "Grafana Plugin SDK for Go"
+aliases = ["/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/"]
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "sdk", "documentation"]
+title = "Grafana Plugin SDK for Go"
 +++
 
 # Grafana plugin SDK for Go
