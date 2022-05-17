@@ -208,7 +208,7 @@
     "jest-matcher-utils": "27.5.1",
     "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
-    "lint-staged": "12.3.7",
+    "lint-staged": "12.4.1",
     "mini-css-extract-plugin": "2.6.0",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",

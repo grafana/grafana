@@ -21247,7 +21247,7 @@ __metadata:
     kbar: ^0.1.0-beta.30
     lerna: ^4.0.0
     lezer-promql: 0.22.0
-    lint-staged: 12.3.7
+    lint-staged: 12.4.1
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 7.9.0
@@ -25549,9 +25549,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lint-staged@npm:12.3.7":
-  version: 12.3.7
-  resolution: "lint-staged@npm:12.3.7"
+"lint-staged@npm:12.4.1":
+  version: 12.4.1
+  resolution: "lint-staged@npm:12.4.1"
   dependencies:
     cli-truncate: ^3.1.0
     colorette: ^2.0.16
@@ -25569,7 +25569,7 @@ __metadata:
     yaml: ^1.10.2
   bin:
     lint-staged: bin/lint-staged.js
-  checksum: b595097556880eb2ab7ce2cf105047f6f22525ccfd608fbdc63ab243259aa36a26949576fadff673748fb885e7cb37ad3f4471d964ad54c1205d57a58999ba24
+  checksum: b57183b537064cda6caef6679918bf271903145f7c28d09567e918b8b13094048b579f8df808ea590dbd7ea2ec332327c5e372cf3d77e85b7b0254f6541ce4c3
   languageName: node
   linkType: hard
 
