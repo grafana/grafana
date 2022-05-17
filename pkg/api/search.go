@@ -79,19 +79,17 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
 	folderUIDs := make(map[string]bool, 0)
 	dashboardUIDs := make(map[string]bool, 0)
-	parentUIDs := make(map[string]bool, 0)
 
 	for _, hit := range hits {
 		if hit.Type == models.DashHitFolder {
 			folderUIDs[hit.UID] = true
 		} else {
 			dashboardUIDs[hit.UID] = true
-			parentUIDs[hit.FolderUID] = true
+			folderUIDs[hit.FolderUID] = true
 		}
 	}
 
 	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folderUIDs)
-	parentMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, parentUIDs)
 	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
 
 	// search hit with access control metadata attached
@@ -105,7 +103,7 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.H
 		if hit.Type == models.DashHitFolder {
 			meta = folderMeta[hit.UID]
 		} else {
-			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], parentMeta[hit.FolderUID])
+			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], folderMeta[hit.FolderUID])
 		}
 		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
 	}
