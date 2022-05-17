@@ -297,6 +297,9 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
+  if (angular.nullPointMode === NullValueMode.AsZero) {
+    y1.noValue = '0';
+  }
 
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;

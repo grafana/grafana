@@ -160,6 +160,28 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
+      // Replace null values with configured noValue settings
+      if (field.config.noValue?.length && field.type === FieldType.number) {
+        let replace: any = null;
+        if (type === FieldType.number) {
+          const noValue = +field.config.noValue;
+          if (!Number.isNaN(noValue)) {
+            replace = noValue;
+          }
+        } else if (type === FieldType.string) {
+          replace = field.config.noValue;
+        }
+
+        if (replace != null) {
+          const values = field.values.toArray();
+          for (let i = 0; i < values.length; i++) {
+            if (values[i] === null) {
+              values[i] = replace;
+            }
+          }
+        }
+      }
+
       // Set the Min/Max value automatically
       let range: NumericRange | undefined = undefined;
       if (field.type === FieldType.number) {

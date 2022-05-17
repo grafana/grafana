@@ -445,7 +445,7 @@ const customColor = {
   },
   lines: true,
   linewidth: 1,
-  nullPointMode: 'null',
+  nullPointMode: 'null as zero',
   options: {
     alertThreshold: true,
   },
