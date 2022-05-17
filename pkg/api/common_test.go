@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -326,32 +327,24 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 }
 
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	var features *featuremgmt.FeatureManager
-
-	if enableAccessControl {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol)
-	} else {
-		features = featuremgmt.WithFeatures()
-	}
-
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg(), features)
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg(), featuremgmt.WithFeatures())
 }
 
-func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	// Use a new conf
 	cfg := setting.NewCfg()
 	db := sqlstore.InitTestDB(t)
 	db.Cfg = setting.NewCfg()
 
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, mockstore.NewSQLStoreMock(), features)
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock(), features)
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, features *featuremgmt.FeatureManager) accessControlScenarioContext {
-  db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, features)
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, features)
 }
 
-func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	t.Helper()
 
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -363,7 +356,6 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		cfg.RBACEnabled = false
 		db.Cfg.RBACEnabled = false
 	}
-	features := featuremgmt.WithFeatures()
 
 	var acmock *accesscontrolmock.Mock
 
