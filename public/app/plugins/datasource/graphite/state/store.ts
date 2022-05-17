@@ -177,6 +177,12 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state.target.target = action.payload.query;
     handleTargetChanged(state);
   }
+  // fix for issue https://github.com/grafana/grafana/issues/48145
+  // when typing/updating a query
+  // run the query if the state is not paused when
+  if (!state.paused && actions.updateQuery.match(action)) {
+    state.refresh();
+  }
   if (actions.runQuery.match(action)) {
     state.refresh();
   }
