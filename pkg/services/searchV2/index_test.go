@@ -16,10 +16,10 @@ import (
 )
 
 type testDashboardLoader struct {
-	dashboards []dashboard
+	dashboards []Dashboard
 }
 
-func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ string) ([]dashboard, error) {
+func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ string) ([]Dashboard, error) {
 	return t.dashboards, nil
 }
 
@@ -35,7 +35,7 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var update = flag.Bool("update", false, "update golden files")
 
-func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
+func initTestIndexFromDashes(t *testing.T, dashboards []Dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
 	t.Helper()
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
@@ -60,7 +60,7 @@ func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, fi
 	require.NoError(t, err)
 }
 
-var testDashboards = []dashboard{
+var testDashboards = []Dashboard{
 	{
 		id:  1,
 		uid: "1",
@@ -108,7 +108,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-create", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(writer, reader, dashboard{
+		newReader, err := index.updateDashboard(writer, reader, Dashboard{
 			id:  3,
 			uid: "3",
 			info: &extract.DashboardInfo{
@@ -125,7 +125,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-update", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(writer, reader, dashboard{
+		newReader, err := index.updateDashboard(writer, reader, Dashboard{
 			id:  2,
 			uid: "2",
 			info: &extract.DashboardInfo{

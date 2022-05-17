@@ -24,7 +24,7 @@ type dashboardLoader interface {
 	// dashboard index for an organization. If dashboardUID is not empty – then only
 	// return dashboard with specified UID or empty slice if not found (this is required
 	// to apply partial update).
-	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error)
+	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]Dashboard, error)
 }
 
 type eventStore interface {
@@ -32,15 +32,15 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
-type ExtendDocumentFunc func(dash dashboard, doc *bluge.Document) error
+type ExtendDocumentFunc func(dash Dashboard, doc *bluge.Document) error
 type ResponseProcessorFunc func(field string, value []byte) bool
 
 type DashboardIndexExtender interface {
-	GetDocumentExtender(orgID int64, dashboards []dashboard) ExtendDocumentFunc
+	GetDocumentExtender(orgID int64, dashboards []Dashboard) ExtendDocumentFunc
 	GetResponseProcessor(frame *data.Frame) ResponseProcessorFunc
 }
 
-type dashboard struct {
+type Dashboard struct {
 	id       int64
 	uid      string
 	isFolder bool
@@ -318,7 +318,7 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash Dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
 
 	var doc *bluge.Document
@@ -379,17 +379,17 @@ func newSQLDashboardLoader(sql *sqlstore.SQLStore) *sqlDashboardLoader {
 	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader")}
 }
 
-func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
-	var dashboards []dashboard
+func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]Dashboard, error) {
+	var dashboards []Dashboard
 
 	limit := 1
 
 	if dashboardUID == "" {
 		limit = 200
-		dashboards = make([]dashboard, 0, limit+1)
+		dashboards = make([]Dashboard, 0, limit+1)
 
 		// Add the root folder ID (does not exist in SQL).
-		dashboards = append(dashboards, dashboard{
+		dashboards = append(dashboards, Dashboard{
 			id:       0,
 			uid:      "",
 			isFolder: true,
@@ -444,7 +444,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
 			}
-			dashboards = append(dashboards, dashboard{
+			dashboards = append(dashboards, Dashboard{
 				id:       row.Id,
 				uid:      row.Uid,
 				isFolder: row.IsFolder,
