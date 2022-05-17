@@ -20282,14 +20282,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:10.0.1":
-  version: 10.0.1
-  resolution: "fs-extra@npm:10.0.1"
+"fs-extra@npm:10.1.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
   dependencies:
     graceful-fs: ^4.2.0
     jsonfile: ^6.0.1
     universalify: ^2.0.0
-  checksum: c1faaa5eb9e1c5c7c7ff09f966e93922ecb068ae1b04801cfc983ef05fcc1f66bfbb8d8d0b745c910014c7a2e7317fb6cf3bfe7390450c1157e3cc1a218f221d
+  checksum: dc94ab37096f813cc3ca12f0f1b5ad6744dfed9ed21e953d72530d103cea193c2f81584a39e9dee1bea36de5ee66805678c0dddc048e8af1427ac19c00fffc50
   languageName: node
   linkType: hard
 
@@ -21222,7 +21222,7 @@ __metadata:
     file-loader: 6.2.0
     file-saver: 2.0.5
     fork-ts-checker-webpack-plugin: 7.2.1
-    fs-extra: 10.0.1
+    fs-extra: 10.1.0
     glob: 7.2.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
