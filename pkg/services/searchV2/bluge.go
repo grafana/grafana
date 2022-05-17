@@ -259,6 +259,8 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		}
 	}
 
+	q.Query = strings.ToLower(q.Query)
+
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(newPermissionFilter(filter, logger))
