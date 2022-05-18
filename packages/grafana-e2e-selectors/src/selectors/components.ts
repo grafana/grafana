@@ -265,7 +265,7 @@ export const Components = {
     placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
-    spanBar: () => 'data-testid SpanBar--wrapper',
+    spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {

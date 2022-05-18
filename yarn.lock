@@ -4965,6 +4965,7 @@ __metadata:
   dependencies:
     "@emotion/css": 11.7.1
     "@grafana/data": 9.0.0-pre
+    "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.0.0-pre
     "@testing-library/react": 12.1.4

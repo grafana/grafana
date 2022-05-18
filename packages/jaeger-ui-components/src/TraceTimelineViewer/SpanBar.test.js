@@ -16,6 +16,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import SpanBar from './SpanBar';
 
 describe('<SpanBar>', () => {
@@ -78,11 +80,11 @@ describe('<SpanBar>', () => {
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
 
-    await userEvent.hover(screen.getByTestId('SpanBar--wrapper'));
+    await userEvent.hover(screen.getByTestId(selectors.components.TraceViewer.spanBar));
     expect(screen.queryByText(shortLabel)).not.toBeInTheDocument();
     expect(screen.getByText(longLabel)).toBeInTheDocument();
 
-    await userEvent.unhover(screen.getByTestId('SpanBar--wrapper'));
+    await userEvent.unhover(screen.getByTestId(selectors.components.TraceViewer.spanBar));
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
   });

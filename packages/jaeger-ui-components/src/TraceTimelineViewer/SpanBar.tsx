@@ -18,6 +18,7 @@ import { groupBy as _groupBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -150,7 +151,7 @@ function SpanBar({
       onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
-      data-testid="SpanBar--wrapper"
+      data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
         aria-label={label}
