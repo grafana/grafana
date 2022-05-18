@@ -18,7 +18,7 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	var version *dashver.DashboardVersion
+	var version dashver.DashboardVersion
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardID, query.Version, query.OrgID).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
@@ -36,5 +36,5 @@ func (s *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQu
 	if err != nil {
 		return nil, err
 	}
-	return version, nil
+	return &version, nil
 }
