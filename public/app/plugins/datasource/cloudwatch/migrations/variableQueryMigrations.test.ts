@@ -35,6 +35,19 @@ describe('variableQueryMigrations', () => {
           expect(query.dimensionFilters).toStrictEqual({});
         });
       });
+      describe('and filter param is empty array', () => {
+        it('should leave an empty filter', () => {
+          const query = migrateVariableQuery(
+            'dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier, [])'
+          );
+          expect(query.queryType).toBe(VariableQueryType.DimensionValues);
+          expect(query.region).toBe('us-east-1');
+          expect(query.namespace).toBe('AWS/RDS');
+          expect(query.metricName).toBe('CPUUtilization');
+          expect(query.dimensionKey).toBe('DBInstanceIdentifier');
+          expect(query.dimensionFilters).toStrictEqual({});
+        });
+      });
       describe('and filter param is defined by user', () => {
         it('should use the user defined filter', () => {
           const query = migrateVariableQuery(
@@ -60,6 +73,13 @@ describe('variableQueryMigrations', () => {
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
     });
+    it('should parse a empty array for tags', () => {
+      const query = migrateVariableQuery('resource_arns(eu-west-1,elasticloadbalancing:loadbalancer, [])');
+      expect(query.queryType).toBe(VariableQueryType.ResourceArns);
+      expect(query.region).toBe('eu-west-1');
+      expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
+      expect(query.tags).toStrictEqual({});
+    });
   });
   describe('when ec2_instance_attribute query is used', () => {
     it('should parse the query', () => {
@@ -68,6 +88,13 @@ describe('variableQueryMigrations', () => {
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+    it('should parse an empty array for filters', () => {
+      const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,[])');
+      expect(query.queryType).toBe(VariableQueryType.EC2InstanceAttributes);
+      expect(query.region).toBe('us-east-1');
+      expect(query.attributeName).toBe('rds:db');
+      expect(query.ec2Filters).toStrictEqual({});
     });
   });
   describe('when OldVariableQuery is used', () => {
