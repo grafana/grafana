@@ -42,7 +42,7 @@ type ImportDashboardService struct {
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	var dashboard *models.Dashboard
+	var draftDashboard *models.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
 			PluginID:  req.PluginId,
@@ -51,13 +51,13 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		if resp, err := s.pluginDashboardService.LoadPluginDashboard(ctx, loadReq); err != nil {
 			return nil, err
 		} else {
-			dashboard = resp.Dashboard
+			draftDashboard = resp.Dashboard
 		}
 	} else {
-		dashboard = models.NewDashboardFromJson(req.Dashboard)
+		draftDashboard = models.NewDashboardFromJson(req.Dashboard)
 	}
 
-	evaluator := utils.NewDashTemplateEvaluator(dashboard.Data, req.Inputs)
+	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
 	generatedDash, err := evaluator.Eval()
 	if err != nil {
 		return nil, err
@@ -79,33 +79,33 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		User:      req.User,
 	}
 
-	savedDash, err := s.dashboardService.ImportDashboard(ctx, dto)
+	savedDashboard, err := s.dashboardService.ImportDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDash, req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDashboard, req.FolderId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, dashboard)
+	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dashboardimport.ImportDashboardResponse{
-		UID:              savedDash.Uid,
+		UID:              savedDashboard.Uid,
 		PluginId:         req.PluginId,
-		Title:            savedDash.Title,
+		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         savedDash.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDash.FolderId,
-		ImportedUri:      "db/" + savedDash.Slug,
-		ImportedUrl:      savedDash.GetUrl(),
-		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDashboard.FolderId,
+		ImportedUri:      "db/" + savedDashboard.Slug,
+		ImportedUrl:      savedDashboard.GetUrl(),
+		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
-		DashboardId:      savedDash.Id,
-		Slug:             savedDash.Slug,
+		DashboardId:      savedDashboard.Id,
+		Slug:             savedDashboard.Slug,
 	}, nil
 }
