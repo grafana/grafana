@@ -46,7 +46,7 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 34)
+	require.Len(t, paths, 36)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
@@ -69,8 +69,8 @@ func TestAuthorize(t *testing.T) {
 }
 
 func TestAuthorizeRuleChanges(t *testing.T) {
-	namespace := randFolder()
-	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid)
+	groupKey := models.GenerateGroupKey(rand.Int63())
+	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
 
 	testCases := []struct {
 		name        string
@@ -81,9 +81,10 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			name: "if there are rules to add it should check create action and query for datasource",
 			changes: func() *changes {
 				return &changes{
-					New:    models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace))),
-					Update: nil,
-					Delete: nil,
+					GroupKey: groupKey,
+					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey))),
+					Update:   nil,
+					Delete:   nil,
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -104,7 +105,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to update within the same namespace it should check update action",
 			changes: func() *changes {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				updates := make([]ruleUpdate, 0, len(rules))
 
 				for _, rule := range rules {
@@ -116,9 +117,10 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return &changes{
-					New:    nil,
-					Update: updates,
-					Delete: nil,
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   updates,
+					Delete:   nil,
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -140,7 +142,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules that are moved between namespaces it should check update action",
 			changes: func() *changes {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withNamespace(namespace)))
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				updates := make([]ruleUpdate, 0, len(rules))
 
 				for _, rule := range rules {
@@ -154,9 +156,10 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return &changes{
-					New:    nil,
-					Update: updates,
-					Delete: nil,
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   updates,
+					Delete:   nil,
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -168,7 +171,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
-						dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid + "other"),
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID + "other"),
 					},
 					ac.ActionAlertingRuleCreate: {
 						namespaceIdScope,
@@ -185,7 +188,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			groupChanges := testCase.changes()
 
-			result, err := authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) bool {
+			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(make(map[string][]string))
 				require.False(t, response)
 				require.NoError(t, err)
@@ -198,7 +201,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			permissions := testCase.permissions(groupChanges)
 			executed = false
-			result, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) bool {
+			result, err = authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
 				require.NoError(t, err)
@@ -213,8 +216,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 }
 
 func TestAuthorizeRuleDelete(t *testing.T) {
-	namespace := randFolder()
-	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid)
+	groupKey := models.GenerateGroupKey(rand.Int63())
+	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
 
 	getScopes := func(rules []*models.AlertRule) []string {
 		var scopes []string
@@ -236,9 +239,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			name: "should validate check access to data source and folder",
 			changes: func() *changes {
 				return &changes{
-					New:    nil,
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   nil,
+					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -258,9 +262,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			name: "should remove rules user does not have access to data source",
 			changes: func() *changes {
 				return &changes{
-					New:    nil,
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   nil,
+					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -282,9 +287,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			name: "should not fail if no changes other than unauthorized",
 			changes: func() *changes {
 				return &changes{
-					New:    nil,
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   nil,
+					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -304,9 +310,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			name: "should not fail if there are changes and no rules can be deleted",
 			changes: func() *changes {
 				return &changes{
-					New:    models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					GroupKey: groupKey,
+					New:      models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
+					Update:   nil,
+					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -329,9 +336,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			name: "should fail if no access to folder",
 			changes: func() *changes {
 				return &changes{
-					New:    nil,
-					Update: nil,
-					Delete: models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withNamespace(namespace))),
+					GroupKey: groupKey,
+					New:      nil,
+					Update:   nil,
+					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
@@ -350,7 +358,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			groupChanges := testCase.changes()
 			permissions := testCase.permissions(groupChanges)
-			result, err := authorizeRuleChanges(namespace, groupChanges, func(evaluator ac.Evaluator) bool {
+			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response, err := evaluator.Evaluate(permissions)
 				require.NoError(t, err)
 				return response

@@ -13,6 +13,7 @@ import {
 } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
 
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 import {
@@ -164,12 +165,14 @@ export const updateHistorySearchFilters = (
   return async (dispatch, getState) => {
     await dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
-    await dispatch(
-      updateHistorySettings({
-        ...currentSettings,
-        lastUsedDatasourceFilters: filters.datasourceFilters,
-      })
-    );
+    if (supportedFeatures().lastUsedDataSourcesAvailable) {
+      await dispatch(
+        updateHistorySettings({
+          ...currentSettings,
+          lastUsedDatasourceFilters: filters.datasourceFilters,
+        })
+      );
+    }
   };
 };
 

@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/data-frames/"]
 title = "Data frames"
 +++
 
