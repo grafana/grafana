@@ -2,6 +2,7 @@ package csrf
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -14,6 +15,7 @@ type Service interface {
 	Middleware(logger log.Logger) func(http.Handler) http.Handler
 	TrustOrigin(origin string)
 	AddOriginHeader(headerName string)
+	AddSafeEndpoint(endpoint string)
 }
 
 type Implementation struct {
@@ -21,6 +23,7 @@ type Implementation struct {
 
 	trustedOrigins map[string]struct{}
 	originHeaders  map[string]struct{}
+	safeEndpoints  map[string]struct{}
 }
 
 func ProvideCSRFFilter(cfg *setting.Cfg) Service {
@@ -30,6 +33,7 @@ func ProvideCSRFFilter(cfg *setting.Cfg) Service {
 		originHeaders: map[string]struct{}{
 			"Origin": {},
 		},
+		safeEndpoints: map[string]struct{}{},
 	}
 
 	additionalHeaders := cfg.SectionWithEnvOverrides("security").Key("csrf_additional_headers").Strings(" ")
@@ -64,6 +68,15 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 					return
 				}
 			}
+
+			// Skip CSRF checks for "safe" endpoints
+			for endpoint, _ := range i.safeEndpoints {
+				if r.URL.Path == endpoint {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
 			// Otherwise - verify that Origin matches the server origin
 			netAddr, err := util.SplitHostPortDefault(r.Host, "", "0") // we ignore the port
 			if err != nil {
@@ -113,4 +126,8 @@ func (i *Implementation) TrustOrigin(origin string) {
 
 func (i *Implementation) AddOriginHeader(headerName string) {
 	i.originHeaders[headerName] = struct{}{}
+}
+
+func (i *Implementation) AddSafeEndpoint(endpoint string) {
+	i.safeEndpoints[endpoint] = struct{}{}
 }
