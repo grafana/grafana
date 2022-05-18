@@ -4837,7 +4837,7 @@ __metadata:
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
-    react-popper: 2.2.5
+    react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-router-dom: ^5.2.0
     react-select: 5.2.2
@@ -21291,7 +21291,7 @@ __metadata:
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
     react-moveable: 0.32.7
-    react-popper: 2.2.5
+    react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
     react-refresh: 0.11.0
@@ -31716,7 +31716,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper@npm:2.2.5, react-popper@npm:^2.2.4, react-popper@npm:^2.2.5":
+"react-popper@npm:2.3.0":
+  version: 2.3.0
+  resolution: "react-popper@npm:2.3.0"
+  dependencies:
+    react-fast-compare: ^3.0.1
+    warning: ^4.0.2
+  peerDependencies:
+    "@popperjs/core": ^2.0.0
+    react: ^16.8.0 || ^17 || ^18
+    react-dom: ^16.8.0 || ^17 || ^18
+  checksum: 837111c98738011c69b3069a464ea5bdcbf487105b6148e8faf90cb7337e134edb1b98b8824322941c378756cca30a15c18c25f558e53b85ed5762fa0dc8e6b2
+  languageName: node
+  linkType: hard
+
+"react-popper@npm:^2.2.4, react-popper@npm:^2.2.5":
   version: 2.2.5
   resolution: "react-popper@npm:2.2.5"
   dependencies:
