@@ -365,6 +365,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = InitTestDB(t)
+				setup()
 
 				userCmd = models.CreateUserCommand{
 					Email:            fmt.Sprint("sa", 1, "@test.com"),
