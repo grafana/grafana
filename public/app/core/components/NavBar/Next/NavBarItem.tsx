@@ -109,11 +109,12 @@ const NavBarItem = ({
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
+                    item={{
+                      ...item,
+                      text: itemText,
+                      icon,
+                    }}
                     isDivider={!isSection && item.divider}
-                    icon={icon}
-                    target={item.target}
-                    text={itemText}
-                    url={item.url}
                     onClick={item.onClick}
                     styleOverrides={cx(styles.primaryText, { [styles.header]: isSection })}
                   />

@@ -225,6 +225,7 @@ function NavItem({
             (childLink) =>
               !childLink.divider && (
                 <NavBarMenuItem
+                  item={childLink}
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
@@ -233,9 +234,6 @@ function NavItem({
                     onClose();
                   }}
                   styleOverrides={styles.item}
-                  target={childLink.target}
-                  text={childLink.text}
-                  url={childLink.url}
                   isMobile={true}
                 />
               )

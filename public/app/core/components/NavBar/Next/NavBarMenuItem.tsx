@@ -1,33 +1,35 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Icon, IconButton, IconName, Link, useTheme2 } from '@grafana/ui';
+import { togglePin } from 'app/core/reducers/navBarTree';
 
-export interface Props {
+export interface OwnProps {
   icon?: IconName;
   isActive?: boolean;
   isDivider?: boolean;
   onClick?: () => void;
   styleOverrides?: string;
-  target?: HTMLAnchorElement['target'];
-  text: React.ReactNode;
-  url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
+  item: NavModelItem;
 }
 
-export function NavBarMenuItem({
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+function NavBarMenuItemUnConnected({
   icon,
   isActive,
   isDivider,
   onClick,
   styleOverrides,
-  target,
-  text,
-  url,
   isMobile = false,
+  item,
+  togglePin,
 }: Props) {
+  const { id, target, text, url, isSavedItem } = item;
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, Boolean(icon));
   const elStyle = cx(styles.element, styleOverrides);
@@ -64,16 +66,30 @@ export function NavBarMenuItem({
     return isDivider ? (
       <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
     ) : (
-      <li className={styles.listItem}>{element}</li>
+      <li className={styles.listItem}>
+        {element}
+        <IconButton name={isSavedItem ? 'favorite' : 'bookmark'} onClick={() => togglePin({ id: id || '' })} />
+      </li>
     );
   }
 
   return isDivider ? (
     <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
-    <div style={{ position: 'relative' }}>{element}</div>
+    <div style={{ position: 'relative' }}>
+      {element}
+      <IconButton name={isSavedItem ? 'favorite' : 'bookmark'} onClick={() => togglePin({ id: id || '' })} />
+    </div>
   );
 }
+
+const mapDispatchToProps = {
+  togglePin,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+export const NavBarMenuItem = connector(NavBarMenuItemUnConnected);
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
