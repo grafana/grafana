@@ -43,10 +43,10 @@ describe('TraceViewContainer', () => {
   it('toggles children visibility', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
-    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-testid="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
 
-    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-testid="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
   });
 

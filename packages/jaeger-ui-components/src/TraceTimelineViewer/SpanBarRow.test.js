@@ -18,17 +18,14 @@ import React from 'react';
 
 import SpanBarRow from './SpanBarRow';
 
-jest.mock('./SpanTreeOffset', () => {
-  // eslint-disable-next-line react/display-name
-  return () => <span>SpanTreeOffset</span>;
-});
-
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
   const props = {
+    addHoverIndentGuideId: jest.fn(),
     className: 'a-class-name',
     color: 'color-a',
     columnDivision: '0.5',
+    hoverIndentGuideIds: new Set(),
     isChildrenExpanded: true,
     isDetailExpanded: false,
     isFilteredOut: false,
@@ -50,6 +47,7 @@ describe('<SpanBarRow>', () => {
       hasChildren: true,
       process: {
         serviceName: 'service-name',
+        tags: [],
       },
       spanID,
       logs: [],
@@ -78,8 +76,8 @@ describe('<SpanBarRow>', () => {
     render(<SpanBarRow {...props} />);
     const { onChildrenToggled } = props;
     expect(onChildrenToggled.mock.calls.length).toBe(0);
-    await userEvent.click(screen.getByText('SpanTreeOffset'));
-    //expect(onChildrenToggled.mock.calls.length).toBe(1);
+    await userEvent.click(screen.getByTestId('icon-wrapper'));
+    expect(onChildrenToggled.mock.calls.length).toBe(1);
   });
 
   it('render references button', () => {
