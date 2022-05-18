@@ -40,6 +40,7 @@ const tempoPlugin = async () =>
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
+import { config } from '@grafana/runtime';
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
@@ -112,7 +113,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': true ? heatmapPanelNG : heatmapPanel,
+  'app/plugins/panel/heatmap/module': config.featureToggles.useNewHeatmapPanel ? heatmapPanelNG : heatmapPanel,
   'app/plugins/panel/heatmap-new/module': heatmapPanelNG,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,
