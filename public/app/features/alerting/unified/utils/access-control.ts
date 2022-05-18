@@ -34,15 +34,15 @@ export const notificationsPermissions = {
     external: AccessControlAction.AlertingNotificationsExternalRead,
   },
   create: {
-    grafana: AccessControlAction.AlertingNotificationsCreate,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
   update: {
-    grafana: AccessControlAction.AlertingNotificationsUpdate,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
   delete: {
-    grafana: AccessControlAction.AlertingNotificationsDelete,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
 };
