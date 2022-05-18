@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import TextList from './TextList';
@@ -26,16 +26,15 @@ describe('<TextList>', () => {
   ];
 
   beforeEach(() => {
-    wrapper = shallow(<TextList data={data} />);
+    render(<TextList data={data} />);
   });
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="TextList"]').length).toBe(1);
+    expect(screen).toBeDefined();
+    expect(screen.getAllByTestId('TextList')).toHaveLength(1);
   });
 
   it('renders a table row for each data element', () => {
-    const trs = wrapper.find('li');
-    expect(trs.length).toBe(data.length);
+    expect(screen.getAllByRole('listitem')).toHaveLength(data.length);
   });
 });

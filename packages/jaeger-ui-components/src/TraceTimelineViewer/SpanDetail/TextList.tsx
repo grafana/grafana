@@ -40,6 +40,16 @@ const getStyles = () => {
   };
 };
 
+const getRow = (row) => {
+  if (typeof row === 'string') {
+    return row;
+  } else {
+    // dict
+    return Object.entries(row).map(([key, value]) => {
+      return { value };
+    });
+  }
+};
 type TextListProps = {
   data: string[];
 };
@@ -48,13 +58,13 @@ export default function TextList(props: TextListProps) {
   const { data } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.TextList)} data-test-id="TextList">
+    <div className={cx(styles.TextList)} data-testid="TextList">
       <ul className={styles.List}>
         {data.map((row, i) => {
           return (
             // `i` is necessary in the key because row.key can repeat
             <li className={styles.item} key={`${i}`}>
-              {row}
+              {getRow(row)}
             </li>
           );
         })}
