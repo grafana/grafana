@@ -112,7 +112,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': heatmapPanel,
+  'app/plugins/panel/heatmap/module': true ? heatmapPanelNG : heatmapPanel,
   'app/plugins/panel/heatmap-new/module': heatmapPanelNG,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,

@@ -182,4 +182,8 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagUseNewHeatmapPanel
+	// Swaps the current (angular) heatmap for a new react one.  This aims to be builtin for 9.0
+	FlagUseNewHeatmapPanel = "useNewHeatmapPanel"
 )

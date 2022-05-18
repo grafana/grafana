@@ -248,5 +248,11 @@ var (
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "useNewHeatmapPanel",
+			Description:     "Swaps the current (angular) heatmap for a new react one.  This aims to be builtin for 9.0",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // Still dev mode until we are confident with the saved options and migrations
+		},
 	}
 )
