@@ -8,6 +8,8 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
+import { isDashboardPubliclyViewed } from '../../utils/publicDashboards';
+
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
 import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
@@ -59,12 +61,21 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
-                <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
-                {data.request && data.request.timeInfo && (
-                  <span className="panel-time-info">
-                    <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
-                  </span>
+                {!isDashboardPubliclyViewed() && (
+                  <div data-testid="panel-dropdown">
+                    <Icon name="angle-down" className="panel-menu-toggle" />
+                    <PanelHeaderMenuWrapper
+                      panel={panel}
+                      dashboard={dashboard}
+                      show={panelMenuOpen}
+                      onClose={closeMenu}
+                    />
+                    {data.request && data.request.timeInfo && (
+                      <span className="panel-time-info">
+                        <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             );
