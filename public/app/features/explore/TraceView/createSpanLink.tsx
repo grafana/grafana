@@ -162,7 +162,7 @@ function legacyCreateSpanLinkFactory(
             datasourceName: metricsDataSourceSettings.name,
             query: {
               expr: query.query || defaultQuery,
-              refId: '',
+              refId: 'A',
             },
           },
         };

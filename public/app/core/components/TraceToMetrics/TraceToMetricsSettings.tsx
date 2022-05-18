@@ -73,9 +73,9 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
       {options.jsonData.tracesToMetrics?.queries?.map((query, i) => (
         <div key={i} className={styles.queryRow}>
-          <InlineField label="Name" labelWidth={10}>
+          <InlineField label="Link Label" labelWidth={10}>
             <Input
-              label="Name"
+              label="Link Label"
               type="text"
               allowFullScreen
               value={query.name}
@@ -130,6 +130,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
       <Button
         variant="secondary"
+        title="Add query"
         icon="plus"
         type="button"
         onClick={() => {
