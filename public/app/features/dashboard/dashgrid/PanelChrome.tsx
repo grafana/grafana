@@ -37,6 +37,7 @@ import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
+import { isDashboardPubliclyViewed } from '../utils/publicDashboards';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -103,6 +104,10 @@ export class PanelChrome extends PureComponent<Props, State> {
   canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
 
   canAddAnnotation = () => {
+    if (isDashboardPubliclyViewed()) {
+      return false;
+    }
+
     let canAdd = true;
 
     if (contextSrv.accessControlEnabled()) {
