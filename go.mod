@@ -338,4 +338,3 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
 
-replace github.com/grafana/thema => ../thema
