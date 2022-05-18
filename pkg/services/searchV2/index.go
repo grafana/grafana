@@ -50,10 +50,10 @@ type dashboardIndex struct {
 	eventStore   eventStore
 	logger       log.Logger
 	buildSignals chan int64
-	extender     DashboardIndexExtender
+	extender     DocumentExtender
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DashboardIndexExtender) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender) *dashboardIndex {
 	return &dashboardIndex{
 		loader:       dashLoader,
 		eventStore:   evStore,
@@ -131,7 +131,7 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		uids = append(uids, d.uid)
 	}
 
-	dashboardExtender := i.extender.GetDocumentExtender().GetDashboardExtender(orgID, uids)
+	dashboardExtender := i.extender.GetDashboardExtender(orgID, uids)
 
 	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {

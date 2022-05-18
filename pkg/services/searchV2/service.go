@@ -39,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore, extender),
+		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore, extender.GetDocumentExtender()),
 		logger:         log.New("searchV2"),
 		extender:       extender,
 	}
@@ -59,7 +59,7 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
 	s.extender = ext
-	s.dashboardIndex.extender = ext
+	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
