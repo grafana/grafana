@@ -23,22 +23,24 @@ import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
 type SearchViewProps = {
-  query: string; //
+  queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
 };
 
-export const SearchView = ({ showManage, folderDTO }: SearchViewProps) => {
+export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
     useSearchQuery({});
+  query.query = queryText; // Use the query value passed in from parent rather than from URL
+
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
   const results = useAsync(() => {
-    let qstr = query.query as string;
+    let qstr = queryText;
     if (!qstr?.length) {
       qstr = '*';
     }
@@ -49,7 +51,7 @@ export const SearchView = ({ showManage, folderDTO }: SearchViewProps) => {
       location: folderDTO?.uid, // This will scope all results to the prefix
     };
     return getGrafanaSearcher().search(q);
-  }, [query, layout, folderDTO]);
+  }, [query, layout, queryText, folderDTO]);
 
   const toggleSelection = useCallback(
     (kind: string, uid: string) => {

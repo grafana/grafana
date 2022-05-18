@@ -43,9 +43,9 @@ export default function SearchPage() {
   };
 
   // since we don't use "query" from use search... it is not actually loaded from the URL!
-  const { onQueryChange } = useSearchQuery({});
+  const { query, onQueryChange } = useSearchQuery({});
 
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
@@ -84,7 +84,7 @@ export default function SearchPage() {
           </InlineField>
         </InlineFieldRow>
 
-        <SearchView showManage={showManage} folderDTO={folderDTO} />
+        <SearchView showManage={showManage} folderDTO={folderDTO} queryText={query.query} />
       </Page.Contents>
     </Page>
   );
