@@ -26,6 +26,8 @@ Results of log queries are shown as histograms in the graph and individual logs 
 
 If the data source supports a full range log volume histogram, the graph with log distribution for all entered log queries is shown automatically. This feature is currently supported by Elasticsearch and Loki data sources.
 
+**NOTE:** In Loki, this full range log volume histogram is rendered by normal metric query which can turns out to be expensive depends on time range of query and how big/scalable the Loki installation is. Grafana sends custom header `X-Query-Tags` with value `Source=logvolhist` for all the full range log volume histogram queries, It's recommended to set suitable custom timeout(say 10 seconds) on any proxy(say nginix) in front of Loki, to avoid overloading the Loki servers.
+
 If the data source does not support loading full range log volume histogram, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval, and the first log row's timestamp then anchors the start of the histogram from the result. The end of the time series is anchored to the time picker's **To** range.
 
 #### Log level
