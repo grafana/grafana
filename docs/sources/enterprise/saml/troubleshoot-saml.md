@@ -26,7 +26,7 @@ We only support one private key format: PKCS#8.
 
 The keys may be in a different format (PKCS#1 or PKCS#12); in that case, it may be necessary to convert the private key format.
 
-This creates a new pkcs8 key file.
+The following command creates a pkcs8 key file.
 
 ```bash
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
