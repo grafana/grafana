@@ -2,7 +2,6 @@ package guardian
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -174,7 +173,7 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		svc = a.permissionServices.GetFolderService()
 	}
 
-	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))
+	permissions, err := svc.GetPermissions(a.ctx, a.user, a.dashboard.Uid)
 	if err != nil {
 		return nil, err
 	}
