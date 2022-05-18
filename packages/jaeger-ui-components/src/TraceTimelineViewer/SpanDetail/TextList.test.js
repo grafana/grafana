@@ -30,8 +30,7 @@ describe('<TextList>', () => {
   });
 
   it('renders without exploding', () => {
-    expect(screen).toBeDefined();
-    expect(screen.getAllByTestId('TextList')).toHaveLength(1);
+    expect(() => render(<TextList data={data} />)).not.toThrow();
   });
 
   it('renders a table row for each data element', () => {
