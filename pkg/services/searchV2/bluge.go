@@ -78,9 +78,6 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		location += "/" + dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
-			if err := extendDoc(dash.uid, doc); err != nil {
-				return nil, nil, err
-			}
 			batch.Insert(panelDoc)
 		}
 	}
