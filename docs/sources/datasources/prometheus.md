@@ -1,8 +1,8 @@
 +++
-title = "Prometheus"
+aliases = ["/docs/grafana/latest/datasources/prometheus/", "/docs/grafana/latest/features/datasources/prometheus/"]
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
+title = "Prometheus"
 weight = 1300
 +++
 

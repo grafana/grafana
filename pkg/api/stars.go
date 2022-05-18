@@ -26,7 +26,7 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}
-		err := hs.SQLStore.GetDashboard(c.Req.Context(), query)
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err != nil {
 			return response.Error(500, "Failed to get dashboard", err)
 		}

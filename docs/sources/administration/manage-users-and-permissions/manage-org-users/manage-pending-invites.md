@@ -1,6 +1,6 @@
 +++
-title = "Manage a pending invitation"
 aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/manage-pending-invites/"]
+title = "Manage a pending invitation"
 weight = 20
 +++
 

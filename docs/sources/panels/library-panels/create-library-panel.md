@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/library-panels/create-library-panel/", "/docs/sources/panels/library-panels/create-library-panel/"]
 title = "Create a Grafana library panel"
 weight = 20
-aliases = ["/docs/sources/panels/library-panels/create-library-panel/"]
 +++
 
 # Create a Grafana library panel

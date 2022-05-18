@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField, Button } from '@grafana/ui';
+import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField, Button, Select } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
@@ -15,6 +15,7 @@ import { getGrafanaSearcher, SearchQuery } from '../service';
 import { SearchLayout } from '../types';
 
 import { ActionRow, getValidQueryLayout } from './components/ActionRow';
+import { FolderSection } from './components/FolderSection';
 import { FolderView } from './components/FolderView';
 import { ManageActions } from './components/ManageActions';
 import { SearchResultsGrid } from './components/SearchResultsGrid';
@@ -33,7 +34,16 @@ export default function SearchPage() {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
     useSearchQuery({});
+
   const [showManage, setShowManage] = useState(false); // grid vs list view
+  const [folder, setFolder] = useState<string>(); // grid vs list view
+  const folders = useAsync(async () => {
+    const rsp = await getGrafanaSearcher().search({
+      query: '*',
+      kind: ['folder'],
+    });
+    return rsp.view.map((v) => ({ value: v.uid, label: v.name }));
+  }, []);
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
@@ -48,10 +58,10 @@ export default function SearchPage() {
       query: qstr,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
+      location: folder, // This will scope all results to the prefix
     };
-    console.log('DO QUERY', q);
     return getGrafanaSearcher().search(q);
-  }, [query, layout]);
+  }, [query, layout, folder]);
 
   const [inputValue, setInputValue] = useState('');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +138,17 @@ export default function SearchPage() {
 
     const selection = showManage ? searchSelection.isSelected : undefined;
     if (layout === SearchLayout.Folders) {
+      if (folder) {
+        return (
+          <FolderSection
+            section={{ uid: folder, kind: 'folder', title: folder }}
+            selection={selection}
+            selectionToggle={toggleSelection}
+            onTagSelected={onTagAdd}
+            renderStandaloneBody={true}
+          />
+        );
+      }
       return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagAdd} />;
     }
 
@@ -162,6 +183,7 @@ export default function SearchPage() {
         className={css`
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         `}
       >
         <Input
@@ -176,6 +198,14 @@ export default function SearchPage() {
         <InlineFieldRow>
           <InlineField label="Show manage options">
             <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
+          </InlineField>
+          <InlineField label="Folder">
+            <Select
+              options={folders.value ?? []}
+              isLoading={folders.loading}
+              onChange={(v) => setFolder(v?.value)}
+              isClearable
+            />
           </InlineField>
         </InlineFieldRow>
 
@@ -215,6 +245,7 @@ export default function SearchPage() {
 const getStyles = (theme: GrafanaTheme2) => ({
   searchInput: css`
     margin-bottom: 6px;
+    min-height: ${theme.spacing(4)};
   `,
   unsupported: css`
     padding: 10px;

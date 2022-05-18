@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/transform-data/add-transformation-to-data/", "/docs/grafana/latest/panels/transform-data/apply-transformation-to-data/", "/docs/sources/panels/transform-data/add-transformation-to-data/", "/docs/sources/panels/transform-data/apply-transformation-to-data/"]
 title = "Add a transformation to data"
 weight = 20
-aliases = ["/docs/sources/panels/transform-data/add-transformation-to-data/", "/docs/sources/panels/transform-data/apply-transformation-to-data", "/docs/grafana/latest/panels/transform-data/apply-transformation-to-data"]
 +++
 
 # Add a transformation function to data
