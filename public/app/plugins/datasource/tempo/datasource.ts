@@ -480,6 +480,41 @@ function secondServiceMapQuery(
   );
 }
 
+function makePromLink(title: string, expr: string, datasourceUid: string, instant: boolean) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        expr: expr,
+        range: !instant,
+        exemplar: !instant,
+        instant: instant,
+      } as PromQuery,
+      datasourceUid,
+      datasourceName: 'Prometheus',
+    },
+  };
+}
+
+function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+  return {
+    ...options,
+    targets: serviceMapMetrics.map((metric) => {
+      return {
+        refId: metric,
+        // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
+        // service map at the same time anyway
+        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
+        instant: true,
+      };
+    }),
+  };
+}
+
+// APM Table
+/////////////////////////
+
 function getApmTable(
   request: DataQueryRequest<TempoQuery>,
   firstResponse: DataQueryResponse,
@@ -637,39 +672,6 @@ function getApmTable(
   return df;
 }
 
-function makePromLink(title: string, metric: string, datasourceUid: string, instant: boolean) {
-  return {
-    url: '',
-    title,
-    internal: {
-      query: {
-        expr: metric,
-        range: !instant,
-        exemplar: !instant,
-        instant: instant,
-      } as PromQuery,
-      datasourceUid,
-      datasourceName: 'Prometheus',
-    },
-  };
-}
-
-function makeTempoLink(title: string, tempoDatasourceUid: string, query: string) {
-  return {
-    url: '',
-    title,
-    internal: {
-      query: {
-        queryType: 'nativeSearch',
-        serviceName: 'app',
-        spanName: 'HTTP Client',
-      } as TempoQuery,
-      datasourceUid: tempoDatasourceUid,
-      datasourceName: 'Tempo',
-    },
-  };
-}
-
 function buildExpr(metric: string, serviceMapQuery: string | undefined) {
   if (!serviceMapQuery || serviceMapQuery === '{}') {
     const replaceString = metric.includes(',REPLACE_STRING') ? ',REPLACE_STRING' : 'REPLACE_STRING';
@@ -692,17 +694,18 @@ function makeApmMetricsRequest(apmMetrics: any[], options: DataQueryRequest<Temp
   return metrics;
 }
 
-function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+function makeTempoLink(title: string, tempoDatasourceUid: string, query: string) {
   return {
-    ...options,
-    targets: serviceMapMetrics.map((metric) => {
-      return {
-        refId: metric,
-        // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
-        // service map at the same time anyway
-        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
-        instant: true,
-      };
-    }),
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: 'app',
+        spanName: 'HTTP Client',
+      } as TempoQuery,
+      datasourceUid: tempoDatasourceUid,
+      datasourceName: 'Tempo',
+    },
   };
 }
