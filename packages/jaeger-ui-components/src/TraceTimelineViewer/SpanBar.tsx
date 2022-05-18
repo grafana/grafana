@@ -165,7 +165,7 @@ function SpanBar({
           {label}
         </div>
       </div>
-      <div data-testid="popover">
+      <div>
         {Object.keys(logGroups).map((positionKey) => (
           <Popover
             key={positionKey}
@@ -173,7 +173,7 @@ function SpanBar({
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
-            <div className={styles.logMarker} style={{ left: positionKey }} />
+            <div data-testid="SpanBar--logMarker" className={styles.logMarker} style={{ left: positionKey }} />
           </Popover>
         ))}
       </div>

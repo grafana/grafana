@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-
-import { Popover } from '../common/Popover';
 
 import SpanBar from './SpanBar';
 
@@ -75,7 +73,7 @@ describe('<SpanBar>', () => {
     },
   };
 
-  it('renders without exploding', () => {
+  it('renders without exploding', async () => {
     render(<SpanBar {...props} />);
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
