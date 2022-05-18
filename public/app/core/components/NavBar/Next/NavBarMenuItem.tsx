@@ -68,7 +68,11 @@ function NavBarMenuItemUnConnected({
     ) : (
       <li className={styles.listItem}>
         {element}
-        <IconButton name={isSavedItem ? 'favorite' : 'bookmark'} onClick={() => togglePin({ id: id || '' })} />
+        <IconButton
+          name="bookmark"
+          iconType={isSavedItem ? 'solid' : 'default'}
+          onClick={() => togglePin({ id: id || '' })}
+        />
       </li>
     );
   }
@@ -76,10 +80,7 @@ function NavBarMenuItemUnConnected({
   return isDivider ? (
     <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
-    <div style={{ position: 'relative' }}>
-      {element}
-      <IconButton name={isSavedItem ? 'favorite' : 'bookmark'} onClick={() => togglePin({ id: id || '' })} />
-    </div>
+    <div style={{ position: 'relative' }}>{element}</div>
   );
 }
 
