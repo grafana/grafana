@@ -142,9 +142,7 @@ describe('<SpanBarRow>', () => {
         })}
       />
     );
-    expect(screen.getAllByTestId('a-href')).toHaveLength(1);
-    const { getByText } = within(screen.getByTestId('a-href'));
-    expect(getByText('This span is referenced by another span')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
   });
 
   it('render referenced to by multiple span', () => {
