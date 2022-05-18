@@ -247,9 +247,10 @@ func TestUserAuth(t *testing.T) {
 			// Find a user to set tokens on
 			login := "loginuser0"
 
+			fixedTime := time.Now()
 			// Calling srv.LookupAndUpdateQuery on an existing user will populate an entry in the user_auth table
 			// Make the first log-in during the past
-			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, -2) }
 			queryOne := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
 			user, err := srv.LookupAndUpdate(context.Background(), queryOne)
 			database.GetTime = time.Now
@@ -259,7 +260,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Add a second auth module for this user
 			// Have this module's last log-in be more recent
-			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, -1) }
 			queryTwo := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
 			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
 			require.Nil(t, err)
@@ -273,10 +274,10 @@ func TestUserAuth(t *testing.T) {
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
-			require.Equal(t, getAuthQuery.Result.AuthModule, "test2")
+			require.Equal(t, "test2", getAuthQuery.Result.AuthModule)
 
 			// Now reuse first auth module and make sure it's updated to the most recent
-			database.GetTime = time.Now
+			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, 0) }
 			user, err = srv.LookupAndUpdate(context.Background(), queryOne)
 
 			require.Nil(t, err)
@@ -285,7 +286,16 @@ func TestUserAuth(t *testing.T) {
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
-			require.Equal(t, getAuthQuery.Result.AuthModule, "test1")
+			require.Equal(t, "test1", getAuthQuery.Result.AuthModule)
+
+			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, 1) }
+			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
+			require.Nil(t, err)
+			require.Equal(t, user.Login, login)
+
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
+			require.Nil(t, err)
+			require.Equal(t, "test2", getAuthQuery.Result.AuthModule)
 		})
 
 		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {

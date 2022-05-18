@@ -151,8 +151,13 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error {
 	authInfo.Created = GetTime()
 
+	cond := &models.UserAuth{
+		Id:         authInfo.Id,
+		UserId:     authInfo.UserId,
+		AuthModule: authInfo.AuthModule,
+	}
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Update(authInfo)
+		_, err := sess.Update(authInfo, cond)
 		return err
 	})
 }
