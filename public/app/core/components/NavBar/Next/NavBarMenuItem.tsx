@@ -3,6 +3,7 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, IconButton, IconName, Link, useTheme2 } from '@grafana/ui';
 import { togglePin } from 'app/core/reducers/navBarTree';
 
@@ -68,11 +69,13 @@ function NavBarMenuItemUnConnected({
     ) : (
       <li className={styles.listItem}>
         {element}
-        <IconButton
-          name="bookmark"
-          iconType={isSavedItem ? 'solid' : 'default'}
-          onClick={() => togglePin({ id: id || '' })}
-        />
+        {config.featureToggles.savedItems ? (
+          <IconButton
+            name="bookmark"
+            iconType={isSavedItem ? 'solid' : 'default'}
+            onClick={() => togglePin({ id: id || '' })}
+          />
+        ) : null}
       </li>
     );
   }
