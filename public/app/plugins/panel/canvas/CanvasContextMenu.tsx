@@ -30,19 +30,21 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   useEffect(() => {
     const handleMouseEvent = (e: MouseEvent) => {
       e.preventDefault();
+      if (e.currentTarget) {
+        scene.select({ targets: [e.currentTarget as HTMLElement | SVGElement] });
+      }
       setAnchorPoint({ x: e.pageX, y: e.pageY });
       setIsMenuVisible(true);
       scene.showContextMenu.next(true);
     };
 
-    // @TODO select with right click || removeEventListener
     if (selectedElements) {
       if (selectedElements.length === 1) {
         const element = selectedElements[0];
         element.addEventListener('contextmenu', (ev) => handleMouseEvent(ev as MouseEvent));
       }
     }
-  }, [scene.showContextMenu, selectedElements]);
+  }, [scene, selectedElements]);
 
   if (!selectedElements) {
     return <></>;
