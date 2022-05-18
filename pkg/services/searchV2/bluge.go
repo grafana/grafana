@@ -203,14 +203,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	return docs
 }
 
-var ngramQuery = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-	},
-}
-
-var ngramIndexer = &analysis.Analyzer{
+var ngramIndexAnalyzer = &analysis.Analyzer{
 	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
 	TokenFilters: []analysis.TokenFilter{
 		token.NewLowerCaseFilter(),
@@ -218,8 +211,15 @@ var ngramIndexer = &analysis.Analyzer{
 	},
 }
 
+var ngramQueryAnalyzer = &analysis.Analyzer{
+	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
+	TokenFilters: []analysis.TokenFilter{
+		token.NewLowerCaseFilter(),
+	},
+}
+
 func getNameNGramField(name string) bluge.Field {
-	return bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexer)
+	return bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer)
 }
 
 func getDashboardFolderUID(reader *bluge.Reader, folderID int64) (string, error) {
@@ -305,8 +305,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		}
 	}
 
-	//q.Query = strings.ToLower(q.Query)
-
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(newPermissionFilter(filter, logger))
@@ -367,7 +365,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
-				SetAnalyzer(ngramQuery).SetBoost(1))
+				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
 			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
