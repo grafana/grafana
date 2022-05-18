@@ -92,7 +92,6 @@ describe('<SpanBar>', () => {
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
     render(<SpanBar {...props} />);
-    expect(screen.getByTestId('popover')).toBeInTheDocument();
-    expect(screen.getByTestId('popover').querySelectorAll('div')).toHaveLength(2);
+    expect(screen.getAllByTestId('SpanBar--logMarker')).toHaveLength(2);
   });
 });
