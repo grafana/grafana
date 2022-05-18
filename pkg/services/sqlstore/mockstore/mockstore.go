@@ -20,7 +20,6 @@ type SQLStoreMock struct {
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
-	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
 	ExpectedDashboardVersion       *models.DashboardVersion
 	ExpectedDashboardVersions      []*models.DashboardVersion
@@ -466,11 +465,6 @@ func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.D
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	query.Result = m.ExpectedDashboard
-	return m.ExpectedError
-}
-
 func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
 	query.Result = m.ExpectedPersistedDashboards
 	return m.ExpectedError
@@ -652,10 +646,6 @@ func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *m
 }
 
 func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
 	return m.ExpectedError
 }
 

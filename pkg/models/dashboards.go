@@ -199,9 +199,14 @@ type Dashboard struct {
 	FolderId  int64
 	IsFolder  bool
 	HasAcl    bool
+	IsPublic  bool
 
 	Title string
 	Data  *simplejson.Json
+}
+
+type PublicDashboardConfig struct {
+	IsPublic bool `json:"isPublic"`
 }
 
 func (d *Dashboard) SetId(id int64) {
@@ -409,6 +414,12 @@ type DeleteDashboardCommand struct {
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
+}
+
+type SavePublicDashboardConfigCommand struct {
+	Uid                   string
+	OrgId                 int64
+	PublicDashboardConfig PublicDashboardConfig
 }
 
 //
