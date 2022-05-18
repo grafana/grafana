@@ -17,7 +17,7 @@ const RecordingRuleType: FC<SharedProps> = ({ selected = false, disabled = false
             Should be combined with an alert rule.
           </span>
         }
-        image="/public/img/alerting/mimir_logo_recording.svg"
+        image="public/img/alerting/mimir_logo_recording.svg"
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudRecording}
