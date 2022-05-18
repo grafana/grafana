@@ -34,7 +34,7 @@ $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -no
 
 #### **Convert** the private key format to base64
 
-This converts already created keys to base64
+The following command converts keys to base64 format.
 
 Base64-encode the cert.pem and key.pem files:
 (-w0 switch is not needed on Mac, only for Linux)
