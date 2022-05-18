@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -98,13 +98,16 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     };
 
     try {
-      const results: { deleteUrl: any; url: any } = await getBackendSrv().post(snapshotApiUrl, cmdData);
+      const results: { deleteUrl: string; url: string } = await getBackendSrv().post(snapshotApiUrl, cmdData);
       this.setState({
         deleteUrl: results.deleteUrl,
         snapshotUrl: results.url,
         step: 2,
       });
     } finally {
+      reportInteraction('grafana_dashboards_snapshot_created', {
+        location: external ? 'raintank' : 'local',
+      });
       this.setState({ isLoading: false });
     }
   };
