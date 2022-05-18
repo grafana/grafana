@@ -7,7 +7,7 @@ import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
 import { HeatmapPanel } from './HeatmapPanel';
-import { heatmapChangedHandler } from './migrations';
+import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import {
   PanelOptions,
   defaultPanelOptions,
@@ -23,7 +23,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     disableStandardOptions: [FieldConfigProperty.Color, FieldConfigProperty.Thresholds],
   })
   .setPanelChangeHandler(heatmapChangedHandler)
-  // .setMigrationHandler(heatmapMigrationHandler)
+  .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
