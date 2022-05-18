@@ -26,7 +26,7 @@ We only support one private key format: PKCS#8.
 
 The keys may be in a different format (PKCS#1 or PKCS#12); in that case, it may be necessary to convert the private key format.
 
-This creates a new pkcs8 key file.
+The following command creates a pkcs8 key file.
 
 ```bash
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
@@ -34,7 +34,7 @@ $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -no
 
 #### **Convert** the private key format to base64
 
-This converts already created keys to base64
+The following command converts keys to base64 format.
 
 Base64-encode the cert.pem and key.pem files:
 (-w0 switch is not needed on Mac, only for Linux)
