@@ -27,7 +27,7 @@ import {
 } from 'app/features/dimensions/utils';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement } from '../types';
+import { Placement, VerticalConstraint } from '../types';
 
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -37,6 +37,82 @@ export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
   frame?: FrameState;
 }
+
+const constraintViewable = (scene: Scene) => ({
+  name: 'constraintViewable',
+  props: {},
+  events: {},
+  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+    const rect = moveable.getRect();
+    const targetElement = scene.findElementByTarget(moveable.state.target);
+
+    // If target is currently in motion or selection is more than 1 element don't display constraint visualizations
+    if (
+      targetElement?.isMoving ||
+      (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1)
+    ) {
+      return;
+    }
+
+    let verticalConstraintVisualization = null;
+    let horizontalConstraintVisualization = null;
+
+    const constraint = targetElement?.options.constraint ?? {};
+
+    const borderStyle = '1px dashed #4af';
+    const verticalConstraintTop = React.createElement(`div`, {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 2}px`,
+        bottom: '0px',
+        borderLeft: borderStyle,
+        height: '100vh',
+      },
+    });
+    const verticalConstraintBottom = React.createElement(`div`, {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 2}px`,
+        top: `${rect.height}px`,
+        borderLeft: borderStyle,
+        height: '100vh',
+      },
+    });
+    const verticalConstraintTopBottom = React.createElement('div', {}, [
+      verticalConstraintTop,
+      verticalConstraintBottom,
+    ]);
+
+    switch (constraint.vertical) {
+      case VerticalConstraint.Top:
+        verticalConstraintVisualization = verticalConstraintTop;
+        break;
+      case VerticalConstraint.Bottom:
+        verticalConstraintVisualization = verticalConstraintBottom;
+        break;
+      case VerticalConstraint.TopBottom:
+        verticalConstraintVisualization = verticalConstraintTopBottom;
+        break;
+      case VerticalConstraint.Center:
+        // center here
+        break;
+    }
+
+    const horizontalConstraintLeft = React.createElement(`div`, {
+      style: {
+        position: 'absolute',
+        right: '0px',
+        top: `${rect.height / 2}px`,
+        borderTop: borderStyle,
+        width: '100vw',
+      },
+    });
+
+    const root = React.createElement('div', {}, [verticalConstraintVisualization, horizontalConstraintVisualization]);
+
+    return root;
+  },
+});
 
 export class Scene {
   styles = getStyles(config.theme2);
@@ -62,15 +138,16 @@ export class Scene {
     this.root = this.load(cfg, enableEditing);
   }
 
-  customAble = {
-    name: 'customAble',
+  // Move to a file outside of scene
+  dimensionViewable = {
+    name: 'dimensionViewable',
     props: {},
     events: {},
     render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
       const rect = moveable.getRect();
       return (
         <div
-          key={'dimension-viewer'}
+          key={'dimension-viewable'}
           className={'moveable-dimension'}
           style={{
             position: 'absolute',
@@ -256,7 +333,7 @@ export class Scene {
     }
   };
 
-  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+  findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
@@ -339,14 +416,19 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
-      ables: [this.customAble],
+      ables: [this.dimensionViewable, constraintViewable(this)],
       props: {
-        customAble: true,
+        dimensionViewable: allowChanges,
+        constraintViewable: allowChanges,
       },
       origin: false,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
+      })
+      .on('dragStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        targetedElement!.isMoving = true;
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -361,7 +443,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint();
+          targetedElement.isMoving = false;
         }
 
         this.moved.next(Date.now());
