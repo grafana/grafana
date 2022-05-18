@@ -230,6 +230,59 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test1")
 		})
 
+		t.Run("Keeps track of last used auth_module when not using oauth", func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore = sqlstore.InitTestDB(t)
+
+			for i := 0; i < 5; i++ {
+				cmd := models.CreateUserCommand{
+					Email: fmt.Sprint("user", i, "@test.com"),
+					Name:  fmt.Sprint("user", i),
+					Login: fmt.Sprint("loginuser", i),
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.Nil(t, err)
+			}
+
+			// Find a user to set tokens on
+			login := "loginuser0"
+
+			// Calling srv.LookupAndUpdateQuery on an existing user will populate an entry in the user_auth table
+			// Make the first log-in during the past
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+			queryOne := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+			user, err := srv.LookupAndUpdate(context.Background(), queryOne)
+			database.GetTime = time.Now
+
+			require.Nil(t, err)
+			require.Equal(t, user.Login, login)
+
+			// Add a second auth module for this user
+			// Have this module's last log-in be more recent
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+			queryTwo := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
+			require.Nil(t, err)
+			require.Equal(t, user.Login, login)
+
+			// Now reuse first auth module and make sure it's updated to the most recent
+			database.GetTime = time.Now
+			user, err = srv.LookupAndUpdate(context.Background(), queryOne)
+
+			require.Nil(t, err)
+			require.Equal(t, user.Login, login)
+
+			// Get the latest entry by not supply an authmodule or authid
+			getAuthQuery := &models.GetAuthInfoQuery{
+				UserId: user.Id,
+			}
+
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
+
+			require.Nil(t, err)
+			require.Equal(t, getAuthQuery.Result.AuthModule, "test1")
+		})
+
 		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {
 			// Find a user to set tokens on
 			login := "loginuser0"
