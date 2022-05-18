@@ -1,14 +1,13 @@
 import React from 'react';
 
-import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { Field, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
 import { HeatmapPanel } from './HeatmapPanel';
-import { heatmapChangedHandler } from './migrations';
+import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import {
   PanelOptions,
   defaultPanelOptions,
@@ -20,9 +19,11 @@ import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    disableStandardOptions: [FieldConfigProperty.Color, FieldConfigProperty.Thresholds],
+  })
   .setPanelChangeHandler(heatmapChangedHandler)
-  // .setMigrationHandler(heatmapMigrationHandler)
+  .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
@@ -155,19 +156,19 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     category = ['Display'];
 
     builder
-      .addRadio({
-        path: 'showValue',
-        name: 'Show values',
-        defaultValue: defaultPanelOptions.showValue,
-        category,
-        settings: {
-          options: [
-            { value: VisibilityMode.Auto, label: 'Auto' },
-            { value: VisibilityMode.Always, label: 'Always' },
-            { value: VisibilityMode.Never, label: 'Never' },
-          ],
-        },
-      })
+      // .addRadio({
+      //   path: 'showValue',
+      //   name: 'Show values',
+      //   defaultValue: defaultPanelOptions.showValue,
+      //   category,
+      //   settings: {
+      //     options: [
+      //       { value: VisibilityMode.Auto, label: 'Auto' },
+      //       { value: VisibilityMode.Always, label: 'Always' },
+      //       { value: VisibilityMode.Never, label: 'Never' },
+      //     ],
+      //   },
+      // })
       .addNumberInput({
         path: 'hideThreshold',
         name: 'Hide cell counts <=',
@@ -194,20 +195,20 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //     max: 100,
       //   },
       // })
-      .addRadio({
-        path: 'yAxisLabels',
-        name: 'Axis labels',
-        defaultValue: 'auto',
-        category,
-        settings: {
-          options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'middle', label: 'Middle' },
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'top', label: 'Top' },
-          ],
-        },
-      })
+      // .addRadio({
+      //   path: 'yAxisLabels',
+      //   name: 'Axis labels',
+      //   defaultValue: 'auto',
+      //   category,
+      //   settings: {
+      //     options: [
+      //       { value: 'auto', label: 'Auto' },
+      //       { value: 'middle', label: 'Middle' },
+      //       { value: 'bottom', label: 'Bottom' },
+      //       { value: 'top', label: 'Top' },
+      //     ],
+      //   },
+      // })
       .addBooleanSwitch({
         path: 'yAxisReverse',
         name: 'Reverse buckets',
@@ -232,7 +233,12 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       showIf: (opts) => opts.tooltip.show,
     });
 
-    // custom legend?
-    commonOptionsBuilder.addLegendOptions(builder);
+    category = ['Legend'];
+    builder.addBooleanSwitch({
+      path: 'legend.show',
+      name: 'Show legend',
+      defaultValue: defaultPanelOptions.legend.show,
+      category,
+    });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
