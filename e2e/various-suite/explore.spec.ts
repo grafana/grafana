@@ -43,5 +43,9 @@ e2e.scenario({
 
     const canvases = e2e().get('canvas');
     canvases.should('have.length', 1);
+
+    // Both queries above should have been run and be shown in the query history
+    e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
+    e2e.components.QueryHistory.queryText().should('have.length', 2).should('contain', 'csv_metric_values');
   },
 });
