@@ -112,7 +112,7 @@
     "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
-    "@testing-library/react-hooks": "7.0.2",
+    "@testing-library/react-hooks": "8.0.0",
     "@testing-library/user-event": "14.2.0",
     "@types/angular": "1.8.4",
     "@types/angular-route": "1.7.2",
