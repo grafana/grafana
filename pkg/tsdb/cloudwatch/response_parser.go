@@ -118,7 +118,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	for _, metric := range aggregatedResponse.Metrics {
 		label := *metric.Label
 
-		deepLink, err := query.buildDeepLink(startTime, endTime)
+		deepLink, err := query.buildDeepLink(startTime, endTime, dynamicLabelEnabled)
 		if err != nil {
 			return nil, err
 		}
