@@ -117,7 +117,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, isPublic, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -129,7 +129,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
       routeName: this.props.route.routeName,
-      fixUrl: !this.props.isPublic,
+      fixUrl: !isPublic,
     });
 
     // small delay to start live updates
