@@ -14,7 +14,7 @@ import { ShowModalReactEvent } from '../../types/events';
 
 import { AlertHowToModal } from './AlertHowToModal';
 import AlertRuleItem from './AlertRuleItem';
-import { UnifiedAlertingPromotion } from './components/UnifiedAlertingPromotion';
+import { DeprecationNotice } from './components/DeprecationNotice';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
@@ -127,7 +127,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               How to add an alert
             </Button>
           </div>
-          <UnifiedAlertingPromotion />
+          <DeprecationNotice />
           <VerticalGroup spacing="none">
             {alertRules.map((rule) => {
               return (

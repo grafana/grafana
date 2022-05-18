@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -214,6 +213,20 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 	return result
 }
 
+// MergeMeta will merge actions matching prefix of second metadata into first
+func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
+	if first == nil {
+		first = Metadata{}
+	}
+
+	for key := range second {
+		if strings.HasPrefix(key, prefix) {
+			first[key] = true
+		}
+	}
+	return first
+}
+
 func ManagedUserRoleName(userID int64) string {
 	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
@@ -237,5 +250,5 @@ func extractPrefixes(prefix string) (string, string, bool) {
 }
 
 func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol)
+	return !cfg.RBACEnabled
 }

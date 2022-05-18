@@ -438,16 +438,10 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
-// testing routes
-// swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
-type DatasourceIDReference struct {
-	// DatasourceID should be the numeric datasource identifier
-	// in:path
-	DatasourceID int
-}
-
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// testing routes
+// swagger:parameters RouteTestRuleConfig
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // ruler routes

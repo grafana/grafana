@@ -133,6 +133,15 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
+// GenerateGroupKey generates many random alert rules. Does not guarantee that rules are unique (by UID)
+func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
+	return AlertRuleGroupKey{
+		OrgID:        orgID,
+		NamespaceUID: util.GenerateShortUID(),
+		RuleGroup:    util.GenerateShortUID(),
+	}
+}
+
 // CopyRule creates a deep copy of AlertRule
 func CopyRule(r *AlertRule) *AlertRule {
 	result := AlertRule{

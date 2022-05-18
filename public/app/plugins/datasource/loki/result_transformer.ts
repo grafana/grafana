@@ -334,6 +334,9 @@ export function lokiStreamsToDataFrames(
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
+    // TODO: when we get a real frame-type in @grafana/data
+    // move this to frame.meta.type
+    frameType: 'LabeledTimeValues',
   };
 
   const meta: QueryResultMeta = {
