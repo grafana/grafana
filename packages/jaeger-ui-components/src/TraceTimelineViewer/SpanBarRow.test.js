@@ -65,7 +65,7 @@ describe('<SpanBarRow>', () => {
   });
 
   it('renders without exploding', () => {
-    expect(screen).toBeDefined();
+    expect(() => render(<SpanBarRow {...props} />)).not.toThrow();
   });
 
   it('escalates detail toggling', () => {
