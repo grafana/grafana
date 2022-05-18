@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,7 +38,7 @@ func TestProvideFolderService(t *testing.T) {
 
 		ProvideFolderService(
 			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, folderPermissions, ac, mockstore.NewSQLStoreMock(),
+			store, nil, features, folderPermissions, ac,
 		)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
@@ -55,7 +54,6 @@ func TestFolderService(t *testing.T) {
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
-		mockStore := mockstore.NewSQLStoreMock()
 
 		service := FolderServiceImpl{
 			cfg:              cfg,
@@ -65,7 +63,6 @@ func TestFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
-			sqlStore:         mockStore,
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -105,7 +102,11 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				mockStore.ExpectedDashboard = models.NewDashboardFolder("Folder")
+				store.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					folder := args.Get(1).(*models.GetDashboardQuery)
+					folder.Result = models.NewDashboard("dashboard-test")
+					folder.Result.IsFolder = true
+				}).Return(nil)
 				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
@@ -155,8 +156,6 @@ func TestFolderService(t *testing.T) {
 				dashboardFolder.Id = rand.Int63()
 				dashboardFolder.Uid = util.GenerateShortUID()
 				f := models.DashboardToFolder(dashboardFolder)
-
-				mockStore.ExpectedDashboard = dashboardFolder
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything).Return(dashboardFolder, nil)

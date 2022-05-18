@@ -445,7 +445,8 @@ type Cfg struct {
 	DashboardPreviews DashboardPreviewsSettings
 
 	// Access Control
-	RBACEnabled bool
+	RBACEnabled         bool
+	RBACPermissionCache bool
 }
 
 type CommandLineArgs struct {
@@ -1358,6 +1359,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {

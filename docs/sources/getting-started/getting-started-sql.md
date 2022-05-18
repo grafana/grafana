@@ -1,8 +1,8 @@
 +++
+aliases = ["/docs/grafana/latest/getting-started/getting-started-sql/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
 description = "Guide for getting started with Grafana and MS SQL Server"
-keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 draft = true
+keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
 weight = 400
 +++
 

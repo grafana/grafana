@@ -1,19 +1,21 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 )
 
 var (
@@ -32,12 +34,13 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
+	dashSvc := &dashboards.FakeDashboardService{
+		GetDashboardFn: func(ctx context.Context, cmd *models.GetDashboardQuery) error {
+			cmd.Result = &models.Dashboard{Uid: "home", Id: 1}
+			return nil
+		},
 	}
-	sc.hs.SQLStore = sqlstore
+	sc.hs.dashboardService = dashSvc
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -67,13 +70,6 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
-
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
-	sc.hs.SQLStore = sqlstore
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -168,12 +164,8 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
-	sc.hs.SQLStore = sqlstore
+	dashSvc := &dashboards.FakeDashboardService{}
+	sc.hs.dashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)

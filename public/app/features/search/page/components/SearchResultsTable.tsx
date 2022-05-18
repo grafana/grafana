@@ -31,118 +31,113 @@ export type TableColumn = Column & {
 
 const HEADER_HEIGHT = 36; // pixels
 
-export const SearchResultsTable = ({
-  response,
-  width,
-  height,
-  selection,
-  selectionToggle,
-  onTagSelected,
-  onDatasourceChange,
-}: SearchResultsProps) => {
-  const styles = useStyles2(getStyles);
-  const tableStyles = useStyles2(getTableStyles);
+export const SearchResultsTable = React.memo(
+  ({ response, width, height, selection, selectionToggle, onTagSelected, onDatasourceChange }: SearchResultsProps) => {
+    const styles = useStyles2(getStyles);
+    const tableStyles = useStyles2(getTableStyles);
 
-  const memoizedData = useMemo(() => {
-    if (!response?.view?.dataFrame.fields.length) {
-      return [];
+    const memoizedData = useMemo(() => {
+      if (!response?.view?.dataFrame.fields.length) {
+        return [];
+      }
+      // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
+      // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
+      // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
+      return Array(response.totalRows).fill(0);
+    }, [response]);
+
+    // React-table column definitions
+    const memoizedColumns = useMemo(() => {
+      return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
+    }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+
+    const options: TableOptions<{}> = useMemo(
+      () => ({
+        columns: memoizedColumns,
+        data: memoizedData,
+      }),
+      [memoizedColumns, memoizedData]
+    );
+
+    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
+
+    const RenderRow = React.useCallback(
+      ({ index: rowIndex, style }) => {
+        const row = rows[rowIndex];
+        prepareRow(row);
+
+        const url = response.view.fields.url?.values.get(rowIndex);
+        return (
+          <div {...row.getRowProps({ style })} className={styles.rowContainer}>
+            {row.cells.map((cell: Cell, index: number) => {
+              return (
+                <TableCell
+                  key={index}
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                  userProps={{ href: url }}
+                />
+              );
+            })}
+          </div>
+        );
+      },
+      [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
+    );
+
+    if (!rows.length) {
+      return <div className={styles.noData}>No data</div>;
     }
-    // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
-    // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
-    // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-    return Array(response.totalRows).fill(0);
-  }, [response]);
 
-  // React-table column definitions
-  const memoizedColumns = useMemo(() => {
-    return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
-  }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+    return (
+      <div {...getTableProps()} aria-label="Search result table" role="table">
+        <div>
+          {headerGroups.map((headerGroup) => {
+            const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
 
-  const options: TableOptions<{}> = useMemo(
-    () => ({
-      columns: memoizedColumns,
-      data: memoizedData,
-    }),
-    [memoizedColumns, memoizedData]
-  );
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
-
-  const RenderRow = React.useCallback(
-    ({ index: rowIndex, style }) => {
-      const row = rows[rowIndex];
-      prepareRow(row);
-
-      const url = response.view.fields.url?.values.get(rowIndex);
-      return (
-        <div {...row.getRowProps({ style })} className={styles.rowContainer}>
-          {row.cells.map((cell: Cell, index: number) => {
             return (
-              <TableCell
-                key={index}
-                tableStyles={tableStyles}
-                cell={cell}
-                columnIndex={index}
-                columnCount={row.cells.length}
-                userProps={{ href: url }}
-              />
+              <div key={key} {...headerGroupProps} className={styles.headerRow}>
+                {headerGroup.headers.map((column) => {
+                  const { key, ...headerProps } = column.getHeaderProps();
+                  return (
+                    <div key={key} {...headerProps} role="columnheader" className={styles.headerCell}>
+                      {column.render('Header')}
+                    </div>
+                  );
+                })}
+              </div>
             );
           })}
         </div>
-      );
-    },
-    [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
-  );
 
-  if (!rows.length) {
-    return <div className={styles.noData}>No data</div>;
+        <div {...getTableBodyProps()}>
+          <InfiniteLoader
+            isItemLoaded={response.isItemLoaded}
+            itemCount={rows.length}
+            loadMoreItems={response.loadMoreItems}
+          >
+            {({ onItemsRendered, ref }) => (
+              <FixedSizeList
+                ref={ref}
+                onItemsRendered={onItemsRendered}
+                height={height - HEADER_HEIGHT}
+                itemCount={rows.length}
+                itemSize={tableStyles.rowHeight}
+                width="100%"
+                style={{ overflow: 'hidden auto' }}
+              >
+                {RenderRow}
+              </FixedSizeList>
+            )}
+          </InfiniteLoader>
+        </div>
+      </div>
+    );
   }
-
-  return (
-    <div {...getTableProps()} aria-label="Search result table" role="table">
-      <div>
-        {headerGroups.map((headerGroup) => {
-          const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
-
-          return (
-            <div key={key} {...headerGroupProps} className={styles.headerRow}>
-              {headerGroup.headers.map((column) => {
-                const { key, ...headerProps } = column.getHeaderProps();
-                return (
-                  <div key={key} {...headerProps} role="columnheader" className={styles.headerCell}>
-                    {column.render('Header')}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-
-      <div {...getTableBodyProps()}>
-        <InfiniteLoader
-          isItemLoaded={response.isItemLoaded}
-          itemCount={rows.length}
-          loadMoreItems={response.loadMoreItems}
-        >
-          {({ onItemsRendered, ref }) => (
-            <FixedSizeList
-              ref={ref}
-              onItemsRendered={onItemsRendered}
-              height={height - HEADER_HEIGHT}
-              itemCount={rows.length}
-              itemSize={tableStyles.rowHeight}
-              width="100%"
-              style={{ overflow: 'hidden auto' }}
-            >
-              {RenderRow}
-            </FixedSizeList>
-          )}
-        </InfiniteLoader>
-      </div>
-    </div>
-  );
-};
+);
+SearchResultsTable.displayName = 'SearchResultsTable';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);

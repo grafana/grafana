@@ -1,6 +1,7 @@
 +++
-title = "Contribute to Grafana"
+aliases = ["/docs/grafana/latest/developers/contribute/"]
 keywords = ["grafana", "documentation", "developers", "resources"]
+title = "Contribute to Grafana"
 +++
 
 # Contribute to Grafana

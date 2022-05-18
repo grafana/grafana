@@ -1,8 +1,8 @@
 +++
-title = "Elasticsearch"
+aliases = ["/docs/grafana/latest/datasources/elasticsearch/", "/docs/grafana/latest/features/datasources/elasticsearch/"]
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
+title = "Elasticsearch"
 weight = 325
 +++
 

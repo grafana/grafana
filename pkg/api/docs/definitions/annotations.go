@@ -16,6 +16,15 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
+// swagger:route GET /annotations/{annotation_id} annotations getAnnotation
+//
+// Get Annotation by Id.
+//
+// Responses:
+// 200: getAnnotationResponse
+// 401: unauthorisedError
+// 500: internalServerError
+
 // swagger:route POST /annotations/mass-delete annotations massDeleteAnnotations
 //
 // Delete multiple annotations.
@@ -214,6 +223,13 @@ type GetAnnotationsResponse struct {
 	// The response message
 	// in: body
 	Body []*annotations.ItemDTO `json:"body"`
+}
+
+// swagger:response getAnnotationResponse
+type GetAnnotationResponse struct {
+	// The response message
+	// in: body
+	Body *annotations.ItemDTO `json:"body"`
 }
 
 // swagger:response createAnnotationResponse

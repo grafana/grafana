@@ -1,8 +1,8 @@
 +++
-title = "Provision CloudWatch"
+aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/provision-cloudwatch/", "/docs/grafana/latest/datasources/cloudwatch/"]
 description = "Guide for provisioning CloudWatch"
+title = "Provision CloudWatch"
 weight = 400
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 +++
 
 # Provision CloudWatch data source

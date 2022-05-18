@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/guides/what-is-grafana/", "/docs/grafana/latest/introduction/oss-details/"]
 title = "What is Grafana OSS"
 weight = 5
-aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 +++
 
 # What is Grafana OSS
