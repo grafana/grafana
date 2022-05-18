@@ -49,6 +49,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		NotificationService: notificationService,
 		folderService:       folderService,
 		accesscontrol:       ac,
+		dashboardService:    dashboardService,
 	}
 
 	if ng.IsDisabled() {
