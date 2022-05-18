@@ -288,6 +288,7 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, "test1", getAuthQuery.Result.AuthModule)
 
+			// Now reuse second auth module and make sure it's updated to the most recent
 			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, 1) }
 			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
 			require.Nil(t, err)
@@ -296,6 +297,16 @@ func TestUserAuth(t *testing.T) {
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 			require.Nil(t, err)
 			require.Equal(t, "test2", getAuthQuery.Result.AuthModule)
+
+			// Ensure test 1 did not have its entry modified
+			getAuthQueryUnchanged := &models.GetAuthInfoQuery{
+				UserId:     user.Id,
+				AuthModule: "test1",
+			}
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQueryUnchanged)
+			require.Nil(t, err)
+			require.Equal(t, "test1", getAuthQueryUnchanged.Result.AuthModule)
+			require.Less(t, getAuthQueryUnchanged.Result.Created, getAuthQuery.Result.Created)
 		})
 
 		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {
