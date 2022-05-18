@@ -221,16 +221,24 @@ export enum BigValueTextMode {
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
 
+export enum GaugeDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
+  RetroLCD = 'lcd',
+}
+
+export enum BackgroundDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
+}
+
 export enum TableCellDisplayMode {
   Auto = 'auto',
-  BasicGauge = 'basic',
   ColorBackground = 'color-background',
-  ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
-  GradientGauge = 'gradient-gauge',
+  Gauge = 'gauge',
   Image = 'image',
   JSONView = 'json-view',
-  LcdGauge = 'lcd-gauge',
 }
 
 export interface VizTextDisplayOptions {
@@ -280,19 +288,26 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
 }
 
-export interface TableFieldOptions {
-  align: string;
+export interface TableCellOptions {
   displayMode: TableCellDisplayMode;
-  inspect: boolean;
+  subDisplayMode?: GaugeDisplayMode | BackgroundDisplayMode;
+}
+
+export interface TableFieldOptions {
+  align: FieldTextAlignment;
+  cellOptions: TableCellOptions;
+  filterable?: boolean;
   hidden?: boolean;
+  inspect: boolean;
   minWidth?: number;
   width?: number;
-  filterable?: boolean;
 }
 
 export const defaultTableFieldOptions: TableFieldOptions = {
   align: 'auto',
-  displayMode: TableCellDisplayMode.Auto,
+  cellOptions: {
+    displayMode: TableCellDisplayMode.Auto,
+  },
   inspect: false,
 };
 
