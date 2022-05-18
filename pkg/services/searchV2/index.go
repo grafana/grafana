@@ -174,6 +174,13 @@ func (i *dashboardIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 		i.logger.Error("can't create temp dir", "error", err)
 		return
 	}
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			return
+		}
+	}()
 
 	cancel := make(chan struct{})
 	err = reader.Backup(tmpDir, cancel)
@@ -189,12 +196,6 @@ func (i *dashboardIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	}
 
 	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
-
-	err = os.RemoveAll(tmpDir)
-	if err != nil {
-		i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
-		return
-	}
 }
 
 func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
