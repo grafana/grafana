@@ -7,7 +7,7 @@ import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
-import { ContextMenu, MenuItem, stylesFactory } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
@@ -27,6 +27,7 @@ import {
 } from 'app/features/dimensions/utils';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import { CanvasContextMenu } from '../../../plugins/panel/canvas/CanvasContextMenu';
 import { Placement } from '../types';
 
 import { constraintViewable, dimensionViewable } from './ables';
@@ -37,16 +38,6 @@ import { RootElement } from './root';
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
   frame?: FrameState;
-}
-
-type AnchorPoint = {
-  x: number;
-  y: number;
-};
-
-interface ContextMenuState {
-  isMenuVisible: Boolean;
-  anchorPoint: AnchorPoint;
 }
 
 export class Scene {
@@ -70,19 +61,11 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
-  contextMenu: ContextMenuState;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
-    this.contextMenu = {
-      isMenuVisible: false,
-      anchorPoint: {
-        x: 0,
-        y: 0,
-      },
-    };
   }
 
   getNextElementName = (isFrame = false) => {
@@ -315,14 +298,6 @@ export class Scene {
     return targetElements;
   };
 
-  handleMouseEvent = (e: MouseEvent) => {
-    e.preventDefault();
-    this.contextMenu.anchorPoint = { x: e.pageX, y: e.pageY };
-    this.contextMenu.isMenuVisible = true;
-
-    this.showContextMenu.next(true);
-  };
-
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -411,13 +386,6 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      // @TODO handle for group/frame?
-      // just for one element for now
-      if (targets.length === 1) {
-        const element = targets[0];
-        element.addEventListener('contextmenu', (ev) => this.handleMouseEvent(ev as MouseEvent));
-      }
-
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
         setTimeout(() => {
@@ -427,90 +395,13 @@ export class Scene {
     });
   };
 
-  contextMenuAction = (actionType: string) => {
-    this.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentSelectedElement = currentSelectedElements[0];
-      const currentLayer = currentSelectedElement.parent!;
-
-      switch (actionType) {
-        case LayerActionID.Delete:
-          currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
-          break;
-        case LayerActionID.Duplicate:
-          currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
-          break;
-        case LayerActionID.MoveTop:
-          currentLayer.doAction(LayerActionID.MoveTop, currentSelectedElement);
-          break;
-        case LayerActionID.MoveBottom:
-          currentLayer.doAction(LayerActionID.MoveBottom, currentSelectedElement);
-          break;
-      }
-    });
-  };
-
-  renderMenuItems = () => {
-    return (
-      <>
-        <MenuItem
-          label="Delete"
-          onClick={() => {
-            this.contextMenuAction(LayerActionID.Delete);
-            this.closeContextMenu();
-          }}
-          className={this.styles.menuItem}
-        />
-        <MenuItem
-          label="Duplicate"
-          onClick={() => {
-            this.contextMenuAction(LayerActionID.Duplicate);
-            this.closeContextMenu();
-          }}
-          className={this.styles.menuItem}
-        />
-        <MenuItem
-          label="Bring to front"
-          onClick={() => {
-            this.contextMenuAction(LayerActionID.MoveTop);
-            this.closeContextMenu();
-          }}
-          className={this.styles.menuItem}
-        />
-        <MenuItem
-          label="Send to back"
-          onClick={() => {
-            this.contextMenuAction(LayerActionID.MoveBottom);
-            this.closeContextMenu();
-          }}
-          className={this.styles.menuItem}
-        />
-      </>
-    );
-  };
-
-  closeContextMenu = () => {
-    this.contextMenu.isMenuVisible = false;
-    this.showContextMenu.next(false);
-  };
-
-  renderContextMenu = () => {
-    return (
-      <ContextMenu
-        x={this.contextMenu.anchorPoint.x}
-        y={this.contextMenu.anchorPoint.y}
-        onClose={this.closeContextMenu}
-        renderMenuItems={this.renderMenuItems}
-        focusOnOpen={false}
-      />
-    );
-  };
-
   render() {
-    const canSeeContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
-        {this.contextMenu.isMenuVisible && canSeeContextMenu && this.renderContextMenu()}
+        {canShowContextMenu && <CanvasContextMenu scene={this} />}
       </div>
     );
   }
@@ -520,10 +411,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrap: css`
     overflow: hidden;
     position: relative;
-  `,
-  menuItem: css`
-    max-width: 60ch;
-    overflow: hidden;
   `,
   selected: css`
     z-index: 999 !important;
