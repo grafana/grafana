@@ -21290,7 +21290,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
-    react-moveable: 0.31.1
+    react-moveable: 0.32.7
     react-popper: 2.2.5
     react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
@@ -31651,7 +31651,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.31.1, react-moveable@npm:~0.31.0":
+"react-moveable@npm:0.32.7":
+  version: 0.32.7
+  resolution: "react-moveable@npm:0.32.7"
+  dependencies:
+    "@daybrush/utils": ^1.6.0
+    "@egjs/agent": ^2.2.1
+    "@egjs/children-differ": ^1.0.1
+    "@scena/dragscroll": ^1.1.1
+    "@scena/event-emitter": ^1.0.5
+    "@scena/matrix": ^1.1.1
+    css-to-mat: ^1.0.3
+    framework-utils: ^1.1.0
+    gesto: ^1.7.0
+    overlap-area: ^1.0.0
+    react-css-styled: ^1.0.3
+  checksum: d1737af5cc9ffe243047f2100910ae7aa610808ea74ea8928b7568ae8638b39986a5735288eec9fab29d5d899163b5021dd0f674a197522d2639df9eb6e48da2
+  languageName: node
+  linkType: hard
+
+"react-moveable@npm:~0.31.0":
   version: 0.31.1
   resolution: "react-moveable@npm:0.31.1"
   dependencies:
