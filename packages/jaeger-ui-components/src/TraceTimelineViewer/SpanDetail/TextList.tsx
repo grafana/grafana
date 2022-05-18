@@ -45,9 +45,7 @@ const getRow = (row) => {
     return row;
   } else {
     // dict
-    Object.entries(row).map(([_, value]) => {
-      return { value };
-    });
+    return Object.values(row);
   }
 };
 type TextListProps = {

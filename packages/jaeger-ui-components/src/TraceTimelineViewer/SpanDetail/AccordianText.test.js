@@ -16,13 +16,10 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import AccordianText from './AccordianText';
-import TextList from './TextList';
 
 const warnings = ['Duplicated tag', 'Duplicated spanId'];
 
 describe('<AccordianText>', () => {
-  let rerender;
-
   const props = {
     compact: false,
     data: warnings,
@@ -32,16 +29,13 @@ describe('<AccordianText>', () => {
     onToggle: jest.fn(),
   };
 
-  beforeEach(() => {
-    const r = render(<AccordianText {...props} />);
-    rerender = r.rerender;
-  });
-
   it('renders without exploding', () => {
+    render(<AccordianText {...props} />);
     expect(() => render(<AccordianText {...props} />)).not.toThrow();
   });
 
   it('renders the label', () => {
+    render(<AccordianText {...props} />);
     const { getByText } = within(screen.getByTestId('AccordianText--header'));
     expect(getByText(props.label)).toBeInTheDocument();
   });

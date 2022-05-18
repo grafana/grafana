@@ -18,22 +18,17 @@ import React from 'react';
 import TextList from './TextList';
 
 describe('<TextList>', () => {
-  let wrapper;
-
   const data = [
     { key: 'span.kind', value: 'client' },
     { key: 'omg', value: 'mos-def' },
   ];
-
-  beforeEach(() => {
-    render(<TextList data={data} />);
-  });
 
   it('renders without exploding', () => {
     expect(() => render(<TextList data={data} />)).not.toThrow();
   });
 
   it('renders a table row for each data element', () => {
+    render(<TextList data={data} />);
     expect(screen.getAllByRole('listitem')).toHaveLength(data.length);
   });
 });
