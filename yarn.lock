@@ -21363,7 +21363,7 @@ __metadata:
     webpack: 5.72.0
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.2
-    webpack-dev-server: 4.8.1
+    webpack-dev-server: 4.9.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
   languageName: unknown
@@ -37737,9 +37737,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:4.8.1":
-  version: 4.8.1
-  resolution: "webpack-dev-server@npm:4.8.1"
+"webpack-dev-server@npm:4.9.0":
+  version: 4.9.0
+  resolution: "webpack-dev-server@npm:4.9.0"
   dependencies:
     "@types/bonjour": ^3.5.9
     "@types/connect-history-api-fallback": ^1.3.5
@@ -37761,7 +37761,6 @@ __metadata:
     ipaddr.js: ^2.0.1
     open: ^8.0.9
     p-retry: ^4.5.0
-    portfinder: ^1.0.28
     rimraf: ^3.0.2
     schema-utils: ^4.0.0
     selfsigned: ^2.0.1
@@ -37777,7 +37776,7 @@ __metadata:
       optional: true
   bin:
     webpack-dev-server: bin/webpack-dev-server.js
-  checksum: 6f827068353cb024f04edd275ae2828b6d47a3316c1a8677066d1500b1d1038b516399777792bb464ec40bc6f963abe9b24a5fd93b9b39487a3574b38ae45fd6
+  checksum: 3ee3fc9650ede7be37440d404fea2420310f3fb6dfdcfdb71b1d9e4675b04f05843832c9be68ecd4bd4e8e2c960e5d9da299990bd29d05702edfd013fef9e8c8
   languageName: node
   linkType: hard
 
