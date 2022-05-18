@@ -278,6 +278,13 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 	}
 }
 
+var AllBasicRoles = []string{
+	string(models.ROLE_ADMIN),
+	string(models.ROLE_EDITOR),
+	string(models.ROLE_VIEWER),
+	RoleGrafanaAdmin,
+}
+
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
 		string(models.ROLE_ADMIN): {
