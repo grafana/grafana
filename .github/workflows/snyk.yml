@@ -13,7 +13,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
@@ -22,7 +22,7 @@ jobs:
           command: test
           args:  --sarif-file-output=snyk.sarif
 
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
