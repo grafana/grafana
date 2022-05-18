@@ -35,7 +35,7 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
           {links.metricLinks.map((link, i) => (
             <MenuItem
               key={i}
-              label="Metrics for this span"
+              label={link.title ?? 'Metrics for this span'}
               onClick={(e) => {
                 if (link.onClick) {
                   link.onClick(e);
