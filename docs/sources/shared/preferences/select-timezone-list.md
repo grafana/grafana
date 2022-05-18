@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/preferences/select-timezone-list/
 title: Select home dashboard list
 ---
 

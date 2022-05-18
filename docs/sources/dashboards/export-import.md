@@ -1,7 +1,7 @@
 +++
-title = "Export and import"
+aliases = ["/docs/grafana/latest/dashboards/export-import/", "/docs/grafana/latest/reference/export_import/"]
 keywords = ["grafana", "dashboard", "documentation", "export", "import"]
-aliases = ["/docs/grafana/latest/reference/export_import/"]
+title = "Export and import"
 weight = 800
 +++
 
