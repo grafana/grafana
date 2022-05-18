@@ -59,23 +59,20 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: defaultPanelFieldConfig.align,
         })
         .addSelect({
-          path: 'displayMode',
+          path: 'cellOptions.displayMode',
           name: 'Cell display mode',
           description: 'Color text, background, show as gauge, etc',
           settings: {
             options: [
               { value: TableCellDisplayMode.Auto, label: 'Auto' },
-              { value: TableCellDisplayMode.ColorText, label: 'Color text' },
-              { value: TableCellDisplayMode.ColorBackground, label: 'Color background (gradient)' },
-              { value: TableCellDisplayMode.ColorBackgroundSolid, label: 'Color background (solid)' },
-              { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
-              { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
-              { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
+              { value: TableCellDisplayMode.ColorText, label: 'Colored text' },
+              { value: TableCellDisplayMode.ColorBackground, label: 'Colored background' },
+              { value: TableCellDisplayMode.Gauge, label: 'Gauge' },
               { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
-          defaultValue: defaultPanelFieldConfig.displayMode,
+          defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
         })
         .addBooleanSwitch({
           path: 'inspect',
@@ -84,11 +81,10 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: false,
           showIf: (cfg) => {
             return (
-              cfg.displayMode === TableCellDisplayMode.Auto ||
-              cfg.displayMode === TableCellDisplayMode.JSONView ||
-              cfg.displayMode === TableCellDisplayMode.ColorText ||
-              cfg.displayMode === TableCellDisplayMode.ColorBackground ||
-              cfg.displayMode === TableCellDisplayMode.ColorBackgroundSolid
+              cfg.cellOptions.displayMode === TableCellDisplayMode.Auto ||
+              cfg.cellOptions.displayMode === TableCellDisplayMode.JSONView ||
+              cfg.cellOptions.displayMode === TableCellDisplayMode.ColorText ||
+              cfg.cellOptions.displayMode === TableCellDisplayMode.ColorBackground
             );
           },
         })
