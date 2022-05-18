@@ -21250,7 +21250,7 @@ __metadata:
     lint-staged: 12.4.1
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.9.0
+    lru-cache: 7.10.1
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
     moment: 2.29.2
@@ -25990,10 +25990,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.9.0":
-  version: 7.9.0
-  resolution: "lru-cache@npm:7.9.0"
-  checksum: c91a293a103d11ea4f07de4122ba4f73d8203d0de51852fb612b1764296aebf623a3e11dddef1b3aefdc8d71af97d52b222dad5459dcb967713bbab9a19fed7d
+"lru-cache@npm:7.10.1":
+  version: 7.10.1
+  resolution: "lru-cache@npm:7.10.1"
+  checksum: e8b190d71ed0fcd7b29c71a3e9b01f851c92d1ef8865ff06b5581ca991db1e5e006920ed4da8b56da1910664ed51abfd76c46fb55e82ac252ff6c970ff910d72
   languageName: node
   linkType: hard
 
