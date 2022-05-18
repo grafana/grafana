@@ -38,7 +38,7 @@ describe('<AccordianText>', () => {
   });
 
   it('renders without exploding', () => {
-    expect(screen).toBeDefined();
+    expect(() => render(<AccordianText {...props} />)).not.toThrow();
   });
 
   it('renders the label', () => {
