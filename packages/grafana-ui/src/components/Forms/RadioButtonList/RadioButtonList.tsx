@@ -33,18 +33,25 @@ export function RadioButtonList<T>({
   const styles = useStyles2(getStyles);
 
   return (
-    <div id={id} className={cx(styles.container, className)}>
-      {options.map((option) => (
-        <RadioButtonDot
-          key={keySelector(option.value!)}
-          id={keySelector(option.value!)} // TODO Fix null assertion
-          name={name}
-          label={option.label}
-          checked={value && value === option.value}
-          disabled={disabled || disabledOptions.some((optionValue) => optionValue === option.value)}
-          onChange={() => onChange && option.value && onChange(option.value)}
-        />
-      ))}
+    <div id={id} className={cx(styles.container, className)} aria-role="radiogroup">
+      {options.map((option) => {
+        const isChecked = value && value === option.value;
+        const isDisabled = disabled || disabledOptions.some((optionValue) => optionValue === option.value);
+
+        const handleChange = () => onChange && option.value && onChange(option.value);
+
+        return (
+          <RadioButtonDot
+            key={keySelector(option.value!)}
+            id={keySelector(option.value!)} // TODO Fix null assertion
+            name={name}
+            label={option.label}
+            checked={isChecked}
+            disabled={isDisabled}
+            onChange={handleChange}
+          />
+        );
+      })}
     </div>
   );
 }

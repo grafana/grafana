@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 
 import { RadioButtonDot } from './RadioButtonDot';
 import { RadioButtonList } from './RadioButtonList';
+import mdx from './RadioButtonList.mdx';
 
 const defaultOptions: Array<SelectableValue<string>> = [
   { label: 'Option 1', value: 'opt-1' },
@@ -17,7 +18,14 @@ const defaultOptions: Array<SelectableValue<string>> = [
 export default {
   title: 'Forms/RadioButtonList',
   component: RadioButtonList,
-  subcomponents: { Hello: RadioButtonDot },
+  parameters: {
+    controls: {
+      exclude: ['name', 'id', 'keySelector', 'onChange', 'className', 'value'],
+    },
+    docs: {
+      page: mdx,
+    },
+  },
   argTypes: {
     value: {
       options: defaultOptions.map((x) => x.value!),
@@ -30,11 +38,6 @@ export default {
   args: {
     options: defaultOptions,
     disabled: false,
-  },
-  parameters: {
-    controls: {
-      exclude: ['name', 'id', 'keySelector', 'onChange', 'className', 'value'],
-    },
   },
 } as ComponentMeta<typeof RadioButtonList>;
 
