@@ -45,7 +45,7 @@ const getRow = (row) => {
     return row;
   } else {
     // dict
-    return Object.entries(row).map(([key, value]) => {
+    Object.entries(row).map(([_, value]) => {
       return { value };
     });
   }
