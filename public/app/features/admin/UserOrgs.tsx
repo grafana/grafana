@@ -330,11 +330,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
         if (this.state.pendingUserId) {
-          const updateResult = await updateUserRoles(
-            this.state.pendingRoles,
-            this.state.pendingUserId!,
-            this.state.pendingOrgId!
-          );
+          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state
           this.state.pendingOrgId = null;
           this.state.pendingRoles = [];
