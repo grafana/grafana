@@ -142,9 +142,6 @@ describe('<SpanBarRow>', () => {
         })}
       />
     );
-    //const menu = spanRow.find(`a[href="href"]`);
-    //expect(menu.length).toEqual(1);
-    //expect(menu.at(0).text()).toEqual('This span is referenced by another span');
     expect(screen.getAllByTestId('a-href')).toHaveLength(1);
     const { getByText } = within(screen.getByTestId('a-href'));
     expect(getByText('This span is referenced by another span')).toBeInTheDocument();
