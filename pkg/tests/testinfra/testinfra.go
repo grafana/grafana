@@ -291,7 +291,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		if !o.EnableLog {
-			logSection, err := cfg.NewSection("log")
+			logSection, err := getOrCreateSection("log")
 			require.NoError(t, err)
 			_, err = logSection.NewKey("enabled", "false")
 			require.NoError(t, err)
