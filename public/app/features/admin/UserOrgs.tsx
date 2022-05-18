@@ -335,7 +335,6 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
             this.state.pendingUserId!,
             this.state.pendingOrgId!
           );
-          console.log('UserOrgs: onAddUserToOrg updateUserRoles result:', updateResult);
           // clear pending state
           this.state.pendingOrgId = null;
           this.state.pendingRoles = [];
