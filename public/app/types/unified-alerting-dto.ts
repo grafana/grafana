@@ -19,6 +19,29 @@ export enum GrafanaAlertState {
   Error = 'Error',
 }
 
+type GrafanaAlertStateReason = ` (${GrafanaAlertState})` | '';
+
+export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
+
+/** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
+ */
+export function isAlertStateWithReason(s: PromAlertingRuleState | GrafanaAlertStateWithReason): boolean {
+  return (
+    s !== null && typeof s !== 'undefined' && !Object.values(PromAlertingRuleState).includes(s as PromAlertingRuleState)
+  );
+}
+
+export function mapStateWithReasonToBaseState(
+  s: GrafanaAlertStateWithReason | PromAlertingRuleState
+): GrafanaAlertState | PromAlertingRuleState {
+  if (isAlertStateWithReason(s)) {
+    const fields = s.split(' ');
+    return fields[0] as GrafanaAlertState;
+  }
+
+  return s as PromAlertingRuleState;
+}
+
 export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
@@ -64,7 +87,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts: Array<{
     labels: Labels;
     annotations: Annotations;
-    state: Exclude<PromAlertingRuleState | GrafanaAlertState, PromAlertingRuleState.Inactive>;
+    state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
     activeAt: string;
     value: string;
   }>;

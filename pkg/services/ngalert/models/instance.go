@@ -7,14 +7,15 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64  `xorm:"rule_org_id"`
-	RuleUID           string `xorm:"rule_uid"`
-	Labels            InstanceLabels
-	LabelsHash        string
-	CurrentState      InstanceStateType
-	CurrentStateSince time.Time
-	CurrentStateEnd   time.Time
-	LastEvalTime      time.Time
+	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
+	RuleUID           string            `xorm:"rule_uid" json:"ruleUIid"`
+	Labels            InstanceLabels    `json:"labels"`
+	LabelsHash        string            `json:"labeHash"`
+	CurrentState      InstanceStateType `json:"currentState"`
+	CurrentReason     InstanceStateType `json:"currentReason"`
+	CurrentStateSince time.Time         `json:"currentStateSince"`
+	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
+	LastEvalTime      time.Time         `json:"lastEvalTime"`
 }
 
 // InstanceStateType is an enum for instance states.
@@ -49,6 +50,7 @@ type SaveAlertInstanceCommand struct {
 	RuleUID           string
 	Labels            InstanceLabels
 	State             InstanceStateType
+	Reason            InstanceStateType
 	LastEvalTime      time.Time
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
@@ -69,20 +71,9 @@ type ListAlertInstancesQuery struct {
 	RuleOrgID int64 `json:"-"`
 	RuleUID   string
 	State     InstanceStateType
+	Reason    InstanceStateType
 
-	Result []*ListAlertInstancesQueryResult
-}
-
-// ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
-type ListAlertInstancesQueryResult struct {
-	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
-	RuleUID           string            `xorm:"rule_uid" json:"ruleUid"`
-	Labels            InstanceLabels    `json:"labels"`
-	LabelsHash        string            `json:"labeHash"`
-	CurrentState      InstanceStateType `json:"currentState"`
-	CurrentStateSince time.Time         `json:"currentStateSince"`
-	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
-	LastEvalTime      time.Time         `json:"lastEvalTime"`
+	Result []*AlertInstance
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,
