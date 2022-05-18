@@ -293,25 +293,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 	})
 }
 
-func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
-
-		us := &models.DashboardRef{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(us)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = us
-		return nil
-	})
-}
-
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
