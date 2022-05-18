@@ -47,7 +47,7 @@ const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    fetchBuildInfo: jest.mocked(discoverFeatures),
+    discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
@@ -138,7 +138,7 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
+    mocks.api.discoverFeatures.mockResolvedValue({
       application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
@@ -148,7 +148,7 @@ describe('RuleEditor', () => {
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     await userEvent.click(await ui.buttons.lotexAlert.get());
     const dataSourceSelect = ui.inputs.dataSource.get();
@@ -237,7 +237,7 @@ describe('RuleEditor', () => {
       },
     ] as DashboardSearchHit[]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
+    mocks.api.discoverFeatures.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
@@ -247,7 +247,7 @@ describe('RuleEditor', () => {
     // fill out the form
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -331,7 +331,7 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
+    mocks.api.discoverFeatures.mockResolvedValue({
       application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
@@ -340,7 +340,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
@@ -451,7 +451,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor(uid);
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     // check that it's filled in
@@ -553,7 +553,7 @@ describe('RuleEditor', () => {
       ),
     };
 
-    mocks.api.fetchBuildInfo.mockImplementation(async (dataSourceName) => {
+    mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return {
           application: PromApplication.Lotex,
@@ -615,7 +615,7 @@ describe('RuleEditor', () => {
 
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     await ui.inputs.name.find();

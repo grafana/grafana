@@ -861,6 +861,12 @@ export class PrometheusDatasource
       [PromApplication.Prometheus]: 'red',
     };
 
+    const AppDisplayNames: Record<PromApplication, string> = {
+      [PromApplication.Lotex]: 'Cortex',
+      [PromApplication.Mimir]: 'Mimir',
+      [PromApplication.Prometheus]: 'Prometheus',
+    };
+
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
     const applicationSubType = (
       <Badge
@@ -870,7 +876,7 @@ export class PrometheusDatasource
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
             />{' '}
-            {buildInfo.application}
+            {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
           </span>
         }
         color={COLORS[buildInfo.application ?? PromApplication.Prometheus]}
