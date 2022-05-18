@@ -3,18 +3,15 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-<<<<<<< HEAD
+
 import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
-=======
-import { Field, InlineField, InlineFieldRow, RadioButtonGroup, Select, VerticalGroup } from '@grafana/ui';
-import { HorizontalConstraint, Placement, QuickPlacement, VerticalConstraint } from 'app/features/canvas';
->>>>>>> f4fe1fe4b7 (Quick positioning (#48226))
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 import { PanelOptions } from '../models.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
+import { QuickPositioning } from './QuickPositioning';
 import { CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
@@ -33,15 +30,6 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
   { label: 'Center', value: VerticalConstraint.Center },
   { label: 'Scale', value: VerticalConstraint.Scale },
-];
-
-const alignmentOptions: Array<SelectableValue<QuickPlacement>> = [
-  { label: 'Align left', value: QuickPlacement.Left },
-  { label: 'Align h centers', value: QuickPlacement.HorizontalCenter },
-  { label: 'Align right', value: QuickPlacement.Right },
-  { label: 'Align top', value: QuickPlacement.Top },
-  { label: 'Align v centers', value: QuickPlacement.VerticalCenter },
-  { label: 'Align bottom', value: QuickPlacement.Bottom },
 ];
 
 export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({ item }) => {
@@ -89,61 +77,28 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     settings.scene.clearCurrentSelection();
   };
 
-  const onQuickPositioningChange = (position: string) => {
-    switch (position) {
-      case QuickPlacement.Top:
-        onPositionChange(0, 'top');
-        break;
-      case QuickPlacement.Bottom:
-        onPositionChange(getRightBottomPosition(element.options.placement?.height ?? 0, 'bottom'), 'top');
-        break;
-      case QuickPlacement.VerticalCenter:
-        onPositionChange(getCenterPosition(element.options.placement?.height ?? 0, 'v'), 'top');
-        break;
-      case QuickPlacement.Left:
-        onPositionChange(0, 'left');
-        break;
-      case QuickPlacement.Right:
-        onPositionChange(getRightBottomPosition(element.options.placement?.width ?? 0, 'right'), 'left');
-        break;
-      case QuickPlacement.HorizontalCenter:
-        onPositionChange(getCenterPosition(element.options.placement?.width ?? 0, 'h'), 'left');
-        break;
-    }
-  };
-
-  const getCenterPosition = (elementSize: number, align: 'h' | 'v') => {
-    const sceneSize = align === 'h' ? settings.scene.width : settings.scene.height;
-
-    return (sceneSize - elementSize) / 2;
-  };
-
-  const getRightBottomPosition = (elementSize: number, align: 'right' | 'bottom') => {
-    const sceneSize = align === 'right' ? settings.scene.width : settings.scene.height;
-
-    return sceneSize - elementSize;
-  };
-
   return (
     <div>
-      <RadioButtonGroup options={alignmentOptions} onChange={(v) => onQuickPositioningChange(v)} />
+      <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
       <br />
-      <br />
-      <HorizontalGroup>
-        <ConstraintSelectionBox
-          onVerticalConstraintChange={onVerticalConstraintChange}
-          onHorizontalConstraintChange={onHorizontalConstraintChange}
-          currentConstraints={element.options.constraint ?? {}}
-        />
-        <VerticalGroup>
-          <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
-          <Select
-            options={horizontalOptions}
-            onChange={onHorizontalConstraintSelect}
-            value={options.constraint?.horizontal}
+      <Field label="Constraints">
+        <HorizontalGroup>
+          <ConstraintSelectionBox
+            onVerticalConstraintChange={onVerticalConstraintChange}
+            onHorizontalConstraintChange={onHorizontalConstraintChange}
+            currentConstraints={element.options.constraint ?? {}}
           />
-        </VerticalGroup>
-      </HorizontalGroup>
+          <VerticalGroup>
+            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
+            <Select
+              options={horizontalOptions}
+              onChange={onHorizontalConstraintSelect}
+              value={options.constraint?.horizontal}
+            />
+          </VerticalGroup>
+        </HorizontalGroup>
+      </Field>
+
       <br />
 
       <Field label="Position">
