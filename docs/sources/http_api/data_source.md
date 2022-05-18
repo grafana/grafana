@@ -604,6 +604,162 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
+## Check data source health by id
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source health check API](#check-data-source-health).
+
+`GET /api/datasources/:datasourceId/health`
+
+Makes a call to the health endpoint of data source identified by the given `dashboardId`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/112/health HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
+  "status": "OK"
+}
+```
+
+## Check data source health
+
+`GET /api/datasources/uid/:uid/health`
+
+Makes a call to the health endpoint of data source identified by the given `uid`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/uid/P8045C56BDA891CB2/health HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
+  "status": "OK"
+}
+```
+
+## Fetch data source resources by id
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source resources API](#fetch-data-source-resources).
+
+`GET /api/datasources/:datasourceId/resources/*`
+
+Makes a call to the resources endpoint of data source identified by the given `dashboardId`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/112/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+	{
+		"text": "AutoScalingGroupName",
+		"value": "AutoScalingGroupName",
+		"label": "AutoScalingGroupName"
+	},
+	{
+		"text": "ImageId",
+		"value": "ImageId",
+		"label": "ImageId"
+	},
+	{
+		"text": "InstanceId",
+		"value": "InstanceId",
+		"label": "InstanceId"
+	},
+	{
+		"text": "InstanceType",
+		"value": "InstanceType",
+		"label": "InstanceType"
+	}
+]
+```
+
+## Fetch data source resources
+
+`GET /api/datasources/uid/:uid/resources/*`
+
+Makes a call to the resources endpoint of data source identified by the given `uid`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/uid/P8045C56BDA891CB2/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+	{
+		"text": "AutoScalingGroupName",
+		"value": "AutoScalingGroupName",
+		"label": "AutoScalingGroupName"
+	},
+	{
+		"text": "ImageId",
+		"value": "ImageId",
+		"label": "ImageId"
+	},
+	{
+		"text": "InstanceId",
+		"value": "InstanceId",
+		"label": "InstanceId"
+	},
+	{
+		"text": "InstanceType",
+		"value": "InstanceType",
+		"label": "InstanceType"
+	}
+]
+```
+
 ## Query a data source
 
 Queries a data source having a backend implementation.
