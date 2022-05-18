@@ -144,6 +144,5 @@ type Store interface {
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error
-	GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
 }
