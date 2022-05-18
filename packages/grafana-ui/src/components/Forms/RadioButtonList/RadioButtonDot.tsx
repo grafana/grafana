@@ -12,10 +12,10 @@ export interface RadioButtonDotProps {
   disabled?: boolean;
   label: React.ReactNode;
   description?: string;
-  onClick?: (id: string) => void;
+  onChange?: (id: string) => void;
 }
 
-export const RadioButtonDot = ({ id, name, label, checked, disabled, description, onClick }: RadioButtonDotProps) => {
+export const RadioButtonDot = ({ id, name, label, checked, disabled, description, onChange }: RadioButtonDotProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -27,7 +27,7 @@ export const RadioButtonDot = ({ id, name, label, checked, disabled, description
         checked={checked}
         disabled={disabled}
         className={styles.input}
-        onClick={() => onClick && onClick(id)}
+        onChange={() => onChange && onChange(id)}
       />
       {label}
     </label>

@@ -9,21 +9,22 @@ import { RadioButtonDot } from './RadioButtonDot';
 
 export interface RadioButtonListProps<T> {
   name: string;
-  value?: T;
   id?: string;
-  idSelector: (option: T) => string;
+  options: Array<SelectableValue<T>>;
+  keySelector: (option: T) => string;
+  value?: T;
+  onChange?: (value: T) => void;
   disabled?: boolean;
   disabledOptions?: T[];
-  options: Array<SelectableValue<T>>;
-  onChange?: (value: T) => void;
   className?: string;
 }
 
 export function RadioButtonList<T>({
   name,
+  id,
   options,
+  keySelector,
   value,
-  idSelector,
   onChange,
   className,
   disabled,
@@ -32,16 +33,16 @@ export function RadioButtonList<T>({
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div id={id} className={cx(styles.container, className)}>
       {options.map((option) => (
         <RadioButtonDot
-          key={idSelector(option.value!)}
-          id={idSelector(option.value!)} // TODO Fix null assertion
+          key={keySelector(option.value!)}
+          id={keySelector(option.value!)} // TODO Fix null assertion
           name={name}
           label={option.label}
           checked={value && value === option.value}
           disabled={disabled || disabledOptions.some((optionValue) => optionValue === option.value)}
-          onClick={() => onChange && option.value && onChange(option.value)}
+          onChange={() => onChange && option.value && onChange(option.value)}
         />
       ))}
     </div>
