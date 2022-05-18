@@ -13,8 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,12 +36,12 @@ var (
 
 // Screenshot represents a screenshot of a dashboard in Grafana.
 //
-// A screenshot can have an ImageOnDiskPath and an ImagePublicURL if the
-// screenshot is stored or disk and uploaded to a cloud storage service or
-// made accessible via the Grafana HTTP server.
+// A screenshot can have a Path and an URL if the screenshot is stored on disk
+// and uploaded to a cloud storage service or made accessible via the Grafana
+// HTTP server.
 type Screenshot struct {
-	ImageOnDiskPath string
-	ImagePublicURL  string
+	Path string
+	URL  string
 }
 
 // ScreenshotOptions are the options for taking a screenshot.
@@ -81,16 +81,16 @@ type ScreenshotService interface {
 
 // BrowserScreenshotService takes screenshots using a headless browser.
 type BrowserScreenshotService struct {
-	db                  sqlstore.Store
+	ds                  dashboards.DashboardService
 	rs                  rendering.Service
 	screenshotDuration  prometheus.Histogram
 	screenshotFailures  prometheus.Counter
 	screenshotSuccesses prometheus.Counter
 }
 
-func NewBrowserScreenshotService(r prometheus.Registerer, db sqlstore.Store, rs rendering.Service) ScreenshotService {
+func NewBrowserScreenshotService(r prometheus.Registerer, ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
 	return &BrowserScreenshotService{
-		db: db,
+		ds: ds,
 		rs: rs,
 		screenshotDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Name:      "browser_screenshot_duration_seconds",
@@ -111,21 +111,16 @@ func NewBrowserScreenshotService(r prometheus.Registerer, db sqlstore.Store, rs 
 	}
 }
 
-// Take returns a screenshot with an ImageOnDiskPath or an error if the
-// dashboard does not exist or it failed to screenshot the dashboard.
-// It uses both the context and the timeout in ScreenshotOptions, however
-// the timeout in ScreenshotOptions is sent to the remote browser where it
-// is used as a client timeout.
+// Take returns a screenshot or an error if either the dashboard does not exist
+// or it failed to screenshot the dashboard. It uses both the context and the
+// timeout in ScreenshotOptions, however the timeout in ScreenshotOptions is
+// sent to the remote browser where it is used as a client timeout.
 func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
-	q := models.GetDashboardsQuery{DashboardUIds: []string{opts.DashboardUID}}
-	if err := s.db.GetDashboards(ctx, &q); err != nil {
+	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
+	if err := s.ds.GetDashboard(ctx, &q); err != nil {
 		defer s.screenshotFailures.Inc()
 		return nil, err
 	}
-	if len(q.Result) == 0 {
-		return nil, models.ErrDashboardNotFound
-	}
-	dashboard := q.Result[0]
 
 	start := time.Now()
 	defer func() { s.screenshotDuration.Observe(time.Since(start).Seconds()) }()
@@ -133,7 +128,7 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 	opts = opts.SetDefaults()
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   dashboard.OrgId,
+			OrgID:   q.Result.OrgId,
 			OrgRole: models.ROLE_ADMIN,
 		},
 		ErrorOpts: rendering.ErrorOpts{
@@ -147,7 +142,7 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 		Height:          opts.Height,
 		Theme:           opts.Theme,
 		ConcurrentLimit: setting.AlertingRenderLimit,
-		Path:            fmt.Sprintf("d-solo/%s/%s/?orgId=%d&panelId=%d", dashboard.Uid, dashboard.Slug, dashboard.OrgId, opts.PanelID),
+		Path:            fmt.Sprintf("d-solo/%s/%s/?orgId=%d&panelId=%d", q.Result.Uid, q.Result.Slug, q.Result.OrgId, opts.PanelID),
 	}
 
 	result, err := s.rs.Render(ctx, renderOpts, nil)
@@ -157,7 +152,7 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 	}
 
 	defer s.screenshotSuccesses.Inc()
-	screenshot := Screenshot{ImageOnDiskPath: result.FilePath}
+	screenshot := Screenshot{Path: result.FilePath}
 	return &screenshot, nil
 }
 
@@ -349,46 +344,21 @@ func NewUploadingScreenshotService(r prometheus.Registerer, service ScreenshotSe
 	}
 }
 
-// Take uploads a screenshot with an ImageOnDiskPath and returns a new
-// screenshot with the unmodified ImageOnDiskPath and a ImagePublicURL.
-// It returns the unmodified screenshot on error.
+// Take uploads a screenshot with a path and returns a new screenshot with the
+// unmodified path and a URL. It returns the unmodified screenshot on error.
 func (s *UploadingScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
 	screenshot, err := s.service.Take(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := s.uploader.Upload(ctx, screenshot.ImageOnDiskPath)
+	url, err := s.uploader.Upload(ctx, screenshot.Path)
 	if err != nil {
 		defer s.uploadFailures.Inc()
 		return screenshot, fmt.Errorf("failed to upload screenshot: %w", err)
 	}
-	screenshot.ImagePublicURL = url
+	screenshot.URL = url
 
 	defer s.uploadSuccesses.Inc()
 	return screenshot, nil
-}
-
-func provideService(cfg *setting.Cfg, r prometheus.Registerer, db *sqlstore.SQLStore, rs rendering.Service) (ScreenshotService, error) {
-	u, err := imguploader.NewImageUploader()
-	if err != nil {
-		return nil, err
-	}
-
-	var s ScreenshotService
-	s = NewBrowserScreenshotService(r, db, rs)
-	s = NewUploadingScreenshotService(r, s, u)
-	s = NewRateLimitScreenshotService(s, 5)
-	s = NewSingleFlightScreenshotService(s)
-	s = NewCachableScreenshotService(r, 15*time.Second, s)
-	s = NewObservableScreenshotService(r, s)
-	return s, nil
-}
-
-func ProvideService(cfg *setting.Cfg, db *sqlstore.SQLStore, rs rendering.Service) (ScreenshotService, error) {
-	return provideService(cfg, prometheus.DefaultRegisterer, db, rs)
-}
-
-func ProvideServiceForTest(cfg *setting.Cfg, db *sqlstore.SQLStore, rs rendering.Service) (ScreenshotService, error) {
-	return provideService(cfg, prometheus.NewRegistry(), db, rs)
 }

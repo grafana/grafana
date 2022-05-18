@@ -15,10 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -42,12 +42,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
-	screenshotFunc   screenshotFunc
+	imageService     image.ImageService
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
-	dashboardService dashboards.DashboardService, screenshots screenshot.ScreenshotService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -58,7 +58,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
-		screenshotFunc:   NewScreenshotFunc(screenshots),
+		imageService:     imageService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -169,14 +169,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 }
 
 //nolint:unused
-func (st *Manager) takeScreenshot(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
-	if state.Screenshot.ImageOnDiskPath == "" {
-		screenshot, err := st.screenshotFunc(ctx, alertRule)
+func (st *Manager) newImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
+	if state.Image == nil {
+		image, err := st.imageService.NewImage(ctx, alertRule, state.Labels)
 		if err != nil {
-			st.log.Error("failed to take screenshot", "error", err)
+			st.log.Error("failed to create image", "error", err)
 			return err
 		}
-		state.Screenshot = *screenshot
+		state.Image = image
 	}
 	return nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -25,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +35,7 @@ import (
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
-	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, screenshotService screenshot.ScreenshotService) (*AlertNG, error) {
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -47,11 +48,11 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		SecretsService:      secretsService,
 		Metrics:             m,
 		Log:                 log.New("ngalert"),
-		screenshotService:   screenshotService,
 		NotificationService: notificationService,
 		folderService:       folderService,
 		accesscontrol:       ac,
 		dashboardService:    dashboardService,
+		renderService:       renderService,
 	}
 
 	if ng.IsDisabled() {
@@ -79,7 +80,8 @@ type AlertNG struct {
 	Metrics             *metrics.NGAlert
 	NotificationService notifications.Service
 	Log                 log.Logger
-	screenshotService   screenshot.ScreenshotService
+	renderService       rendering.Service
+	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       dashboards.FolderService
@@ -109,6 +111,12 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.Metrics.Registerer, store, ng.dashboardService, ng.renderService)
+	if err != nil {
+		return err
+	}
+	ng.imageService = imageService
+
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
 		return err
@@ -137,7 +145,7 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.screenshotService)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.imageService)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager

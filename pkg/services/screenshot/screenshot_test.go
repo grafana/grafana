@@ -16,8 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -73,20 +73,24 @@ func TestBrowserScreenshotService(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 
-	db := mockstore.NewSQLStoreMock()
+	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
-	s := NewBrowserScreenshotService(prometheus.DefaultRegisterer, db, r)
+	s := NewBrowserScreenshotService(prometheus.DefaultRegisterer, &d, r)
 
 	// a non-existent dashboard should return error
-	db.ExpectedError = models.ErrDashboardNotFound
+	d.GetDashboardFn = func(ctx context.Context, cmd *models.GetDashboardQuery) error {
+		return models.ErrDashboardNotFound
+	}
 	ctx := context.Background()
 	opts := ScreenshotOptions{}
 	screenshot, err := s.Take(ctx, opts)
 	assert.EqualError(t, err, "Dashboard not found")
 	assert.Nil(t, screenshot)
 
-	db.ExpectedDashboards = []*models.Dashboard{{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}}
-	db.ExpectedError = nil
+	d.GetDashboardFn = func(ctx context.Context, cmd *models.GetDashboardQuery) error {
+		cmd.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
+		return nil
+	}
 
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
@@ -114,7 +118,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
 	screenshot, err = s.Take(ctx, opts)
 	require.NoError(t, err)
-	assert.Equal(t, Screenshot{ImageOnDiskPath: "panel.png"}, *screenshot)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 
 	// a timeout should return error
 	r.EXPECT().
@@ -136,24 +140,24 @@ func TestCachableScreenshotService(t *testing.T) {
 	opts := ScreenshotOptions{DashboardUID: "foo", PanelID: 1}
 
 	// should be a miss and ask the mock service to take a screenshot
-	m.EXPECT().Take(ctx, opts).Return(&Screenshot{ImageOnDiskPath: "panel.png"}, nil)
+	m.EXPECT().Take(ctx, opts).Return(&Screenshot{Path: "panel.png"}, nil)
 	screenshot, err := s.Take(ctx, opts)
 	require.NoError(t, err)
-	assert.Equal(t, Screenshot{ImageOnDiskPath: "panel.png"}, *screenshot)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 
 	// should be a hit
 	screenshot, err = s.Take(ctx, opts)
 	require.NoError(t, err)
-	assert.Equal(t, Screenshot{ImageOnDiskPath: "panel.png"}, *screenshot)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 
 	// wait 1s and the cached screenshot should have expired
 	<-time.After(time.Second)
 
 	// should be a miss as the cached screenshot has expired
-	m.EXPECT().Take(ctx, opts).Return(&Screenshot{ImageOnDiskPath: "panel.png"}, nil)
+	m.EXPECT().Take(ctx, opts).Return(&Screenshot{Path: "panel.png"}, nil)
 	screenshot, err = s.Take(ctx, opts)
 	require.NoError(t, err)
-	assert.Equal(t, Screenshot{ImageOnDiskPath: "panel.png"}, *screenshot)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 }
 
 func TestNoopScreenshotService(t *testing.T) {
@@ -183,7 +187,7 @@ func TestSingleFlightScreenshotService(t *testing.T) {
 	// expect 1 invocation of the mock service for the same options
 	m.EXPECT().Take(ctx, opts).
 		Do(func(_ context.Context, _ ScreenshotOptions) { <-time.After(time.Second) }).
-		Return(&Screenshot{ImageOnDiskPath: "panel.png"}, nil)
+		Return(&Screenshot{Path: "panel.png"}, nil)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
@@ -192,7 +196,7 @@ func TestSingleFlightScreenshotService(t *testing.T) {
 			defer wg.Done()
 			screenshot, err := s.Take(ctx, opts)
 			require.NoError(t, err)
-			assert.Equal(t, Screenshot{ImageOnDiskPath: "panel.png"}, *screenshot)
+			assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 		}()
 	}
 	wg.Wait()
@@ -200,63 +204,63 @@ func TestSingleFlightScreenshotService(t *testing.T) {
 	// expect two invocations of the mock service for different dashboards
 	opts1 := ScreenshotOptions{DashboardUID: "foo", PanelID: 1}
 	opts2 := ScreenshotOptions{DashboardUID: "bar", PanelID: 1}
-	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{ImageOnDiskPath: "foo.png"}, nil)
-	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{ImageOnDiskPath: "bar.png"}, nil)
+	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{Path: "foo.png"}, nil)
+	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{Path: "bar.png"}, nil)
 
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts1)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "foo.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "foo.png"}, *screenshot)
 	}()
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts2)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "bar.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "bar.png"}, *screenshot)
 	}()
 	wg.Wait()
 
 	// expect two invocations of the mock service for different panels in the same dashboard
 	opts1 = ScreenshotOptions{DashboardUID: "foo", PanelID: 1}
 	opts2 = ScreenshotOptions{DashboardUID: "foo", PanelID: 2}
-	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{ImageOnDiskPath: "panel1.png"}, nil)
-	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{ImageOnDiskPath: "panel2.png"}, nil)
+	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{Path: "panel1.png"}, nil)
+	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{Path: "panel2.png"}, nil)
 
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts1)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "panel1.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "panel1.png"}, *screenshot)
 	}()
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts2)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "panel2.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "panel2.png"}, *screenshot)
 	}()
 	wg.Wait()
 
 	// expect two invocations of the mock service for different panels in the same dashboard
 	opts1 = ScreenshotOptions{DashboardUID: "foo", PanelID: 1, Theme: models.ThemeDark}
 	opts2 = ScreenshotOptions{DashboardUID: "foo", PanelID: 1, Theme: models.ThemeLight}
-	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{ImageOnDiskPath: "dark.png"}, nil)
-	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{ImageOnDiskPath: "light.png"}, nil)
+	m.EXPECT().Take(ctx, opts1).Return(&Screenshot{Path: "dark.png"}, nil)
+	m.EXPECT().Take(ctx, opts2).Return(&Screenshot{Path: "light.png"}, nil)
 
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts1)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "dark.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "dark.png"}, *screenshot)
 	}()
 	go func() {
 		defer wg.Done()
 		screenshot, err := s.Take(ctx, opts2)
 		require.NoError(t, err)
-		assert.Equal(t, Screenshot{ImageOnDiskPath: "light.png"}, *screenshot)
+		assert.Equal(t, Screenshot{Path: "light.png"}, *screenshot)
 	}()
 	wg.Wait()
 }
@@ -287,7 +291,7 @@ func TestRateLimitScreenshotService(t *testing.T) {
 				atomic.AddInt64(&v, -1)
 				assert.Equal(t, int64(0), atomic.LoadInt64(&v))
 			}).
-			Return(&Screenshot{ImageOnDiskPath: "foo.png"}, nil)
+			Return(&Screenshot{Path: "foo.png"}, nil)
 	}
 
 	var wg sync.WaitGroup
@@ -297,7 +301,7 @@ func TestRateLimitScreenshotService(t *testing.T) {
 			defer wg.Done()
 			result, err := s.Take(ctx, opts)
 			require.NoError(t, err)
-			assert.Equal(t, Screenshot{ImageOnDiskPath: "foo.png"}, *result)
+			assert.Equal(t, Screenshot{Path: "foo.png"}, *result)
 		}()
 	}
 	wg.Wait()
@@ -314,21 +318,21 @@ func TestUploadingScreenshotService(t *testing.T) {
 	ctx := context.Background()
 	opts := ScreenshotOptions{DashboardUID: "foo", PanelID: 1}
 
-	m.EXPECT().Take(ctx, opts).Return(&Screenshot{ImageOnDiskPath: "foo.png"}, nil)
+	m.EXPECT().Take(ctx, opts).Return(&Screenshot{Path: "foo.png"}, nil)
 	u.EXPECT().Upload(ctx, "foo.png").Return("https://example.com/foo.png", nil)
 	screenshot, err := s.Take(ctx, opts)
 	require.NoError(t, err)
 	assert.Equal(t, Screenshot{
-		ImageOnDiskPath: "foo.png",
-		ImagePublicURL:  "https://example.com/foo.png",
+		Path: "foo.png",
+		URL:  "https://example.com/foo.png",
 	}, *screenshot)
 
 	// error on upload should still return screenshot on disk
-	m.EXPECT().Take(ctx, opts).Return(&Screenshot{ImageOnDiskPath: "foo.png"}, nil)
+	m.EXPECT().Take(ctx, opts).Return(&Screenshot{Path: "foo.png"}, nil)
 	u.EXPECT().Upload(ctx, "foo.png").Return("", errors.New("service is unavailable"))
 	screenshot, err = s.Take(ctx, opts)
 	assert.EqualError(t, err, "failed to upload screenshot: service is unavailable")
 	assert.Equal(t, Screenshot{
-		ImageOnDiskPath: "foo.png",
+		Path: "foo.png",
 	}, *screenshot)
 }
