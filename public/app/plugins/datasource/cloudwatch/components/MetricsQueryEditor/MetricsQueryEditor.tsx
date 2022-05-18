@@ -140,7 +140,6 @@ export const MetricsQueryEditor = (props: Props) => {
           >
             <Input
               id={`${query.refId}-cloudwatch-metric-query-editor-label`}
-              placeholder="auto"
               onBlur={onRunQuery}
               value={preparedQuery.label ?? ''}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>

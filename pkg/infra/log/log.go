@@ -378,6 +378,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		return err
 	}
 
+	logEnabled := cfg.Section("log").Key("enabled").MustBool(true)
+	if !logEnabled {
+		return nil
+	}
+
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
