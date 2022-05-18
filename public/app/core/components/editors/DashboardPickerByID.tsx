@@ -11,7 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 export interface DashboardPickerItem {
   id: number;
   uid: string;
-  label: string;
+  [key: string]: string | number;
 }
 
 interface Props {
@@ -22,6 +22,7 @@ interface Props {
   invalid?: boolean;
   disabled?: boolean;
   id?: string;
+  optionLabel?: string;
 }
 
 /**
@@ -35,9 +36,10 @@ export const DashboardPickerByID: FC<Props> = ({
   invalid,
   disabled,
   id,
+  optionLabel = 'label',
 }) => {
-  const debouncedSearch = debounce(getDashboards, 300);
-  const option = value ? { value, label: value.label } : undefined;
+  const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel), 300);
+  const option = value ? { value, [optionLabel]: value[optionLabel] } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {
     propsOnChange(item?.value);
   };
@@ -55,19 +57,20 @@ export const DashboardPickerByID: FC<Props> = ({
       value={option}
       invalid={invalid}
       disabled={disabled}
+      getOptionLabel={(option) => option[optionLabel]}
     />
   );
 };
 
-async function getDashboards(query = ''): Promise<Array<SelectableValue<DashboardPickerItem>>> {
+async function getDashboards(query: string, label: string): Promise<Array<SelectableValue<DashboardPickerItem>>> {
   const result = await backendSrv.search({ type: 'dash-db', query, limit: 100 });
   return result.map(({ id, uid = '', title, folderTitle }) => {
     const value: DashboardPickerItem = {
       id,
       uid,
-      label: `${folderTitle ?? 'General'}/${title}`,
+      [label]: `${folderTitle ?? 'General'}/${title}`,
     };
 
-    return { value, label: value.label };
+    return { value, [label]: value[label] };
   });
 }

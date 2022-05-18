@@ -13,7 +13,7 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   'create-dashboard': defineMessage({ id: 'nav.create-dashboard', message: 'Dashboard' }),
   folder: defineMessage({ id: 'nav.create-folder', message: 'Folder' }),
   import: defineMessage({ id: 'nav.create-import', message: 'Import' }),
-  alert: defineMessage({ id: 'nav.create-alert', message: 'Alert rule' }),
+  alert: defineMessage({ id: 'nav.create-alert', message: 'New alert rule' }),
 
   dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
   'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),

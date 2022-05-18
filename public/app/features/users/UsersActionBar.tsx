@@ -40,7 +40,7 @@ export class UsersActionBar extends PureComponent<Props> {
     const canAddToOrg = contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite);
 
     return (
-      <div className="page-action-bar">
+      <div className="page-action-bar" data-testid="users-action-bar">
         <div className="gf-form gf-form--grow">
           <FilterInput
             value={searchQuery}

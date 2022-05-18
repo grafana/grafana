@@ -1,8 +1,8 @@
 +++
-title = "Zipkin"
+aliases = ["/docs/grafana/latest/datasources/zipkin/"]
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
+title = "Zipkin"
 weight = 1600
 +++
 
@@ -39,6 +39,15 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Filter by Span ID -** Toggle to append the span ID to the logs query.
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
+
+### Trace to metrics
+
+> **Note:** This feature is behind the `traceToMetrics` feature toggle.
+
+To configure trace to metrics, select the target Prometheus data source and enter the desired query.
+
+-- **Data source -** Target data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source.
 
 ### Node Graph
 

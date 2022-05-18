@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
@@ -14,16 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/xorm"
 )
 
-func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
+func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
 	var rows []struct {
 		Id     int
 		Secret []byte
 	}
 
-	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return
 	}
@@ -35,25 +33,30 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 			continue
 		}
 
-		decrypted, err := secretsSrv.Decrypt(context.Background(), row.Secret)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
+			if err != nil {
+				logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			if err != nil {
+				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+			if _, err = sess.Exec(updateSQL, encrypted, nowInUTC(), row.Id); err != nil {
+				logger.Warn("Could not update secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
-		if _, err = sess.Exec(updateSQL, encrypted, nowInUTC(), row.Id); err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -64,13 +67,13 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 	}
 }
 
-func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
+func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
 	var rows []struct {
 		Id     int
 		Secret string
 	}
 
-	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return
 	}
@@ -82,40 +85,44 @@ func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Sess
 			continue
 		}
 
-		decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+			if err != nil {
+				logger.Warn("Could not decode base64-encoded secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			decrypted, err := secretsSrv.Decrypt(ctx, decoded)
+			if err != nil {
+				logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			if err != nil {
+				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encoded := base64.StdEncoding.EncodeToString(encrypted)
+			if s.hasUpdatedColumn {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+			} else {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, row.Id)
+			}
+
+			if err != nil {
+				logger.Warn("Could not update secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decode base64-encoded secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encoded := base64.StdEncoding.EncodeToString(encrypted)
-		if s.hasUpdatedColumn {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
-		} else {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, row.Id)
-		}
-
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -126,13 +133,13 @@ func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Sess
 	}
 }
 
-func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
+func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
 	}
 
-	if err := sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return
 	}
@@ -144,29 +151,34 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 			continue
 		}
 
-		decrypted, err := secretsSrv.DecryptJsonData(context.Background(), row.SecureJsonData)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
+			if err != nil {
+				logger.Warn("Could not decrypt secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			toUpdate := struct {
+				SecureJsonData map[string][]byte
+				Updated        string
+			}{Updated: nowInUTC()}
+
+			toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			if err != nil {
+				logger.Warn("Could not re-encrypt secrets", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
+				logger.Warn("Could not update secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decrypt secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		toUpdate := struct {
-			SecureJsonData map[string][]byte
-			Updated        string
-		}{Updated: nowInUTC()}
-
-		toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not re-encrypt secrets", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -177,14 +189,14 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 	}
 }
 
-func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
+func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-	if err := sess.SQL(selectSQL).Find(&results); err != nil {
+	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
 		return
 	}
@@ -193,54 +205,57 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 
 	for _, result := range results {
 		result := result
-		postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not load alert_configuration while re-encrypting it", "id", result.Id, "error", err)
-			continue
-		}
 
-		for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
-			for _, gmr := range receiver.GrafanaManagedReceivers {
-				for k, v := range gmr.SecureSettings {
-					decoded, err := base64.StdEncoding.DecodeString(v)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not decode base64-encoded alert_configuration secret", "id", result.Id, "key", k, "error", err)
-						continue
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
+			if err != nil {
+				logger.Warn("Could not load alert_configuration while re-encrypting it", "id", result.Id, "error", err)
+				return err
+			}
+
+			for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
+				for _, gmr := range receiver.GrafanaManagedReceivers {
+					for k, v := range gmr.SecureSettings {
+						decoded, err := base64.StdEncoding.DecodeString(v)
+						if err != nil {
+							logger.Warn("Could not decode base64-encoded alert_configuration secret", "id", result.Id, "key", k, "error", err)
+							return err
+						}
+
+						decrypted, err := secretsSrv.Decrypt(ctx, decoded)
+						if err != nil {
+							logger.Warn("Could not decrypt alert_configuration secret", "id", result.Id, "key", k, "error", err)
+							return err
+						}
+
+						reencrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+						if err != nil {
+							logger.Warn("Could not re-encrypt alert_configuration secret", "id", result.Id, "key", k, "error", err)
+							return err
+						}
+
+						gmr.SecureSettings[k] = base64.StdEncoding.EncodeToString(reencrypted)
 					}
-
-					decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not decrypt alert_configuration secret", "id", result.Id, "key", k, "error", err)
-						continue
-					}
-
-					reencrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not re-encrypt alert_configuration secret", "id", result.Id, "key", k, "error", err)
-						continue
-					}
-
-					gmr.SecureSettings[k] = base64.StdEncoding.EncodeToString(reencrypted)
 				}
 			}
-		}
 
-		marshalled, err := json.Marshal(postableUserConfig)
+			marshalled, err := json.Marshal(postableUserConfig)
+			if err != nil {
+				logger.Warn("Could not marshal alert_configuration while re-encrypting it", "id", result.Id, "error", err)
+				return err
+			}
+
+			result.AlertmanagerConfiguration = string(marshalled)
+			if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
+				logger.Warn("Could not update alert_configuration secret while re-encrypting it", "id", result.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not marshal alert_configuration while re-encrypting it", "id", result.Id, "error", err)
-			continue
-		}
-
-		result.AlertmanagerConfiguration = string(marshalled)
-		if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
-			anyFailure = true
-			logger.Warn("Could not update alert_configuration secret while re-encrypting it", "id", result.Id, "error", err)
-			continue
 		}
 	}
 
@@ -258,7 +273,7 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	}
 
 	toMigrate := []interface {
-		reencrypt(*manager.SecretsService, *xorm.Session)
+		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
@@ -270,18 +285,9 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		alertingSecret{},
 	}
 
-	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) (err error) {
-		defer func() {
-			if r := recover(); r != nil {
-				err = errors.New(fmt.Sprint(r))
-				logger.Error("Secrets re-encryption failed, rolling back transaction...", "error", err)
-			}
-		}()
+	for _, m := range toMigrate {
+		m.reencrypt(context.Background(), runner.SecretsService, runner.SQLStore)
+	}
 
-		for _, m := range toMigrate {
-			m.reencrypt(runner.SecretsService, sess.Session)
-		}
-
-		return nil
-	})
+	return nil
 }

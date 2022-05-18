@@ -32,6 +32,7 @@ export function fetchACOptions(): ThunkResult<void> {
         dispatch(acOptionsLoaded(options));
       }
       if (
+        !contextSrv.accessControlBuiltinRefactorEnabled() &&
         contextSrv.licensedAccessControlEnabled() &&
         contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
       ) {
