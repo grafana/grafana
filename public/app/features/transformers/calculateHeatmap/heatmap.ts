@@ -1,3 +1,5 @@
+import { dsnToString } from '@sentry/utils';
+import { es } from 'date-fns/locale';
 import { map } from 'rxjs';
 
 import {
@@ -188,6 +190,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   if (!xField || !yField) {
     throw 'no heatmap fields found';
+  }
+
+  if (!xs.length || !ys.length) {
+    throw 'no values found';
   }
 
   const heat2d = heatmap(xs, ys, {

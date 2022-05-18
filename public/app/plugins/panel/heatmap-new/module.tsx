@@ -3,7 +3,6 @@ import React from 'react';
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
-import { commonOptionsBuilder } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
@@ -232,7 +231,12 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       showIf: (opts) => opts.tooltip.show,
     });
 
-    // custom legend?
-    commonOptionsBuilder.addLegendOptions(builder);
+    category = ['Legend'];
+    builder.addBooleanSwitch({
+      path: 'legend.show',
+      name: 'Show legend',
+      defaultValue: defaultPanelOptions.legend.show,
+      category,
+    });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());

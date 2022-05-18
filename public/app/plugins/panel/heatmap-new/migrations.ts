@@ -1,5 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -59,9 +59,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     yAxisLabels: angular.yBucketBound,
     yAxisReverse: angular.reverseYBuckets,
     legend: {
-      displayMode: angular.legend.show ? LegendDisplayMode.List : LegendDisplayMode.Hidden,
-      calcs: [],
-      placement: 'bottom',
+      show: Boolean(angular.legend.show),
     },
     showValue: VisibilityMode.Never,
     tooltip: {
