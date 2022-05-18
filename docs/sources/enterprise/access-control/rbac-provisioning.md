@@ -1,9 +1,10 @@
 ---
-title: 'RBAC provisioning in Grafana'
-menuTitle: 'RBAC provisioning'
-description: 'Learn how to use RBAC provisioning in Grafana.'
-aliases: []
-weight: 30
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/provisioning-roles-example/
+description: View an example YAML provisioning file that configures Grafana role assignments.
+menuTitle: Provisioning roles example
+title: Example role configuration file using Grafana provisioning
+weight: 60
 ---
 
 ## RBAC provisioning

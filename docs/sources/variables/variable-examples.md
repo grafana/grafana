@@ -1,6 +1,7 @@
 +++
-title = "Variable examples"
+aliases = ["/docs/grafana/latest/variables/variable-examples/"]
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
+title = "Variable examples"
 weight = 200
 +++
 

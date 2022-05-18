@@ -1,7 +1,9 @@
 ---
-title: About API keys in Grafana
+aliases:
+  - /docs/grafana/latest/administration/api-keys/about-api-keys/
+description: Learn about using API keys in Grafana
 menuTitle: About API keys
-description: 'Learn about using API keys in Grafana'
+title: About API keys in Grafana
 weight: 30
 ---
 
