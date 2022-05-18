@@ -48,11 +48,9 @@ describe('<AccordianText>', () => {
 
   it('renders the content when it is expanded', () => {
     props.isOpen = true;
-    rerender(<AccordianText {...props} />);
-    expect(screen.getAllByTestId('TextList')).toHaveLength(1);
-    const { getByText } = within(screen.getByTestId('TextList'));
+    render(<AccordianText {...props} />);
     warnings.forEach((warning) => {
-      expect(getByText(warning)).toBeInTheDocument();
+      expect(screen.getByText(warning)).toBeInTheDocument();
     });
   });
 });
