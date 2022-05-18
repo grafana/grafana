@@ -4354,7 +4354,7 @@ __metadata:
     "@braintree/sanitize-url": 6.0.0
     "@grafana/schema": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@swc/helpers": 0.3.8
@@ -4410,7 +4410,7 @@ __metadata:
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@types/node": 16.11.26
     rimraf: 3.0.2
@@ -4432,7 +4432,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@types/chrome-remote-interface": 0.31.4
     "@types/lodash": 4.14.181
@@ -4540,7 +4540,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.0.0-pre
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.1
     "@testing-library/dom": 8.13.0
@@ -4573,7 +4573,7 @@ __metadata:
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@swc/helpers": 0.3.8
@@ -4730,7 +4730,7 @@ __metadata:
     "@react-aria/menu": 3.4.3
     "@react-aria/overlays": 3.8.1
     "@react-stately/menu": 3.2.6
-    "@rollup/plugin-commonjs": 21.0.2
+    "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.1
     "@storybook/addon-a11y": 6.4.21
@@ -7672,9 +7672,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-commonjs@npm:21.0.2":
-  version: 21.0.2
-  resolution: "@rollup/plugin-commonjs@npm:21.0.2"
+"@rollup/plugin-commonjs@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@rollup/plugin-commonjs@npm:22.0.0"
   dependencies:
     "@rollup/pluginutils": ^3.1.0
     commondir: ^1.0.1
@@ -7684,8 +7684,8 @@ __metadata:
     magic-string: ^0.25.7
     resolve: ^1.17.0
   peerDependencies:
-    rollup: ^2.38.3
-  checksum: 5fd4c7b75d7881070f4395d7ba5f9035934f53b25e92d136583cc794461a456efc1e2a2204f946ec567dfea58073c38cb48f24d27155b89af0df0447c2cd0758
+    rollup: ^2.68.0
+  checksum: fdcce2bf58875fde0e06f001544c0d9a0509a12929393862f72dcef8fcbf4d5d0ba0d5db6cf10ba4351335caf67a3dbdb95000678c468585e3972994f92e2ce9
   languageName: node
   linkType: hard
 
