@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"testing"
 	"time"
 
@@ -662,58 +663,16 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
-		require.JSONEq(t, `
-{
-	"status": "success",
-	"data": {
-		"groups": [{
-			"name": "arulegroup",
-			"file": "folder1",
-			"rules": [{
-				"state": "inactive",
-				"name": "rule under folder folder1",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"duration": 120,
-				"annotations": {
-					"annotation1": "val1"
-				},
-				"labels": {
-					"label1": "val1"
-				},
-				"health": "ok",
-				"type": "alerting",
-				"lastEvaluation": "0001-01-01T00:00:00Z",
-				"evaluationTime": 0
-			}],
-			"interval": 60,
-			"lastEvaluation": "0001-01-01T00:00:00Z",
-			"evaluationTime": 0
-		},
-		{
-			"name": "arulegroup",
-			"file": "folder2",
-			"rules": [{
-				"state": "inactive",
-				"name": "rule under folder folder2",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"duration": 120,
-				"annotations": {
-					"annotation1": "val1"
-				},
-				"labels": {
-					"label1": "val1"
-				},
-				"health": "ok",
-				"type": "alerting",
-				"lastEvaluation": "0001-01-01T00:00:00Z",
-				"evaluationTime": 0
-			}],
-			"interval": 60,
-			"lastEvaluation": "0001-01-01T00:00:00Z",
-			"evaluationTime": 0
-		}]
-	}
-}`, string(b))
+		body := asJson(t, b)
+		// Sort, for test consistency.
+		sort.Slice(body.Data.Groups, func(i, j int) bool { return body.Data.Groups[i].File < body.Data.Groups[j].File })
+		require.Equal(t, "success", body.Status)
+		// The request should see both groups, and all rules underneath.
+		require.Len(t, body.Data.Groups, 2)
+		require.Len(t, body.Data.Groups[0].Rules, 1)
+		require.Len(t, body.Data.Groups[1].Rules, 1)
+		require.Equal(t, "folder1", body.Data.Groups[0].File)
+		require.Equal(t, "folder2", body.Data.Groups[1].File)
 	}
 
 	// remove permissions from folder2
@@ -733,35 +692,11 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
-		require.JSONEq(t, `
-{
-	"status": "success",
-	"data": {
-		"groups": [{
-			"name": "arulegroup",
-			"file": "folder1",
-			"rules": [{
-				"state": "inactive",
-				"name": "rule under folder folder1",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
-				"duration": 120,
-				"annotations": {
-					"annotation1": "val1"
-				},
-				"labels": {
-					"label1": "val1"
-				},
-				"health": "ok",
-				"type": "alerting",
-				"lastEvaluation": "0001-01-01T00:00:00Z",
-				"evaluationTime": 0
-			}],
-			"interval": 60,
-			"lastEvaluation": "0001-01-01T00:00:00Z",
-			"evaluationTime": 0
-		}]
-	}
-}`, string(b))
+		body := asJson(t, b)
+		require.Equal(t, "success", body.Status)
+		require.Len(t, body.Data.Groups, 1)
+		require.Len(t, body.Data.Groups[0].Rules, 1)
+		require.Equal(t, "folder1", body.Data.Groups[0].File)
 	}
 
 	// remove permissions from _ALL_ folders
@@ -789,4 +724,26 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }`, string(b))
 	}
+}
+
+func asJson(t *testing.T, blob []byte) rulesResponse {
+	t.Helper()
+	var r rulesResponse
+	require.NoError(t, json.Unmarshal(blob, &r))
+	return r
+}
+
+type rulesResponse struct {
+	Status string
+	Data   rulesData
+}
+
+type rulesData struct {
+	Groups []groupData
+}
+
+type groupData struct {
+	Name  string
+	File  string
+	Rules []interface{}
 }
