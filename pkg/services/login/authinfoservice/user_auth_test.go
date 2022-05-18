@@ -265,17 +265,22 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
 
+			// Get the latest entry by not supply an authmodule or authid
+			getAuthQuery := &models.GetAuthInfoQuery{
+				UserId: user.Id,
+			}
+
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
+
+			require.Nil(t, err)
+			require.Equal(t, getAuthQuery.Result.AuthModule, "test2")
+
 			// Now reuse first auth module and make sure it's updated to the most recent
 			database.GetTime = time.Now
 			user, err = srv.LookupAndUpdate(context.Background(), queryOne)
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
-
-			// Get the latest entry by not supply an authmodule or authid
-			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
-			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
