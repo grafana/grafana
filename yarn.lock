@@ -4869,7 +4869,7 @@ __metadata:
     sass-loader: 12.6.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
-    storybook-dark-mode: 1.0.9
+    storybook-dark-mode: 1.1.0
     style-loader: 3.3.1
     terser-webpack-plugin: 5.3.1
     tinycolor2: 1.4.2
@@ -34757,9 +34757,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook-dark-mode@npm:1.0.9":
-  version: 1.0.9
-  resolution: "storybook-dark-mode@npm:1.0.9"
+"storybook-dark-mode@npm:1.1.0":
+  version: 1.1.0
+  resolution: "storybook-dark-mode@npm:1.1.0"
   dependencies:
     fast-deep-equal: ^3.0.0
     memoizerific: ^1.11.3
@@ -34769,7 +34769,7 @@ __metadata:
     "@storybook/components": ^6.0.0
     "@storybook/core-events": ^6.0.0
     "@storybook/theming": ^6.0.0
-  checksum: e73d2cff9bbdd83f574142ad44446938d543efe5dbecac17e2d90e8b3a3a7c3841ac72d382bbe73d2e2c6059d85b488570d21db3a2356bae235aa95f74b65e91
+  checksum: e1d7abbb96d1cdbe9cdba1e20aabffa6878f170e348958cc328de4183027c2052f44f6d78f82a45039f803349c7a4ec19988d42898030b2720dc591192f520e6
   languageName: node
   linkType: hard
 
