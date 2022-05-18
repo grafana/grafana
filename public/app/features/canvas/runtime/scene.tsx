@@ -27,7 +27,7 @@ import {
 } from 'app/features/dimensions/utils';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement, VerticalConstraint } from '../types';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -60,7 +60,7 @@ const constraintViewable = (scene: Scene) => ({
     const constraint = targetElement?.options.constraint ?? {};
 
     const borderStyle = '1px dashed #4af';
-    const verticalConstraintTop = React.createElement(`div`, {
+    const verticalConstraintTop = React.createElement('div', {
       style: {
         position: 'absolute',
         left: `${rect.width / 2}px`,
@@ -69,7 +69,7 @@ const constraintViewable = (scene: Scene) => ({
         height: '100vh',
       },
     });
-    const verticalConstraintBottom = React.createElement(`div`, {
+    const verticalConstraintBottom = React.createElement('div', {
       style: {
         position: 'absolute',
         left: `${rect.width / 2}px`,
@@ -98,7 +98,7 @@ const constraintViewable = (scene: Scene) => ({
         break;
     }
 
-    const horizontalConstraintLeft = React.createElement(`div`, {
+    const horizontalConstraintLeft = React.createElement('div', {
       style: {
         position: 'absolute',
         right: '0px',
@@ -107,6 +107,35 @@ const constraintViewable = (scene: Scene) => ({
         width: '100vw',
       },
     });
+
+    const horizontalConstraintRight = React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left: `${rect.width}px`,
+        top: `${rect.height / 2}px`,
+        borderTop: borderStyle,
+        width: '100vw',
+      },
+    });
+    const horizontalConstraintLeftRight = React.createElement('div', {}, [
+      horizontalConstraintLeft,
+      horizontalConstraintRight,
+    ]);
+
+    switch (constraint.horizontal) {
+      case HorizontalConstraint.Left:
+        horizontalConstraintVisualization = horizontalConstraintLeft;
+        break;
+      case HorizontalConstraint.Right:
+        horizontalConstraintVisualization = horizontalConstraintRight;
+        break;
+      case HorizontalConstraint.LeftRight:
+        horizontalConstraintVisualization = horizontalConstraintLeftRight;
+        break;
+      case HorizontalConstraint.Center:
+        // center here
+        break;
+    }
 
     const root = React.createElement('div', {}, [verticalConstraintVisualization, horizontalConstraintVisualization]);
 
