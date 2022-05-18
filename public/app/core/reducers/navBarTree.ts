@@ -22,17 +22,19 @@ const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState,
   reducers: {
-    togglePin: (state, action: PayloadAction<{ id: string }>) => {
+    togglePin: (state, action: PayloadAction<{ id?: string; url?: string }>) => {
+      const { id, url } = action.payload;
       const nav = state
         .flatMap((navItem) => (navItem.id === 'saved-items' ? [] : navItem.children))
-        .find((navItem) => navItem?.id === action.payload.id);
+        // Plug in navigation items do not have an id, so we are using the url to compare them
+        .find((navItem) => (id ? navItem?.id === id : navItem?.url === url));
       if (nav) {
         nav.isSavedItem = !nav.isSavedItem;
         const savedItems = state.find((navItem) => navItem.id === 'saved-items');
         if (savedItems) {
           savedItems.children = nav.isSavedItem
             ? [...(savedItems.children || []), nav]
-            : savedItems.children?.filter((navItem) => navItem.id !== action.payload.id);
+            : savedItems.children?.filter((navItem) => (id ? navItem.id !== id : navItem.url !== url));
         }
         // Persist new savedItems
         const service = new PreferencesService('user');

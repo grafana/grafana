@@ -73,7 +73,7 @@ function NavBarMenuItemUnConnected({
           <IconButton
             name="bookmark"
             iconType={isSavedItem ? 'solid' : 'default'}
-            onClick={() => togglePin({ id: id || '' })}
+            onClick={() => togglePin({ id, url })}
           />
         ) : null}
       </li>
