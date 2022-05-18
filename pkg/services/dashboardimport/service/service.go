@@ -89,7 +89,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, dashboard)
+	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDash)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		FolderId:         savedDash.FolderId,
 		ImportedUri:      "db/" + savedDash.Slug,
 		ImportedUrl:      savedDash.GetUrl(),
-		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		ImportedRevision: savedDash.Data.Get("revision").MustInt64(1),
 		Imported:         true,
 		DashboardId:      savedDash.Id,
 		Slug:             savedDash.Slug,
