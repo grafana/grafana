@@ -1,5 +1,7 @@
-import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { isEmpty } from 'lodash';
+
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -24,7 +26,7 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { isEmpty } from 'lodash';
+
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -400,6 +402,9 @@ export const saveRuleFormAction = createAsyncThunk(
             const newLocation = `/alerting/${encodeURIComponent(stringifiedIdentifier)}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
+            } else {
+              // refresh the details of the current editable rule after saving
+              thunkAPI.dispatch(fetchEditableRuleAction(identifier));
             }
           }
         })()

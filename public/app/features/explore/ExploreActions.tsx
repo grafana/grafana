@@ -1,10 +1,12 @@
-import { FC, useEffect, useState } from 'react';
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
+import { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { ExploreId } from 'app/types';
+
 import { splitOpen, splitClose } from './state/main';
-import { isSplit } from './state/selectors';
 import { runQueries } from './state/query';
+import { isSplit } from './state/selectors';
 
 interface Props {
   exploreIdLeft: ExploreId;
@@ -28,7 +30,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
     if (splitted) {
       actionsArr.push({
         id: 'explore/run-query-left',
-        name: 'Run Query (Left)',
+        name: 'Run query (left)',
         keywords: 'query left',
         perform: () => {
           dispatch(runQueries(exploreIdLeft));
@@ -39,7 +41,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',
-          name: 'Run Query (Right)',
+          name: 'Run query (right)',
           keywords: 'query right',
           perform: () => {
             dispatch(runQueries(exploreIdRight));
@@ -68,7 +70,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
     } else {
       actionsArr.push({
         id: 'explore/run-query',
-        name: 'Run Query',
+        name: 'Run query',
         keywords: 'query',
         perform: () => {
           dispatch(runQueries(exploreIdLeft));

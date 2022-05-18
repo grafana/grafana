@@ -3,10 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { config } from '@grafana/runtime';
 
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
 import Page from '../../core/components/Page/Page';
+import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
+
 import { StoredNotifications } from './StoredNotifications';
 
 const mapStateToProps = (state: StoreState) => ({

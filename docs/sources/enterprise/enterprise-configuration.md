@@ -1,7 +1,8 @@
 +++
-title = "Enterprise configuration"
+aliases = ["/docs/grafana/latest/enterprise/enterprise-configuration/"]
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
+title = "Enterprise configuration"
 weight = 700
 +++
 
@@ -205,6 +206,10 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 If true, the feature is enabled. Defaults to false.
 
+### allow_sign_up
+
+If true, allow new Grafana users to be created through SAML logins. Defaults to true.
+
 ### certificate
 
 Base64-encoded public X.509 certificate. Used to sign requests to the IdP.
@@ -243,7 +248,7 @@ How long the SPs metadata is valid. Defaults to 48 hours.
 
 ### assertion_attribute_name
 
-Friendly name or name of the attribute within the SAML assertion to use as the user name.
+Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion.
 
 ### assertion_attribute_login
 

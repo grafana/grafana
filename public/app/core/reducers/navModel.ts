@@ -1,6 +1,6 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 
+import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {

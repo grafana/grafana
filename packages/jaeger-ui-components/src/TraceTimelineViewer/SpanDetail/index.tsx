@@ -12,25 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import React from 'react';
 import IoLink from 'react-icons/lib/io/link';
 
-import AccordianKeyValues from './AccordianKeyValues';
-import AccordianLogs from './AccordianLogs';
-import AccordianText from './AccordianText';
-import DetailState from './DetailState';
-import { formatDuration } from '../utils';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
+import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
 import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
-import AccordianReferences from './AccordianReferences';
-import { autoColor } from '../../Theme';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { Divider } from '../../common/Divider';
+import { TopOfViewRefType } from '../VirtualizedTraceView';
+import { formatDuration } from '../utils';
+
+import AccordianKeyValues from './AccordianKeyValues';
+import AccordianLogs from './AccordianLogs';
+import AccordianReferences from './AccordianReferences';
+import AccordianText from './AccordianText';
+import DetailState from './DetailState';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -117,6 +120,7 @@ type SpanDetailProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -136,6 +140,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     focusSpan,
     createSpanLink,
     createFocusSpanLink,
+    topOfViewRefType,
   } = props;
   const {
     isTagsOpen,
@@ -185,7 +190,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
   const styles = useStyles2(getStyles);
-  const link = createSpanLink?.(span);
+  const links = createSpanLink?.(span);
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
   return (
@@ -196,8 +201,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
         </div>
       </div>
-      {link ? (
-        <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
+      {links?.logLinks?.[0] ? (
+        <DataLinkButton
+          link={{ ...links?.logLinks?.[0], title: 'Logs for this span' } as any}
+          buttonProps={{ icon: 'gf-logs' }}
+        />
       ) : null}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>
@@ -279,27 +287,29 @@ export default function SpanDetail(props: SpanDetailProps) {
             focusSpan={focusSpan}
           />
         )}
-        <small className={styles.debugInfo}>
-          <a
-            {...focusSpanLink}
-            onClick={(e) => {
-              // click handling logic copied from react router:
-              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-              if (
-                focusSpanLink.onClick &&
-                e.button === 0 && // Ignore everything but left clicks
-                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-              ) {
-                e.preventDefault();
-                focusSpanLink.onClick(e);
-              }
-            }}
-          >
-            <IoLink className={cx(uAlignIcon, styles.LinkIcon)}></IoLink>
-          </a>
-          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-        </small>
+        {topOfViewRefType === TopOfViewRefType.Explore && (
+          <small className={styles.debugInfo}>
+            <a
+              {...focusSpanLink}
+              onClick={(e) => {
+                // click handling logic copied from react router:
+                // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+                if (
+                  focusSpanLink.onClick &&
+                  e.button === 0 && // Ignore everything but left clicks
+                  (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                  !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+                ) {
+                  e.preventDefault();
+                  focusSpanLink.onClick(e);
+                }
+              }}
+            >
+              <IoLink className={cx(uAlignIcon, styles.LinkIcon)}></IoLink>
+            </a>
+            <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
+          </small>
+        )}
       </div>
     </div>
   );

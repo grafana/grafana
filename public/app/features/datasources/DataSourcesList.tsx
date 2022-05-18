@@ -1,10 +1,10 @@
 // Libraries
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 // Types
 import { DataSourceSettings, LayoutMode } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface Props {
   dataSources: DataSourceSettings[];

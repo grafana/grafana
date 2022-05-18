@@ -1,9 +1,9 @@
 +++
-title = "Bar chart"
+aliases = ["/docs/grafana/latest/panels/visualizations/bar-chart/", "/docs/grafana/latest/visualizations/bar-chart/"]
 description = "Bar chart visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
+title = "Bar chart"
 weight = 170
-aliases = ["/docs/grafana/latest/panels/visualizations/bar-chart/"]
 +++
 
 # Bar chart
@@ -128,7 +128,9 @@ Display all Y-axes on the right side.
 
 #### Hidden
 
-Hide the Y-axes.
+Hide all axes.
+
+To selectively hide axes, [add an override]({{< relref "../panels/override-field-values/add-a-field-override.md" >}}) targeting specific fields.
 
 ### Label
 

@@ -1,6 +1,7 @@
-import { Vector } from '../types/vector';
 import { DisplayProcessor } from '../types';
+import { Vector } from '../types/vector';
 import { formattedValueToString } from '../valueFormats';
+
 import { FunctionalVector } from './FunctionalVector';
 
 /**

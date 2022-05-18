@@ -1,6 +1,13 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceSettings,
+  PanelData,
+  TableData,
+} from '@grafana/data';
 
 import Datasource from '../datasource';
+
 import { AzureMonitorQuery } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -161,6 +168,7 @@ export interface AzureMonitorOption<T = string> {
 }
 
 export interface AzureQueryEditorFieldProps {
+  data?: PanelData;
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;

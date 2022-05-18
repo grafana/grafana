@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,8 +20,10 @@ import (
 )
 
 type simpleCrawler struct {
-	renderService rendering.Service
-	threadCount   int
+	renderService    rendering.Service
+	threadCount      int
+	concurrentLimit  int
+	renderingTimeout time.Duration
 
 	glive                   *live.GrafanaLive
 	thumbnailRepo           thumbnailRepo
@@ -36,13 +39,17 @@ type simpleCrawler struct {
 	renderingSessionByOrgId map[int64]rendering.Session
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings) dashRenderer {
+	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
-		renderService: renderService,
-		threadCount:   6,
-		glive:         gl,
-		thumbnailRepo: repo,
-		log:           log.New("thumbnails_crawler"),
+		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
+		concurrentLimit:  cfg.RendererConcurrentRequestLimit + threadCount,
+		renderingTimeout: settings.RenderingTimeout,
+		renderService:    renderService,
+		threadCount:      threadCount,
+		glive:            gl,
+		thumbnailRepo:    repo,
+		log:              log.New("thumbnails_crawler"),
 		status: crawlStatus{
 			State:    initializing,
 			Complete: 0,
@@ -124,14 +131,14 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 			"current version: %s, requiredVersion: %s", r.renderService.Version(), res.SemverConstraint)
 	}
 
+	runStarted := time.Now()
+
 	r.queueMutex.Lock()
 	if r.IsRunning() {
 		r.queueMutex.Unlock()
 		r.log.Info("Already running")
 		return nil
 	}
-
-	now := time.Now()
 
 	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails(ctx, theme, thumbnailKind)
 	if err != nil {
@@ -154,24 +161,24 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 	r.auth = auth
 	r.opts = rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout:                  20 * time.Second,
+			Timeout:                  r.renderingTimeout,
 			RequestTimeoutMultiplier: 3,
 		},
 		Theme:           theme,
-		ConcurrentLimit: 10,
+		ConcurrentLimit: r.concurrentLimit,
 	}
 
 	r.renderingSessionByOrgId = make(map[int64]rendering.Session)
 	r.queue = items
 	r.status = crawlStatus{
-		Started:  now,
+		Started:  runStarted,
 		State:    running,
 		Complete: 0,
 	}
 	r.broadcastStatus()
 	r.queueMutex.Unlock()
 
-	r.log.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind))
+	r.log.Info("Starting dashboard crawler", "threadCount", r.threadCount, "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind), "crawlerSetupTime", time.Since(runStarted))
 
 	group, gCtx := errgroup.WithContext(ctx)
 	// create a pool of workers
@@ -184,6 +191,9 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 	}
 
 	err = group.Wait()
+
+	status, _ := r.Status()
+	r.log.Info("Crawl finished", "completedCount", status.Complete, "errorCount", status.Errors, "threadCount", r.threadCount, "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind), "crawlerRunTime", time.Since(runStarted))
 	if err != nil {
 		r.log.Error("Crawl ended with an error", "err", err)
 	}
@@ -246,7 +256,6 @@ func (r *simpleCrawler) crawlFinished() {
 
 	r.status.State = stopped
 	r.status.Finished = time.Now()
-	r.log.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
 }
 
 func (r *simpleCrawler) shouldWalk() bool {
@@ -257,11 +266,14 @@ func (r *simpleCrawler) shouldWalk() bool {
 }
 
 func (r *simpleCrawler) walk(ctx context.Context, id int) {
+	walkerStarted := time.Now()
+
 	for {
 		if !r.shouldWalk() {
 			break
 		}
 
+		itemStarted := time.Now()
 		item, renderingSession, authOpts, err := r.next(ctx)
 		if err != nil {
 			r.log.Error("Render item retrieval error", "walkerId", id, "error", err)
@@ -312,10 +324,10 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 				}, item.Version)
 
 				if err != nil {
-					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err, "itemTime", time.Since(itemStarted))
 					r.newErrorResult()
 				} else {
-					r.log.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
+					r.log.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId, "itemTime", time.Since(itemStarted))
 					r.newSuccessResult()
 				}
 			}()
@@ -323,5 +335,5 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 		r.broadcastStatus()
 	}
 
-	r.log.Info("Walker finished", "walkerId", id)
+	r.log.Info("Walker finished", "walkerId", id, "walkerTime", time.Since(walkerStarted))
 }

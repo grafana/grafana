@@ -1,11 +1,12 @@
 +++
-title = "What's new in Grafana v8.5"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-5/", "/docs/grafana/latest/whatsnew/whats-new-in-v8-5/"]
 description = "Feature and improvement highlights for Grafana v8.5"
 keywords = ["grafana", "new", "documentation", "8.5", "release notes"]
+title = "What's new in Grafana v8.5"
 weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-5/"]
+
 [_build]
-list = false
+  list = false
 +++
 
 # What’s new in Grafana v8.5
@@ -52,7 +53,7 @@ The Bar gauge panel now supports scrolling to support displaying large datasets 
 
 {{< figure src="/static/img/docs/bar-gauge-panel/vertical-view-8-5.png" max-width="400px" caption="Vertical view" >}}
 
-{{< figure src="/static/img/docs/bar-gauge-panel/horizontal-view-8-5.png" max-width="400px" caption="Horizontal view" >}}
+{{< figure src="/static/img/docs/bar-gauge-panel/horizontal-8-5.png" max-width="400px" caption="Horizontal view" >}}
 
 ## Transformations
 
@@ -111,9 +112,13 @@ This feature is behind the `explore2Dashboard` feature toggle and is enabled by 
 Check the Grafana Enterprise / Security section below for more details, including how to enable this beta feature; we’ve implemented
 [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) for alerting rules, notification policies, and contact points in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/). You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
 
+{{< figure src="/static/img/docs/enterprise/fine-grained-access-control-8-5.png" max-width="400px" caption="Fine grained access control" >}}
+
 ### Control access to dashboards, folders, and annotations (beta)
 
 You can now use fine-grained access control to manage which specific users, teams, and roles can create, read, update, or delete dashboards, folders, or annotations. These are the latest services to incorporate fine-grained access control, which helps you dial in the specific access your users should have in Grafana. Fine-grained access control is currently in beta, but general availability is just around the corner, planned for our 9.0 release. You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
+
+{{< figure src="/static/img/docs/enterprise/configure-role-access-8-5.png" max-width="400px" caption="Configure role access" >}}
 
 ### Configure Azure Key Vault using Managed Identities
 

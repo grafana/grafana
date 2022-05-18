@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Story } from '@storybook/react';
+import React, { useEffect, useState } from 'react';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { VizLayout } from './VizLayout';
 
 export default {

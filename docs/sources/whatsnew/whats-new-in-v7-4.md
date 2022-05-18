@@ -1,11 +1,12 @@
 +++
-title = "What's New in Grafana v7.4"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/", "/docs/grafana/latest/whatsnew/whats-new-in-v7-4/"]
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
+title = "What's New in Grafana v7.4"
 weight = -31
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
+
 [_build]
-list = false
+  list = false
 +++
 
 # What's new in Grafana v7.4
@@ -107,7 +108,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
 
 ### Content security policy support
 
@@ -202,7 +203,7 @@ For more information, refer to [Export logs of usage insights]({{< relref "../en
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml/configure-saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 

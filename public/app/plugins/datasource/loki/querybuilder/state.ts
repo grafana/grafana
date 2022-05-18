@@ -1,4 +1,5 @@
 import store from 'app/core/store';
+
 import { QueryEditorMode } from '../../prometheus/querybuilder/shared/types';
 import { LokiQuery, LokiQueryType } from '../types';
 

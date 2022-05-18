@@ -1,11 +1,14 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { configureStore } from 'app/store/configureStore';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId, byText } from 'testing-library-selector';
-import { mockCombinedRule, mockDataSource } from '../../mocks';
+
+import { configureStore } from 'app/store/configureStore';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+
+import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
+
 import { RulesGroup } from './RulesGroup';
 
 const hasRulerMock = jest.fn<boolean, any>();
@@ -68,6 +71,8 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
+
+    disableRBAC();
 
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange

@@ -1,13 +1,16 @@
-import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
-import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
+import React, { FC, memo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { useSearchQuery } from '../hooks/useSearchQuery';
+import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
+
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { SearchField } from './SearchField';
-import { SearchResults } from './SearchResults';
+import { useSearchQuery } from '../hooks/useSearchQuery';
+
 import { ActionRow } from './ActionRow';
 import { PreviewsSystemRequirements } from './PreviewsSystemRequirements';
+import { SearchField } from './SearchField';
+import { SearchResults } from './SearchResults';
 
 export interface Props {
   onCloseSearch: () => void;

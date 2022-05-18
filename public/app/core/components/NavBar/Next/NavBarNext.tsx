@@ -1,23 +1,27 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import { cloneDeep } from 'lodash';
-import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
-import { config, locationService } from '@grafana/runtime';
-import { getKioskMode } from 'app/core/navigation/kiosk';
-import { Branding } from 'app/core/components/Branding/Branding';
-import { KioskMode, StoreState } from 'app/types';
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
-import { OrgSwitcher } from '../../OrgSwitcher';
-import { NavBarMenu } from './NavBarMenu';
-import NavBarItem from './NavBarItem';
-import { useSelector } from 'react-redux';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { NavBarContext } from '../context';
-import { NavBarToggle } from './NavBarToggle';
-import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
 import { FocusScope } from '@react-aria/focus';
+import { cloneDeep } from 'lodash';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+
+import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { KioskMode, StoreState } from 'app/types';
+
+import { OrgSwitcher } from '../../OrgSwitcher';
+import { NavBarContext } from '../context';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
+
+import NavBarItem from './NavBarItem';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenu } from './NavBarMenu';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
+import { NavBarScrollContainer } from './NavBarScrollContainer';
+import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -26,7 +30,7 @@ const onOpenSearch = () => {
 const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
-  text: 'Search Dashboards',
+  text: 'Search dashboards',
   icon: 'search',
 };
 
@@ -89,18 +93,17 @@ export const NavBarNext = React.memo(() => {
 
             <NavBarMenuPortalContainer />
 
-            <ul className={styles.itemList}>
-              <NavBarItemWithoutMenu
-                elClassName={styles.grafanaLogoInner}
-                isActive={isMatchOrChildMatch(homeItem, activeItem)}
-                label="Home"
-                className={styles.grafanaLogo}
-                url={homeItem.url}
-              >
-                <Branding.MenuLogo />
-              </NavBarItemWithoutMenu>
+            <NavBarItemWithoutMenu
+              elClassName={styles.grafanaLogoInner}
+              label="Home"
+              className={styles.grafanaLogo}
+              url={homeItem.url}
+            >
+              <Branding.MenuLogo />
+            </NavBarItemWithoutMenu>
 
-              <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
+            <NavBarScrollContainer>
+              <ul className={styles.itemList}>
                 <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
                   <Icon name="search" size="xl" />
                 </NavBarItem>
@@ -127,21 +130,21 @@ export const NavBarNext = React.memo(() => {
                       {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                     </NavBarItem>
                   ))}
-              </CustomScrollbar>
 
-              {configItems.map((link, index) => (
-                <NavBarItem
-                  key={`${link.id}-${index}`}
-                  isActive={isMatchOrChildMatch(link, activeItem)}
-                  reverseMenuDirection
-                  link={link}
-                  className={cx({ [styles.verticalSpacer]: index === 0 })}
-                >
-                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-                </NavBarItem>
-              ))}
-            </ul>
+                {configItems.map((link, index) => (
+                  <NavBarItem
+                    key={`${link.id}-${index}`}
+                    isActive={isMatchOrChildMatch(link, activeItem)}
+                    reverseMenuDirection
+                    link={link}
+                    className={cx({ [styles.verticalSpacer]: index === 0 })}
+                  >
+                    {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                    {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                  </NavBarItem>
+                ))}
+              </ul>
+            </NavBarScrollContainer>
           </FocusScope>
         </NavBarContext.Provider>
       </nav>
@@ -207,9 +210,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    '> *': {
-      height: theme.spacing(6),
-    },
 
     [theme.breakpoints.down('md')]: {
       visibility: 'hidden',
@@ -219,7 +219,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'stretch',
     display: 'flex',
     flexShrink: 0,
+    height: theme.spacing(6),
     justifyContent: 'stretch',
+
+    [theme.breakpoints.down('md')]: {
+      visibility: 'hidden',
+    },
   }),
   grafanaLogoInner: css({
     alignItems: 'center',

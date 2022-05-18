@@ -1,12 +1,13 @@
 import { map } from 'rxjs/operators';
 
-import { noopTransformer } from './noop';
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
-import { DataFrame, Field } from '../../types/dataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { getValueMatcher } from '../matchers';
+import { DataFrame, Field } from '../../types/dataFrame';
+import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { ArrayVector } from '../../vector/ArrayVector';
+import { getValueMatcher } from '../matchers';
+
+import { DataTransformerID } from './ids';
+import { noopTransformer } from './noop';
 
 export enum FilterByValueType {
   exclude = 'exclude',

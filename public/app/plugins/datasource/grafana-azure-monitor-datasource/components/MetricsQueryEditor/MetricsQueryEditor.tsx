@@ -1,19 +1,22 @@
 import React from 'react';
 
+import { PanelData } from '@grafana/data/src/types';
+import { InlineFieldRow } from '@grafana/ui';
+
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import SubscriptionField from '../SubscriptionField';
+
+import AggregationField from './AggregationField';
+import DimensionFields from './DimensionFields';
+import LegendFormatField from './LegendFormatField';
+import MetricNameField from './MetricNameField';
 import MetricNamespaceField from './MetricNamespaceField';
-import ResourceTypeField from './ResourceTypeField';
 import ResourceGroupsField from './ResourceGroupsField';
 import ResourceNameField from './ResourceNameField';
-import MetricNameField from './MetricNameField';
-import AggregationField from './AggregationField';
+import ResourceTypeField from './ResourceTypeField';
 import TimeGrainField from './TimeGrainField';
-import DimensionFields from './DimensionFields';
 import TopField from './TopField';
-import LegendFormatField from './LegendFormatField';
-import { InlineFieldRow } from '@grafana/ui';
 import {
   useMetricNames,
   useMetricNamespaces,
@@ -25,6 +28,7 @@ import {
 } from './dataHooks';
 
 interface MetricsQueryEditorProps {
+  data: PanelData | undefined;
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
@@ -34,6 +38,7 @@ interface MetricsQueryEditorProps {
 }
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
+  data,
   query,
   datasource,
   subscriptionId,
@@ -136,6 +141,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
       </InlineFieldRow>
       <DimensionFields
+        data={data}
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}

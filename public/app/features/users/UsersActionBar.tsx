@@ -1,11 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { setUsersSearchQuery } from './state/reducers';
-import { selectTotal } from '../invites/state/selectors';
-import { getUsersSearchQuery } from './state/selectors';
+
 import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
+
+import { selectTotal } from '../invites/state/selectors';
+
+import { setUsersSearchQuery } from './state/reducers';
+import { getUsersSearchQuery } from './state/selectors';
 
 export interface Props {
   searchQuery: string;
@@ -37,7 +40,7 @@ export class UsersActionBar extends PureComponent<Props> {
     const canAddToOrg = contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite);
 
     return (
-      <div className="page-action-bar">
+      <div className="page-action-bar" data-testid="users-action-bar">
         <div className="gf-form gf-form--grow">
           <FilterInput
             value={searchQuery}
