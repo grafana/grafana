@@ -84,7 +84,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
-        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        const delta = evt.xMax - evt.xMin;
+        if (delta > 1) {
+          onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        }
       },
       isToolTipOpen,
       timeZone,
