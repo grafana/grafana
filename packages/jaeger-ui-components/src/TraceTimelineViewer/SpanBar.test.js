@@ -77,19 +77,16 @@ describe('<SpanBar>', () => {
 
   it('renders without exploding', () => {
     render(<SpanBar {...props} />);
-    let { getByText } = within(screen.getByTestId('SpanBar--label'));
-    expect(getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
 
-    expect(screen.getByTestId('SpanBar--wrapper')).toBeInTheDocument();
-    fireEvent.mouseOver(screen.getByTestId('SpanBar--wrapper'));
+    await userEvent.hover(screen.getByTestId('SpanBar--wrapper'));
+    expect(screen.queryByText(shortLabel)).not.toBeInTheDocument();
+    expect(screen.getByText(longLabel)).toBeInTheDocument();
 
-    expect(screen.getByTestId('SpanBar--label')).toBeInTheDocument();
-    within(screen.getByTestId('SpanBar--label'));
-    expect(getByText(longLabel)).toBeInTheDocument();
-    fireEvent.mouseLeave(screen.getByTestId('SpanBar--wrapper'));
-
-    within(screen.getByTestId('SpanBar--label'));
-    expect(getByText(shortLabel)).toBeInTheDocument();
+    await userEvent.unhover(screen.getByTestId('SpanBar--wrapper'));
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
   });
 
   it('log markers count', () => {
