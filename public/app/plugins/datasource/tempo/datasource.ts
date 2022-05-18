@@ -520,8 +520,6 @@ function getApmTable(
       },
     });
 
-    // const spanNames = firstResponses.data[0][0].data[0].fields[1].values.toArray().join('|');
-    // const errorRateMetricWithFilter = buildExpr(errorRateMetric.query, '{span_name=~"' + spanNames + '"}');
     df.fields.push({
       ...rate[0].fields[2],
       name: ' ',
@@ -539,9 +537,39 @@ function getApmTable(
   }
 
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
+    const errorRateNames = errorRate[0].fields[1].values.toArray();
+    const errorRateValues = errorRate[0].fields[2].values.toArray();
+    const rateNames = rate[0].fields[1].values.toArray().sort();
+
+    let tempRateNames = rate[0].fields[1].values.toArray().sort();
+    let values: string[] = [];
+    let errorRateMap: any = {};
+    errorRateNames.map((name: string, index: number) => {
+      errorRateMap[name] = { name: name, value: errorRateValues[index] };
+    });
+    errorRateMap = Object.keys(errorRateMap)
+      .sort()
+      .reduce((obj: any, key) => {
+        obj[key] = errorRateMap[key];
+        return obj;
+      }, {});
+
+    for (var i = 0; i < rateNames.length; i++) {
+      if (tempRateNames[i]) {
+        if (tempRateNames[i] === Object.keys(errorRateMap)[i]) {
+          values.push(errorRateMap[Object.keys(errorRateMap)[i]].value);
+        } else {
+          i--;
+          tempRateNames = tempRateNames.slice(1);
+          values.push('0');
+        }
+      }
+    }
+
     df.fields.push({
       ...errorRate[0].fields[2],
       name: 'Error Rate',
+      values: values,
       config: {
         links: [
           makePromLink(
@@ -557,6 +585,7 @@ function getApmTable(
     df.fields.push({
       ...errorRate[0].fields[2],
       name: '  ',
+      values: values,
       labels: null,
       config: {
         color: {
@@ -590,7 +619,7 @@ function getApmTable(
 
   if (df.fields.length > 0 && df.fields[0].values) {
     var linkTitles = [];
-    for (var i = 0; i < df.fields[0].values.length; i++) {
+    for (var j = 0; j < df.fields[0].values.length; j++) {
       linkTitles.push('Tempo');
     }
 
