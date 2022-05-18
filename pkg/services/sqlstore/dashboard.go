@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"xorm.io/xorm"
-
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -197,26 +195,6 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 		query.Result = make([]*models.DashboardTagCloudItem, 0)
 		sess := dbSession.SQL(sql, query.OrgId)
 		err := sess.Find(&query.Result)
-		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
-			return models.ErrCommandValidationFailed
-		}
-
-		var dashboards = make([]*models.Dashboard, 0)
-		var session *xorm.Session
-		if len(query.DashboardIds) > 0 {
-			session = dbSession.In("id", query.DashboardIds)
-		} else {
-			session = dbSession.In("uid", query.DashboardUIds)
-		}
-
-		err := session.Find(&dashboards)
-		query.Result = dashboards
 		return err
 	})
 }
