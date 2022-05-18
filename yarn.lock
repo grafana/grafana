@@ -4361,7 +4361,7 @@ __metadata:
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
-    "@testing-library/react-hooks": 7.0.2
+    "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
@@ -4751,7 +4751,7 @@ __metadata:
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
-    "@testing-library/react-hooks": 7.0.2
+    "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
@@ -9496,25 +9496,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react-hooks@npm:7.0.2":
-  version: 7.0.2
-  resolution: "@testing-library/react-hooks@npm:7.0.2"
+"@testing-library/react-hooks@npm:8.0.0":
+  version: 8.0.0
+  resolution: "@testing-library/react-hooks@npm:8.0.0"
   dependencies:
     "@babel/runtime": ^7.12.5
-    "@types/react": ">=16.9.0"
-    "@types/react-dom": ">=16.9.0"
-    "@types/react-test-renderer": ">=16.9.0"
     react-error-boundary: ^3.1.0
   peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-    react-test-renderer: ">=16.9.0"
+    "@types/react": ^16.9.0 || ^17.0.0
+    react: ^16.9.0 || ^17.0.0
+    react-dom: ^16.9.0 || ^17.0.0
+    react-test-renderer: ^16.9.0 || ^17.0.0
   peerDependenciesMeta:
+    "@types/react":
+      optional: true
     react-dom:
       optional: true
     react-test-renderer:
       optional: true
-  checksum: 27c6169b5c9832bd02dcea232e6a0a3cd8d4504e13ecb49d57eb5ab6bea5e2f1bff65f3102068b7e57eec3cbd671326dc0b277335014b0edfbdedf11a1fe6db5
+  checksum: f45bd06601bf1d00e375c3d945b0e54b4d997b18402c45711deada7e8c4a8f569fe283973e6786c9ecd55e4bd01a43bd42546a2924453065880abf4b13dbafdb
   languageName: node
   linkType: hard
 
@@ -10845,7 +10845,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*, @types/react-dom@npm:>=16.9.0":
+"@types/react-dom@npm:*":
   version: 17.0.10
   resolution: "@types/react-dom@npm:17.0.10"
   dependencies:
@@ -10982,7 +10982,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1, @types/react-test-renderer@npm:>=16.9.0":
+"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
   dependencies:
@@ -11028,7 +11028,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:>=16.9.0":
+"@types/react@npm:*":
   version: 17.0.33
   resolution: "@types/react@npm:17.0.33"
   dependencies:
@@ -21102,7 +21102,7 @@ __metadata:
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.2
     "@testing-library/react": 12.1.4
-    "@testing-library/react-hooks": 7.0.2
+    "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
