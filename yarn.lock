@@ -4402,6 +4402,9 @@ __metadata:
     typescript: 4.6.4
     uplot: 1.6.20
     xss: 1.0.11
+  peerDependencies:
+    react: ">= 16.8 || 17.x.x || 18.x.x"
+    react-dom: ">= 16.8 || 17.x.x || 18.x.x"
   languageName: unknown
   linkType: soft
 
@@ -4857,6 +4860,9 @@ __metadata:
     uuid: 8.3.2
     webpack: 5.72.0
     webpack-filter-warnings-plugin: 1.2.1
+  peerDependencies:
+    react: ">= 16.8 || 17.x.x || 18.x.x"
+    react-dom: ">= 16.8 || 17.x.x || 18.x.x"
   languageName: unknown
   linkType: soft
 

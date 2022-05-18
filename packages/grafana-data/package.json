@@ -33,8 +33,6 @@
     "moment-timezone": "0.5.34",
     "ol": "6.14.1",
     "papaparse": "5.3.2",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.5",
     "tslib": "2.4.0",
@@ -66,6 +64,8 @@
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "history": "4.10.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
     "rollup": "2.73.0",
@@ -74,5 +74,9 @@
     "sinon": "13.0.1",
     "tinycolor2": "1.4.2",
     "typescript": "4.6.4"
+  },
+  "peerDependencies": {
+    "react": ">= 16.8 || 17.x.x || 18.x.x",
+    "react-dom": ">= 16.8 || 17.x.x || 18.x.x"
   }
 }
