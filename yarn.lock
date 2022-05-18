@@ -21335,7 +21335,7 @@ __metadata:
     sass: 1.51.0
     sass-loader: 12.6.0
     search-query-parser: 1.6.0
-    selecto: 1.15.0
+    selecto: 1.16.2
     semver: ^7.1.3
     sinon: 13.0.1
     slate: 0.47.8
@@ -33613,9 +33613,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.15.0":
-  version: 1.15.0
-  resolution: "selecto@npm:1.15.0"
+"selecto@npm:1.16.2":
+  version: 1.16.2
+  resolution: "selecto@npm:1.16.2"
   dependencies:
     "@daybrush/utils": ^1.4.0
     "@egjs/children-differ": ^1.0.1
@@ -33627,7 +33627,7 @@ __metadata:
     gesto: ^1.7.0
     keycon: ^1.1.2
     overlap-area: ^1.0.0
-  checksum: ae19513c77180ecb4b24f1dd49b5dbe6800c9574ce839a8299748f213763a41a30292754d210490d77579f1c09b991b03e88fe76b29df68c3e9db474d9bafb4c
+  checksum: a8389449641cc7cb00a3aad18f6c42fae82e2457c8c2c7b0552a92d93bf3bc04e8fbcc244f44233e85b660ef326607f65c776ed6b3ccc8926d2cdb5b0edf145b
   languageName: node
   linkType: hard
 
