@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { Field, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
+import { GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
@@ -19,7 +19,9 @@ import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    disableStandardOptions: [FieldConfigProperty.Color, FieldConfigProperty.Thresholds],
+  })
   .setPanelChangeHandler(heatmapChangedHandler)
   // .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
@@ -154,19 +156,19 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     category = ['Display'];
 
     builder
-      .addRadio({
-        path: 'showValue',
-        name: 'Show values',
-        defaultValue: defaultPanelOptions.showValue,
-        category,
-        settings: {
-          options: [
-            { value: VisibilityMode.Auto, label: 'Auto' },
-            { value: VisibilityMode.Always, label: 'Always' },
-            { value: VisibilityMode.Never, label: 'Never' },
-          ],
-        },
-      })
+      // .addRadio({
+      //   path: 'showValue',
+      //   name: 'Show values',
+      //   defaultValue: defaultPanelOptions.showValue,
+      //   category,
+      //   settings: {
+      //     options: [
+      //       { value: VisibilityMode.Auto, label: 'Auto' },
+      //       { value: VisibilityMode.Always, label: 'Always' },
+      //       { value: VisibilityMode.Never, label: 'Never' },
+      //     ],
+      //   },
+      // })
       .addNumberInput({
         path: 'hideThreshold',
         name: 'Hide cell counts <=',

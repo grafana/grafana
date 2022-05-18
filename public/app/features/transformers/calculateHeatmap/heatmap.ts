@@ -1,5 +1,3 @@
-import { dsnToString } from '@sentry/utils';
-import { es } from 'date-fns/locale';
 import { map } from 'rxjs';
 
 import {
