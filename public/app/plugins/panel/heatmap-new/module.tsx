@@ -195,20 +195,20 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //     max: 100,
       //   },
       // })
-      .addRadio({
-        path: 'yAxisLabels',
-        name: 'Axis labels',
-        defaultValue: 'auto',
-        category,
-        settings: {
-          options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'middle', label: 'Middle' },
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'top', label: 'Top' },
-          ],
-        },
-      })
+      // .addRadio({
+      //   path: 'yAxisLabels',
+      //   name: 'Axis labels',
+      //   defaultValue: 'auto',
+      //   category,
+      //   settings: {
+      //     options: [
+      //       { value: 'auto', label: 'Auto' },
+      //       { value: 'middle', label: 'Middle' },
+      //       { value: 'bottom', label: 'Bottom' },
+      //       { value: 'top', label: 'Top' },
+      //     ],
+      //   },
+      // })
       .addBooleanSwitch({
         path: 'yAxisReverse',
         name: 'Reverse buckets',
