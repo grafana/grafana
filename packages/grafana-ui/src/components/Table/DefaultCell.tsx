@@ -51,7 +51,10 @@ function getCellStyle(
     return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
   }
 
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+  if (
+    field.config.custom?.cellOptions.displayMode === TableCellDisplayMode.ColorBackground &&
+    field.config.custom?.cellOptions.subDisplayMode === 'lcd'
+  ) {
     const bgColor = tinycolor(displayValue.color);
     const textColor = getTextColorForBackground(displayValue.color!);
     return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);

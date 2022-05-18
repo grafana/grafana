@@ -77,7 +77,7 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
+    const Cell = getCellComponent(fieldTableOptions.cellOptions.displayMode, field);
     columns.push({
       Cell,
       id: fieldIndex.toString(),
@@ -126,9 +126,7 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DefaultCell;
     case TableCellDisplayMode.Image:
       return ImageCell;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.BasicGauge:
-    case TableCellDisplayMode.GradientGauge:
+    case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;

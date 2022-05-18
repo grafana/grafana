@@ -6,7 +6,7 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
-import { TableCellProps, TableCellDisplayMode } from './types';
+import { TableCellProps, TableCellDisplayMode, GaugeDisplayMode } from './types';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -36,9 +36,15 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   const displayValue = field.display!(cell.value);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
-  if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
+  if (
+    (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === GaugeDisplayMode.RetroLCD)
+  ) {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
-  } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
+  } else if (
+    (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === GaugeDisplayMode.Basic)
+  ) {
     barGaugeMode = BarGaugeDisplayMode.Basic;
   }
 
