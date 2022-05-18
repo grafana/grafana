@@ -228,30 +228,6 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, query.Result[0].Email, "test2@test.com")
 			})
 
-			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = InitTestDB(t)
-
-				userCmd = models.CreateUserCommand{
-					Email:            fmt.Sprint("sa", 1, "@test.com"),
-					Name:             fmt.Sprint("sa", 1),
-					Login:            fmt.Sprint("login-sa", 1),
-					IsServiceAccount: true,
-				}
-				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
-				require.NoError(t, err)
-
-				groupId := team1.Id
-				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, groupId, false, 0)
-				require.NoError(t, err)
-
-				t.Logf("service account id: %d", serviceAccount.Id)
-				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: false}
-				err = sqlStore.GetTeamMembers(context.Background(), query)
-				require.NoError(t, err)
-				t.Logf("result number: %v+", query.Result)
-				require.Equal(t, len(query.Result), 1)
-			})
-
 			t.Run("Should be able to remove users from a group", func(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
@@ -386,6 +362,31 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, getTeamQuery.Result.MemberCount, 2)
 			})
+
+			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
+				sqlStore = InitTestDB(t)
+
+				userCmd = models.CreateUserCommand{
+					Email:            fmt.Sprint("sa", 1, "@test.com"),
+					Name:             fmt.Sprint("sa", 1),
+					Login:            fmt.Sprint("login-sa", 1),
+					IsServiceAccount: true,
+				}
+				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				require.NoError(t, err)
+
+				groupId := team2.Id
+				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, groupId, false, 0)
+				require.NoError(t, err)
+
+				t.Logf("service account id: %d", serviceAccount.Id)
+				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: false}
+				err = sqlStore.GetTeamMembers(context.Background(), query)
+				require.NoError(t, err)
+				t.Logf("result number: %v+", query.Result)
+				require.Equal(t, len(query.Result), 1)
+			})
+
 		})
 	})
 }
