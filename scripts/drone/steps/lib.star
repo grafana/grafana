@@ -760,6 +760,21 @@ def build_docs_website_step():
         ],
     }
 
+def build_swagger_api_step():
+    return {
+        'name': 'build-swagger-api',
+        'image': build_image,
+        'environment': {
+            'GITHUB_TOKEN': from_secret(github_token),
+        },
+        'commands': [
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
+            'cd grafana-enterprise',
+            'git checkout main',
+            'cd ../grafana',
+            'make swagger-api-spec'
+        ]
+    }
 
 def copy_packages_for_docker_step():
     return {

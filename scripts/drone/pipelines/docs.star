@@ -12,6 +12,7 @@ load(
     'build_frontend_docs_step',
     'build_frontend_package_step',
     'build_docs_website_step',
+    'build_swagger_api_step',
 )
 
 load(
@@ -36,6 +37,7 @@ def docs_pipelines(edition, ver_mode, trigger):
         lint_docs(),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
+        build_swagger_api_step(),
         build_docs_website_step(),
     ]
 

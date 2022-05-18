@@ -560,6 +560,17 @@ steps:
   image: grafana/build-container:1.5.4
   name: build-frontend-docs
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout main
+  - cd ../grafana
+  - make swagger-api-spec
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.4
+  name: build-swagger-api
+- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
@@ -649,6 +660,17 @@ steps:
   - build-frontend-packages
   image: grafana/build-container:1.5.4
   name: build-frontend-docs
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout main
+  - cd ../grafana
+  - make swagger-api-spec
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.4
+  name: build-swagger-api
 - commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
@@ -4667,6 +4689,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 39c6fd27fc223b7bc99242101d28f508cdbbf01b561330bb52979f1d032af5d5
+hmac: f8a8fb13817e17770a8deede536f0f888db3579186f4b9ddfa5a98a8e5abe56c
 
 ...

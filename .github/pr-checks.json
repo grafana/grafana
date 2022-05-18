@@ -26,6 +26,23 @@
     "targetUrl": "https://github.com/grafana/grafana/blob/main/contribute/merge-pull-request.md#should-the-pull-request-be-backported"
   },
   {
+    "type": "check-swagger-generation",
+    "title": "Swagger Generation Check",
+    "labels": {
+      "exists": "Swagger generation enabled",
+      "notExists": "Swagger generation decision needed",
+      "matches": [
+        "swagger-generation"
+      ]
+    },
+    "skip": {
+      "message": "Swagger Generation skipped",
+      "matches": [
+        "no-swagger-generation"
+      ]
+    }
+  },
+  {
     "type": "check-changelog",
     "title": "Changelog Check",
     "labels": {
