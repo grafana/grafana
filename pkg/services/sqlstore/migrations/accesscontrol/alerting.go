@@ -77,13 +77,13 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 		})
 	}
 
-	added, err := m.sess.InsertMulti(toAdd)
+	added, err := m.sess.Table(&permission{}).InsertMulti(toAdd)
 	if err != nil {
 		return fmt.Errorf("failed to insert new permissions:%w", err)
 	}
 	m.migrator.Logger.Debug(fmt.Sprintf("updated %d of %d roles with new permission %s", added, len(toAdd), accesscontrol.ActionAlertingNotificationsWrite))
 
-	_, err = m.sess.Table(permission{}).In("id", toDelete...).Delete(permission{})
+	_, err = m.sess.Table(&permission{}).In("id", toDelete...).Delete(permission{})
 	if err != nil {
 		m.migrator.Logger.Warn("failed to delete deprecated permissions [alert.notifications:update, alert.notifications:create, alert.notifications:delete]", "err", err)
 	}
