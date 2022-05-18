@@ -16,7 +16,7 @@ interface SearchFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   width?: number;
 }
 
-export const getSearchFieldStyles = (theme: GrafanaTheme) => ({
+const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     width: 100%;
     display: flex;
