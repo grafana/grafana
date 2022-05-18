@@ -58,13 +58,22 @@ export const ActionRow: FC<Props> = ({
   hideLayout,
 }) => {
   const styles = useStyles2(getStyles);
+  const layout = getValidQueryLayout(query);
+
+  // Disabled folder layout option when query is present
+  const disabledOptions = query.sort || query.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
-            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={getValidQueryLayout(query)} />
+            <RadioButtonGroup
+              options={layoutOptions}
+              disabledOptions={disabledOptions}
+              onChange={onLayoutChange}
+              value={layout}
+            />
           )}
           <SortPicker onChange={onSortChange} value={query.sort?.value} />
         </HorizontalGroup>

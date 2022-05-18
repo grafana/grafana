@@ -83,6 +83,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       > ul {
         list-style: none;
       }
+
+      border: solid 1px ${theme.v1.colors.border2};
     `,
     section: css`
       display: flex;
