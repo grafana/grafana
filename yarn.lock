@@ -3911,7 +3911,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.4.0, @emotion/cache@npm:^11.5.0":
+"@emotion/cache@npm:^11.4.0":
   version: 11.5.0
   resolution: "@emotion/cache@npm:11.5.0"
   dependencies:
@@ -4044,15 +4044,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/react@npm:^11.1.1":
-  version: 11.5.0
-  resolution: "@emotion/react@npm:11.5.0"
+"@emotion/react@npm:^11.8.1":
+  version: 11.9.0
+  resolution: "@emotion/react@npm:11.9.0"
   dependencies:
     "@babel/runtime": ^7.13.10
-    "@emotion/cache": ^11.5.0
-    "@emotion/serialize": ^1.0.2
-    "@emotion/sheet": ^1.0.3
-    "@emotion/utils": ^1.0.0
+    "@emotion/babel-plugin": ^11.7.1
+    "@emotion/cache": ^11.7.1
+    "@emotion/serialize": ^1.0.3
+    "@emotion/utils": ^1.1.0
     "@emotion/weak-memoize": ^0.2.5
     hoist-non-react-statics: ^3.3.1
   peerDependencies:
@@ -4063,7 +4063,7 @@ __metadata:
       optional: true
     "@types/react":
       optional: true
-  checksum: 4188b664cc5b7142cf58323d78911cfdeef106d7b26987f8e4aceb51074e99a48a16cf6c3d1aa124462d2135a7b0d2b5d1bc2bbb6ac6167010f69607d822d51a
+  checksum: 4ceb004f942fb7557a55ea17aad2c48c4cd48ed5a780ccdc2993e4bded2f94d7c1764bd2f4fbe53f5b26059263599cec64ff66d29447e281a58c60b39c72e5cc
   languageName: node
   linkType: hard
 
@@ -4090,6 +4090,19 @@ __metadata:
     "@emotion/utils": ^1.0.0
     csstype: ^3.0.2
   checksum: ff84fbe09ec06e7ad3deaef5c5b5ea6af6a522e8efe49c2b398b875d06872626284a83b6b18b7f777750c94264a61e7924157d869d9bca2f675731bbb91a6055
+  languageName: node
+  linkType: hard
+
+"@emotion/serialize@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@emotion/serialize@npm:1.0.3"
+  dependencies:
+    "@emotion/hash": ^0.8.0
+    "@emotion/memoize": ^0.7.4
+    "@emotion/unitless": ^0.7.5
+    "@emotion/utils": ^1.0.0
+    csstype: ^3.0.2
+  checksum: 99a9053bd98c99d63af542ebee029281eeaf653e3a12e97ee79bad7330c68408104c30be6fc07a528e38bb69aba680655181744b76ec6c6f459c121cb805fac2
   languageName: node
   linkType: hard
 
@@ -4840,7 +4853,7 @@ __metadata:
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-router-dom: ^5.2.0
-    react-select: 5.2.2
+    react-select: 5.3.2
     react-select-event: ^5.1.0
     react-table: 7.8.0
     react-test-renderer: 17.0.2
@@ -21298,7 +21311,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
-    react-select: 5.2.2
+    react-select: 5.3.2
     react-select-event: 5.5.0
     react-split-pane: 0.1.92
     react-table: 7.8.0
@@ -31885,21 +31898,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.2.2":
-  version: 5.2.2
-  resolution: "react-select@npm:5.2.2"
+"react-select@npm:5.3.2":
+  version: 5.3.2
+  resolution: "react-select@npm:5.3.2"
   dependencies:
     "@babel/runtime": ^7.12.0
     "@emotion/cache": ^11.4.0
-    "@emotion/react": ^11.1.1
+    "@emotion/react": ^11.8.1
     "@types/react-transition-group": ^4.4.0
     memoize-one: ^5.0.0
     prop-types: ^15.6.0
     react-transition-group: ^4.3.0
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
-  checksum: 02cf76a31df6d957b15e8664957ece85afb0e9538f0686f77e8dd7cdc47cb59b71e295cd373912f2dd641724f140a1f701c91e7e7f89bb7e845a04bf5d6c67ad
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: c8c0ecd75704098ef1010fba4df68bcc5e7d76ffcd6d3bac40bc3017758a9c035a887fa82ead9105dc719c14e04c4164d8b7a8e8fa61d0ed39e4bdf48ee3bf1c
   languageName: node
   linkType: hard
 
