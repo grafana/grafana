@@ -226,7 +226,7 @@
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
     "sass": "1.51.0",
-    "sass-loader": "12.6.0",
+    "sass-loader": "13.0.0",
     "sinon": "14.0.0",
     "style-loader": "3.3.1",
     "stylelint": "14.8.2",
