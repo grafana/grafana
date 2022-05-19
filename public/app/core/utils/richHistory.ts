@@ -136,7 +136,7 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
   const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
   try {
-    const richHistory: RichHistoryQuery[] = await richHistoryLocalStorage.getRichHistory({
+    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
       datasourceFilters: [],
       from: 0,
       search: '',
