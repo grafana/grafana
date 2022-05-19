@@ -32,18 +32,9 @@ func (m *alertingMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator)
 	return m.migrateNotificationActions()
 }
 
-type permission struct {
-	Id      int64
-	RoleId  int64
-	Action  string
-	Scope   string
-	Created time.Time
-	Updated time.Time
-}
-
 func (m *alertingMigrator) migrateNotificationActions() error {
-	var results []permission
-	err := m.sess.Table(&permission{}).In("action", "alert.notifications:update", "alert.notifications:create", "alert.notifications:delete", accesscontrol.ActionAlertingNotificationsWrite).Find(&results)
+	var results []accesscontrol.Permission
+	err := m.sess.Table(&accesscontrol.Permission{}).In("action", "alert.notifications:update", "alert.notifications:create", "alert.notifications:delete", accesscontrol.ActionAlertingNotificationsWrite).Find(&results)
 	if err != nil {
 		return fmt.Errorf("failed to query permission table: %w", err)
 	}
@@ -51,16 +42,16 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 	toDelete := make([]interface{}, 0, len(results))
 	for _, result := range results {
 		if result.Action == accesscontrol.ActionAlertingNotificationsWrite {
-			groupByRoleID[result.RoleId] = false
+			groupByRoleID[result.RoleID] = false
 			continue // do not delete this permission
 		}
-		if _, ok := groupByRoleID[result.RoleId]; !ok {
-			groupByRoleID[result.RoleId] = true
+		if _, ok := groupByRoleID[result.RoleID]; !ok {
+			groupByRoleID[result.RoleID] = true
 		}
-		toDelete = append(toDelete, result.Id)
+		toDelete = append(toDelete, result.ID)
 	}
 
-	toAdd := make([]permission, 0, len(groupByRoleID))
+	toAdd := make([]accesscontrol.Permission, 0, len(groupByRoleID))
 
 	now := time.Now()
 	for roleID, add := range groupByRoleID {
@@ -68,8 +59,8 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 			m.migrator.Logger.Info(fmt.Sprintf("skip adding action %s to role ID %d because it is already there", accesscontrol.ActionAlertingNotificationsWrite, roleID))
 			continue
 		}
-		toAdd = append(toAdd, permission{
-			RoleId:  roleID,
+		toAdd = append(toAdd, accesscontrol.Permission{
+			RoleID:  roleID,
 			Action:  accesscontrol.ActionAlertingNotificationsWrite,
 			Scope:   "",
 			Created: now,
@@ -77,15 +68,15 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 		})
 	}
 
-	added, err := m.sess.Table(&permission{}).InsertMulti(toAdd)
+	added, err := m.sess.Table(&accesscontrol.Permission{}).InsertMulti(toAdd)
 	if err != nil {
 		return fmt.Errorf("failed to insert new permissions:%w", err)
 	}
 	m.migrator.Logger.Debug(fmt.Sprintf("updated %d of %d roles with new permission %s", added, len(toAdd), accesscontrol.ActionAlertingNotificationsWrite))
 
-	_, err = m.sess.Table(&permission{}).In("id", toDelete...).Delete(permission{})
+	_, err = m.sess.Table(&accesscontrol.Permission{}).In("id", toDelete...).Delete(accesscontrol.Permission{})
 	if err != nil {
-		m.migrator.Logger.Warn("failed to delete deprecated permissions [alert.notifications:update, alert.notifications:create, alert.notifications:delete]", "err", err)
+		return fmt.Errorf("failed to delete deprecated permissions [alert.notifications:update, alert.notifications:create, alert.notifications:delete]:%w", err)
 	}
 
 	return nil
