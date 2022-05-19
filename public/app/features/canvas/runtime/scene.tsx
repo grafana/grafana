@@ -60,6 +60,31 @@ const constraintViewable = (scene: Scene) => ({
     const constraint = targetElement?.options.constraint ?? {};
 
     const borderStyle = '1px dashed #4af';
+
+    const centerIndicatorLineOne = React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 2}px`,
+        top: `${rect.height / 2 - rect.height / 16}px`,
+        borderLeft: borderStyle,
+        height: `${rect.height / 8}px`,
+        transform: 'rotate(45deg)',
+      },
+    });
+
+    const centerIndicatorLineTwo = React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 2}px`,
+        top: `${rect.height / 2 - rect.height / 16}px`,
+        borderLeft: borderStyle,
+        height: `${rect.height / 8}px`,
+        transform: 'rotate(-45deg)',
+      },
+    });
+
+    const centerIndicator = React.createElement('div', {}, [centerIndicatorLineOne, centerIndicatorLineTwo]);
+
     const verticalConstraintTop = React.createElement('div', {
       style: {
         position: 'absolute',
@@ -69,6 +94,7 @@ const constraintViewable = (scene: Scene) => ({
         height: '100vh',
       },
     });
+
     const verticalConstraintBottom = React.createElement('div', {
       style: {
         position: 'absolute',
@@ -78,10 +104,23 @@ const constraintViewable = (scene: Scene) => ({
         height: '100vh',
       },
     });
+
     const verticalConstraintTopBottom = React.createElement('div', {}, [
       verticalConstraintTop,
       verticalConstraintBottom,
     ]);
+
+    const verticalConstraintCenterLine = React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 2}px`,
+        top: `${rect.height / 4}px`,
+        borderLeft: borderStyle,
+        height: `${rect.height / 2}px`,
+      },
+    });
+
+    const verticalConstraintCenter = React.createElement('div', {}, [verticalConstraintCenterLine, centerIndicator]);
 
     switch (constraint.vertical) {
       case VerticalConstraint.Top:
@@ -94,7 +133,7 @@ const constraintViewable = (scene: Scene) => ({
         verticalConstraintVisualization = verticalConstraintTopBottom;
         break;
       case VerticalConstraint.Center:
-        // center here
+        verticalConstraintVisualization = verticalConstraintCenter;
         break;
     }
 
@@ -117,9 +156,25 @@ const constraintViewable = (scene: Scene) => ({
         width: '100vw',
       },
     });
+
     const horizontalConstraintLeftRight = React.createElement('div', {}, [
       horizontalConstraintLeft,
       horizontalConstraintRight,
+    ]);
+
+    const horizontalConstraintCenterLine = React.createElement('div', {
+      style: {
+        position: 'absolute',
+        left: `${rect.width / 4}px`,
+        top: `${rect.height / 2}px`,
+        borderTop: borderStyle,
+        width: `${rect.width / 2}px`,
+      },
+    });
+
+    const horizontalConstraintCenter = React.createElement('div', {}, [
+      horizontalConstraintCenterLine,
+      centerIndicator,
     ]);
 
     switch (constraint.horizontal) {
@@ -133,13 +188,16 @@ const constraintViewable = (scene: Scene) => ({
         horizontalConstraintVisualization = horizontalConstraintLeftRight;
         break;
       case HorizontalConstraint.Center:
-        // center here
+        horizontalConstraintVisualization = horizontalConstraintCenter;
         break;
     }
 
-    const root = React.createElement('div', {}, [verticalConstraintVisualization, horizontalConstraintVisualization]);
+    const constraintVisualization = React.createElement('div', {}, [
+      verticalConstraintVisualization,
+      horizontalConstraintVisualization,
+    ]);
 
-    return root;
+    return constraintVisualization;
   },
 });
 
@@ -191,6 +249,7 @@ export class Scene {
             fontWeight: 'bold',
             willChange: 'transform',
             transform: 'translate(-50%, 0px)',
+            zIndex: 100,
           }}
         >
           {Math.round(rect.offsetWidth)} x {Math.round(rect.offsetHeight)}
