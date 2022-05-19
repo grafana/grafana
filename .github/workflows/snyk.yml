@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  snyk_scans:
 
     runs-on: ubuntu-latest
 
