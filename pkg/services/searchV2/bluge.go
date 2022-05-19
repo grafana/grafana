@@ -42,10 +42,30 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 	}
 	// Not closing Writer here since we use it later while processing dashboard change events.
 
-	batch := bluge.NewBatch()
-
 	start := time.Now()
 	label := start
+
+	batch := bluge.NewBatch()
+
+	// In order to reduce memory usage while initial indexing we are limiting
+	// the size of batch here.
+	docsInBatch := 0
+	maxBatchSize := 100
+
+	flushIfRequired := func(force bool) error {
+		docsInBatch++
+		needFlush := force || (maxBatchSize > 0 && docsInBatch >= maxBatchSize)
+		if !needFlush {
+			return nil
+		}
+		err := writer.Batch(batch)
+		if err != nil {
+			return err
+		}
+		docsInBatch = 0
+		batch.Reset()
+		return nil
+	}
 
 	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
@@ -55,6 +75,9 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 		}
 		doc := getFolderDashboardDoc(dash)
 		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, nil, err
+		}
 		uid := dash.uid
 		if uid == "" {
 			uid = "general"
@@ -71,13 +94,22 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 		location := folderUID
 		doc := getNonFolderDashboardDoc(dash, location)
 		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, nil, err
+		}
 
 		// Index each panel in dashboard.
 		location += "/" + dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
+			if err := flushIfRequired(false); err != nil {
+				return nil, nil, err
+			}
 		}
+	}
+	if err := flushIfRequired(true); err != nil {
+		return nil, nil, err
 	}
 	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
 	label = time.Now()
