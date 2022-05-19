@@ -421,6 +421,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
 
+	fieldLen := 0
 	ext := extender.GetFramer(frame)
 
 	locationItems := make(map[string]bool, 50)
@@ -470,9 +471,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldTag:
 				tags = append(tags, string(value))
 			default:
-				if !ext(field, value) {
-					return false
-				}
+				return ext(field, value)
 			}
 			return true
 		})
@@ -520,6 +519,14 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 				fExplain.Append(&jsb)
 			} else {
 				fExplain.Append(nil)
+			}
+		}
+
+		// extend fields to match the longest field
+		fieldLen++
+		for _, f := range frame.Fields {
+			if fieldLen > f.Len() {
+				f.Extend(fieldLen - f.Len())
 			}
 		}
 
