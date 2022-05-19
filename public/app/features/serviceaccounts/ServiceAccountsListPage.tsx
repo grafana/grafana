@@ -204,11 +204,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     filter: css`
       margin: 0 ${theme.spacing(1)};
     `,
-    iconRow: css`
-      svg {
-        margin-left: ${theme.spacing(0.5)};
-      }
-    `,
     row: css`
       display: flex;
       align-items: center;

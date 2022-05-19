@@ -1,15 +1,13 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
-import { OrgRole } from '@grafana/data';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { ConfirmButton, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
-
-import { getStyles } from './ServiceAccountsListPage';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;
@@ -117,15 +115,17 @@ const ServiceAccountListItem = memo(
         </td>
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
           <td>
-            <Button
+            <ConfirmButton
               size="sm"
-              variant="destructive"
-              onClick={() => {
+              onConfirm={() => {
                 onSetToRemove(serviceAccount);
               }}
-              icon="times"
               aria-label="Delete service account"
-            />
+              confirmText="Delete"
+              confirmVariant="destructive"
+            >
+              <IconButton className={styles.deleteButton} name="trash-alt" size="sm" />
+            </ConfirmButton>
           </td>
         )}
       </tr>
@@ -133,5 +133,18 @@ const ServiceAccountListItem = memo(
   }
 );
 ServiceAccountListItem.displayName = 'ServiceAccountListItem';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    iconRow: css`
+      svg {
+        margin-left: ${theme.spacing(0.5)};
+      }
+    `,
+    deleteButton: css`
+      color: ${theme.colors.text.secondary};
+    `,
+  };
+};
 
 export default ServiceAccountListItem;
