@@ -42,8 +42,9 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
 
   const theme = {
     name,
-    isDark: false,
-    isLight: true,
+    isDark: colors.mode === 'dark',
+    isLight: colors.mode === 'light',
+    isFusebit: colors.mode === 'fusebit',
     colors,
     breakpoints,
     spacing,
