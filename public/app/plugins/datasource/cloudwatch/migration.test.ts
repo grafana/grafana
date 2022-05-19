@@ -210,6 +210,16 @@ describe('migration', () => {
           expect(query.dimensionFilters).toBe('');
         });
       });
+
+      describe('and filter value is an empty array', () => {
+        it('should leave an empty filter', () => {
+          const query = migrateVariableQuery(
+            'dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier, [])'
+          );
+          expect(query.dimensionFilters).toBe('');
+        });
+      });
+
       describe('and filter param is defined by user', () => {
         it('should use the user defined filter', () => {
           const query = migrateVariableQuery(
@@ -223,14 +233,35 @@ describe('migration', () => {
           expect(query.dimensionFilters).toBe('{"InstanceId":"$instance_id"}');
         });
       });
-      describe('when resource_arns query is used', () => {
-        it('should parse the query', () => {
-          const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
-          expect(query.queryType).toBe(VariableQueryType.ResourceArns);
-          expect(query.region).toBe('us-east-1');
-          expect(query.resourceType).toBe('rds:db');
-          expect(query.tags).toBe('{"environment":["$environment"]}');
-        });
+    });
+
+    describe('when resource_arns query is used', () => {
+      it('should parse the query', () => {
+        const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
+        expect(query.queryType).toBe(VariableQueryType.ResourceArns);
+        expect(query.region).toBe('us-east-1');
+        expect(query.resourceType).toBe('rds:db');
+        expect(query.tags).toBe('{"environment":["$environment"]}');
+      });
+
+      it('should parse a empty array for tags', () => {
+        const query = migrateVariableQuery('resource_arns(us-east-1,rds:db, [])');
+        expect(query.tags).toBe('');
+      });
+    });
+
+    describe('when ec2_instance_attribute query is used', () => {
+      it('should parse the query', () => {
+        const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,{"environment":["$environment"]})');
+        expect(query.queryType).toBe(VariableQueryType.EC2InstanceAttributes);
+        expect(query.region).toBe('us-east-1');
+        expect(query.attributeName).toBe('rds:db');
+        expect(query.ec2Filters).toBe('{"environment":["$environment"]}');
+      });
+
+      it('should parse an empty array for filters', () => {
+        const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,[])');
+        expect(query.ec2Filters).toBe('');
       });
     });
   });

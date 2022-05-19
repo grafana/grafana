@@ -124,6 +124,9 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
     newQuery.dimensionFilters = dimensionValuesQuery[6] || '';
+    if (newQuery.dimensionFilters === '[]') {
+      newQuery.dimensionFilters = '';
+    }
     return newQuery;
   }
 
@@ -141,6 +144,9 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.region = ec2InstanceAttributeQuery[1];
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
     newQuery.ec2Filters = ec2InstanceAttributeQuery[3] || '';
+    if (newQuery.ec2Filters === '[]') {
+      newQuery.ec2Filters = '';
+    }
     return newQuery;
   }
 
@@ -150,6 +156,9 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
     newQuery.tags = resourceARNsQuery[3] || '';
+    if (newQuery.tags === '[]') {
+      newQuery.tags = '';
+    }
     return newQuery;
   }
 
