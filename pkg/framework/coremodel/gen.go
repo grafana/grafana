@@ -319,13 +319,11 @@ import (
 `
 
 var tmplAddenda = template.Must(template.New("addenda").Parse(`
-var (
-	//go:embed lineage.cue
-	cueFS embed.FS
+//go:embed lineage.cue
+var cueFS embed.FS
 
-	// codegen ensures that this is always the latest Thema schema version
-	currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
-)
+// codegen ensures that this is always the latest Thema schema version
+const currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
 
 // Lineage returns the Thema lineage representing a Grafana {{ .Name }}.
 //
@@ -401,8 +399,8 @@ func TestSchemaAssignability(t *testing.T) {
 var tmplTypedef = `{{range .Types}}
 {{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
 //
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY GRAFANA'S BACKEND.
-// For public, stable Go types, see https://github.com/grafana/grodkit
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `
