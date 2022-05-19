@@ -36,10 +36,12 @@ SELECT id,
 	settings
 FROM
 	alert
+WHERE org_id IN (SELECT id from org)
+	AND dashboard_id IN (SELECT id from dashboard)
 `
 
 // slurpDashAlerts loads all alerts from the alert database table into the
-// the dashAlert type.
+// the dashAlert type. If there are alerts that belong to either organization or dashboard that does not exist, those alerts will not be returned/
 // Additionally it unmarshals the json settings for the alert into the
 // ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {

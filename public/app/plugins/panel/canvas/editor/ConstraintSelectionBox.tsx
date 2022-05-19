@@ -147,22 +147,26 @@ const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => 
       }
     `,
     topConstraint: css`
-      ${currentConstraints.vertical === VerticalConstraint.Top
+      ${currentConstraints.vertical === VerticalConstraint.Top ||
+      currentConstraints.vertical === VerticalConstraint.TopBottom
         ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     bottomConstraint: css`
-      ${currentConstraints.vertical === VerticalConstraint.Bottom
+      ${currentConstraints.vertical === VerticalConstraint.Bottom ||
+      currentConstraints.vertical === VerticalConstraint.TopBottom
         ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     leftConstraint: css`
-      ${currentConstraints.horizontal === HorizontalConstraint.Left
+      ${currentConstraints.horizontal === HorizontalConstraint.Left ||
+      currentConstraints.horizontal === HorizontalConstraint.LeftRight
         ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     rightConstraint: css`
-      ${currentConstraints.horizontal === HorizontalConstraint.Right
+      ${currentConstraints.horizontal === HorizontalConstraint.Right ||
+      currentConstraints.horizontal === HorizontalConstraint.LeftRight
         ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,

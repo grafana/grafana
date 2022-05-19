@@ -93,6 +93,7 @@ func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 }
 
 // CreateGrafDir creates the Grafana directory.
+// The log by default is muted in the regression test, to activate it, pass option EnableLog = true
 func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	t.Helper()
 
@@ -178,6 +179,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	logSect, err := cfg.NewSection("log")
 	require.NoError(t, err)
+
 	_, err = logSect.NewKey("level", "debug")
 	require.NoError(t, err)
 
@@ -288,6 +290,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
+		if !o.EnableLog {
+			logSection, err := getOrCreateSection("log")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -316,4 +324,5 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	EnableLog                             bool
 }

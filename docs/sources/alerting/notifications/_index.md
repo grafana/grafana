@@ -48,7 +48,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. Click **Notification policies**.
 1. From the **Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
 1. To add a top level specific policy, go to the **Specific routing** section and click **New specific policy**.
-1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["How label matching works"](#how-label-matching-works).
+1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["Labels and label matchers"]({{< relref "../fundamentals/labels-and-label-matchers.md" >}}).
 1. In **Contact point**, add the [contact point]({{< relref "../contact-points/_index.md" >}}) to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching nested policies even after the alert matched the parent policy. When this option is enabled, you can get more than one notification. Use it to send notification to a catch-all contact point as well as to one of more specific contact points handled by nested policies.
 1. Optionally, enable **Override grouping** to specify the same grouping as the root policy. If this option is not enabled, the root policy grouping is used.
@@ -67,20 +67,6 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. Find the policy you want to edit, then click **Edit** (pen icon).
 1. Make any changes using instructions in [Add new specific policy](#add-new-specific-policy).
 1. Click **Save policy**.
-
-## How label matching works
-
-A policy will match an alert if the alert's labels match all the "Matching Labels" specified on the policy.
-
-- The **Label** field is the name of the label to match. It must exactly match the label name.
-- The **Operator** field is the operator to match against the label value. The available operators are:
-
-  - `=`: Select labels that are exactly equal to the provided string.
-  - `!=`: Select labels that are not equal to the provided string.
-  - `=~`: Select labels that regex-match the provided string.
-  - `!~`: Select labels that do not regex-match the provided string.
-
-- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Operator** value.
 
 ## Example
 
