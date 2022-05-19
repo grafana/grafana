@@ -14,21 +14,24 @@ jobs:
     steps:
 
       - uses: actions/checkout@v3
-      - name: Run Snyk to check for vulnerabilities
+      - name: Run Snyk to check for vulnerabilities - sarif output
+        continue-on-error: true
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args:  --sarif-file-output=snyk.sarif --strict-out-of-sync=false
+          args:  --all-projects --sarif-file-output=snyk.sarif --strict-out-of-sync=false
 
-      - name: Run Snyk to check for vulnerabilities
+      - name: Run Snyk to check for vulnerabilities - json output
+        continue-on-error: true
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --all-projects --json-output=snyk.json
+          args: --all-projects --json-output=snyk.json  --strict-out-of-sync=false
+
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v1
