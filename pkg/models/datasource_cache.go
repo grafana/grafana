@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -180,6 +182,8 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		next = ds.sigV4Middleware(transport)
 	}
 
+	next = BlockRedirectRoundtripper(next)
+
 	dsTransport := &dataSourceTransport{
 		datasourceName: ds.Name,
 		headers:        customHeaders,
@@ -348,4 +352,40 @@ func newConntrackDialContext(name string) func(context.Context, string, string) 
 			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}),
 	)
+}
+
+var RequestValidator PluginRequestValidator = &validations.OSSPluginRequestValidator{}
+
+type RoundTripperFunc func(req *http.Request) (*http.Response, error)
+
+// RoundTrip implements the RoundTripper interface.
+func (rt RoundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return rt(r)
+}
+func BlockRedirectRoundtripper(next http.RoundTripper) http.RoundTripper {
+	return RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		if next == nil {
+			next = http.DefaultTransport
+		}
+
+		resp, err := next.RoundTrip(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+			redirectLocation, locationErr := resp.Location()
+			if errors.Is(locationErr, http.ErrNoLocation) {
+				return resp, nil
+			}
+			if locationErr != nil {
+				return nil, locationErr
+			}
+
+			if validationErr := RequestValidator.Validate(redirectLocation.String(), nil); validationErr != nil {
+				return nil, validationErr
+			}
+		}
+		return resp, nil
+	})
 }
