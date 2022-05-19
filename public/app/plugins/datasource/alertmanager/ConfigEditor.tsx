@@ -2,6 +2,7 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, Select } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
@@ -51,6 +52,7 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
+        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
       />
     </>
   );
