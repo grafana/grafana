@@ -215,7 +215,7 @@
     "node-notifier": "10.0.1",
     "nodemon": "2.0.15",
     "postcss": "8.4.12",
-    "postcss-loader": "6.2.1",
+    "postcss-loader": "7.0.0",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.3",
     "prettier": "2.6.0",
