@@ -289,7 +289,7 @@
     "@visx/scale": "2.2.2",
     "@visx/shape": "2.10.0",
     "@visx/tooltip": "2.10.0",
-    "@welldone-software/why-did-you-render": "6.2.3",
+    "@welldone-software/why-did-you-render": "7.0.1",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.2",
