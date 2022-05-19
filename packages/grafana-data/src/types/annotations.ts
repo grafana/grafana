@@ -1,15 +1,15 @@
-import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
-import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
+import { QueryEditorProps } from './datasource';
 import { DataQuery, DataSourceRef } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource?: DataSourceRef | string | null;
+  datasource?: DataSourceRef | null;
 
   enable: boolean;
   name: string;

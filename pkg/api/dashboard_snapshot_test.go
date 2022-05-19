@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,12 +50,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		sqlmock.ExpectedDashboardAclInfoList = aclMockResp
 		sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
 
-		// we need it here for now for the guadian service to work
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-			query.Result = aclMockResp
-			return nil
-		})
-
 		return mockSnapshotResult
 	}
 
@@ -70,6 +63,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
+				guardian.InitLegacyGuardian(sc.sqlStore)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)

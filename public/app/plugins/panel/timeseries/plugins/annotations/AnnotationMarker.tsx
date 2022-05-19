@@ -1,11 +1,14 @@
+import { css } from '@emotion/css';
 import React, { HTMLAttributes, useCallback, useRef, useState } from 'react';
+import { usePopper } from 'react-popper';
+
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
 import { Portal, useStyles2, usePanelContext } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { AnnotationEditorForm } from './AnnotationEditorForm';
-import { getCommonAnnotationStyles } from '../styles';
-import { usePopper } from 'react-popper';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
+
+import { getCommonAnnotationStyles } from '../styles';
+
+import { AnnotationEditorForm } from './AnnotationEditorForm';
 import { AnnotationTooltip } from './AnnotationTooltip';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -27,7 +30,7 @@ const POPPER_CONFIG = {
 };
 
 export function AnnotationMarker({ annotation, timeZone, style }: Props) {
-  const { canAddAnnotations, ...panelCtx } = usePanelContext();
+  const { canAddAnnotations, canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
   const commonStyles = useStyles2(getCommonAnnotationStyles);
   const styles = useStyles2(getStyles);
 
@@ -89,10 +92,11 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
         timeFormatter={timeFormatter}
         onEdit={onAnnotationEdit}
         onDelete={onAnnotationDelete}
-        editable={Boolean(canAddAnnotations && canAddAnnotations())}
+        canEdit={canEditAnnotations!(annotation.dashboardId)}
+        canDelete={canDeleteAnnotations!(annotation.dashboardId)}
       />
     );
-  }, [canAddAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
+  }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
 
   const isRegionAnnotation = Boolean(annotation.isRegion);
 

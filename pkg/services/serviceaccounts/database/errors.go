@@ -6,14 +6,25 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type ErrMisingSAToken struct {
+type ErrSAInvalidName struct {
 }
 
-func (e *ErrMisingSAToken) Error() string {
+func (e *ErrSAInvalidName) Error() string {
+	return "service account name already in use"
+}
+
+func (e *ErrSAInvalidName) Unwrap() error {
+	return models.ErrUserAlreadyExists
+}
+
+type ErrMissingSAToken struct {
+}
+
+func (e *ErrMissingSAToken) Error() string {
 	return "service account token not found"
 }
 
-func (e *ErrMisingSAToken) Unwrap() error {
+func (e *ErrMissingSAToken) Unwrap() error {
 	return models.ErrApiKeyNotFound
 }
 
@@ -33,7 +44,7 @@ type ErrDuplicateSAToken struct {
 }
 
 func (e *ErrDuplicateSAToken) Error() string {
-	return fmt.Sprintf("service account token %s already exists", e.name)
+	return fmt.Sprintf("service account token %s already exists in the organization", e.name)
 }
 
 func (e *ErrDuplicateSAToken) Unwrap() error {

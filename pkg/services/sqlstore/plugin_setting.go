@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (ss *SQLStore) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
+func (ss *SQLStore) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
 					FROM plugin_setting `
 	params := make([]interface{}, 0)
@@ -17,7 +17,7 @@ func (ss *SQLStore) GetPluginSettings(ctx context.Context, orgID int64) ([]*mode
 		params = append(params, orgID)
 	}
 
-	var rslt []*models.PluginSettingInfoDTO
+	var rslt []*models.PluginSetting
 	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		return sess.SQL(sql, params...).Find(&rslt)
 	})

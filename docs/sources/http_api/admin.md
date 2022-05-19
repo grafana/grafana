@@ -1,8 +1,8 @@
 +++
-title = "Admin HTTP API "
+aliases = ["/docs/grafana/latest/http_api/admin/"]
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/docs/grafana/latest/http_api/admin/"]
+title = "Admin HTTP API "
 +++
 
 # Admin API
@@ -11,7 +11,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Fetch settings
@@ -376,7 +376,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                | Scope           |
 | --------------------- | --------------- |
-| users.password:update | global:users:\* |
+| users.password:update | global.users:\* |
 
 **Example Request**:
 
@@ -409,7 +409,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                   | Scope           |
 | ------------------------ | --------------- |
-| users.permissions:update | global:users:\* |
+| users.permissions:update | global.users:\* |
 
 **Example Request**:
 
@@ -442,7 +442,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
-| users:delete | global:users:\* |
+| users:delete | global.users:\* |
 
 **Example Request**:
 
@@ -510,7 +510,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global:users:\* |
+| users.authtoken:list | global.users:\* |
 
 **Example Request**:
 
@@ -569,7 +569,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action                 | Scope           |
 | ---------------------- | --------------- |
-| users.authtoken:update | global:users:\* |
+| users.authtoken:update | global.users:\* |
 
 **Example Request**:
 
@@ -609,7 +609,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
-| users.logout | global:users:\* |
+| users.logout | global.users:\* |
 
 **Example Request**:
 

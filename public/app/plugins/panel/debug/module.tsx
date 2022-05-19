@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+
 import { DebugPanel } from './DebugPanel';
 import { StateViewEditor } from './StateView';
 import { DebugMode, DebugPanelOptions } from './types';

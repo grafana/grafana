@@ -1,5 +1,6 @@
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 
 export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   table: css`

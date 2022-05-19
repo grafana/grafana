@@ -1,5 +1,6 @@
 //@ts-ignore
 import concurrently from 'concurrently';
+
 import { Task, TaskRunner } from './task';
 
 interface StartTaskOptions {

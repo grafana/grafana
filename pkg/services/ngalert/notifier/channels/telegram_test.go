@@ -81,7 +81,7 @@ func TestTelegramNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "telegram_testing" of type "telegram": could not find Bot Token in settings`,
+			expInitError: `could not find Bot Token in settings`,
 		},
 	}
 
@@ -101,16 +101,16 @@ func TestTelegramNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewTelegramNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewTelegramConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewTelegramNotifier(cfg, webhookSender, tmpl)
 			msg, err := pn.buildTelegramMessage(ctx, c.alerts)
 			if c.expMsgError != nil {
 				require.Error(t, err)

@@ -46,10 +46,10 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 		query.Result.IsExternal = true
 	}
 
-	query.Result.AccessControl = hs.getAccessControlMetadata(c, "global:users", userID)
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "global.users:id:", strconv.FormatInt(userID, 10))
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GET /api/users/lookup
@@ -73,7 +73,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 		UpdatedAt:      user.Updated,
 		CreatedAt:      user.Created,
 	}
-	return response.JSON(200, &result)
+	return response.JSON(http.StatusOK, &result)
 }
 
 // POST /api/user
@@ -176,7 +176,7 @@ func (hs *HTTPServer) getUserTeamList(ctx context.Context, orgID int64, userID i
 	for _, team := range query.Result {
 		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
 	}
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GET /api/users/:id/orgs
@@ -195,7 +195,7 @@ func (hs *HTTPServer) getUserOrgList(ctx context.Context, userID int64) response
 		return response.Error(500, "Failed to get user organizations", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (hs *HTTPServer) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
@@ -321,7 +321,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
-	return response.JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
 func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
@@ -334,7 +334,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
-	return response.JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
 func GetAuthProviderLabel(authModule string) string {

@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *models.AddApiKeyCommand) error {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -28,7 +29,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		t := models.ApiKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
-			Role:             cmd.Role,
+			Role:             models.ROLE_VIEWER,
 			Key:              cmd.Key,
 			Created:          updated,
 			Updated:          updated,
@@ -56,8 +57,32 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		if err != nil {
 			return err
 		} else if n == 0 {
-			return &ErrMisingSAToken{}
+			return &ErrMissingSAToken{}
 		}
+		return nil
+	})
+}
+
+// assignApiKeyToServiceAccount sets the API key service account ID
+func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(ctx context.Context, apikeyId int64, saccountId int64) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		key := models.ApiKey{Id: apikeyId}
+		exists, err := sess.Get(&key)
+		if err != nil {
+			s.log.Warn("API key not loaded", "err", err)
+			return err
+		}
+		if !exists {
+			s.log.Warn("API key not found", "err", err)
+			return models.ErrApiKeyNotFound
+		}
+		key.ServiceAccountId = &saccountId
+
+		if _, err := sess.ID(key.Id).Update(&key); err != nil {
+			s.log.Warn("Could not update api key", "err", err)
+			return err
+		}
+
 		return nil
 	})
 }

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
 )
 
 var (
@@ -80,7 +80,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 			// since they dont make much sense. We should remove them later.
 			histogram := httpRequestDurationHistogram.
 				WithLabelValues(handler, code, req.Method)
-			if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
+			if traceID := tracing.TraceIDFromContext(c.Req.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
 				// ExemplarObserver. This will always work for a
 				// HistogramVec.

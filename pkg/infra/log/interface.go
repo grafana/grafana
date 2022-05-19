@@ -11,7 +11,7 @@ const (
 )
 
 type Logger interface {
-	// New returns a new Logger that has this logger's context plus the given context
+	// New returns a new contextual Logger that has this logger's context plus the given context.
 	New(ctx ...interface{}) *ConcreteLogger
 
 	Log(keyvals ...interface{}) error

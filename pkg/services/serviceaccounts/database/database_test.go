@@ -8,8 +8,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestStore_CreateServiceAccount(t *testing.T) {
+	_, store := setupTestDatabase(t)
+	t.Run("create service account", func(t *testing.T) {
+		serviceAccountName := "new Service Account"
+		serviceAccountOrgId := int64(1)
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, "sa-new-service-account", saDTO.Login)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
+		assert.Equal(t, 0, int(saDTO.Tokens))
+
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		require.NoError(t, err)
+		assert.Equal(t, "sa-new-service-account", retrieved.Login)
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
+	})
+}
 
 func TestStore_DeleteServiceAccount(t *testing.T) {
 	cases := []struct {

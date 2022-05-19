@@ -1,8 +1,8 @@
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
+import { DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
-import { DataQueryResponse } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -85,6 +85,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: DataFrame[];
+  // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
 }

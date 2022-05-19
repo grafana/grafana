@@ -5,10 +5,13 @@ import (
 	"net/url"
 
 	"github.com/benbjohnson/clock"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -16,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -24,12 +28,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert, folderService dashboards.FolderService) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -44,6 +48,8 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Log:                 log.New("ngalert"),
 		NotificationService: notificationService,
 		folderService:       folderService,
+		accesscontrol:       ac,
+		dashboardService:    dashboardService,
 	}
 
 	if ng.IsDisabled() {
@@ -74,9 +80,11 @@ type AlertNG struct {
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       dashboards.FolderService
+	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	accesscontrol        accesscontrol.AccessControl
 }
 
 func (ng *AlertNG) init() error {
@@ -88,11 +96,12 @@ func (ng *AlertNG) init() error {
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
 		FolderService:   ng.folderService,
+		AccessControl:   ng.accesscontrol,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
 	if err != nil {
 		return err
 	}
@@ -124,11 +133,17 @@ func (ng *AlertNG) init() error {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
+
+	// Provisioning
+	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
+	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
+	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -139,16 +154,23 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		SecretsService:       ng.SecretsService,
+		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
+		ProvenanceStore:      store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		AccessControl:        ng.accesscontrol,
+		Policies:             policyService,
+		ContactPointService:  contactPointService,
+		Templates:            templateService,
+		MuteTimings:          muteTimingService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return nil
+	return DeclareFixedRoles(ng.accesscontrol)
 }
 
 // Run starts the scheduler and Alertmanager.

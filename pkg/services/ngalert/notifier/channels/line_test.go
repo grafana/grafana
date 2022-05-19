@@ -73,7 +73,7 @@ func TestLineNotifier(t *testing.T) {
 		}, {
 			name:         "Token missing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "line_testing" of type "line": could not find token in settings`,
+			expInitError: `could not find token in settings`,
 		},
 	}
 
@@ -93,7 +93,7 @@ func TestLineNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewLineNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewLineConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -103,6 +103,7 @@ func TestLineNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewLineNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

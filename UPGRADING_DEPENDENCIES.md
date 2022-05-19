@@ -15,6 +15,7 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 - `grafana/build-container`
 - Appveyor
 - Dockerfile
+- `.github/workflows/publish.yml`
 
 ## Go dependencies
 

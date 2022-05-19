@@ -1,4 +1,6 @@
 import React from 'react';
+
+import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
 import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import {
   PanelContext,
@@ -10,9 +12,9 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
-import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { preparePlotConfigBuilder } from './utils';
+
 import { TimelineMode, TimelineOptions, TimelineValueAlignment } from './types';
+import { preparePlotConfigBuilder } from './utils';
 
 /**
  * @alpha

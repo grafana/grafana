@@ -1,5 +1,7 @@
-import React, { PureComponent, ReactElement } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent, ReactElement } from 'react';
+
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   ConfirmButton,
@@ -14,13 +16,13 @@ import {
   useTheme,
   withTheme,
 } from '@grafana/ui';
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
-import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'app/types';
-import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
-import { OrgRolePicker } from './OrgRolePicker';
-import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'app/types';
+
+import { OrgRolePicker } from './OrgRolePicker';
 
 interface Props {
   orgs: UserOrg[];

@@ -10,20 +10,20 @@ import (
 func TestGetResourcesMetadata(t *testing.T) {
 	tests := []struct {
 		desc         string
-		resource     string
+		prefix       string
 		resourcesIDs map[string]bool
 		permissions  map[string][]string
 		expected     map[string]Metadata
 	}{
 		{
 			desc:         "Should return no permission for resources 1,2,3 given the user has no permission",
-			resource:     "resources",
+			prefix:       "resources:id:",
 			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected:     map[string]Metadata{},
 		},
 		{
-			desc:     "Should return no permission for resources 1,2,3 given the user has permissions for 4 only",
-			resource: "resources",
+			desc:   "Should return no permission for resources 1,2,3 given the user has permissions for 4 only",
+			prefix: "resources:id:",
 			permissions: map[string][]string{
 				"resources:action1": {Scope("resources", "id", "4")},
 				"resources:action2": {Scope("resources", "id", "4")},
@@ -33,8 +33,8 @@ func TestGetResourcesMetadata(t *testing.T) {
 			expected:     map[string]Metadata{},
 		},
 		{
-			desc:     "Should only return permissions for resources 1 and 2, given the user has no permissions for 3",
-			resource: "resources",
+			desc:   "Should only return permissions for resources 1 and 2, given the user has no permissions for 3",
+			prefix: "resources:id:",
 			permissions: map[string][]string{
 				"resources:action1": {Scope("resources", "id", "1")},
 				"resources:action2": {Scope("resources", "id", "2")},
@@ -47,8 +47,8 @@ func TestGetResourcesMetadata(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Should return permissions with global scopes for resources 1,2,3",
-			resource: "resources",
+			desc:   "Should return permissions with global scopes for resources 1,2,3",
+			prefix: "resources:id:",
 			permissions: map[string][]string{
 				"resources:action1": {Scope("resources", "id", "1")},
 				"resources:action2": {Scope("resources", "id", "2")},
@@ -65,8 +65,8 @@ func TestGetResourcesMetadata(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Should correctly filter out irrelevant permissions for resources 1,2,3",
-			resource: "resources",
+			desc:   "Should correctly filter out irrelevant permissions for resources 1,2,3",
+			prefix: "resources:id:",
 			permissions: map[string][]string{
 				"resources:action1":      {Scope("resources", "id", "1")},
 				"resources:action2":      {Scope("otherresources", "id", "*")},
@@ -77,22 +77,10 @@ func TestGetResourcesMetadata(t *testing.T) {
 				"1": {"resources:action1": true, "otherresources:action1": true},
 			},
 		},
-		{
-			desc:     "Should correctly handle permissions with multilayer scope",
-			resource: "resources:sub",
-			permissions: map[string][]string{
-				"resources:action1": {Scope("resources", "sub", "id", "1"), Scope("resources", "sub", "id", "123")},
-			},
-			resourcesIDs: map[string]bool{"1": true, "123": true},
-			expected: map[string]Metadata{
-				"1":   {"resources:action1": true},
-				"123": {"resources:action1": true},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.resource, tt.resourcesIDs)
+			metadata := GetResourcesMetadata(context.Background(), tt.permissions, tt.prefix, tt.resourcesIDs)
 			assert.EqualValues(t, tt.expected, metadata)
 		})
 	}

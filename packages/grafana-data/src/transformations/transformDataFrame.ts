@@ -2,6 +2,7 @@ import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { DataFrame, DataTransformerConfig } from '../types';
+
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
 const getOperator =
@@ -17,7 +18,9 @@ const getOperator =
     const options = { ...defaultOptions, ...config.options };
 
     return source.pipe(
-      mergeMap((before) => of(before).pipe(info.transformation.operator(options), postProcessTransform(before, info)))
+      mergeMap((before) =>
+        of(before).pipe(info.transformation.operator(options, config.replace), postProcessTransform(before, info))
+      )
     );
   };
 

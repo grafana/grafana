@@ -1,8 +1,11 @@
-import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import * as H from 'history';
-import { LocationUpdate } from './LocationSrv';
+
+import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import { attachDebugger, createLogger } from '@grafana/ui';
+
 import { config } from '../config';
+
+import { LocationUpdate } from './LocationSrv';
 
 /**
  * @public

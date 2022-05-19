@@ -1,15 +1,21 @@
-import { map, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
+
 import {
   CoreApp,
   DataQueryRequest,
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  Field,
   getFieldDisplayName,
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { QueryOptions } from 'app/types';
+
+import { describe } from '../../../../test/lib/common';
+import { VariableHide } from '../../../features/variables/types';
 
 import {
   alignRange,
@@ -19,9 +25,6 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
-import { VariableHide } from '../../../features/variables/types';
-import { describe } from '../../../../test/lib/common';
-import { QueryOptions } from 'app/types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -247,7 +250,7 @@ describe('PrometheusDatasource', () => {
         },
       ]);
       const result = ds.createQuery(target as any, { interval: '15s' } as any, 0, 0);
-      expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
+      expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
     });
 
     it('should add escaping if needed to regex filter expressions', () => {
@@ -265,7 +268,7 @@ describe('PrometheusDatasource', () => {
       ]);
       const result = ds.createQuery(target as any, { interval: '15s' } as any, 0, 0);
       expect(result).toMatchObject({
-        expr: `metric{job="foo",k1=~"v.*",k2=~"v\\\\'.*"} - metric{k1=~"v.*",k2=~"v\\\\'.*"}`,
+        expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
       });
     });
   });
@@ -310,8 +313,8 @@ describe('PrometheusDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith((result) => {
         const results = result[0].data;
         expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
-        expect(results[1].fields[1].values.toArray()).toEqual([10, 0]);
-        expect(results[2].fields[1].values.toArray()).toEqual([5, 0]);
+        expect(results[0].fields[2].values.toArray()).toEqual([10, 0]);
+        expect(results[0].fields[3].values.toArray()).toEqual([5, 0]);
       });
     });
 
@@ -352,7 +355,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = map(result[0].data, 'name');
+        const seriesLabels = result[0].data[0].fields.slice(1).map((field: Field) => getFieldDisplayName(field));
         expect(seriesLabels).toEqual(expected);
       });
     });
@@ -637,7 +640,7 @@ describe('PrometheusDatasource', () => {
       };
 
       const result = ds.applyTemplateVariables(query, {});
-      expect(result).toMatchObject({ expr: 'test{job="bar",k1="v1",k2!="v2"}' });
+      expect(result).toMatchObject({ expr: 'test{job="bar", k1="v1", k2!="v2"}' });
     });
   });
 
@@ -2172,7 +2175,7 @@ describe('modifyQuery', () => {
         const result = ds.modifyQuery(query, action);
 
         expect(result.refId).toEqual('A');
-        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod="pod-123"}');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod="pod-123"}');
       });
     });
   });
@@ -2202,7 +2205,7 @@ describe('modifyQuery', () => {
         const result = ds.modifyQuery(query, action);
 
         expect(result.refId).toEqual('A');
-        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod!="pod-123"}');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod!="pod-123"}');
       });
     });
   });

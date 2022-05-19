@@ -1,9 +1,10 @@
 import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ButtonVariant, ModalsController, FullWidthButtonContainer } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { SaveDashboardAsModal } from './SaveDashboardAsModal';
-import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
-import { selectors } from '@grafana/e2e-selectors';
+
+import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
@@ -17,7 +18,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
         return (
           <Button
             onClick={() => {
-              showModal(SaveDashboardModalProxy, {
+              showModal(SaveDashboardDrawer, {
                 dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
@@ -45,10 +46,11 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
           <FullWidthButtonContainer>
             <Button
               onClick={() => {
-                showModal(SaveDashboardAsModal, {
+                showModal(SaveDashboardDrawer, {
                   dashboard,
                   onSaveSuccess,
                   onDismiss: hideModal,
+                  isCopy: true,
                 });
               }}
               variant={variant}

@@ -172,7 +172,7 @@ func TestWebhookNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "webhook_testing" of type "webhook": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
@@ -193,7 +193,7 @@ func TestWebhookNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWebHookNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewWebHookConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -204,6 +204,7 @@ func TestWebhookNotifier(t *testing.T) {
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ctx = notify.WithReceiverName(ctx, "my_receiver")
+			pn := NewWebHookNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

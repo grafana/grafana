@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import jsonMarkup from 'json-markup';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import jsonMarkup from 'json-markup';
+import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 const copyIconClassName = 'copyIcon';

@@ -1,4 +1,5 @@
 import { cloneDeep } from 'lodash';
+
 import { VariableModel } from 'app/features/variables/types';
 
 export class VariableBuilder<T extends VariableModel> {

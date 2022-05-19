@@ -13,6 +13,7 @@ type simpleSecret struct {
 
 type b64Secret struct {
 	simpleSecret
+	hasUpdatedColumn bool
 }
 
 type jsonSecret struct {

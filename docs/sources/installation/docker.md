@@ -1,9 +1,9 @@
 +++
-title = "Run Grafana Docker image"
+aliases = ["/docs/grafana/latest/installation/docker/"]
 description = "Guide for running Grafana using Docker"
 keywords = ["grafana", "configuration", "documentation", "docker"]
+title = "Run Grafana Docker image"
 weight = 600
-
 +++
 
 # Run Grafana Docker image
@@ -15,6 +15,8 @@ You can install and run Grafana using the official Docker images. Our docker ima
 **Grafana Open Source**: `grafana/grafana-oss`
 
 Each edition is available in two variants: Alpine and Ubuntu. See below.
+
+For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](https://grafana.com/docs/grafana/latest/administration/configure-docker/).
 
 This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 

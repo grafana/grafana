@@ -1,5 +1,7 @@
 import { map } from 'lodash';
+
 import { rangeUtil } from '@grafana/data';
+
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption } from '../types';
 

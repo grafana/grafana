@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"path"
 
@@ -26,38 +27,57 @@ type EmailNotifier struct {
 	tmpl        *template.Template
 }
 
-// NewEmailNotifier is the constructor function
-// for the EmailNotifier.
-func NewEmailNotifier(model *NotificationChannelConfig, ns notifications.EmailSender, t *template.Template) (*EmailNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+type EmailConfig struct {
+	*NotificationChannelConfig
+	SingleEmail bool
+	Addresses   []string
+	Message     string
+}
+
+func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewEmailConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
+	return NewEmailNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
 
-	addressesString := model.Settings.Get("addresses").MustString()
-	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
-
+func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
+	addressesString := config.Settings.Get("addresses").MustString()
 	if addressesString == "" {
-		return nil, receiverInitError{Reason: "could not find addresses in settings", Cfg: *model}
+		return nil, errors.New("could not find addresses in settings")
 	}
-
 	// split addresses with a few different ways
 	addresses := util.SplitEmails(addressesString)
+	return &EmailConfig{
+		NotificationChannelConfig: config,
+		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
+		Message:                   config.Settings.Get("message").MustString(),
+		Addresses:                 addresses,
+	}, nil
+}
 
+// NewEmailNotifier is the constructor function
+// for the EmailNotifier.
+func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Addresses:   addresses,
-		SingleEmail: singleEmail,
-		Message:     model.Settings.Get("message").MustString(),
+		Addresses:   config.Addresses,
+		SingleEmail: config.SingleEmail,
+		Message:     config.Message,
 		log:         log.New("alerting.notifier.email"),
 		ns:          ns,
 		tmpl:        t,
-	}, nil
+	}
 }
 
 // Notify sends the alert notification.

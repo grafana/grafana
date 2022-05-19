@@ -1,4 +1,5 @@
 import { map, without } from 'lodash';
+
 import { getValueFormats } from '@grafana/data';
 
 export class ColumnOptionsCtrl {

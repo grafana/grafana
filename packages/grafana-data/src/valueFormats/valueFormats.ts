@@ -1,8 +1,9 @@
-import { getCategories } from './categories';
+import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
+
+import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
 import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
-import { TimeZone } from '../types';
 
 export interface FormattedValue {
   text: string;
@@ -55,6 +56,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     decimals = getDecimalsForValue(value);
   }
 
+  if (value === 0) {
+    return value.toFixed(decimals);
+  }
+
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
   const formatted = String(Math.round(value * factor) / factor);
 
@@ -66,7 +71,7 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
+    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
   }
 
   return formatted;

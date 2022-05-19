@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/", "/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 title = "Add authentication for data source plugins"
-aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 +++
 
 # Add authentication for data source plugins
@@ -312,6 +312,17 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 	for _, q := range req.Queries {
 		// ...
 	}
+}
+```
+
+The `Authorization` and `X-ID-Token` headers will also be available on the `CallResourceRequest` object on the `CallResource` request in your backend data source when `jsonData.oauthPassThru` is `true`.
+
+```go
+func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+  token := req.Headers["Authorization"]
+  idToken := req.Headers["X-ID-Token"] // present if user's token includes an ID token
+
+  // ...
 }
 ```
 

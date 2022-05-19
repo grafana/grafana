@@ -1,7 +1,6 @@
 import { cx } from '@emotion/css';
-import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
-
+import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
@@ -9,8 +8,9 @@ import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
-import { getModalStyles } from './getModalStyles';
+
 import { ModalHeader } from './ModalHeader';
+import { getModalStyles } from './getModalStyles';
 
 export interface Props {
   /** @deprecated no longer used */

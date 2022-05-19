@@ -2,8 +2,6 @@ package resourcegraph
 
 import (
 	"bytes"
-	"time"
-
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,9 +9,13 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
@@ -179,7 +179,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, client, req)
+	res, err := client.Do(req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -226,7 +226,7 @@ func AddConfigLinks(frame data.Frame, dl string) data.Frame {
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, reqBody []byte, url string) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
@@ -268,13 +268,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func GetAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case setting.AzurePublic:
+	case azsettings.AzurePublic:
 		return "https://portal.azure.com", nil
-	case setting.AzureChina:
+	case azsettings.AzureChina:
 		return "https://portal.azure.cn", nil
-	case setting.AzureUSGovernment:
+	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case setting.AzureGermany:
+	case azsettings.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")

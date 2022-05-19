@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"golang.org/x/oauth2"
 )
 
@@ -16,7 +16,8 @@ var (
 )
 
 type Service struct {
-	SocialService social.Service
+	SocialService   social.Service
+	AuthInfoService login.AuthInfoService
 }
 
 type OAuthTokenService interface {
@@ -24,9 +25,10 @@ type OAuthTokenService interface {
 	IsOAuthPassThruEnabled(*models.DataSource) bool
 }
 
-func ProvideService(socialService social.Service) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
 	return &Service{
-		SocialService: socialService,
+		SocialService:   socialService,
+		AuthInfoService: authInfoService,
 	}
 }
 
@@ -38,7 +40,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
-	if err := bus.Dispatch(ctx, authInfoQuery); err != nil {
+	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
@@ -88,7 +90,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(ctx, updateAuthCommand); err != nil {
+		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
 			return nil
 		}

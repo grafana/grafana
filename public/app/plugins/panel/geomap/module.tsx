@@ -1,13 +1,15 @@
 import React from 'react';
+
 import { PanelPlugin } from '@grafana/data';
-import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
-import { MapViewEditor } from './editor/MapViewEditor';
-import { defaultView, GeomapPanelOptions } from './types';
-import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { getLayerEditor } from './editor/layerEditor';
-import { LayersEditor } from './editor/LayersEditor';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
+
+import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
+import { LayersEditor } from './editor/LayersEditor';
+import { MapViewEditor } from './editor/MapViewEditor';
+import { getLayerEditor } from './editor/layerEditor';
+import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
+import { defaultView, GeomapPanelOptions } from './types';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()

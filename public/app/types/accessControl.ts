@@ -1,12 +1,10 @@
 /**
  * UserPermission is a map storing permissions in a form of
  * {
- *   action: { scope: scope }
+ *   action: true;
  * }
  */
-export type UserPermission = {
-  [key: string]: { [key: string]: string };
-};
+export type UserPermission = Record<string, boolean>;
 
 // Permission actions
 export enum AccessControlAction {
@@ -25,6 +23,7 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
 
+  ServiceAccountsRead = 'serviceaccounts:read',
   ServiceAccountsCreate = 'serviceaccounts:create',
   ServiceAccountsWrite = 'serviceaccounts:write',
   ServiceAccountsDelete = 'serviceaccounts:delete',
@@ -80,6 +79,39 @@ export enum AccessControlAction {
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:read',
+
+  // Alerting rules
+  AlertingRuleCreate = 'alert.rules:create',
+  AlertingRuleRead = 'alert.rules:read',
+  AlertingRuleUpdate = 'alert.rules:update',
+  AlertingRuleDelete = 'alert.rules:delete',
+
+  // Alerting instances (+silences)
+  AlertingInstanceCreate = 'alert.instances:create',
+  AlertingInstanceUpdate = 'alert.instances:update',
+  AlertingInstanceRead = 'alert.instances:read',
+
+  // Alerting Notification policies
+  AlertingNotificationsCreate = 'alert.notifications:create',
+  AlertingNotificationsRead = 'alert.notifications:read',
+  AlertingNotificationsUpdate = 'alert.notifications:update',
+  AlertingNotificationsDelete = 'alert.notifications:delete',
+
+  // External alerting rule actions.
+  AlertingRuleExternalWrite = 'alert.rules.external:write',
+  AlertingRuleExternalRead = 'alert.rules.external:read',
+
+  // External alerting instances actions.
+  AlertingInstancesExternalWrite = 'alert.instances.external:write',
+  AlertingInstancesExternalRead = 'alert.instances.external:read',
+
+  // External alerting notifications actions.
+  AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
+  AlertingNotificationsExternalRead = 'alert.notifications.external:read',
+
+  ActionAPIKeysRead = 'apikeys:read',
+  ActionAPIKeysCreate = 'apikeys:create',
+  ActionAPIKeysDelete = 'apikeys:delete',
 }
 
 export interface Role {

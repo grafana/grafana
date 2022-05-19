@@ -1,10 +1,12 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
-import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
-import { AzureQueryType } from '../types';
-import AzureMonitorDatasource from '../datasource';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import createMockQuery from '../__mocks__/query';
+import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import AzureMonitorDatasource from '../datasource';
+import { AzureQueryType } from '../types';
+
+import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 
 const templateSrv = new TemplateSrv({
   getVariables: () => [subscriptionsVariable, singleVariable, multiVariable],

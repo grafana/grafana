@@ -1,6 +1,7 @@
-import React from 'react';
-import { Modal } from './Modal';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { Modal } from './Modal';
 
 describe('Modal', () => {
   it('renders nothing by default or when isOpen is false', () => {

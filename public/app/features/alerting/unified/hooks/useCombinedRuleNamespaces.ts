@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react';
+
 import {
   CombinedRule,
   CombinedRuleGroup,
@@ -8,7 +10,7 @@ import {
   RulesSource,
 } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { useMemo, useRef } from 'react';
+
 import {
   getAllRulesSources,
   getRulesSourceByName,
@@ -16,6 +18,7 @@ import {
   isGrafanaRulesSource,
 } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
+
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 interface CacheValue {
@@ -81,23 +84,35 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
           });
 
           const result = Object.values(namespaces);
-          if (isGrafanaRulesSource(rulesSource)) {
-            // merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
-            result.forEach((namespace) => {
-              namespace.groups = [
-                {
-                  name: 'default',
-                  rules: namespace.groups.flatMap((g) => g.rules).sort((a, b) => a.name.localeCompare(b.name)),
-                },
-              ];
-            });
-          }
+
           cache.current[rulesSourceName] = { promRules, rulerRules, result };
           return result;
         })
         .flat(),
     [promRulesResponses, rulerRulesResponses, rulesSources]
   );
+}
+
+// merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups
+export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
+  return namespaces.map((namespace) => {
+    const newNamespace: CombinedRuleNamespace = {
+      ...namespace,
+      groups: [],
+    };
+
+    // add default group with ungrouped rules
+    newNamespace.groups.push({
+      name: 'default',
+      rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
+    });
+
+    return newNamespace;
+  });
+}
+
+export function sortRulesByName(rules: CombinedRule[]) {
+  return rules.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[]): void {
@@ -228,7 +243,7 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
 function hashQuery(query: string) {
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.substr(1, query.length - 2);
+    query = query.slice(1, -1);
   }
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');

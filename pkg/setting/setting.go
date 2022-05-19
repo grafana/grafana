@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -171,6 +172,12 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
+	// Help UI
+	HelpEnabled bool
+
+	// Profile UI
+	ProfileEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -296,7 +303,7 @@ type Cfg struct {
 	AWSListMetricsPageLimit int
 
 	// Azure Cloud settings
-	Azure AzureSettings
+	Azure *azsettings.AzureSettings
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -379,12 +386,16 @@ type Cfg struct {
 
 	Env string
 
+	ForceMigration bool
+
 	// Analytics
-	CheckForUpdates                     bool
+	CheckForGrafanaUpdates              bool
+	CheckForPluginUpdates               bool
 	ReportingDistributor                string
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
+	FeedbackLinksEnabled                bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -430,6 +441,15 @@ type Cfg struct {
 
 	// Query history
 	QueryHistoryEnabled bool
+
+	DashboardPreviews DashboardPreviewsSettings
+
+	// Access Control
+	RBACEnabled         bool
+	RBACPermissionCache bool
+	// Undocumented option as a backup in case removing builtin-role assignment
+	// fails
+	RBACBuiltInRoleAssignmentEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -818,6 +838,7 @@ func NewCfg() *Cfg {
 	return &Cfg{
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
+		Azure:  &azsettings.AzureSettings{},
 	}
 }
 
@@ -874,6 +895,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, HomePath)
@@ -910,6 +932,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readAccessControlSettings(iniFile, cfg)
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
@@ -921,20 +944,25 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
 	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
+
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
@@ -942,6 +970,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	help := iniFile.Section("help")
+	HelpEnabled = help.Key("enabled").MustBool(true)
+
+	profile := iniFile.Section("profile")
+	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
@@ -979,6 +1013,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+
+	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1321,6 +1357,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	return nil
+}
+
+func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
+	rbac := iniFile.Section("rbac")
+	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
+	cfg.RBACBuiltInRoleAssignmentEnabled = rbac.Key("builtin_role_assignment_enabled").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {

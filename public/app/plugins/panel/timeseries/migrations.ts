@@ -1,3 +1,5 @@
+import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import {
   ConfigOverrideRule,
   DynamicConfigValue,
@@ -27,10 +29,11 @@ import {
   ScaleDistribution,
   StackingMode,
   SortOrder,
+  GraphTransform,
 } from '@grafana/schema';
-import { TimeSeriesOptions } from './types';
-import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import { defaultGraphConfig } from './config';
+import { TimeSeriesOptions } from './types';
 
 /**
  * This is called when the panel changes from another panel
@@ -240,6 +243,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 fixedColor: v,
                 mode: FieldColorModeId.Fixed,
               },
+            });
+            break;
+          case 'transform':
+            rule.properties.push({
+              id: 'custom.transform',
+              value: v === 'negative-Y' ? GraphTransform.NegativeY : GraphTransform.Constant,
             });
             break;
           default:

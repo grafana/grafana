@@ -79,7 +79,7 @@ func TestWeComNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook URL in settings`,
+			expInitError: `could not find webhook URL in settings`,
 		},
 	}
 
@@ -97,7 +97,7 @@ func TestWeComNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWeComNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewWeComConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -106,6 +106,7 @@ func TestWeComNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewWeComNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

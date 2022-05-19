@@ -1,11 +1,12 @@
 +++
-title = "What's new in Grafana v8.1"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-1/", "/docs/grafana/latest/whatsnew/whats-new-in-v8-1/"]
 description = "Feature and improvement highlights for Grafana v8.1"
 keywords = ["grafana", "new", "documentation", "8.1", "release notes"]
+title = "What's new in Grafana v8.1"
 weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-1/"]
+
 [_build]
-list = false
+  list = false
 +++
 
 # What’s new in Grafana v8.1
@@ -53,7 +54,7 @@ Grafana 8.1 includes some significant enhancements to transformations, including
 
 #### Config from query (Beta)
 
-This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/reference-transformation-functions.md#config-from-query-results" >}}).
+This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/transformation-functions.md#config-from-query-results" >}}).
 
 #### Rows to fields (Beta)
 
@@ -75,7 +76,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/reference-transformation-functions.md#rows-to-fields" >}}).
+For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/transformation-functions.md#rows-to-fields" >}}).
 
 #### Contextual & Inline Help
 
@@ -129,17 +130,17 @@ We’d love as much feedback as possible about this change, because we are consi
 
 ### High availability setup support for Grafana Live
 
-We have added an experimental HA setup support for Grafana Live with Redis. This resolves the limitation when clients were connected to different Grafana instances and those instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+We have added an experimental HA setup support for Grafana Live with Redis. This resolves the limitation when clients were connected to different Grafana instances and those instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live//set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
 
-### New permissions for fine-grained access control
+### New permissions for role-based access control
 
-Fine-grained access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
+Role-based access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
 
-Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
+Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of role-based access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
 
 ### New and improved reporting scheduler
 

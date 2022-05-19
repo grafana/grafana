@@ -76,7 +76,7 @@ func TestThreemaNotifier(t *testing.T) {
 				"recipient_id": "87654321",
 				"api_secret": "supersecret"
 			}`,
-			expInitError: `failed to validate receiver "threema_testing" of type "threema": invalid Threema Gateway ID: Must start with a *`,
+			expInitError: `invalid Threema Gateway ID: Must start with a *`,
 		}, {
 			name: "Invalid receipent id",
 			settings: `{
@@ -84,14 +84,14 @@ func TestThreemaNotifier(t *testing.T) {
 				"recipient_id": "8765432",
 				"api_secret": "supersecret"
 			}`,
-			expInitError: `failed to validate receiver "threema_testing" of type "threema": invalid Threema Recipient ID: Must be 8 characters long`,
+			expInitError: `invalid Threema Recipient ID: Must be 8 characters long`,
 		}, {
 			name: "No API secret",
 			settings: `{
 				"gateway_id": "*1234567",
 				"recipient_id": "87654321"
 			}`,
-			expInitError: `failed to validate receiver "threema_testing" of type "threema": could not find Threema API secret in settings`,
+			expInitError: `could not find Threema API secret in settings`,
 		},
 	}
 
@@ -111,7 +111,7 @@ func TestThreemaNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewThreemaNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewThreemaConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -121,6 +121,7 @@ func TestThreemaNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewThreemaNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

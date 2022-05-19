@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -31,53 +32,71 @@ type ThreemaNotifier struct {
 	tmpl        *template.Template
 }
 
-// NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
-	gatewayID := model.Settings.Get("gateway_id").MustString()
-	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString())
+type ThreemaConfig struct {
+	*NotificationChannelConfig
+	GatewayID   string
+	RecipientID string
+	APISecret   string
+}
 
-	// Validation
+func ThreemaFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewThreemaConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewThreemaNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewThreemaConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*ThreemaConfig, error) {
+	gatewayID := config.Settings.Get("gateway_id").MustString()
 	if gatewayID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema Gateway ID in settings"}
+		return nil, errors.New("could not find Threema Gateway ID in settings")
 	}
 	if !strings.HasPrefix(gatewayID, "*") {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Gateway ID: Must start with a *"}
+		return nil, errors.New("invalid Threema Gateway ID: Must start with a *")
 	}
 	if len(gatewayID) != 8 {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Gateway ID: Must be 8 characters long"}
+		return nil, errors.New("invalid Threema Gateway ID: Must be 8 characters long")
 	}
+	recipientID := config.Settings.Get("recipient_id").MustString()
 	if recipientID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema Recipient ID in settings"}
+		return nil, errors.New("could not find Threema Recipient ID in settings")
 	}
 	if len(recipientID) != 8 {
-		return nil, receiverInitError{Cfg: *model, Reason: "invalid Threema Recipient ID: Must be 8 characters long"}
+		return nil, errors.New("invalid Threema Recipient ID: Must be 8 characters long")
 	}
+	apiSecret := decryptFunc(context.Background(), config.SecureSettings, "api_secret", config.Settings.Get("api_secret").MustString())
 	if apiSecret == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Threema API secret in settings"}
+		return nil, errors.New("could not find Threema API secret in settings")
 	}
+	return &ThreemaConfig{
+		NotificationChannelConfig: config,
+		GatewayID:                 gatewayID,
+		RecipientID:               recipientID,
+		APISecret:                 apiSecret,
+	}, nil
+}
 
+// NewThreemaNotifier is the constructor for the Threema notifier
+func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t *template.Template) *ThreemaNotifier {
 	return &ThreemaNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		GatewayID:   gatewayID,
-		RecipientID: recipientID,
-		APISecret:   apiSecret,
+		GatewayID:   config.GatewayID,
+		RecipientID: config.RecipientID,
+		APISecret:   config.APISecret,
 		log:         log.New("alerting.notifier.threema"),
 		ns:          ns,
 		tmpl:        t,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Threema

@@ -153,7 +153,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 		{
 			name:         "Error when incorrect settings",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "opsgenie_testing" of type "opsgenie": could not find api key property in settings`,
+			expInitError: `could not find api key property in settings`,
 		},
 	}
 
@@ -174,7 +174,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 			webhookSender.Webhook.Body = "<not-sent>"
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewOpsgenieNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewOpsgenieConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -184,6 +184,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewOpsgenieNotifier(cfg, webhookSender, tmpl, decryptFn)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

@@ -1,9 +1,9 @@
 +++
-title = "Reporting"
+aliases = ["/docs/grafana/latest/administration/reports/", "/docs/grafana/latest/dashboards/reporting/"]
 description = ""
 keywords = ["grafana", "reporting"]
-aliases = ["/docs/grafana/latest/administration/reports"]
-weight = 8
+title = "Reporting"
+weight = 10
 +++
 
 # Reporting

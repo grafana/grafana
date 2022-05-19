@@ -1,4 +1,5 @@
 import React, { ChangeEvent } from 'react';
+
 import {
   DataTransformerID,
   SelectableValue,
@@ -6,11 +7,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
 import {
   ConcatenateFrameNameMode,
   ConcatenateTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/concat';
+import { Input, Select } from '@grafana/ui';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 
@@ -57,7 +58,6 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
           <div className="gf-form">
             <div className="gf-form-label width-8">Name</div>
             <Select
-              menuShouldPortal
               className="width-18"
               options={nameModes}
               value={nameModes.find((v) => v.value === frameNameMode)}

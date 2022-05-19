@@ -32,8 +32,8 @@ func TestPluginProxy(t *testing.T) {
 
 		store := &mockPluginsSettingsService{}
 		key, _ := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
-		store.pluginSetting = &models.PluginSetting{
-			SecureJsonData: map[string][]byte{
+		store.pluginSetting = &pluginsettings.DTO{
+			SecureJSONData: map[string][]byte{
 				"key": key,
 			},
 		}
@@ -65,7 +65,7 @@ func TestPluginProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{}
+		store.pluginSetting = &pluginsettings.DTO{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -92,7 +92,7 @@ func TestPluginProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{}
+		store.pluginSetting = &pluginsettings.DTO{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -118,7 +118,7 @@ func TestPluginProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{}
+		store.pluginSetting = &pluginsettings.DTO{}
 
 		req := getPluginProxiedRequest(
 			t,
@@ -145,8 +145,8 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{
-			JsonData: map[string]interface{}{
+		store.pluginSetting = &pluginsettings.DTO{
+			JSONData: map[string]interface{}{
 				"dynamicUrl": "https://dynamic.grafana.com",
 			},
 		}
@@ -180,7 +180,7 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		store := &mockPluginsSettingsService{}
-		store.pluginSetting = &models.PluginSetting{}
+		store.pluginSetting = &pluginsettings.DTO{}
 
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 		require.NoError(t, err)
@@ -216,9 +216,9 @@ func TestPluginProxy(t *testing.T) {
 			map[string]string{"key": "123"},
 			secrets.WithoutScope(),
 		)
-		store.pluginSetting = &models.PluginSetting{
-			JsonData:       map[string]interface{}{"dynamicUrl": "https://dynamic.grafana.com"},
-			SecureJsonData: encryptedJsonData,
+		store.pluginSetting = &pluginsettings.DTO{
+			JSONData:       map[string]interface{}{"dynamicUrl": "https://dynamic.grafana.com"},
+			SecureJSONData: encryptedJsonData,
 		}
 
 		httpReq, err := http.NewRequest(http.MethodGet, "", nil)
@@ -268,8 +268,8 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 		pluginSettingsService := &mockPluginsSettingsService{
-			pluginSetting: &models.PluginSetting{
-				SecureJsonData: map[string][]byte{},
+			pluginSetting: &pluginsettings.DTO{
+				SecureJSONData: map[string][]byte{},
 			},
 		}
 		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, pluginSettingsService, secretsService)
@@ -304,27 +304,26 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 }
 
 type mockPluginsSettingsService struct {
-	pluginSetting *models.PluginSetting
+	pluginSetting *pluginsettings.DTO
 	err           error
 }
 
-func (s *mockPluginsSettingsService) GetPluginSettings(_ context.Context, _ int64) ([]*models.PluginSettingInfoDTO, error) {
+func (s *mockPluginsSettingsService) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
 	return nil, s.err
 }
 
-func (s *mockPluginsSettingsService) GetPluginSettingById(_ context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = s.pluginSetting
+func (s *mockPluginsSettingsService) GetPluginSettingByPluginID(_ context.Context, _ *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
+	return s.pluginSetting, s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSettingPluginVersion(_ context.Context, _ *pluginsettings.UpdatePluginVersionArgs) error {
 	return s.err
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(_ context.Context, _ *models.UpdatePluginSettingVersionCmd) error {
+func (s *mockPluginsSettingsService) UpdatePluginSetting(_ context.Context, _ *pluginsettings.UpdateArgs) error {
 	return s.err
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSetting(_ context.Context, _ *models.UpdatePluginSettingCmd) error {
-	return s.err
-}
-
-func (s *mockPluginsSettingsService) DecryptedValues(_ *models.PluginSetting) map[string]string {
+func (s *mockPluginsSettingsService) DecryptedValues(_ *pluginsettings.DTO) map[string]string {
 	return nil
 }

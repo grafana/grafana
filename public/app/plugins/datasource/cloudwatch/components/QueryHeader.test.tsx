@@ -1,8 +1,9 @@
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
-import { CloudWatchLogsQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import { CloudWatchLogsQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+
 import QueryHeader from './QueryHeader';
 
 const ds = setupMockedDataSource({
@@ -13,7 +14,7 @@ ds.datasource.getRegions = jest.fn().mockResolvedValue([]);
 describe('QueryHeader', () => {
   it('should display metric options for metrics', async () => {
     const query: CloudWatchMetricsQuery = {
-      queryType: 'Metrics',
+      queryMode: 'Metrics',
       id: '',
       region: 'us-east-2',
       namespace: '',
@@ -74,9 +75,9 @@ describe('QueryHeader', () => {
       />
     );
 
-    const builderElement = screen.queryByLabelText('Builder');
-    expect(builderElement).toBeNull();
-    const codeElement = screen.queryByLabelText('Code');
-    expect(codeElement).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Builder')).toBeNull();
+      expect(screen.queryByLabelText('Code')).toBeNull();
+    });
   });
 });

@@ -1,14 +1,17 @@
-import React, { FC } from 'react';
+import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { FC } from 'react';
+
 import { AlertState, dateTimeFormat, GrafanaTheme } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
-import { css } from '@emotion/css';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { AlertStateTag } from './AlertStateTag';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
 import { useManagedAlertStateHistory } from '../../hooks/useManagedAlertStateHistory';
 import { AlertLabel } from '../AlertLabel';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+
+import { AlertStateTag } from './AlertStateTag';
 
 type StateHistoryRowItem = {
   id: string;

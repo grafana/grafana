@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,24 +11,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 )
 
 func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
-	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store,
+	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
-	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices, features featuremgmt.FeatureToggles,
+	ac accesscontrol.AccessControl,
 ) *ImportDashboardService {
 	s := &ImportDashboardService{
-		features:                    features,
-		pluginDashboardManager:      pluginDashboardManager,
-		dashboardService:            dashboardService,
-		libraryPanelService:         libraryPanelService,
-		dashboardPermissionsService: permissionsServices.GetDashboardService(),
+		pluginDashboardService: pluginDashboardService,
+		dashboardService:       dashboardService,
+		libraryPanelService:    libraryPanelService,
 	}
 
 	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore, ac)
@@ -39,25 +36,28 @@ func ProvideService(routeRegister routing.RouteRegister,
 }
 
 type ImportDashboardService struct {
-	features                    featuremgmt.FeatureToggles
-	pluginDashboardManager      plugins.PluginDashboardManager
-	dashboardService            dashboards.DashboardService
-	libraryPanelService         librarypanels.Service
-	dashboardPermissionsService accesscontrol.PermissionsService
+	pluginDashboardService plugindashboards.Service
+	dashboardService       dashboards.DashboardService
+	libraryPanelService    librarypanels.Service
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	var dashboard *models.Dashboard
+	var draftDashboard *models.Dashboard
 	if req.PluginId != "" {
-		var err error
-		if dashboard, err = s.pluginDashboardManager.LoadPluginDashboard(ctx, req.PluginId, req.Path); err != nil {
+		loadReq := &plugindashboards.LoadPluginDashboardRequest{
+			PluginID:  req.PluginId,
+			Reference: req.Path,
+		}
+		if resp, err := s.pluginDashboardService.LoadPluginDashboard(ctx, loadReq); err != nil {
 			return nil, err
+		} else {
+			draftDashboard = resp.Dashboard
 		}
 	} else {
-		dashboard = models.NewDashboardFromJson(req.Dashboard)
+		draftDashboard = models.NewDashboardFromJson(req.Dashboard)
 	}
 
-	evaluator := utils.NewDashTemplateEvaluator(dashboard.Data, req.Inputs)
+	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
 	generatedDash, err := evaluator.Eval()
 	if err != nil {
 		return nil, err
@@ -79,60 +79,33 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		User:      req.User,
 	}
 
-	savedDash, err := s.dashboardService.ImportDashboard(ctx, dto)
+	savedDashboard, err := s.dashboardService.ImportDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDash, req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDashboard, req.FolderId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, dashboard)
+	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
 	if err != nil {
 		return nil, err
-	}
-
-	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		if err := s.setDashboardPermissions(ctx, req.User, savedDash); err != nil {
-			return nil, err
-		}
 	}
 
 	return &dashboardimport.ImportDashboardResponse{
-		UID:              savedDash.Uid,
+		UID:              savedDashboard.Uid,
 		PluginId:         req.PluginId,
-		Title:            savedDash.Title,
+		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         savedDash.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDash.FolderId,
-		ImportedUri:      "db/" + savedDash.Slug,
-		ImportedUrl:      savedDash.GetUrl(),
-		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDashboard.FolderId,
+		ImportedUri:      "db/" + savedDashboard.Slug,
+		ImportedUrl:      savedDashboard.GetUrl(),
+		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
-		DashboardId:      savedDash.Id,
-		Slug:             savedDash.Slug,
+		DashboardId:      savedDashboard.Id,
+		Slug:             savedDashboard.Slug,
 	}, nil
-}
-
-func (s *ImportDashboardService) setDashboardPermissions(ctx context.Context, user *models.SignedInUser, dashboard *models.Dashboard) error {
-	resourceID := strconv.FormatInt(dashboard.Id, 10)
-
-	permissions := []accesscontrol.SetResourcePermissionCommand{
-		{UserID: user.UserId, Permission: models.PERMISSION_ADMIN.String()},
-	}
-
-	if dashboard.FolderId == 0 {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
-		}...)
-	}
-	_, err := s.dashboardPermissionsService.SetPermissions(ctx, user.OrgId, resourceID, permissions...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

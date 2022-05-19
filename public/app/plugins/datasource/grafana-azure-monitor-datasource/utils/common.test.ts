@@ -1,4 +1,5 @@
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
+
 import { hasOption, interpolateVariable } from './common';
 
 describe('AzureMonitor: hasOption', () => {

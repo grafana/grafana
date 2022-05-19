@@ -1,8 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { Input } from '../Input/Input';
-import { InlineField } from './InlineField';
 import { Select } from '../Select/Select';
+
+import { InlineField } from './InlineField';
 
 describe('InlineField', () => {
   it('renders the label', () => {
@@ -28,7 +30,7 @@ describe('InlineField', () => {
   it('renders with the inputId of its children', () => {
     render(
       <InlineField label="My other label">
-        <Select menuShouldPortal inputId="my-select-input" onChange={() => {}} />
+        <Select inputId="my-select-input" onChange={() => {}} />
       </InlineField>
     );
 

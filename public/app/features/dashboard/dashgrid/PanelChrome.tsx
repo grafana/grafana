@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -19,25 +19,28 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
-import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { PanelHeader } from './PanelHeader/PanelHeader';
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { profiler } from 'app/core/profiler';
+import { locationService, RefreshEvent } from '@grafana/runtime';
+import { VizLegendOptions } from '@grafana/schema';
+import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
 import config from 'app/core/config';
-import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
-import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RenderEvent } from 'app/types/events';
+import { profiler } from 'app/core/profiler';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
-import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
+import { RenderEvent } from 'app/types/events';
+
+import { contextSrv } from '../../../core/services/context_srv';
+import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { DashboardModel, PanelModel } from '../state';
+import { loadSnapshotData } from '../utils/loadSnapshotData';
+
+import { PanelHeader } from './PanelHeader/PanelHeader';
+import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
-import { isSoloRoute } from '../../../routes/utils';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -87,13 +90,52 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationCreate: this.onAnnotationCreate,
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
-        canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
+        canAddAnnotations: this.canAddAnnotation,
         onInstanceStateChange: this.onInstanceStateChange,
         onToggleLegendSort: this.onToggleLegendSort,
+        canEditAnnotations: this.canEditAnnotation,
+        canDeleteAnnotations: this.canDeleteAnnotation,
       },
       data: this.getInitialPanelDataState(),
     };
   }
+
+  canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
+
+  canAddAnnotation = () => {
+    let canAdd = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      canAdd = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canAdd;
+    }
+    return canAdd && this.canEditDashboard();
+  };
+
+  canEditAnnotation = (dashboardId: number) => {
+    let canEdit = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId !== 0) {
+        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canEdit;
+      } else {
+        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.organization.canEdit;
+      }
+    }
+    return canEdit && this.canEditDashboard();
+  };
+
+  canDeleteAnnotation = (dashboardId: number) => {
+    let canDelete = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId !== 0) {
+        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+      } else {
+        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.organization.canDelete;
+      }
+    }
+    return canDelete && this.canEditDashboard();
+  };
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
   getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);

@@ -1,8 +1,10 @@
 import React, { ChangeEvent, MouseEvent, FC } from 'react';
-import { Input } from '../Input/Input';
+
 import { Button } from '../Button';
-import { TextArea } from '../TextArea/TextArea';
 import { InlineField } from '../Forms/InlineField';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { Input } from '../Input/Input';
+import { TextArea } from '../TextArea/TextArea';
 
 interface Props {
   label: string;
@@ -15,17 +17,19 @@ interface Props {
 
 export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder }) => {
   return (
-    <InlineField label={label} labelWidth={14}>
-      {hasCert ? (
-        <>
-          <Input type="text" disabled value="configured" width={24} />
-          <Button variant="secondary" onClick={onClick} style={{ marginLeft: 4 }}>
-            Reset
-          </Button>
-        </>
-      ) : (
-        <TextArea rows={7} onChange={onChange} placeholder={placeholder} required />
+    <InlineFieldRow>
+      <InlineField label={label} labelWidth={14} disabled={hasCert}>
+        {hasCert ? (
+          <Input type="text" value="configured" width={24} />
+        ) : (
+          <TextArea rows={7} onChange={onChange} placeholder={placeholder} required />
+        )}
+      </InlineField>
+      {hasCert && (
+        <Button variant="secondary" onClick={onClick} style={{ marginLeft: 4 }}>
+          Reset
+        </Button>
       )}
-    </InlineField>
+    </InlineFieldRow>
   );
 };

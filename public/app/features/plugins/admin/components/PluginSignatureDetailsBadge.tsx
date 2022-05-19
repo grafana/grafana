@@ -1,6 +1,7 @@
-import React from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
+import React from 'react';
+
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 import { useStyles2, Icon, Badge, IconName } from '@grafana/ui';
 

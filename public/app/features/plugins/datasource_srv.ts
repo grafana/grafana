@@ -1,5 +1,11 @@
-// Services & Utils
-import { importDataSourcePlugin } from './plugin_loader';
+import {
+  AppEvents,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  DataSourceSelectItem,
+  ScopedVars,
+} from '@grafana/data';
 import {
   GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
@@ -9,25 +15,18 @@ import {
   getLegacyAngularInjector,
   getBackendSrv,
 } from '@grafana/runtime';
-// Types
-import {
-  AppEvents,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
-} from '@grafana/data';
-// Pretend Datasource
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
   ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
+
 import { DataSourceVariableModel } from '../variables/types';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+
+import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -212,6 +211,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
+      if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
+        return false;
+      }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
@@ -308,7 +310,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ annotations: true, variables: true }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -321,7 +323,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -345,5 +347,3 @@ export function variableInterpolation(value: any[]) {
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-export default DatasourceSrv;

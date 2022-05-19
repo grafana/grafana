@@ -1,15 +1,19 @@
 import React, { PureComponent } from 'react';
-// Components
-import Page from 'app/core/components/Page/Page';
-import { PluginSettings } from './PluginSettings';
-import BasicSettings from './BasicSettings';
-import ButtonRow from './ButtonRow';
-// Services & Utils
-import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
+import { connect, ConnectedProps } from 'react-redux';
 
-// Actions & selectors
-import { getDataSource, getDataSourceMeta } from '../state/selectors';
+import { DataSourceSettings, urlUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Alert, Button } from '@grafana/ui';
+import { cleanUpAction } from 'app/core/actions/cleanUp';
+import appEvents from 'app/core/app_events';
+import Page from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
+import { StoreState, AccessControlAction } from 'app/types/';
+
+import { ShowConfirmModalEvent } from '../../../types/events';
 import {
   deleteDataSource,
   initDataSourceSettings,
@@ -17,21 +21,14 @@ import {
   testDataSource,
   updateDataSource,
 } from '../state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
-
-// Types
-import { StoreState, AccessControlAction } from 'app/types/';
-import { DataSourceSettings, urlUtil } from '@grafana/data';
-import { Alert, Button } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
-import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
-import { selectors } from '@grafana/e2e-selectors';
+import { getDataSource, getDataSourceMeta } from '../state/selectors';
+
+import BasicSettings from './BasicSettings';
+import ButtonRow from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { connect, ConnectedProps } from 'react-redux';
-import { cleanUpAction } from 'app/core/actions/cleanUp';
-import { ShowConfirmModalEvent } from '../../../types/events';
+import { PluginSettings } from './PluginSettings';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

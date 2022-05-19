@@ -11,20 +11,28 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	var dashID int64
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
+	}
+
+	if dashID == 0 {
+		dashID = dash.Id
 	}
 
 	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
@@ -56,10 +64,12 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return response.JSON(200, filteredAcls)
+	return response.JSON(http.StatusOK, filteredAcls)
 }
 
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+	var dashID int64
+	var err error
 	apiCmd := dtos.UpdateDashboardAclCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -68,14 +78,21 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	dashUID := web.Params(c.Req)[":uid"]
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
+	}
+
+	if dashUID != "" {
+		dashID = dash.Id
 	}
 
 	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
@@ -115,12 +132,12 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !hs.AccessControl.IsDisabled() {
 		old, err := g.GetAcl()
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Id, false, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Uid, false, items, old); err != nil {
 			return response.Error(500, "Failed to update permissions", err)
 		}
 		return response.Success("Dashboard permissions updated")
@@ -138,7 +155,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 }
 
 // updateDashboardAccessControl is used for api backward compatibility
-func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
@@ -186,13 +203,17 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 		}
 	}
 
-	svc := hs.permissionServices.GetDashboardService()
 	if isFolder {
-		svc = hs.permissionServices.GetFolderService()
+		if _, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+			return err
+		}
+		return nil
 	}
 
-	_, err := svc.SetPermissions(ctx, orgID, strconv.FormatInt(dashID, 10), commands...)
-	return err
+	if _, err := hs.dashboardPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {

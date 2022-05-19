@@ -1,27 +1,25 @@
 import React, { useState } from 'react';
-import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
-import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
-import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
-import { AngularEditorLoader } from './AngularEditorLoader';
-import { selectors } from '@grafana/e2e-selectors';
 
-export const newAnnotation: AnnotationQuery = {
-  name: 'New annotation',
-  enable: true,
-  datasource: null,
-  iconColor: 'red',
-};
+import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
+import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+
+import { DashboardModel } from '../../state/DashboardModel';
+
+import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   editIdx: number;
   dashboard: DashboardModel;
 };
 
+export const newAnnotationName = 'New annotation';
+
 export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
-  const [annotation, setAnnotation] = useState(editIdx !== null ? dashboard.annotations.list[editIdx] : newAnnotation);
+  const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
 
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
@@ -44,7 +42,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     onUpdate({
       ...annotation,
-      datasource: ds.name,
+      datasource: getDataSourceRef(ds),
     });
   };
 
@@ -63,7 +61,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     });
   };
 
-  const isNewAnnotation = annotation.name === newAnnotation.name;
+  const isNewAnnotation = annotation.name === newAnnotationName;
 
   return (
     <div>

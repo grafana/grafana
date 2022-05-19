@@ -1,4 +1,5 @@
 import { isString } from 'lodash';
+
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
@@ -22,8 +23,8 @@ export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef 
  *
  * @public
  */
-export function isDataSourceRef(ref: DataSourceRef | string | null): ref is DataSourceRef {
-  return typeof ref === 'object' && (typeof ref?.uid === 'string' || typeof ref?.uid === 'undefined');
+export function isDataSourceRef(ref: DataSourceRef | string | null | undefined): ref is DataSourceRef {
+  return typeof ref === 'object' && typeof ref?.uid === 'string';
 }
 
 /**

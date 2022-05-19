@@ -35,12 +35,11 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, objectType string,
 	var result *commentmodel.Comment
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		group := commentmodel.CommentGroup{
-			OrgId:      orgID,
-			ObjectType: objectType,
-			ObjectId:   objectID,
-		}
-		has, err := dbSession.Get(&group)
+		var group commentmodel.CommentGroup
+		has, err := dbSession.NoAutoCondition().Where(
+			"org_id=? AND object_type=? AND object_id=?",
+			orgID, objectType, objectID,
+		).Get(&group)
 		if err != nil {
 			return err
 		}
@@ -49,6 +48,9 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, objectType string,
 
 		groupID := group.Id
 		if !has {
+			group.OrgId = orgID
+			group.ObjectType = objectType
+			group.ObjectId = objectID
 			group.Created = nowUnix
 			group.Updated = nowUnix
 			group.Settings = commentmodel.Settings{}
@@ -95,12 +97,11 @@ func (s *sqlStorage) Get(ctx context.Context, orgID int64, objectType string, ob
 	}
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		group := commentmodel.CommentGroup{
-			OrgId:      orgID,
-			ObjectType: objectType,
-			ObjectId:   objectID,
-		}
-		has, err := dbSession.Get(&group)
+		var group commentmodel.CommentGroup
+		has, err := dbSession.NoAutoCondition().Where(
+			"org_id=? AND object_type=? AND object_id=?",
+			orgID, objectType, objectID,
+		).Get(&group)
 		if err != nil {
 			return err
 		}

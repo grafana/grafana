@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
@@ -29,7 +31,7 @@ type SecretsService struct {
 
 	currentProviderID secrets.ProviderID
 	providers         map[secrets.ProviderID]secrets.Provider
-	dataKeyCache      map[string]dataKeyCacheItem
+	dataKeyCache      *dataKeyCache
 	log               log.Logger
 }
 
@@ -62,6 +64,9 @@ func ProvideSecretsService(
 
 	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
+	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	cache := newDataKeyCache(ttl)
+
 	s := &SecretsService{
 		store:             store,
 		enc:               enc,
@@ -69,7 +74,7 @@ func ProvideSecretsService(
 		usageStats:        usageStats,
 		providers:         providers,
 		currentProviderID: currentProviderID,
-		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		dataKeyCache:      cache,
 		features:          features,
 		log:               logger,
 	}
@@ -115,11 +120,6 @@ func (s *SecretsService) registerUsageMetrics() {
 	})
 }
 
-type dataKeyCacheItem struct {
-	expiry  time.Time
-	dataKey []byte
-}
-
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
@@ -132,11 +132,20 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
+	var err error
+	defer func() {
+		opsCounter.With(prometheus.Labels{
+			"success":   strconv.FormatBool(err == nil),
+			"operation": OpEncrypt,
+		}).Inc()
+	}()
+
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
 	keyName := s.keyName(scope)
 
-	dataKey, err := s.dataKey(ctx, keyName)
+	var dataKey []byte
+	dataKey, err = s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
 			dataKey, err = s.newDataKey(ctx, keyName, scope, sess)
@@ -148,7 +157,8 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		}
 	}
 
-	encrypted, err := s.enc.Encrypt(ctx, payload, string(dataKey))
+	var encrypted []byte
+	encrypted, err = s.enc.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +186,17 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	}
 
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
+	var err error
+	defer func() {
+		opsCounter.With(prometheus.Labels{
+			"success":   strconv.FormatBool(err == nil),
+			"operation": OpDecrypt,
+		}).Inc()
+	}()
+
 	if len(payload) == 0 {
-		return nil, fmt.Errorf("unable to decrypt empty payload")
+		err = fmt.Errorf("unable to decrypt empty payload")
+		return nil, err
 	}
 
 	var dataKey []byte
@@ -189,12 +208,13 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{'#'})
 		if endOfKey == -1 {
-			return nil, fmt.Errorf("could not find valid key in encrypted payload")
+			err = fmt.Errorf("could not find valid key in encrypted payload")
+			return nil, err
 		}
 		b64Key := payload[:endOfKey]
 		payload = payload[endOfKey+1:]
 		key := make([]byte, b64.DecodedLen(len(b64Key)))
-		_, err := b64.Decode(key, b64Key)
+		_, err = b64.Decode(key, b64Key)
 		if err != nil {
 			return nil, err
 		}
@@ -206,7 +226,10 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		}
 	}
 
-	return s.enc.Decrypt(ctx, payload, string(dataKey))
+	var decrypted []byte
+	decrypted, err = s.enc.Decrypt(ctx, payload, string(dataKey))
+
+	return decrypted, err
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {
@@ -299,20 +322,15 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 4. Cache its unencrypted value and return it
-	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  now().Add(dekTTL),
-		dataKey: dataKey,
-	}
+	s.dataKeyCache.add(name, dataKey)
 
 	return dataKey, nil
 }
 
 // dataKey looks up DEK in cache or database, and decrypts it
 func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, error) {
-	if item, exists := s.dataKeyCache[name]; exists {
-		item.expiry = now().Add(dekTTL)
-		s.dataKeyCache[name] = item
-		return item.dataKey, nil
+	if dataKey, exists := s.dataKeyCache.get(name); exists {
+		return dataKey, nil
 	}
 
 	// 1. get encrypted data key from database
@@ -333,10 +351,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 3. cache data key
-	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  now().Add(dekTTL),
-		dataKey: decrypted,
-	}
+	s.dataKeyCache.add(name, decrypted)
 
 	return decrypted, nil
 }
@@ -348,25 +363,20 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
 	if err != nil {
-		return nil
+		return err
 	}
 
-	// Invalidate cache
-	s.dataKeyCache = make(map[string]dataKeyCacheItem)
-	return err
+	s.dataKeyCache.flush()
+
+	return nil
 }
 
-// These variables are used to test the code
-// responsible for periodically cleaning up
-// data encryption keys cache.
-var (
-	now        = time.Now
-	dekTTL     = 15 * time.Minute
-	gcInterval = time.Minute
-)
-
 func (s *SecretsService) Run(ctx context.Context) error {
-	gc := time.NewTicker(gcInterval)
+	gc := time.NewTicker(
+		s.settings.KeyValue("security.encryption", "data_keys_cache_cleanup_interval").
+			MustDuration(time.Minute),
+	)
+
 	grp, gCtx := errgroup.WithContext(ctx)
 
 	for _, p := range s.providers {
@@ -381,7 +391,7 @@ func (s *SecretsService) Run(ctx context.Context) error {
 		select {
 		case <-gc.C:
 			s.log.Debug("removing expired data encryption keys from cache...")
-			s.removeExpiredItems()
+			s.dataKeyCache.removeExpired()
 			s.log.Debug("done removing expired data encryption keys from cache")
 		case <-gCtx.Done():
 			s.log.Debug("grafana is shutting down; stopping...")
@@ -392,14 +402,6 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			}
 
 			return nil
-		}
-	}
-}
-
-func (s *SecretsService) removeExpiredItems() {
-	for id, dek := range s.dataKeyCache {
-		if dek.expiry.Before(now()) {
-			delete(s.dataKeyCache, id)
 		}
 	}
 }

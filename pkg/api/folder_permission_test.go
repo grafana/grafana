@@ -6,21 +6,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	service "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
@@ -29,10 +28,24 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	folderService := &dashboards.FakeFolderService{}
 	defer folderService.AssertExpectations(t)
 
-	dashboardStore := &database.FakeDashboardStore{}
+	dashboardStore := &dashboards.FakeDashboardStore{}
 	defer dashboardStore.AssertExpectations(t)
 
-	hs := &HTTPServer{Cfg: settings, folderService: folderService, dashboardService: service.ProvideDashboardService(dashboardStore, nil), Features: featuremgmt.WithFeatures()}
+	features := featuremgmt.WithFeatures()
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+
+	hs := &HTTPServer{
+		Cfg:                         settings,
+		Features:                    features,
+		folderService:               folderService,
+		folderPermissionsService:    folderPermissions,
+		dashboardPermissionsService: dashboardPermissions,
+		dashboardService: service.ProvideDashboardService(
+			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
+		),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
+	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderNotFound).Twice()
@@ -342,8 +355,6 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 
 func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {

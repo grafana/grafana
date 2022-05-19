@@ -1,7 +1,10 @@
-import React from 'react';
-import { TextArea } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { TextArea } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import mdx from './TextArea.mdx';
 
 export default {

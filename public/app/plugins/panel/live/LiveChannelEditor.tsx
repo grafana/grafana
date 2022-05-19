@@ -1,6 +1,6 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import {
   LiveChannelScope,
   LiveChannelAddress,
@@ -8,9 +8,10 @@ import {
   StandardEditorProps,
   GrafanaTheme,
 } from '@grafana/data';
+import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { LivePanelOptions } from './types';
-import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
 
@@ -97,19 +98,13 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
         <div>
           <div className={style.dropWrap}>
             <Label>Scope</Label>
-            <Select
-              menuShouldPortal
-              options={scopes}
-              value={scopes.find((s) => s.value === scope)}
-              onChange={this.onScopeChanged}
-            />
+            <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={this.onScopeChanged} />
           </div>
 
           {scope && (
             <div className={style.dropWrap}>
               <Label>Namespace</Label>
               <Select
-                menuShouldPortal
                 options={namespaces}
                 value={
                   namespaces.find((s) => s.value === namespace) ??
@@ -126,7 +121,6 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
             <div className={style.dropWrap}>
               <Label>Path</Label>
               <Select
-                menuShouldPortal
                 options={paths}
                 value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}

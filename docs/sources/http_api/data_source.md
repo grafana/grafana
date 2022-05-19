@@ -1,13 +1,13 @@
 +++
-title = "Data source HTTP API "
+aliases = ["/docs/grafana/latest/http_api/data_source/", "/docs/grafana/latest/http_api/datasource/"]
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
-aliases = ["/docs/grafana/latest/http_api/datasource/"]
+title = "Data source HTTP API "
 +++
 
 # Data source API
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Get all data sources
@@ -604,13 +604,272 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## Query a data source by ID
+## Check data source health by id
 
-Queries a data source having backend implementation.
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source health check API](#check-data-source-health).
+
+`GET /api/datasources/:datasourceId/health`
+
+Makes a call to the health endpoint of data source identified by the given `dashboardId`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/112/health HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
+  "status": "OK"
+}
+```
+
+## Check data source health
+
+`GET /api/datasources/uid/:uid/health`
+
+Makes a call to the health endpoint of data source identified by the given `uid`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/uid/P8045C56BDA891CB2/health HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
+  "status": "OK"
+}
+```
+
+## Fetch data source resources by id
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source resources API](#fetch-data-source-resources).
+
+`GET /api/datasources/:datasourceId/resources/*`
+
+Makes a call to the resources endpoint of data source identified by the given `dashboardId`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/112/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+	{
+		"text": "AutoScalingGroupName",
+		"value": "AutoScalingGroupName",
+		"label": "AutoScalingGroupName"
+	},
+	{
+		"text": "ImageId",
+		"value": "ImageId",
+		"label": "ImageId"
+	},
+	{
+		"text": "InstanceId",
+		"value": "InstanceId",
+		"label": "InstanceId"
+	},
+	{
+		"text": "InstanceType",
+		"value": "InstanceType",
+		"label": "InstanceType"
+	}
+]
+```
+
+## Fetch data source resources
+
+`GET /api/datasources/uid/:uid/resources/*`
+
+Makes a call to the resources endpoint of data source identified by the given `uid`.
+
+### Examples
+
+**Example Request**:
+
+```http
+GET api/datasources/uid/P8045C56BDA891CB2/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+	{
+		"text": "AutoScalingGroupName",
+		"value": "AutoScalingGroupName",
+		"label": "AutoScalingGroupName"
+	},
+	{
+		"text": "ImageId",
+		"value": "ImageId",
+		"label": "ImageId"
+	},
+	{
+		"text": "InstanceId",
+		"value": "InstanceId",
+		"label": "InstanceId"
+	},
+	{
+		"text": "InstanceType",
+		"value": "InstanceType",
+		"label": "InstanceType"
+	}
+]
+```
+
+## Query a data source
+
+Queries a data source having a backend implementation.
+
+`POST /api/ds/query`
+
+> **Note:** Grafana's built-in data sources usually have a backend implementation.
+
+**Example request for the Test data source**:
+
+```http
+POST /api/ds/query HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+   "queries":[
+      {
+         "refId":"A",
+         "scenarioId":"csv_metric_values",
+         "datasource":{
+            "uid":"PD8C576611E62080A"
+         },
+         "format": "table"
+         "maxDataPoints":1848,
+         "intervalMs":200,
+         "stringInput":"1,20,90,30,5,0",
+      }
+   ],
+   "from":"now-5m",
+   "to":"now"
+}
+```
+
+JSON Body schema:
+
+- **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries** – Specifies one or more queries. Must contain at least 1.
+- **queries.datasource.uid** – Specifies the UID of data source to be queried. Each query in the request must have a unique `datasource`.
+- **queries.refId** – Specifies an identifier of the query. Defaults to "A".
+- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Defaults to 1000.
+
+In addition, specific properties of each data source should be added in a request (for example **queries.stringInput** as shown in the request above). To better understand how to form a query for a certain data source, use the Developer Tools in your browser of choice and inspect the HTTP requests being made to `/api/ds/query`.
+
+**Example Test data source time series query response:**
+
+```json
+{
+  "results": {
+    "A": {
+      "frames": [
+        {
+          "schema": {
+            "refId": "A",
+            "fields": [
+              {
+                "name": "time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                }
+              },
+              {
+                "name": "A-series",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "int64",
+                  "nullable": true
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [
+              [1644488152084, 1644488212084, 1644488272084, 1644488332084, 1644488392084, 1644488452084],
+              [1, 20, 90, 30, 5, 0]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Status codes
+
+| Code | Description                                                                                                                                                                      |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200  | All data source queries returned a successful response.                                                                                                                          |
+| 400  | Bad request due to invalid JSON, missing content type, missing or invalid fields, etc. Or one or more data source queries were unsuccessful. Refer to the body for more details. |
+| 403  | Access denied.                                                                                                                                                                   |
+| 404  | Either the data source or plugin required to fulfil the request could not be found.                                                                                              |
+| 500  | Unexpected error. Refer to the body and/or server logs for more details.                                                                                                         |
+
+## Deprecated resources
+
+The following resources have been deprecated. They will be removed in a future release.
+
+### Query a data source by ID
+
+> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
+
+Queries a data source having a backend implementation.
 
 `POST /api/tsdb/query`
 
-> **Note:** Most of Grafana's builtin data sources have backend implementation.
+> **Note:** Grafana's built-in data sources usually have a backend implementation.
 
 **Example Request**:
 
@@ -635,17 +894,16 @@ Content-Type: application/json
 }
 ```
 
-> **Note:** The `from`, `to`, and `queries` properties are required.
-
 JSON Body schema:
 
-- **from/to** – Should be either absolute in epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-1h`.
-- **queries.refId** – Specifies an identifier of the query. Is optional and default to "A".
-- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have an unique `datasourceId`.
-- **queries.maxDataPoints** - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
-- **queries.intervalMs** - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+- **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
+- **queries.refId** – Specifies an identifier of the query. Defaults to "A".
+- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
+- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have a unique `datasourceId`.
+- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Defaults to 100.
+- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Defaults to 1000.
 
-In addition, each data source has its own specific properties that should be added in a request.
+In addition, specific properties of each data source should be added in a request. To better understand how to form a query for a certain data source, use the Developer Tools in your browser of choice and inspect the HTTP requests being made to `/api/tsdb/query`.
 
 **Example request for the MySQL data source:**
 

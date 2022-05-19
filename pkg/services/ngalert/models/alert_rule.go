@@ -18,12 +18,9 @@ var (
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
-	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
-	// ErrRuleGroupNamespaceNotFound
-	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
-	// ErrAlertRuleFailedValidation
-	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
-	// ErrAlertRuleUniqueConstraintViolation
+	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
+	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
+	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
@@ -86,6 +83,15 @@ const (
 	PanelIDAnnotation      = "__panelId__"
 )
 
+var (
+	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
+	InternalLabelNameSet = map[string]struct{}{
+		RuleUIDLabel:      {},
+		NamespaceUIDLabel: {},
+	}
+	InternalAnnotationNameSet = map[string]struct{}{}
+)
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -108,6 +114,36 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+type SchedulableAlertRule struct {
+	UID             string `xorm:"uid"`
+	OrgID           int64  `xorm:"org_id"`
+	IntervalSeconds int64
+	Version         int64
+}
+
+type LabelOption func(map[string]string)
+
+func WithoutInternalLabels() LabelOption {
+	return func(labels map[string]string) {
+		for k := range labels {
+			if _, ok := InternalLabelNameSet[k]; ok {
+				delete(labels, k)
+			}
+		}
+	}
+}
+
+// GetLabels returns the labels specified as part of the alert rule.
+func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
+	labels := alertRule.Labels
+
+	for _, opt := range opts {
+		opt(labels)
+	}
+
+	return labels
 }
 
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
@@ -134,12 +170,33 @@ type AlertRuleKey struct {
 	UID   string
 }
 
+// AlertRuleGroupKey is the identifier of a group of alerts
+type AlertRuleGroupKey struct {
+	OrgID        int64
+	NamespaceUID string
+	RuleGroup    string
+}
+
+func (k AlertRuleGroupKey) String() string {
+	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
+}
+
 func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
+	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetGroupKey returns the identifier of a group the rule belongs to
+func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
+	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
+}
+
+// GetKey returns the alert definitions identifier
+func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
@@ -206,6 +263,7 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
+	RuleGroup     string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
@@ -213,6 +271,12 @@ type ListAlertRulesQuery struct {
 	PanelID      int64
 
 	Result []*AlertRule
+}
+
+type GetAlertRulesForSchedulingQuery struct {
+	ExcludeOrgIDs []int64
+
+	Result []*SchedulableAlertRule
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -224,22 +288,14 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupAlertRulesQuery is the query for listing rule group alert rules
-type ListRuleGroupAlertRulesQuery struct {
-	OrgID int64
-	// Namespace is the folder slug
-	NamespaceUID string
-	RuleGroup    string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-
-	Result []*AlertRule
+// ListRuleGroupsQuery is the query for listing unique rule groups
+// across all organizations
+type ListRuleGroupsQuery struct {
+	Result []string
 }
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
+// for an organization
 type ListOrgRuleGroupsQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string

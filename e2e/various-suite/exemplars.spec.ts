@@ -49,6 +49,9 @@ describe('Exemplars', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
+    // Switch to code editor
+    cy.contains('label', 'Code').click();
+
     // we need to wait for the query-field being lazy-loaded, in two steps:
     // 1. first we wait for the text 'Loading...' to appear
     // 1. then we wait for the text 'Loading...' to disappear

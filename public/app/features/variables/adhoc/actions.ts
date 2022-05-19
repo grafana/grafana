@@ -1,10 +1,20 @@
 import { cloneDeep } from 'lodash';
-import { StoreState, ThunkResult } from 'app/types';
+
+import { DataSourceRef, getDataSourceRef } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
+import { StoreState, ThunkResult } from 'app/types';
+
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { getAdhocVariableEditorState } from '../editor/selectors';
+import { isAdHoc } from '../guard';
+import { variableUpdated } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getLastKey, getNewVariableIndex, getVariable, getVariablesState } from '../state/selectors';
+import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { AddVariable, KeyedVariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   AdHocVariabelFilterUpdate,
   filterAdded,
@@ -13,13 +23,6 @@ import {
   filterUpdated,
   initialAdHocVariableModelState,
 } from './reducer';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
-import { variableUpdated } from '../state/actions';
-import { isAdHoc } from '../guard';
-import { DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { getAdhocVariableEditorState } from '../editor/selectors';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;

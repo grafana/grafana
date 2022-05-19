@@ -1,8 +1,9 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
+
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
   apply(compiler) {
@@ -15,6 +16,16 @@ class CopyUniconsPlugin {
           'unicons/svg/line'
         );
         fs.copySync(srcDir, destDir);
+      }
+
+      let solidDestDir = path.resolve(__dirname, '../../public/img/icons/solid');
+
+      if (!fs.pathExistsSync(solidDestDir)) {
+        let srcDir = path.join(
+          path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
+          'unicons/svg/solid'
+        );
+        fs.copySync(srcDir, solidDestDir);
       }
     });
   }

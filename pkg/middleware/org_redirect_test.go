@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -46,15 +45,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	for _, tc := range testCases {
 		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-				return nil
-			})
-
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
 			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 				return &models.UserToken{
 					UserId:        0,
@@ -72,14 +63,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
-		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-			return fmt.Errorf("")
-		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSetUsingOrgError = fmt.Errorf("")
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{

@@ -1,7 +1,8 @@
 +++
-title = "Upgrade Grafana"
+aliases = ["/docs/grafana/latest/installation/upgrading/"]
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
+title = "Upgrade Grafana"
 weight = 700
 +++
 
@@ -338,7 +339,7 @@ When WebSocket connection is established, Grafana checks the request Origin head
 
 To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
 
-Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) documentation for more information.
+Refer to [Grafana Live configuration]({{< relref "../live/set-up-grafana-live.md" >}}) documentation for more information.
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
@@ -365,7 +366,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field definitions' display name]({{< relref "../panels/standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 
@@ -378,3 +379,16 @@ As of Grafana v8.1, we no longer support unencrypted storage of passwords and ba
 > **Note:** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
 
 To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
+
+## Upgrading to 8.3
+
+In 8.3, Grafana dashboards now reference data sources using an object with `uid` and `type` properties instead of the data source name property. A schema migration is applied when existing dashboards open. If you provision dashboards to multiple Grafana instances, then we recommend that you also provision data sources. You can specify the `uid` to be the same for data sources across your instances.
+If you need to find the `uid` for a data source created in the UI, check the URL of the data source settings page. The URL follows the pattern ` /data source/edit/${uid}`, meaning the last part is the `uid`.
+
+## Upgrading to 8.5
+
+The concept of a `default` data source existed in Grafana since the beginning. However, the meaning and behavior were not clear. The default data source was not just the starting data source for new panels but it was also saved using a special value (null). This made it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
+
+This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
+That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
+Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.

@@ -1,10 +1,9 @@
 import React, { FC } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
-
 import { Button, LinkButton } from '@grafana/ui';
-
-import { AccessControlAction } from 'app/types/';
 import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types/';
 
 export interface Props {
   exploreUrl: string;

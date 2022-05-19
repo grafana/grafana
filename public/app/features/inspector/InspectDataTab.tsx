@@ -1,5 +1,8 @@
+import { css } from '@emotion/css';
+import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
@@ -14,19 +17,18 @@ import {
   transformDataFrame,
   TimeZone,
 } from '@grafana/data';
-import { Button, Container, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Spinner, Table } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { PanelModel } from 'app/features/dashboard/state';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
+import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
+import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { config } from 'app/core/config';
-import { saveAs } from 'file-saver';
-import { css } from '@emotion/css';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
-import { PanelModel } from 'app/features/dashboard/state';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
-import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 
 interface Props {
   isLoading: boolean;
@@ -232,8 +234,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
 
     return (
-      <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
-        <div className={styles.actionsWrapper}>
+      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+        <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
             panel={panel}
@@ -281,7 +283,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
             </Button>
           )}
         </div>
-        <Container grow={1}>
+        <div className={styles.content}>
           <AutoSizer>
             {({ width, height }) => {
               if (width === 0) {
@@ -295,7 +297,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               );
             }}
           </AutoSizer>
-        </Container>
+        </div>
       </div>
     );
   }

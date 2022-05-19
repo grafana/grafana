@@ -1,24 +1,24 @@
-import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
-import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue } from '../../index';
-import { SelectionReference } from './SelectionReference';
-import { Portal } from '../index';
-
-// @ts-ignore
+import { css, cx } from '@emotion/css';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import { Editor } from '@grafana/slate-react';
+import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { Popper as ReactPopper } from 'react-popper';
+import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { Popper as ReactPopper } from 'react-popper';
-import { css, cx } from '@emotion/css';
 
-import { SlatePrism } from '../../slate-plugins';
-import { SCHEMA } from '../../utils/slate';
-import { useStyles2 } from '../../themes';
 import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
-import { getInputStyles } from '../Input/Input';
+import { Editor } from '@grafana/slate-react';
+
+import { makeValue } from '../../index';
+import { SlatePrism } from '../../slate-plugins';
+import { useStyles2 } from '../../themes';
+import { SCHEMA } from '../../utils/slate';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { getInputStyles } from '../Input/Input';
+import { Portal } from '../index';
+
+import { DataLinkSuggestions } from './DataLinkSuggestions';
+import { SelectionReference } from './SelectionReference';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -80,6 +80,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
     const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
     const prevLinkUrl = usePrevious<Value>(linkUrl);
+    const [scrollTop, setScrollTop] = useState(0);
 
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -87,10 +88,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 
     // Used to get the height of the suggestion elements in order to scroll to them.
     const activeRef = useRef<HTMLDivElement>(null);
-    const activeIndexPosition = useMemo(
-      () => getElementPosition(activeRef.current, suggestionsIndex),
-      [suggestionsIndex]
-    );
+    useEffect(() => {
+      setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
+    }, [suggestionsIndex]);
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -183,7 +183,11 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   {({ ref, style, placement }) => {
                     return (
                       <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
-                        <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
+                        <CustomScrollbar
+                          scrollTop={scrollTop}
+                          autoHeightMax="300px"
+                          setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                        >
                           <DataLinkSuggestions
                             activeRef={activeRef}
                             suggestions={stateRef.current.suggestions}

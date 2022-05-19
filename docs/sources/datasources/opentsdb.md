@@ -1,8 +1,8 @@
 +++
-title = "OpenTSDB"
+aliases = ["/docs/grafana/latest/datasources/opentsdb/", "/docs/grafana/latest/features/datasources/opentsdb/", "/docs/grafana/latest/features/opentsdb/"]
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
-aliases = ["/docs/grafana/latest/features/opentsdb", "/docs/grafana/latest/features/datasources/opentsdb/"]
+title = "OpenTSDB"
 weight = 1100
 +++
 

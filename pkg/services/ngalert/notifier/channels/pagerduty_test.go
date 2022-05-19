@@ -119,7 +119,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "pageduty_testing" of type "pagerduty": could not find integration key property in settings`,
+			expInitError: `could not find integration key property in settings`,
 		},
 	}
 
@@ -139,7 +139,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewPagerdutyNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewPagerdutyConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -149,6 +149,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewPagerdutyNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

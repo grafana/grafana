@@ -1,27 +1,51 @@
-import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
-import { UrlQueryMap, urlUtil } from './url';
+import { Location } from 'history';
+
 import { textUtil } from '../text';
+import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
+
+import { UrlQueryMap, urlUtil } from './url';
 
 let grafanaConfig: GrafanaConfig = { appSubUrl: '' } as any;
 let getTimeRangeUrlParams: () => RawTimeRange;
 let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
+
+const maybeParseUrl = (input: string): URL | undefined => {
+  try {
+    return new URL(input);
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  *
  * @param url
  * @internal
  */
-const stripBaseFromUrl = (url: string): string => {
+const stripBaseFromUrl = (urlOrPath: string): string => {
+  // Will only return a URL object if the input is actually a valid URL
+  const parsedUrl = maybeParseUrl(urlOrPath);
+  if (parsedUrl) {
+    // If the input is a URL, and for a different origin that we're on, just bail
+    // and return it. There's no need to strip anything from it
+    if (parsedUrl.origin !== window.location.origin) {
+      return urlOrPath;
+    }
+  }
+
   const appSubUrl = grafanaConfig.appSubUrl ?? '';
   const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
-  const isAbsoluteUrl = url.startsWith('http');
+  const isAbsoluteUrl = urlOrPath.startsWith('http');
+
   let segmentToStrip = appSubUrl;
 
-  if (!url.startsWith('/') || isAbsoluteUrl) {
+  if (!urlOrPath.startsWith('/') || isAbsoluteUrl) {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
-  return url.length > 0 && url.indexOf(segmentToStrip) === 0 ? url.slice(segmentToStrip.length - stripExtraChars) : url;
+  return urlOrPath.length > 0 && urlOrPath.indexOf(segmentToStrip) === 0
+    ? urlOrPath.slice(segmentToStrip.length - stripExtraChars)
+    : urlOrPath;
 };
 
 /**
@@ -37,6 +61,28 @@ const assureBaseUrl = (url: string): string => {
 };
 
 /**
+ *
+ * @param location
+ * @param searchParamsToUpdate
+ * @returns
+ */
+const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<string, any>) => {
+  const searchParams = urlUtil.parseKeyValue(
+    location.search.startsWith('?') ? location.search.substring(1) : location.search
+  );
+  for (const key of Object.keys(searchParamsToUpdate)) {
+    // removing params with null | undefined
+    if (searchParamsToUpdate[key] === null || searchParamsToUpdate[key] === undefined) {
+      delete searchParams[key];
+    } else {
+      searchParams[key] = searchParamsToUpdate[key];
+    }
+  }
+  return urlUtil.renderUrl(location.pathname, searchParams);
+};
+
+/**
+ * @deprecated use `getUrlForPartial` instead
  * Update URL or search param string `init` with new params `partial`.
  */
 const updateSearchParams = (init: string, partial: string) => {
@@ -92,6 +138,7 @@ export const locationUtil = {
     const params = getVariablesUrlParams(scopedVars);
     return urlUtil.toUrlParams(params);
   },
+  getUrlForPartial,
   processUrl: (url: string) => {
     return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   },

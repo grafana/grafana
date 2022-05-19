@@ -1,12 +1,14 @@
-import React from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { locationService } from '@grafana/runtime';
-import { serializeStateToUrlParam } from '@grafana/data';
 import userEvent from '@testing-library/user-event';
-import { splitOpen } from './state/main';
-import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
-import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
+import React from 'react';
+
+import { serializeStateToUrlParam } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
 import { changeDatasource } from './spec/helper/interactions';
+import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
+import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
+import { splitOpen } from './state/main';
 
 type Mock = jest.Mock;
 
@@ -66,7 +68,7 @@ describe('Wrapper', () => {
         range: { from: 'now-1h', to: 'now' },
       }),
     };
-    const { datasources, store } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
@@ -82,11 +84,6 @@ describe('Wrapper', () => {
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
       ...urlParams,
-    });
-
-    expect(store.getState().explore.richHistory[0]).toMatchObject({
-      datasourceName: 'loki',
-      queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });
 
     // We called the data source query method once
@@ -222,7 +219,7 @@ describe('Wrapper', () => {
     };
     setupExplore({ urlParams });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
-    userEvent.click(closeButtons[1]);
+    await userEvent.click(closeButtons[1]);
 
     await waitFor(() => {
       const logsPanels = screen.queryAllByTitle(/Close split pane/i);

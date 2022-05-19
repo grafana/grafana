@@ -1,21 +1,28 @@
 import { ComponentType } from 'react';
 
-export interface NavModelItem {
+export interface NavLinkDTO {
+  id?: string;
   text: string;
-  url?: string;
+  description?: string;
+  section?: NavSection;
   subTitle?: string;
   icon?: string;
   img?: string;
-  id?: string;
-  active?: boolean;
-  hideFromTabs?: boolean;
-  hideFromMenu?: boolean;
-  divider?: boolean;
-  children?: NavModelItem[];
-  breadcrumbs?: NavModelBreadcrumb[];
+  url?: string;
   target?: string;
+  sortWeight?: number;
+  divider?: boolean;
+  hideFromMenu?: boolean;
+  hideFromTabs?: boolean;
+  children?: NavLinkDTO[];
+  highlightText?: string;
+}
+
+export interface NavModelItem extends NavLinkDTO {
+  children?: NavModelItem[];
+  active?: boolean;
+  breadcrumbs?: NavModelBreadcrumb[];
   parentItem?: NavModelItem;
-  section?: NavSection;
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
@@ -23,6 +30,7 @@ export interface NavModelItem {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromNavbar?: boolean;
+  showIconInNavbar?: boolean;
 }
 
 export enum NavSection {

@@ -235,6 +235,9 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Sessi
 func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
+		if opts.ErrorConcurrentLimitReached {
+			return nil, ErrConcurrentLimitReached
+		}
 
 		theme := models.ThemeDark
 		if opts.Theme != "" {
@@ -250,6 +253,9 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		rs.log.Warn("Could not render image, no image renderer found/installed. " +
 			"For image rendering support please install the grafana-image-renderer plugin. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		if opts.ErrorRenderUnavailable {
+			return nil, ErrRenderUnavailable
+		}
 		return rs.renderUnavailableImage(), nil
 	}
 

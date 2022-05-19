@@ -9,6 +9,9 @@ export enum DataFrameType {
   TimeSeriesLong = 'timeseries-long',
   TimeSeriesMany = 'timeseries-many',
 
+  /** Directory listing */
+  DirectoryListing = 'directory-listing',
+
   /**
    * First field is X, the rest are bucket values
    */
@@ -21,4 +24,11 @@ export enum DataFrameType {
    * All values in the grid exist and have regular spacing
    */
   HeatmapScanlines = 'heatmap-scanlines',
+
+  /**
+   *  WIP sparse heatmap support
+   *
+   *  @private
+   */
+  HeatmapSparse = 'heatmap-cells-sparse',
 }

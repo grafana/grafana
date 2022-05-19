@@ -8,12 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -28,28 +26,27 @@ import (
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
-	dashboardService dashboardservice.DashboardProvisioningService,
+	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
+	dashboardService dashboardservice.DashboardService,
 	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
-	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
-		Cfg:                     cfg,
-		SQLStore:                sqlStore,
-		pluginStore:             pluginStore,
-		EncryptionService:       encryptionService,
-		NotificationService:     notificatonService,
-		log:                     log.New("provisioning"),
-		newDashboardProvisioner: dashboards.New,
-		provisionNotifiers:      notifiers.Provision,
-		provisionDatasources:    datasources.Provision,
-		provisionPlugins:        plugins.Provision,
-		dashboardService:        dashboardService,
-		datasourceService:       datasourceService,
-		alertingService:         alertingService,
-		pluginsSettings:         pluginSettings,
-		features:                features,
-		permissionsServices:     permissionsServices,
+		Cfg:                          cfg,
+		SQLStore:                     sqlStore,
+		pluginStore:                  pluginStore,
+		EncryptionService:            encryptionService,
+		NotificationService:          notificatonService,
+		log:                          log.New("provisioning"),
+		newDashboardProvisioner:      dashboards.New,
+		provisionNotifiers:           notifiers.Provision,
+		provisionDatasources:         datasources.Provision,
+		provisionPlugins:             plugins.Provision,
+		dashboardProvisioningService: dashboardProvisioningService,
+		dashboardService:             dashboardService,
+		datasourceService:            datasourceService,
+		alertingService:              alertingService,
+		pluginsSettings:              pluginSettings,
 	}
 	return s, nil
 }
@@ -93,25 +90,24 @@ func newProvisioningServiceImpl(
 }
 
 type ProvisioningServiceImpl struct {
-	Cfg                     *setting.Cfg
-	SQLStore                *sqlstore.SQLStore
-	pluginStore             plugifaces.Store
-	EncryptionService       encryption.Internal
-	NotificationService     *notifications.NotificationService
-	log                     log.Logger
-	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory
-	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
-	provisionDatasources    func(context.Context, string, datasources.Store, utils.OrgStore) error
-	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
-	mutex                   sync.Mutex
-	dashboardService        dashboardservice.DashboardProvisioningService
-	datasourceService       datasourceservice.DataSourceService
-	alertingService         *alerting.AlertNotificationService
-	pluginsSettings         pluginsettings.Service
-	features                featuremgmt.FeatureToggles
-	permissionsServices     accesscontrol.PermissionsServices
+	Cfg                          *setting.Cfg
+	SQLStore                     *sqlstore.SQLStore
+	pluginStore                  plugifaces.Store
+	EncryptionService            encryption.Internal
+	NotificationService          *notifications.NotificationService
+	log                          log.Logger
+	pollingCtxCancel             context.CancelFunc
+	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
+	dashboardProvisioner         dashboards.DashboardProvisioner
+	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
+	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
+	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
+	mutex                        sync.Mutex
+	dashboardProvisioningService dashboardservice.DashboardProvisioningService
+	dashboardService             dashboardservice.DashboardService
+	datasourceService            datasourceservice.DataSourceService
+	alertingService              *alerting.AlertNotificationService
+	pluginsSettings              pluginsettings.Service
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -194,7 +190,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService, ps.SQLStore, ps.features, ps.permissionsServices)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.SQLStore, ps.dashboardService)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

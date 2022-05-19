@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {

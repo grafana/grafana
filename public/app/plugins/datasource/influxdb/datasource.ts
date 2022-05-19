@@ -2,10 +2,9 @@ import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { DataSourceWithBackend, frameToMetricFindValue, getBackendSrv } from '@grafana/runtime';
+
 import {
   AnnotationEvent,
-  AnnotationQueryRequest,
   ArrayVector,
   DataFrame,
   DataQueryError,
@@ -22,16 +21,25 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
+  AnnotationQueryRequest,
 } from '@grafana/data';
-import InfluxSeries from './influx_series';
-import InfluxQueryModel from './influx_query_model';
-import ResponseParser from './response_parser';
-import { InfluxQueryBuilder } from './query_builder';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { buildRawQuery } from './queryUtils';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  frameToMetricFindValue,
+  getBackendSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { FluxQueryEditor } from './components/FluxQueryEditor';
+import InfluxQueryModel from './influx_query_model';
+import InfluxSeries from './influx_series';
+import { buildRawQuery } from './queryUtils';
+import { InfluxQueryBuilder } from './query_builder';
+import ResponseParser from './response_parser';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -353,6 +361,36 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return Promise.reject({
         message: 'Query missing in annotation definition',
       });
+    }
+
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+      // We want to send our query to the backend as a raw query
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        datasource: this.getRef(),
+        query: this.templateSrv.replace(options.annotation.query ?? ''),
+        rawQuery: true,
+      };
+
+      return lastValueFrom(
+        getBackendSrv()
+          .fetch<BackendDataSourceResponse>({
+            url: '/api/ds/query',
+            method: 'POST',
+            data: {
+              from: options.range.from.valueOf().toString(),
+              to: options.range.to.valueOf().toString(),
+              queries: [target],
+            },
+            requestId: options.annotation.name,
+          })
+          .pipe(
+            map(
+              async (res: FetchResponse<BackendDataSourceResponse>) =>
+                await this.responseParser.transformAnnotationResponse(options, res, target)
+            )
+          )
+      );
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });

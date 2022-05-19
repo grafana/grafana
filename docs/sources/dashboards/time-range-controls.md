@@ -1,8 +1,8 @@
 +++
-title = "Time range controls"
+aliases = ["/docs/grafana/latest/dashboards/time-range-controls/", "/docs/grafana/latest/reference/timerange/"]
 keywords = ["grafana", "dashboard", "documentation", "time range"]
-aliases = ["/docs/grafana/latest/reference/timerange/"]
-weight = 7
+title = "Time range controls"
+weight = 13
 +++
 
 # Time range controls
@@ -36,7 +36,7 @@ Here are some examples:
 
 ### Note about Grafana alerting
 
-For Grafana alerting, we do not support are the following syntaxes at this time.
+For Grafana alerting, we do not support the following syntaxes at this time.
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" since this is an absolute timestamp.
@@ -117,7 +117,7 @@ For more advanced time settings, click the **Dashboard settings** (gear) icon at
 
 ## Panel time overrides and timeshift
 
-In [Query options]({{< relref "../panels/reference-query-options.md" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
+In [Query options]({{< relref "../panels/query-options.md" >}}), you can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
 > **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
 

@@ -1,13 +1,17 @@
 import Mousetrap from 'mousetrap';
+
 import 'mousetrap-global-bind';
+import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { locationService } from '@grafana/runtime';
-import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import {
   RemovePanelEvent,
   ShiftTimeEvent,
@@ -16,12 +20,12 @@ import {
   ZoomOutEvent,
   AbsoluteTimeEvent,
 } from '../../types/events';
+import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
-import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
-import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
-import { HelpModal } from '../components/help/HelpModal';
 
 export class KeybindingSrv {
   reset() {
@@ -45,7 +49,7 @@ export class KeybindingSrv {
     this.bind('t r', () => toggleTheme(true));
   }
 
-  private globalEsc() {
+  globalEsc() {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
@@ -200,7 +204,7 @@ export class KeybindingSrv {
       if (dashboard.meta.canSave) {
         appEvents.publish(
           new ShowModalReactEvent({
-            component: SaveDashboardModalProxy,
+            component: SaveDashboardDrawer,
             props: {
               dashboard,
             },

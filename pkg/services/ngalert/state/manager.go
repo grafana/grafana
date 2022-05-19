@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,6 +23,12 @@ import (
 
 var ResendDelay = 30 * time.Second
 
+// AlertInstanceManager defines the interface for querying the current alert instances.
+type AlertInstanceManager interface {
+	GetAll(orgID int64) []*State
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+}
+
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
@@ -30,22 +37,25 @@ type Manager struct {
 	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore     store.RuleStore
-	instanceStore store.InstanceStore
-	sqlStore      sqlstore.Store
+	ruleStore        store.RuleStore
+	instanceStore    store.InstanceStore
+	sqlStore         sqlstore.Store
+	dashboardService dashboards.DashboardService
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore,
-	instanceStore store.InstanceStore, sqlStore sqlstore.Store) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
+	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
+	dashboardService dashboards.DashboardService) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics, externalURL),
-		quit:          make(chan struct{}),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           logger,
-		metrics:       metrics,
-		ruleStore:     ruleStore,
-		instanceStore: instanceStore,
-		sqlStore:      sqlStore,
+		cache:            newCache(logger, metrics, externalURL),
+		quit:             make(chan struct{}),
+		ResendDelay:      ResendDelay, // TODO: make this configurable
+		log:              logger,
+		metrics:          metrics,
+		ruleStore:        ruleStore,
+		instanceStore:    instanceStore,
+		sqlStore:         sqlStore,
+		dashboardService: dashboardService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -70,7 +80,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.GetOrgAlertRules(ctx, &ruleCmd); err != nil {
+		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
@@ -165,6 +175,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
+		Condition:       alertRule.Condition,
 	})
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
@@ -267,7 +278,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 			OrgId: alertRule.OrgID,
 		}
 
-		err = st.sqlStore.GetDashboard(ctx, query)
+		err = st.dashboardService.GetDashboard(ctx, query)
 		if err != nil {
 			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 			return

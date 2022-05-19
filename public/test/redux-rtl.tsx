@@ -1,10 +1,12 @@
-import React from 'react';
-import { render as rtlRender } from '@testing-library/react';
 import { AnyAction, configureStore } from '@reduxjs/toolkit';
 import { ThunkMiddlewareFor } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
+import { render as rtlRender } from '@testing-library/react';
+import React from 'react';
 import { Provider } from 'react-redux';
+
 import { createRootReducer } from 'app/core/reducers/root';
 import { StoreState } from 'app/types';
+
 import { mockNavModel } from './mocks/navModel';
 
 function render(

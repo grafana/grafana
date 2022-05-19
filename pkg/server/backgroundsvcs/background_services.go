@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
+	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,11 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 )
@@ -31,12 +34,14 @@ func ProvideBackgroundServiceRegistry(
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
-	grafanaUpdateChecker *updatechecker.GrafanaService, pluginsUpdateChecker *updatechecker.PluginsService,
-	metrics *metrics.InternalMetricsService, secretsService *secretsManager.SecretsService,
-	remoteCache *remotecache.RemoteCache, thumbnailsService thumbs.Service,
+	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
+	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *plugindashboards.Service, _ *dashboardsnapshots.Service,
-	_ *alerting.AlertNotificationService, _ serviceaccounts.Service, _ *guardian.Provider,
+	_ *dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
+	_ serviceaccounts.Service, _ *guardian.Provider,
+	_ *plugindashboardsservice.DashboardUpdater,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -54,10 +59,15 @@ func ProvideBackgroundServiceRegistry(
 		pluginsUpdateChecker,
 		metrics,
 		usageStats,
+		statsCollector,
 		tracing,
 		remoteCache,
 		secretsService,
-		thumbnailsService)
+		StorageService,
+		thumbnailsService,
+		searchService,
+		entityEventsService,
+	)
 }
 
 // BackgroundServiceRegistry provides background services.

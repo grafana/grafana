@@ -1,9 +1,11 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
-import { DashboardModel } from 'app/features/dashboard/state';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { DashboardModel } from 'app/features/dashboard/state';
 import * as api from 'app/features/manage-dashboards/state/actions';
+
+import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));

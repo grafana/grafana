@@ -20,3 +20,14 @@ package definitions
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
+
+// swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
+//
+// Patch Current Org Prefs.
+//
+// Responses:
+// 200: addOrgUser
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError

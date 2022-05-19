@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -27,10 +27,10 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		ps := models.PluginSetting{
-			Id:             1,
-			JsonData:       map[string]interface{}{},
-			SecureJsonData: encryptedJsonData,
+		ps := pluginsettings.DTO{
+			ID:             1,
+			JSONData:       map[string]interface{}{},
+			SecureJSONData: encryptedJsonData,
 		}
 
 		// Populate cache
@@ -45,7 +45,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		ps.SecureJsonData = encryptedJsonData
+		ps.SecureJSONData = encryptedJsonData
 
 		password, ok = psService.DecryptedValues(&ps)["password"]
 		require.Equal(t, "password", password)
@@ -65,10 +65,10 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		ps := models.PluginSetting{
-			Id:             1,
-			JsonData:       map[string]interface{}{},
-			SecureJsonData: encryptedJsonData,
+		ps := pluginsettings.DTO{
+			ID:             1,
+			JSONData:       map[string]interface{}{},
+			SecureJSONData: encryptedJsonData,
 		}
 
 		// Populate cache
@@ -83,7 +83,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		ps.SecureJsonData = encryptedJsonData
+		ps.SecureJSONData = encryptedJsonData
 		ps.Updated = time.Now()
 
 		password, ok = psService.DecryptedValues(&ps)["password"]

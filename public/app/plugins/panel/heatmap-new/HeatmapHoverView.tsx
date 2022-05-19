@@ -1,10 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 
-import { HeatmapHoverEvent } from './utils';
-import { BucketLayout, HeatmapData } from './fields';
+import {
+  DataFrameType,
+  DataFrameView,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  LinkModel,
+} from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { DataHoverView } from '../geomap/components/DataHoverView';
+
+import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapHoverEvent } from './utils';
 
 type Props = {
   data: HeatmapData;
@@ -26,7 +37,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       const dashboard = getDashboardSrv().getCurrent();
       return dashboard?.formatDate(v, tooltipTimeFormat);
     }
-    return `${v}XX`;
+    return `${v}`;
   };
 
   const xVals = xField?.values.toArray();
@@ -45,7 +56,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       if (yField?.display) {
         return formattedValueToString(yField.display(v));
       }
-      return `${v}YYY`;
+      return `${v}`;
     };
   }
 
@@ -152,6 +163,38 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     [hover.index]
   );
 
+  const renderExemplars = () => {
+    const exemplarIndex = data.exemplarsMappings?.lookup; //?.[hover.index];
+    if (!exemplarIndex || !data.exemplars) {
+      return null;
+    }
+
+    const ids = exemplarIndex[hover.index];
+    if (ids) {
+      const view = new DataFrameView(data.exemplars);
+      return (
+        <ul>
+          {ids.map((id) => (
+            <li key={id}>
+              <pre>{JSON.stringify(view.get(id), null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    // should not show anything... but for debugging
+    return <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>;
+  };
+
+  if (data.heatmap?.meta?.type === DataFrameType.HeatmapSparse) {
+    return (
+      <div>
+        <DataHoverView data={data.heatmap} rowIndex={hover.index} />
+      </div>
+    );
+  }
+
   return (
     <>
       <div>
@@ -170,8 +213,11 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
         <div>
           Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
         </div>
-        <div>Count: {count}</div>
+        <div>
+          {getFieldDisplayName(countField!, data.heatmap)}: {count}
+        </div>
       </div>
+      {renderExemplars()}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (

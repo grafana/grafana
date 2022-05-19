@@ -33,7 +33,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, nil, tmpl)
+		_, err := NewEmailConfig(model)
 		require.Error(t, err)
 	})
 
@@ -46,14 +46,13 @@ func TestEmailNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		emailSender := mockNotificationService()
-
-		emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
+		cfg, err := NewEmailConfig(&NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, emailSender, tmpl)
-
+		})
 		require.NoError(t, err)
+		emailNotifier := NewEmailNotifier(cfg, emailSender, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -266,7 +265,7 @@ func createCoreEmailService(t *testing.T) *notifications.NotificationService {
 	cfg.Smtp.Host = "localhost:1234"
 	mailer := notifications.NewFakeMailer()
 
-	ns, err := notifications.ProvideService(bus, cfg, mailer)
+	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
 	require.NoError(t, err)
 
 	return ns
@@ -284,13 +283,13 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 		settingsJSON.Set("message", messageTmpl)
 	}
 	require.NoError(t, err)
-
-	emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
+	cfg, err := NewEmailConfig(&NotificationChannelConfig{
 		Name:     "ops",
 		Type:     "email",
 		Settings: settingsJSON,
-	}, ns, emailTmpl)
+	})
 	require.NoError(t, err)
+	emailNotifier := NewEmailNotifier(cfg, ns, emailTmpl)
 
 	return emailNotifier
 }

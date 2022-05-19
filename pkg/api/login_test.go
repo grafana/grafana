@@ -13,6 +13,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -28,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -63,22 +64,6 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 		return "", err
 	}
 	return string(responseData), nil
-}
-
-type FakeLogger struct {
-	log.Logger
-}
-
-func (fl *FakeLogger) Debug(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Info(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Warn(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Error(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
@@ -332,7 +317,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		log:              &FakeLogger{},
+		log:              log.NewNopLogger(),
 		Cfg:              setting.NewCfg(),
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
@@ -351,8 +336,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		Email: "",
 	}
 
-	mockAuthenticateUserFunc(user, "", nil)
-	t.Cleanup(resetAuthenticateUserFunc)
+	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -684,8 +668,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			mockAuthenticateUserFunc(c.authUser, c.authModule, c.authErr)
-			t.Cleanup(resetAuthenticateUserFunc)
+			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
@@ -732,13 +715,14 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 	return m.socialConnector, m.err
 }
 
-func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
-	login.AuthenticateUserFunc = func(ctx context.Context, query *models.LoginUserQuery) error {
-		query.User = user
-		query.AuthModule = authmodule
-		return err
-	}
+type fakeAuthenticator struct {
+	ExpectedUser       *models.User
+	ExpectedAuthModule string
+	ExpectedError      error
 }
-func resetAuthenticateUserFunc() {
-	login.AuthenticateUserFunc = login.AuthenticateUser
+
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+	query.User = fa.ExpectedUser
+	query.AuthModule = fa.ExpectedAuthModule
+	return fa.ExpectedError
 }

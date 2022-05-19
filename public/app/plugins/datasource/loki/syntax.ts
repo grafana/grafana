@@ -1,4 +1,5 @@
 import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
 const AGGREGATION_OPERATORS: CompletionItem[] = [
@@ -80,6 +81,13 @@ export const PIPE_OPERATORS: CompletionItem[] = [
     detail: 'unwrap identifier',
     documentation:
       'Take labels and use the values as sample data for metric aggregations. Only available in Loki 2.0+.',
+  },
+  {
+    label: 'unpack',
+    insertText: 'unpack',
+    detail: 'unpack identifier',
+    documentation:
+      'Parses a JSON log line, unpacking all embedded labels in the pack stage. A special property "_entry" will also be used to replace the original log line. Only available in Loki 2.0+.',
   },
   {
     label: 'label_format',

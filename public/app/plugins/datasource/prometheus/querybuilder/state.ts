@@ -1,6 +1,8 @@
 import { CoreApp } from '@grafana/data';
 import store from 'app/core/store';
+
 import { LegendFormatMode, PromQuery } from '../types';
+
 import { QueryEditorMode } from './shared/types';
 
 const queryEditorModeDefaultLocalStorageKey = 'PrometheusQueryEditorModeDefault';
@@ -14,7 +16,7 @@ export function changeEditorMode(query: PromQuery, editorMode: QueryEditorMode, 
   onChange({ ...query, editorMode });
 }
 
-export function getDefaultEditorMode(expr: string) {
+function getDefaultEditorMode(expr: string) {
   // If we already have an expression default to code view
   if (expr != null && expr !== '') {
     return QueryEditorMode.Code;
@@ -35,7 +37,6 @@ export function getDefaultEditorMode(expr: string) {
  * Returns query with defaults, and boolean true/false depending on change was required
  */
 export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
-  // If no expr (ie new query) then default to builder
   let result = query;
 
   if (!query.editorMode) {

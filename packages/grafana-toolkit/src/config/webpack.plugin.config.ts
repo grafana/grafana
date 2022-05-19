@@ -1,19 +1,20 @@
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
+import * as webpack from 'webpack';
+
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const fs = require('fs');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const path = require('path');
+const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const util = require('util');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
-
-import * as webpack from 'webpack';
-import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 export interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -197,7 +198,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       (context, request, callback) => {
         const prefix = 'grafana/';
         if (request.indexOf(prefix) === 0) {
-          return callback(null, request.substr(prefix.length));
+          return callback(null, request.slice(prefix.length));
         }
 
         // @ts-ignore

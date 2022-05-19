@@ -80,7 +80,6 @@ The current team members are:
 - Emil Tullstedt ([Grafana Labs](https://grafana.com/))
 - Erik Sundell ([Grafana Labs](https://grafana.com/))
 - Fredrik Enestad ([Embark Studios](https://www.embark-studios.com/))
-- Hugo Häggmark ([Grafana Labs](https://grafana.com/))
 - Ivana Huckova ([Grafana Labs](https://grafana.com/))
 - Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
 - Jessica Müller ([Grafana Labs](https://grafana.com/))

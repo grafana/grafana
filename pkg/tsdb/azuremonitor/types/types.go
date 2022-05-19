@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
@@ -109,21 +110,29 @@ type AzureResponseTable struct {
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
+		ResourceURI     string `json:"resourceUri"`
+		MetricNamespace string `json:"metricNamespace"`
+		MetricName      string `json:"metricName"`
+
+		Aggregation      string                        `json:"aggregation"`
+		Alias            string                        `json:"alias"`
+		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
+		TimeGrain        string                        `json:"timeGrain"`
+		Top              string                        `json:"top"`
+
+		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
+		// These are used for pre-resource picker queries to reconstruct a resource URI
+		// Deprecated
+		MetricDefinition string `json:"metricDefinition"`
+		// Deprecated
+		ResourceGroup string `json:"resourceGroup"`
+		// Deprecated
+		ResourceName string `json:"resourceName"`
+
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
 		DimensionFilter     string  `json:"dimensionFilter"` // old model
 		Format              string  `json:"format"`
-		MetricDefinition    string  `json:"metricDefinition"`
-		MetricName          string  `json:"metricName"`
-		MetricNamespace     string  `json:"metricNamespace"`
-		ResourceGroup       string  `json:"resourceGroup"`
-		ResourceName        string  `json:"resourceName"`
-		TimeGrain           string  `json:"timeGrain"`
-		Top                 string  `json:"top"`
-
-		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }
@@ -131,17 +140,23 @@ type AzureMonitorJSONQuery struct {
 // AzureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
 // queries like "BlobType", "eq", "*"
 type AzureMonitorDimensionFilter struct {
-	Dimension string `json:"dimension"`
-	Operator  string `json:"operator"`
-	Filter    string `json:"filter"`
+	Dimension string   `json:"dimension"`
+	Operator  string   `json:"operator"`
+	Filters   []string `json:"filters,omitempty"`
+	// Deprecated: To support multiselection, filters are passed in a slice now. Also migrated in frontend.
+	Filter *string `json:"filter,omitempty"`
 }
 
-func (a AzureMonitorDimensionFilter) String() string {
-	filter := "*"
-	if a.Filter != "" {
-		filter = a.Filter
+func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
+	var filterStrings []string
+	for _, filter := range a.Filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
 	}
-	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
+	if a.Operator == "eq" {
+		return strings.Join(filterStrings, " or ")
+	} else {
+		return strings.Join(filterStrings, " and ")
+	}
 }
 
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.

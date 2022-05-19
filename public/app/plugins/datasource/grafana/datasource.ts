@@ -1,11 +1,7 @@
+import { isString } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
-import {
-  DataSourceWithBackend,
-  getBackendSrv,
-  getGrafanaLiveSrv,
-  getTemplateSrv,
-  StreamingFrameOptions,
-} from '@grafana/runtime';
+import { map } from 'rxjs/operators';
+
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
@@ -19,13 +15,19 @@ import {
   parseLiveChannelAddress,
   toDataFrame,
 } from '@grafana/data';
-
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
-import AnnotationQueryEditor from './components/AnnotationQueryEditor';
-import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-import { isString } from 'lodash';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  StreamingFrameOptions,
+} from '@grafana/runtime';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
-import { map } from 'rxjs/operators';
+
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+
+import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 
 let counter = 100;
 
@@ -48,7 +50,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
         let datasource: DataSourceRef | undefined | null = undefined;
         if (isString(anno.datasource)) {
-          const ref = migrateDatasourceNameToRef(anno.datasource);
+          const ref = migrateDatasourceNameToRef(anno.datasource, { returnDefaultAsNull: false });
           if (ref) {
             datasource = ref;
           }

@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -105,7 +107,7 @@ func TestWarmStateCache(t *testing.T) {
 		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore, &dashboards.FakeDashboardService{})
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -157,7 +159,7 @@ func TestAlertingTicker(t *testing.T) {
 			disabledOrgID: {},
 		},
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore, &dashboards.FakeDashboardService{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
@@ -200,7 +202,7 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	key := alerts[0].GetKey()
-	err := dbstore.DeleteAlertRuleByUID(ctx, alerts[0].OrgID, alerts[0].UID)
+	err := dbstore.DeleteAlertRulesByUID(ctx, alerts[0].OrgID, alerts[0].UID)
 	require.NoError(t, err)
 	t.Logf("alert rule: %v deleted", key)
 

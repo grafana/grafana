@@ -32,11 +32,10 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	for i := 0; i < b.N; i++ {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
 		acFilter, err := accesscontrol.Filter(
-			context.Background(),
-			"data_source.id",
-			"datasources",
-			"datasources:read",
 			&models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(permissions)}},
+			"data_source.id",
+			"datasources:id:",
+			"datasources:read",
 		)
 		require.NoError(b, err)
 

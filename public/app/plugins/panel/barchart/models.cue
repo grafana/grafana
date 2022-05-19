@@ -32,14 +32,14 @@ Panel: {
                     showValue: ui.VisibilityMode
                     barWidth: number
                     groupWidth: number
-                }
+                } @cuetsy(kind="interface")
                 PanelFieldConfig: {
                     ui.AxisConfig
                     ui.HideableFieldConfig
                     lineWidth?: number
                     fillOpacity?: number
                     gradientMode?: ui.GraphGradientMode
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

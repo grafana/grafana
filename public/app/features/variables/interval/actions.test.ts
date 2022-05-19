@@ -1,26 +1,28 @@
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { dateTime } from '@grafana/data';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
-import { createIntervalOptions } from './reducer';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { afterEach, beforeEach } from '../../../../test/lib/common';
+import { notifyApp } from '../../../core/actions';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { TemplateSrv } from '../../templating/template_srv';
+import { variableAdapters } from '../adapters';
+import { intervalBuilder } from '../shared/testing/builders';
+import { updateOptions } from '../state/actions';
+import { getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import {
   addVariable,
   setCurrentVariableValue,
   variableStateFailed,
   variableStateFetching,
 } from '../state/sharedReducer';
-import { variableAdapters } from '../adapters';
-import { createIntervalVariableAdapter } from './adapter';
-import { dateTime } from '@grafana/data';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { TemplateSrv } from '../../templating/template_srv';
-import { intervalBuilder } from '../shared/testing/builders';
-import { updateOptions } from '../state/actions';
-import { notifyApp } from '../../../core/actions';
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { variablesInitTransaction } from '../state/transactionReducer';
-import { afterEach, beforeEach } from '../../../../test/lib/common';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
+import { createIntervalVariableAdapter } from './adapter';
+import { createIntervalOptions } from './reducer';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);

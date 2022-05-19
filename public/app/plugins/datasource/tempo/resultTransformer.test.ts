@@ -1,3 +1,5 @@
+import { collectorTypes } from '@opentelemetry/exporter-collector';
+
 import {
   ArrayVector,
   FieldType,
@@ -6,6 +8,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
 } from '@grafana/data';
+
 import {
   SearchResponse,
   createTableFrame,
@@ -21,7 +24,6 @@ import {
   otlpResponse,
   tempoSearchResponse,
 } from './testResponse';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
@@ -99,6 +101,9 @@ describe('createTableFrameFromSearch()', () => {
     const frame = createTableFrameFromSearch(tempoSearchResponse.traces as SearchResponse[], defaultSettings);
     expect(frame.fields[0].name).toBe('traceID');
     expect(frame.fields[0].values.get(0)).toBe('e641dcac1c3a0565');
+
+    // TraceID must have unit = 'string' to prevent the ID from rendering as Infinity
+    expect(frame.fields[0].config.unit).toBe('string');
 
     expect(frame.fields[1].name).toBe('traceName');
     expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');

@@ -1,6 +1,9 @@
 import React, { FC } from 'react';
+
 import { useStyles2 } from '@grafana/ui';
+
 import { FormAmRoute } from '../../types/amroutes';
+
 import { getGridStyles } from './gridStyles';
 
 export interface AmRootRouteReadProps {

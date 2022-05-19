@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -26,13 +26,13 @@ type setUpConf struct {
 	aclMockResp []*models.DashboardAclInfoDTO
 }
 
-type mockSearchService struct{ ExpectedResult search.HitList }
+type mockSearchService struct{ ExpectedResult models.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
 	q.Result = mss.ExpectedResult
 	return nil
 }
-func (mss *mockSearchService) SortOptions() []search.SortOption { return nil }
+func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
 	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
@@ -46,15 +46,9 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-		query.Result = aclMockResp
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-		query.Result = []*models.TeamDTO{}
-		return nil
-	})
+	store.ExpectedDashboardAclInfoList = aclMockResp
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	guardian.InitLegacyGuardian(store)
 	return hs
 }
 
@@ -99,9 +93,9 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET",
 			"/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery",
 			"/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				hs.SearchService.(*mockSearchService).ExpectedResult = search.HitList{
-					&search.Hit{ID: 1},
-					&search.Hit{ID: 2},
+				hs.SearchService.(*mockSearchService).ExpectedResult = models.HitList{
+					&models.Hit{ID: 1},
+					&models.Hit{ID: 2},
 				}
 
 				sc.handlerFunc = hs.GetAlerts
@@ -129,18 +123,12 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 }
 
 func callPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
-		return nil
-	})
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
 func postAlertScenario(t *testing.T, hs *HTTPServer, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.PauseAlertCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)

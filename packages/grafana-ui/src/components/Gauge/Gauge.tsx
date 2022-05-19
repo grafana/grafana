@@ -1,5 +1,6 @@
-import React, { PureComponent } from 'react';
 import $ from 'jquery';
+import React, { PureComponent } from 'react';
+
 import {
   DisplayValue,
   formattedValueToString,
@@ -14,6 +15,7 @@ import {
   FALLBACK_COLOR,
   TextDisplayOptions,
 } from '@grafana/data';
+
 import { Themeable } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
 

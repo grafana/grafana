@@ -1,8 +1,8 @@
 +++
-title = "HTTP Preferences API "
+aliases = ["/docs/grafana/latest/http_api/preferences/"]
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "preferences"]
-aliases = ["/docs/grafana/latest/http_api/preferences/"]
+title = "HTTP Preferences API "
 +++
 
 # User and Org Preferences API
@@ -35,7 +35,19 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"theme":"","homeDashboardId":0,"timezone":""}
+{
+    "theme": "",
+    "homeDashboardId": 217,
+    "homeDashboardUID": "jcIIG-07z",
+    "timezone": "utc",
+    "weekStart": "",
+    "navbar": {
+        "savedItems": null
+    },
+    "queryHistory": {
+        "homeTab": ""
+    }
+}
 ```
 
 ## Update Current User Prefs
@@ -52,8 +64,36 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "theme": "",
-  "homeDashboardId":0,
+  "homeDashboardUID":"home",
   "timezone":"utc"
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
+
+{"message":"Preferences updated"}
+```
+
+## Patch Current User Prefs
+
+Update one or more preferences without modifying the others.
+
+`PATCH /api/user/preferences`
+
+**Example Request**:
+
+```http
+PATCH /api/user/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "theme": "dark"
 }
 ```
 
@@ -85,7 +125,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"theme":"","homeDashboardId":0,"timezone":""}
+{
+    "theme": "",
+    "homeDashboardId": 0,
+    "timezone": "",
+    "weekStart": "",
+    "navbar": {
+        "savedItems": null
+    },
+    "queryHistory": {
+        "homeTab": ""
+    }
+}
 ```
 
 ## Update Current Org Prefs
@@ -102,8 +153,36 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "theme": "",
-  "homeDashboardId":0,
+  "homeDashboardUID":"home",
   "timezone":"utc"
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
+
+{"message":"Preferences updated"}
+```
+
+## Patch Current Org Prefs
+
+Update one or more preferences without modifying the others.
+
+`PATCH /api/org/preferences`
+
+**Example Request**:
+
+```http
+PATCH /api/org/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "theme": "dark"
 }
 ```
 

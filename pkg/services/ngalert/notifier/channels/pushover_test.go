@@ -112,13 +112,13 @@ func TestPushoverNotifier(t *testing.T) {
 			settings: `{
 				"apiToken": "<apiToken>"
 			}`,
-			expInitError: `failed to validate receiver "pushover_testing" of type "pushover": user key not found`,
+			expInitError: `user key not found`,
 		}, {
 			name: "Missing api key",
 			settings: `{
 				"userKey": "<userKey>"
 			}`,
-			expInitError: `failed to validate receiver "pushover_testing" of type "pushover": API token not found`,
+			expInitError: `API token not found`,
 		},
 	}
 
@@ -147,7 +147,7 @@ func TestPushoverNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewPushoverNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewPushoverConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -157,6 +157,7 @@ func TestPushoverNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewPushoverNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

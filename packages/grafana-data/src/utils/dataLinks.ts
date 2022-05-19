@@ -10,6 +10,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '../types';
+
 import { locationUtil } from './location';
 import { serializeStateToUrlParam } from './url';
 

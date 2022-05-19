@@ -28,6 +28,7 @@ type LoginCommand struct {
 type CurrentUser struct {
 	IsSignedIn                 bool               `json:"isSignedIn"`
 	Id                         int64              `json:"id"`
+	ExternalUserId             string             `json:"externalUserId"`
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
@@ -63,7 +64,7 @@ type MetricRequest struct {
 	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
 	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
 	// required: true
-	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasourceId": 86, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasource":{ "uid":"PD8C576611E62080A" }, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`
@@ -78,11 +79,20 @@ func GetGravatarUrl(text string) string {
 		return ""
 	}
 
+	hash, _ := GetGravatarHash(text)
+	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hash)
+}
+
+func GetGravatarHash(text string) ([]byte, bool) {
+	if text == "" {
+		return make([]byte, 0), false
+	}
+
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
 		mlog.Warn("Failed to hash text", "err", err)
 	}
-	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+	return hasher.Sum(nil), true
 }
 
 func GetGravatarUrlWithDefault(text string, defaultText string) string {

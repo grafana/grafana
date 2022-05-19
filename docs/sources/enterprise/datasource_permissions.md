@@ -1,8 +1,8 @@
 +++
-title = "Data source permissions"
+aliases = ["/docs/grafana/latest/enterprise/datasource_permissions/", "/docs/sources/permissions/datasource_permissions/"]
 description = "Grafana Datasource Permissions Guide"
-aliases = ["docs/sources/permissions/datasource_permissions.md"]
 keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
+title = "Data source permissions"
 weight = 500
 +++
 

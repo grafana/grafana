@@ -2,9 +2,12 @@ package accesscontrol
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Options struct {
@@ -12,10 +15,12 @@ type Options struct {
 }
 
 type AccessControl interface {
+	registry.ProvidesUsageStats
+
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
-	// GetUserPermissions returns user permissions.
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
 	// GetUserRoles returns user roles.
@@ -28,20 +33,31 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
 type PermissionsProvider interface {
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type PermissionsServices interface {
-	GetTeamService() PermissionsService
-	GetFolderService() PermissionsService
-	GetDashboardService() PermissionsService
-	GetDataSourceService() PermissionsService
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
 }
 
 type PermissionsService interface {
@@ -113,6 +129,11 @@ var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
+// ReqViewer returns true if the current user has models.ROLE_VIEWER. Note: this can be anonymous user as well
+var ReqViewer = func(c *models.ReqContext) bool {
+	return c.OrgRole.Includes(models.ROLE_VIEWER)
+}
+
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN
 }
@@ -163,32 +184,76 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource string, ids map[string]bool) map[string]Metadata {
-	allScope := GetResourceAllScope(resource)
-	allIDScope := GetResourceAllIDScope(resource)
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return map[string]Metadata{}
+	}
 
-	// prefix of ID based scopes (resource:id)
-	idPrefix := Scope(resource, "id")
-	// index of the ID in the scope
-	idIndex := len(idPrefix) + 1
+	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
+	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
+
+	// index of the attribute in the scope
+	attributeIndex := len(attributePrefix)
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
+
 	for action, scopes := range permissions {
 		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allIDScope {
+			if scope == "*" || scope == allScope || scope == allAttributeScope {
 				// Add global action to all resources
-				for id := range ids {
+				for id := range resourceIDs {
 					result = addActionToMetadata(result, action, id)
 				}
 			} else {
-				if len(scope) > idIndex && strings.HasPrefix(scope, idPrefix) && ids[scope[idIndex:]] {
+				if len(scope) > attributeIndex && strings.HasPrefix(scope, attributePrefix) && resourceIDs[scope[attributeIndex:]] {
 					// Add action to a specific resource
-					result = addActionToMetadata(result, action, scope[idIndex:])
+					result = addActionToMetadata(result, action, scope[attributeIndex:])
 				}
 			}
 		}
 	}
 
 	return result
+}
+
+// MergeMeta will merge actions matching prefix of second metadata into first
+func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
+	if first == nil {
+		first = Metadata{}
+	}
+
+	for key := range second {
+		if strings.HasPrefix(key, prefix) {
+			first[key] = true
+		}
+	}
+	return first
+}
+
+func ManagedUserRoleName(userID int64) string {
+	return fmt.Sprintf("managed:users:%d:permissions", userID)
+}
+
+func ManagedTeamRoleName(teamID int64) string {
+	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
+}
+
+func ManagedBuiltInRoleName(builtInRole string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
+}
+
+func extractPrefixes(prefix string) (string, string, bool) {
+	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	rootPrefix := parts[0] + ":"
+	attributePrefix := rootPrefix + parts[1] + ":"
+	return rootPrefix, attributePrefix, true
+}
+
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.RBACEnabled
 }

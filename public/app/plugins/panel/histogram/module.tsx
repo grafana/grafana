@@ -1,10 +1,10 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { HistogramPanel } from './HistogramPanel';
+import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
+
+import { HistogramPanel } from './HistogramPanel';
 import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { originalDataHasHistogram } from './utils';
-
-import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
@@ -23,6 +23,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
         description: histogramFieldInfo.bucketSize.description,
         settings: {
           placeholder: 'Auto',
+          min: 0,
         },
         defaultValue: defaultPanelOptions.bucketSize,
         showIf: (opts, data) => !originalDataHasHistogram(data),
@@ -33,6 +34,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
         description: histogramFieldInfo.bucketOffset.description,
         settings: {
           placeholder: '0',
+          min: 0,
         },
         defaultValue: defaultPanelOptions.bucketOffset,
         showIf: (opts, data) => !originalDataHasHistogram(data),

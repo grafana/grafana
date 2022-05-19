@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, InlineField, InlineFieldRow, InlineLabel, Input, useStyles } from '@grafana/ui';
 import React, { useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Icon, InlineField, InlineFieldRow, InlineLabel, Input, useStyles } from '@grafana/ui';
+
 import { JaegerQuery } from '../types';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';

@@ -1,3 +1,5 @@
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
+
 import { RichHistoryQuery } from '../../types';
 
 /**
@@ -31,7 +33,7 @@ export type RichHistoryStorageWarningDetails = {
  * @alpha
  */
 export default interface RichHistoryStorage {
-  getRichHistory(): Promise<RichHistoryQuery[]>;
+  getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]>;
 
   /**
    * Creates new RichHistoryQuery, returns object with unique id and created date
@@ -44,4 +46,7 @@ export default interface RichHistoryStorage {
   deleteRichHistory(id: string): Promise<void>;
   updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery>;
   updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery>;
+
+  getSettings(): Promise<RichHistorySettings>;
+  updateSettings(settings: RichHistorySettings): Promise<void>;
 }

@@ -1,9 +1,13 @@
 package state
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -229,4 +233,75 @@ func TestSetEndsAt(t *testing.T) {
 			assert.Equal(t, tc.expected, s.EndsAt)
 		})
 	}
+}
+
+func TestGetLastEvaluationValuesForCondition(t *testing.T) {
+	genState := func(results []Evaluation) *State {
+		return &State{
+			Results: results,
+		}
+	}
+
+	t.Run("should return nil if no results", func(t *testing.T) {
+		result := genState(nil).GetLastEvaluationValuesForCondition()
+		require.Nil(t, result)
+	})
+	t.Run("should return value of the condition of the last result", func(t *testing.T) {
+		expected := rand.Float64()
+		evals := []Evaluation{
+			{
+				EvaluationTime:  time.Time{},
+				EvaluationState: 0,
+				Values: map[string]*float64{
+					"A": ptr.Float64(rand.Float64()),
+				},
+				Condition: "A",
+			},
+			{
+				EvaluationTime:  time.Time{},
+				EvaluationState: 0,
+				Values: map[string]*float64{
+					"B": ptr.Float64(rand.Float64()),
+					"A": ptr.Float64(expected),
+				},
+				Condition: "A",
+			},
+		}
+		result := genState(evals).GetLastEvaluationValuesForCondition()
+		require.Len(t, result, 1)
+		require.Contains(t, result, "A")
+		require.Equal(t, result["A"], expected)
+	})
+	t.Run("should return empty map if there is no value for condition", func(t *testing.T) {
+		evals := []Evaluation{
+			{
+				EvaluationTime:  time.Time{},
+				EvaluationState: 0,
+				Values: map[string]*float64{
+					"C": ptr.Float64(rand.Float64()),
+				},
+				Condition: "A",
+			},
+		}
+		result := genState(evals).GetLastEvaluationValuesForCondition()
+		require.NotNil(t, result)
+		require.Len(t, result, 0)
+	})
+	t.Run("should use NaN if value is not defined", func(t *testing.T) {
+		evals := []Evaluation{
+			{
+				EvaluationTime:  time.Time{},
+				EvaluationState: 0,
+				Values: map[string]*float64{
+					"A": nil,
+				},
+				Condition: "A",
+			},
+		}
+		result := genState(evals).GetLastEvaluationValuesForCondition()
+		require.NotNil(t, result)
+		require.Len(t, result, 1)
+		require.Contains(t, result, "A")
+		require.Truef(t, math.IsNaN(result["A"]), "expected NaN but got %v", result["A"])
+	})
 }

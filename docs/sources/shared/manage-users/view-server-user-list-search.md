@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/manage-users/view-server-user-list-search/
 title: View user list and search - list format
 ---
 

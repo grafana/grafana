@@ -1,4 +1,5 @@
 import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
+
 import { Field } from '@grafana/data';
 
 export interface Options {}

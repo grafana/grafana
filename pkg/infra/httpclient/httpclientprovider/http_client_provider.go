@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -17,7 +18,7 @@ import (
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) *sdkhttpclient.Provider {
+func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
@@ -28,6 +29,7 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureTo
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
+		RedirectLimitMiddleware(validator),
 	}
 
 	if cfg.SigV4AuthEnabled {
@@ -35,10 +37,6 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureTo
 	}
 
 	setDefaultTimeoutOptions(cfg)
-
-	if features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
-		middlewares = append(middlewares, AzureMiddleware(cfg))
-	}
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,

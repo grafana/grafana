@@ -1,83 +1,100 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Input, useStyles2 } from '@grafana/ui';
-import { config } from '@grafana/runtime';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+import { useAsync, useDebounce } from 'react-use';
 
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { SearchPageDashboards } from './SearchPageDashboards';
-import { SearchPageDashboardList } from './SearchPageDashboardList';
-import { loadResults } from './state/actions';
-import { StoreState } from 'app/types';
-import { SearchPageStats } from './SearchPageStats';
-import { buildStatsTable } from './data';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { FolderDTO } from 'app/types';
+
+import { useSearchQuery } from '../hooks/useSearchQuery';
+import { getGrafanaSearcher } from '../service';
+
+import { SearchView } from './components/SearchView';
 
 const node: NavModelItem = {
   id: 'search',
-  text: 'Search',
+  text: 'Search playground',
+  subTitle: 'The body below will eventually live inside existing UI layouts',
   icon: 'dashboard',
   url: 'search',
 };
 
 export default function SearchPage() {
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
-  const dashboards = useSelector((state: StoreState) => state.searchPage.data.dashboards);
-  const panels = useSelector((state: StoreState) => state.searchPage.data.panels);
+  const [showManage, setShowManage] = useState(false); // grid vs list view
+  const [folderDTO, setFolderDTO] = useState<FolderDTO>(); // grid vs list view
+  const folders = useAsync(async () => {
+    const rsp = await getGrafanaSearcher().search({
+      query: '*',
+      kind: ['folder'],
+    });
+    return rsp.view.map((v) => ({ value: v.uid, label: v.name }));
+  }, []);
+  const setFolder = async (uid?: string) => {
+    if (uid?.length) {
+      const dto = await backendSrv.getFolderByUid(uid);
+      setFolderDTO(dto);
+    } else {
+      setFolderDTO(undefined);
+    }
+  };
 
-  const [query, setQuery] = useState('');
+  // since we don't use "query" from use search... it is not actually loaded from the URL!
+  const { query, onQueryChange } = useSearchQuery({});
 
-  const loadDashboardResults = useCallback(async () => {
-    await dispatch(loadResults(query));
-  }, [query, dispatch]);
-
-  useEffect(() => {
-    loadDashboardResults();
-  }, [query, loadDashboardResults]);
-
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
+  const [inputValue, setInputValue] = useState(query.query ?? '');
+  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setInputValue(e.currentTarget.value);
+  };
+  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
   return (
     <Page navModel={{ node: node, main: node }}>
-      <Page.Contents>
-        <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} autoFocus spellCheck={false} />
-        <br /> <br />
-        {!dashboards && <div>Loading....</div>}
-        {dashboards && (
-          <div>
-            <AutoSizer style={{ width: '100%', height: '1000px' }}>
-              {({ width }) => {
-                return (
-                  <div>
-                    {dashboards && <SearchPageDashboardList dashboards={dashboards} />}
-                    <br />
-                    {dashboards.dataFrame && dashboards.dataFrame.length > 0 && (
-                      <SearchPageDashboards dashboards={dashboards.dataFrame} width={width} />
-                    )}
+      <Page.Contents
+        className={css`
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        `}
+      >
+        <Input
+          value={inputValue}
+          onChange={onSearchQueryChange}
+          autoFocus
+          spellCheck={false}
+          placeholder="Search for dashboards and panels"
+          className={styles.searchInput}
+          suffix={false ? <Spinner /> : null}
+        />
+        <InlineFieldRow>
+          <InlineField label="Show manage options">
+            <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
+          </InlineField>
+          <InlineField label="Folder">
+            <Select
+              options={folders.value ?? []}
+              isLoading={folders.loading}
+              onChange={(v) => setFolder(v?.value)}
+              isClearable
+            />
+          </InlineField>
+        </InlineFieldRow>
 
-                    {panels && (
-                      <SearchPageStats
-                        panelTypes={buildStatsTable(panels.fields.find((f) => f.name === 'Type'))}
-                        width={width}
-                      />
-                    )}
-                  </div>
-                );
-              }}
-            </AutoSizer>
-          </div>
-        )}
+        <SearchView showManage={showManage} folderDTO={folderDTO} queryText={query.query} />
       </Page.Contents>
     </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchInput: css`
+    margin-bottom: 6px;
+    min-height: ${theme.spacing(4)};
+  `,
   unsupported: css`
     padding: 10px;
     display: flex;
@@ -85,5 +102,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     height: 100%;
     font-size: 18px;
+  `,
+  noResults: css`
+    padding: ${theme.v1.spacing.md};
+    background: ${theme.v1.colors.bg2};
+    font-style: italic;
+    margin-top: ${theme.v1.spacing.md};
   `,
 });

@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux';
+
 import { StoreState } from '../../../../types';
 
 const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;

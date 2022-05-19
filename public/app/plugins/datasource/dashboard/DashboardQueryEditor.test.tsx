@@ -1,11 +1,15 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { SHARED_DASHBOARD_QUERY } from './types';
-import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+
+import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
   ...(jest.requireActual('app/core/config') as unknown as object),
@@ -20,12 +24,11 @@ jest.mock('app/core/config', () => ({
   },
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    get: () => Promise.resolve({}),
-    getInstanceSettings: () => ({}),
-  }),
-}));
+setDataSourceSrv(
+  new MockDataSourceSrv({
+    test: mockDataSource({ isDefault: true }),
+  })
+);
 
 describe('DashboardQueryEditor', () => {
   const mockOnChange = jest.fn();
@@ -78,7 +81,7 @@ describe('DashboardQueryEditor', () => {
     );
     const select = screen.getByText('Choose panel');
 
-    userEvent.click(select);
+    await userEvent.click(select);
 
     const myFirstPanel = await screen.findByText('My first panel');
     expect(myFirstPanel).toBeInTheDocument();
@@ -101,7 +104,7 @@ describe('DashboardQueryEditor', () => {
     );
     const select = screen.getByText('Choose panel');
 
-    userEvent.click(select);
+    await userEvent.click(select);
 
     expect(screen.queryByText('My first panel')).not.toBeInTheDocument();
 

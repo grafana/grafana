@@ -1,9 +1,12 @@
-import React from 'react';
-import NamedColorsGroup from './NamedColorsGroup';
-import { ColorSwatch } from './ColorSwatch';
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+
+import { ColorSwatch } from './ColorSwatch';
+import NamedColorsGroup from './NamedColorsGroup';
 
 export interface NamedColorsPaletteProps {
   color?: string;

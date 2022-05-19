@@ -280,18 +280,12 @@ func TestSecretsService_Run(t *testing.T) {
 		require.NoError(t, err)
 
 		// Data encryption key cache should contain one element
-		require.Len(t, svc.dataKeyCache, 1)
-
-		// Execute background process after key's TTL, to force
-		// clean up process, during a hundred milliseconds with
-		// gc ticker configured on every nanosecond, to ensure
-		// the ticker is triggered.
-		gcInterval = time.Nanosecond
+		require.Len(t, svc.dataKeyCache.entries, 1)
 
 		t.Cleanup(func() { now = time.Now })
-		now = func() time.Time { return time.Now().Add(dekTTL) }
+		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
 
-		ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
 
 		err = svc.Run(ctx)
@@ -300,23 +294,7 @@ func TestSecretsService_Run(t *testing.T) {
 		// Then, once the ticker has been triggered,
 		// the cleanup process should have happened,
 		// therefore the cache should be empty.
-		require.Len(t, svc.dataKeyCache, 0)
-	})
-
-	t.Run("should update data key expiry after every use", func(t *testing.T) {
-		// Encrypt to generate data encryption key
-		withoutScope := secrets.WithoutScope()
-		_, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
-		require.NoError(t, err)
-
-		// New call to Encrypt one minute later should update cache entry's expiry
-		t.Cleanup(func() { now = time.Now })
-		now = func() time.Time { return time.Now().Add(time.Minute) }
-		_, err = svc.Encrypt(ctx, []byte("grafana"), withoutScope)
-		require.NoError(t, err)
-
-		dataKeyID := svc.keyName(withoutScope())
-		assert.True(t, svc.dataKeyCache[dataKeyID].expiry.After(time.Now().Add(dekTTL)))
+		require.Len(t, svc.dataKeyCache.entries, 0)
 	})
 }
 
@@ -350,11 +328,11 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 		// Decrypt to ensure data key is cached
 		_, err := svc.Decrypt(ctx, ciphertext)
 		require.NoError(t, err)
-		require.NotEmpty(t, svc.dataKeyCache)
+		require.NotEmpty(t, svc.dataKeyCache.entries)
 
 		err = svc.ReEncryptDataKeys(ctx)
 		require.NoError(t, err)
 
-		assert.Empty(t, svc.dataKeyCache)
+		assert.Empty(t, svc.dataKeyCache.entries)
 	})
 }

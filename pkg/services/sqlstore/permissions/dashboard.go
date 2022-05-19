@@ -1,12 +1,13 @@
 package permissions
 
 import (
-	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 type DashboardPermissionFilter struct {
@@ -77,27 +78,61 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User *models.SignedInUser
+	User             *models.SignedInUser
+	dashboardActions []string
+	folderActions    []string
+}
+
+// NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
+func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+	needEdit := permissionLevel > models.PERMISSION_VIEW
+	folderActions := []string{dashboards.ActionFoldersRead}
+	var dashboardActions []string
+	if queryType == searchstore.TypeAlertFolder {
+		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
+		if needEdit {
+			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleCreate)
+		}
+	} else {
+		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		if needEdit {
+			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+		}
+	}
+	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions}
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
+	var args []interface{}
 	builder := strings.Builder{}
+	builder.WriteString("(")
 
-	builder.WriteString("(((")
+	if len(f.dashboardActions) > 0 {
+		builder.WriteString("((")
 
-	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", "dashboards:read", f.User)
-	builder.WriteString(dashFilter.Where)
+		dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeDashboardsPrefix, f.dashboardActions...)
+		builder.WriteString(dashFilter.Where)
+		args = append(args, dashFilter.Args...)
 
-	builder.WriteString(" OR ")
+		builder.WriteString(" OR dashboard.folder_id IN(SELECT id FROM dashboard WHERE ")
+		dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.dashboardActions...)
 
-	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", "dashboards:read", f.User)
-	builder.WriteString(dashFolderFilter.Where)
+		builder.WriteString(dashFolderFilter.Where)
+		builder.WriteString(")) AND NOT dashboard.is_folder)")
+		args = append(args, dashFolderFilter.Args...)
+	}
 
-	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
-
-	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", "folders:read", f.User)
-	builder.WriteString(folderFilter.Where)
-	builder.WriteString(" AND dashboard.is_folder))")
-
-	return builder.String(), append(dashFilter.Args, append(dashFolderFilter.Args, folderFilter.Args...)...)
+	if len(f.folderActions) > 0 {
+		if len(f.dashboardActions) > 0 {
+			builder.WriteString(" OR ")
+		}
+		builder.WriteString("(")
+		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.folderActions...)
+		builder.WriteString(folderFilter.Where)
+		builder.WriteString(" AND dashboard.is_folder)")
+		args = append(args, folderFilter.Args...)
+	}
+	builder.WriteString(")")
+	return builder.String(), args
 }

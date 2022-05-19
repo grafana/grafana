@@ -1,7 +1,8 @@
 +++
-title = "Auditing"
+aliases = ["/docs/grafana/latest/enterprise/auditing/"]
 description = "Auditing"
 keywords = ["grafana", "auditing", "audit", "logs"]
+title = "Auditing"
 weight = 1100
 +++
 
@@ -122,7 +123,7 @@ pattern of the `requestUri` field is given.
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "saml.md#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./saml/configure-saml.md#single-logout" >}}).
 
 #### User management
 
@@ -224,7 +225,7 @@ external group.
 
 Where the following:
 
-- `RECIPIENT` is `grafana` for requests handled by Grafana or the numeric data source ID for requests forwarded to a data source.
+- `RECIPIENT` is `grafana` for requests handled by Grafana or the data source UID for requests forwarded to a data source.
 - `NAMESPACE` is the string identifier for the rules namespace.
 - `GROUP-NAME` is the string identifier for the rules group.
 - `SILENCE-ID` is the ID of the affected silence.

@@ -1,17 +1,20 @@
-import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
-import { GrafanaPlugin, PluginMeta } from './plugin';
-import { PanelData } from './panel';
-import { LogRowModel } from './logs';
+import { Observable } from 'rxjs';
+
+import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+
+import { ScopedVars } from './ScopedVars';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
+import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange } from './time';
-import { ScopedVars } from './ScopedVars';
-import { CoreApp } from './app';
-import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
-import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { LogRowModel } from './logs';
+import { PanelData } from './panel';
+import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
+import { RawTimeRange, TimeRange } from './time';
+import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
@@ -62,16 +65,19 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
@@ -148,8 +154,11 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreMetricsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreLogsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
@@ -413,6 +422,7 @@ export type ExploreQueryFieldProps<
 
 export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
   datasource: DataSourceApi<TQuery>;
+  query: TQuery;
   onClickExample: (query: TQuery) => void;
   exploreId?: any;
 }
@@ -468,7 +478,7 @@ export interface DataQueryError {
     error?: string;
   };
   message?: string;
-  status?: string;
+  status?: number;
   statusText?: string;
   refId?: string;
   type?: DataQueryErrorType;
@@ -481,7 +491,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints?: number;
   range: TimeRange;
-  reverse?: boolean;
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;

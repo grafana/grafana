@@ -1,6 +1,7 @@
-import { Row } from 'react-table';
-import memoizeOne from 'memoize-one';
 import { Property } from 'csstype';
+import memoizeOne from 'memoize-one';
+import { Row } from 'react-table';
+
 import {
   DataFrame,
   Field,
@@ -10,13 +11,13 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
-import { JSONViewCell } from './JSONViewCell';
+import { DefaultCell } from './DefaultCell';
+import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
-import { getFooterValue } from './FooterRow';
+import { JSONViewCell } from './JSONViewCell';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -118,7 +119,7 @@ export function getColumns(
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
+export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:

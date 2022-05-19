@@ -1,6 +1,7 @@
-import { DataQuery } from './query';
-import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { Observable } from 'rxjs';
+
+import { DataQueryRequest, DataQueryResponse } from './datasource';
+import { DataQuery } from './query';
 
 /**
  * TODO: This should be added to ./logs.ts but because of cross reference between ./datasource.ts and ./logs.ts it can

@@ -1,10 +1,7 @@
-import React from 'react';
-import { merge } from 'lodash';
-import { Table } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Meta, Story } from '@storybook/react';
-import { useTheme2 } from '../../themes';
-import mdx from './Table.mdx';
+import { merge } from 'lodash';
+import React from 'react';
+
 import {
   DataFrame,
   FieldType,
@@ -15,7 +12,13 @@ import {
   FieldConfig,
   formattedValueToString,
 } from '@grafana/data';
+import { Table } from '@grafana/ui';
+
+import { useTheme2 } from '../../themes';
 import { prepDataForStorybook } from '../../utils/storybook/data';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Table.mdx';
 import { FooterItem } from './types';
 
 export default {
@@ -185,4 +188,9 @@ export const Footer: Story = (args) => {
       <Table data={data} height={args.height} width={args.width} footerValues={footer} {...args} />
     </div>
   );
+};
+
+export const Pagination: Story = (args) => <Basic {...args} />;
+Pagination.args = {
+  pageSize: 10,
 };

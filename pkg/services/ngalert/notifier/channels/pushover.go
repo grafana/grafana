@@ -3,6 +3,7 @@ package channels
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"strconv"
@@ -39,62 +40,93 @@ type PushoverNotifier struct {
 	ns               notifications.WebhookSender
 }
 
-// NewSlackNotifier is the constructor for the Slack notifier
-func NewPushoverNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
+type PushoverConfig struct {
+	*NotificationChannelConfig
+	UserKey          string
+	APIToken         string
+	AlertingPriority int
+	OKPriority       int
+	Retry            int
+	Expire           int
+	Device           string
+	AlertingSound    string
+	OKSound          string
+	Upload           bool
+	Message          string
+}
 
-	userKey := fn(context.Background(), model.SecureSettings, "userKey", model.Settings.Get("userKey").MustString())
-	APIToken := fn(context.Background(), model.SecureSettings, "apiToken", model.Settings.Get("apiToken").MustString())
-	device := model.Settings.Get("device").MustString()
-	alertingPriority, err := strconv.Atoi(model.Settings.Get("priority").MustString("0")) // default Normal
+func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewPushoverConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewPushoverNotifier(cfg, fc.NotificationService, fc.Template), nil
+}
+
+func NewPushoverConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PushoverConfig, error) {
+	userKey := decryptFunc(context.Background(), config.SecureSettings, "userKey", config.Settings.Get("userKey").MustString())
+	if userKey == "" {
+		return nil, errors.New("user key not found")
+	}
+	APIToken := decryptFunc(context.Background(), config.SecureSettings, "apiToken", config.Settings.Get("apiToken").MustString())
+	if APIToken == "" {
+		return nil, errors.New("API token not found")
+	}
+	alertingPriority, err := strconv.Atoi(config.Settings.Get("priority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
 	}
-	okPriority, err := strconv.Atoi(model.Settings.Get("okPriority").MustString("0")) // default Normal
+	okPriority, err := strconv.Atoi(config.Settings.Get("okPriority").MustString("0")) // default Normal
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
 	}
-	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
-	expire, _ := strconv.Atoi(model.Settings.Get("expire").MustString())
-	alertingSound := model.Settings.Get("sound").MustString()
-	okSound := model.Settings.Get("okSound").MustString()
-	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
+	retry, _ := strconv.Atoi(config.Settings.Get("retry").MustString())
+	expire, _ := strconv.Atoi(config.Settings.Get("expire").MustString())
+	return &PushoverConfig{
+		NotificationChannelConfig: config,
+		APIToken:                  APIToken,
+		UserKey:                   userKey,
+		AlertingPriority:          alertingPriority,
+		OKPriority:                okPriority,
+		Retry:                     retry,
+		Expire:                    expire,
+		Device:                    config.Settings.Get("device").MustString(),
+		AlertingSound:             config.Settings.Get("sound").MustString(),
+		OKSound:                   config.Settings.Get("okSound").MustString(),
+		Upload:                    config.Settings.Get("uploadImage").MustBool(true),
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+	}, nil
+}
 
-	if userKey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "user key not found"}
-	}
-	if APIToken == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "API token not found"}
-	}
+// NewSlackNotifier is the constructor for the Slack notifier
+func NewPushoverNotifier(config *PushoverConfig, ns notifications.WebhookSender, t *template.Template) *PushoverNotifier {
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
-			SecureSettings:        model.SecureSettings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
+			SecureSettings:        config.SecureSettings,
 		}),
-		UserKey:          userKey,
-		APIToken:         APIToken,
-		AlertingPriority: alertingPriority,
-		OKPriority:       okPriority,
-		Retry:            retry,
-		Expire:           expire,
-		Device:           device,
-		AlertingSound:    alertingSound,
-		OKSound:          okSound,
-		Upload:           uploadImage,
-		Message:          model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		UserKey:          config.UserKey,
+		APIToken:         config.APIToken,
+		AlertingPriority: config.AlertingPriority,
+		OKPriority:       config.OKPriority,
+		Retry:            config.Retry,
+		Expire:           config.Expire,
+		Device:           config.Device,
+		AlertingSound:    config.AlertingSound,
+		OKSound:          config.OKSound,
+		Upload:           config.Upload,
+		Message:          config.Message,
 		tmpl:             t,
 		log:              log.New("alerting.notifier.pushover"),
 		ns:               ns,
-	}, nil
+	}
 }
 
 // Notify sends an alert notification to Slack.

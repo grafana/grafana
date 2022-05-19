@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -30,18 +29,51 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 	return &api{ac, router, manager, permissions}
 }
 
+func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write accesscontrol.Evaluator) {
+	if a.service.options.InheritedScopesSolver == nil || a.service.options.InheritedScopePrefixes == nil {
+		read = accesscontrol.EvalPermission(actionRead, scope)
+		write = accesscontrol.EvalPermission(actionWrite, scope)
+	} else {
+		// Add inherited scopes to the evaluators protecting the endpoint.
+		// Scopes in the request context parameters are to be added by solveInheritedScopes.
+		// If a user got actionRead on any of the inherited scopes, they will be granted access to the endpoint.
+		// Ex: a user inherits dashboards:read from the containing folder (folders:uid:BCeknZL7k)
+		inheritedRead := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionRead, scope)}
+		inheritedWrite := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionWrite, scope)}
+		for _, scopePrefix := range a.service.options.InheritedScopePrefixes {
+			inheritedRead = append(inheritedRead,
+				accesscontrol.EvalPermission(actionRead, accesscontrol.Parameter(scopePrefix)))
+			inheritedWrite = append(inheritedWrite,
+				accesscontrol.EvalPermission(actionWrite, accesscontrol.Parameter(scopePrefix)))
+		}
+
+		read = accesscontrol.EvalAny(inheritedRead...)
+		write = accesscontrol.EvalAny(inheritedWrite...)
+	}
+	return
+}
+
 func (a *api) registerEndpoints() {
-	auth := middleware.Middleware(a.ac)
-	uidSolver := solveUID(a.service.options.UidSolver)
-	disable := middleware.Disable(a.ac.IsDisabled())
+	auth := accesscontrol.Middleware(a.ac)
+	disable := disableMiddleware(a.ac.IsDisabled())
+	inheritanceSolver := solveInheritedScopes(a.service.options.InheritedScopesSolver)
+
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
-		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
-		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
+		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
+		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
+		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
+		readEvaluator, writeEvaluator := a.getEvaluators(actionRead, actionWrite, scope)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", inheritanceSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
+		if a.service.options.Assignments.Users {
+			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
+		}
+		if a.service.options.Assignments.Teams {
+			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
+		}
+		if a.service.options.Assignments.BuiltInRoles {
+			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+		}
 	})
 }
 
@@ -65,7 +97,6 @@ func (a *api) getDescription(c *models.ReqContext) response.Response {
 
 type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
-	ResourceID    string   `json:"resourceId"`
 	RoleName      string   `json:"roleName"`
 	IsManaged     bool     `json:"isManaged"`
 	UserID        int64    `json:"userId,omitempty"`
@@ -105,9 +136,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 			dto = append(dto, resourcePermissionDTO{
 				ID:            p.ID,
-				ResourceID:    p.ResourceID,
 				RoleName:      p.RoleName,
-				IsManaged:     p.IsManaged(),
 				UserID:        p.UserId,
 				UserLogin:     p.UserLogin,
 				UserAvatarUrl: dtos.GetGravatarUrl(p.UserEmail),
@@ -117,6 +146,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				BuiltInRole:   p.BuiltInRole,
 				Actions:       p.Actions,
 				Permission:    permission,
+				IsManaged:     p.IsManaged,
 			})
 		}
 	}

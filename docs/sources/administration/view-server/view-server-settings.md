@@ -1,14 +1,14 @@
 +++
-title = "View server settings"
+aliases = ["/docs/grafana/latest/admin/view-server-settings/", "/docs/grafana/latest/administration/view-server/view-server-settings/"]
 description = "How to view server settings in the Grafana UI"
 keywords = ["grafana", "configuration", "server", "settings"]
-aliases = ["/docs/grafana/latest/admin/view-server-settings/"]
+title = "View server settings"
 weight = 300
 +++
 
 # View Grafana server settings
 
-> Refer to [Fine-grained access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+> Refer to [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with RBAC permissions.
 
 If you are a Grafana server administrator, use the Settings tab to view the settings that are applied to your Grafana server via the [Configuration]({{< relref "../configuration.md#config-file-locations" >}}) file and any environmental variables.
 

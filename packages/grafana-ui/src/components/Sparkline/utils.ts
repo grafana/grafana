@@ -1,5 +1,6 @@
 import { DataFrame, FieldConfig, FieldSparkline, IndexVector } from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
+
 import { applyNullInsertThreshold } from '../GraphNG/nullInsertThreshold';
 
 /** @internal
