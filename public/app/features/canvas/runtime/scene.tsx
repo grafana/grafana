@@ -320,7 +320,9 @@ export class Scene {
       })
       .on('dragStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-        targetedElement!.isMoving = true;
+        if (targetedElement) {
+          targetedElement.isMoving = true;
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
