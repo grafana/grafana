@@ -4396,7 +4396,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.5
-    sinon: 13.0.1
+    sinon: 14.0.0
     tinycolor2: 1.4.2
     tslib: 2.4.0
     typescript: 4.6.4
@@ -4989,7 +4989,7 @@ __metadata:
     react-dom: 17.0.2
     react-icons: 2.2.7
     reselect: 4.1.5
-    sinon: 13.0.1
+    sinon: 14.0.0
     tinycolor2: 1.4.2
     tslib: 2.4.0
     tween-functions: ^1.2.0
@@ -7959,12 +7959,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@sinonjs/fake-timers@npm:9.0.0"
+"@sinonjs/fake-timers@npm:^9.1.2":
+  version: 9.1.2
+  resolution: "@sinonjs/fake-timers@npm:9.1.2"
   dependencies:
     "@sinonjs/commons": ^1.7.0
-  checksum: b410feff05afe879798056809dc61941fb2703af74cfeee19a46f10f3bebe8cb734b70cdc406c555d7bfc7cd6063fdcb3bd8a8097c55b4201624a201ae7f2035
+  checksum: 7d3aef54e17c1073101cb64d953157c19d62a40e261a30923fa1ee337b049c5f29cc47b1f0c477880f42b5659848ba9ab897607ac8ea4acd5c30ddcfac57fca6
   languageName: node
   linkType: hard
 
@@ -21352,7 +21352,7 @@ __metadata:
     search-query-parser: 1.6.0
     selecto: 1.16.2
     semver: ^7.1.3
-    sinon: 13.0.1
+    sinon: 14.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.1
@@ -34270,17 +34270,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:13.0.1":
-  version: 13.0.1
-  resolution: "sinon@npm:13.0.1"
+"sinon@npm:14.0.0":
+  version: 14.0.0
+  resolution: "sinon@npm:14.0.0"
   dependencies:
     "@sinonjs/commons": ^1.8.3
-    "@sinonjs/fake-timers": ^9.0.0
+    "@sinonjs/fake-timers": ^9.1.2
     "@sinonjs/samsam": ^6.1.1
     diff: ^5.0.0
     nise: ^5.1.1
     supports-color: ^7.2.0
-  checksum: d0d90fdc5aea4170b9cbebaf0e2f6cb04c0feeadc4f5d1dfe1eaf22162637840dd3c989c5386a904b8995f44a9ca6bab61bd1bfac40e425112737f5b12b2a2a1
+  checksum: b2aeeb0cdc2cd30f904ccbcd60bae4e1b3dcf3aeeface09c1832db0336be0dbaa461f3b91b769bed84f05c83d45d5072a9da7ee14bc7289daeda2a1214fe173c
   languageName: node
   linkType: hard
 
