@@ -1,6 +1,6 @@
 <!-- 8.5.3 START -->
 
-# 8.5.3 (unreleased)
+# 8.5.3
 
 ### Bug fixes
 
