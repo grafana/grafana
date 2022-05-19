@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/publishing-and-signing-criteria/"]
 title = "Plugin publishing and signing criteria"
 +++
 

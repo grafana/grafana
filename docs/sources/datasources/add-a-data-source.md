@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/datasources/add-a-data-source/", "/docs/grafana/latest/features/datasources/add-a-data-source/"]
 title = "Add data source"
-aliases = ["/docs/grafana/latest/features/datasources/add-a-data-source/"]
 weight = 100
 +++
 

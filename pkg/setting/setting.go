@@ -445,7 +445,11 @@ type Cfg struct {
 	DashboardPreviews DashboardPreviewsSettings
 
 	// Access Control
-	RBACEnabled bool
+	RBACEnabled         bool
+	RBACPermissionCache bool
+	// Undocumented option as a backup in case removing builtin-role assignment
+	// fails
+	RBACBuiltInRoleAssignmentEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -1358,6 +1362,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
+	cfg.RBACBuiltInRoleAssignmentEnabled = rbac.Key("builtin_role_assignment_enabled").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {

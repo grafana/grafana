@@ -1,7 +1,8 @@
 +++
-title = "Query caching"
+aliases = ["/docs/grafana/latest/enterprise/query-caching/"]
 description = "Grafana Enterprise data source query caching"
 keywords = ["grafana", "plugins", "query", "caching"]
+title = "Query caching"
 weight = 300
 +++
 

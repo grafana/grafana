@@ -1,8 +1,12 @@
 ---
-title: 'About RBAC in Grafana'
-menuTitle: 'About RBAC'
-description: 'Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.'
-aliases: ["/docs/grafana/latest/enterprise/access-control/', '/docs/grafana/latest/enterprise/access-control/roles/"]
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/', '/docs/grafana/latest/enterprise/access-control/roles/
+  - /docs/grafana/latest/enterprise/access-control/about-rbac/
+description: Role-based access control (RBAC) provides a standardized way of granting,
+  changing, and revoking access so that users can view and modify Grafana resources,
+  such as users and reports.
+menuTitle: About RBAC
+title: About RBAC in Grafana
 weight: 10
 ---
 
@@ -19,13 +23,12 @@ By using RBAC you can provide users with permissions that extend the permissions
 - Assign fixed roles to users and teams: for example, grant an engineering team the ability to create data sources
 - Create custom roles: for example, a role that allows users to create and edit dashboards, but not delete them
 
-Basic roles contain multiple fixed roles. Fixed roles in turn contain multiple permissions, each of which has an action and a scope. Here is an example of the hierarchy of Basic roles, fixed roles, permissions, actions, and scopes.
+RBAC roles contain multiple permissions, each of which has an action and a scope:
 
-- **Basic role:** `Viewer`
-  - **Fixed role:** `fixed:datasources:reader`
-    - **Permission:**
-      - **Action:** `datasources:read`
-      - **Scope:** `datasources:*`
+- **Role:** `fixed:datasources:reader`
+  - **Permission:**
+    - **Action:** `datasources:read`
+    - **Scope:** `datasources:*`
 
 ## Basic roles
 
@@ -38,16 +41,21 @@ Grafana includes the following basic roles:
 - Editor
 - Viewer
 
-Each basic role is comprised of a number of _fixed roles_ that control the permissions a basic role grants. For example, the viewer basic role contains the following fixed roles among others:
+Each basic role is comprised of a number of _permissions_. For example, the viewer basic role contains the following permissions among others:
 
-- `fixed:datasources:id:reader`: Enables the viewer to see the ID of a data source.
-- `fixed:organization:reader`: Enables the viewer to see a list of organizations.
-- `fixed:annotations:reader`: Enables the viewer to see annotations that other users have added to a dashboard.
-- `fixed:annotations.dashboard:writer`: Enables the viewer to add annotations to a dashboard.
+- `Action: datasources.id:read, Scope: datasources:*`: Enables the viewer to see the ID of a data source.
+- `Action: orgs:read`: Enables the viewer to see their organization details
+- `Action: annotations:read, Scope: annotations:*`: Enables the viewer to see annotations that other users have added to a dashboard.
+- `Action: annotations:create, Scope: annotations:type:dashboard`: Enables the viewer to add annotations to a dashboard.
+- `Action: annotations:write, Scope: annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
+- `Action: annotations:delete, Scope: annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
-You can use RBAC to modify the fixed roles associated with any basic role, to modify what viewers, editors, or admins can do. For more information about the fixed roles associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
+You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
+You cannot delete basic roles.
 
 > **Note:** You must assign each Grafana user a basic role.
+
+To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
 
 ## Fixed roles
 
@@ -81,7 +89,7 @@ If you are a Grafana Enterprise customer, you can create custom roles to manage 
 
 Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action allows a user to see a list of roles associated with each team.
 
-A scope describes where an action can be performed. For example, the `teams:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
+A scope describes where an action can be performed. For example, the `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
 Consider creating a custom role when fixed roles do not meet your permissions requirements.
 

@@ -74,12 +74,6 @@ const (
 	OkErrState       ExecutionErrorState = "OK"
 )
 
-// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
-var InternalLabelNameSet = map[string]struct{}{
-	RuleUIDLabel:      {},
-	NamespaceUIDLabel: {},
-}
-
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
@@ -87,6 +81,15 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+)
+
+var (
+	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
+	InternalLabelNameSet = map[string]struct{}{
+		RuleUIDLabel:      {},
+		NamespaceUIDLabel: {},
+	}
+	InternalAnnotationNameSet = map[string]struct{}{}
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -167,6 +170,17 @@ type AlertRuleKey struct {
 	UID   string
 }
 
+// AlertRuleGroupKey is the identifier of a group of alerts
+type AlertRuleGroupKey struct {
+	OrgID        int64
+	NamespaceUID string
+	RuleGroup    string
+}
+
+func (k AlertRuleGroupKey) String() string {
+	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
+}
+
 func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
@@ -174,6 +188,11 @@ func (k AlertRuleKey) String() string {
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetGroupKey returns the identifier of a group the rule belongs to
+func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
+	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
 }
 
 // GetKey returns the alert definitions identifier

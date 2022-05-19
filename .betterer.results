@@ -1,17 +1,11 @@
 // BETTERER RESULTS V2.
-// 
+//
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
 exports[`no enzyme tests`] = {
   value: `{
     "packages/grafana-ui/src/components/BarGauge/BarGauge.test.tsx:4199795290": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:3311646309": [
-      [0, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/FormField/FormField.test.tsx:3429087660": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.test.tsx:3129955645": [
@@ -27,9 +21,6 @@ exports[`no enzyme tests`] = {
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:2719724375": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:3121815234": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
@@ -80,12 +71,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:1478502145": [
-      [14, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:1451240090": [
-      [14, 26, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2408389970": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -110,7 +95,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetailRow.test.js:2623922632": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:1117377794": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/Ticks.test.js:743308415": [
@@ -206,7 +191,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3933225580": [
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3420464349": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
