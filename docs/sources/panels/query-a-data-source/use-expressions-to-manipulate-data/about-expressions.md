@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/", "/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/"]
 title = "About expressions"
 weight = 10
-aliases = ["/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/"]
 +++
 
 # About expressions
@@ -12,7 +12,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../../../alerting/unified-alerting/_index.md" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are primarily used by [Grafana alerting]({{< relref "../../../alerting/_index.md" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
 

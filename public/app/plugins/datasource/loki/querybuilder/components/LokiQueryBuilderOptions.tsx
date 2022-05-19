@@ -81,7 +81,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
             options={RESOLUTION_OPTIONS}
             value={query.resolution || 1}
             aria-label="Select resolution"
-            menuShouldPortal
           />
         </EditorField>
       </QueryOptionGroup>

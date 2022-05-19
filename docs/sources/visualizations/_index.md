@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/visualizations/", "/docs/grafana/latest/visualizations/"]
 title = "Visualizations"
 weight = 75
-aliases = ["/docs/grafana/latest/panels/visualizations/"]
 +++
 
 # Visualization panels
@@ -27,6 +27,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Table]({{< relref "./table/_index.md" >}}) is the main and only table visualization.
   - [Logs]({{< relref "./logs-panel.md" >}}) is the main visualization for logs.
   - [Node Graph]({{< relref "./node-graph.md" >}}) for directed graphs or networks.
+  - [Traces]({{< relref "./traces.md" >}}) is the main visualization for traces.
 - Widgets
   - [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
   - [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alerts.

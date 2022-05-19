@@ -1,8 +1,8 @@
 +++
-title = "Data source HTTP API "
+aliases = ["/docs/grafana/latest/http_api/data_source/", "/docs/grafana/latest/http_api/datasource/"]
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
-aliases = ["/docs/grafana/latest/http_api/datasource/"]
+title = "Data source HTTP API "
 +++
 
 # Data source API
@@ -690,6 +690,16 @@ In addition, specific properties of each data source should be added in a reques
   }
 }
 ```
+
+#### Status codes
+
+| Code | Description                                                                                                                                                                      |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200  | All data source queries returned a successful response.                                                                                                                          |
+| 400  | Bad request due to invalid JSON, missing content type, missing or invalid fields, etc. Or one or more data source queries were unsuccessful. Refer to the body for more details. |
+| 403  | Access denied.                                                                                                                                                                   |
+| 404  | Either the data source or plugin required to fulfil the request could not be found.                                                                                              |
+| 500  | Unexpected error. Refer to the body and/or server logs for more details.                                                                                                         |
 
 ## Deprecated resources
 

@@ -1,7 +1,7 @@
 +++
-title = "Alert list"
+aliases = ["/docs/grafana/latest/features/panels/alertlist/", "/docs/grafana/latest/panels/visualizations/alert-list-panel/", "/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/visualizations/alert-list-panel/"]
 keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/", "/docs/grafana/latest/panels/visualizations/alert-list-panel/"]
+title = "Alert list"
 weight = 100
 +++
 

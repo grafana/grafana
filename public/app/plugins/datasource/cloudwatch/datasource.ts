@@ -12,6 +12,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  dateTimeFormat,
   FieldType,
   LoadingState,
   LogRowModel,
@@ -22,6 +23,7 @@ import {
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -36,6 +38,7 @@ import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetrics
 import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
+import { migrateMetricQuery } from './migrations/metricQueryMigrations';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchJsonData,
@@ -266,31 +269,45 @@ export class CloudWatchDatasource
     throw new Error('invalid metric editor mode');
   }
 
+  replaceMetricQueryVars(
+    query: CloudWatchMetricsQuery,
+    options: DataQueryRequest<CloudWatchQuery>
+  ): CloudWatchMetricsQuery {
+    query.region = this.templateSrv.replace(this.getActualRegion(query.region), options.scopedVars);
+    query.namespace = this.replace(query.namespace, options.scopedVars, true, 'namespace');
+    query.metricName = this.replace(query.metricName, options.scopedVars, true, 'metric name');
+    query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, options.scopedVars);
+    query.statistic = this.templateSrv.replace(query.statistic, options.scopedVars);
+    query.period = String(this.getPeriod(query, options)); // use string format for period in graph query, and alerting
+    query.id = this.templateSrv.replace(query.id, options.scopedVars);
+    query.expression = this.templateSrv.replace(query.expression, options.scopedVars);
+    query.sqlExpression = this.templateSrv.replace(query.sqlExpression, options.scopedVars, 'raw');
+
+    return query;
+  }
+
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validMetricsQueries = metricQueries
-      .filter(this.filterQuery)
-      .map((item: CloudWatchMetricsQuery): MetricQuery => {
-        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-        item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
-        item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
-        item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
-        item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
-        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-        item.id = this.templateSrv.replace(item.id, options.scopedVars);
-        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
-        item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
+    const timezoneUTCOffset = dateTimeFormat(Date.now(), {
+      timeZone: options.timezone,
+      format: 'Z',
+    }).replace(':', '');
 
-        return {
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          ...item,
-          type: 'timeSeriesQuery',
-          datasource: this.getRef(),
-        };
-      });
+    const validMetricsQueries = metricQueries.filter(this.filterQuery).map((q: CloudWatchMetricsQuery): MetricQuery => {
+      const migratedQuery = migrateMetricQuery(q);
+      const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options);
+
+      return {
+        timezoneUTCOffset,
+        intervalMs: options.intervalMs,
+        maxDataPoints: options.maxDataPoints,
+        ...migratedAndIterpolatedQuery,
+        type: 'timeSeriesQuery',
+        datasource: this.getRef(),
+      };
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
@@ -660,6 +677,10 @@ export class CloudWatchDatasource
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err: FetchError) => {
+        if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
+          throw err;
+        }
+
         if (err.status === 400) {
           throw err;
         }

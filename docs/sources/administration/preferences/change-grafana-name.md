@@ -1,6 +1,7 @@
 +++
-title = "Change name and email"
+aliases = ["/docs/grafana/latest/administration/preferences/change-grafana-name/"]
 keywords = ["grafana", "configuration", "documentation", "home"]
+title = "Change name and email"
 weight = 100
 +++
 

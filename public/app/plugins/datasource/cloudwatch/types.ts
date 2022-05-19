@@ -46,7 +46,9 @@ export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
 
   //common props
   id: string;
+
   alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
@@ -382,7 +384,7 @@ export interface OldVariableQuery extends DataQuery {
   region: string;
   metricName: string;
   dimensionKey: string;
-  dimensionFilters?: Dimensions;
+  dimensionFilters: string;
   ec2Filters: string;
   instanceID: string;
   attributeName: string;

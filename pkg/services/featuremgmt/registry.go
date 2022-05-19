@@ -67,10 +67,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "panelTitleSearch",
-			Description:     "Search for dashboards using panel title",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // only supported in dev mode right now
+			Name:        "panelTitleSearch",
+			Description: "Search for dashboards using panel title",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "tempoSearch",
@@ -94,17 +93,6 @@ var (
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:            "accesscontrol-builtins",
-			Description:     "Simplify access control builtin roles",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:        "prometheus_azure_auth",
@@ -132,12 +120,6 @@ var (
 			Name:        "disable_http_request_histogram",
 			Description: "Do not create histograms for http requests",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:            "validatedQueries",
-			Description:     "only execute the query saved in a panel",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:            "publicDashboards",
@@ -173,11 +155,6 @@ var (
 		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:        "saveDashboardDrawer",
-			Description: "Use a drawer to show save dashboard dialog",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -241,6 +218,29 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "datasourceQueryMultiStatus",
+			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "azureMonitorExperimentalUI",
+			Description:     "Use grafana-experimental UI in Azure Monitor",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
+		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "prometheusStreamingJSONParser",
+			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

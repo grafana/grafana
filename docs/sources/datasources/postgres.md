@@ -1,8 +1,8 @@
 +++
-title = "PostgreSQL"
+aliases = ["/docs/grafana/latest/datasources/postgres/", "/docs/grafana/latest/features/datasources/postgres/"]
 description = "Guide for using PostgreSQL in Grafana"
 keywords = ["grafana", "postgresql", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/postgres/"]
+title = "PostgreSQL"
 weight = 1200
 +++
 

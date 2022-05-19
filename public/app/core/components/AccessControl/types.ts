@@ -22,6 +22,7 @@ export type SetPermission = {
 };
 
 export enum PermissionTarget {
+  None = 'None',
   Team = 'Team',
   User = 'User',
   BuiltInRole = 'builtInRole',

@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/panels/working-with-panels/add-panel/", "/docs/sources/panels/working-with-panels/add-panel/"]
 title = "Add a panel to a dashboard"
-aliases = ["/docs/sources/panels/working-with-panels/add-panel/"]
 weight = 20
 +++
 
