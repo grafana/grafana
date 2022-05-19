@@ -31,9 +31,7 @@ export const openQueryHistory = async (exploreId: ExploreId = ExploreId.left) =>
   const selector = withinExplore(exploreId);
   const button = selector.getByRole('button', { name: 'Rich history button' });
   await userEvent.click(button);
-  expect(
-    await selector.findByText('The history is local to your browser and is not shared with others.')
-  ).toBeInTheDocument();
+  expect(await selector.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
 export const closeQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {

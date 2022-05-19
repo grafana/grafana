@@ -34,8 +34,8 @@ describe('RichHistoryRemoteStorage', () => {
     storage = new RichHistoryRemoteStorage();
   });
 
-  it('returns list of query history items', async () => {
-    const expectedViewModel: RichHistoryQuery<any> = {
+  const setup = (): { richHistoryQuery: RichHistoryQuery; dto: RichHistoryRemoteStorageDTO } => {
+    const richHistoryQuery: RichHistoryQuery<any> = {
       id: '123',
       createdAt: 200 * 1000,
       datasourceUid: 'ds1',
@@ -44,16 +44,25 @@ describe('RichHistoryRemoteStorage', () => {
       comment: 'comment',
       queries: [{ foo: 'bar ' }],
     };
-    const returnedDTOs: RichHistoryRemoteStorageDTO[] = [
-      {
-        uid: expectedViewModel.id,
-        createdAt: expectedViewModel.createdAt / 1000,
-        datasourceUid: expectedViewModel.datasourceUid,
-        starred: expectedViewModel.starred,
-        comment: expectedViewModel.comment,
-        queries: expectedViewModel.queries,
-      },
-    ];
+
+    const dto = {
+      uid: richHistoryQuery.id,
+      createdAt: richHistoryQuery.createdAt / 1000,
+      datasourceUid: richHistoryQuery.datasourceUid,
+      starred: richHistoryQuery.starred,
+      comment: richHistoryQuery.comment,
+      queries: richHistoryQuery.queries,
+    };
+
+    return {
+      richHistoryQuery,
+      dto,
+    };
+  };
+
+  it('returns list of query history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    const returnedDTOs: RichHistoryRemoteStorageDTO[] = [dto];
     fetchMock.mockReturnValue(
       of({
         data: {
@@ -79,6 +88,18 @@ describe('RichHistoryRemoteStorage', () => {
       url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
       requestId: 'query-history-get-all',
     });
-    expect(items).toMatchObject([expectedViewModel]);
+    expect(items).toMatchObject([richHistoryQuery]);
+  });
+
+  it('migrates provided rich history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    fetchMock.mockReturnValue(of({}));
+    await storage.migrate([richHistoryQuery]);
+    expect(fetchMock).toBeCalledWith({
+      url: '/api/query-history/migrate',
+      method: 'POST',
+      data: { queries: [dto] },
+      showSuccessAlert: false,
+    });
   });
 });
