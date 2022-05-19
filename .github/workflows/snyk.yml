@@ -20,7 +20,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args:  --sarif-file-output=snyk.sarif
+          args:  --sarif-file-output=snyk.sarif --strict-out-of-sync=false
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
