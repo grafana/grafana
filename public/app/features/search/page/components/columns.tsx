@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
