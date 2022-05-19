@@ -372,7 +372,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
-		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -394,8 +394,8 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	}
 }
 
-func isItStale(lastEval time.Time, intervalSeconds int64) bool {
-	return lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).Before(time.Now())
+func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
+	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
 
 func removePrivateLabels(labels data.Labels) data.Labels {
