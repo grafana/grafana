@@ -22,8 +22,7 @@ FROM debian:testing-20210111-slim
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive \
   GOOGLE_SDK_VERSION=385.0.0 \
-  GOOGLE_SDK_CHECKSUM=cd1839e9343e32f64645f2d3c269340a9c50d0c77d85c9a0a44cd9de2103879e \
-  GCSFUSE_VERSION=0.41.1
+  GOOGLE_SDK_CHECKSUM=cd1839e9343e32f64645f2d3c269340a9c50d0c77d85c9a0a44cd9de2103879e
 
 # Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
 # Pin pip3 to version 20.0.2 to address https://github.com/pypa/pip/issues/11070
@@ -33,15 +32,12 @@ RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U pip
     tar xzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \
     rm google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
     apt update && \
-    apt install -y createrepo-c expect fuse && \
+    apt install -y createrepo-c expect s3fs && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud && \
     mkdir -p /deb-repo /rpm-repo && \
-    ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
-    curl -L -O https://github.com/GoogleCloudPlatform/gcsfuse/releases/download/v${GCSFUSE_VERSION}/gcsfuse_${GCSFUSE_VERSION}_amd64.deb && \
-    dpkg --install gcsfuse_${GCSFUSE_VERSION}_amd64.deb && \
-    rm -Rf gcsfuse_${GCSFUSE_VERSION}_amd64.deb
+    ln -s /usr/bin/createrepo_c /usr/bin/createrepo
 
 COPY --from=0 /go/bin/aptly /usr/local/bin/aptly
