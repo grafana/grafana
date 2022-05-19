@@ -66,11 +66,11 @@ Content-Length: 29
 
 ### Status Codes
 
-| Code | Description                                                                                 |
-| ---- | ------------------------------------------------------------------------------------------- |
-| 200  | Report was sent.                                                                            |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).          |
-| 401  | Authentication failed, refer to [Authentication API]({{< relref "auth.md" >}}). |
-| 403  | User is authenticated but is not authorized to generate the report.                         |
-| 404  | Report not found.                                                                           |
-| 500  | Unexpected error or server misconfiguration. Refer to server logs for more details.         |
+| Code | Description                                                                         |
+| ---- | ----------------------------------------------------------------------------------- |
+| 200  | Report was sent.                                                                    |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).  |
+| 401  | Authentication failed, refer to [Authentication API]({{< relref "auth.md" >}}).     |
+| 403  | User is authenticated but is not authorized to generate the report.                 |
+| 404  | Report not found.                                                                   |
+| 500  | Unexpected error or server misconfiguration. Refer to server logs for more details. |

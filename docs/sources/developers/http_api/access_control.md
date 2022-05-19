@@ -251,22 +251,22 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                        |
-| ----------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                           |
+| ----------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "../../enterprise/access-control/about-rbac#custom-roles" >}}) for more information.  |
-| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                     |
+| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                        |
 | version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../../enterprise/access-control/about-rbac#custom-roles" >}}) for more information. |
 | name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../../enterprise/access-control/about-rbac#custom-roles" >}}) for more information.                                                                                             |
-| description | string     | No       | Description of the role.                                                                                                                                                                                                           |
-| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                       |
-| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                |
-| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                   |
-| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                  |
+| description | string     | No       | Description of the role.                                                                                                                                                                                                              |
+| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                          |
+| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                   |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                      |
+| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                     |
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                                        |
-| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                           |
+| ---------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                            |
 | scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [[Custom role actions and scopes]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
@@ -366,8 +366,8 @@ Content-Type: application/json
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                                       |
-| ---------- | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                          |
+| ---------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                           |
 | scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
@@ -439,9 +439,9 @@ Accept: application/json
 
 #### Query parameters
 
-| Param  | Type    | Required | Description                                                                                                                                                                                                                                            |
-| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                |
+| Param  | Type    | Required | Description                                                                                                                                                                                                                                               |
+| ------ | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                   |
 | global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [About RBAC]({{< relref "../../enterprise/access-control/about-rbac" >}}) for more information. |
 
 #### Example response
