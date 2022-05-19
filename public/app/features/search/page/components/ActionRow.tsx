@@ -61,7 +61,7 @@ export const ActionRow: FC<Props> = ({
   const layout = getValidQueryLayout(query);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = query.sort || query.query ? [SearchLayout.Folders] : [];
+  const disabledOptions = query.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
