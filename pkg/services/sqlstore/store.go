@@ -99,7 +99,6 @@ type Store interface {
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
-	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error

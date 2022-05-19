@@ -889,3 +889,18 @@ func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDash
 		return nil
 	})
 }
+
+func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
+		us := &models.DashboardRef{}
+		exists, err := sess.SQL(rawSQL, query.Id).Get(us)
+		if err != nil {
+			return err
+		} else if !exists {
+			return models.ErrDashboardNotFound
+		}
+		query.Result = us
+		return nil
+	})
+}
