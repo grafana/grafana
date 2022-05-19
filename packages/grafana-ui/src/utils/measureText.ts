@@ -1,4 +1,4 @@
-const context = document.createElement('canvas').getContext('2d')!;
+let _context: CanvasRenderingContext2D;
 const cache = new Map<string, TextMetrics>();
 const cacheLimit = 500;
 let ctxFontStyle = '';
@@ -7,7 +7,10 @@ let ctxFontStyle = '';
  * @internal
  */
 export function getCanvasContext() {
-  return context;
+  if (!_context) {
+    _context = document.createElement('canvas').getContext('2d')!;
+  }
+  return _context;
 }
 
 /**
@@ -21,6 +24,8 @@ export function measureText(text: string, fontSize: number): TextMetrics {
   if (fromCache) {
     return fromCache;
   }
+
+  const context = getCanvasContext();
 
   if (ctxFontStyle !== fontStyle) {
     context.font = ctxFontStyle = fontStyle;

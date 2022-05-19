@@ -8,6 +8,7 @@ import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuil
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
+import { escapeLabelValueInSelector } from '../../language_utils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
@@ -49,15 +50,17 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
       return [];
     }
 
+    let values;
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     if (labelsToConsider.length === 0) {
-      return await datasource.languageProvider.fetchLabelValues(forLabel.label);
+      values = await datasource.languageProvider.fetchLabelValues(forLabel.label);
+    } else {
+      const expr = lokiQueryModeller.renderLabels(labelsToConsider);
+      const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+      values = result[datasource.interpolateString(forLabel.label)];
     }
 
-    const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated] ?? [];
+    return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
 
   const labelFilterError: string | undefined = useMemo(() => {

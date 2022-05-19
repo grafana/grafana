@@ -34,7 +34,7 @@ export function getProfileRoutes(cfg = config): RouteDescriptor[] {
   return uniquePaths.map((path) => ({
     path,
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "Profile feature toggle page"*/ 'app/features/profile/FeatureTogglePage')
+      () => import(/* webpackChunkName: "ProfileFeatureTogglePage"*/ 'app/features/profile/FeatureTogglePage')
     ),
   }));
 }

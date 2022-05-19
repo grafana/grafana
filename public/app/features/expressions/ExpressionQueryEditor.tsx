@@ -46,13 +46,7 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
     return (
       <div>
         <InlineField label="Operation" labelWidth={labelWidth}>
-          <Select
-            menuShouldPortal
-            options={gelTypes}
-            value={selected}
-            onChange={this.onSelectExpressionType}
-            width={25}
-          />
+          <Select options={gelTypes} value={selected} onChange={this.onSelectExpressionType} width={25} />
         </InlineField>
         {this.renderExpressionType()}
       </div>

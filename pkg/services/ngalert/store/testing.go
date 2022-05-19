@@ -153,7 +153,7 @@ func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 }
 
 // For now, we're not implementing namespace filtering.
-func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -161,7 +161,14 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 		return err
 	}
 	for _, rules := range f.Rules {
-		q.Result = append(q.Result, rules...)
+		for _, rule := range rules {
+			q.Result = append(q.Result, &models.SchedulableAlertRule{
+				UID:             rule.UID,
+				OrgID:           rule.OrgID,
+				IntervalSeconds: rule.IntervalSeconds,
+				Version:         rule.Version,
+			})
+		}
 	}
 	return nil
 }

@@ -8,7 +8,7 @@ import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';
 import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
-import MetricsQueryHeader from './MetricsQueryHeader';
+import MetricsQueryHeader from './MetricsQueryEditor/MetricsQueryHeader';
 
 interface QueryHeaderProps {
   query: CloudWatchQuery;

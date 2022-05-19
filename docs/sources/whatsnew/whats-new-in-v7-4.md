@@ -1,11 +1,12 @@
 +++
-title = "What's New in Grafana v7.4"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/", "/docs/grafana/latest/whatsnew/whats-new-in-v7-4/"]
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
+title = "What's New in Grafana v7.4"
 weight = -31
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
+
 [_build]
-list = false
+  list = false
 +++
 
 # What's new in Grafana v7.4
@@ -107,7 +108,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
 
 ### Content security policy support
 

@@ -64,7 +64,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
     <>
       <InlineFieldRow>
         <InlineField label="View" labelWidth={labelWidth} grow={true}>
-          <Select menuShouldPortal options={views.options} value={views.current} onChange={onSelectView} />
+          <Select options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
       {value?.id === MapCenterID.Coordinates && (

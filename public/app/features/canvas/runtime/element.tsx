@@ -13,7 +13,8 @@ import { DimensionContext } from 'app/features/dimensions';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { GroupState } from './group';
+import { FrameState } from './frame';
+import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
@@ -25,13 +26,16 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
+  // Determine whether or not element is in motion or not (via moveable)
+  isMoving = false;
+
   // Filled in by ref
   div?: HTMLDivElement;
 
   // Calculated
   data?: any; // depends on the type
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: FrameState) {
     const fallbackName = `Element ${Date.now()}`;
     if (!options) {
       this.options = { type: item.id, name: fallbackName };
@@ -68,6 +72,11 @@ export class ElementState implements LayerElement {
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
   applyLayoutStylesToDiv() {
+    if (this.isRoot()) {
+      // Root supersedes layout engine and is always 100% width + height of panel
+      return;
+    }
+
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
@@ -170,12 +179,16 @@ export class ElementState implements LayerElement {
     }
   }
 
-  setPlacementFromConstraint() {
+  setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
-    const elementContainer = this.div && this.div.getBoundingClientRect();
-    const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+    if (!elementContainer) {
+      elementContainer = this.div && this.div.getBoundingClientRect();
+    }
+    if (!parentContainer) {
+      parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+    }
 
     const relativeTop =
       elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
@@ -305,6 +318,11 @@ export class ElementState implements LayerElement {
     }
 
     this.dataStyle = css;
+    this.applyLayoutStylesToDiv();
+  }
+
+  isRoot(): this is RootElement {
+    return false;
   }
 
   /** Recursively visit all nodes */

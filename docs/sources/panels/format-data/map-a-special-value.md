@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/format-data/map-a-special-value/", "/docs/sources/panels/format-data/map-a-special-value/"]
 title = "Map a special value"
 weight = 50
-aliases = ["/docs/sources/panels/format-data/map-a-special-value/"]
 +++
 
 # Map a special value
