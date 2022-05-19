@@ -1,3 +1,7 @@
+import { replace } from 'lodash';
+
+import SupportedNamespaces from '../../azure_monitor/supported_namespaces';
+import UrlBuilder from '../../azure_monitor/url_builder';
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
 export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
@@ -109,6 +113,20 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
     return query;
   }
 
+  let resourceUri = query.azureMonitor?.resourceUri;
+
+  if (resourceUri && metricNamespace?.includes('Microsoft.Storage/storageAccounts')) {
+    const splitUri = resourceUri.split('/');
+    const accountNameIndex = splitUri.findIndex((item) => item === 'storageAccounts') + 1;
+    const baseUri = splitUri.slice(0, accountNameIndex + 1).join('/');
+    if (metricNamespace === 'Microsoft.Storage/storageAccounts') {
+      resourceUri = baseUri;
+    } else {
+      const subNamespace = metricNamespace.split('/')[2];
+      resourceUri = `${baseUri}/${subNamespace}/default`;
+    }
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -118,6 +136,7 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
       aggregation: undefined,
       timeGrain: '',
       dimensionFilters: [],
+      resourceUri,
     },
   };
 }

@@ -1,4 +1,4 @@
-import { filter, startsWith } from 'lodash';
+import { filter, find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
@@ -250,9 +250,27 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiPreviewVersion,
       this.replaceTemplateVariables(query)
     );
-    return this.getResource(url).then((result: AzureMonitorMetricNamespacesResponse) => {
-      return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
-    });
+    return this.getResource(url)
+      .then((result: AzureMonitorMetricNamespacesResponse) => {
+        return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
+      })
+      .then((result) => {
+        if (url.includes('Microsoft.Storage/storageAccounts')) {
+          const storageNamespaces = [
+            'Microsoft.Storage/storageAccounts',
+            'Microsoft.Storage/storageAccounts/blobServices',
+            'Microsoft.Storage/storageAccounts/fileServices',
+            'Microsoft.Storage/storageAccounts/tableServices',
+            'Microsoft.Storage/storageAccounts/queueServices',
+          ];
+          for (const namespace of storageNamespaces) {
+            if (!find(result, ['value', namespace.toLowerCase()])) {
+              result.push({ value: namespace, text: namespace });
+            }
+          }
+        }
+        return result;
+      });
   }
 
   getMetricNames(query: GetMetricNamesQuery) {
