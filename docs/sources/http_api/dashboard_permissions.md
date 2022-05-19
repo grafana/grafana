@@ -175,9 +175,9 @@ Gets all existing permissions for the dashboard with the given `dashboardId`.
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                        | Scope                               |
-| ----------------------------- | ----------------------------------- |
-| `dashboards.permissions:read` | `dashboards:id:*`<br>`folders:id:*` |
+| Action                        | Scope                         |
+| ----------------------------- | ----------------------------- |
+| `dashboards.permissions:read` | `dashboards:*`<br>`folders:*` |
 
 **Example request**:
 
@@ -256,9 +256,9 @@ Updates permissions for a dashboard. This operation will remove existing permiss
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                         | Scope                               |
-| ------------------------------ | ----------------------------------- |
-| `dashboards.permissions:write` | `dashboards:id:*`<br>`folders:id:*` |
+| Action                         | Scope                         |
+| ------------------------------ | ----------------------------- |
+| `dashboards.permissions:write` | `dashboards:*`<br>`folders:*` |
 
 **Example request**:
 

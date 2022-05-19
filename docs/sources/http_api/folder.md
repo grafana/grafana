@@ -75,9 +75,9 @@ Will return the folder given the folder uid.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action         | Scope           |
-| -------------- | --------------- |
-| `folders:read` | `folders:uid:*` |
+| Action         | Scope       |
+| -------------- | ----------- |
+| `folders:read` | `folders:*` |
 
 **Example Request**:
 
@@ -192,9 +192,9 @@ Updates an existing folder identified by uid.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action          | Scope           |
-| --------------- | --------------- |
-| `folders:write` | `folders:uid:*` |
+| Action          | Scope       |
+| --------------- | ----------- |
+| `folders:write` | `folders:*` |
 
 **Example Request**:
 
@@ -279,9 +279,9 @@ If [Grafana alerting]({{< relref "../alerting/_index.md" >}}) is enabled, you ca
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action           | Scope           |
-| ---------------- | --------------- |
-| `folders:delete` | `folders:uid:*` |
+| Action           | Scope       |
+| ---------------- | ----------- |
+| `folders:delete` | `folders:*` |
 
 **Example Request**:
 
@@ -323,9 +323,9 @@ Will return the folder identified by id.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action         | Scope          |
-| -------------- | -------------- |
-| `folders:read` | `folders:id:*` |
+| Action         | Scope       |
+| -------------- | ----------- |
+| `folders:read` | `folders:*` |
 
 **Example Request**:
 

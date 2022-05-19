@@ -30,9 +30,9 @@ Creates a new dashboard or updates an existing dashboard. When updating existing
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope                          |
-| ------------------- | ------------------------------ |
-| `dashboards:create` | `folders:*`<br>`folders:uid:*` |
+| Action              | Scope       |
+| ------------------- | ----------- |
+| `dashboards:create` | `folders:*` |
 
 **Example Request for new dashboard**:
 
@@ -286,9 +286,9 @@ Will return the dashboard given the dashboard unique identifier (uid). Informati
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action            | Scope                                 |
-| ----------------- | ------------------------------------- |
-| `dashboards:read` | `dashboards:uid:*`<br>`folders:uid:*` |
+| Action            | Scope          |
+| ----------------- | -------------- |
+| `dashboards:read` | `dashboards:*` |
 
 **Example Request**:
 
@@ -342,9 +342,9 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope                                 |
-| ------------------- | ------------------------------------- |
-| `dashboards:delete` | `dashboards:uid:*`<br>`folders:uid:*` |
+| Action              | Scope                         |
+| ------------------- | ----------------------------- |
+| `dashboards:delete` | `dashboards:*`<br>`folders:*` |
 
 **Example Request**:
 

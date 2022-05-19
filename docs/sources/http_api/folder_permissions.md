@@ -29,9 +29,9 @@ Gets all existing permissions for the folder with the given `uid`.
 
 See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
 
-| Action                     | Scope                          |
-| -------------------------- | ------------------------------ |
-| `folders.permissions:read` | `folders:*`<br>`folders:uid:*` |
+| Action                     | Scope       |
+| -------------------------- | ----------- |
+| `folders.permissions:read` | `folders:*` |
 
 **Example request**:
 
@@ -108,9 +108,9 @@ Updates permissions for a folder. This operation will remove existing permission
 
 See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
 
-| Action                      | Scope                          |
-| --------------------------- | ------------------------------ |
-| `folders.permissions:write` | `folders:*`<br>`folders:uid:*` |
+| Action                      | Scope       |
+| --------------------------- | ----------- |
+| `folders.permissions:write` | `folders:*` |
 
 **Example request**:
 

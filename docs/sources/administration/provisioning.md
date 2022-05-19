@@ -601,4 +601,4 @@ The following sections detail the supported settings and secure settings for eac
 
 Grafana Enterprise supports provisioning for the following resources:
 
-- [Access control provisioning]({{< relref "../enterprise/access-control/_index.md" >}})
+- [Role-based access control provisioning]({{< relref "../enterprise/access-control/rbac-provisioning.md" >}})

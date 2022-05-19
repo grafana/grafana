@@ -6,7 +6,7 @@ aliases:
 description: Learn how to view permissions associated with roles, create custom roles,
   and update and delete roles in Grafana.
 menuTitle: Manage RBAC roles
-title: Manage RBAC roles
+title: Manage Grafana RBAC roles
 weight: 50
 ---
 
@@ -215,8 +215,6 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 }'
 ```
 
-</br>
-
 **Example response**
 
 ```
@@ -316,7 +314,7 @@ This section describes how to reset the basic roles to their default:
 
 1. Open the YAML configuration file and locate the `roles` section.
 
-1. Grant the `action: "roles:write", scope: "permissions:type:escalate` permission to `Grafana Admin`.
+1. Grant the `action: "roles:write", scope: "permissions:type:escalate` permission to `Grafana Admin`. Note that this permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
 
    ```yaml
    apiVersion: 2
@@ -333,24 +331,16 @@ This section describes how to reset the basic roles to their default:
           scope: 'permissions:type:escalate'
    ```
 
-> **Note**: This permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
-
 1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
 Delete a custom role when you no longer need it. When you delete a custom role, the custom role is removed from users and teams to which it is assigned.
 
-> **Note:** If you use the same configuration file to both add and remove roles, the system deletes roles identified in the `deleteRoles` section before it adds roles identified in the `roles` section.
-
-</br>
-
 **Before you begin:**
 
 - Identify the role or roles that you want to delete.
 - Ensure that you have access to the YAML configuration file.
-
-</br>
 
 **To delete a custom role:**
 
@@ -363,7 +353,7 @@ Delete a custom role when you no longer need it. When you delete a custom role, 
    | `name`    | The name of the custom role you want to delete. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`   | Identifies the organization to which the role belongs.                                                                                     |
    | `state`   | The state of the role set to `absent` to trigger its removal.                                                                              |
-   | `force`   | Sets the force parameter.                                                                                                                  |
+   | `force`   | When set to `true`, the roles are removed even if there are existing assignments.                                                          |
 
 1. Reload the provisioning configuration file.
 
