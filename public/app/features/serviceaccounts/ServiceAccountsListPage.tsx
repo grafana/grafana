@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { GrafanaTheme2, OrgRole, SelectableValue } from '@grafana/data';
 import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
@@ -34,48 +34,40 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-const mapDispatchToProps = {
-  fetchServiceAccounts,
-  fetchACOptions,
-  updateServiceAccount,
-  removeServiceAccount,
-  setServiceAccountToRemove,
-  changeFilter,
-  changeQuery,
-};
+const connector = connect(mapStateToProps);
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-const ServiceAccountsListPage = ({
-  fetchServiceAccounts,
-  removeServiceAccount,
-  fetchACOptions,
-  updateServiceAccount,
-  setServiceAccountToRemove,
+const ServiceAccountsListPageUnconnected = ({
   navModel,
   serviceAccounts,
   isLoading,
   roleOptions,
   builtInRoles,
-  changeFilter,
-  changeQuery,
   query,
   filters,
   serviceAccountToRemove,
 }: Props): JSX.Element => {
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    fetchServiceAccounts();
+    dispatch(fetchServiceAccounts());
     if (contextSrv.licensedAccessControlEnabled()) {
-      fetchACOptions();
+      dispatch(fetchACOptions());
     }
-  }, [fetchServiceAccounts, fetchACOptions]);
+  }, [dispatch]);
 
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-    await updateServiceAccount(updatedServiceAccount);
-    await fetchServiceAccounts();
+    await dispatch(updateServiceAccount(updatedServiceAccount));
+    await dispatch(fetchServiceAccounts());
+  };
+
+  const onQueryChange = (value: string) => {
+    dispatch(changeQuery(value));
+  };
+
+  const onFilterChange = (value: string | boolean | SelectableValue[]) => {
+    dispatch(changeFilter({ name: 'expiredTokens', value }));
   };
 
   return (
@@ -87,14 +79,14 @@ const ServiceAccountsListPage = ({
             placeholder="Search service account by name."
             autoFocus={true}
             value={query}
-            onChange={changeQuery}
+            onChange={onQueryChange}
           />
           <RadioButtonGroup
             options={[
               { label: 'All service accounts', value: false },
               { label: 'Expired tokens', value: true },
             ]}
-            onChange={(value) => changeFilter({ name: 'expiredTokens', value })}
+            onChange={onFilterChange}
             value={filters.find((f) => f.name === 'expiredTokens')?.value}
             className={styles.filter}
           />
@@ -223,4 +215,5 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export default connector(ServiceAccountsListPage);
+const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);
+export default ServiceAccountsListPage;

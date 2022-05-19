@@ -10,16 +10,17 @@ import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
 
-interface ServiceAccountCreatePageProps {
+interface Props {
   navModel: NavModel;
 }
+
 interface ServiceAccountDTO {
   name: string;
 }
 
 const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
 
-const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ navModel }) => {
+const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
   const history = useHistory();
 
   const onSubmit = useCallback(

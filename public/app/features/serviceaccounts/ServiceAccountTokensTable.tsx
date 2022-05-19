@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface Props {
   onDelete: (token: ApiKey) => void;
 }
 
-export const ServiceAccountTokensTable: FC<Props> = ({ tokens, timeZone, onDelete }) => {
+export const ServiceAccountTokensTable = ({ tokens, timeZone, onDelete }: Props): JSX.Element => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 

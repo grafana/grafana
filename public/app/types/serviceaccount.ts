@@ -45,6 +45,7 @@ export interface ServiceAccountProfileState {
 }
 
 export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
+
 export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
