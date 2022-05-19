@@ -37,14 +37,19 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
-    {
-      path: '/p/:uid/:slug?',
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/PublicDashboardPage')
-      ),
-    },
+    ...(config.featureToggles.publicDashboards
+      ? [
+          {
+            path: '/p/:uid/:slug?',
+            pageClass: 'page-dashboard',
+            routeName: DashboardRoutes.Normal,
+            component: SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/PublicDashboardPage')
+            ),
+          },
+        ]
+      : []),
     {
       path: '/dashboard/:type/:slug',
       pageClass: 'page-dashboard',
