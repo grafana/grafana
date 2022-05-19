@@ -40,6 +40,7 @@ export interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
+  icon?: string; // used for grid view
   uid?: string;
   uri: string;
   url: string;

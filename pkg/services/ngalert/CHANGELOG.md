@@ -54,6 +54,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
+- [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
 
 ## 8.5.3
 

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
+import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -130,7 +131,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>
