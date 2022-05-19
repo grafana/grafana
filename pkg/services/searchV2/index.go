@@ -53,9 +53,10 @@ type dashboardIndex struct {
 	eventStore   eventStore
 	logger       log.Logger
 	buildSignals chan int64
+	extender     DocumentExtender
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender) *dashboardIndex {
 	return &dashboardIndex{
 		loader:       dashLoader,
 		eventStore:   evStore,
@@ -63,6 +64,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		perOrgWriter: map[int64]*bluge.Writer{},
 		logger:       log.New("dashboardIndex"),
 		buildSignals: make(chan int64),
+		extender:     extender,
 	}
 }
 
@@ -211,7 +213,8 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 	orgSearchIndexLoadTime := time.Since(started)
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
-	reader, writer, err := initIndex(dashboards, i.logger)
+	dashboardExtender := i.extender.GetDashboardExtender(orgID)
+	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
@@ -350,7 +353,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	if len(dbDashboards) == 0 {
 		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
 	} else {
-		newReader, err = i.updateDashboard(writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(orgID, writer, reader, dbDashboards[0])
 	}
 	if err != nil {
 		return err
@@ -389,12 +392,17 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
+
+	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
 
 	var doc *bluge.Document
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 	} else {
 		var folderUID string
 		if dash.folderID == 0 {
@@ -409,6 +417,9 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 
 		location := folderUID
 		doc = getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 
 		var actualPanelIDs []string
 
