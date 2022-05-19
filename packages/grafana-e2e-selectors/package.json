@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "21.0.2",
+    "@rollup/plugin-commonjs": "22.0.0",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@types/node": "16.11.26",
     "rimraf": "3.0.2",

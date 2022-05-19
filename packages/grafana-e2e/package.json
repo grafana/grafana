@@ -31,7 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "21.0.2",
+    "@rollup/plugin-commonjs": "22.0.0",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@types/chrome-remote-interface": "0.31.4",
     "@types/lodash": "4.14.181",

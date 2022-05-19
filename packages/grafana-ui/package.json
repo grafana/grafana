@@ -30,8 +30,8 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.7.1",
-    "@emotion/react": "11.8.2",
+    "@emotion/css": "11.9.0",
+    "@emotion/react": "11.9.0",
     "@grafana/aws-sdk": "0.0.35",
     "@grafana/data": "9.0.0-pre",
     "@grafana/e2e-selectors": "9.0.0-pre",
@@ -97,7 +97,7 @@
     "@babel/core": "7.17.8",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
-    "@rollup/plugin-commonjs": "21.0.2",
+    "@rollup/plugin-commonjs": "22.0.0",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@storybook/addon-a11y": "6.4.21",
     "@storybook/addon-actions": "6.4.21",
@@ -117,7 +117,7 @@
     "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
-    "@testing-library/react-hooks": "7.0.2",
+    "@testing-library/react-hooks": "8.0.0",
     "@testing-library/user-event": "14.2.0",
     "@types/classnames": "2.3.0",
     "@types/common-tags": "^1.8.0",
