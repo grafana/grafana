@@ -166,6 +166,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       &:hover {
         box-shadow: none;
+        // background-clip: padding-box;
+        // width: 100%;
+        // background: #FF0;
       }
     `,
     headerCell: css`
@@ -203,6 +206,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    missingTitleText: css`
+      color: ${theme.colors.text.disabled};
+      font-style: italic;
+    `,
     invalidDatasourceItem: css`
       color: ${theme.colors.error.main};
       text-decoration: line-through;
@@ -220,8 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding-right: ${theme.spacing(1)};
     `,
     checkboxHeader: css`
-      // display: flex;
-      // justify-content: flex-start;
+      margin-left: 2px;
     `,
     checkbox: css`
       margin-left: 10px;
