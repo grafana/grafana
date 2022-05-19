@@ -131,7 +131,9 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
           />
         );
       }
-      return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagAdd} />;
+      return (
+        <FolderView selection={selection} selectionToggle={toggleSelection} tags={query.tag} onTagSelected={onTagAdd} />
+      );
     }
 
     return (

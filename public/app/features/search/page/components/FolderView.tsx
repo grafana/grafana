@@ -12,11 +12,8 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-export const FolderView = ({
-  selection,
-  selectionToggle,
-  onTagSelected,
-}: Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'>) => {
+type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'> & { tags?: string[] };
+export const FolderView = ({ selection, selectionToggle, onTagSelected, tags }: Props) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
@@ -59,6 +56,7 @@ export const FolderView = ({
                 selectionToggle={selectionToggle}
                 onTagSelected={onTagSelected}
                 section={section}
+                tags={tags}
               />
             )}
           </div>

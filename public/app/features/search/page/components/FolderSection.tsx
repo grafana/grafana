@@ -29,6 +29,7 @@ interface SectionHeaderProps {
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
+  tags?: string[];
 }
 
 export const FolderSection: FC<SectionHeaderProps> = ({
@@ -37,6 +38,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   onTagSelected,
   selection,
   renderStandaloneBody,
+  tags,
 }) => {
   const editable = selectionToggle != null;
   const theme = useTheme();
@@ -74,7 +76,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       folderUid = undefined;
       folderTitle = undefined;
     }
-    const raw = await getGrafanaSearcher().search(query);
+    const raw = await getGrafanaSearcher().search({ ...query, tags });
     const v = raw.view.map(
       (item) =>
         ({
@@ -91,7 +93,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
         } as DashboardSectionItem)
     );
     return v;
-  }, [sectionExpanded, section]);
+  }, [sectionExpanded, section, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
