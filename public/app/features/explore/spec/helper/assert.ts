@@ -48,3 +48,15 @@ export const assertDataSourceFilterVisibility = (visible: boolean, exploreId: Ex
     expect(filterInput).not.toBeInTheDocument();
   }
 };
+
+export const assertQueryHistoryElementsShown = (
+  shown: number,
+  total: number,
+  exploreId: ExploreId = ExploreId.left
+) => {
+  expect(withinExplore(exploreId).queryByText(`Showing ${shown} of ${total}.`)).toBeInTheDocument();
+};
+
+export const assertLoadMoreQueryHistoryNotVisible = (exploreId: ExploreId = ExploreId.left) => {
+  expect(withinExplore(exploreId).queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+};

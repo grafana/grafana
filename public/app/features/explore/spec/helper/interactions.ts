@@ -66,6 +66,11 @@ export const deleteQueryHistory = (queryIndex: number, exploreId: ExploreId = Ex
   invokeAction(queryIndex, 'Delete query', exploreId);
 };
 
+export const loadMoreQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {
+  const button = withinExplore(exploreId).getByRole('button', { name: 'Load more' });
+  await userEvent.click(button);
+};
+
 const invokeAction = async (queryIndex: number, actionAccessibleName: string, exploreId: ExploreId) => {
   const selector = withinExplore(exploreId);
   const buttons = selector.getAllByRole('button', { name: actionAccessibleName });

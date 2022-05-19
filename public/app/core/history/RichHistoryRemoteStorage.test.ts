@@ -110,6 +110,5 @@ describe('RichHistoryRemoteStorage', () => {
       data: { queries: [dto] },
       showSuccessAlert: false,
     });
-    expect(total).toBe(1);
   });
 });
