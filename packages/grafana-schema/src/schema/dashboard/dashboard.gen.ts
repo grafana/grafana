@@ -116,10 +116,10 @@ export type DashboardLinkType = 'link' | 'dashboards';
 export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
 
 export enum FieldColorModeId {
-  Continuous-GrYlRd = 'continuous-GrYlRd',
+  ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
-  Palette-Classic = 'palette-classic',
-  Palette-Saturated = 'palette-saturated',
+  PaletteClassic = 'palette-classic',
+  PaletteSaturated = 'palette-saturated',
   Thresholds = 'thresholds',
 }
 

@@ -136,7 +136,7 @@ seqs: [
 				#VariableType: "query" | "adhoc" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type")
 
 				// TODO docs
-				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
+				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteSaturated|ContinuousGrYlRd|Fixed")
 
 				// TODO docs
 				#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
