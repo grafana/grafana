@@ -35,7 +35,7 @@
 
 .panel-content {
   font-family: $fusebit-font !important;
-  color: $fusebit-text-color;
+  color: $text-color;
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;
@@ -47,7 +47,7 @@
 }
 
 div.flot-text {
-  color: $fusebit-text-color !important;
+  color: $text-color !important;
 }
 
 .dashboard-solo {
@@ -58,7 +58,7 @@ div.flot-text {
 }
 
 .template-variable {
-  color: $fusebit-text-color;
+  color: $variable;
 }
 
 .panel-solo {

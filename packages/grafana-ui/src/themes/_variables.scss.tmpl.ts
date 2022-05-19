@@ -199,7 +199,6 @@ $panel-header-z-index: 10;
 $tabs-padding: 10px 15px 9px;
 
 // fusebit
-$fusebit-text-color: #333333;
 $fusebit-font: 'Courier Prime', monospace;
 
 $external-services: (
