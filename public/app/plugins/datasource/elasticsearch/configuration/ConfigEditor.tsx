@@ -5,7 +5,7 @@ import { Alert, DataSourceHttpSettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
-import { isDeprecatedVersion } from '../utils';
+import { isSupportedVersion } from '../utils';
 
 import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
@@ -27,18 +27,18 @@ export const ConfigEditor = (props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const deprecatedVersion = isDeprecatedVersion(options.jsonData.esVersion);
+  const supportedVersion = isSupportedVersion(options.jsonData.esVersion);
 
   return (
     <>
       {options.access === 'direct' && (
-        <Alert title="Deprecation Notice" severity="warning">
-          Browser access mode in the Elasticsearch datasource is deprecated and will be removed in a future release.
+        <Alert title="Error" severity="error">
+          Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.
         </Alert>
       )}
-      {deprecatedVersion && (
-        <Alert title="Deprecation notice" severity="warning">
-          {`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) is deprecated and will be removed in a future release.`}
+      {!supportedVersion && (
+        <Alert title="Deprecation notice" severity="error">
+          {`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
         </Alert>
       )}
 

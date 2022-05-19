@@ -1,7 +1,8 @@
 +++
-title = "Grafana CLI"
+aliases = ["/docs/grafana/latest/administration/cli/"]
 description = "Guide to using grafana-cli"
 keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
+title = "Grafana CLI"
 weight = 400
 +++
 

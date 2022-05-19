@@ -132,7 +132,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/silences',
-    roles: evaluateAccess([AccessControlAction.AlertingInstanceRead], ['Editor', 'Admin']),
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead],
+      ['Viewer', 'Editor', 'Admin']
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),
@@ -291,7 +294,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   return uniquePaths.map((path) => ({
     path,
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "Alerting feature toggle page"*/ 'app/features/alerting/FeatureTogglePage')
+      () => import(/* webpackChunkName: "AlertingFeatureTogglePage"*/ 'app/features/alerting/FeatureTogglePage')
     ),
   }));
 }

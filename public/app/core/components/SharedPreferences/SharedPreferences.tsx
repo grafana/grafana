@@ -168,7 +168,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 data-testid="User preferences home dashboard drop down"
               >
                 <Select
-                  menuShouldPortal
                   value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
                   getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}
@@ -208,7 +207,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <div className="gf-form-button-row">
-                <Button variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  data-testid={selectors.components.UserProfile.preferencesSaveButton}
+                >
                   <Trans id="common.save">Save</Trans>
                 </Button>
               </div>

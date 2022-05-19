@@ -39,6 +39,7 @@ type SystemStats struct {
 	DailyActiveEditors        int64
 	DailyActiveViewers        int64
 	DailyActiveSessions       int64
+	DataKeys                  int64
 }
 
 type DataSourceStats struct {

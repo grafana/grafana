@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-edit-user-account/", "/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/"]
 title = "View and edit a user account"
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/"]
 weight = 110
 +++
 

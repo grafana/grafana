@@ -1,14 +1,14 @@
 +++
-title = "Image rendering"
+aliases = ["/docs/grafana/latest/administration/image_rendering/", "/docs/grafana/latest/image-rendering/"]
 description = "Image rendering"
 keywords = ["grafana", "image", "rendering", "plugin"]
-aliases = ["/docs/grafana/latest/administration/image_rendering/"]
+title = "Image rendering"
 weight = 55
 +++
 
 # Image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}), [PDF export]({{< relref "../enterprise/export-pdf.md" >}}), and [Reporting]({{< relref "../enterprise/reporting.md" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications/_index.md" >}}), [PDF export]({{< relref "../enterprise/export-pdf.md" >}}), and [Reporting]({{< relref "../enterprise/reporting.md" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 
@@ -89,6 +89,29 @@ RENDERING_CLUSTERING_TIMEOUT=30
     "mode": "clustered",
     "clustering": {
       "mode": "browser",
+      "maxConcurrency": 5,
+      "timeout": 30
+    }
+  }
+}
+```
+
+##### Cluster mode `contextPerRenderKey` (experimental)
+
+> **Note:** This feature is available in Image Renderer v3.4.0 and later versions.
+
+In `contextPerRenderKey` mode, the plugin will reuse the same [browser context](https://chromedevtools.github.io/devtools-protocol/tot/Target/#method-createBrowserContext) for all rendering requests sharing the same `renderKey` auth cookie and target domain within a short time window. Each new request will open a new page within the existing context. Contexts are closed automatically after 5s of inactivity.
+
+In the case of `contextPerRenderKey` mode, the `clustering.max_concurrency` option refers to the number of open contexts rather than the number of open pages. There is no way to limit the number of open pages in a context.
+
+`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../dashboards/previews.md#about-the-dashboard-previews-crawler" >}}).
+
+```json
+{
+  "rendering": {
+    "mode": "clustered",
+    "clustering": {
+      "mode": "contextPerRenderKey",
       "maxConcurrency": 5,
       "timeout": 30
     }

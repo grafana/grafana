@@ -16,6 +16,7 @@ import {
   ValueTypes,
 } from '../types';
 
+import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
 
 import { AliasBy, Project, VisualMetricQueryEditor } from '.';
@@ -128,11 +129,19 @@ function Editor({
       )}
 
       {editorMode === EditorMode.MQL && (
-        <MQLQueryEditor
-          onChange={(q: string) => onQueryChange({ ...query, query: q })}
-          onRunQuery={onRunQuery}
-          query={query.query}
-        ></MQLQueryEditor>
+        <>
+          <MQLQueryEditor
+            onChange={(q: string) => onQueryChange({ ...query, query: q })}
+            onRunQuery={onRunQuery}
+            query={query.query}
+          ></MQLQueryEditor>
+          <GraphPeriod
+            onChange={(graphPeriod: string) => onQueryChange({ ...query, graphPeriod })}
+            graphPeriod={query.graphPeriod}
+            refId={refId}
+            variableOptionGroup={variableOptionGroup}
+          />
+        </>
       )}
 
       <AliasBy

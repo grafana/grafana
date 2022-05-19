@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/add-query-editor-help/"]
 title = "Add query editor help"
 +++
 
@@ -27,7 +28,6 @@ By adding a help component to your plugin, you can for example create "cheat she
    export const plugin = new DataSourcePlugin<DataSource, MyQuery, MyDataSourceOptions>(DataSource)
      .setConfigEditor(ConfigEditor)
      .setQueryEditor(QueryEditor)
-     .setExploreQueryField(ExploreQueryEditor)
      .setQueryEditorHelp(QueryEditorHelp);
    ```
 

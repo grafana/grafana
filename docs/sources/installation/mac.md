@@ -1,7 +1,8 @@
 +++
-title = "Install on macOS"
+aliases = ["/docs/grafana/latest/installation/mac/"]
 description = "Installing Grafana on macOS"
 keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
+title = "Install on macOS"
 weight = 500
 +++
 

@@ -101,7 +101,6 @@ export function ChannelSubForm<R extends ChannelValues>({
                 <Select
                   disabled={readOnly}
                   inputId={contactPointTypeInputId}
-                  menuShouldPortal
                   {...field}
                   width={37}
                   options={typeOptions}

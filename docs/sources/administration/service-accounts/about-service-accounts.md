@@ -1,7 +1,9 @@
 ---
-title: About service accounts
+aliases:
+  - /docs/grafana/latest/administration/service-accounts/about-service-accounts/
+description: This page contains detailed information about service accounts in Grafana
 menuTitle: About service accounts
-description: 'This page contains detailed information about service accounts in Grafana'
+title: About service accounts
 weight: 30
 ---
 

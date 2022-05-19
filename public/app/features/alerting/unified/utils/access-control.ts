@@ -9,7 +9,7 @@ function getRulesSourceType(alertManagerSourceName: string): RulesSourceType {
   return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
 }
 
-const instancesPermissions = {
+export const instancesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingInstanceRead,
     external: AccessControlAction.AlertingInstancesExternalRead,
@@ -28,7 +28,7 @@ const instancesPermissions = {
   },
 };
 
-const notificationsPermissions = {
+export const notificationsPermissions = {
   read: {
     grafana: AccessControlAction.AlertingNotificationsRead,
     external: AccessControlAction.AlertingNotificationsExternalRead,
