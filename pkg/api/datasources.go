@@ -436,16 +436,16 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *models.ReqContext) {
 	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			c.JsonApiErr(403, "Access denied to datasource", err)
+			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 			return
 		}
-		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 		return
 	}
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
-		c.JsonApiErr(500, "Unable to find datasource plugin", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 		return
 	}
 
