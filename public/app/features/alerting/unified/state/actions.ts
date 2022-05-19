@@ -43,7 +43,7 @@ import {
   updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchAnnotations } from '../api/annotations';
-import { fetchBuildInfo } from '../api/buildInfo';
+import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -231,12 +231,12 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
         }
 
         const { id, name } = ds;
-        const buildInfo = await fetchBuildInfo(name);
+        const buildInfo = await discoverFeatures(name);
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
               dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+              apiVersion: buildInfo.application === PromApplication.Lotex ? 'legacy' : 'config',
             }
           : undefined;
 

@@ -71,26 +71,56 @@ describe('variableQueryMigrations', () => {
     });
   });
   describe('when OldVariableQuery is used', () => {
-    it('should parse the query', () => {
+    const baseOldQuery: OldVariableQuery = {
+      queryType: VariableQueryType.Regions,
+      namespace: '',
+      region: 'us-east-1',
+      metricName: '',
+      dimensionKey: '',
+      dimensionFilters: '',
+      ec2Filters: '',
+      instanceID: '',
+      attributeName: '',
+      resourceType: '',
+      tags: '',
+      refId: '',
+    };
+    it('should parse ec2 query', () => {
       const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
         queryType: VariableQueryType.EC2InstanceAttributes,
-        namespace: '',
-        region: 'us-east-1',
-        metricName: '',
-        dimensionKey: '',
         ec2Filters: '{"environment":["$environment"]}',
-        instanceID: '',
         attributeName: 'rds:db',
-        resourceType: 'elasticloadbalancing:loadbalancer',
-        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
-        refId: '',
       };
       const query = migrateVariableQuery(oldQuery);
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+    it('should parse resource arn query', () => {
+      const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
+        queryType: VariableQueryType.ResourceArns,
+        resourceType: 'elasticloadbalancing:loadbalancer',
+        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.region).toBe('us-east-1');
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
+    });
+    it('should parse dimension values query', () => {
+      const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
+        queryType: VariableQueryType.DimensionValues,
+        metricName: 'foo',
+        dimensionKey: 'bar',
+        dimensionFilters: '{"InstanceId":"$instanceid"}',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.metricName).toBe('foo');
+      expect(query.dimensionKey).toBe('bar');
+      expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instanceid' });
     });
   });
 });

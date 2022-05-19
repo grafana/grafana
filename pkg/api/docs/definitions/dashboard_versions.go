@@ -1,10 +1,28 @@
 package definitions
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersions
 //
 // Gets all existing versions for the dashboard.
+//
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: dashboardVersionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/uid/{uid}/versions dashboard_versions getDashboardVersionsByUID
+//
+// Gets all existing versions for the dashboard using UID.
 //
 // Responses:
 // 200: dashboardVersionsResponse
@@ -43,6 +61,21 @@ import "github.com/grafana/grafana/pkg/models"
 //
 // Restore a dashboard to a given dashboard version.
 //
+// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: postDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/uid/{uid}/restore dashboard_versions restoreDashboardVersionByUID
+//
+// Restore a dashboard to a given dashboard version using UID.
+//
 // Responses:
 // 200: postDashboardResponse
 // 401: unauthorisedError
@@ -64,7 +97,14 @@ type DashboardVersionIdParam struct {
 	DashboardVersionID int64
 }
 
-// swagger:parameters getDashboardVersions
+// swagger:parameters restoreDashboardVersion restoreDashboardVersionByUID
+type RestoreVersionBodyParam struct {
+	// in:body
+	// required:true
+	Body dtos.RestoreDashboardVersionCommand
+}
+
+// swagger:parameters getDashboardVersions getDashboardVersionsByUID
 type GetDashboardVersionsParams struct {
 	// Maximum number of results to return
 	// in:query

@@ -135,12 +135,17 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		"orgId", orgID,
 		"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
 		"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
-		"orgSearchIndexTotalTime", orgSearchIndexTotalTime)
+		"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
+		"orgSearchDashboardCount", len(dashboards))
 
 	i.mu.Lock()
 	i.perOrgReader[orgID] = reader
 	i.perOrgWriter[orgID] = writer
 	i.mu.Unlock()
+
+	if orgID == 1 {
+		go updateUsageStats(context.Background(), reader, i.logger)
+	}
 	return len(dashboards), nil
 }
 
