@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
@@ -14,13 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/xorm"
 )
 
 func (s simpleSecret) rollback(
+	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sess *xorm.Session,
+	sqlStore *sqlstore.SQLStore,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -28,7 +27,7 @@ func (s simpleSecret) rollback(
 		Secret []byte
 	}
 
-	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -38,25 +37,30 @@ func (s simpleSecret) rollback(
 			continue
 		}
 
-		decrypted, err := secretsSrv.Decrypt(context.Background(), row.Secret)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
+			if err != nil {
+				logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
+			if err != nil {
+				logger.Warn("Could not encrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+			if _, err = sess.Exec(updateSQL, encrypted, nowInUTC(), row.Id); err != nil {
+				logger.Warn("Could not update secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encrypted, err := encryptionSrv.Encrypt(context.Background(), decrypted, secretKey)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not encrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
-		if _, err = sess.Exec(updateSQL, encrypted, nowInUTC(), row.Id); err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -70,9 +74,10 @@ func (s simpleSecret) rollback(
 }
 
 func (s b64Secret) rollback(
+	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sess *xorm.Session,
+	sqlStore *sqlstore.SQLStore,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -80,7 +85,7 @@ func (s b64Secret) rollback(
 		Secret string
 	}
 
-	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -90,40 +95,44 @@ func (s b64Secret) rollback(
 			continue
 		}
 
-		decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+			if err != nil {
+				logger.Warn("Could not decode base64-encoded secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			decrypted, err := secretsSrv.Decrypt(ctx, decoded)
+			if err != nil {
+				logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
+			if err != nil {
+				logger.Warn("Could not encrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			encoded := base64.StdEncoding.EncodeToString(encrypted)
+			if s.hasUpdatedColumn {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+			} else {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, row.Id)
+			}
+
+			if err != nil {
+				logger.Warn("Could not update secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decode base64-encoded secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encrypted, err := encryptionSrv.Encrypt(context.Background(), decrypted, secretKey)
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not encrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		encoded := base64.StdEncoding.EncodeToString(encrypted)
-		if s.hasUpdatedColumn {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
-		} else {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, row.Id)
-		}
-
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -137,9 +146,10 @@ func (s b64Secret) rollback(
 }
 
 func (s jsonSecret) rollback(
+	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sess *xorm.Session,
+	sqlStore *sqlstore.SQLStore,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -147,7 +157,7 @@ func (s jsonSecret) rollback(
 		SecureJsonData map[string][]byte
 	}
 
-	if err := sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -157,27 +167,34 @@ func (s jsonSecret) rollback(
 			continue
 		}
 
-		decrypted, err := secretsSrv.DecryptJsonData(context.Background(), row.SecureJsonData)
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
+			if err != nil {
+				logger.Warn("Could not decrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			toUpdate := struct {
+				SecureJsonData map[string][]byte
+				Updated        string
+			}{Updated: nowInUTC()}
+
+			toUpdate.SecureJsonData, err = encryptionSrv.EncryptJsonData(ctx, decrypted, secretKey)
+			if err != nil {
+				logger.Warn("Could not re-encrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
+				logger.Warn("Could not update secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not decrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		toUpdate := struct {
-			SecureJsonData map[string][]byte
-			Updated        string
-		}{Updated: nowInUTC()}
-
-		toUpdate.SecureJsonData, err = encryptionSrv.EncryptJsonData(context.Background(), decrypted, secretKey)
-		if err != nil {
-			logger.Warn("Could not re-encrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
-		}
-
-		if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
-			logger.Warn("Could not update secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
-			continue
 		}
 	}
 
@@ -191,9 +208,10 @@ func (s jsonSecret) rollback(
 }
 
 func (s alertingSecret) rollback(
+	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sess *xorm.Session,
+	sqlStore *sqlstore.SQLStore,
 	secretKey string,
 ) (anyFailure bool) {
 	var results []struct {
@@ -202,61 +220,64 @@ func (s alertingSecret) rollback(
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-	if err := sess.SQL(selectSQL).Find(&results); err != nil {
+	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to roll back")
 		return true
 	}
 
 	for _, result := range results {
 		result := result
-		postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
-		if err != nil {
-			anyFailure = true
-			logger.Warn("Could not load configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
-			continue
-		}
 
-		for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
-			for _, gmr := range receiver.GrafanaManagedReceivers {
-				for k, v := range gmr.SecureSettings {
-					decoded, err := base64.StdEncoding.DecodeString(v)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not decode base64-encoded secret (alert_configuration with id: %d, key)", k, result.Id, err)
-						continue
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
+			if err != nil {
+				logger.Warn("Could not load configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
+				return err
+			}
+
+			for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
+				for _, gmr := range receiver.GrafanaManagedReceivers {
+					for k, v := range gmr.SecureSettings {
+						decoded, err := base64.StdEncoding.DecodeString(v)
+						if err != nil {
+							logger.Warn("Could not decode base64-encoded secret (alert_configuration with id: %d, key)", k, result.Id, err)
+							return err
+						}
+
+						decrypted, err := secretsSrv.Decrypt(ctx, decoded)
+						if err != nil {
+							logger.Warn("Could not decrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
+							return err
+						}
+
+						reencrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
+						if err != nil {
+							logger.Warn("Could not re-encrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
+							return err
+						}
+
+						gmr.SecureSettings[k] = base64.StdEncoding.EncodeToString(reencrypted)
 					}
-
-					decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not decrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
-						continue
-					}
-
-					reencrypted, err := encryptionSrv.Encrypt(context.Background(), decrypted, secretKey)
-					if err != nil {
-						anyFailure = true
-						logger.Warn("Could not re-encrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
-						continue
-					}
-
-					gmr.SecureSettings[k] = base64.StdEncoding.EncodeToString(reencrypted)
 				}
 			}
-		}
 
-		marshalled, err := json.Marshal(postableUserConfig)
+			marshalled, err := json.Marshal(postableUserConfig)
+			if err != nil {
+				logger.Warn("Could not marshal configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
+				return err
+			}
+
+			result.AlertmanagerConfiguration = string(marshalled)
+			if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
+				logger.Warn("Could not update secret (alert_configuration with id: %d) while rolling it back", result.Id, err)
+				return err
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			anyFailure = true
-			logger.Warn("Could not marshal configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
-			continue
-		}
-
-		result.AlertmanagerConfiguration = string(marshalled)
-		if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
-			anyFailure = true
-			logger.Warn("Could not update secret (alert_configuration with id: %d) while rolling it back", result.Id, err)
-			continue
 		}
 	}
 
@@ -276,7 +297,7 @@ func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	}
 
 	toRollback := []interface {
-		rollback(*manager.SecretsService, encryption.Internal, *xorm.Session, string) bool
+		rollback(context.Context, *manager.SecretsService, encryption.Internal, *sqlstore.SQLStore, string) bool
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
@@ -288,31 +309,29 @@ func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		alertingSecret{},
 	}
 
-	return runner.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) (err error) {
-		defer func() {
-			if r := recover(); r != nil {
-				err = errors.New(fmt.Sprint(r))
-				logger.Error("Secrets roll back failed, rolling back transaction...", "error", err)
-			}
-		}()
+	var anyFailure bool
+	ctx := context.Background()
 
-		var anyFailure bool
-
-		for _, r := range toRollback {
-			if failed := r.rollback(runner.SecretsService, runner.EncryptionService, sess.Session, runner.Cfg.SecretKey); failed {
-				anyFailure = true
-			}
+	for _, r := range toRollback {
+		if failed := r.rollback(
+			ctx,
+			runner.SecretsService,
+			runner.EncryptionService,
+			runner.SQLStore,
+			runner.Cfg.SecretKey,
+		); failed {
+			anyFailure = true
 		}
+	}
 
-		if anyFailure {
-			logger.Warn("Some errors happened, not cleaning up data keys table...")
-			return nil
-		}
-
-		if _, sqlErr := sess.Exec("DELETE FROM data_keys"); sqlErr != nil {
-			logger.Warn("Error while cleaning up data keys table...", "error", sqlErr)
-		}
-
+	if anyFailure {
+		logger.Warn("Some errors happened, not cleaning up data keys table...")
 		return nil
-	})
+	}
+
+	if _, sqlErr := runner.SQLStore.NewSession(ctx).Exec("DELETE FROM data_keys"); sqlErr != nil {
+		logger.Warn("Error while cleaning up data keys table...", "error", sqlErr)
+	}
+
+	return nil
 }

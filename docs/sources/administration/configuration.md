@@ -1,8 +1,8 @@
 +++
-title = "Configuration"
+aliases = ["/docs/grafana/latest/administration/configuration/", "/docs/grafana/latest/installation/configuration/"]
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/latest/installation/configuration/"]
+title = "Configuration"
 weight = 150
 +++
 
@@ -1700,7 +1700,7 @@ Enter a comma-separated list of plugin identifiers to hide in the plugin catalog
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+Refer to [Grafana Live configuration documentation]({{< relref "../live/set-up-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 
@@ -1729,7 +1729,7 @@ allowed_origins = "https://*.example.com"
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
 
-For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ### ha_engine_address
 
@@ -1921,3 +1921,27 @@ default_baselayer_config = `{
 ### enable_custom_baselayers
 
 Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+
+## [dashboard_previews]
+
+### [crawler]
+
+> **Note:** This feature is available in Grafana v9.0 and later versions.
+
+#### thread_count
+
+Number of dashboards rendered in parallel. Default is 6
+
+#### rendering_timeout
+
+Timeout passed down to the Image Renderer plugin. It is used in two separate places within a single rendering request - during the initial navigation to the dashboard, and when waiting for all the panels to load. Default is 20s.
+
+#### max_crawl_duration
+
+Maximum duration of a single crawl. Default is 1h.
+
+#### scheduler_interval
+
+Minimum interval between two subsequent scheduler runs. Default is 12h.
+
+Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.

@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, MutableDataFrame } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { TraceToLogsOptions } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
@@ -393,12 +394,13 @@ describe('createSpanLinkFactory', () => {
       setTemplateSrv(new TemplateSrv());
     });
 
-    it('returns query with span', () => {
+    it('returns single query with span', () => {
       const splitOpenFn = jest.fn();
       const createLink = createSpanLinkFactory({
         splitOpenFn,
         traceToMetricsOptions: {
           datasourceUid: 'prom1',
+          queries: [{ query: 'customQuery' }],
         },
       });
       expect(createLink).toBeDefined();
@@ -409,7 +411,68 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('returns nothing if no queries specified', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1',
+        } as TraceToMetricsOptions,
+      });
+      expect(createLink).toBeDefined();
+
+      const links = createLink!(createTraceSpan());
+      expect(links?.metricLinks).toBeUndefined();
+    });
+
+    it('returns multiple queries including default', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1',
+          queries: [
+            { name: 'Named Query', query: 'customQuery' },
+            { name: 'defaultQuery', query: '' },
+            { query: 'no_name_here' },
+          ],
+        } as TraceToMetricsOptions,
+      });
+      expect(createLink).toBeDefined();
+
+      const links = createLink!(createTraceSpan());
+      expect(links?.metricLinks).toBeDefined();
+      expect(links?.metricLinks).toHaveLength(3);
+
+      const namedLink = links?.metricLinks?.[0];
+      expect(namedLink).toBeDefined();
+      expect(namedLink!.title).toBe('Named Query');
+      expect(namedLink!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+        )}`
+      );
+
+      const defaultLink = links?.metricLinks?.[1];
+      expect(defaultLink).toBeDefined();
+      expect(defaultLink!.title).toBe('defaultQuery');
+      expect(defaultLink!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":"A"}],"panelsState":{}}'
+        )}`
+      );
+
+      const unnamedQuery = links?.metricLinks?.[2];
+      expect(unnamedQuery).toBeDefined();
+      expect(unnamedQuery!.title).toBeUndefined();
+      expect(unnamedQuery!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"no_name_here","refId":"A"}],"panelsState":{}}'
         )}`
       );
     });

@@ -1,8 +1,8 @@
 +++
-title = "Status history"
+aliases = ["/docs/grafana/latest/panels/visualizations/status-history/", "/docs/grafana/latest/visualizations/status-history/"]
 description = "Status history visualization"
 keywords = ["grafana", "docs", "status history", "panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/status-history/"]
+title = "Status history"
 weight = 900
 +++
 

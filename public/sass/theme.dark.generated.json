@@ -102,7 +102,14 @@
       "xl": 1200,
       "xxl": 1440
     },
-    "keys": ["xs", "sm", "md", "lg", "xl", "xxl"],
+    "keys": [
+      "xs",
+      "sm",
+      "md",
+      "lg",
+      "xl",
+      "xxl"
+    ],
     "unit": "px"
   },
   "shape": {},

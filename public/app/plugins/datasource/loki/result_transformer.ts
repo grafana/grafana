@@ -25,6 +25,7 @@ import TableModel from 'app/core/table_model';
 import { renderLegendFormat } from '../prometheus/legend';
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
 import {
   LokiRangeQueryRequest,
   LokiResponse,
@@ -333,6 +334,9 @@ export function lokiStreamsToDataFrames(
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
+    // TODO: when we get a real frame-type in @grafana/data
+    // move this to frame.meta.type
+    frameType: 'LabeledTimeValues',
   };
 
   const meta: QueryResultMeta = {
@@ -346,7 +350,7 @@ export function lokiStreamsToDataFrames(
   const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
-  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+  if (meta.custom && dataFrameHasLokiError(dataFrame)) {
     meta.custom.error = 'Error when parsing some of the logs';
   }
 

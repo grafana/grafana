@@ -62,7 +62,7 @@ const ServiceAccountsListPage = ({
   query,
   filters,
   serviceAccountToRemove,
-}: Props) => {
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -72,10 +72,12 @@ const ServiceAccountsListPage = ({
     }
   }, [fetchServiceAccounts, fetchACOptions]);
 
-  const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
+  const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-    updateServiceAccount(updatedServiceAccount);
+    await updateServiceAccount(updatedServiceAccount);
+    await fetchServiceAccounts();
   };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>

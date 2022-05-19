@@ -275,7 +275,7 @@ func TestAny_Evaluate(t *testing.T) {
 				EvalPermission("report:write", Scope("reports", "10")),
 			),
 			permissions: map[string][]string{
-				"permissions:write": {"permissions:delegate"},
+				"permissions:write": {"permissions:type:delegate"},
 			},
 			expected: false,
 		},

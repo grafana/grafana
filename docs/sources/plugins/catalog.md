@@ -1,6 +1,6 @@
 +++
-title = "Plugin catalog"
 aliases = ["/docs/grafana/latest/plugins/catalog/"]
+title = "Plugin catalog"
 weight = 1
 +++
 

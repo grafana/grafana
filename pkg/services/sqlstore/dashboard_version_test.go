@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
@@ -94,14 +95,13 @@ func TestGetDashboardVersion(t *testing.T) {
 		require.Equal(t, query.DashboardId, savedDash.Id)
 		require.Equal(t, query.Version, savedDash.Version)
 
-		dashCmd := models.GetDashboardQuery{
-			OrgId: savedDash.OrgId,
+		dashCmd := &models.Dashboard{
 			Uid:   savedDash.Uid,
+			OrgId: savedDash.OrgId,
 		}
-
-		err = sqlStore.GetDashboard(context.Background(), &dashCmd)
+		err = getDashboard(t, sqlStore, dashCmd)
 		require.Nil(t, err)
-		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
+		eq := reflect.DeepEqual(dashCmd.Data, query.Result.Data)
 		require.Equal(t, true, eq)
 	})
 
@@ -220,5 +220,22 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		require.GreaterOrEqual(t, len(query.Result), versionsToKeep)
 		// Ensure we haven't deleted more than perBatch * maxBatches rows
 		require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
+	})
+}
+
+func getDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard) error {
+	t.Helper()
+	return sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		has, err := sess.Get(dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardNotFound
+		}
+
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
 	})
 }

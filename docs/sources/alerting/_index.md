@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 title = "Alerts"
 weight = 114
-aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 +++
 
 # Grafana alerting

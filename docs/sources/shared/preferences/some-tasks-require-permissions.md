@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/preferences/some-tasks-require-permissions/
 title: Some tasks require permissions
 ---
 

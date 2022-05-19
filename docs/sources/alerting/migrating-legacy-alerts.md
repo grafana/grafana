@@ -1,8 +1,8 @@
 +++
-title = "Migrating legacy dashboard alerts"
+aliases = ["/docs/grafana/latest/alerting/migrating-legacy-alerts/", "/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
 description = "Migrate legacy dashboard alerts"
+title = "Migrating legacy dashboard alerts"
 weight = 114
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
 +++
 
 # Migrating legacy dashboard alerts

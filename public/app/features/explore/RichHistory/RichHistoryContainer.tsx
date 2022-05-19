@@ -34,7 +34,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   return {
     richHistory,
     firstTab,
-    activeDatasourceInstance: datasourceInstance?.name,
+    activeDatasourceInstance: datasourceInstance!.name,
     richHistorySettings,
     richHistorySearchFilters,
   };

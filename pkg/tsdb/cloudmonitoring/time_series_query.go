@@ -20,6 +20,21 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
+	// GraphPeriod needs to be explicitly disabled.
+	// If not set, the default behavior is to set an automatic value
+	if timeSeriesQuery.GraphPeriod != "disabled" {
+		graphPeriod := timeSeriesQuery.GraphPeriod
+		if graphPeriod == "auto" || graphPeriod == "" {
+			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
+			graphPeriod = interval.Text
+		}
+		return fmt.Sprintf(" | graph_period %s", graphPeriod)
+	}
+	return ""
+}
+
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
@@ -35,13 +50,11 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
-	interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-
+	timeSeriesQuery.Query += timeSeriesQuery.appendGraphPeriod(req)
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
-	timeSeriesQuery.Query += fmt.Sprintf(" | graph_period %s | within d'%s', d'%s'", interval.Text, from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
+	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 
 	buf, err := json.Marshal(map[string]interface{}{
 		"query": timeSeriesQuery.Query,

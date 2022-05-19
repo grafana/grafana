@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/panels/transform-data/", "/docs/grafana/latest/panels/transformations/", "/docs/grafana/latest/panels/transformations/apply-transformations/", "/docs/grafana/latest/panels/transformations/config-from-query/", "/docs/grafana/latest/panels/transformations/rows-to-fields/", "/docs/sources/panels/transform-data/"]
 title = "Transform data"
-aliases = ["/docs/grafana/latest/panels/transformations/", "/docs/grafana/latest/panels/transformations/config-from-query/", "/docs/grafana/latest/panels/transformations/rows-to-fields/", "/docs/grafana/latest/panels/transformations/apply-transformations/", "/docs/sources/panels/transform-data/"]
 weight = 500
 +++
 

@@ -1,9 +1,9 @@
 +++
-title = "Mute timings"
+aliases = ["/docs/grafana/latest/alerting/notifications/mute-timings/", "/docs/grafana/latest/alerting/unified-alerting/notifications/mute-timings/"]
 description = "Mute timings"
 keywords = ["grafana", "alerting", "guide", "mute", "mute timings", "mute time interval"]
+title = "Mute timings"
 weight = 450
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/notifications/mute-timings/"]
 +++
 
 # Mute timings

@@ -1,8 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 
-import { DataFrameView, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
+import {
+  DataFrameType,
+  DataFrameView,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  LinkModel,
+} from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { DataHoverView } from '../geomap/components/DataHoverView';
 
 import { BucketLayout, HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
@@ -176,6 +186,14 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     // should not show anything... but for debugging
     return <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>;
   };
+
+  if (data.heatmap?.meta?.type === DataFrameType.HeatmapSparse) {
+    return (
+      <div>
+        <DataHoverView data={data.heatmap} rowIndex={hover.index} />
+      </div>
+    );
+  }
 
   return (
     <>
