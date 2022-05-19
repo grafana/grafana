@@ -4796,7 +4796,7 @@ __metadata:
     d3: 5.15.0
     date-fns: 2.28.0
     enzyme: 3.11.0
-    expose-loader: 3.1.0
+    expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.0.0
     is-hotkey: 0.2.0
@@ -19452,12 +19452,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expose-loader@npm:3.1.0":
-  version: 3.1.0
-  resolution: "expose-loader@npm:3.1.0"
+"expose-loader@npm:4.0.0":
+  version: 4.0.0
+  resolution: "expose-loader@npm:4.0.0"
   peerDependencies:
     webpack: ^5.0.0
-  checksum: c9bc3c220f9f5e46f7897a8a884fbe3b494b7e2a7fca454dc4642ad73664367c2501dfdf8476477a1ee3fd6c32d18aae1187e428c03f310de2f465eb4157d33c
+  checksum: a674397dfb93e961aade42e09c78e28c63314f5050231e3b5ecc48a0a2d8aebc70327d3bbde5a9e4e0c28a3e02d18d2f8c0de844025f696d00964707611224c1
   languageName: node
   linkType: hard
 
@@ -21234,7 +21234,7 @@ __metadata:
     eslint-plugin-react-hooks: 4.3.0
     eslint-webpack-plugin: 3.1.1
     eventemitter3: 4.0.7
-    expose-loader: 3.1.0
+    expose-loader: 4.0.0
     fast-deep-equal: ^3.1.3
     fast-json-patch: 3.1.0
     file-loader: 6.2.0

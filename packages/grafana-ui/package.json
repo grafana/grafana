@@ -156,7 +156,7 @@
     "css-minimizer-webpack-plugin": "4.0.0",
     "csstype": "3.1.0",
     "enzyme": "3.11.0",
-    "expose-loader": "3.1.0",
+    "expose-loader": "4.0.0",
     "mock-raf": "1.0.1",
     "postcss": "8.4.12",
     "postcss-loader": "6.2.1",
