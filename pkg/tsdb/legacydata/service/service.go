@@ -41,10 +41,7 @@ func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.O
 
 //nolint: staticcheck // legacydata.DataResponse deprecated
 func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query legacydata.DataQuery) (legacydata.DataResponse, error) {
-	decryptedJsonData, err := h.dataSourcesService.DecryptedValues(ctx, ds)
-	if err != nil {
-		return legacydata.DataResponse{}, err
-	}
+	decryptedJsonData := h.dataSourcesService.DecryptedValues(ds)
 
 	req, err := generateRequest(ctx, ds, decryptedJsonData, query)
 	if err != nil {
