@@ -447,11 +447,12 @@ describe('AzureMonitorDatasource', () => {
           ],
         };
 
-        beforeEach(() => {
+        it('should return list of Resource Names', () => {
+          metricDefinition = 'Microsoft.Storage/storageAccounts/blobServices';
+          const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
+            ? 'Microsoft.Storage/storageAccounts'
+            : metricDefinition;
           ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-            const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
-              ? 'Microsoft.Storage/storageAccounts'
-              : metricDefinition;
             const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
             expect(path).toBe(
               basePath +
@@ -459,16 +460,15 @@ describe('AzureMonitorDatasource', () => {
             );
             return Promise.resolve(response);
           });
-        });
-
-        it('should return list of Resource Names', () => {
-          metricDefinition = 'Microsoft.Storage/storageAccounts/blobServices';
           return ctx.ds
             .getResourceNames(subscription, resourceGroup, metricDefinition)
             .then((results: Array<{ text: string; value: string }>) => {
               expect(results.length).toEqual(1);
               expect(results[0].text).toEqual('storagetest/default');
               expect(results[0].value).toEqual('storagetest/default');
+              expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
+                `azuremonitor/subscriptions/${subscription}/resourceGroups/${resourceGroup}/resources?$filter=resourceType eq '${validMetricDefinition}'&api-version=2021-04-01`
+              );
             });
         });
       });
