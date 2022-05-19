@@ -76,9 +76,12 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
+      let name = access.name.values.get(p.row.index);
+      if (!name.length) {
+        name = 'missing title'; // normal for panels
+      }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)} title={name}>
           {name}
         </a>
       );

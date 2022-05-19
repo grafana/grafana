@@ -160,6 +160,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     cellWrapper: css`
       border-right: none;
       padding: ${theme.spacing(1)};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
       &:hover {
         box-shadow: none;
       }
