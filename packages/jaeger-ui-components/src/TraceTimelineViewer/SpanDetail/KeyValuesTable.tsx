@@ -44,6 +44,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     row: css`
       label: row;
+      height: 30px;
       & > td {
         padding: 0rem 0.5rem;
       }
