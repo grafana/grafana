@@ -6,7 +6,7 @@ weight = 110
 
 # Alerting fundamentals
 
-This section covers the fundamental concepts of Grafana alerting. It covers the following topics:
+This section includes the following fundamental concepts of Grafana alerting:
 
 - [Annotations and labels for alerting rules]({{< relref "./annotation-label/_index.md" >}})
 - [Alertmanager]({{< relref "./alertmanager.md" >}})
