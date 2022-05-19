@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trim } from 'lodash';
-import { VariableOption, VariableWithOptions } from '../../types';
-import { isMulti, isQuery } from '../../guard';
+
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
-import { containsSearchFilter } from '../../utils';
 import { ALL_VARIABLE_VALUE } from '../../constants';
+import { isMulti, isQuery } from '../../guard';
+import { VariableOption, VariableWithOptions } from '../../types';
+import { containsSearchFilter } from '../../utils';
 
 export interface ToggleOption {
   option?: VariableOption;

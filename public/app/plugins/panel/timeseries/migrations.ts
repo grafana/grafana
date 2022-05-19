@@ -1,3 +1,5 @@
+import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import {
   ConfigOverrideRule,
   DynamicConfigValue,
@@ -29,9 +31,9 @@ import {
   SortOrder,
   GraphTransform,
 } from '@grafana/schema';
-import { TimeSeriesOptions } from './types';
-import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import { defaultGraphConfig } from './config';
+import { TimeSeriesOptions } from './types';
 
 /**
  * This is called when the panel changes from another panel

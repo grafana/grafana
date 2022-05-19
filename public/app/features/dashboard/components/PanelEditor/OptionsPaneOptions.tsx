@@ -1,17 +1,20 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+
+import { AngularPanelOptions } from './AngularPanelOptions';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
+import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { getFieldOverrideCategories } from './getFieldOverrideElements';
+import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVisualizationOptions } from './getVisualizationOptions';
-import { css } from '@emotion/css';
-import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { getFieldOverrideCategories } from './getFieldOverrideElements';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
-import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
-import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
-import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { OptionPaneRenderProps } from './types';
 
 export const OptionsPaneOptions: React.FC<OptionPaneRenderProps> = (props) => {

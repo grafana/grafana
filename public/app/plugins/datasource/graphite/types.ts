@@ -1,6 +1,8 @@
 import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
-import { GraphiteDatasource } from './datasource';
+
 import { TemplateSrv } from '../../../features/templating/template_srv';
+
+import { GraphiteDatasource } from './datasource';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;

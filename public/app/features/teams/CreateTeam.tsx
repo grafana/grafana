@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { Button, Form, Field, Input, FieldSet, Label, Tooltip, Icon } from '@grafana/ui';
+import { connect } from 'react-redux';
+
 import { NavModel } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { connect } from 'react-redux';
+import { Button, Form, Field, Input, FieldSet, Label, Tooltip, Icon } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
-import { contextSrv } from 'app/core/core';
 
 export interface Props {
   navModel: NavModel;

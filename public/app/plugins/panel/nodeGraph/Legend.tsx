@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
-import { NodeDatum } from './types';
-import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { identity } from 'lodash';
-import { Config } from './layout';
 import { css } from '@emotion/css';
+import { identity } from 'lodash';
+import React, { useCallback } from 'react';
+
+import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 import { Icon, useStyles, useTheme, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
+
+import { Config } from './layout';
+import { NodeDatum } from './types';
 
 function getStyles() {
   return {

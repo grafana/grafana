@@ -1,13 +1,13 @@
 +++
-title = "User HTTP API "
+aliases = ["/docs/grafana/latest/http_api/user/"]
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/docs/grafana/latest/http_api/user/"]
+title = "User HTTP API "
 +++
 
 # User API
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Search Users

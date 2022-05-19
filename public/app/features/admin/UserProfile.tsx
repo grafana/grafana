@@ -1,10 +1,11 @@
-import React, { FC, PureComponent, useRef, useState } from 'react';
-import { AccessControlAction, UserDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
-import { config } from 'app/core/config';
+import React, { FC, PureComponent, useRef, useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { AccessControlAction, UserDTO } from 'app/types';
 
 interface Props {
   user: UserDTO;

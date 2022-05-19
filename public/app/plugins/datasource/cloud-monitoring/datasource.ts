@@ -1,6 +1,7 @@
 import { chunk, flatten, isString, isArray } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -9,9 +10,9 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,

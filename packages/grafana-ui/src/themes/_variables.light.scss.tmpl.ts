@@ -1,8 +1,10 @@
 /* eslint-disable max-len */
 
-import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
-import { styleMixins } from '.';
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+
+import { styleMixins } from '.';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
@@ -105,8 +107,8 @@ $text-blue: ${theme.v1.colors.textBlue};
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: ${theme.colors.gradients.brandHorizontal};
+$brand-gradient-vertical: ${theme.colors.gradients.brandVertical};
 
 // Links
 // -------------------------

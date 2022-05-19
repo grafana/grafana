@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+
 import { locationUtil } from '@grafana/data';
-import { SaveDashboardOptions } from './types';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/core';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
-import { locationService, reportInteraction } from '@grafana/runtime';
 import { DashboardSavedEvent } from 'app/types/events';
+
+import { SaveDashboardOptions } from './types';
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;

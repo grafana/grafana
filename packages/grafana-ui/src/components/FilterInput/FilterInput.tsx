@@ -1,5 +1,7 @@
 import React, { HTMLProps } from 'react';
+
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
+
 import { Button, Icon, Input } from '..';
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
 

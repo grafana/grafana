@@ -1,7 +1,9 @@
-import React, { ButtonHTMLAttributes, FC } from 'react';
 import { css } from '@emotion/css';
+import React, { ButtonHTMLAttributes, FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 import { Button, ButtonVariant, IconName, LinkButton, useStyles } from '@grafana/ui';
+
 import { EmptyArea } from './EmptyArea';
 
 export interface EmptyAreaWithCTAProps {

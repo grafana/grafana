@@ -1,5 +1,6 @@
-import React, { FormEvent, useLayoutEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { FormEvent, useLayoutEffect, useRef, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, TextArea, useStyles2 } from '@grafana/ui';
 

@@ -1,3 +1,9 @@
+import { dateTime, DataQuery } from '@grafana/data';
+import store from 'app/core/store';
+
+import { RichHistoryQuery } from '../../types';
+import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
+
 import {
   addToRichHistory,
   updateStarredInRichHistory,
@@ -7,19 +13,29 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  filterAndSortQueries,
+  migrateQueryHistoryFromLocalStorage,
   SortOrder,
 } from './richHistory';
-import store from 'app/core/store';
-import { dateTime, DataQuery } from '@grafana/data';
-import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
-import { RichHistoryQuery } from '../../types';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 
 jest.mock('../history/richHistoryStorageProvider', () => {
   return {
     getRichHistoryStorage: () => richHistoryStorageMock,
+  };
+});
+
+const richHistoryLocalStorageMock = { getRichHistory: jest.fn() };
+jest.mock('../history/RichHistoryLocalStorage', () => {
+  return function () {
+    return richHistoryLocalStorageMock;
+  };
+});
+
+const richHistoryRemoteStorageMock = { migrate: jest.fn() };
+jest.mock('../history/RichHistoryRemoteStorage', () => {
+  return function () {
+    return richHistoryRemoteStorageMock;
   };
 });
 
@@ -162,6 +178,25 @@ describe('richHistory', () => {
     });
   });
 
+  describe('migration', () => {
+    beforeEach(() => {
+      richHistoryRemoteStorageMock.migrate.mockReset();
+    });
+
+    it('migrates history', async () => {
+      const history = [{ id: 'test' }, { id: 'test2' }];
+
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+    });
+    it('does not migrate if there are no entries', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue([]);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
+    });
+  });
+
   describe('mapNumbertoTimeInSlider', () => {
     it('should correctly map number to value', () => {
       const value = mapNumbertoTimeInSlider(25);
@@ -173,30 +208,6 @@ describe('richHistory', () => {
     it('should correctly create string value from timestamp', () => {
       const value = createDateStringFromTs(1583932327000);
       expect(value).toEqual('March 11');
-    });
-  });
-
-  describe('filterQueries', () => {
-    it('should filter out queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(
-        storedHistory,
-        SortOrder.Ascending,
-        ['not provided data source'],
-        ''
-      );
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should keep queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, ['datasource history name'], '');
-      expect(filteredQueries).toHaveLength(1);
-    });
-    it('should filter out all queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'i do not exist in query');
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should include queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'query1');
-      expect(filteredQueries).toHaveLength(1);
     });
   });
 

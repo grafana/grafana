@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org/"]
 title = "Invite a user to join an organization"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org.md"]
 weight = 10
 +++
 

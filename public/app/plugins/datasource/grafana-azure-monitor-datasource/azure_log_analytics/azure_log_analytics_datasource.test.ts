@@ -5,6 +5,7 @@ import createMockQuery from '../__mocks__/query';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 
@@ -28,6 +29,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   beforeEach(() => {
     templateSrv.init([singleVariable]);
+    templateSrv.getVariables = jest.fn().mockReturnValue([singleVariable]);
     ctx.instanceSettings = {
       jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
@@ -119,6 +121,24 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
       await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
       expect(ctx.mockGetResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
+    });
+
+    it('should include macros as suggested functions', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      expect(result.database.functions.map((f: { name: string }) => f.name)).toEqual([
+        'Func1',
+        '_AzureBackup_GetVaults',
+        '$__timeFilter',
+        '$__timeFrom',
+        '$__timeTo',
+        '$__escapeMulti',
+        '$__contains',
+      ]);
+    });
+
+    it('should include template variables as global parameters', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
 

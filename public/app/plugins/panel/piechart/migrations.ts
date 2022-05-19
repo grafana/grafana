@@ -1,5 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
+
 import { PieChartOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './types';
 
 export const PieChartPanelChangedHandler = (

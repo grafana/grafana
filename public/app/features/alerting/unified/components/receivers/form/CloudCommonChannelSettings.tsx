@@ -1,7 +1,9 @@
-import { Checkbox, Field } from '@grafana/ui';
 import React, { FC } from 'react';
-import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 import { useFormContext } from 'react-hook-form';
+
+import { Checkbox, Field } from '@grafana/ui';
+
+import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 
 export const CloudCommonChannelSettings: FC<CommonSettingsComponentProps> = ({
   pathPrefix,

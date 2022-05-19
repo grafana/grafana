@@ -1,4 +1,5 @@
 import $ from 'jquery';
+
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
 export interface GAEchoBackendOptions {

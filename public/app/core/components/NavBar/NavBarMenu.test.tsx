@@ -1,8 +1,10 @@
-import React from 'react';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NavModelItem } from '@grafana/data';
+import React from 'react';
 import { render } from 'test/redux-rtl';
+
+import { NavModelItem } from '@grafana/data';
+
 import { NavBarMenu } from './NavBarMenu';
 
 describe('NavBarMenu', () => {
@@ -23,10 +25,10 @@ describe('NavBarMenu', () => {
     expect(closeButton).toBeInTheDocument();
   });
 
-  it('clicking the close button calls the onClose callback', () => {
+  it('clicking the close button calls the onClose callback', async () => {
     const closeButton = screen.getByRole('button', { name: 'Close navigation menu' });
     expect(closeButton).toBeInTheDocument();
-    userEvent.click(closeButton);
+    await userEvent.click(closeButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 });

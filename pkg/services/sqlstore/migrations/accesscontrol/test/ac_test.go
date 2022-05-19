@@ -91,7 +91,7 @@ func TestMigrations(t *testing.T) {
 	setupTeams(t, x)
 
 	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
-	setupUnecessaryFGACPermissions(t, x)
+	setupUnecessaryRBACPermissions(t, x)
 
 	team1Scope := accesscontrol.Scope("teams", "id", "1")
 	team2Scope := accesscontrol.Scope("teams", "id", "2")
@@ -347,7 +347,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), membersCount, "needed 5 members for this test to run")
 }
 
-func setupUnecessaryFGACPermissions(t *testing.T, x *xorm.Engine) {
+func setupUnecessaryRBACPermissions(t *testing.T, x *xorm.Engine) {
 	t.Helper()
 
 	now := time.Now()

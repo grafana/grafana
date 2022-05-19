@@ -1,5 +1,6 @@
-import { scaledUnits, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
+
+import { scaledUnits, ValueFormatter } from './valueFormats';
 
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];

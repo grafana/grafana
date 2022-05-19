@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -20,7 +19,7 @@ func TestService(t *testing.T) {
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService(), nil)
+	s := ProvideService(sqlStore, ossencryption.ProvideService(), nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"

@@ -1,23 +1,24 @@
+import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css, cx } from '@emotion/css';
-import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+
 import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { copyStringToClipboard } from 'app/core/utils/explore';
-import appEvents from 'app/core/app_events';
 import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
-import { changeDatasource } from '../state/datasource';
-import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
+import { changeDatasource } from '../state/datasource';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
+import { setQueries } from '../state/query';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;

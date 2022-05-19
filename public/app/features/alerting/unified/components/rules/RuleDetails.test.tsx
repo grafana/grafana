@@ -1,15 +1,18 @@
 import { render } from '@testing-library/react';
-import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
-import { CombinedRule } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
-import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
-import { RuleDetails } from './RuleDetails';
+
+import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
+import { CombinedRule } from 'app/types/unified-alerting';
+
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
+import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
+
+import { RuleDetails } from './RuleDetails';
 
 jest.mock('../../hooks/useIsRuleEditable');
 
@@ -27,14 +30,12 @@ const ui = {
 
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
-describe('RuleDetails FGAC', () => {
-  mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
-
+describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
     it('Should not render Edit button for users without the update permission', () => {
       // Arrange
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -45,7 +46,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should not render Delete button for users without the delete permission', () => {
       // Arrange
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -56,9 +57,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Edit button for users with the update permission', () => {
       // Arrange
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action === AccessControlAction.AlertingRuleUpdate);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -69,9 +68,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Delete button for users with the delete permission', () => {
       // Arrange
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action === AccessControlAction.AlertingRuleDelete);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -109,7 +106,7 @@ describe('RuleDetails FGAC', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' });
     it('Should not render Edit button for users without the update permission', () => {
       // Arrange
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
 
       // Act
       renderRuleDetails(cloudRule);
@@ -120,7 +117,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should not render Delete button for users without the delete permission', () => {
       // Arrange
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
 
       // Act
       renderRuleDetails(cloudRule);
@@ -131,9 +128,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Edit button for users with the update permission', () => {
       // Arrange
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action === AccessControlAction.AlertingRuleExternalWrite);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
       renderRuleDetails(cloudRule);
@@ -144,9 +139,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Delete button for users with the delete permission', () => {
       // Arrange
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action === AccessControlAction.AlertingRuleExternalWrite);
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
       renderRuleDetails(cloudRule);

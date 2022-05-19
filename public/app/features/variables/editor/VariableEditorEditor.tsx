@@ -1,29 +1,31 @@
-import React, { FormEvent, PureComponent } from 'react';
-import { bindActionCreators } from 'redux';
-import { connect, ConnectedProps } from 'react-redux';
 import { isEqual } from 'lodash';
-import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
-import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import React, { FormEvent, PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+import { bindActionCreators } from 'redux';
 
+import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+
+import { appEvents } from '../../../core/core';
+import { StoreState, ThunkDispatch } from '../../../types';
 import { variableAdapters } from '../adapters';
+import { hasOptions } from '../guard';
+import { updateOptions } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable, getVariablesState } from '../state/selectors';
+import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableHide } from '../types';
-import { appEvents } from '../../../core/core';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { VariableHideSelect } from './VariableHideSelect';
+import { VariableSectionHeader } from './VariableSectionHeader';
+import { VariableTextField } from './VariableTextField';
+import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
 import { OnPropChangeArguments } from './types';
-import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
-import { updateOptions } from '../state/actions';
-import { VariableTextField } from './VariableTextField';
-import { VariableSectionHeader } from './VariableSectionHeader';
-import { hasOptions } from '../guard';
-import { VariableTypeSelect } from './VariableTypeSelect';
-import { VariableHideSelect } from './VariableHideSelect';
-import { getVariable, getVariablesState } from '../state/selectors';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { StoreState, ThunkDispatch } from '../../../types';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,

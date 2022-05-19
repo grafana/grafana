@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { StandardEditorProps } from '@grafana/data';
 
 import { XYChartOptions, ScatterFieldConfig } from './models.gen';

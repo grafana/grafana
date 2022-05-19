@@ -1,15 +1,16 @@
-import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
-import RcDrawer from 'rc-drawer';
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import RcDrawer from 'rc-drawer';
+import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { useStyles2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
-import { useStyles2 } from '../../themes';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
   children: ReactNode;

@@ -1,9 +1,10 @@
 import React from 'react';
 
 import { InlineField } from '../..';
-import { HttpSettingsProps } from './types';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
+
+import { HttpSettingsProps } from './types';
 
 export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfig, onChange }) => {
   const password = dataSourceConfig.secureJsonData ? dataSourceConfig.secureJsonData.basicAuthPassword : '';

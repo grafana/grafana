@@ -2,7 +2,10 @@ load(
     'scripts/drone/steps/lib.star',
     'download_grabpl_step',
     'build_image',
-    'initialize_step',
+    'identify_runner_step',
+    'gen_version_step',
+    'wire_install_step',
+    'yarn_install_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -66,11 +69,54 @@ load('scripts/drone/vault.star', 'from_secret')
 
 
 ver_mode = 'main'
+trigger = {
+    'event': ['push',],
+    'branch': 'main',
+}
 
-def get_steps(edition, is_downstream=False):
-    services = integration_test_services(edition)
-    publish = edition != 'enterprise' or is_downstream
-    include_enterprise2 = edition == 'enterprise'
+def main_test_frontend():
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        yarn_install_step(),
+    ]
+    test_steps = [
+        lint_frontend_step(),
+        test_frontend_step(),
+    ]
+    return pipeline(
+        name='main-test-frontend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+    )
+
+def main_test_backend():
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        wire_install_step(),
+    ]
+    test_steps = [
+        lint_drone_step(),
+        codespell_step(),
+        shellcheck_step(),
+        lint_backend_step(edition="oss"),
+        test_backend_step(edition="oss"),
+        test_backend_integration_step(edition="oss"),
+    ]
+    return pipeline(
+        name='main-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+    )
+
+
+def get_steps(edition):
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        wire_install_step(),
+        yarn_install_step(),
+    ]
     test_steps = [
         lint_drone_step(),
         codespell_step(),
@@ -83,10 +129,10 @@ def get_steps(edition, is_downstream=False):
     ]
     build_steps = [
         trigger_test_release(),
-        enterprise_downstream_step(edition=edition),
-        build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
+        build_backend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -96,22 +142,9 @@ def get_steps(edition, is_downstream=False):
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        build_steps.append(benchmark_ldap_step())
-        services.append(ldap_service())
-        test_steps.extend([
-            lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2),
-            test_backend_integration_step(edition=edition2),
-        ])
-        build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64'], is_downstream=is_downstream),
-        ])
-
     # Insert remaining steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
+        package_step(edition=edition, ver_mode=ver_mode),
         grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
@@ -129,32 +162,16 @@ def get_steps(edition, is_downstream=False):
         publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss)
     ])
 
-    if include_enterprise2:
-      integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
-
     build_steps.extend([
         release_canary_npm_packages_step(edition, trigger=trigger_oss),
-        upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, trigger=trigger_oss),
+        upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
         upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
     ])
 
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64'], is_downstream=is_downstream),
-            upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
-            upload_cdn_step(edition=edition2, ver_mode=ver_mode)
-        ])
+    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
+    store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
-    if edition == 'enterprise' and not is_downstream:
-        store_steps = []
-    else:
-        store_steps = [
-            store_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        ]
-
-    return test_steps, build_steps, integration_test_steps, windows_steps, store_steps
+    return init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps
 
 def trigger_test_release():
     return {
@@ -191,10 +208,6 @@ def trigger_test_release():
 def main_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    trigger = {
-        'event': ['push',],
-        'branch': 'main',
-    }
     drone_change_trigger = {
         'event': ['push',],
         'branch': 'main',
@@ -210,39 +223,30 @@ def main_pipelines(edition):
             ],
         },
     }
-    test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
+    init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
 
-    if edition == 'enterprise':
-        services.append(ldap_service())
-        integration_test_steps.append(benchmark_ldap_step())
-
-    pipelines = [docs_pipelines(edition, ver_mode, trigger), pipeline(
-        name='main-test', edition=edition, trigger=trigger, services=[],
-        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,
-        volumes=[],
-    ), pipeline(
+    pipelines = [docs_pipelines(edition, ver_mode, trigger), main_test_frontend(), main_test_backend(), pipeline(
         name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
-        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + build_steps,
+        steps=init_steps + build_steps,
         volumes=volumes,
     ), pipeline(
         name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step()] + integration_test_steps,
+        steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
-        name='windows-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
-        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
+        name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        steps=[identify_runner_step('windows')] + windows_steps,
+        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
     ), notify_pipeline(
         name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
         template=drone_change_template, secret='drone-changes-webhook',
     ), pipeline(
-        name='publish-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
-        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode,
-                                                         install_deps=False) + store_steps,
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', ],
+        name='main-publish', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        steps=[download_grabpl_step(), identify_runner_step(),] + store_steps,
+        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', ],
     ), notify_pipeline(
-        name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'],
+        name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
+        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', 'main-publish'],
         template=failure_template, secret='slack_webhook'
     )]
 

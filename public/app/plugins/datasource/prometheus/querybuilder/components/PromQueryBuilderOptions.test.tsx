@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { CoreApp } from '@grafana/data';
+import { selectOptionInTest } from '@grafana/ui';
+
 import { PromQuery } from '../../types';
 import { getQueryWithDefaults } from '../state';
-import { CoreApp } from '@grafana/data';
+
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
-import { selectOptionInTest } from '@grafana/ui';
 
 describe('PromQueryBuilderOptions', () => {
   it('Can change query type', async () => {

@@ -1,12 +1,14 @@
-import React from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { locationService } from '@grafana/runtime';
-import { serializeStateToUrlParam } from '@grafana/data';
 import userEvent from '@testing-library/user-event';
-import { splitOpen } from './state/main';
-import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
-import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
+import React from 'react';
+
+import { serializeStateToUrlParam } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
 import { changeDatasource } from './spec/helper/interactions';
+import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
+import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
+import { splitOpen } from './state/main';
 
 type Mock = jest.Mock;
 
@@ -217,7 +219,7 @@ describe('Wrapper', () => {
     };
     setupExplore({ urlParams });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
-    userEvent.click(closeButtons[1]);
+    await userEvent.click(closeButtons[1]);
 
     await waitFor(() => {
       const logsPanels = screen.queryAllByTitle(/Close split pane/i);

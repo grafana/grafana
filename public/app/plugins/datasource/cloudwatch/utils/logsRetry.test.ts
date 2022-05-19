@@ -1,9 +1,12 @@
-import { runWithRetry } from './logsRetry';
-import { toArray } from 'rxjs/operators';
 import { lastValueFrom, of, throwError } from 'rxjs';
+import { toArray } from 'rxjs/operators';
+
 import { dataFrameToJSON, MutableDataFrame } from '@grafana/data';
 import { DataResponse, FetchError } from '@grafana/runtime';
+
 import { StartQueryRequest } from '../types';
+
+import { runWithRetry } from './logsRetry';
 
 describe('runWithRetry', () => {
   const timeoutPass = () => false;

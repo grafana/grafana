@@ -1,8 +1,8 @@
 +++
-title = "HTTP API"
+aliases = ["/docs/grafana/latest/http_api/", "/docs/grafana/latest/overview/"]
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/docs/grafana/latest/overview"]
+title = "HTTP API"
 weight = 170
 +++
 
@@ -39,7 +39,7 @@ dashboards, creating users, and updating data sources.
 
 Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
-- [Fine-grained access control API]({{< relref "access_control.md" >}})
+- [Role-based access control API]({{< relref "access_control.md" >}})
 - [Data source permissions API]({{< relref "datasource_permissions.md" >}})
 - [External group sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})

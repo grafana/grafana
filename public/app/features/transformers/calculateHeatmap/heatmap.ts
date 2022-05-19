@@ -1,3 +1,5 @@
+import { map } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -10,7 +12,7 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
-import { map } from 'rxjs';
+
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
@@ -188,6 +190,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'no heatmap fields found';
   }
 
+  if (!xs.length || !ys.length) {
+    throw 'no values found';
+  }
+
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
@@ -220,7 +226,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'count',
         type: FieldType.number,
         values: new ArrayVector(heat2d.count),
-        config: {},
+        config: {
+          unit: 'short', // always integer
+        },
       },
     ],
   };

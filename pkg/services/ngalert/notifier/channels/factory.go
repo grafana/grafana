@@ -36,7 +36,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, error){
 	"prometheus-alertmanager": AlertmanagerFactory,
 	"dingding":                DingDingFactory,
-	"discord":                 DiscrodFactory,
+	"discord":                 DiscordFactory,
 	"email":                   EmailFactory,
 	"googlechat":              GoogleChatFactory,
 	"kafka":                   KafkaFactory,

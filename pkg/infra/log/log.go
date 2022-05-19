@@ -378,6 +378,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		return err
 	}
 
+	logEnabled := cfg.Section("log").Key("enabled").MustBool(true)
+	if !logEnabled {
+		return nil
+	}
+
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
@@ -446,7 +451,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 
 	var err error
-	root.gokitLogActivated, err = isNewLoggerActivated(cfg)
+	isOldLoggerActivated, err := isOldLoggerActivated(cfg)
+	root.gokitLogActivated = !isOldLoggerActivated
+
 	if err != nil {
 		return err
 	}
@@ -459,13 +466,13 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 // This would be removed eventually, no need to make a fancy design.
 // For the sake of important cycle I just copied the function
-func isNewLoggerActivated(cfg *ini.File) (bool, error) {
+func isOldLoggerActivated(cfg *ini.File) (bool, error) {
 	section := cfg.Section("feature_toggles")
 	toggles, err := readFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return false, err
 	}
-	return toggles["newlog"], nil
+	return toggles["oldlog"], nil
 }
 
 func readFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]bool, error) {

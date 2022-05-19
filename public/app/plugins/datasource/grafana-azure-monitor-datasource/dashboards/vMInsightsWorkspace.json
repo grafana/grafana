@@ -1494,7 +1494,7 @@
               "subscription": ""
             }
           ],
-          "title": "Max Available Bytes Sent and Trend  Line",
+          "title": "Max Available Bytes Sent and Trend Line",
           "transformations": [
             {
               "id": "organize",
@@ -1970,7 +1970,7 @@
               "subscription": ""
             }
           ],
-          "title": "Max Available Bytes Recieved and Trend  Line",
+          "title": "Max Available Bytes Received and Trend Line",
           "transformations": [
             {
               "id": "organize",

@@ -1,4 +1,5 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+
 import { ApiKey, OrgRole, Role } from '.';
 
 export interface OrgServiceAccount extends WithAccessControlMetadata {

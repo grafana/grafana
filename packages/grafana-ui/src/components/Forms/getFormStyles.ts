@@ -1,12 +1,14 @@
-import { stylesFactory } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
+import { ComponentSize } from '../../types/size';
+import { getButtonStyles, ButtonVariant } from '../Button';
+import { getInputStyles } from '../Input/Input';
+
+import { getCheckboxStyles } from './Checkbox';
+import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getLabelStyles } from './Label';
 import { getLegendStyles } from './Legend';
-import { getFieldValidationMessageStyles } from './FieldValidationMessage';
-import { getButtonStyles, ButtonVariant } from '../Button';
-import { ComponentSize } from '../../types/size';
-import { getInputStyles } from '../Input/Input';
-import { getCheckboxStyles } from './Checkbox';
 
 /** @deprecated */
 export const getFormStyles = stylesFactory(

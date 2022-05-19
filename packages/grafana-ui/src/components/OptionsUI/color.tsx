@@ -1,8 +1,10 @@
-import React from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { useTheme2, useStyles2 } from '../../themes';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2, useStyles2 } from '../../themes';
+import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { ColorSwatch } from '../ColorPicker/ColorSwatch';
 
 /**

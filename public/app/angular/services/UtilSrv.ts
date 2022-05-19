@@ -1,7 +1,8 @@
-import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
-import { HideModalEvent, ShowModalEvent } from '../../types/events';
 import { deprecationWarning } from '@grafana/data';
+import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import { appEvents } from 'app/core/app_events';
+
+import { HideModalEvent, ShowModalEvent } from '../../types/events';
 
 /**
  * Old legacy utilSrv exposed to angular services and handles angular modals.

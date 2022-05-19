@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+
 import {
   dataFrameToJSON,
   DataQueryRequest,
@@ -6,12 +7,13 @@ import {
   dateTime,
   MutableDataFrame,
 } from '@grafana/data';
-
-import { MysqlDatasource } from '../datasource';
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { FetchResponse, setBackendSrv } from '@grafana/runtime';
+import { MysqlDatasource } from '../datasource';
+
 import { MySQLOptions, MySQLQuery } from './../types';
 
 describe('MySQLDatasource', () => {

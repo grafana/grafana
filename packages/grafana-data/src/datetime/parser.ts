@@ -1,10 +1,11 @@
 /* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
+import { lowerCase } from 'lodash';
 import moment, { MomentInput } from 'moment-timezone';
-import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
+
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
-import { lowerCase } from 'lodash';
 import { systemDateFormats } from './formats';
+import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.

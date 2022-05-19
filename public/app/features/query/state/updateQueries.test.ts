@@ -5,6 +5,7 @@ import {
   DataSourceWithQueryImportSupport,
 } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+
 import { updateQueries } from './updateQueries';
 
 const oldUidDS = {

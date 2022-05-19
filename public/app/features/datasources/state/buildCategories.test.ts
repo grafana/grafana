@@ -1,6 +1,8 @@
-import { buildCategories } from './buildCategories';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { DataSourcePluginMeta } from '@grafana/data';
+
+import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
+
+import { buildCategories } from './buildCategories';
 
 const plugins: DataSourcePluginMeta[] = [
   {
@@ -51,6 +53,6 @@ describe('buildCategories', () => {
 
   it('should add enterprise phantom plugins', () => {
     expect(categories[3].title).toBe('Enterprise plugins');
-    expect(categories[3].plugins.length).toBe(16);
+    expect(categories[3].plugins.length).toBe(17);
   });
 });

@@ -1,8 +1,8 @@
 +++
-title = "Team sync"
+aliases = ["/docs/grafana/latest/auth/saml/", "/docs/grafana/latest/enterprise/team-sync/"]
 description = "Grafana Team Sync"
 keywords = ["grafana", "auth", "documentation"]
-aliases = ["/docs/grafana/latest/auth/saml/"]
+title = "Team sync"
 weight = 1000
 +++
 
@@ -29,7 +29,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
 
 ## Synchronize a Grafana team with an external group
 

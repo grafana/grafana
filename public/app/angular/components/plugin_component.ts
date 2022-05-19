@@ -1,12 +1,12 @@
 import angular, { ILocationService } from 'angular';
 import { each } from 'lodash';
 
-import config from 'app/core/config';
-import coreModule from 'app/angular/core_module';
-
 import { DataSourceApi, PanelEvents } from '@grafana/data';
-import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
+import coreModule from 'app/angular/core_module';
+import config from 'app/core/config';
+
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
+import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
 
 /** @ngInject */
 function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {

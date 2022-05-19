@@ -1,13 +1,15 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch } from '@grafana/ui';
+import React from 'react';
+
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import appEvents from 'app/core/app_events';
-import { ShowConfirmModalEvent } from '../../../types/events';
-import { dispatch } from 'app/store/store';
+import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
+import { dispatch } from 'app/store/store';
+
+import { ShowConfirmModalEvent } from '../../../types/events';
 
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -77,12 +79,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         className="space-between"
       >
         <div className={styles.input}>
-          <Select
-            menuShouldPortal
-            value={selectedOption}
-            options={retentionPeriodOptions}
-            onChange={onChangeRetentionPeriod}
-          ></Select>
+          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
         </div>
       </Field>
       <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">

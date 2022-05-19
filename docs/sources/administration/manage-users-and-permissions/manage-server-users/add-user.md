@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/"]
 title = "Add a user"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/add-user.md"]
 weight = 10
 +++
 

@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
+
 import { Spinner, HorizontalGroup } from '@grafana/ui';
+
 import { DashboardModel } from '../../state/DashboardModel';
 import {
   historySrv,

@@ -1,9 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { ThresholdsMode, FieldConfig, FieldColorModeId } from '@grafana/data';
+
+import { getTheme } from '../../themes';
 
 import { Gauge, Props } from './Gauge';
-import { getTheme } from '../../themes';
-import { ThresholdsMode, FieldConfig, FieldColorModeId } from '@grafana/data';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),

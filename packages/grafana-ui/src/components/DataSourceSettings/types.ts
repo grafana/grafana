@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { DataSourceSettings } from '@grafana/data';
 
 export interface AzureAuthSettings {

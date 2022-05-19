@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+
 import { NestedEntry } from './NestedEntry';
 import { ResourceRowType } from './types';
 
@@ -10,6 +11,7 @@ const defaultProps = {
   isSelectable: false,
   isOpen: false,
   isDisabled: false,
+  scrollIntoView: false,
   onToggleCollapse: jest.fn(),
   onSelectedChange: jest.fn(),
 };

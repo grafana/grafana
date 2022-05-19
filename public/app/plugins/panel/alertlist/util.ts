@@ -1,7 +1,9 @@
+import { isEmpty } from 'lodash';
+
 import { PanelProps } from '@grafana/data';
 import { Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { isEmpty } from 'lodash';
+
 import { UnifiedAlertListOptions } from './types';
 
 export function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {

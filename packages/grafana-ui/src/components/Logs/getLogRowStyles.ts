@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
+
 import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {

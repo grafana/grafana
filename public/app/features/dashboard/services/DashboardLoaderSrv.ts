@@ -1,15 +1,17 @@
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-// eslint-disable-next-line lodash/import-scope
-import _, { isFunction } from 'lodash';
 import $ from 'jquery';
-import kbn from 'app/core/utils/kbn';
+import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
+
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
-import impressionSrv from 'app/core/services/impression_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { getDashboardSrv } from './DashboardSrv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+import impressionSrv from 'app/core/services/impression_srv';
+import kbn from 'app/core/utils/kbn';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { appEvents } from '../../../core/core';
+
+import { getDashboardSrv } from './DashboardSrv';
 
 export class DashboardLoaderSrv {
   constructor() {}

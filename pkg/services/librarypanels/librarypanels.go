@@ -81,14 +81,12 @@ func loadLibraryPanelsRecursively(elements map[string]libraryelements.LibraryEle
 
 		elementInDB, ok := elements[UID]
 		if !ok {
-			name := libraryPanel.Get("name").MustString()
 			elem := parent.Get("panels").GetIndex(i)
 			elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 			elem.Set("id", panelAsJSON.Get("id").MustInt64())
-			elem.Set("type", fmt.Sprintf("Name: \"%s\", UID: \"%s\"", name, UID))
+			elem.Set("type", fmt.Sprintf("Library panel with UID: \"%s\"", UID))
 			elem.Set("libraryPanel", map[string]interface{}{
-				"uid":  UID,
-				"name": name,
+				"uid": UID,
 			})
 			continue
 		}
@@ -174,10 +172,6 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 		if len(UID) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		name := libraryPanel.Get("name").MustString()
-		if len(name) == 0 {
-			return errLibraryPanelHeaderNameMissing
-		}
 
 		// keep only the necessary JSON properties, the rest of the properties should be safely stored in library_panels table
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
@@ -186,8 +180,7 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 			"id":      ID,
 			"gridPos": gridPos,
 			"libraryPanel": map[string]interface{}{
-				"uid":  UID,
-				"name": name,
+				"uid": UID,
 			},
 		})
 	}

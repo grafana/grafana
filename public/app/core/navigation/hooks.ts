@@ -1,5 +1,6 @@
-import { locationService } from '@grafana/runtime';
 import { useLocation } from 'react-router-dom';
+
+import { locationService } from '@grafana/runtime';
 
 export type UseUrlParamsResult = [URLSearchParams, (params: Record<string, any>, replace?: boolean) => void];
 

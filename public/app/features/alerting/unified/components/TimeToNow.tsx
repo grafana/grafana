@@ -1,5 +1,6 @@
-import { dateTimeFormatTimeAgo, DateTimeInput } from '@grafana/data';
 import React, { FC, useEffect, useState } from 'react';
+
+import { dateTimeFormatTimeAgo, DateTimeInput } from '@grafana/data';
 
 export interface Props {
   date: DateTimeInput;

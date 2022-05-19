@@ -1,7 +1,8 @@
 +++
-title = "Upgrade Grafana"
+aliases = ["/docs/grafana/latest/installation/upgrading/"]
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
+title = "Upgrade Grafana"
 weight = 700
 +++
 
@@ -338,7 +339,7 @@ When WebSocket connection is established, Grafana checks the request Origin head
 
 To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
 
-Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) documentation for more information.
+Refer to [Grafana Live configuration]({{< relref "../live/set-up-grafana-live.md" >}}) documentation for more information.
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
@@ -365,7 +366,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field options/Display name]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field definitions' display name]({{< relref "../panels/standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
 

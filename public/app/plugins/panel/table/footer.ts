@@ -8,8 +8,9 @@ import {
   fieldReducers,
 } from '@grafana/data';
 import { FooterItem } from '@grafana/ui/src/components/Table/types';
-import { TableFooterCalc } from './models.gen';
 import { config } from 'app/core/config';
+
+import { TableFooterCalc } from './models.gen';
 
 export function getFooterCells(frame: DataFrame, options?: TableFooterCalc): FooterItem[] {
   return frame.fields.map((field, i) => {

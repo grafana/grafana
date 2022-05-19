@@ -1,7 +1,9 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, TeamGroupSync } from './TeamGroupSync';
+import React from 'react';
+
 import { TeamGroup } from '../../types';
+
+import { Props, TeamGroupSync } from './TeamGroupSync';
 import { getMockTeamGroups } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {

@@ -1,5 +1,4 @@
 import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
@@ -12,7 +11,17 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
+
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Pagination } from '../Pagination/Pagination';
+
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
+import { TableCell } from './TableCell';
+import { getTableStyles } from './styles';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -20,13 +29,7 @@ import {
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
-import { getTableStyles } from './styles';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { TableCell } from './TableCell';
-import { useStyles2 } from '../../themes';
-import { FooterRow } from './FooterRow';
-import { HeaderRow } from './HeaderRow';
-import { Pagination } from '../Pagination/Pagination';
+import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -248,7 +251,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     [gotoPage]
   );
 
-  const itemCount = enablePagination ? page.length : data.length;
+  const itemCount = enablePagination ? page.length : rows.length;
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
@@ -304,9 +307,9 @@ export const Table: FC<Props> = memo((props: Props) => {
               totalColumnsWidth={totalColumnsWidth}
             />
           )}
-          {paginationEl}
         </div>
       </CustomScrollbar>
+      {paginationEl}
     </div>
   );
 });

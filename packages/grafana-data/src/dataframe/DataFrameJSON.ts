@@ -1,5 +1,6 @@
 import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
+
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
 /**

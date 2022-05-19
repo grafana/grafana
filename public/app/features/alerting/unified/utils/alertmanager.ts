@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   MatcherOperator,
@@ -7,11 +9,11 @@ import {
   TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
+
 import { MatcherFieldValue } from '../types/silence-form';
-import { SelectableValue } from '@grafana/data';
+
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
-import { FetchError } from '@grafana/runtime';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
