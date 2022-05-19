@@ -98,6 +98,10 @@ const (
 )
 
 var (
+	StateReasonMissingSeries = "MissingSeries"
+)
+
+var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
 	InternalLabelNameSet = map[string]struct{}{
 		RuleUIDLabel:      {},
