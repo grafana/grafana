@@ -1,4 +1,4 @@
-import { debounce, unionBy } from 'lodash';
+import { unionBy } from 'lodash';
 import React, { FC, useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -77,8 +77,6 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
     setLoadingLogGroups(false);
   };
 
-  const loadLogGroupsDebounced = debounce(loadLogGroups, 300);
-
   return (
     <>
       <ConnectionConfig
@@ -133,7 +131,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
             }}
             options={unionBy(logGroups, defaultLogGroups?.map(toOption), 'value')}
             isLoading={loadingLogGroups}
-            onOpenMenu={loadLogGroupsDebounced}
+            onOpenMenu={loadLogGroups}
             isOptionDisabled={() => !!defaultLogGroups && defaultLogGroups.length >= MAX_LOG_GROUPS}
             placeholder="Choose Log Groups"
             maxVisibleValues={MAX_VISIBLE_LOG_GROUPS}

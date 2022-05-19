@@ -1,19 +1,23 @@
-import { render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 
+import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+
 import { ConfigEditor, Props } from './ConfigEditor';
 
-const describeLogGroup = jest.fn().mockReturnValue(Promise.resolve(['foo', 'bar']));
+const ds = setupMockedDataSource();
+
+const describeLogGroup = jest.fn().mockResolvedValue(['foo', 'bar']);
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockImplementation(() =>
       Promise.resolve({
-        getRegions: jest.fn().mockReturnValue([
+        getRegions: jest.fn().mockResolvedValue([
           {
             label: 'ap-east-1',
             value: 'ap-east-1',
@@ -21,9 +25,37 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
         ]),
         describeLogGroup,
         getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
+        getList: jest.fn().mockImplementation(() => []),
       })
     ),
+    getList: jest.fn().mockImplementation(() => []),
   }),
+}));
+
+jest.mock('./XrayLinkConfig', () => ({
+  XrayLinkConfig: () => <></>,
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    put: jest.fn().mockResolvedValue({ datasource: ds.datasource }),
+  }),
+  setTemplateSrv: jest.fn(),
+  config: {
+    loginError: false,
+    buildInfo: {
+      version: 'v1.0',
+      commit: '1',
+      env: 'production',
+      edition: 'Open Source',
+    },
+    licenseInfo: {
+      stateInfo: '',
+      licenseUrl: '',
+    },
+    appSubUrl: '',
+  },
 }));
 
 const props: Props = {
@@ -95,6 +127,9 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
   it('should render component', () => {
     const wrapper = setup();
 
@@ -137,12 +172,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should call describeLogGroups when multiselect isopened', () => {
-    jest.mock('./XrayLinkConfig', () => ({
-      XrayLinkConfig: () => {
-        <></>;
-      },
-    }));
+  it('should call describeLogGroups when multiselect isopened', async () => {
     // const wrapper = setup();
     // const logsSelect = wrapper.find({ label: 'Default Log Groups' });
     // expect(logsSelect.length).toEqual(1);
@@ -154,9 +184,13 @@ describe('Render', () => {
       settings: {},
     };
 
-    const { getByLabelText, getByText } = render(<ConfigEditor {...props} />);
-    selectEvent.openMenu(getByLabelText('Default Log Groups'));
-    expect(describeLogGroup).toBeCalledWith('ap-east-1');
-    expect(getByText('foo')).toBeInTheDocument();
+    await act(async () => {
+      render(<ConfigEditor {...props} />);
+    });
+    const multiselect = await screen.findByLabelText('Default Log Groups');
+    //await selectOptionInTest(multiselect, 'foo');
+    selectEvent.openMenu(multiselect);
+    expect(await screen.findByText('foo')).toBeInTheDocument();
+    expect(describeLogGroup).toHaveBeenCalled();
   });
 });
