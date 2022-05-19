@@ -3,24 +3,24 @@ import pluralize from 'pluralize';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
-import { GrafanaTheme2, OrgRole, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, ServiceAccountDTO, AccessControlAction } from 'app/types';
+import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import ServiceAccountListItem from './ServiceAccountsListItem';
 import {
-  changeFilter,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
   removeServiceAccount,
   updateServiceAccount,
   setServiceAccountToRemove,
+  changeStateFilter,
 } from './state/actions';
 
 interface OwnProps {}
@@ -43,7 +43,7 @@ const ServiceAccountsListPageUnconnected = ({
   roleOptions,
   builtInRoles,
   query,
-  filters,
+  serviceAccountStateFilter,
   serviceAccountToRemove,
 }: Props): JSX.Element => {
   const dispatch = useDispatch();
@@ -56,6 +56,9 @@ const ServiceAccountsListPageUnconnected = ({
     }
   }, [dispatch]);
 
+  const noServiceAccountsCreated =
+    serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
+
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
     await dispatch(updateServiceAccount(updatedServiceAccount));
@@ -66,8 +69,8 @@ const ServiceAccountsListPageUnconnected = ({
     dispatch(changeQuery(value));
   };
 
-  const onFilterChange = (value: string | boolean | SelectableValue[]) => {
-    dispatch(changeFilter({ name: 'expiredTokens', value }));
+  const onStateFilterChange = (value: ServiceAccountStateFilter) => {
+    dispatch(changeStateFilter(value));
   };
 
   return (
@@ -89,31 +92,34 @@ const ServiceAccountsListPageUnconnected = ({
             </Tooltip>
             <span>Looking for API keys?</span>
           </div>
-          {serviceAccounts.length !== 0 && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton className={styles.addServiceAccountButton} href="org/serviceaccounts/create" variant="primary">
+          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
               Add service account
             </LinkButton>
           )}
         </div>
-        <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
+        <div className={styles.filterRow}>
           <FilterInput
-            placeholder="Search service account by name."
+            placeholder="Search service account by name"
             autoFocus={true}
             value={query}
             onChange={onQueryChange}
+            width={50}
           />
+          <div className={styles.filterDelimiter}></div>
           <RadioButtonGroup
             options={[
-              { label: 'All service accounts', value: false },
-              { label: 'Expired tokens', value: true },
+              { label: 'All', value: ServiceAccountStateFilter.All },
+              { label: 'With expiring tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+              { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
             ]}
-            onChange={onFilterChange}
-            value={filters.find((f) => f.name === 'expiredTokens')?.value}
+            onChange={onStateFilterChange}
+            value={serviceAccountStateFilter}
             className={styles.filter}
           />
         </div>
         {isLoading && <PageLoader />}
-        {!isLoading && serviceAccounts.length === 0 && (
+        {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA
               title="You haven't created any service accounts yet."
@@ -128,23 +134,25 @@ const ServiceAccountsListPageUnconnected = ({
             />
           </>
         )}
-        {!isLoading && serviceAccounts.length !== 0 && (
-          <>
-            <div className={cx(styles.table, 'admin-list-table')}>
-              <table className="filter-table form-inline filter-table--hover">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Account</th>
-                    <th>ID</th>
-                    <th>Roles</th>
-                    <th>Status</th>
-                    <th>Tokens</th>
-                    <th style={{ width: '34px' }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
+
+        <>
+          <div className={cx(styles.table, 'admin-list-table')}>
+            <table className="filter-table form-inline filter-table--hover">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Account</th>
+                  <th>ID</th>
+                  <th>Roles</th>
+                  <th>Status</th>
+                  <th>Tokens</th>
+                  <th style={{ width: '34px' }} />
+                </tr>
+              </thead>
+              <tbody>
+                {!isLoading &&
+                  serviceAccounts.length !== 0 &&
+                  serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
                     <ServiceAccountListItem
                       serviceAccount={serviceAccount}
                       key={serviceAccount.id}
@@ -154,11 +162,10 @@ const ServiceAccountsListPageUnconnected = ({
                       onSetToRemove={setServiceAccountToRemove}
                     />
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+              </tbody>
+            </table>
+          </div>
+        </>
         {serviceAccountToRemove && (
           <ConfirmModal
             body={
@@ -242,7 +249,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: ${theme.spacing(0.5)};
       }
     `,
-    addServiceAccountButton: css``,
+    filterRow: cx(
+      'page-action-bar',
+      css`
+        display: flex;
+        justifycontent: flex-end;
+      `
+    ),
+    filterDelimiter: css`
+      flex-grow: 1;
+    `,
   };
 };
 

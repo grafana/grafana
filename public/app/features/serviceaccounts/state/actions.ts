@@ -4,14 +4,13 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, ServiceAccountDTO, ServiceAccountFilter, ThunkResult } from 'app/types';
+import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
 
 import {
   acOptionsLoaded,
   builtInRolesLoaded,
-  filterChanged,
   pageChanged,
   queryChanged,
   serviceAccountLoaded,
@@ -20,6 +19,7 @@ import {
   serviceAccountsFetchEnd,
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
+  stateFilterChanged,
 } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
@@ -113,24 +113,23 @@ export function removeServiceAccount(serviceAccountId: number): ThunkResult<void
 }
 
 // search / filtering of serviceAccounts
-const getFilters = (filters: ServiceAccountFilter[]) => {
-  return filters
-    .map((filter) => {
-      if (Array.isArray(filter.value)) {
-        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
-      }
-      return `${filter.name}=${filter.value}`;
-    })
-    .join('&');
+const getStateFilter = (value: ServiceAccountStateFilter) => {
+  switch (value) {
+    case ServiceAccountStateFilter.WithExpiredTokens:
+      return '&expiredTokens=true';
+    default:
+      return '';
+  }
 };
 
 export function fetchServiceAccounts(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, query, filters } = getState().serviceAccounts;
+      dispatch(serviceAccountsFetchBegin());
+      const { perPage, page, query, serviceAccountStateFilter } = getState().serviceAccounts;
       const result = await getBackendSrv().get(
-        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(
-          filters
+        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}${getStateFilter(
+          serviceAccountStateFilter
         )}&accesscontrol=true`
       );
       dispatch(serviceAccountsFetched(result));
@@ -141,27 +140,26 @@ export function fetchServiceAccounts(): ThunkResult<void> {
   };
 }
 
-const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500);
+const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500, {
+  leading: true,
+});
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
     dispatch(queryChanged(query));
     fetchServiceAccountsWithDebounce(dispatch);
   };
 }
 
-export function changeFilter(filter: ServiceAccountFilter): ThunkResult<void> {
+export function changeStateFilter(filter: ServiceAccountStateFilter): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
-    dispatch(filterChanged(filter));
-    fetchServiceAccountsWithDebounce(dispatch);
+    dispatch(stateFilterChanged(filter));
+    dispatch(fetchServiceAccounts());
   };
 }
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(serviceAccountsFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchServiceAccounts());
   };

@@ -4,9 +4,9 @@ import {
   ApiKey,
   Role,
   ServiceAccountDTO,
-  ServiceAccountFilter,
   ServiceAccountProfileState,
   ServiceAccountsState,
+  ServiceAccountStateFilter,
 } from 'app/types';
 
 // serviceAccountsProfilePage
@@ -44,7 +44,7 @@ export const initialStateList: ServiceAccountsState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
-  filters: [{ name: 'expiredTokens', value: false }],
+  serviceAccountStateFilter: ServiceAccountStateFilter.All,
 };
 
 interface ServiceAccountsFetched {
@@ -97,20 +97,10 @@ const serviceAccountsSlice = createSlice({
       ...state,
       page: action.payload,
     }),
-    filterChanged: (state, action: PayloadAction<ServiceAccountFilter>) => {
-      const { name, value } = action.payload;
-
-      if (state.filters.some((filter) => filter.name === name)) {
-        return {
-          ...state,
-          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
-        };
-      }
-      return {
-        ...state,
-        filters: [...state.filters, action.payload],
-      };
-    },
+    stateFilterChanged: (state, action: PayloadAction<ServiceAccountStateFilter>) => ({
+      ...state,
+      serviceAccountStateFilter: action.payload,
+    }),
   },
 });
 export const serviceAccountsReducer = serviceAccountsSlice.reducer;
@@ -123,7 +113,7 @@ export const {
   builtInRolesLoaded,
   serviceAccountToRemoveLoaded,
   pageChanged,
-  filterChanged,
+  stateFilterChanged,
   queryChanged,
 } = serviceAccountsSlice.actions;
 
