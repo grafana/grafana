@@ -30,7 +30,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --all-projects --json-output=snyk.json  --strict-out-of-sync=false
+          args: --json --all-projects --json-output=snyk.json  --strict-out-of-sync=false
 
 
       - name: Upload result to GitHub Code Scanning
