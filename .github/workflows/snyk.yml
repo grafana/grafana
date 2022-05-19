@@ -39,10 +39,10 @@ jobs:
           sarif_file: snyk.sarif
 
       - name: Create results dir
-        run: mkdir -p results && cp -v snyk.sarif snyk.json results/
+        run: mkdir -p snyk_scans && cp -v snyk.sarif snyk.json snyk_scans/
 
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v2
         with:
-          name: results
+          name: snyk_scans
           path: snyk_scans
