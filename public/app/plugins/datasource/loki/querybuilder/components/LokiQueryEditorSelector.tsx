@@ -11,7 +11,7 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { getQueryWithDefaults } from '../state';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -26,9 +26,8 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const query = getQueryWithDefaults(props.query);
 
   const onEditorModeChange = useCallback(
-    (newMetricEditorMode: QueryEditorMode) => {
-      const change = { ...query, editorMode: newMetricEditorMode };
-      if (newMetricEditorMode === QueryEditorMode.Builder) {
+    (newEditorMode: QueryEditorMode) => {
+      if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
         if (result.errors.length) {
@@ -36,7 +35,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           return;
         }
       }
-      onChange(change);
+      changeEditorMode(query, newEditorMode, onChange);
     },
     [onChange, query]
   );

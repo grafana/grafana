@@ -7,7 +7,7 @@ import { byTestId, byText } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { mockCombinedRule, mockDataSource } from '../../mocks';
+import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -71,6 +71,8 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
+
+    disableRBAC();
 
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange

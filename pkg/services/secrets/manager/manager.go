@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
@@ -130,11 +132,20 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
+	var err error
+	defer func() {
+		opsCounter.With(prometheus.Labels{
+			"success":   strconv.FormatBool(err == nil),
+			"operation": OpEncrypt,
+		}).Inc()
+	}()
+
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
 	keyName := s.keyName(scope)
 
-	dataKey, err := s.dataKey(ctx, keyName)
+	var dataKey []byte
+	dataKey, err = s.dataKey(ctx, keyName)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
 			dataKey, err = s.newDataKey(ctx, keyName, scope, sess)
@@ -146,7 +157,8 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		}
 	}
 
-	encrypted, err := s.enc.Encrypt(ctx, payload, string(dataKey))
+	var encrypted []byte
+	encrypted, err = s.enc.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +186,17 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	}
 
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
+	var err error
+	defer func() {
+		opsCounter.With(prometheus.Labels{
+			"success":   strconv.FormatBool(err == nil),
+			"operation": OpDecrypt,
+		}).Inc()
+	}()
+
 	if len(payload) == 0 {
-		return nil, fmt.Errorf("unable to decrypt empty payload")
+		err = fmt.Errorf("unable to decrypt empty payload")
+		return nil, err
 	}
 
 	var dataKey []byte
@@ -187,12 +208,13 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{'#'})
 		if endOfKey == -1 {
-			return nil, fmt.Errorf("could not find valid key in encrypted payload")
+			err = fmt.Errorf("could not find valid key in encrypted payload")
+			return nil, err
 		}
 		b64Key := payload[:endOfKey]
 		payload = payload[endOfKey+1:]
 		key := make([]byte, b64.DecodedLen(len(b64Key)))
-		_, err := b64.Decode(key, b64Key)
+		_, err = b64.Decode(key, b64Key)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +226,10 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		}
 	}
 
-	return s.enc.Decrypt(ctx, payload, string(dataKey))
+	var decrypted []byte
+	decrypted, err = s.enc.Decrypt(ctx, payload, string(dataKey))
+
+	return decrypted, err
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {

@@ -69,6 +69,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
 
       <LayerDragDropList
         layers={layers}
+        showActions={() => layers.length > 2} // 2 because base layer is not counted!
         getLayerInfo={getLayerInfo}
         onDragEnd={onDragEnd}
         onSelect={onSelect}

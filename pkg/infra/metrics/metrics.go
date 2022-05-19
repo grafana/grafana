@@ -12,7 +12,6 @@ import (
 const ExporterName = "grafana"
 
 var (
-
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -191,6 +190,9 @@ var (
 
 	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
 	StatsTotalLibraryVariables prometheus.Gauge
+
+	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
+	StatsTotalDataKeys prometheus.Gauge
 )
 
 func init() {
@@ -565,6 +567,12 @@ func init() {
 		Help:      "total amount of library variables in the database",
 		Namespace: ExporterName,
 	})
+
+	StatsTotalDataKeys = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_data_keys",
+		Help:      "total amount of data keys in the database",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -660,6 +668,7 @@ func initMetricVars() {
 		MAccessEvaluationCount,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
+		StatsTotalDataKeys,
 	)
 }
 

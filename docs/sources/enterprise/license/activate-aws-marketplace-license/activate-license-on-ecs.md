@@ -1,8 +1,8 @@
 +++
-title = "Activate a Grafana Enterprise license from AWS Marketplace on ECS"
+aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-ecs/", "/docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/activate-license-on-ecs/"]
 description = "Activate a Grafana Enterprise license from AWS Marketplace on ECS"
 keywords = ["grafana", "ecs", "enterprise", "aws", "marketplace", "activate"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-ecs"]
+title = "Activate a Grafana Enterprise license from AWS Marketplace on ECS"
 weight = 250
 +++
 

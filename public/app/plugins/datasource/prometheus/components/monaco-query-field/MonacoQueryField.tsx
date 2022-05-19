@@ -199,6 +199,13 @@ const MonacoQueryField = (props: Props) => {
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
           });
+
+          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the 
+          command palette uses. Pass the event out of monaco manually
+          */
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
+            global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+          });
         }}
       />
     </div>

@@ -188,6 +188,9 @@ function getStyles(theme: GrafanaTheme2) {
 
       a {
         color: ${theme.colors.text.link};
+      }
+
+      a:hover {
         text-decoration: underline;
       }
     `;

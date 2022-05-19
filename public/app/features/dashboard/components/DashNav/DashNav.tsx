@@ -8,7 +8,7 @@ import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpda
 import config from 'app/core/config';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
-import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -225,7 +225,7 @@ export const DashNav = React.memo<Props>((props) => {
               tooltip="Save dashboard"
               icon="save"
               onClick={() => {
-                showModal(SaveDashboardProxy, {
+                showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
                 });

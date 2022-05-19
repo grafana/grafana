@@ -65,16 +65,19 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
@@ -151,8 +154,11 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreMetricsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreLogsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;

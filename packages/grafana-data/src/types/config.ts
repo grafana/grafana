@@ -162,6 +162,7 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  rbacEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;

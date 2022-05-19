@@ -10,6 +10,7 @@ const shortcuts = {
     { keys: ['g', 'p'], description: 'Go to Profile' },
     { keys: ['s', 'o'], description: 'Open search' },
     { keys: ['esc'], description: 'Exit edit/setting views' },
+    { keys: ['h'], description: 'Show all keyboard shortcuts' },
   ],
   Dashboard: [
     { keys: ['mod+s'], description: 'Save dashboard' },

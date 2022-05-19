@@ -18,12 +18,11 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
-import { AlertTypeStep } from './AlertTypeStep';
-import { CloudConditionsStep } from './CloudConditionsStep';
+import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
-import { GrafanaConditionsStep } from './GrafanaConditionsStep';
-import { QueryStep } from './QueryStep';
+import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { RuleInspector } from './RuleInspector';
+import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -151,11 +150,10 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <AlertTypeStep editingExistingRule={!!existing} />
+              <QueryAndAlertConditionStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  <QueryStep />
-                  {type === RuleFormType.grafana ? <GrafanaConditionsStep /> : <CloudConditionsStep />}
+                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
                   <DetailsStep />
                 </>
               )}

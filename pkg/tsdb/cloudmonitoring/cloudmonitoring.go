@@ -338,6 +338,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
+					GraphPeriod: q.MetricQuery.GraphPeriod,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy

@@ -7,10 +7,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme } from '../../themes';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
+import { InlineField } from '../Forms/InlineField';
 import { Input } from '../Forms/Legacy/Input/Input';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
+import { InlineSwitch } from '../Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
 
 import { BasicAuthSettings } from './BasicAuthSettings';
@@ -59,6 +60,8 @@ const HttpAccessHelp = () => (
   </div>
 );
 
+const LABEL_WIDTH = 26;
+
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   const {
     defaultUrl,
@@ -106,7 +109,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   const accessSelect = (
     <Select
       aria-label="Access"
-      menuShouldPortal
       className="width-20 gf-form-input"
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
@@ -208,53 +210,64 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">Auth</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">
-            <Switch
-              label="Basic auth"
-              labelClass="width-13"
-              checked={dataSourceConfig.basicAuth}
-              onChange={(event) => {
-                onSettingsChange({ basicAuth: event!.currentTarget.checked });
-              }}
-            />
-            <Switch
+            <InlineField label="Basic auth" labelWidth={LABEL_WIDTH}>
+              <InlineSwitch
+                id="http-settings-basic-auth"
+                value={dataSourceConfig.basicAuth}
+                onChange={(event) => {
+                  onSettingsChange({ basicAuth: event!.currentTarget.checked });
+                }}
+              />
+            </InlineField>
+
+            <InlineField
               label="With Credentials"
-              labelClass="width-13"
-              checked={dataSourceConfig.withCredentials}
-              onChange={(event) => {
-                onSettingsChange({ withCredentials: event!.currentTarget.checked });
-              }}
               tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests."
-            />
+              labelWidth={LABEL_WIDTH}
+            >
+              <InlineSwitch
+                id="http-settings-with-credentials"
+                value={dataSourceConfig.withCredentials}
+                onChange={(event) => {
+                  onSettingsChange({ withCredentials: event!.currentTarget.checked });
+                }}
+              />
+            </InlineField>
           </div>
 
           {azureAuthSettings?.azureAuthSupported && (
             <div className="gf-form-inline">
-              <Switch
+              <InlineField
                 label="Azure Authentication"
-                labelClass="width-13"
-                checked={azureAuthEnabled}
-                onChange={(event) => {
-                  onSettingsChange(
-                    azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
-                  );
-                }}
                 tooltip="Use Azure authentication for Azure endpoint."
-              />
+                labelWidth={LABEL_WIDTH}
+              >
+                <InlineSwitch
+                  id="http-settings-azure-auth"
+                  value={azureAuthEnabled}
+                  onChange={(event) => {
+                    onSettingsChange(
+                      azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                    );
+                  }}
+                />
+              </InlineField>
             </div>
           )}
 
           {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
-              <Switch
-                label="SigV4 auth"
-                labelClass="width-13"
-                checked={dataSourceConfig.jsonData.sigV4Auth || false}
-                onChange={(event) => {
-                  onSettingsChange({
-                    jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
-                  });
-                }}
-              />
+              <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH}>
+                <InlineSwitch
+                  id="http-settings-sigv4-auth"
+                  value={dataSourceConfig.jsonData.sigV4Auth || false}
+                  onChange={(event) => {
+                    onSettingsChange({
+                      jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
+                    });
+                  }}
+                />
+              </InlineField>
             </div>
           )}
 

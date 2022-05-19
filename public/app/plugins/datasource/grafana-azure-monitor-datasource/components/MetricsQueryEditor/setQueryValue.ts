@@ -185,7 +185,7 @@ export function appendDimensionFilter(
   query: AzureMonitorQuery,
   dimension = '',
   operator = 'eq',
-  filter = '*'
+  filters: string[] = []
 ): AzureMonitorQuery {
   const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
 
@@ -194,7 +194,7 @@ export function appendDimensionFilter(
     {
       dimension,
       operator,
-      filter,
+      filters,
     },
   ]);
 }
@@ -216,6 +216,9 @@ export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
   const newFilters = [...existingFilters];
   const newFilter = newFilters[index];
   newFilter[fieldName] = value;
+  if (fieldName === 'dimension' || fieldName === 'operator') {
+    newFilter.filters = [];
+  }
   return setDimensionFilters(query, newFilters);
 }
 

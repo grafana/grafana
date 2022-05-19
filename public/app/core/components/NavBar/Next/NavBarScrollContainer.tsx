@@ -77,6 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
   }),
   scrollContent: css({
+    flex: 1,
     position: 'relative',
   }),
   // override the scroll container position so that the scroll indicators

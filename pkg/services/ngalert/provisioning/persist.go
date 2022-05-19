@@ -14,6 +14,7 @@ type AMConfigStore interface {
 }
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
+//go:generate mockery --name ProvisioningStore --structname MockProvisioningStore --inpackage --filename provisioning_store_mock.go --with-expecter
 type ProvisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)

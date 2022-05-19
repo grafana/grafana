@@ -1,5 +1,4 @@
 import { render, RenderResult } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
 
@@ -43,6 +42,7 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
+    getQueryHints: jest.fn(() => []),
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
@@ -95,25 +95,5 @@ describe('PromQueryEditorByApp', () => {
 
     expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
-  });
-
-  it('should not run query onBlur in explore', async () => {
-    const { getByTestId, onRunQuery } = setup(CoreApp.Explore);
-
-    const input = getByTestId('dummy-code-input');
-    expect(input).toBeInTheDocument();
-    await userEvent.type(input, 'metric');
-    input.blur();
-    expect(onRunQuery).not.toHaveBeenCalled();
-  });
-
-  it('should run query onBlur in dashboard', async () => {
-    const { getByTestId, onRunQuery } = setup(CoreApp.Dashboard);
-
-    const input = getByTestId('dummy-code-input');
-    expect(input).toBeInTheDocument();
-    await userEvent.type(input, 'metric');
-    input.blur();
-    expect(onRunQuery).toHaveBeenCalled();
   });
 });

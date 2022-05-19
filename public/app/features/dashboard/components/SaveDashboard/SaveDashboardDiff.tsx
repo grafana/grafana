@@ -40,12 +40,11 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
       }
     }
     return {
-      oldJSON,
-      newJSON,
       schemaChange,
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
+      jsonView: <DiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
 
@@ -65,7 +64,7 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
       {value.showDiffs && <div className={styles.spacer}>{value.diffs}</div>}
 
       <h4>JSON Model</h4>
-      <DiffViewer oldValue={value.oldJSON} newValue={value.newJSON} />
+      {value.jsonView}
     </div>
   );
 };

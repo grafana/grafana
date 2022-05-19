@@ -16,6 +16,7 @@ type FakeDashboardService struct {
 	PublicDashboardConfigResult *models.PublicDashboardConfig
 	PublicDashboardConfigError  error
 	SaveDashboardError          error
+	GetDashboardFn              func(ctx context.Context, cmd *models.GetDashboardQuery) error
 }
 
 func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -33,7 +34,7 @@ func (s *FakeDashboardService) GetPublicDashboardConfig(ctx context.Context, org
 }
 
 func (s *FakeDashboardService) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	return s.PublicDashboardConfigResult, s.SaveDashboardError
+	return s.PublicDashboardConfigResult, s.PublicDashboardConfigError
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
@@ -54,5 +55,25 @@ func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64
 	return s.ProvisionedDashData, nil
 }
 func (s *FakeDashboardService) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return nil
+}
+
+func (s *FakeDashboardService) GetDashboard(ctx context.Context, cmd *models.GetDashboardQuery) error {
+	if s.GetDashboardFn != nil {
+		return s.GetDashboardFn(ctx, cmd)
+	}
+	// A minimal result for tests that need a valid result, but don't care what's in it.
+	d := models.NewDashboard("mocked")
+	d.Id = 1
+	d.Uid = "1"
+	cmd.Result = d
+	return nil
+}
+
+func (s *FakeDashboardService) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	return nil
+}
+
+func (s *FakeDashboardService) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return nil
 }

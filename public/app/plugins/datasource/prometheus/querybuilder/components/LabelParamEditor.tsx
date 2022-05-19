@@ -25,7 +25,6 @@ export function LabelParamEditor({
   return (
     <Select
       inputId={getOperationParamId(operationIndex, index)}
-      menuShouldPortal
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {

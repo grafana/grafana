@@ -85,6 +85,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: DataFrame[];
+  // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
 }
