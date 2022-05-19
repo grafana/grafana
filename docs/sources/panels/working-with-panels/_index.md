@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/panels/add-a-panel/", "/docs/grafana/latest/panels/legend-options/", "/docs/grafana/latest/panels/panel-editor/", "/docs/grafana/latest/panels/panel-options/", "/docs/grafana/latest/panels/standard-options/", "/docs/grafana/latest/panels/working-with-panels/", "/docs/sources/panels/working-with-panels/"]
 title = "Working with Grafana panels"
-aliases = ["/docs/grafana/latest/panels/panel-editor/", "/docs/grafana/latest/panels/add-a-panel/", "/docs/grafana/latest/panels/standard-options/", "/docs/grafana/latest/panels/panel-options/", "/docs/grafana/latest/panels/legend-options/", "/docs/sources/panels/working-with-panels/"]
 weight = 100
 +++
 

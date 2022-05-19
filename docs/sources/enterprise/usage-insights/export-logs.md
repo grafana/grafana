@@ -1,8 +1,8 @@
 +++
-title = "Export logs of usage insights"
+aliases = ["/docs/grafana/latest/enterprise/usage-insights/export-logs/"]
 description = "Export logs of usage insights"
 keywords = ["grafana", "export", "usage-insights", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/export-logs.md"]
+title = "Export logs of usage insights"
 weight = 500
 +++
 

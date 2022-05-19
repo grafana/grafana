@@ -1,6 +1,7 @@
 +++
-title = "Traces"
+aliases = ["/docs/grafana/latest/visualizations/traces/"]
 keywords = ["grafana", "dashboard", "documentation", "panels", "traces"]
+title = "Traces"
 weight = 850
 +++
 

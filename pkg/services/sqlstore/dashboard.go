@@ -29,28 +29,6 @@ func init() {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
-			return models.ErrDashboardIdentifierNotSet
-		}
-
-		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-		has, err := dbSession.Get(&dashboard)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
-		}
-
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
-		query.Result = &dashboard
-		return nil
-	})
-}
-
 type DashboardSearchProjection struct {
 	ID          int64  `xorm:"id"`
 	UID         string `xorm:"uid"`
@@ -312,28 +290,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 		}
 
 		return err
-	})
-}
-
-type DashboardSlugDTO struct {
-	Slug string
-}
-
-func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-		var slug = DashboardSlugDTO{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = slug.Slug
-		return nil
 	})
 }
 

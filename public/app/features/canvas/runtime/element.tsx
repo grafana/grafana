@@ -26,6 +26,9 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
+  // Determine whether or not element is in motion or not (via moveable)
+  isMoving = false;
+
   // Filled in by ref
   div?: HTMLDivElement;
 

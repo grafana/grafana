@@ -24,7 +24,6 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	ac := &OSSAccessControlService{
 		cfg:            cfg,
-		features:       featuremgmt.WithFeatures(),
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
