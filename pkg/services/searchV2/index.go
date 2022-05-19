@@ -266,7 +266,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	if len(dbDashboards) == 0 {
 		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
 	} else {
-		newReader, err = i.updateDashboard(writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(orgID, writer, reader, dbDashboards[0])
 	}
 	if err != nil {
 		return err
@@ -305,12 +305,17 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
+
+	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
 
 	var doc *bluge.Document
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 	} else {
 		var folderUID string
 		if dash.folderID == 0 {
@@ -325,6 +330,9 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 
 		location := folderUID
 		doc = getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 
 		var actualPanelIDs []string
 

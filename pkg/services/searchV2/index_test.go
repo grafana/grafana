@@ -34,6 +34,8 @@ var testDisallowAllFilter = func(uid string) bool {
 	return false
 }
 
+var testOrgID int64 = 1
+
 var update = flag.Bool("update", false, "update golden files")
 
 func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
@@ -48,12 +50,12 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	}
 	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{}, extender)
 	require.NotNil(t, index)
-	numDashboards, err := index.buildOrgIndex(context.Background(), 1)
+	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
 	require.Equal(t, len(dashboardLoader.dashboards), numDashboards)
-	reader, ok := index.getOrgReader(1)
+	reader, ok := index.getOrgReader(testOrgID)
 	require.True(t, ok)
-	writer, ok := index.getOrgWriter(1)
+	writer, ok := index.getOrgWriter(testOrgID)
 	require.True(t, ok)
 	return index, reader, writer
 }
@@ -119,7 +121,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-create", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(writer, reader, dashboard{
+		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
 			id:  3,
 			uid: "3",
 			info: &extract.DashboardInfo{
@@ -136,7 +138,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-update", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(writer, reader, dashboard{
+		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
 			id:  2,
 			uid: "2",
 			info: &extract.DashboardInfo{
