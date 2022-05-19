@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, LegendDisplayMode } from '@grafana/ui';
+import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
@@ -35,7 +35,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const info = useMemo(() => prepareHeatmapData(data, options, theme), [data, options, theme]);
+  const info = useMemo(() => {
+    try {
+      return prepareHeatmapData(data, options, theme);
+    } catch (ex) {
+      return { warning: `${ex}` };
+    }
+  }, [data, options, theme]);
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
 
@@ -79,7 +85,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
-        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        const delta = evt.xMax - evt.xMin;
+        if (delta > 1) {
+          onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        }
       },
       isToolTipOpen,
       timeZone,
@@ -92,7 +101,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   }, [options, data.structureRev]);
 
   const renderLegend = () => {
-    if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
+    if (!info.heatmap || !options.legend.show) {
       return null;
     }
 

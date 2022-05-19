@@ -6,11 +6,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSearch_SortedResults(t *testing.T) {
+	ss := startest.NewStarServiceFake()
 	ms := mockstore.NewSQLStoreMock()
 	ms.ExpectedPersistedDashboards = models.HitList{
 		&models.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
@@ -20,9 +23,10 @@ func TestSearch_SortedResults(t *testing.T) {
 		&models.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 	}
 	ms.ExpectedSignedInUser = &models.SignedInUser{IsGrafanaAdmin: true}
-	ms.ExpectedUserStars = map[int64]bool{10: true, 12: true}
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{10: true, 12: true}}
 	svc := &SearchService{
-		sqlstore: ms,
+		sqlstore:    ms,
+		starService: ss,
 	}
 
 	query := &Query{

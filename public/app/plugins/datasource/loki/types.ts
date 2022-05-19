@@ -57,6 +57,7 @@ export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
+  keepCookies?: string[];
 }
 
 export interface LokiStats {
