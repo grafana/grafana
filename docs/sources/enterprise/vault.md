@@ -8,10 +8,9 @@ weight = 1200
 
 # Vault integration
 
-> Only available in Grafana Enterprise v7.1+.
+If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../administration/configuration.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}).
 
-If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../administration/configuration.md" >}})
-and [Provisioning]({{< relref "../administration/provisioning.md" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Advanced]({{< relref "/grafana-cloud" >}}).
 
 > **Note:** If you have Grafana [set up for high availability]({{< relref "../administration/set-up-for-high-availability.md" >}}), then we advise not to use dynamic secrets for provisioning files.
 > Each Grafana instance is responsible for renewing its own leases. Your data source leases might expire when one of your Grafana servers shuts down.

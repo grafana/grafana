@@ -10,7 +10,7 @@ weight = 500
 
 > **Note:** Available in Grafana Enterprise v8.0+.
 
-Settings updates at runtime allows you to update Grafana settings with no need to restart the Grafana server.
+By updating settings at runtime, you can update Grafana settings without needing to restart the Grafana server.
 
 Updates that happen at runtime are stored in the database and override
 [settings from the other sources](https://grafana.com/docs/grafana/latest/administration/configuration/)
@@ -88,5 +88,5 @@ HTTP API, then the other instances are synchronized through the database and the
 
 ## Control access with role-based access control
 
-If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
+If you have [role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
 Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.

@@ -8,9 +8,9 @@ weight = 1100
 
 # Auditing
 
-> **Note:** Only available in Grafana Enterprise v7.3+.
-
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+
+> **Note:** Available in [Grafana Enterprise 7.3+]({{< relref "../enterprise" >}}) and [Grafana Cloud Advanced]({{< relref "/grafana-cloud" >}}).
 
 ## Audit logs
 
