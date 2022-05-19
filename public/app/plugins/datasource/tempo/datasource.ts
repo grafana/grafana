@@ -448,9 +448,9 @@ function secondServiceMapQuery(
   tempoDatasourceUid: string
 ) {
   const spanNames = firstResponses.data[0][0].data[0].fields[1].values.toArray().join('|');
-  const errorRateExprWithErrorSpanNames = buildExpr(errorRateMetric, '{span_name=~"' + spanNames + '"}');
+  const errorRateExprWithRateSpanNames = buildExpr(errorRateMetric, '{span_name=~"' + spanNames + '"}');
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmMetricsRequest([errorRateExprWithErrorSpanNames, durationMetric], request);
+  serviceMapRequest.targets = makeApmMetricsRequest([errorRateExprWithRateSpanNames, durationMetric], request);
 
   return queryServiceMapPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
@@ -465,7 +465,7 @@ function secondServiceMapQuery(
         request,
         firstResponses,
         secondResponses[0],
-        errorRateExprWithErrorSpanNames,
+        errorRateExprWithRateSpanNames,
         datasourceUid,
         tempoDatasourceUid
       );
@@ -517,7 +517,7 @@ function getApmTable(
   request: DataQueryRequest<TempoQuery>,
   firstResponse: DataQueryResponse,
   secondResponse: DataQueryResponse,
-  errorRateExprWithErrorSpanNames: string,
+  errorRateExprWithRateSpanNames: string,
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
@@ -527,15 +527,14 @@ function getApmTable(
   //   df = toDataFrame([]);
   // } else {
 
-  const rateExpr = buildExpr(rateMetric, request.targets[0].serviceMapQuery);
+  const rateExpr = buildExpr(rateMetric, request.targets[0].serviceMapQuery ?? '');
   const rate = firstResponse.data[0][0].data.filter((x: { refId: string }) => {
     return x.refId === rateExpr;
   });
-  const errorRateExpr = buildExpr(errorRateMetric, request.targets[0].serviceMapQuery);
   const errorRate = secondResponse.data.filter((x) => {
-    return x.refId === errorRateExprWithErrorSpanNames;
+    return x.refId === errorRateExprWithRateSpanNames;
   });
-  const durationExpr = buildExpr(durationMetric, request.targets[0].serviceMapQuery);
+  const durationExpr = buildExpr(durationMetric, request.targets[0].serviceMapQuery ?? '');
   const duration = secondResponse.data.filter((x) => {
     return x.refId === durationExpr;
   });
@@ -551,7 +550,14 @@ function getApmTable(
       ...rate[0].fields[2],
       name: 'Rate',
       config: {
-        links: [makePromLink('Rate', rateExpr, datasourceUid, false)],
+        links: [
+          makePromLink(
+            'Rate',
+            `topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="\${__data.fields[0]}"}[$__range] @ end())) by (span_name))`,
+            datasourceUid,
+            false
+          ),
+        ],
         decimals: 2,
       },
     });
@@ -580,7 +586,14 @@ function getApmTable(
       name: 'Error Rate',
       values: values,
       config: {
-        links: [makePromLink('Error Rate', errorRateExpr, datasourceUid, false)],
+        links: [
+          makePromLink(
+            'Error Rate',
+            `topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="\${__data.fields[0]}"}[$__range] @ end())) by (span_name))`,
+            datasourceUid,
+            false
+          ),
+        ],
         decimals: 2,
       },
     });
@@ -630,15 +643,15 @@ function getApmTable(
   return df;
 }
 
-function buildExpr(metric: string, serviceMapQuery: string | undefined) {
-  if (!serviceMapQuery || serviceMapQuery === '{}') {
+function buildExpr(metric: string, filter: string) {
+  if (!filter || filter === '{}') {
     const replaceString = metric.includes(',-REPLACE-') ? ',-REPLACE-' : '-REPLACE-';
     return `${metric.replace(replaceString, '')}`;
   }
   // map serviceGraph metric tags to APM metric tags
-  serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
-  serviceMapQuery = serviceMapQuery.replace('{', '').replace('}', '');
-  return `${metric.replace('-REPLACE-', serviceMapQuery)}`;
+  filter = filter.replace('client', 'service').replace('server', 'service');
+  filter = filter.replace('{', '').replace('}', '');
+  return `${metric.replace('-REPLACE-', filter)}`;
 }
 
 function getErrorRateValues(rate: DataQueryResponseData[], errorRate: DataQueryResponseData[]) {
@@ -676,7 +689,7 @@ function getErrorRateValues(rate: DataQueryResponseData[], errorRate: DataQueryR
 
 function makeApmMetricsRequest(apmMetrics: any[], request: DataQueryRequest<TempoQuery>) {
   const metrics = apmMetrics.map((metric) => {
-    const expr = buildExpr(metric, request.targets[0].serviceMapQuery);
+    const expr = buildExpr(metric, request.targets[0].serviceMapQuery ?? '');
     return {
       refId: expr,
       expr: expr,
