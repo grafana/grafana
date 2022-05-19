@@ -166,9 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       &:hover {
         box-shadow: none;
-        // background-clip: padding-box;
-        // width: 100%;
-        // background: #FF0;
       }
     `,
     headerCell: css`
