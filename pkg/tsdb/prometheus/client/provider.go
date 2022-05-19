@@ -1,6 +1,8 @@
 package client
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,6 +33,9 @@ func NewProvider(
 	log log.Logger,
 ) *Provider {
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
 	return &Provider{
 		settings:       settings,
 		jsonData:       jsonData,

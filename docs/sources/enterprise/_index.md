@@ -1,7 +1,8 @@
 +++
-title = "Grafana Enterprise"
+aliases = ["/docs/grafana/latest/enterprise/"]
 description = "Grafana Enterprise overview"
 keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
+title = "Grafana Enterprise"
 weight = 150
 +++
 
@@ -59,20 +60,21 @@ With Grafana Enterprise, you get access to the following features:
 
 With a Grafana Enterprise license, you get access to premium data sources, including:
 
-- [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
-- [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
-- [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [AppDynamics](https://grafana.com/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Azure Devops](https://grafana.com/grafana/plugins/grafana-azuredevops-datasource)
+- [DataDog](https://grafana.com/grafana/plugins/grafana-datadog-datasource)
+- [Dynatrace](https://grafana.com/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](https://grafana.com/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](https://grafana.com/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](https://grafana.com/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
-- [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
-- [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
-- [Salesforce](https://grafana.com/grafana/plugins/grafana-salesforce-datasource/)
-- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource/)
+- [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
+- [Oracle Database](https://grafana.com/grafana/plugins/grafana-oracle-datasource)
+- [Salesforce](https://grafana.com/grafana/plugins/grafana-salesforce-datasource)
+- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
-- [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](https://grafana.com/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Wavefront](https://grafana.com/grafana/plugins/grafana-wavefront-datasource)
 

@@ -1,8 +1,8 @@
 +++
-title = "Short URL HTTP API "
+aliases = ["/docs/grafana/latest/http_api/short_url/"]
 description = "Grafana Short URL HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "shortUrl"]
-aliases = ["/docs/grafana/latest/http_api/short_url/"]
+title = "Short URL HTTP API "
 +++
 
 # Short URL API

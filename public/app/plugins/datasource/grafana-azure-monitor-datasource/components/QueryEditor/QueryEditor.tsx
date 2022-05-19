@@ -16,7 +16,6 @@ import {
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import MetricsQueryEditor from '../MetricsQueryEditor';
 import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
@@ -102,22 +101,9 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
 }) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
-      if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
-        return (
-          <NewMetricsQueryEditor
-            data={data}
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            variableOptionGroup={variableOptionGroup}
-            setError={setError}
-          />
-        );
-      }
       return (
-        <MetricsQueryEditor
+        <NewMetricsQueryEditor
           data={data}
-          subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}
           onChange={onChange}
