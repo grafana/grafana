@@ -507,7 +507,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 
 	clearState := func() {
-		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
+		states := sch.stateManager.GetInstancesForRuleUID(key.OrgID, key.UID)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
 		notify(expiredAlerts, logger)
@@ -628,22 +628,22 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 }
 
-func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
+func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.AlertInstance) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
 			RuleOrgID:         s.OrgID,
 			RuleUID:           s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
-			State:             models.InstanceStateType(s.State.String()),
-			Reason:            models.InstanceStateType(s.State.String()),
+			State:             models.InstanceStateType(s.EvaluationState.String()),
+			Reason:            models.InstanceStateType(s.EvaluationState.String()),
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
 		err := sch.instanceStore.SaveAlertInstance(ctx, &cmd)
 		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.EvaluationState.String(), "msg", err.Error())
 		}
 	}
 }

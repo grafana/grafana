@@ -51,7 +51,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		startsAt := alertState.StartsAt
 		valString := ""
 
-		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+		if alertState.EvaluationState == eval.Alerting || alertState.EvaluationState == eval.Pending {
 			valString = formatValues(alertState)
 		}
 
@@ -62,7 +62,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
 			State: state.InstanceStateAndReason{
-				State:  alertState.State,
+				State:  alertState.EvaluationState,
 				Reason: alertState.EvaluationReason,
 			}.String(),
 
@@ -74,7 +74,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, alertResponse)
 }
 
-func formatValues(alertState *state.State) string {
+func formatValues(alertState *state.AlertInstance) string {
 	var fv string
 	values := alertState.GetLastEvaluationValuesForCondition()
 
@@ -209,35 +209,35 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
-			activeAt := alertState.StartsAt
+		for _, alertInstance := range srv.manager.GetInstancesForRuleUID(rule.OrgID, rule.UID) {
+			activeAt := alertInstance.StartsAt
 			valString := ""
-			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
-				valString = formatValues(alertState)
+			if alertInstance.EvaluationState == eval.Alerting || alertInstance.EvaluationState == eval.Pending {
+				valString = formatValues(alertInstance)
 			}
 
 			alert := &apimodels.Alert{
-				Labels:      alertState.GetLabels(labelOptions...),
-				Annotations: alertState.Annotations,
+				Labels:      alertInstance.GetLabels(labelOptions...),
+				Annotations: alertInstance.Annotations,
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
 				State: state.InstanceStateAndReason{
-					State:  alertState.State,
-					Reason: alertState.EvaluationReason,
+					State:  alertInstance.EvaluationState,
+					Reason: alertInstance.EvaluationReason,
 				}.String(),
 
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
 
-			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
-				newRule.LastEvaluation = alertState.LastEvaluationTime
+			if alertInstance.LastEvaluationTime.After(newRule.LastEvaluation) {
+				newRule.LastEvaluation = alertInstance.LastEvaluationTime
 			}
 
-			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
+			newRule.EvaluationTime = alertInstance.EvaluationDuration.Seconds()
 
-			switch alertState.State {
+			switch alertInstance.EvaluationState {
 			case eval.Normal:
 			case eval.Pending:
 				if alertingRule.State == "inactive" {
@@ -251,8 +251,8 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 				newRule.Health = "nodata"
 			}
 
-			if alertState.Error != nil {
-				newRule.LastError = alertState.Error.Error()
+			if alertInstance.Error != nil {
+				newRule.LastError = alertInstance.Error.Error()
 				newRule.Health = "error"
 			}
 

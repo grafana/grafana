@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type State struct {
+type AlertInstance struct {
 	AlertRuleUID string
 	OrgID        int64
 	CacheId      string
@@ -23,7 +23,7 @@ type State struct {
 	EndsAt     time.Time
 	LastSentAt time.Time
 
-	State                eval.State
+	EvaluationState      eval.State
 	EvaluationReason     eval.State
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
@@ -56,24 +56,24 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *State) resultNormal(_ *models.AlertRule, result eval.Result) {
+func (a *AlertInstance) resultNormal(_ *models.AlertRule, result eval.Result) {
 	a.Error = nil // should be nil since state is not error
-	if a.State != eval.Normal {
+	if a.EvaluationState != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
-	a.State = eval.Normal
+	a.EvaluationState = eval.Normal
 }
 
-func (a *State) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
+func (a *AlertInstance) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since the state is not an error
 
-	switch a.State {
+	switch a.EvaluationState {
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.State = eval.Alerting
+			a.EvaluationState = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
@@ -82,14 +82,14 @@ func (a *State) resultAlerting(alertRule *models.AlertRule, result eval.Result) 
 		a.setEndsAt(alertRule, result)
 		if !(alertRule.For > 0) {
 			// If For is 0, immediately set Alerting
-			a.State = eval.Alerting
+			a.EvaluationState = eval.Alerting
 		} else {
-			a.State = eval.Pending
+			a.EvaluationState = eval.Pending
 		}
 	}
 }
 
-func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
+func (a *AlertInstance) resultError(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	execErrState := eval.Error
@@ -120,12 +120,12 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
 	}
 
-	switch a.State {
+	switch a.EvaluationState {
 	case eval.Alerting, eval.Error:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.State = execErrState
+			a.EvaluationState = execErrState
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
@@ -133,16 +133,16 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 		// For is observed when Alerting is chosen for the alert state
 		// if execution error or timeout.
 		if execErrState == eval.Alerting && alertRule.For > 0 {
-			a.State = eval.Pending
+			a.EvaluationState = eval.Pending
 		} else {
-			a.State = execErrState
+			a.EvaluationState = execErrState
 		}
 		a.StartsAt = result.EvaluatedAt
 		a.setEndsAt(alertRule, result)
 	}
 }
 
-func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
+func (a *AlertInstance) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	if a.StartsAt.IsZero() {
@@ -152,16 +152,16 @@ func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 
 	switch alertRule.NoDataState {
 	case models.Alerting:
-		a.State = eval.Alerting
+		a.EvaluationState = eval.Alerting
 	case models.NoData:
-		a.State = eval.NoData
+		a.EvaluationState = eval.NoData
 	case models.OK:
-		a.State = eval.Normal
+		a.EvaluationState = eval.Normal
 	}
 }
 
-func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
+func (a *AlertInstance) NeedsSending(resendDelay time.Duration) bool {
+	if a.EvaluationState == eval.Pending || a.EvaluationState == eval.Normal && !a.Resolved {
 		return false
 	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
@@ -169,19 +169,19 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
-func (a *State) Equals(b *State) bool {
+func (a *AlertInstance) Equals(b *AlertInstance) bool {
 	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
 		a.Labels.String() == b.Labels.String() &&
-		a.State.String() == b.State.String() &&
+		a.EvaluationState.String() == b.EvaluationState.String() &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
-func (a *State) TrimResults(alertRule *models.AlertRule) {
+func (a *AlertInstance) TrimResults(alertRule *models.AlertRule) {
 	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
 	if numBuckets == 0 {
 		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
@@ -199,7 +199,7 @@ func (a *State) TrimResults(alertRule *models.AlertRule) {
 // The internal Alertmanager will use this time to know when it should automatically resolve the alert
 // in case it hasn't received additional alerts. Under regular operations the scheduler will continue to send the
 // alert with an updated EndsAt, if the alert is resolved then a last alert is sent with EndsAt = last evaluation time.
-func (a *State) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
+func (a *AlertInstance) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
 	ends := ResendDelay
 	if alertRule.IntervalSeconds > int64(ResendDelay.Seconds()) {
 		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
@@ -208,7 +208,7 @@ func (a *State) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
 }
 
-func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
+func (a *AlertInstance) GetLabels(opts ...models.LabelOption) map[string]string {
 	labels := a.Labels.Copy()
 
 	for _, opt := range opts {
@@ -218,7 +218,7 @@ func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 	return labels
 }
 
-func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
+func (a *AlertInstance) GetLastEvaluationValuesForCondition() map[string]float64 {
 	if len(a.Results) <= 0 {
 		return nil
 	}

@@ -198,7 +198,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	}
 
 	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
-	states := make([]*state.State, 0, len(evalStates))
+	states := make([]*state.AlertInstance, 0, len(evalStates))
 	for _, s := range evalStates {
 		states = append(states, randomState(s))
 	}
@@ -208,7 +208,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
-		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
+		if !(s.EvaluationState == eval.Alerting || s.EvaluationState == eval.Error || s.EvaluationState == eval.NoData) {
 			continue
 		}
 		alert := stateToPostableAlert(s, appURL)
@@ -242,9 +242,9 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func randomState(evalState eval.State) *state.State {
-	return &state.State{
-		State:              evalState,
+func randomState(evalState eval.State) *state.AlertInstance {
+	return &state.AlertInstance{
+		EvaluationState:    evalState,
 		AlertRuleUID:       util.GenerateShortUID(),
 		StartsAt:           time.Now(),
 		EndsAt:             randomTimeInFuture(),

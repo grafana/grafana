@@ -25,8 +25,8 @@ var ResendDelay = 30 * time.Second
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
-	GetAll(orgID int64) []*State
-	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+	GetAll(orgID int64) []*AlertInstance
+	GetInstancesForRuleUID(orgID int64, alertRuleUID string) []*AlertInstance
 }
 
 type Manager struct {
@@ -74,7 +74,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		st.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
-	var states []*State
+	var states []*AlertInstance
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -109,12 +109,12 @@ func (st *Manager) Warm(ctx context.Context) {
 			if err != nil {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
-			stateForEntry := &State{
+			stateForEntry := &AlertInstance{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
 				Labels:               lbs,
-				State:                translateInstanceState(entry.CurrentState),
+				EvaluationState:      translateInstanceState(entry.CurrentState),
 				EvaluationReason:     translateInstanceReason(entry.CurrentReason),
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
@@ -131,15 +131,15 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *AlertInstance {
 	return st.cache.getOrCreate(ctx, alertRule, result)
 }
 
-func (st *Manager) set(entry *State) {
+func (st *Manager) set(entry *AlertInstance) {
 	st.cache.set(entry)
 }
 
-func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*AlertInstance, error) {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
@@ -153,10 +153,10 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*AlertInstance {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
-	var states []*State
-	processedResults := make(map[string]*State, len(results))
+	var states []*AlertInstance
+	processedResults := make(map[string]*AlertInstance, len(results))
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result)
 		states = append(states, s)
@@ -167,7 +167,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *AlertInstance {
 	currentState := st.getOrCreate(ctx, alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -180,7 +180,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	})
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
-	oldState := currentState.State
+	oldState := currentState.EvaluationState
 	oldReason := currentState.EvaluationReason
 
 	// The underlying reason for a state is always the result of the evaluation.
@@ -202,23 +202,23 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
-	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+	currentState.Resolved = oldState == eval.Alerting && currentState.EvaluationState == eval.Normal
 
 	st.set(currentState)
 
-	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.EvaluationReason
+	shouldUpdateAnnotation := oldState != currentState.EvaluationState || oldReason != currentState.EvaluationReason
 	if shouldUpdateAnnotation {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.EvaluationReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
+		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.EvaluationState, Reason: currentState.EvaluationReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
 
-func (st *Manager) GetAll(orgID int64) []*State {
+func (st *Manager) GetAll(orgID int64) []*AlertInstance {
 	return st.cache.getAll(orgID)
 }
 
-func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+func (st *Manager) GetInstancesForRuleUID(orgID int64, alertRuleUID string) []*AlertInstance {
+	return st.cache.getInstancesForRuleUID(orgID, alertRuleUID)
 }
 
 func (st *Manager) recordMetrics() {
@@ -239,7 +239,7 @@ func (st *Manager) recordMetrics() {
 	}
 }
 
-func (st *Manager) Put(states []*State) {
+func (st *Manager) Put(states []*AlertInstance) {
 	for _, s := range states {
 		st.set(s)
 	}
@@ -341,9 +341,9 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.AlertRule, states map[string]*State) {
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-	for _, s := range allStates {
+func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.AlertRule, states map[string]*AlertInstance) {
+	allInstances := st.GetInstancesForRuleUID(alertRule.OrgID, alertRule.UID)
+	for _, s := range allInstances {
 		_, ok := states[s.CacheId]
 		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
@@ -358,10 +358,10 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 
-			if s.State == eval.Alerting {
+			if s.EvaluationState == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
 					InstanceStateAndReason{State: eval.Normal, Reason: eval.Normal},
-					InstanceStateAndReason{State: s.State, Reason: s.EvaluationReason})
+					InstanceStateAndReason{State: s.EvaluationState, Reason: s.EvaluationReason})
 			}
 		}
 	}

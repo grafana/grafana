@@ -44,13 +44,13 @@ func TestWarmStateCache(t *testing.T) {
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
 
-	expectedEntries := []*state.State{
+	expectedEntries := []*state.AlertInstance{
 		{
-			AlertRuleUID: rule.UID,
-			OrgID:        rule.OrgID,
-			CacheId:      `[["test1","testValue1"]]`,
-			Labels:       data.Labels{"test1": "testValue1"},
-			State:        eval.Normal,
+			AlertRuleUID:    rule.UID,
+			OrgID:           rule.OrgID,
+			CacheId:         `[["test1","testValue1"]]`,
+			Labels:          data.Labels{"test1": "testValue1"},
+			EvaluationState: eval.Normal,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
@@ -59,11 +59,11 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 		}, {
-			AlertRuleUID: rule.UID,
-			OrgID:        rule.OrgID,
-			CacheId:      `[["test2","testValue2"]]`,
-			Labels:       data.Labels{"test2": "testValue2"},
-			State:        eval.Alerting,
+			AlertRuleUID:    rule.UID,
+			OrgID:           rule.OrgID,
+			CacheId:         `[["test2","testValue2"]]`,
+			Labels:          data.Labels{"test2": "testValue2"},
+			EvaluationState: eval.Alerting,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
 			},
@@ -115,7 +115,7 @@ func TestWarmStateCache(t *testing.T) {
 			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.AlertInstance{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}
