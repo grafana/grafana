@@ -1,7 +1,7 @@
 package dashboard
 
 // HandoffSchemaVersion is the minimum schemaVersion for dashboards at which the
-// Thema-based dashboard schema is known to be valid.
+// Thema-based dashboard schema is possibly valid
 //
 // schemaVersion is the original version numbering system for dashboards. If a
 // dashboard is below this schemaVersion, it is necessary for the frontend
