@@ -158,7 +158,7 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
@@ -167,7 +167,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, alertRule, processedResults)
+	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	return states
 }
 
@@ -368,7 +368,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
@@ -386,7 +386,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			}
 
 			if s.State == eval.Alerting {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
+				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
 					InstanceStateAndReason{State: eval.Normal, Reason: ""},
 					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
 			}
