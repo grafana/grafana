@@ -112,7 +112,7 @@ export class ContextSrv {
     return config.rbacEnabled;
   }
 
-  accessControlBuiltinRefactorEnabled(): boolean {
+  accessControlBuiltInRoleAssignmentEnabled(): boolean {
     return config.rbacBuiltInRoleAssignmentEnabled;
   }
 
