@@ -369,6 +369,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
+	// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+	shouldManageAnnotationsAndInstances := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
+
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
 		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
@@ -383,18 +386,23 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+				if shouldManageAnnotationsAndInstances {
+					st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				}
+				// LOGZ.IO GRAFANA CHANGE :: end
 			}
 		}
 	}
 
-	shouldManageInstances := ctx.Value(ShouldManageAnnotationsAndInstancesContextKey).(bool)
-	if shouldManageInstances {
+	// LOGZ.IO GRAFANA CHANGE :: Manage annotations and instances only on one peer of HA cluster
+	if shouldManageAnnotationsAndInstances {
 		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
 			st.log.Error("unable to delete stale instances from database", "err", err.Error(),
 				"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
 		}
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 }
 
 func isItStale(lastEval time.Time, intervalSeconds int64) bool {
