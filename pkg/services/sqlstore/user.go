@@ -82,7 +82,14 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 		args.Email = args.Login
 	}
 
-	exists, err := sess.Where("email=? OR login=?", args.Email, args.Login).Get(&models.User{})
+	where := "email=? OR login=?"
+	if setting.CaseInsensitiveID {
+		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		args.Login = strings.ToLower(args.Login)
+		args.Email = strings.ToLower(args.Email)
+	}
+
+	exists, err := sess.Where(where, args.Email, args.Login).Get(&models.User{})
 	if err != nil {
 		return user, err
 	}
@@ -177,7 +184,13 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 			cmd.Email = cmd.Login
 		}
 
-		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		where := "email=? OR login=?"
+		if setting.CaseInsensitiveID {
+			where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+			cmd.Login = strings.ToLower(cmd.Login)
+			cmd.Email = strings.ToLower(cmd.Email)
+		}
+		exists, err := sess.Where(where, cmd.Email, cmd.Login).Get(&models.User{})
 		if err != nil {
 			return err
 		}
@@ -297,9 +310,13 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 
 		// Try and find the user by login first.
 		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "login=?"
+		if setting.CaseInsensitiveID {
+			where = "LOWER(login)=LOWER(?)"
+		}
 
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		if err != nil {
 			return err
 		}
@@ -307,8 +324,12 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 		if !has && strings.Contains(query.LoginOrEmail, "@") {
 			// If the user wasn't found, and it contains an "@" fallback to finding the
 			// user by email.
-			user = &models.User{Email: query.LoginOrEmail}
-			has, err = sess.Get(user)
+			where = "email=?"
+			if setting.CaseInsensitiveID {
+				where = "LOWER(email)=LOWER(?)"
+			}
+			user = &models.User{}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		}
 
 		if err != nil {
@@ -329,8 +350,13 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			return models.ErrUserNotFound
 		}
 
-		user := &models.User{Email: query.Email}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "email=?"
+		if setting.CaseInsensitiveID {
+			where = "LOWER(email)=LOWER(?)"
+		}
+
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.Email).Get(user)
 
 		if err != nil {
 			return err
@@ -345,6 +371,11 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 }
 
 func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
+	if setting.CaseInsensitiveID {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
+
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Name:    cmd.Name,
@@ -555,9 +586,17 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		case query.UserId > 0:
 			sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
 		case query.Login != "":
-			sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			if setting.CaseInsensitiveID {
+				sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			}
 		case query.Email != "":
-			sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			if setting.CaseInsensitiveID {
+				sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			}
 		}
 
 		var user models.SignedInUser
