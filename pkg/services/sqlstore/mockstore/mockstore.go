@@ -20,7 +20,6 @@ type SQLStoreMock struct {
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
-	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
 	ExpectedDashboardVersion       *models.DashboardVersion
 	ExpectedDashboardVersions      []*models.DashboardVersion
@@ -309,24 +308,6 @@ func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *mode
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	query.Result = false
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	query.Result = m.ExpectedUserStars
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 	return m.ExpectedError
 }
@@ -464,11 +445,6 @@ func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgU
 
 func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	query.Result = m.ExpectedDashboard
-	return m.ExpectedError
 }
 
 func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
@@ -652,10 +628,6 @@ func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *m
 }
 
 func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
 	return m.ExpectedError
 }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -37,12 +38,8 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *models.ReqContext, dashID int6
 		return false, nil
 	}
 
-	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := hs.SQLStore.IsStarredByUserCtx(c.Req.Context(), &query); err != nil {
-		return false, err
-	}
-
-	return query.Result, nil
+	query := star.IsStarredByUserQuery{UserID: c.UserId, DashboardID: dashID}
+	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
 }
 
 func dashboardGuardianResponse(err error) response.Response {
@@ -146,12 +143,13 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
+		IsPublic:               dash.IsPublic,
 	}
 
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &query); err != nil {
+		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
@@ -242,7 +240,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := hs.SQLStore.GetDashboard(ctx, &query); err != nil {
+	if err := hs.dashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -445,7 +443,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
-		err := hs.SQLStore.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		err := hs.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -531,7 +529,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 			OrgId: c.SignedInUser.OrgId,
 			Uid:   dashUID,
 		}
-		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
 			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
 		}
 		dashID = q.Result.Id
@@ -589,7 +587,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 			OrgId: c.SignedInUser.OrgId,
 			Uid:   dashUID,
 		}
-		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
 			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
 		}
 		dashID = q.Result.Id
@@ -785,7 +783,7 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.Id = id
-		err = hs.SQLStore.GetDashboardUIDById(c.Req.Context(), q)
+		err = hs.dashboardService.GetDashboardUIDById(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}

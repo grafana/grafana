@@ -3265,6 +3265,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3323,9 +3324,7 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
    "items": {
@@ -3336,7 +3335,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3388,7 +3386,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -3525,6 +3525,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3564,9 +3565,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "description": "Receiver receiver",
@@ -4900,6 +4899,46 @@
      }
     },
     "summary": "Update an existing contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/mute-timings": {
+   "get": {
+    "operationId": "RouteGetMuteTimings",
+    "responses": {
+     "200": {
+      "$ref": "#/responses/MuteTiming"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the mute timings.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/mute-timings/{name}": {
+   "get": {
+    "operationId": "RouteGetMuteTiming",
+    "responses": {
+     "200": {
+      "$ref": "#/responses/MuteTiming"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get a mute timing.",
     "tags": [
      "provisioning"
     ]

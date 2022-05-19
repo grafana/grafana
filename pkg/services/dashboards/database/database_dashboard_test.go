@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,9 +28,11 @@ func TestDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
+	var starService star.Service
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
+		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
@@ -61,7 +65,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := sqlStore.GetDashboard(context.Background(), &query)
+		err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -78,7 +82,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := sqlStore.GetDashboard(context.Background(), &query)
+		err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -95,7 +99,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := sqlStore.GetDashboard(context.Background(), &query)
+		err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -105,13 +109,21 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsFolder)
 	})
 
+	t.Run("Should be able to get a dashboard UID by ID", func(t *testing.T) {
+		setup()
+		query := models.GetDashboardRefByIdQuery{Id: savedDash.Id}
+		err := dashboardStore.GetDashboardUIDById(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, query.Result.Uid, savedDash.Uid)
+	})
+
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
 		setup()
 		query := models.GetDashboardQuery{
 			OrgId: 1,
 		}
 
-		err := sqlStore.GetDashboard(context.Background(), &query)
+		err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
@@ -180,7 +192,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err = sqlStore.GetDashboard(context.Background(), &query)
+		err = dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, query.Result.FolderId, int64(0))
 		require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
@@ -423,15 +435,15 @@ func TestDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
 		setup()
 		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
-		err := sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
-			DashboardId: starredDash.Id,
-			UserId:      10,
+		err := starService.Add(context.Background(), &star.StarDashboardCommand{
+			DashboardID: starredDash.Id,
+			UserID:      10,
 		})
 		require.NoError(t, err)
 
-		err = sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
-			DashboardId: savedDash.Id,
-			UserId:      1,
+		err = starService.Add(context.Background(), &star.StarDashboardCommand{
+			DashboardID: savedDash.Id,
+			UserID:      1,
 		})
 		require.NoError(t, err)
 

@@ -24,7 +24,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-config":                    true,
 		"live-pipeline":                  true,
 		"live-service-web-worker":        true,
-		"accesscontrol-builtins":         true,
 		"prometheus_azure_auth":          true,
 		"disable_http_request_histogram": true,
 	}
