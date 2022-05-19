@@ -4,7 +4,6 @@ import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
 
 import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
-import { DataSourceSrvMock } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 
 const dsMock = new DatasourceSrv();
@@ -19,7 +18,7 @@ dsMock.init(
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => DataSourceSrvMock,
+  getDataSourceSrv: () => dsMock,
 }));
 
 const validRichHistory: RichHistoryQuery = {

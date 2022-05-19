@@ -1,6 +1,5 @@
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
-import { DataSourceRef } from '../../../../packages/grafana-data';
 import { RichHistoryQuery } from '../../types';
 
 /**
@@ -53,19 +52,3 @@ export default interface RichHistoryStorage {
   getSettings(): Promise<RichHistorySettings>;
   updateSettings(settings: RichHistorySettings): Promise<void>;
 }
-
-/**
- * Simple data source srv mock used for testing remote and local storage conversions between
- * uid and data source name.
- */
-export const DataSourceSrvMock = {
-  getInstanceSettings: (ref: DataSourceRef | string) => {
-    if (ref === 'invalid' || (typeof ref !== 'string' && ref.uid === 'invalid')) {
-      throw Error('Data source not found');
-    } else {
-      return typeof ref === 'string'
-        ? { uid: ref.slice('name-of-'.length), name: ref }
-        : { uid: ref.uid, name: `name-of-${ref.uid}` };
-    }
-  },
-};

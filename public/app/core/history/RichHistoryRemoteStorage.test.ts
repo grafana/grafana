@@ -1,11 +1,21 @@
-import { RichHistoryQuery } from '../../types';
 import { of } from 'rxjs';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
+import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
-import { DataSourceSrvMock } from './RichHistoryStorage';
+
+const dsMock = new DatasourceSrv();
+dsMock.init(
+  {
+    // @ts-ignore
+    'name-of-ds1': { uid: 'ds1', name: 'name-of-ds1' },
+    // @ts-ignore
+    'name-of-ds2': { uid: 'ds2', name: 'name-of-ds2' },
+  },
+  ''
+);
 
 const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -13,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
-  getDataSourceSrv: () => DataSourceSrvMock,
+  getDataSourceSrv: () => dsMock,
 }));
 
 describe('RichHistoryRemoteStorage', () => {
@@ -21,7 +31,6 @@ describe('RichHistoryRemoteStorage', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
-
     storage = new RichHistoryRemoteStorage();
   });
 
@@ -29,8 +38,8 @@ describe('RichHistoryRemoteStorage', () => {
     const expectedViewModel: RichHistoryQuery<any> = {
       id: '123',
       createdAt: 200 * 1000,
-      datasourceUid: 'uid',
-      datasourceName: 'name-of-uid',
+      datasourceUid: 'ds1',
+      datasourceName: 'name-of-ds1',
       starred: true,
       comment: 'comment',
       queries: [{ foo: 'bar ' }],
@@ -45,8 +54,6 @@ describe('RichHistoryRemoteStorage', () => {
         queries: expectedViewModel.queries,
       },
     ];
-    const search = 'foo';
-    const datasourceFilters = ['name-of-uid1', 'name-of-uid2'];
     fetchMock.mockReturnValue(
       of({
         data: {

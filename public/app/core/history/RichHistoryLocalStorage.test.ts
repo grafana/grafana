@@ -8,7 +8,7 @@ import { backendSrv } from '../services/backend_srv';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
-import { DataSourceSrvMock, RichHistoryStorageWarning } from './RichHistoryStorage';
+import { RichHistoryStorageWarning } from './RichHistoryStorage';
 
 const key = 'grafana.explore.richHistory';
 
@@ -26,7 +26,7 @@ dsMock.init(
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => DataSourceSrvMock,
+  getDataSourceSrv: () => dsMock,
 }));
 
 interface MockQuery extends DataQuery {

@@ -1,6 +1,6 @@
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { lastValueFrom } from 'rxjs';
 
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DataQuery } from '../../../../packages/grafana-data';
@@ -105,7 +105,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
   params = params + `&to=${relativeFrom}`;
   params = params + `&from=${relativeTo}`;
-  params = params + `&limit=100`;
+  params = params + `&limit=10`;
   params = params + `&page=${filters.page || 1}`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
