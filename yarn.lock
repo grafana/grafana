@@ -21261,7 +21261,7 @@ __metadata:
     monaco-promql: ^1.7.2
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.28.0
+    moveable: 0.29.8
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
@@ -27053,14 +27053,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.28.0":
-  version: 0.28.0
-  resolution: "moveable@npm:0.28.0"
+"moveable@npm:0.29.8":
+  version: 0.29.8
+  resolution: "moveable@npm:0.29.8"
   dependencies:
     "@scena/event-emitter": ^1.0.3
-    react-compat-moveable: ~0.16.0
+    react-compat-moveable: ~0.17.8
     react-simple-compat: ^1.2.1
-  checksum: 1fee85a8c72ad80e55f7c009986fe579ef409afd909a2774f32470a2784dc83e97bd6b8694c5e3d2f73129a84099b009f08ff2565530dbf93009ec9d858ec093
+  checksum: debf5d3bcd53de48d654a67d90ee35adc13691ea17d72abbfcbbcfba228e22fbea06635c10553f3f6c5fcc5e6f9c7e176ebbdd03998223820ddc5776b4575a34
   languageName: node
   linkType: hard
 
@@ -31280,9 +31280,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.16.0":
-  version: 0.16.0
-  resolution: "react-compat-moveable@npm:0.16.0"
+"react-compat-moveable@npm:~0.17.8":
+  version: 0.17.8
+  resolution: "react-compat-moveable@npm:0.17.8"
   dependencies:
     "@daybrush/utils": ^1.6.0
     "@egjs/agent": ^2.2.1
@@ -31295,8 +31295,8 @@ __metadata:
     overlap-area: ^1.0.0
     react-compat-css-styled: ^1.0.8
     react-css-styled: ^1.0.3
-    react-moveable: ~0.31.0
-  checksum: b20bd91698d51a0f7e05534d09c246c4995e26c8e598c169ecc2f81602e3df5124d0327e5eeceef6cb1dc5df97efd81f8e6ee467a022ff4b83c2ae8704295a4a
+    react-moveable: ~0.32.7
+  checksum: fa370828c85c585614ef7fb4ef6d5567904b916972f428e53ec342a8b905124084c82442fa44f4c50d4f6ab413fbc85de1fce88598e59c59671c638b495f1c77
   languageName: node
   linkType: hard
 
@@ -31690,7 +31690,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.32.7":
+"react-moveable@npm:0.32.7, react-moveable@npm:~0.32.7":
   version: 0.32.7
   resolution: "react-moveable@npm:0.32.7"
   dependencies:
@@ -31706,24 +31706,6 @@ __metadata:
     overlap-area: ^1.0.0
     react-css-styled: ^1.0.3
   checksum: d1737af5cc9ffe243047f2100910ae7aa610808ea74ea8928b7568ae8638b39986a5735288eec9fab29d5d899163b5021dd0f674a197522d2639df9eb6e48da2
-  languageName: node
-  linkType: hard
-
-"react-moveable@npm:~0.31.0":
-  version: 0.31.1
-  resolution: "react-moveable@npm:0.31.1"
-  dependencies:
-    "@daybrush/utils": ^1.6.0
-    "@egjs/agent": ^2.2.1
-    "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.1.1
-    "@scena/matrix": ^1.1.1
-    css-to-mat: ^1.0.3
-    framework-utils: ^1.1.0
-    gesto: ^1.7.0
-    overlap-area: ^1.0.0
-    react-css-styled: ^1.0.3
-  checksum: 8a786de00783cb5315aecaa81b21b84719edfb28d8982ffa0d1a96195e269311286729b93dcf264e83af6703b30258ad1a32929703caafa5698a90f9824c8879
   languageName: node
   linkType: hard
 
