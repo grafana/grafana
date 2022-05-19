@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -172,6 +174,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
+		logger:   log.New("macaron.context"),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	c.Map(c)
