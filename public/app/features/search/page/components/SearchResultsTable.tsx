@@ -159,13 +159,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       border-right: none;
+      padding: ${theme.spacing(1)};
       &:hover {
         box-shadow: none;
       }
     `,
     headerCell: css`
-      padding-top: 2px;
-      padding-left: 10px;
+      padding: ${theme.spacing(1)};
     `,
     headerRow: css`
       background-color: ${theme.colors.background.secondary};
@@ -205,10 +205,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
     `,
     locationItem: css`
       color: ${theme.colors.text.secondary};
       margin-right: 12px;
+    `,
+    locationCellStyle: css`
+      padding-top: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
     `,
     checkboxHeader: css`
       // display: flex;
@@ -226,6 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     tagList: css`
+      padding-top: ${theme.spacing(0.5)};
       justify-content: flex-start;
       flex-wrap: nowrap;
     `,

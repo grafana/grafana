@@ -117,15 +117,7 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div
-            {...p.cellProps}
-            className={cx(
-              p.cellStyle,
-              css`
-                padding-right: 10px;
-              `
-            )}
-          >
+          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
