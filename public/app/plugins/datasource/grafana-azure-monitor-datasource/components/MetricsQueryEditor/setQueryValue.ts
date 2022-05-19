@@ -1,7 +1,3 @@
-import { replace } from 'lodash';
-
-import SupportedNamespaces from '../../azure_monitor/supported_namespaces';
-import UrlBuilder from '../../azure_monitor/url_builder';
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
 export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
