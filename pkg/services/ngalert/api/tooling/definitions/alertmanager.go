@@ -561,8 +561,9 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 
 // swagger:model
 type GettableUserConfig struct {
-	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
