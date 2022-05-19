@@ -106,7 +106,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		timeGrain := azJSONModel.TimeGrain
 		timeGrains := azJSONModel.AllowedTimeGrainsMs
-		fmt.Println("TIME GRAINS ", timeGrains)
+
 		if timeGrain == "auto" {
 			timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {

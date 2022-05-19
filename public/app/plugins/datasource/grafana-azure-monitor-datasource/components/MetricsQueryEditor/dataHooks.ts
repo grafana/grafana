@@ -1,5 +1,7 @@
-import { rangeUtil } from '@grafana/data';
 import { useEffect, useState } from 'react';
+
+import { rangeUtil } from '@grafana/data';
+
 import Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
