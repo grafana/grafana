@@ -56,6 +56,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
       setLogGroups([]);
       return;
     }
+
     setLoadingLogGroups(true);
     try {
       const groups = await datasource
@@ -115,7 +116,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         <InlineField
           label="Default Log Groups"
           labelWidth={28}
-          tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+          tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
         >
           <MultiSelect
             inputId="default-log-groups"
@@ -172,6 +173,7 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
 
 function useDatasource(datasourceName: string) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
+  // If saveOptions is called, the datasource needs to be reloaded
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
