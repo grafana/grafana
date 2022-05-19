@@ -23,6 +23,10 @@ interface PathbuilderOpts {
   };
 }
 
+interface PointsBuilderOpts {
+  each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
+}
+
 export interface HeatmapHoverEvent {
   index: number;
   pageX: number;
@@ -264,6 +268,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   let pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
 
+  // heatmap layer
   builder.addSeries({
     facets: [
       {
@@ -299,6 +304,35 @@ export function prepConfig(opts: PrepConfigOpts) {
           },
           index: palette,
         },
+      },
+    }) as any,
+    theme,
+    scaleKey: '', // facets' scales used (above)
+  });
+
+  // exemplars layer
+  builder.addSeries({
+    facets: [
+      {
+        scale: 'x',
+        auto: true,
+        sorted: 1,
+      },
+      {
+        scale: 'y',
+        auto: true,
+      },
+    ],
+    pathBuilder: heatmapPathsPoints({
+      each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
+        qt.add({
+          x: x - u.bbox.left,
+          y: y - u.bbox.top,
+          w: xSize,
+          h: ySize,
+          sidx: seriesIdx,
+          didx: dataIdx,
+        });
       },
     }) as any,
     theme,
@@ -453,6 +487,65 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
+export function heatmapPathsPoints(opts: PointsBuilderOpts) {
+  return (u: uPlot, seriesIdx: number) => {
+    uPlot.orient(
+      u,
+      seriesIdx,
+      (
+        series,
+        dataX,
+        dataY,
+        scaleX,
+        scaleY,
+        valToPosX,
+        valToPosY,
+        xOff,
+        yOff,
+        xDim,
+        yDim,
+        moveTo,
+        lineTo,
+        rect,
+        arc
+      ) => {
+        //console.time('heatmapPathsSparse');
+
+        [dataX, dataY] = dataY as unknown as number[][];
+
+        let points = new Path2D();
+        let fillPaths = [points];
+        let fillPalette = ['rgba(255,255,255, 0.4)'];
+
+        for (let i = 0; i < dataX.length; i++) {
+          let yVal = dataY[i]!;
+          yVal -= 0.5; // center vertically in bucket (when tiles are le)
+          // y-randomize vertically to distribute exemplars in same bucket at same time
+          let randSign = Math.round(Math.random()) * 2 - 1;
+          yVal += randSign * 0.5 * Math.random();
+
+          let x = valToPosX(dataX[i], scaleX, xDim, xOff);
+          let y = valToPosY(yVal, scaleY, yDim, yOff);
+          let w = 8;
+          let h = 8;
+
+          rect(points, x - w / 2, y - h / 2, w, h);
+
+          opts.each(u, seriesIdx, i, x - w / 2, y - h / 2, w, h);
+        }
+
+        u.ctx.save();
+        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+        u.ctx.clip();
+        fillPaths.forEach((p, i) => {
+          u.ctx.fillStyle = fillPalette[i];
+          u.ctx.fill(p);
+        });
+        u.ctx.restore();
+      }
+    );
+  };
+}
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
 export function heatmapPathsSparse(opts: PathbuilderOpts) {

@@ -232,10 +232,10 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     display: (v) => formattedValueToString(disp(v)),
   };
 
-  if (exemplars) {
-    data.exemplarsMappings = getExemplarsMapping(data, exemplars);
-    console.log('EXEMPLARS', data.exemplarsMappings, data.exemplars);
-  }
+  // if (exemplars) {
+  //   data.exemplarsMappings = getExemplarsMapping(data, exemplars);
+  //   console.log('EXEMPLARS', data.exemplarsMappings, data.exemplars);
+  // }
 
   return data;
 };
