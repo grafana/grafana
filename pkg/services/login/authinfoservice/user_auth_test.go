@@ -277,7 +277,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, "test2", getAuthQuery.Result.AuthModule)
 
 			// Now reuse first auth module and make sure it's updated to the most recent
-			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, 0) }
+			database.GetTime = func() time.Time { return fixedTime }
 			user, err = srv.LookupAndUpdate(context.Background(), queryOne)
 
 			require.Nil(t, err)
