@@ -110,8 +110,9 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
-		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
+		// Check that the user is allowed to add a dashboard to the folder
+		guardian := guardian.New(ctx, dash.Id, dto.OrgId, dto.User)
+		if canSave, err := guardian.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canSave {
 			if err != nil {
 				return nil, err
 			}
@@ -447,7 +448,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderId > 0
-	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !accesscontrol.IsDisabled(dr.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
