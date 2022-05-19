@@ -4460,7 +4460,7 @@ __metadata:
     typescript: 4.6.4
     uuid: 8.3.2
     webpack: 5.72.0
-    yaml: ^1.8.3
+    yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
   languageName: unknown
@@ -38740,10 +38740,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2, yaml@npm:^1.8.3":
+"yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2":
   version: 1.10.2
   resolution: "yaml@npm:1.10.2"
   checksum: ce4ada136e8a78a0b08dc10b4b900936912d15de59905b2bf415b4d33c63df1d555d23acb2a41b23cf9fb5da41c256441afca3d6509de7247daa062fd2c5ea5f
+  languageName: node
+  linkType: hard
+
+"yaml@npm:^2.0.0":
+  version: 2.1.0
+  resolution: "yaml@npm:2.1.0"
+  checksum: 59323a8b51b10d9ad0eab951e7a1f315f1076c123b08ffe60441add1df4fa3433b1d5783b21c50a65536e9d853b23fa567921dbd4bc0d711be2dbf14a06be03b
   languageName: node
   linkType: hard
 
