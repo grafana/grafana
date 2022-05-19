@@ -54,7 +54,7 @@ $gray-7: #fbfbfb;
 $white: #ffffff;
 
 $layer0: #FFFFFF;
-$layer1: rgba(215, 229, 255, 0.4);
+$layer1: #F0F5FF;
 $layer2: #F4F5F5;
 
 $divider: rgba(36, 41, 46, 0.12);
@@ -124,7 +124,7 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: rgba(215, 229, 255, 0.4);
+$panel-bg: #F0F5FF;
 $panel-border: 1px solid rgba(36, 41, 46, 0.12);
 $panel-header-hover-bg: rgba(36, 41, 46, 0.12);
 $panel-box-shadow: none;
@@ -141,7 +141,7 @@ $divider-border-color: $gray-2;
 $tight-form-func-bg: #F4F5F5;
 $tight-form-func-highlight-bg: #eff0f0;
 
-$modal-backdrop-bg: rgba(215, 229, 255, 0.4);
+$modal-backdrop-bg: #F0F5FF;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
@@ -166,8 +166,8 @@ $scrollbarBorder: $gray-7;
 // -------------------------
 $table-bg-accent: #F4F5F5;
 $table-border: rgba(36, 41, 46, 0.30);
-$table-bg-odd: rgba(210, 224, 249, 0.4);
-$table-bg-hover: rgba(204, 217, 242, 0.4);
+$table-bg-odd: rgb(235, 240, 249);
+$table-bg-hover: rgb(228, 232, 242);
 
 // Buttons
 // -------------------------
@@ -203,7 +203,7 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: rgba(215, 229, 255, 0.4);
+$input-bg: #F0F5FF;
 $input-bg-disabled: rgba(36, 41, 46, 0.04);
 
 $input-color: rgba(36, 41, 46, 1);
@@ -225,7 +225,7 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: rgba(215, 229, 255, 0.4);
+$dropdownBackground: #F0F5FF;
 $dropdownBorder: rgba(36, 41, 46, 0.12);
 $dropdownDividerTop: rgba(36, 41, 46, 0.12);
 $dropdownDividerBottom: rgba(36, 41, 46, 0.12);
@@ -259,7 +259,7 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: rgba(215, 229, 255, 0.4);
+$menu-dropdown-bg: #F0F5FF;
 $menu-dropdown-hover-bg: rgba(36, 41, 46, 0.12);
 $menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
@@ -285,7 +285,7 @@ $tooltipArrowColor: #555;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
 
-$popover-bg: rgba(215, 229, 255, 0.4);
+$popover-bg: #F0F5FF;
 $popover-color: rgba(36, 41, 46, 1);
 $popover-border-color: rgba(36, 41, 46, 0.12);
 $popover-header-bg: #F4F5F5;
@@ -301,7 +301,7 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: rgba(215, 229, 255, 0.4);
+$popover-code-bg: #F0F5FF;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images

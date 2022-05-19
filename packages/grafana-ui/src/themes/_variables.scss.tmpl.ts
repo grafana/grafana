@@ -198,9 +198,6 @@ $panel-header-z-index: 10;
 // tabs
 $tabs-padding: 10px 15px 9px;
 
-// fusebit
-$fusebit-font: 'Courier Prime', monospace;
-
 $external-services: (
   github: (
     bgColor: #464646,
