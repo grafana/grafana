@@ -554,24 +554,19 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 }
 
 func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
-	type uidRow struct {
-		UID string
-	}
-
 	return func(folderId int64) (string, error) {
 		uid := ""
 		err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			rows := make([]*uidRow, 0)
 			sess.Table("dashboard").
 				Where("id = ?", folderId).
 				Cols("uid")
 
-			err := sess.Find(&rows)
+			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderId)
 			if err != nil {
 				return err
 			}
-			if len(rows) > 0 {
-				uid = rows[0].UID
+			if len(res) > 0 {
+				uid = string(res[0]["uid"])
 			}
 			return nil
 		})
