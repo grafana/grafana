@@ -25,7 +25,7 @@ var (
 			Name:      "encryption_cache_reads_total",
 			Help:      "A counter for encryption cache reads",
 		},
-		[]string{"hit"},
+		[]string{"hit", "method"},
 	)
 )
 

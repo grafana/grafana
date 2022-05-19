@@ -292,7 +292,8 @@ func TestSecretsService_Run(t *testing.T) {
 		require.NoError(t, err)
 
 		// Data encryption key cache should contain one element
-		require.Len(t, svc.dataKeyCache.entries, 1)
+		require.Len(t, svc.dataKeyCache.byId, 1)
+		require.Len(t, svc.dataKeyCache.byName, 1)
 
 		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
@@ -306,7 +307,8 @@ func TestSecretsService_Run(t *testing.T) {
 		// Then, once the ticker has been triggered,
 		// the cleanup process should have happened,
 		// therefore the cache should be empty.
-		require.Len(t, svc.dataKeyCache.entries, 0)
+		require.Len(t, svc.dataKeyCache.byId, 0)
+		require.Len(t, svc.dataKeyCache.byName, 0)
 	})
 }
 
@@ -340,11 +342,13 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 		// Decrypt to ensure data key is cached
 		_, err := svc.Decrypt(ctx, ciphertext)
 		require.NoError(t, err)
-		require.NotEmpty(t, svc.dataKeyCache.entries)
+		require.NotEmpty(t, svc.dataKeyCache.byId)
+		require.NotEmpty(t, svc.dataKeyCache.byName)
 
 		err = svc.ReEncryptDataKeys(ctx)
 		require.NoError(t, err)
 
-		assert.Empty(t, svc.dataKeyCache.entries)
+		assert.Empty(t, svc.dataKeyCache.byId)
+		assert.Empty(t, svc.dataKeyCache.byName)
 	})
 }
