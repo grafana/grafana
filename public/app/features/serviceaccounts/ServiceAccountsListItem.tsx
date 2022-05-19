@@ -57,7 +57,7 @@ const ServiceAccountListItem = memo(
         </td>
         <td className="link-td max-width-10">
           <a
-            className="ellipsis"
+            className={styles.accountId}
             href={editUrl}
             title={serviceAccount.login}
             aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
@@ -141,6 +141,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-left: ${theme.spacing(0.5)};
       }
     `,
+    accountId: cx(
+      'ellipsis',
+      css`
+        color: ${theme.colors.text.secondary};
+      `
+    ),
     deleteButton: css`
       color: ${theme.colors.text.secondary};
     `,
