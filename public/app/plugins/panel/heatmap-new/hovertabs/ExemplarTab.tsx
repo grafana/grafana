@@ -50,6 +50,8 @@ export const ExemplarTab = ({
       };
     }
 
+    // Todo: Might be an easier way to do this, but for now, create a dataframe with fields for the summary, and use the
+    // DataHoverView control.
     const summaryData: DataFrame = {
       name: 'Exemplar',
       fields: [
