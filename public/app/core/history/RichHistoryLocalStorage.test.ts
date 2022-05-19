@@ -86,7 +86,7 @@ describe('RichHistoryLocalStorage', () => {
     it('should save query history to localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       expect(store.exists(key)).toBeTruthy();
-      expect(await storage.getRichHistory(mockFilters)).toMatchObject([mockItem]);
+      expect((await storage.getRichHistory(mockFilters)).richHistory).toMatchObject([mockItem]);
     });
 
     it('should not save duplicated query to localStorage', async () => {
@@ -95,25 +95,25 @@ describe('RichHistoryLocalStorage', () => {
       await expect(async () => {
         await storage.addToRichHistory(mockItem2);
       }).rejects.toThrow('Entry already exists');
-      expect(await storage.getRichHistory(mockFilters)).toMatchObject([mockItem2, mockItem]);
+      expect((await storage.getRichHistory(mockFilters)).richHistory).toMatchObject([mockItem2, mockItem]);
     });
 
     it('should update starred in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       await storage.updateStarred(mockItem.id, false);
-      expect((await storage.getRichHistory(mockFilters))[0].starred).toEqual(false);
+      expect((await storage.getRichHistory(mockFilters)).richHistory[0].starred).toEqual(false);
     });
 
     it('should update comment in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       await storage.updateComment(mockItem.id, 'new comment');
-      expect((await storage.getRichHistory(mockFilters))[0].comment).toEqual('new comment');
+      expect((await storage.getRichHistory(mockFilters)).richHistory[0].comment).toEqual('new comment');
     });
 
     it('should delete query in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       await storage.deleteRichHistory(mockItem.id);
-      expect(await storage.getRichHistory(mockFilters)).toEqual([]);
+      expect((await storage.getRichHistory(mockFilters)).richHistory).toEqual([]);
       expect(store.getObject(key)).toEqual([]);
     });
 
@@ -172,7 +172,7 @@ describe('RichHistoryLocalStorage', () => {
         queries: [{ refId: 'ref' }],
       };
       await storage.addToRichHistory(historyNew);
-      const richHistory = await storage.getRichHistory({
+      const { richHistory } = await storage.getRichHistory({
         search: '',
         sortOrder: SortOrder.Descending,
         datasourceFilters: [],
@@ -264,8 +264,9 @@ describe('RichHistoryLocalStorage', () => {
           ],
         };
 
-        const result = await storage.getRichHistory(mockFilters);
-        expect(result).toStrictEqual([expectedHistoryItem]);
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        expect(richHistory).toStrictEqual([expectedHistoryItem]);
+        expect(total).toBe(1);
       });
 
       it('should load when queries are json-encoded strings', async () => {
@@ -299,8 +300,9 @@ describe('RichHistoryLocalStorage', () => {
           ],
         };
 
-        const result = await storage.getRichHistory(mockFilters);
-        expect(result).toStrictEqual([expectedHistoryItem]);
+        const { richHistory, total } = await storage.getRichHistory(mockFilters);
+        expect(richHistory).toStrictEqual([expectedHistoryItem]);
+        expect(total).toBe(1);
       });
     });
   });
