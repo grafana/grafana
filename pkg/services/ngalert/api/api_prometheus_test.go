@@ -255,7 +255,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
 	require.NoError(t, err)
-	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}, IsSignedIn: true}
+	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
 
 	t.Run("with no rules", func(t *testing.T) {
 		_, _, _, api := setupAPI(t)
@@ -325,7 +325,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}, IsSignedIn: true}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
