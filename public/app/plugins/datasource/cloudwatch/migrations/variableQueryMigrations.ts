@@ -13,10 +13,18 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
 
   // rawQuery is OldVariableQuery
   if (typeof rawQuery !== 'string') {
-    const newQuery: VariableQuery = omit(rawQuery, ['ec2Filters', 'tags']);
+    const newQuery: VariableQuery = omit(rawQuery, ['dimensionFilters', 'ec2Filters', 'tags']);
+    newQuery.dimensionFilters = {};
     newQuery.ec2Filters = {};
     newQuery.tags = {};
 
+    if (rawQuery.dimensionFilters !== '') {
+      try {
+        newQuery.dimensionFilters = JSON.parse(rawQuery.dimensionFilters);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.dimensionFilters}`);
+      }
+    }
     if (rawQuery.ec2Filters !== '') {
       try {
         newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
