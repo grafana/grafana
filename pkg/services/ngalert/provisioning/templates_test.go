@@ -234,6 +234,42 @@ func TestTemplateService(t *testing.T) {
 
 			require.Equal(t, tmpl.Template, result.Template)
 		})
+
+		t.Run("rejects syntactically invalid template", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			tmpl := definitions.MessageTemplate{
+				Name:     "name",
+				Template: "{{ .MyField }",
+			}
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: defaultConfig,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
+
+			require.ErrorIs(t, err, ErrValidation)
+		})
+
+		t.Run("does not reject template with unknown field", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			tmpl := definitions.MessageTemplate{
+				Name:     "name",
+				Template: "{{ .NotAField }}",
+			}
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: defaultConfig,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
+
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("deleting templates", func(t *testing.T) {

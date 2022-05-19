@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"fmt"
+	"html/template"
 	"regexp"
 	"strings"
 
@@ -72,6 +73,11 @@ func (t *MessageTemplate) Validate() error {
 	}
 	if t.Template == "" {
 		return fmt.Errorf("template must have content")
+	}
+
+	_, err := template.New("").Parse(t.Template)
+	if err != nil {
+		return fmt.Errorf("invalid template: %w", err)
 	}
 
 	content := strings.TrimSpace(t.Template)
