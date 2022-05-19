@@ -251,7 +251,7 @@ var wireBasicSet = wire.NewSet(
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	dashboard.ProvideCoremodel,
-	cmreg.ProvideRegistry,
+	cmreg.CoremodelSet,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
 	ossaccesscontrol.ProvideTeamPermissions,
