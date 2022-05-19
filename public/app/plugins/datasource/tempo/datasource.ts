@@ -440,7 +440,7 @@ function firstServiceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceU
 }
 
 // we need the response from the first query to get the rate span_name(s),
-// -> which determine the error rate span_name(s) we need to query
+// -> which determine the errorRate/duration span_name(s) we need to query
 function secondServiceMapQuery(
   request: DataQueryRequest<TempoQuery>,
   firstResponses: DataQueryResponse,
@@ -667,7 +667,7 @@ function getApmTable(
         return 'Tempo';
       }),
       config: {
-        links: [makeTempoLink('Tempo', tempoDatasourceUid, '')],
+        links: [makeTempoLink('Tempo', `\${__data.fields[0]}`, tempoDatasourceUid)],
       },
     });
   }
@@ -728,15 +728,14 @@ function makeApmRequest(apmMetrics: any[], request: DataQueryRequest<TempoQuery>
   return metrics;
 }
 
-function makeTempoLink(title: string, tempoDatasourceUid: string, query: string) {
+function makeTempoLink(title: string, spanName: string, tempoDatasourceUid: string) {
   return {
     url: '',
     title,
     internal: {
       query: {
         queryType: 'nativeSearch',
-        serviceName: 'app',
-        spanName: 'HTTP Client',
+        spanName: spanName,
       } as TempoQuery,
       datasourceUid: tempoDatasourceUid,
       datasourceName: 'Tempo',
