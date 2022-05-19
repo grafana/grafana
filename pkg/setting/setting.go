@@ -119,6 +119,8 @@ var (
 	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
+	CaseInsensitiveID bool // Login and Email will be considered case insensitive
+
 	// HTTP auth
 	SigV4AuthEnabled bool
 
@@ -1377,6 +1379,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+
+	CaseInsensitiveID = users.Key("case_insensitive_id").MustBool(false)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
