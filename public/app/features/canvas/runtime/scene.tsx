@@ -7,7 +7,7 @@ import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
-import { stylesFactory } from '@grafana/ui';
+import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
@@ -401,7 +401,11 @@ export class Scene {
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
-        {canShowContextMenu && <CanvasContextMenu scene={this} />}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} />
+          </Portal>
+        )}
       </div>
     );
   }
