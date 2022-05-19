@@ -323,7 +323,7 @@ var tmplAddenda = template.Must(template.New("addenda").Parse(`
 var cueFS embed.FS
 
 // codegen ensures that this is always the latest Thema schema version
-const currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
+var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
 
 // Lineage returns the Thema lineage representing a Grafana {{ .Name }}.
 //

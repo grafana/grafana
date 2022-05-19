@@ -703,7 +703,7 @@ type ModelVariableType string
 var cueFS embed.FS
 
 // codegen ensures that this is always the latest Thema schema version
-const currentVersion = thema.SV(0, 0)
+var currentVersion = thema.SV(0, 0)
 
 // Lineage returns the Thema lineage representing a Grafana dashboard.
 //
