@@ -58,6 +58,34 @@ func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *models.Ge
 	return r0
 }
 
+// GetDashboardUIDById provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardRefByIdQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetDashboards provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardsQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDashboardsByPluginID provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 	ret := _m.Called(ctx, query)
@@ -210,13 +238,13 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dash
 	return r0, r1
 }
 
-// GetPublicDashboardConfig provides a mock function with given fields: dashboardUid
+// GetPublicDashboardConfig provides a mock function with given fields: orgId, dashboardUid
 func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	ret := _m.Called(dashboardUid)
+	ret := _m.Called(orgId, dashboardUid)
 
 	var r0 *models.PublicDashboardConfig
-	if rf, ok := ret.Get(0).(func(string) *models.PublicDashboardConfig); ok {
-		r0 = rf(dashboardUid)
+	if rf, ok := ret.Get(0).(func(int64, string) *models.PublicDashboardConfig); ok {
+		r0 = rf(orgId, dashboardUid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboardConfig)
@@ -224,8 +252,8 @@ func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(dashboardUid)
+	if rf, ok := ret.Get(1).(func(int64, string) error); ok {
+		r1 = rf(orgId, dashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}
