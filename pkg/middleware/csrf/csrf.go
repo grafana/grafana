@@ -2,7 +2,6 @@ package csrf
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 
