@@ -28,8 +28,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { Placement } from '../types';
 
-import { constraintViewable } from './ConstraintViewable';
-import { dimensionViewable } from './DimensionViewable';
+import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
