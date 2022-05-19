@@ -1,7 +1,8 @@
 +++
-title = "Upgrade Grafana"
+aliases = ["/docs/grafana/latest/installation/upgrading/"]
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
+title = "Upgrade Grafana"
 weight = 700
 +++
 
@@ -338,7 +339,7 @@ When WebSocket connection is established, Grafana checks the request Origin head
 
 To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
 
-Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) documentation for more information.
+Refer to [Grafana Live configuration]({{< relref "../live/set-up-grafana-live.md" >}}) documentation for more information.
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 

@@ -30,14 +30,20 @@ interface Props {
   hideLayout?: boolean;
 }
 
-function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+  const layout = q.layout ?? SearchLayout.Folders;
+
   // Folders is not valid when a query exists
-  if (q.layout === SearchLayout.Folders) {
+  if (layout === SearchLayout.Folders) {
     if (q.query || q.sort) {
       return SearchLayout.List;
     }
   }
-  return q.layout;
+
+  if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
+    return SearchLayout.List;
+  }
+  return layout;
 }
 
 export const ActionRow: FC<Props> = ({
@@ -52,13 +58,22 @@ export const ActionRow: FC<Props> = ({
   hideLayout,
 }) => {
   const styles = useStyles2(getStyles);
+  const layout = getValidQueryLayout(query);
+
+  // Disabled folder layout option when query is present
+  const disabledOptions = query.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
-            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={getValidQueryLayout(query)} />
+            <RadioButtonGroup
+              options={layoutOptions}
+              disabledOptions={disabledOptions}
+              onChange={onLayoutChange}
+              value={layout}
+            />
           )}
           <SortPicker onChange={onSortChange} value={query.sort?.value} />
         </HorizontalGroup>
@@ -82,7 +97,7 @@ export const ActionRow: FC<Props> = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     actionRow: css`
       display: none;

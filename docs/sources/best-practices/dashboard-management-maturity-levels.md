@@ -1,6 +1,7 @@
 +++
-title = "Dashboard management maturity model"
+aliases = ["/docs/grafana/latest/best-practices/dashboard-management-maturity-levels/"]
 description = "Explanation of dashboard management maturity model"
+title = "Dashboard management maturity model"
 weight = 400
 +++
 

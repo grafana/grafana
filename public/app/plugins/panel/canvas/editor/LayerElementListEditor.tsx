@@ -215,8 +215,8 @@ export class LayerElementListEditor extends PureComponent<Props> {
       element.onChange({ ...element.options, name });
     };
 
-    const isFrame = (element: ElementState) => {
-      return element instanceof FrameState;
+    const showActions = (element: ElementState) => {
+      return !(element instanceof FrameState);
     };
 
     const verifyLayerNameUniqueness = (nameToVerify: string) => {
@@ -252,7 +252,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
           getLayerInfo={getLayerInfo}
           onNameChange={onNameChange}
           verifyLayerNameUniqueness={verifyLayerNameUniqueness}
-          isFrame={isFrame}
+          showActions={showActions}
           layers={layer.elements}
           selection={selection}
         />

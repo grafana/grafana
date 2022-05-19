@@ -1,6 +1,8 @@
 import React from 'react';
+import { of } from 'rxjs';
 
 import { serializeStateToUrlParam } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { ExploreId } from '../../../types';
@@ -24,12 +26,14 @@ import {
   switchToQueryHistoryTab,
 } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, tearDown, waitForExplore } from './helper/setup';
+import { setupExplore, setupLocalStorageRichHistory, tearDown, waitForExplore } from './helper/setup';
 
-const fetch = jest.fn();
+const fetchMock = jest.fn();
+const postMock = jest.fn();
+const getMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch }),
+  getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -48,6 +52,10 @@ describe('Explore: Query History', () => {
   silenceConsoleOutput();
 
   afterEach(() => {
+    config.queryHistoryEnabled = false;
+    fetchMock.mockClear();
+    postMock.mockClear();
+    getMock.mockClear();
     tearDown();
   });
 
@@ -152,5 +160,46 @@ describe('Explore: Query History', () => {
     // assert new settings
     assertQueryHistoryTabIsSelected('Starred');
     assertDataSourceFilterVisibility(false);
+  });
+
+  describe('local storage migration', () => {
+    it('does not migrate if query history is not enabled', async () => {
+      config.queryHistoryEnabled = false;
+      const { datasources } = setupExplore();
+      setupLocalStorageRichHistory('loki');
+      (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
+      getMock.mockReturnValue({ result: { queryHistory: [] } });
+      await waitForExplore();
+
+      await openQueryHistory();
+      expect(postMock).not.toBeCalledWith('/api/query-history/migrate', { queries: [] });
+    });
+
+    it('migrates query history from local storage', async () => {
+      config.queryHistoryEnabled = true;
+      const { datasources } = setupExplore();
+      setupLocalStorageRichHistory('loki');
+      (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
+      fetchMock.mockReturnValue(of({ data: { result: { queryHistory: [] } } }));
+      await waitForExplore();
+
+      await openQueryHistory();
+      expect(fetchMock).toBeCalledWith(
+        expect.objectContaining({
+          url: expect.stringMatching('/api/query-history/migrate'),
+          data: { queries: [expect.objectContaining({ datasourceUid: 'loki' })] },
+        })
+      );
+      fetchMock.mockReset();
+      fetchMock.mockReturnValue(of({ data: { result: { queryHistory: [] } } }));
+
+      await closeQueryHistory();
+      await openQueryHistory();
+      expect(fetchMock).not.toBeCalledWith(
+        expect.objectContaining({
+          url: expect.stringMatching('/api/query-history/migrate'),
+        })
+      );
+    });
   });
 });

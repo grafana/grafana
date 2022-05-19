@@ -62,9 +62,8 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 		}
 		for _, r := range gmdo.MetricDataResults {
 			id := *r.Id
-			label := *r.Label
 
-			response := newQueryRowResponse(id)
+			response := newQueryRowResponse()
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
@@ -75,11 +74,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				}
 			}
 
-			if _, exists := response.Metrics[label]; !exists {
-				response.addMetricDataResult(r)
-			} else {
-				response.appendTimeSeries(r)
-			}
+			response.addMetricDataResult(r)
 
 			for code := range errorCodes {
 				if _, exists := response.ErrorCodes[code]; exists {
@@ -120,8 +115,8 @@ func getLabels(cloudwatchLabel string, query *cloudWatchQuery) data.Labels {
 func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse queryRowResponse,
 	query *cloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
 	frames := data.Frames{}
-	for _, label := range aggregatedResponse.Labels {
-		metric := aggregatedResponse.Metrics[label]
+	for _, metric := range aggregatedResponse.Metrics {
+		label := *metric.Label
 
 		deepLink, err := query.buildDeepLink(startTime, endTime)
 		if err != nil {

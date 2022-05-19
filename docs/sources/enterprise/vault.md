@@ -1,7 +1,8 @@
 +++
-title = "Vault"
+aliases = ["/docs/grafana/latest/enterprise/vault/"]
 description = ""
 keywords = ["grafana", "vault", "configuration"]
+title = "Vault"
 weight = 1200
 +++
 

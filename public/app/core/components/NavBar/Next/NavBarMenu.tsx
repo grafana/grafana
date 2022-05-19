@@ -228,6 +228,7 @@ function NavItem({
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
+                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();

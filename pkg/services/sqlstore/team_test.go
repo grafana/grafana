@@ -13,12 +13,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
 	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
+		testUser := &models.SignedInUser{
+			OrgId: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+					ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+				},
+			},
+		}
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
@@ -47,7 +55,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			setup()
 
 			t.Run("Should be able to create teams and add users", func(t *testing.T) {
-				query := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
+				query := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, query.Page, 1)
@@ -63,7 +71,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
-				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
+				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q1)
 				require.NoError(t, err)
 				require.Equal(t, len(q1.Result), 2)
@@ -75,7 +83,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, q1.Result[1].OrgId, testOrgID)
 				require.Equal(t, q1.Result[1].External, true)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
+				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
 				require.Equal(t, len(q2.Result), 1)
@@ -89,7 +97,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				team1 = query.Result.Teams[0]
 				require.EqualValues(t, team1.MemberCount, 2)
 
-				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: team1.Id}
+				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamById(context.Background(), getTeamQuery)
 				require.NoError(t, err)
 				team1 = getTeamQuery.Result
@@ -104,7 +112,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				setup()
 				userId := userIds[1]
 
-				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
+				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), teamQuery)
 				require.NoError(t, err)
 				require.Equal(t, teamQuery.Page, 1)
@@ -114,7 +122,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userId, testOrgID, team1.Id, true, 0)
 				require.NoError(t, err)
 
-				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
+				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), memberQuery)
 				require.NoError(t, err)
 				require.Equal(t, len(memberQuery.Result), 1)
@@ -130,7 +138,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userId, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
@@ -144,7 +152,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
 				require.Equal(t, qAfterUpdate.Result[0].Permission, models.PERMISSION_ADMIN)
@@ -158,7 +166,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userID, testOrgID, team.Id, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
@@ -173,7 +181,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
+				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
 				require.EqualValues(t, qAfterUpdate.Result[0].Permission, 0)
@@ -193,13 +201,13 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {
-				query := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "group", Page: 1}
+				query := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result.Teams), 2)
 				require.EqualValues(t, query.Result.TotalCount, 2)
 
-				query2 := &models.SearchTeamsQuery{OrgId: testOrgID, Query: ""}
+				query2 := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "", SignedInUser: testUser}
 				err = sqlStore.SearchTeams(context.Background(), query2)
 				require.NoError(t, err)
 				require.Equal(t, len(query2.Result.Teams), 2)
@@ -227,7 +235,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
 				require.NoError(t, err)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
+				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = sqlStore.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
 				require.Equal(t, len(q2.Result), 0)
@@ -315,7 +323,16 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
 				sqlStore = InitTestDB(t)
 				setup()
-				signedInUser := &models.SignedInUser{Login: "loginuser0"}
+				signedInUser := &models.SignedInUser{
+					Login: "loginuser0",
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{
+						testOrgID: {
+							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+							ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+						},
+					},
+				}
 				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
 
 				teamId := team1.Id
@@ -396,7 +413,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+	store := InitTestDB(t, InitTestDBOpt{})
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
@@ -455,7 +472,7 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+	store := InitTestDB(t, InitTestDBOpt{})
 	setup(store)
 
 	type getTeamMembersTestCase struct {

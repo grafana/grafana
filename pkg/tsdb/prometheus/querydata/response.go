@@ -40,6 +40,9 @@ func addMetadataToFrame(q *models.Query, frame *data.Frame) {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.ExecutedQueryString = executedQueryString(q)
+	if len(frame.Fields) < 2 {
+		return
+	}
 	frame.Name = getName(q, frame)
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	if frame.Name != "" {

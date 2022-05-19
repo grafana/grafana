@@ -152,8 +152,8 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
-		// create the namespace we'll save our alerts to
-		_, err := createFolder(t, s, 0, "default")
+		// Create the namespace we'll save our alerts to
+		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)

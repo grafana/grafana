@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
+
+var update = true
 
 func TestMatrixResponses(t *testing.T) {
 	tt := []struct {
@@ -34,7 +37,7 @@ func TestMatrixResponses(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden.txt")
+			goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
 
 			query, err := loadStoredQuery(queryFileName)
 			require.NoError(t, err)
@@ -49,7 +52,20 @@ func TestMatrixResponses(t *testing.T) {
 			dr, found := result.Responses["A"]
 			require.True(t, found)
 
-			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName, &dr, true))
+			actual, err := json.MarshalIndent(&dr, "", "  ")
+			require.NoError(t, err)
+
+			// nolint:gosec
+			// We can ignore the gosec G304 because this is a test with static defined paths
+			expected, err := ioutil.ReadFile(goldenFileName + ".json")
+			if err != nil || update {
+				err = os.WriteFile(goldenFileName+".json", actual, 0600)
+				require.NoError(t, err)
+			}
+
+			require.JSONEq(t, string(expected), string(actual))
+
+			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
 		})
 	}
 }
@@ -83,6 +99,8 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	qm := models.QueryModel{
 		RangeQuery: sq.RangeQuery,
 		Expr:       sq.Expr,
+		Interval:   fmt.Sprintf("%ds", sq.Step),
+		IntervalMS: sq.Step * 1000,
 	}
 
 	data, err := json.Marshal(&qm)

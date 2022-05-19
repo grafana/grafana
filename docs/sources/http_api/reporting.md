@@ -1,8 +1,8 @@
 +++
-title = "Reporting API"
+aliases = ["/docs/grafana/latest/http_api/reporting/"]
 description = "Grafana Enterprise APIs"
 keywords = ["grafana", "enterprise", "api", "reporting"]
-aliases = ["/docs/grafana/latest/http_api/reporting/"]
+title = "Reporting API"
 +++
 
 # Reporting API

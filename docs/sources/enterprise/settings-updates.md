@@ -1,7 +1,8 @@
 +++
-title = "Settings updates at runtime"
+aliases = ["/docs/grafana/latest/enterprise/settings-updates/"]
 description = "Settings updates at runtime"
 keywords = ["grafana", "runtime", "settings"]
+title = "Settings updates at runtime"
 weight = 500
 +++
 

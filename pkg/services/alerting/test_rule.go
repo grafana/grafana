@@ -32,7 +32,7 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 
 		handler := NewEvalHandler(e.DataService)
 
-		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.sqlStore)
+		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.sqlStore, nil)
 		context.IsTestRun = true
 		context.IsDebug = true
 

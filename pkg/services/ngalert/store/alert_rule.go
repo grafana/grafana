@@ -37,7 +37,7 @@ type RuleStore interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
-	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
+	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
@@ -344,16 +344,19 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 	return folder, nil
 }
 
-// GetAlertRulesForScheduling returns alert rule info (identifier, interval, version state)
-// that is useful for it's scheduling.
-func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
+// GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
+func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.AlertRule, 0)
-		q := "SELECT uid, org_id, interval_seconds, version FROM alert_rule"
-		if len(query.ExcludeOrgs) > 0 {
-			q = fmt.Sprintf("%s WHERE org_id NOT IN (%s)", q, strings.Join(strings.Split(strings.Trim(fmt.Sprint(query.ExcludeOrgs), "[]"), " "), ","))
+		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
+		q := sess.Table("alert_rule")
+		if len(query.ExcludeOrgIDs) > 0 {
+			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))
+			for _, orgID := range query.ExcludeOrgIDs {
+				excludeOrgs = append(excludeOrgs, orgID)
+			}
+			q = q.NotIn("org_id", excludeOrgs...)
 		}
-		if err := sess.SQL(q).Find(&alerts); err != nil {
+		if err := q.Find(&alerts); err != nil {
 			return err
 		}
 		query.Result = alerts

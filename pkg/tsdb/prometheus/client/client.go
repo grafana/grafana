@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -41,7 +41,6 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Respons
 	qs.Set("start", formatTime(tr.Start))
 	qs.Set("end", formatTime(tr.End))
 	qs.Set("step", strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64))
-	u.RawQuery = qs.Encode()
 
 	return c.fetch(ctx, u, qs)
 }
@@ -82,18 +81,18 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 }
 
 func (c *Client) fetch(ctx context.Context, u *url.URL, qs url.Values) (*http.Response, error) {
-	var body io.Reader
-
-	switch c.method {
-	case http.MethodGet:
+	if strings.ToUpper(c.method) == http.MethodGet {
 		u.RawQuery = qs.Encode()
-	case http.MethodPost:
-		body = strings.NewReader(qs.Encode())
 	}
 
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), body)
+	r, err := http.NewRequestWithContext(ctx, c.method, u.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if strings.ToUpper(c.method) == http.MethodPost {
+		r.Body = ioutil.NopCloser(strings.NewReader(qs.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 
 	return c.doer.Do(r)

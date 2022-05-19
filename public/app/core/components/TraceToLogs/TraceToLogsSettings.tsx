@@ -40,7 +40,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <h3 className="page-heading">Trace to logs</h3>
 
       <div className={styles.infoText}>
-        Trace to logs lets you navigate from a trace span to the selected data source&apos;s log.
+        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
       </div>
 
       <InlineFieldRow>

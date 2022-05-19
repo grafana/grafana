@@ -81,5 +81,9 @@ export interface AzureResourceGraphQuery {
 export interface AzureMetricDimension {
   dimension: string;
   operator: string;
+  filters?: string[];
+  /**
+   * @deprecated filter is deprecated in favour of filters to support multiselect
+   */
   filter?: string;
 }

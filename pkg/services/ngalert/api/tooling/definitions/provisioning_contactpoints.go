@@ -26,7 +26,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points provisioning RoutePutContactpoints
+// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -48,7 +48,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:parameters RoutePostContactpoints RoutePutContactpoints
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {
 	// in:body
 	Body EmbeddedContactPoint
