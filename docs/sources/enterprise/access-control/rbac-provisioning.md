@@ -7,7 +7,7 @@ title: Grafana RBAC provisioning
 weight: 60
 ---
 
-## RBAC provisioning
+# Grafana RBAC provisioning
 
 You can create, change or remove [Custom roles]({{< relref "./manage-rbac-roles.md#create-custom-roles-using-provisioning" >}}) and create or remove [basic role assignments]({{< relref "./assign-rbac-roles.md#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 
