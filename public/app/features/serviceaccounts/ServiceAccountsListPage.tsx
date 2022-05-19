@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole, SelectableValue } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -73,7 +73,28 @@ const ServiceAccountsListPageUnconnected = ({
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h2>Service accounts</h2>
+        <div className={styles.pageHeader}>
+          <h2>Service accounts</h2>
+          <div className={styles.apiKeyInfoLabel}>
+            <Tooltip
+              placement="bottom"
+              interactive
+              content={
+                <>
+                  API keys are now service Accounts with tokens. <a href="">Read more</a>
+                </>
+              }
+            >
+              <Icon name="question-circle" />
+            </Tooltip>
+            <span>Looking for API keys?</span>
+          </div>
+          {serviceAccounts.length !== 0 && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton className={styles.addServiceAccountButton} href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
+        </div>
         <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
           <FilterInput
             placeholder="Search service account by name."
@@ -90,11 +111,6 @@ const ServiceAccountsListPageUnconnected = ({
             value={filters.find((f) => f.name === 'expiredTokens')?.value}
             className={styles.filter}
           />
-          {serviceAccounts.length !== 0 && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
-            </LinkButton>
-          )}
         </div>
         {isLoading && <PageLoader />}
         {!isLoading && serviceAccounts.length === 0 && (
@@ -212,6 +228,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
       cursor: pointer;
       text-decoration: underline;
     `,
+    pageHeader: css`
+      display: flex;
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    apiKeyInfoLabel: css`
+      margin-left: ${theme.spacing(1)};
+      line-height: 2.2;
+      flex-grow: 1;
+      color: ${theme.colors.text.secondary};
+
+      span {
+        padding: ${theme.spacing(0.5)};
+      }
+    `,
+    addServiceAccountButton: css``,
   };
 };
 
