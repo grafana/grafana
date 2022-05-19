@@ -138,7 +138,7 @@ export function RichHistoryQueriesTab(props: Props) {
 
   useEffect(() => {
     const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+      !richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
         : [activeDatasourceInstance];
     const filters: RichHistorySearchFilters = {
