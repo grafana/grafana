@@ -139,3 +139,112 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		)
 	})
 }
+
+var testPrefixDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "Archer Data",
+		},
+	},
+	{
+		id:  2,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "Document Sync",
+		},
+	},
+}
+
+func TestDashboardIndex_PrefixSearch(t *testing.T) {
+	t.Run("prefix-search-beginning", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Arch"},
+		)
+	})
+
+	t.Run("prefix-search-middle", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Syn"},
+		)
+	})
+
+	t.Run("prefix-search-beginning-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "arch"},
+		)
+	})
+
+	t.Run("prefix-search-middle-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "syn"},
+		)
+	})
+}
+
+func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
+	t.Run("multiple-tokens-beginning", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Archer da"},
+		)
+	})
+
+	t.Run("multiple-tokens-beginning-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "archer da"},
+		)
+	})
+
+	t.Run("multiple-tokens-middle", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "rcher Da"},
+		)
+	})
+
+	t.Run("multiple-tokens-middle-lower", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "cument sy"},
+		)
+	})
+}
+
+var scatteredTokensDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
+		},
+	},
+	{
+		id:  3,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "A secret is powerful when it is empty (Umberto Eco)",
+		},
+	},
+}
+
+func TestDashboardIndex_MultipleTokensScattered(t *testing.T) {
+	t.Run("scattered-tokens-match", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "dead secret"},
+		)
+	})
+	t.Run("scattered-tokens-match-reversed", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "powerful secret"},
+		)
+	})
+}

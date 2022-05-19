@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/blugelabs/bluge"
+	"github.com/blugelabs/bluge/analysis"
+	"github.com/blugelabs/bluge/analysis/token"
+	"github.com/blugelabs/bluge/analysis/tokenizer"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -22,6 +25,7 @@ const (
 	documentFieldTag         = "tag"
 	documentFieldURL         = "url"
 	documentFieldName        = "name"
+	documentFieldName_ngram  = "name_ngram"
 	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
@@ -107,6 +111,7 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
+		AddField(getNameNGramField(dash.info.Title)).
 		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions()).
 		// Add legacy ID (for lookup by internal ID)
 		AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)).Aggregatable().StoreValue())
@@ -121,6 +126,7 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
+		AddField(getNameNGramField(dash.info.Title)).
 		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
 
 	// Add legacy ID (for lookup by internal ID)
@@ -167,6 +173,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldURL, purl).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewTextField(documentFieldName, panel.Title).StoreValue().SearchTermPositions()).
+			AddField(getNameNGramField(panel.Title)).
 			AddField(bluge.NewTextField(documentFieldDescription, panel.Description).SearchTermPositions()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
@@ -194,6 +201,25 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		docs = append(docs, doc)
 	}
 	return docs
+}
+
+var ngramIndexAnalyzer = &analysis.Analyzer{
+	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
+	TokenFilters: []analysis.TokenFilter{
+		token.NewLowerCaseFilter(),
+		token.NewEdgeNgramFilter(token.FRONT, 1, 7),
+	},
+}
+
+var ngramQueryAnalyzer = &analysis.Analyzer{
+	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
+	TokenFilters: []analysis.TokenFilter{
+		token.NewLowerCaseFilter(),
+	},
+}
+
+func getNameNGramField(name string) bluge.Field {
+	return bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer)
 }
 
 func getDashboardFolderUID(reader *bluge.Reader, folderID int64) (string, error) {
@@ -335,12 +361,14 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	} else {
 		// The actual se
 		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3)).
-			AddShould(bluge.NewPrefixQuery(q.Query).SetField("name").SetBoost(1))
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
+			AddShould(bluge.NewMatchQuery(q.Query).
+				SetField(documentFieldName_ngram).
+				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
-			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField("name")).SetBoost(1.5)
+			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
 		}
 		fullQuery.AddMust(bq)
 	}
