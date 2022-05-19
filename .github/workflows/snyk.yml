@@ -40,9 +40,9 @@ jobs:
 
       - name: install snyk-to-html
         run: |
-          npm install snyk-to-html -g
+          npm install snyk-to-html snyk2spdx -g
           snyk-to-html -i snyk.json -o snyk.html
-
+          
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
