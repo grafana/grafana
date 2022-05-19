@@ -7,11 +7,11 @@ title = "Reporting API"
 
 # Reporting API
 
-This API allows you to interact programmatically with the [Reporting]({{< relref "../enterprise/reporting.md" >}}) feature.
+This API allows you to interact programmatically with the [Reporting]({{< relref "../../enterprise/reporting.md" >}}) feature.
 
-> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-> If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Send a report
@@ -70,7 +70,7 @@ Content-Length: 29
 | ---- | ------------------------------------------------------------------------------------------- |
 | 200  | Report was sent.                                                                            |
 | 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).          |
-| 401  | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}). |
+| 401  | Authentication failed, refer to [Authentication API]({{< relref "auth.md" >}}). |
 | 403  | User is authenticated but is not authorized to generate the report.                         |
 | 404  | Report not found.                                                                           |
 | 500  | Unexpected error or server misconfiguration. Refer to server logs for more details.         |

@@ -60,7 +60,7 @@ This section describes how to enable RBAC by setting a feature flag or adding an
 
 1. To verify that RBAC is enabled, send an HTTP request to the check endpoint.
 
-   For more information about sending an HTTP request to the check endpoint, refer to [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
+   For more information about sending an HTTP request to the check endpoint, refer to [Check endpoint]({{< relref "../../developers/http_api/access_control.md#check-if-enabled" >}}).
 
 ## Enable role provisioning
 
@@ -90,4 +90,4 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 5. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
