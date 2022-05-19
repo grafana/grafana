@@ -1,5 +1,5 @@
 +++
-title = "Labels and label matchers"
+title = "Label matchers"
 description = "Learn about labels and label matchers in alerting"
 keywords = ["grafana", "alerting", "guide", "fundamentals"]
 weight = 117
