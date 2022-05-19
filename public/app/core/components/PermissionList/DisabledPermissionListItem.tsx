@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+
 import { Select, Icon, Button } from '@grafana/ui';
 import { dashboardPermissionLevels } from 'app/types/acl';
 
@@ -30,7 +31,6 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               onChange={() => {}}
               disabled={true}
               value={currentPermissionLevel}
-              menuShouldPortal
             />
           </div>
         </td>

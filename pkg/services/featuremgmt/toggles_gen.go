@@ -31,10 +31,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsScheduler
-	// Schedule automatic updates to dashboard previews
-	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
-
 	// FlagDashboardPreviewsAdmin
 	// Manage the dashboard previews crawler process from the UI
 	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
@@ -75,10 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrol
-	// Support robust access control
-	FlagAccesscontrol = "accesscontrol"
-
 	// FlagAccesscontrolBuiltins
 	// Simplify access control builtin roles
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
@@ -102,10 +94,6 @@ const (
 	// FlagDisableHttpRequestHistogram
 	// Do not create histograms for http requests
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
-
-	// FlagValidatedQueries
-	// only execute the query saved in a panel
-	FlagValidatedQueries = "validatedQueries"
 
 	// FlagPublicDashboards
 	// enables public access to dashboards
@@ -135,10 +123,6 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagSaveDashboardDrawer
-	// Use a drawer to show save dashboard dialog
-	FlagSaveDashboardDrawer = "saveDashboardDrawer"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -146,6 +130,10 @@ const (
 	// FlagAlertProvisioning
 	// Provisioning-friendly routes for alerting
 	FlagAlertProvisioning = "alertProvisioning"
+
+	// FlagExport
+	// Export grafana instance (to git, etc)
+	FlagExport = "export"
 
 	// FlagStorageLocalUpload
 	// allow uploads to local storage
@@ -159,7 +147,39 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagTracing
+	// Adds trace ID to error notifications
+	FlagTracing = "tracing"
+
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"
+
+	// FlagCommandPalette
+	// Enable command palette
+	FlagCommandPalette = "commandPalette"
+
+	// FlagSavedItems
+	// Enable Saved Items in the navbar.
+	FlagSavedItems = "savedItems"
+
+	// FlagCloudWatchDynamicLabels
+	// Use dynamic labels instead of alias patterns in CloudWatch datasource
+	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
+
+	// FlagDatasourceQueryMultiStatus
+	// Introduce HTTP 207 Multi Status for api/ds/query
+	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
+
+	// FlagAzureMonitorExperimentalUI
+	// Use grafana-experimental UI in Azure Monitor
+	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
+
+	// FlagTraceToMetrics
+	// Enable trace to metrics links
+	FlagTraceToMetrics = "traceToMetrics"
+
+	// FlagPrometheusStreamingJSONParser
+	// Enable streaming JSON parser for Prometheus datasource
+	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 )

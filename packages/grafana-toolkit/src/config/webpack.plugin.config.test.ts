@@ -1,5 +1,6 @@
-import { findModuleFiles, loadWebpackConfig } from './webpack.plugin.config';
 import fs from 'fs';
+
+import { findModuleFiles, loadWebpackConfig } from './webpack.plugin.config';
 // eslint-disable-next-line no-duplicate-imports
 import * as webpackConfig from './webpack.plugin.config';
 

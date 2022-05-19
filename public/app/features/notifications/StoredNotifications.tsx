@@ -1,9 +1,10 @@
+import { css, cx } from '@emotion/css';
 import React, { useRef } from 'react';
 import { useEffectOnce } from 'react-use';
-import { css, cx } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types';
+import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
 import {
   clearAllNotifications,
   clearNotification,
@@ -11,7 +12,7 @@ import {
   selectWarningsAndErrors,
   selectLastReadTimestamp,
 } from 'app/core/reducers/appNotification';
-import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
+import { useDispatch, useSelector } from 'app/types';
 
 export function StoredNotifications() {
   const dispatch = useDispatch();

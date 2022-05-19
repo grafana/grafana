@@ -29,12 +29,12 @@ Panel: {
                     rowHeight: number
                     colWidth?: number
                     alignValue: "center" | *"left" | "right"
-                }
+                } @cuetsy(kind="interface")
                 PanelFieldConfig: {
                     ui.HideableFieldConfig
                     lineWidth?: number | *1
                     fillOpacity?: number | *70
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/shared/visualizations/legend-mode/
 title: Legend mode and legend placement
 ---
 

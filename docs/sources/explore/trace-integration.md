@@ -1,7 +1,8 @@
 +++
-title = "Tracing in Explore"
+aliases = ["/docs/grafana/latest/explore/trace-integration/"]
 description = "Tracing in Explore"
-keywords = ["explore", "trace",]
+keywords = ["explore", "trace"]
+title = "Tracing in Explore"
 weight = 20
 +++
 

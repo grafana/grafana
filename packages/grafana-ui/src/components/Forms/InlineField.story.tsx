@@ -1,7 +1,9 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
+import React from 'react';
+
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
+
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 
@@ -43,7 +45,6 @@ export const withSelect = () => {
   return (
     <InlineField label="Select option">
       <Select
-        menuShouldPortal
         width={16}
         onChange={action('item selected')}
         options={[

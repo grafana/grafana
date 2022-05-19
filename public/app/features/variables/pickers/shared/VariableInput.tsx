@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+
 import { NavigationKey } from '../types';
 
 export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {

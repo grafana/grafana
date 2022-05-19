@@ -1,16 +1,16 @@
 +++
-title = "Fine-grained access control HTTP API "
-description = "Fine-grained access control API"
-keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
+aliases = ["/docs/grafana/latest/http_api/access_control/", "/docs/grafana/latest/http_api/accesscontrol/"]
+description = ""
+keywords = ["grafana", "http", "documentation", "api", "role-based-access-control", "acl", "enterprise"]
+title = "RBAC HTTP API"
 +++
 
-# Fine-grained access control API
+# RBAC API
 
-> Fine-grained access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-The API can be used to create, update, get and list roles, and create or remove built-in role assignments.
-To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
+The API can be used to create, update, get and list roles, and create or remove assignments.
+To use the API, you would need to [enable role-based access control]({{< relref "../enterprise/access-control/_index.md#enable-role-based-access-control" >}}).
 
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
 
@@ -18,9 +18,9 @@ The API does not currently work with an API Token. So in order to use these API 
 
 `GET /api/access-control/status`
 
-Returns an indicator to check if fine-grained access control is enabled or not.
+Returns an indicator to check if role-based access control is enabled or not.
 
-### Required permissions
+#### Required permissions
 
 | Action               | Scope                  |
 | -------------------- | ---------------------- |
@@ -47,12 +47,12 @@ Content-Type: application/json; charset=UTF-8
 
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Returned a flag indicating if the fine-grained access control is enabled or no.    |
-| 403  | Access denied                                                                      |
-| 404  | Not found, an indication that fine-grained access control is not available at all. |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                      |
+| ---- | -------------------------------------------------------------------------------- |
+| 200  | Returned a flag indicating if the role-based access control is enabled or no.    |
+| 403  | Access denied                                                                    |
+| 404  | Not found, an indication that role-based access control is not available at all. |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.             |
 
 ## Create and manage custom roles
 
@@ -61,8 +61,6 @@ Content-Type: application/json; charset=UTF-8
 `GET /api/access-control/roles`
 
 Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.
-
-Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
 Query Parameters:
 
@@ -215,16 +213,16 @@ Content-Type: application/json; charset=UTF-8
 
 `POST /api/access-control/roles`
 
-Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
+Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed roles]({{< relref "../enterprise/access-control/about-rbac#fixed-roles" >}}) can't be created.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
 
-| Action      | Scope                |
-| ----------- | -------------------- |
-| roles:write | permissions:delegate |
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:delegate |
 
 #### Example request
 
@@ -245,7 +243,7 @@ Content-Type: application/json
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         }
     ]
 }
@@ -253,24 +251,24 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                                         |
-| ----------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                     |
-| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#role-scopes" >}}) for more information. |
-| version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                    |
-| name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.                                                                                                                                |
-| description | string     | No       | Description of the role.                                                                                                                                                                                                                                            |
-| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                                        |
-| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                                 |
-| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                                    |
-| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                                   |
+| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                        |
+| ----------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/about-rbac#custom-roles" >}}) for more information.  |
+| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                     |
+| version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/about-rbac#custom-roles" >}}) for more information. |
+| name        | string     | Yes      | Name of the role. Refer to [Custom roles]({{< relref "../enterprise/access-control/about-rbac#custom-roles" >}}) for more information.                                                                                             |
+| description | string     | No       | Description of the role.                                                                                                                                                                                                           |
+| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                       |
+| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                   |
+| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                  |
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                          |
-| ---------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| action     | string    | Yes      | Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) for full list of available actions.                                                                             |
-| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md#scope-definitions" >}}) for full list of available scopes. |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                        |
+| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                            |
+| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [[Custom role actions and scopes]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
 #### Example response
 
@@ -290,7 +288,7 @@ Content-Type: application/json; charset=UTF-8
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate",
+            "scope": "permissions:type:delegate",
             "updated": "2021-05-13T23:19:46+02:00",
             "created": "2021-05-13T23:19:46+02:00"
         }
@@ -309,20 +307,22 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
-### Update a custom role
+### Update a role
 
 `PUT /api/access-control/roles/:uid`
 
-Update the role with the given UID, and it's permissions with the given UID. The operation is idempotent and all permissions of the role will be replaced with what is in the request. You would need to increment the version of the role with each update, otherwise the request will fail.
+Update the role with the given UID, and its permissions. The operation is idempotent and all permissions of the role will be replaced based on the request content. You need to increment the version of the role with each update, otherwise the request will fail.
+
+You can update `custom` roles and `basic` roles permissions. However `fixed` roles cannot be updated.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to update a custom role which allows to do that. This is done to prevent escalation of privileges.
 
-| Action      | Scope                |
-| ----------- | -------------------- |
-| roles:write | permissions:delegate |
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:delegate |
 
 #### Example request
 
@@ -342,11 +342,11 @@ Content-Type: application/json
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         },
         {
             "action": "roles:write",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         }
     ]
 }
@@ -366,10 +366,10 @@ Content-Type: application/json
 
 **Permission**
 
-| Field Name | Data Type | Required | Description                                                                                                                                                                                          |
-| ---------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| action     | string    | Yes      | Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) for full list of available actions.                                                                             |
-| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md#scope-definitions" >}}) for full list of available scopes. |
+| Field Name | Data Type | Required | Description                                                                                                                                                                                                       |
+| ---------- | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| action     | string    | Yes      | Refer to [Custom role actions and scopes]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available actions.                                                           |
+| scope      | string    | No       | If not present, no scope will be mapped to the permission. Refer to [Custom role actions and scopes]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for full list of available scopes. |
 
 #### Example response
 
@@ -388,13 +388,13 @@ Content-Type: application/json; charset=UTF-8
     "permissions":[
         {
             "action":"roles:delete",
-            "scope":"permissions:delegate",
+            "scope":"permissions:type:delegate",
             "updated":"2021-08-06T18:27:40+02:00",
             "created":"2021-08-06T18:27:40+02:00"
         },
         {
             "action":"roles:write",
-            "scope":"permissions:delegate",
+            "scope":"permissions:type:delegate",
             "updated":"2021-08-06T18:27:41+02:00",
             "created":"2021-08-06T18:27:41+02:00"
         }
@@ -419,16 +419,16 @@ Content-Type: application/json; charset=UTF-8
 
 `DELETE /api/access-control/roles/:uid?force=false`
 
-Delete a role with the given UID, and it's permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless `force` query param is set to `true`, and in that case all assignments will also be deleted.
+Delete a role with the given UID, and it's permissions. If the role is assigned, the deletion operation will fail, unless the `force` query param is set to `true`, and in that case all assignments will also be deleted.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to delete a custom role which allows to do that.
 
-| Action       | Scope                |
-| ------------ | -------------------- |
-| roles:delete | permissions:delegate |
+| Action       | Scope                     |
+| ------------ | ------------------------- |
+| roles:delete | permissions:type:delegate |
 
 #### Example request
 
@@ -439,10 +439,10 @@ Accept: application/json
 
 #### Query parameters
 
-| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                     |
-| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                                         |
-| global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information. |
+| Param  | Type    | Required | Description                                                                                                                                                                                                                                            |
+| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                |
+| global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [About RBAC]({{< relref "../enterprise/access-control/about-rbac" >}}) for more information. |
 
 #### Example response
 
@@ -470,7 +470,7 @@ Content-Type: application/json; charset=UTF-8
 
 `GET /api/access-control/users/:userId/roles`
 
-Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
+Lists the roles that have been directly assigned to a given user. The list does not include basic roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
 
 Query Parameters:
 
@@ -574,12 +574,12 @@ For bulk updates consider
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action          | Scope                |
-| --------------- | -------------------- |
-| users.roles:add | permissions:delegate |
+| Action          | Scope                     |
+| --------------- | ------------------------- |
+| users.roles:add | permissions:type:delegate |
 
 #### Example request
 
@@ -632,12 +632,12 @@ For bulk updates consider
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| users.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:remove | permissions:type:delegate |
 
 #### Query parameters
 
@@ -686,13 +686,13 @@ instead.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| users.roles:add    | permissions:delegate |
-| users.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:add    | permissions:type:delegate |
+| users.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -802,12 +802,12 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.
 
-| Action          | Scope                |
-| --------------- | -------------------- |
-| teams.roles:add | permissions:delegate |
+| Action          | Scope                     |
+| --------------- | ------------------------- |
+| teams.roles:add | permissions:type:delegate |
 
 #### Example request
 
@@ -857,12 +857,12 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.```
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| teams.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| teams.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -905,13 +905,13 @@ instead.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role to a team which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| teams.roles:add    | permissions:delegate |
-| teams.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| teams.roles:add    | permissions:type:delegate |
+| teams.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -955,122 +955,38 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Create and remove built-in role assignments
+## Reset basic roles to their default
 
-API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments.
+`POST /api/access-control/roles/hard-reset`
 
-### Get all built-in role assignments
+`permissions:type:escalate` scope enables users to reset basic roles permissions.
+This could result in basic roles having permissions exceedind those of callers.
 
-`GET /api/access-control/builtin-roles`
-
-Gets all built-in role assignments.
-
-Query Parameters:
-
-- `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
+Reset basic roles permissions to their default.
 
 #### Required permissions
 
-| Action             | Scope    |
-| ------------------ | -------- |
-| roles.builtin:list | roles:\* |
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:escalate |
 
 #### Example request
 
 ```http
-GET /api/access-control/builtin-roles
-Accept: application/json
-Content-Type: application/json
-```
-
-#### Example response
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-
-{
-    "Admin": [
-        {
-            "version": 1,
-            "uid": "qQui_LCMk",
-            "name": "fixed:users:writer",
-            "name": "User writer",
-            "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users",
-            "global": true,
-            "updated": "2021-05-13T16:24:26+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
-        },
-        {
-            "version": 1,
-            "uid": "PeXmlYjMk",
-            "name": "fixed:users:reader",
-            "displayName": "User reader",
-            "description": "Allows every read action for user organizations and in addition allows to administer user organizations",
-            "global": true,
-            "updated": "2021-05-13T16:24:26+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
-        }
-    ],
-    "Grafana Admin": [
-        {
-            "version": 1,
-            "uid": "qQui_LCMk",
-            "name": "fixed:users:writer",
-            "displayName": "User writer",
-            "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users",
-            "global": true,
-            "updated": "2021-05-13T16:24:26+02:00",
-            "created": "2021-05-13T16:24:26+02:00"
-        }
-    ]
-}
-```
-
-#### Status codes
-
-| Code | Description                                                          |
-| ---- | -------------------------------------------------------------------- |
-| 200  | Built-in role assignments are returned.                              |
-| 403  | Access denied                                                        |
-| 500  | Unexpected error. Refer to body and/or server logs for more details. |
-
-### Create a built-in role assignment
-
-`POST /api/access-control/builtin-roles`
-
-Creates a new built-in role assignment.
-
-#### Required permissions
-
-`permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has.
-For example, if a user does not have required permissions for creating users, they won't be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
-
-| Action            | Scope                |
-| ----------------- | -------------------- |
-| roles.builtin:add | permissions:delegate |
-
-#### Example request
-
-```http
-POST /api/access-control/builtin-roles
+POST /api/access-control/roles/hard-reset
 Accept: application/json
 Content-Type: application/json
 
 {
-    "roleUid": "LPMGN99Mk",
-    "builtinRole": "Grafana Admin",
-    "global": false
+    "BasicRoles": true
 }
 ```
 
 #### JSON body schema
 
-| Field Name  | Date Type | Required | Description                                                                                                                                                                                                                                                                                                                                   |
-| ----------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| roleUid     | string    | Yes      | UID of the role.                                                                                                                                                                                                                                                                                                                              |
-| builtinRole | boolean   | Yes      | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`.                                                                                                                                                                                                                                                                                 |
-| global      | boolean   | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information. |
+| Field Name | Data Type | Required | Description                              |
+| ---------- | --------- | -------- | ---------------------------------------- |
+| BasicRoles | boolean   | No       | Option to reset basic roles permissions. |
 
 #### Example response
 
@@ -1079,65 +995,13 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "message": "Built-in role grant added"
+    "message": "Reset performed"
 }
 ```
 
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role was assigned to built-in role.                                                |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 404  | Role not found                                                                     |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
-
-### Remove a built-in role assignment
-
-`DELETE /api/access-control/builtin-roles/:builtinRole/roles/:roleUID`
-
-Deletes a built-in role assignment (for one of _Viewer_, _Editor_, _Admin_, or _Grafana Admin_) to the role with the provided UID.
-
-#### Required permissions
-
-`permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has.
-For example, if a user does not have required permissions for creating users, they won't be able to remove a built-in role assignment which allows to do that.
-
-| Action               | Scope                |
-| -------------------- | -------------------- |
-| roles.builtin:remove | permissions:delegate |
-
-#### Example request
-
-```http
-DELETE /api/access-control/builtin-roles/Grafana%20Admin/roles/LPMGN99Mk?global=false
-Accept: application/json
-```
-
-#### Query parameters
-
-| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                                                                |
-| ------ | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| global | boolean | No       | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information. |
-
-#### Example response
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-
-{
-    "message": "Built-in role grant removed"
-}
-```
-
-#### Status codes
-
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role was unassigned from built-in role.                                            |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 404  | Role not found.                                                                    |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                 |
+| ---- | --------------------------- |
+| 200  | Reset performed             |
+| 500  | Failed to reset basic roles |

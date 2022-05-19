@@ -1,5 +1,6 @@
-import { getPluginSettings, clearPluginSettingsCache } from './pluginSettings';
 import { getBackendSrv } from '@grafana/runtime';
+
+import { getPluginSettings, clearPluginSettingsCache } from './pluginSettings';
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn().mockReturnValue({

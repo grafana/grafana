@@ -1,4 +1,5 @@
 import { isArray, reduce } from 'lodash';
+
 import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({

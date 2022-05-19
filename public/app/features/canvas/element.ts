@@ -1,8 +1,11 @@
 import { ComponentType } from 'react';
+
 import { RegistryItem } from '@grafana/data';
-import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
-import { DimensionContext } from '../dimensions/context';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+
+import { DimensionContext } from '../dimensions/context';
+
+import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
 /**
  * This gets saved in panel json

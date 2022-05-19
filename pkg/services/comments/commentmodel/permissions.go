@@ -105,7 +105,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
-		if c.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if !c.accessControl.IsDisabled() {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeDashboard)
 			if canEdit, err := c.accessControl.Evaluate(ctx, signedInUser, evaluator); err != nil || !canEdit {
 				return canEdit, err

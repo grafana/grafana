@@ -5,6 +5,7 @@ import TimegrainConverter from '../../time_grain_converter';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
+
 import { setMetricNamespace, setSubscriptionID } from './setQueryValue';
 
 export interface MetricMetadata {

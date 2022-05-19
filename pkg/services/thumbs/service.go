@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -25,6 +25,7 @@ import (
 )
 
 type Service interface {
+	registry.ProvidesUsageStats
 	Run(ctx context.Context) error
 	Enabled() bool
 	GetImage(c *models.ReqContext)
@@ -50,7 +51,8 @@ type thumbService struct {
 	store                      sqlstore.Store
 	crawlLockServiceActionName string
 	log                        log.Logger
-	usageStatsService          usagestats.Service
+	canRunCrawler              bool
+	settings                   setting.DashboardPreviewsSettings
 }
 
 type crawlerScheduleOptions struct {
@@ -63,34 +65,42 @@ type crawlerScheduleOptions struct {
 	auth             CrawlerAuth
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService, usageStatsService usagestats.Service) Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
-	logger := log.New("thumbnails_service")
+	logger := log.New("previews_service")
 
 	thumbnailRepo := newThumbnailRepo(store)
 
+	canRunCrawler := true
+
+	authSetupStarted := time.Now()
 	crawlerAuth, err := authSetupService.Setup(context.Background())
+
 	if err != nil {
-		logger.Error("Failed to setup auth for the dashboard previews crawler", "err", err)
-		return &dummyService{}
+		logger.Error("Crawler auth setup failed", "err", err, "crawlerAuthSetupTime", time.Since(authSetupStarted))
+		canRunCrawler = false
+	} else {
+		logger.Info("Crawler auth setup complete", "crawlerAuthSetupTime", time.Since(authSetupStarted))
 	}
+
 	t := &thumbService{
-		usageStatsService:          usageStatsService,
 		renderingService:           renderService,
-		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
+		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo, cfg, cfg.DashboardPreviews),
 		thumbnailRepo:              thumbnailRepo,
 		store:                      store,
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
 		log:                        logger,
+		canRunCrawler:              canRunCrawler,
+		settings:                   cfg.DashboardPreviews,
 
 		scheduleOptions: crawlerScheduleOptions{
-			tickerInterval:   time.Hour,
-			crawlInterval:    time.Hour * 12,
-			maxCrawlDuration: time.Hour,
+			tickerInterval:   5 * time.Minute,
+			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
+			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
 			crawlerMode:      CrawlerModeThumbs,
 			thumbnailKind:    models.ThumbnailKindDefault,
 			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
@@ -98,26 +108,23 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		},
 	}
 
-	t.registerUsageStats()
 	return t
 }
 
-func (hs *thumbService) registerUsageStats() {
-	hs.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
-		s := hs.getDashboardPreviewsSetupSettings(ctx)
+func (hs *thumbService) GetUsageStats(ctx context.Context) map[string]interface{} {
+	s := hs.getDashboardPreviewsSetupSettings(ctx)
 
-		stats := make(map[string]interface{})
+	stats := make(map[string]interface{})
 
-		if s.SystemRequirements.Met {
-			stats["stats.dashboard_previews.system_req_met.count"] = 1
-		}
+	if s.SystemRequirements.Met {
+		stats["stats.dashboard_previews.system_req_met.count"] = 1
+	}
 
-		if s.ThumbnailsExist {
-			stats["stats.dashboard_previews.thumbnails_exist.count"] = 1
-		}
+	if s.ThumbnailsExist {
+		stats["stats.dashboard_previews.thumbnails_exist.count"] = 1
+	}
 
-		return stats, nil
-	})
+	return stats
 }
 
 func (hs *thumbService) Enabled() bool {
@@ -401,6 +408,10 @@ func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 }
 
 func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
+	if !hs.canRunCrawler {
+		return
+	}
+
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxCrawlDuration)
 	defer cancel()
 
@@ -435,7 +446,7 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 }
 
 func (hs *thumbService) Run(ctx context.Context) error {
-	if !hs.features.IsEnabled(featuremgmt.FlagDashboardPreviewsScheduler) {
+	if !hs.canRunCrawler {
 		return nil
 	}
 

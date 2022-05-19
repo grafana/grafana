@@ -1,4 +1,9 @@
+import { css, cx } from '@emotion/css';
+import { sortBy } from 'lodash';
 import React, { ChangeEvent } from 'react';
+import { FixedSizeList } from 'react-window';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   HighlightPart,
@@ -10,12 +15,10 @@ import {
   BrowserLabel as LokiLabel,
   fuzzyMatch,
 } from '@grafana/ui';
-import LokiLanguageProvider from '../language_provider';
+
 import PromQlLanguageProvider from '../../prometheus/language_provider';
-import { css, cx } from '@emotion/css';
-import { FixedSizeList } from 'react-window';
-import { GrafanaTheme2 } from '@grafana/data';
-import { sortBy } from 'lodash';
+import LokiLanguageProvider from '../language_provider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;
@@ -65,9 +68,9 @@ export function buildSelector(labels: SelectableLabel[]): string {
     if (label.selected && label.values && label.values.length > 0) {
       const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
-        selectedLabels.push(`${label.name}=~"${selectedValues.join('|')}"`);
+        selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
-        selectedLabels.push(`${label.name}="${selectedValues[0]}"`);
+        selectedLabels.push(`${label.name}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
       }
     }
   }

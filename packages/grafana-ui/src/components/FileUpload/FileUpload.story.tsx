@@ -1,8 +1,11 @@
-import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { FileUpload } from '@grafana/ui';
-import mdx from './FileUpload.mdx';
 import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { FileUpload } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './FileUpload.mdx';
 
 export default {
   title: 'Forms/FileUpload',

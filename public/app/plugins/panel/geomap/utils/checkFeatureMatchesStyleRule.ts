@@ -1,4 +1,5 @@
 import { FeatureLike } from 'ol/Feature';
+
 import { FeatureRuleConfig, ComparisonOperation } from '../types';
 
 /**

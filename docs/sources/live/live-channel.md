@@ -1,7 +1,8 @@
 +++
-title = "Live Channel"
+aliases = ["/docs/grafana/latest/live/live-channel/"]
 description = "Grafana Live channel guide"
 keywords = ["Grafana", "live", "guide", "channel"]
+title = "Live Channel"
 weight = 110
 +++
 

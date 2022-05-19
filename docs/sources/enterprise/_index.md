@@ -1,7 +1,8 @@
 +++
-title = "Grafana Enterprise"
+aliases = ["/docs/grafana/latest/enterprise/"]
 description = "Grafana Enterprise overview"
 keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
+title = "Grafana Enterprise"
 weight = 150
 +++
 
@@ -41,9 +42,9 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 ## Enterprise features
 
-With Grafana Enterprise, you get access to new features, including:
+With Grafana Enterprise, you get access to the following features:
 
-- [Fine-grained access control]({{< relref "access-control/_index.md" >}}) to control access with fine-grained roles and permissions.
+- [Role-based access control]({{< relref "./access-control/_index.md" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.

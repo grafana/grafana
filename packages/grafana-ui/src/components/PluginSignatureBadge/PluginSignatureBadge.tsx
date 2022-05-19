@@ -1,5 +1,7 @@
 import React, { HTMLAttributes } from 'react';
+
 import { PluginSignatureStatus } from '@grafana/data';
+
 import { Badge, BadgeProps } from '../Badge/Badge';
 
 /**

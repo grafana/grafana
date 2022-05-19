@@ -1,6 +1,8 @@
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFieldValue } from '../../types/silence-form';
+
 import { deleteRoute, getFilteredRoutes, updatedRoute } from './AmRoutesTable';
 
 const defaultAmRoute: FormAmRoute = {
@@ -9,6 +11,7 @@ const defaultAmRoute: FormAmRoute = {
   continue: false,
   receiver: '',
   groupBy: [],
+  overrideTimings: false,
   groupWaitValue: '',
   groupWaitValueType: '',
   groupIntervalValue: '',
@@ -164,7 +167,7 @@ describe('deleteRoute', () => {
     const routeToDelete = routes[1];
 
     // Act
-    const updatedRoutes = deleteRoute(routes, routeToDelete);
+    const updatedRoutes = deleteRoute(routes, routeToDelete.id);
 
     // Assert
     expect(updatedRoutes).toHaveLength(2);
@@ -177,7 +180,7 @@ describe('deleteRoute', () => {
     const routes: FormAmRoute[] = [buildAmRoute({ id: '1' }), buildAmRoute({ id: '2' }), buildAmRoute({ id: '3' })];
 
     // Act
-    const updatedRoutes = deleteRoute(routes, buildAmRoute({ id: '-1' }));
+    const updatedRoutes = deleteRoute(routes, '-1');
 
     // Assert
     expect(updatedRoutes).toHaveLength(3);

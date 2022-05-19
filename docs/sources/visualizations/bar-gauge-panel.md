@@ -1,8 +1,8 @@
 +++
-title = "Bar gauge"
+aliases = ["/docs/grafana/latest/features/panels/bar_gauge/", "/docs/grafana/latest/panels/visualizations/bar-gauge-panel/", "/docs/grafana/latest/visualizations/bar-gauge-panel/"]
 description = "Bar gauge panel options"
 keywords = ["grafana", "bar", "bar gauge"]
-aliases = ["/docs/grafana/latest/features/panels/bar_gauge/", "/docs/grafana/latest/panels/visualizations/bar-gauge-panel/"]
+title = "Bar gauge"
 weight = 200
 +++
 
@@ -26,7 +26,7 @@ Choose how Grafana displays your data.
 
 Show a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [List of calculations]({{< relref "../panels/reference-calculation-types.md" >}}).
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../panels/calculation-types.md" >}}).
 - **Fields -** Select the fields display in the panel.
 
 #### All values

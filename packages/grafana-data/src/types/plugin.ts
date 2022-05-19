@@ -1,4 +1,5 @@
 import { ComponentType } from 'react';
+
 import { KeyValue } from './data';
 
 /** Describes plugins life cycle status */
