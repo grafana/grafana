@@ -32,6 +32,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
+		dialect = sqlStore.Dialect
 		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -242,7 +243,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{},
 		}
 
-		err = sqlStore.SearchDashboards(context.Background(), &query)
+		err = dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 0)
@@ -315,7 +316,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -339,7 +340,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -364,7 +365,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -386,7 +387,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 3)
@@ -407,7 +408,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -433,7 +434,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := sqlStore.SearchDashboards(context.Background(), &query)
+		err := dashboardStore.SearchDashboards(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -471,7 +472,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			},
 			IsStarred: true,
 		}
-		err = sqlStore.SearchDashboards(context.Background(), &query)
+		err = dashboardStore.SearchDashboards(context.Background(), &query)
 
 		require.NoError(t, err)
 		require.Equal(t, len(query.Result), 1)
