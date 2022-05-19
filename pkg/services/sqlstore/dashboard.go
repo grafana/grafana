@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"xorm.io/xorm"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -26,28 +28,6 @@ func init() {
 }
 
 var generateNewUid func() string = util.GenerateShortUID
-
-func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
-			return models.ErrDashboardIdentifierNotSet
-		}
-
-		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-		has, err := dbSession.Get(&dashboard)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
-		}
-
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
-		query.Result = &dashboard
-		return nil
-	})
-}
 
 type DashboardSearchProjection struct {
 	ID          int64  `xorm:"id"`
@@ -223,13 +203,19 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 
 func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 {
+		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
 			return models.ErrCommandValidationFailed
 		}
 
 		var dashboards = make([]*models.Dashboard, 0)
+		var session *xorm.Session
+		if len(query.DashboardIds) > 0 {
+			session = dbSession.In("id", query.DashboardIds)
+		} else {
+			session = dbSession.In("uid", query.DashboardUIds)
+		}
 
-		err := dbSession.In("id", query.DashboardIds).Find(&dashboards)
+		err := session.Find(&dashboards)
 		query.Result = dashboards
 		return err
 	})
@@ -304,28 +290,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 		}
 
 		return err
-	})
-}
-
-type DashboardSlugDTO struct {
-	Slug string
-}
-
-func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-		var slug = DashboardSlugDTO{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = slug.Slug
-		return nil
 	})
 }
 

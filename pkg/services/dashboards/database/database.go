@@ -21,6 +21,9 @@ type DashboardStore struct {
 	log      log.Logger
 }
 
+// DashboardStore implements the Store interface
+var _ dashboards.Store = (*DashboardStore)(nil)
+
 func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
 	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store")}
 }
@@ -184,6 +187,47 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
+// retrieves public dashboard configuration
+func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+	var result []*models.Dashboard
+
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&result)
+	})
+
+	if len(result) == 0 {
+		return nil, models.ErrDashboardNotFound
+	}
+
+	pdc := &models.PublicDashboardConfig{
+		IsPublic: result[0].IsPublic,
+	}
+
+	return pdc, err
+}
+
+// stores public dashboard configuration
+func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
+		if err != nil {
+			return err
+		}
+
+		if affectedRowCount == 0 {
+			return models.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmd.PublicDashboardConfig, nil
+}
+
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// delete existing items
@@ -326,10 +370,6 @@ func getExistingDashboardByIdOrUidForUpdate(sess *sqlstore.DBSession, dash *mode
 		dash.SetId(existingByUid.Id)
 		dash.SetUid(existingByUid.Uid)
 		existing = existingByUid
-
-		if !dash.IsFolder {
-			isParentFolderChanged = true
-		}
 	}
 
 	if (existing.IsFolder && !dash.IsFolder) ||
@@ -826,4 +866,26 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore
 	}
 
 	return nil
+}
+
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
+			return models.ErrDashboardIdentifierNotSet
+		}
+
+		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := sess.Get(&dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardNotFound
+		}
+
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		query.Result = &dashboard
+		return nil
+	})
 }

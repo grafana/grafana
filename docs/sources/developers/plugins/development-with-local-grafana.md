@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/developers/plugins/development-with-local-grafana/"]
 title = "Development with local Grafana"
 +++
 

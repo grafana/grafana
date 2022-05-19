@@ -384,7 +384,7 @@ export interface OldVariableQuery extends DataQuery {
   region: string;
   metricName: string;
   dimensionKey: string;
-  dimensionFilters?: Dimensions;
+  dimensionFilters: string;
   ec2Filters: string;
   instanceID: string;
   attributeName: string;

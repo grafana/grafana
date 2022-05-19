@@ -5,7 +5,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 
-import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps, ScopedVars } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataSourceRef, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -51,8 +51,8 @@ export function setupExplore(options?: SetupOptions): {
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },
-    getInstanceSettings(name: string) {
-      return dsSettings.map((d) => d.settings).find((x) => x.name === name || x.uid === name);
+    getInstanceSettings(ref: DataSourceRef) {
+      return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
       return Promise.resolve(

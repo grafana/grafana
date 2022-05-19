@@ -118,7 +118,6 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 // TestDashAlertMigration tests the execution of the main DashAlertMigration.
 func TestDashAlertMigration(t *testing.T) {
-	t.Skip("Test is flaky")
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
@@ -444,7 +443,12 @@ func TestDashAlertMigration(t *testing.T) {
 
 				// Order of nested routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *ualert.Route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.SortSlices(func(a, b *ualert.Route) bool {
+						if a.Receiver != b.Receiver {
+							return a.Receiver < b.Receiver
+						}
+						return a.Matchers[0].Value < b.Matchers[0].Value
+					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
@@ -481,7 +485,6 @@ var (
 )
 
 // createAlertNotification creates a legacy alert notification channel for inserting into the test database.
-//nolint
 func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
 	t.Helper()
 	settingsJson := simplejson.New()
@@ -508,7 +511,6 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-//nolint
 func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
 	t.Helper()
 
@@ -566,9 +568,22 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
+func createOrg(t *testing.T, id int64) *models.Org {
+	t.Helper()
+	return &models.Org{
+		Id:      id,
+		Version: 1,
+		Name:    fmt.Sprintf("org_%d", id),
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+}
+
 // teardown cleans the input tables between test cases.
 func teardown(t *testing.T, x *xorm.Engine) {
-	_, err := x.Exec("DELETE from alert")
+	_, err := x.Exec("DELETE from org")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert_notification")
 	require.NoError(t, err)
@@ -581,6 +596,11 @@ func teardown(t *testing.T, x *xorm.Engine) {
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
+
+	orgs := []models.Org{
+		*createOrg(t, 1),
+		*createOrg(t, 2),
+	}
 
 	// Setup dashboards.
 	dashboards := []models.Dashboard{
@@ -599,6 +619,10 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 		*createDatasource(t, 3, 2, "ds3-2"),
 		*createDatasource(t, 4, 2, "ds4-2"),
 	}
+
+	_, errOrgs := x.Insert(orgs)
+	require.NoError(t, errOrgs)
+
 	_, errDataSourcess := x.Insert(dataSources)
 	require.NoError(t, errDataSourcess)
 
@@ -665,7 +689,6 @@ func boolPointer(b bool) *bool {
 }
 
 // createAlertNameMatchers creates a temporary alert_name Matchers that will be replaced during runtime with the generated rule_uid.
-//nolint
 func createAlertNameMatchers(alertName string) ualert.Matchers {
 	matcher, _ := labels.NewMatcher(labels.MatchEqual, "alert_name", alertName)
 	return ualert.Matchers(labels.Matchers{matcher})

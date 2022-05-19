@@ -1,7 +1,8 @@
 +++
-title = "Install on Windows"
+aliases = ["/docs/grafana/latest/installation/windows/"]
 description = "Install Grafana on Windows"
 keywords = ["grafana", "configuration", "documentation", "windows"]
+title = "Install on Windows"
 weight = 400
 +++
 

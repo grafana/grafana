@@ -1,8 +1,8 @@
 +++
-title = "With Grafana and Prometheus"
+aliases = ["/docs/grafana/latest/getting-started/getting-started-prometheus/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
 description = "Guide for getting started with Grafana and Prometheus"
 keywords = ["grafana", "intro", "guide", "started"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
+title = "With Grafana and Prometheus"
 weight = 300
 +++
 

@@ -149,7 +149,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
               [styles.indentGuideActive]: this.props.hoverIndentGuideIds.has(ancestorId),
             })}
             data-ancestor-id={ancestorId}
-            data-test-id="SpanTreeOffset--indentGuide"
+            data-testid="SpanTreeOffset--indentGuide"
             onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
             onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
           />
@@ -159,7 +159,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             className={styles.iconWrapper}
             onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
             onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
-            data-test-id="icon-wrapper"
+            data-testid="icon-wrapper"
           >
             {icon}
           </span>

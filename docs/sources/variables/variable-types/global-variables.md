@@ -1,7 +1,7 @@
 +++
-title = "Global variables"
+aliases = ["/docs/grafana/latest/variables/global-variables/", "/docs/grafana/latest/variables/variable-types/global-variables/"]
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "global", "standard"]
-aliases = ["/docs/grafana/latest/variables/global-variables.md"]
+title = "Global variables"
 weight = 900
 +++
 

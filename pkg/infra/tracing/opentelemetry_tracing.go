@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	jaegerExporter   string = "jaeger"
-	otlpExporter     string = "otlp"
+	jaegerExporter string = "jaeger"
+	otlpExporter   string = "otlp"
+	noopExporter   string = "noop"
+
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
 )
@@ -51,10 +53,16 @@ type Opentelemetry struct {
 	propagation string
 	log         log.Logger
 
-	tracerProvider *tracesdk.TracerProvider
+	tracerProvider tracerProvider
 	tracer         trace.Tracer
 
 	Cfg *setting.Cfg
+}
+
+type tracerProvider interface {
+	trace.TracerProvider
+
+	Shutdown(ctx context.Context) error
 }
 
 type OpentelemetrySpan struct {
@@ -72,11 +80,20 @@ func (o otelErrHandler) Handle(err error) {
 	o(err)
 }
 
+type noopTracerProvider struct {
+	trace.TracerProvider
+}
+
+func (noopTracerProvider) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
 	}
+	ots.enabled = noopExporter
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
@@ -95,7 +112,6 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 		ots.enabled = otlpExporter
 	}
 	ots.propagation = section.Key("propagation").MustString("")
-
 	return nil
 }
 
@@ -148,8 +164,12 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 	return tp, nil
 }
 
+func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
+	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
+}
+
 func (ots *Opentelemetry) initOpentelemetryTracer() error {
-	var tp *tracesdk.TracerProvider
+	var tp tracerProvider
 	var err error
 	switch ots.enabled {
 	case jaegerExporter:
@@ -163,7 +183,10 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 			return err
 		}
 	default:
-		ots.log.Error("invalid trace exporter")
+		tp, err = ots.initNoopTracerProvider()
+		if err != nil {
+			return err
+		}
 	}
 
 	// Register our TracerProvider as the global so any imported

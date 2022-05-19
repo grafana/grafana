@@ -1,6 +1,7 @@
 +++
-title = "Angular support deprecation"
+aliases = ["/docs/grafana/latest/developers/angular_deprecation/"]
 keywords = ["grafana", "documentation", "developers", "resources"]
+title = "Angular support deprecation"
 +++
 
 # Angular support deprecation
