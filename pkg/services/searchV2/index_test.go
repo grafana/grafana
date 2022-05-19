@@ -185,7 +185,7 @@ type testDocumentExtender struct {
 	ExtendDashboardFunc ExtendDashboardFunc
 }
 
-func (t *testDocumentExtender) GetDashboardExtender(_ int64, _ []string) ExtendDashboardFunc {
+func (t *testDocumentExtender) GetDashboardExtender(_ int64, _ ...string) ExtendDashboardFunc {
 	return t.ExtendDashboardFunc
 }
 

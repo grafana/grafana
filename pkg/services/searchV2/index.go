@@ -126,13 +126,7 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 	orgSearchIndexLoadTime := time.Since(started)
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
-	uids := make([]string, 0, len(dashboards))
-	for _, d := range dashboards {
-		uids = append(uids, d.uid)
-	}
-
-	dashboardExtender := i.extender.GetDashboardExtender(orgID, uids)
-
+	dashboardExtender := i.extender.GetDashboardExtender(orgID)
 	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)

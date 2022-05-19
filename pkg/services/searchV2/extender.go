@@ -13,7 +13,7 @@ type QueryExtender interface {
 }
 
 type DocumentExtender interface {
-	GetDashboardExtender(orgID int64, uids []string) ExtendDashboardFunc
+	GetDashboardExtender(orgID int64, uids ...string) ExtendDashboardFunc
 }
 
 type DashboardIndexExtender interface {
@@ -33,7 +33,7 @@ func (n NoopExtender) GetQueryExtender() QueryExtender {
 
 type NoopDocumentExtender struct{}
 
-func (n NoopDocumentExtender) GetDashboardExtender(_ int64, _ []string) ExtendDashboardFunc {
+func (n NoopDocumentExtender) GetDashboardExtender(_ int64, _ ...string) ExtendDashboardFunc {
 	return func(uid string, doc *bluge.Document) error {
 		return nil
 	}
