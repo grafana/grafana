@@ -189,9 +189,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			groupChanges := testCase.changes()
 
 			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(make(map[string][]string))
+				response := evaluator.Evaluate(make(map[string][]string))
 				require.False(t, response)
-				require.NoError(t, err)
 				executed = true
 				return false
 			})
@@ -202,9 +201,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			permissions := testCase.permissions(groupChanges)
 			executed = false
 			result, err = authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(permissions)
+				response := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
-				require.NoError(t, err)
 				executed = true
 				return true
 			})
@@ -359,8 +357,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			groupChanges := testCase.changes()
 			permissions := testCase.permissions(groupChanges)
 			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(permissions)
-				require.NoError(t, err)
+				response := evaluator.Evaluate(permissions)
 				return response
 			})
 
@@ -401,9 +398,8 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		executed := 0
 
 		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
-			response, err := evaluator.Evaluate(permissions)
+			response := evaluator.Evaluate(permissions)
 			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-			require.NoError(t, err)
 			executed++
 			return true
 		})

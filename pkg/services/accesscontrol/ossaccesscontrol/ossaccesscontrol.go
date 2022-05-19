@@ -98,7 +98,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
 }
 
 // GetUserRoles returns user permissions based on built-in roles
