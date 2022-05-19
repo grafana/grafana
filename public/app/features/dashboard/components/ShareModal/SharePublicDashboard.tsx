@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Field, Switch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 
 import {
@@ -16,18 +17,27 @@ import { ShareModalTabProps } from './types';
 interface Props extends ShareModalTabProps {}
 
 export const SharePublicDashboard = (props: Props) => {
-  const [publicDashboardConfig, setPublicDashboardConfig] = useState<PublicDashboardConfig>({ isPublic: false });
   const dashboardUid = props.dashboard.uid;
+  const orgId = contextSrv.user.orgId;
+  const [publicDashboardConfig, setPublicDashboardConfig] = useState<PublicDashboardConfig>({
+    isPublic: false,
+    publicDashboard: { uid: '', dashboardUid, orgId },
+  });
 
   useEffect(() => {
     getPublicDashboardConfig(dashboardUid)
       .then((pdc: PublicDashboardConfig) => {
+        // empty uid means there isn't a public dashboard entry yet
+        if (pdc.publicDashboard.dashboardUid === '') {
+          pdc.publicDashboard.dashboardUid = dashboardUid;
+          pdc.publicDashboard.orgId = orgId;
+        }
         setPublicDashboardConfig(pdc);
       })
       .catch(() => {
         dispatch(notifyApp(createErrorNotification('Failed to retrieve public dashboard config')));
       });
-  }, [dashboardUid]);
+  }, [dashboardUid, orgId]);
 
   const onSavePublicConfig = () => {
     if (!dashboardCanBePublic(props.dashboard)) {

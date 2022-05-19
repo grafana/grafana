@@ -355,9 +355,9 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 // to the database. It handles validations for sharing config and persistence
 func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *m.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
 	cmd := models.SavePublicDashboardConfigCommand{
-		Uid:                   dto.Uid,
+		DashboardUid:          dto.DashboardUid,
 		OrgId:                 dto.OrgId,
-		PublicDashboardConfig: dto.PublicDashboardConfig,
+		PublicDashboardConfig: *dto.PublicDashboardConfig,
 	}
 
 	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)

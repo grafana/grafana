@@ -8,17 +8,17 @@ var (
 )
 
 type PublicDashboardConfig struct {
-	IsPublic         bool `json:"isPublic"`
-	PublicDashboards []*PublicDashboard
+	IsPublic        bool            `json:"isPublic"`
+	PublicDashboard PublicDashboard `json:"publicDashboard"`
 }
 
 type PublicDashboard struct {
-	Uid               string
-	DashboardUid      string
-	OrgId             string
-	RefreshRate       int64
-	TemplateVariables string
-	TimeVariables     string
+	Uid               string `json:"uid" xorm:"uid"`
+	DashboardUid      string `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId             int64  `json:"orgId" xorm:"org_id"`
+	RefreshRate       int64  `json:"refreshRate" xorm:"refresh_rate"`
+	TemplateVariables string `json:"templateVariables" xorm:"template_variables"`
+	TimeVariables     string `json:"timeVariables" xorm:"time_variables"`
 }
 
 func (pd PublicDashboard) TableName() string {
@@ -30,7 +30,7 @@ func (pd PublicDashboard) TableName() string {
 //
 
 type SavePublicDashboardConfigCommand struct {
-	Uid                   string
+	DashboardUid          string
 	OrgId                 int64
 	PublicDashboardConfig PublicDashboardConfig
 }

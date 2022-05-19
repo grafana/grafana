@@ -8,7 +8,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 	var dashboardPublicCfgV1 = Table{
 		Name: "dashboard_public_config",
 		Columns: []*Column{
-			{Name: "uid", Type: DB_BigInt, IsPrimaryKey: true},
+			{Name: "uid", Type: DB_NVarchar, IsPrimaryKey: true},
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "refresh_rate", Type: DB_Int, Nullable: false, Default: "30"},

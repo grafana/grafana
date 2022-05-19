@@ -35,8 +35,8 @@ func (hs *HTTPServer) SavePublicDashboard(c *models.ReqContext) response.Respons
 
 	dto := dashboards.SavePublicDashboardConfigDTO{
 		OrgId:                 c.OrgId,
-		Uid:                   web.Params(c.Req)[":uid"],
-		PublicDashboardConfig: *pdc,
+		DashboardUid:          web.Params(c.Req)[":uid"],
+		PublicDashboardConfig: pdc,
 	}
 
 	pdc, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)

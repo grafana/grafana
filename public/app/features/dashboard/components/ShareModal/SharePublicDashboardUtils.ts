@@ -3,6 +3,14 @@ import { DashboardModel } from 'app/features/dashboard/state';
 
 export interface PublicDashboardConfig {
   isPublic: boolean;
+  publicDashboard: {
+    uid: string;
+    dashboardUid: string;
+    orgId: number;
+    refreshRate?: number;
+    templateVariables?: object;
+    timeVariables?: object;
+  };
 }
 
 export const dashboardCanBePublic = (dashboard: DashboardModel): boolean => {
@@ -14,8 +22,7 @@ export const getPublicDashboardConfig = async (dashboardUid: string) => {
   return getBackendSrv().get(url);
 };
 
-export const savePublicDashboardConfig = async (dashboardUid: string, conf: PublicDashboardConfig) => {
-  const payload = { isPublic: conf.isPublic };
+export const savePublicDashboardConfig = async (dashboardUid: string, publicDashboardConfig: PublicDashboardConfig) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  return getBackendSrv().post(url, payload);
+  return getBackendSrv().post(url, publicDashboardConfig);
 };
