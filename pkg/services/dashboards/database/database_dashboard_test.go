@@ -109,6 +109,14 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsFolder)
 	})
 
+	t.Run("Should be able to get a dashboard UID by ID", func(t *testing.T) {
+		setup()
+		query := models.GetDashboardRefByIdQuery{Id: savedDash.Id}
+		err := dashboardStore.GetDashboardUIDById(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, query.Result.Uid, savedDash.Uid)
+	})
+
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
 		setup()
 		query := models.GetDashboardQuery{

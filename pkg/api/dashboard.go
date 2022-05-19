@@ -443,7 +443,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
-		err := hs.SQLStore.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		err := hs.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -783,7 +783,7 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.Id = id
-		err = hs.SQLStore.GetDashboardUIDById(c.Req.Context(), q)
+		err = hs.dashboardService.GetDashboardUIDById(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}
