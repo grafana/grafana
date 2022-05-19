@@ -46,7 +46,7 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
 
   const byNameIndex: Record<string, string> = {};
 
-  for (const hue of hues) {
+  hues.forEach((hue) => {
     for (const shade of hue.shades) {
       byNameIndex[shade.name] = shade.color;
       if (shade.aliases) {
@@ -55,7 +55,7 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
         }
       }
     }
-  }
+  });
 
   // special colors
   byNameIndex['transparent'] = 'rgba(0,0,0,0)';
