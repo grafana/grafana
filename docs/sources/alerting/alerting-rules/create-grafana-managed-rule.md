@@ -1,9 +1,9 @@
 +++
-title = "Create Grafana managed alert rule"
+aliases = ["/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/"]
 description = "Create Grafana managed alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
+title = "Create Grafana managed alert rule"
 weight = 400
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/"]
 +++
 
 # Create a Grafana managed alerting rule

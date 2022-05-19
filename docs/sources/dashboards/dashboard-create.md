@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/dashboards/dashboard-create/", "/docs/grafana/latest/features/dashboard/dashboards/"]
 title = "Create dashboards"
-aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
 weight = 7
 +++
 

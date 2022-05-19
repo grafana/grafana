@@ -149,41 +149,44 @@ function legacyCreateSpanLinkFactory(
     }
 
     // Get metrics links
-    if (metricsDataSourceSettings && traceToMetricsOptions) {
+    if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       const defaultQuery = `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
-      const dataLink: DataLink<PromQuery> = {
-        title: metricsDataSourceSettings.name,
-        url: '',
-        internal: {
-          datasourceUid: metricsDataSourceSettings.uid,
-          datasourceName: metricsDataSourceSettings.name,
-          query: {
-            expr: traceToMetricsOptions.query ?? defaultQuery,
-            refId: '',
+
+      links.metricLinks = [];
+      for (const query of traceToMetricsOptions.queries) {
+        const dataLink: DataLink<PromQuery> = {
+          title: metricsDataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: metricsDataSourceSettings.uid,
+            datasourceName: metricsDataSourceSettings.name,
+            query: {
+              expr: query.query || defaultQuery,
+              refId: 'A',
+            },
           },
-        },
-      };
+        };
 
-      const link = mapInternalLinkToExplore({
-        link: dataLink,
-        internalLink: dataLink.internal!,
-        scopedVars: {},
-        range: getTimeRangeFromSpan(span, {
-          startMs: 0,
-          endMs: 0,
-        }),
-        field: {} as Field,
-        onClickFn: splitOpenFn,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      });
+        const link = mapInternalLinkToExplore({
+          link: dataLink,
+          internalLink: dataLink.internal!,
+          scopedVars: {},
+          range: getTimeRangeFromSpan(span, {
+            startMs: 0,
+            endMs: 0,
+          }),
+          field: {} as Field,
+          onClickFn: splitOpenFn,
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        });
 
-      links.metricLinks = [
-        {
+        links.metricLinks.push({
+          title: query?.name,
           href: link.href,
           onClick: link.onClick,
           content: <Icon name="chart-line" title="Explore metrics for this span" />,
-        },
-      ];
+        });
+      }
     }
 
     // Get trace links

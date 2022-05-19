@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -36,22 +37,25 @@ type Manager struct {
 	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore     store.RuleStore
-	instanceStore store.InstanceStore
-	sqlStore      sqlstore.Store
+	ruleStore        store.RuleStore
+	instanceStore    store.InstanceStore
+	sqlStore         sqlstore.Store
+	dashboardService dashboards.DashboardService
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore,
-	instanceStore store.InstanceStore, sqlStore sqlstore.Store) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
+	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
+	dashboardService dashboards.DashboardService) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics, externalURL),
-		quit:          make(chan struct{}),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           logger,
-		metrics:       metrics,
-		ruleStore:     ruleStore,
-		instanceStore: instanceStore,
-		sqlStore:      sqlStore,
+		cache:            newCache(logger, metrics, externalURL),
+		quit:             make(chan struct{}),
+		ResendDelay:      ResendDelay, // TODO: make this configurable
+		log:              logger,
+		metrics:          metrics,
+		ruleStore:        ruleStore,
+		instanceStore:    instanceStore,
+		sqlStore:         sqlStore,
+		dashboardService: dashboardService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -274,7 +278,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 			OrgId: alertRule.OrgID,
 		}
 
-		err = st.sqlStore.GetDashboard(ctx, query)
+		err = st.dashboardService.GetDashboard(ctx, query)
 		if err != nil {
 			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 			return

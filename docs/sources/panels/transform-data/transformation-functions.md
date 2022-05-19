@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/panels/reference-transformation-functions/", "/docs/grafana/latest/panels/transform-data/transformation-functions/", "/docs/grafana/latest/panels/transformations/types-options/", "/docs/sources/panels/reference-transformation-functions/"]
 title = "Transformation functions"
-aliases = ["/docs/grafana/latest/panels/transformations/types-options/", "/docs/sources/panels/reference-transformation-functions/", "/docs/grafana/latest/panels/reference-transformation-functions"]
 weight = 1000
 +++
 

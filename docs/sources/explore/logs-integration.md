@@ -1,7 +1,8 @@
 +++
-title = "Logs in Explore"
+aliases = ["/docs/grafana/latest/explore/logs-integration/"]
 description = "Logs in Explore"
-keywords = ["explore", "logs",]
+keywords = ["explore", "logs"]
+title = "Logs in Explore"
 weight = 15
 +++
 

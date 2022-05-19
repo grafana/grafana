@@ -1,10 +1,12 @@
 ---
-title: Create a service account in Grafana
-menuTitle: Create a service account
-description: 'How to create a service account in Grafana'
-weight: 50
+aliases:
+  - /docs/grafana/latest/administration/service-accounts/create-service-account/
+description: How to create a service account in Grafana
 keywords:
   - Service accounts
+menuTitle: Create a service account
+title: Create a service account in Grafana
+weight: 50
 ---
 
 # Create a service account in Grafana

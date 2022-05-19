@@ -74,8 +74,7 @@ func TestErrorResponse(t *testing.T) {
 	// NOTE: when there is an error-response, it comes with
 	// HTTP code 400, and the format seems to change between versions:
 	// 2.3.x: content-type=text/plain, content is plaintext
-	// 2.4.x: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
-	// main-branch: content-type=application/json, content is JSON
+	// 2.4.x+: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
 	// we should always be able to to return some kind of error message
 	tt := []struct {
 		name         string
@@ -95,7 +94,7 @@ func TestErrorResponse(t *testing.T) {
 			errorMessage: "parse error at line 1, col 8: something is wrong",
 		},
 		{
-			name:         "parse a non-json error body with json content type (loki 2.4.0,2.4.1,2.4.2)",
+			name:         "parse a non-json error body with json content type",
 			body:         []byte("parse error at line 1, col 8: something is wrong"),
 			contentType:  "application/json; charset=UTF-8",
 			errorMessage: "parse error at line 1, col 8: something is wrong",

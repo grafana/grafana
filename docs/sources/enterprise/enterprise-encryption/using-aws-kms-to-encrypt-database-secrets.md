@@ -1,7 +1,8 @@
 +++
-title = "AMS KMS"
+aliases = ["/docs/grafana/latest/enterprise/enterprise-encryption/using-aws-kms-to-encrypt-database-secrets/"]
 description = "Using AWS KMS to encrypt database secrets"
 keywords = ["grafana", "AWS KMS integration"]
+title = "AMS KMS"
 weight = 3
 +++
 
