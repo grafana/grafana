@@ -113,7 +113,7 @@ export class ContextSrv {
   }
 
   accessControlBuiltinRefactorEnabled(): boolean {
-    return Boolean(config.featureToggles['accesscontrol-builtins']);
+    return config.rbacBuiltInRoleAssignmentEnabled;
   }
 
   licensedAccessControlEnabled(): boolean {
