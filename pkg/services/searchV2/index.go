@@ -31,6 +31,10 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
+// While we migrate away from internal IDs... this lets us lookup values in SQL
+// NOTE: folderId is unique across all orgs
+type folderUIDLookup = func(folderId int64) (string, error)
+
 type dashboard struct {
 	id       int64
 	uid      string
@@ -43,23 +47,25 @@ type dashboard struct {
 }
 
 type dashboardIndex struct {
-	mu           sync.RWMutex
-	loader       dashboardLoader
-	perOrgReader map[int64]*bluge.Reader // orgId -> bluge reader
-	perOrgWriter map[int64]*bluge.Writer // orgId -> bluge writer
-	eventStore   eventStore
-	logger       log.Logger
-	buildSignals chan int64
+	mu             sync.RWMutex
+	loader         dashboardLoader
+	perOrgReader   map[int64]*bluge.Reader // orgId -> bluge reader
+	perOrgWriter   map[int64]*bluge.Writer // orgId -> bluge writer
+	eventStore     eventStore
+	logger         log.Logger
+	buildSignals   chan int64
+	folderIdLookup folderUIDLookup
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, folderIDs folderUIDLookup) *dashboardIndex {
 	return &dashboardIndex{
-		loader:       dashLoader,
-		eventStore:   evStore,
-		perOrgReader: map[int64]*bluge.Reader{},
-		perOrgWriter: map[int64]*bluge.Writer{},
-		logger:       log.New("dashboardIndex"),
-		buildSignals: make(chan int64),
+		loader:         dashLoader,
+		eventStore:     evStore,
+		perOrgReader:   map[int64]*bluge.Reader{},
+		perOrgWriter:   map[int64]*bluge.Writer{},
+		logger:         log.New("dashboardIndex"),
+		buildSignals:   make(chan int64),
+		folderIdLookup: folderIDs,
 	}
 }
 
@@ -314,7 +320,7 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 			folderUID = "general"
 		} else {
 			var err error
-			folderUID, err = getDashboardFolderUID(reader, dash.folderID)
+			folderUID, err = i.folderIdLookup(dash.folderID)
 			if err != nil {
 				return nil, err
 			}
@@ -447,6 +453,32 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	return dashboards, err
+}
+
+func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
+	type uidRow struct {
+		UID string
+	}
+
+	return func(folderId int64) (string, error) {
+		uid := ""
+		err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			rows := make([]*uidRow, 0)
+			sess.Table("data_source").
+				Where("id = ?", folderId).
+				Cols("uid")
+
+			err := sess.Find(&rows)
+			if err != nil {
+				return err
+			}
+			if len(rows) > 0 {
+				uid = rows[0].UID
+			}
+			return nil
+		})
+		return uid, err
+	}
 }
 
 type dashboardQueryResult struct {

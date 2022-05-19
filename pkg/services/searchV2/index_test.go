@@ -40,7 +40,7 @@ func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIn
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{})
+	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{}, func(folderId int64) (string, error) { return "x", nil })
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), 1)
 	require.NoError(t, err)

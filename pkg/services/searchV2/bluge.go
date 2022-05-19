@@ -28,7 +28,6 @@ const (
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
-	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
 )
 
 func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge.Writer, error) {
@@ -107,9 +106,7 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
-		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions()).
-		// Add legacy ID (for lookup by internal ID)
-		AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)).Aggregatable().StoreValue())
+		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
 }
 
 func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
@@ -122,9 +119,6 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
 		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
-
-	// Add legacy ID (for lookup by internal ID)
-	doc.AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)))
 
 	for _, tag := range dash.info.Tags {
 		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
@@ -196,42 +190,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	return docs
 }
 
-func getDashboardFolderUID(reader *bluge.Reader, folderID int64) (string, error) {
-	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(strconv.FormatInt(folderID, 10)).SetField(documentFieldInternalID))
-	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindFolder)).SetField(documentFieldKind))
-	req := bluge.NewAllMatches(fullQuery)
-	req.WithStandardAggregations()
-	documentMatchIterator, err := reader.Search(context.Background(), req)
-	if err != nil {
-		return "", err
-	}
-	var uid string
-	match, err := documentMatchIterator.Next()
-	for err == nil && match != nil {
-		// load the identifier for this match
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
-			if field == documentFieldUID {
-				uid = string(value)
-			}
-			return true
-		})
-		if err != nil {
-			return "", err
-		}
-		// load the next document match
-		match, err = documentMatchIterator.Next()
-	}
-	return uid, err
-}
-
 func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
 	var panelIDs []string
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
-	req.WithStandardAggregations()
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
 		return nil, err
