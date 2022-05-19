@@ -2,67 +2,6 @@
 //
 // Derived from the Thema lineage at pkg/coremodel/dashboard/lineage.cue
 
-export interface Dashboard {
-  annotations?: {
-    list: AnnotationQuery[];
-  };
-  description?: string;
-  editable: boolean;
-  fiscalYearStartMonth?: number;
-  gnetId?: string;
-  graphTooltip: DashboardCursorSync;
-  id?: number;
-  links?: DashboardLink[];
-  liveNow?: boolean;
-  panels?: Panel | {
-      type: 'graph';
-    } | {
-      type: 'heatmap';
-    } | {
-      type: 'row';
-      collapsed: boolean;
-      id: number;
-      panels: Panel | {
-          type: 'graph';
-        } | {
-          type: 'heatmap';
-        }[];
-    }[];
-  refresh?: string | false;
-  schemaVersion: number;
-  style: 'light' | 'dark';
-  tags?: string[];
-  templating?: {
-    list: VariableModel[];
-  };
-  time?: {
-    from: string;
-    to: string;
-  };
-  timepicker?: {
-    collapse: boolean;
-    enable: boolean;
-    hidden: boolean;
-    refresh_intervals: string[];
-  };
-  timezone?: 'browser' | 'utc' | '';
-  title?: string;
-  uid?: string;
-  version?: number;
-  weekStart?: string;
-}
-
-export const defaultDashboard: Partial<Dashboard> = {
-  editable: true,
-  graphTooltip: DashboardCursorSync.Off,
-  links: [],
-  panels: [],
-  schemaVersion: 36,
-  style: 'dark',
-  tags: [],
-  timezone: 'browser',
-};
-
 export interface AnnotationQuery {
   builtIn: number;
   datasource: {};
@@ -213,4 +152,65 @@ export const defaultPanel: Partial<Panel> = {
   timeRegions: [],
   transformations: [],
   transparent: false,
+};
+
+export interface Dashboard {
+  annotations?: {
+    list: AnnotationQuery[];
+  };
+  description?: string;
+  editable: boolean;
+  fiscalYearStartMonth?: number;
+  gnetId?: string;
+  graphTooltip: DashboardCursorSync;
+  id?: number;
+  links?: DashboardLink[];
+  liveNow?: boolean;
+  panels?: Panel | {
+      type: 'graph';
+    } | {
+      type: 'heatmap';
+    } | {
+      type: 'row';
+      collapsed: boolean;
+      id: number;
+      panels: Panel | {
+          type: 'graph';
+        } | {
+          type: 'heatmap';
+        }[];
+    }[];
+  refresh?: string | false;
+  schemaVersion: number;
+  style: 'light' | 'dark';
+  tags?: string[];
+  templating?: {
+    list: VariableModel[];
+  };
+  time?: {
+    from: string;
+    to: string;
+  };
+  timepicker?: {
+    collapse: boolean;
+    enable: boolean;
+    hidden: boolean;
+    refresh_intervals: string[];
+  };
+  timezone?: 'browser' | 'utc' | '';
+  title?: string;
+  uid?: string;
+  version?: number;
+  weekStart?: string;
+}
+
+export const defaultDashboard: Partial<Dashboard> = {
+  editable: true,
+  graphTooltip: DashboardCursorSync.Off,
+  links: [],
+  panels: [],
+  schemaVersion: 36,
+  style: 'dark',
+  tags: [],
+  timezone: 'browser',
 };

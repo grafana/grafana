@@ -24,7 +24,6 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
@@ -255,7 +254,9 @@ func generateTypescript(path string, ls linsrc) error {
 		return fmt.Errorf("cuetsy top gen failed: %w", err)
 	}
 
-	parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
+	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
+	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
+	parts.Nodes = append(parts.Nodes, top.T, top.D)
 	str := fmt.Sprintf(genHeader, ls.relpath) + fmt.Sprint(parts)
 
 	// Ensure parent directory exists
