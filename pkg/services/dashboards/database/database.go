@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -902,5 +904,25 @@ func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.
 		}
 		query.Result = us
 		return nil
+	})
+}
+
+func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
+			return models.ErrCommandValidationFailed
+		}
+
+		var dashboards = make([]*models.Dashboard, 0)
+		var session *xorm.Session
+		if len(query.DashboardIds) > 0 {
+			session = sess.In("id", query.DashboardIds)
+		} else {
+			session = sess.In("uid", query.DashboardUIds)
+		}
+
+		err := session.Find(&dashboards)
+		query.Result = dashboards
+		return err
 	})
 }

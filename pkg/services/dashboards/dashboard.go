@@ -18,6 +18,7 @@ type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
@@ -45,13 +46,14 @@ type DashboardProvisioningService interface {
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 // Store is a dashboard store.
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)

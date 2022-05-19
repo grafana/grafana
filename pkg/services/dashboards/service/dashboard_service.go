@@ -518,3 +518,7 @@ func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *models.
 func (dr *DashboardServiceImpl) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	return dr.dashboardStore.GetDashboardUIDById(ctx, query)
 }
+
+func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return dr.dashboardStore.GetDashboards(ctx, query)
+}

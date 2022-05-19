@@ -127,6 +127,19 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
+	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
+		setup()
+		query := models.GetDashboardsQuery{DashboardIds: []int64{savedDash.Id, savedDash2.Id}}
+		err := dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		assert.Equal(t, len(query.Result), 2)
+
+		query = models.GetDashboardsQuery{DashboardUIds: []string{savedDash.Uid, savedDash2.Uid}}
+		err = dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		assert.Equal(t, len(query.Result), 2)
+	})
+
 	t.Run("Should be able to delete dashboard", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, false, "delete this")

@@ -72,6 +72,20 @@ func (_m *FakeDashboardStore) GetDashboardUIDById(ctx context.Context, query *mo
 	return r0
 }
 
+// GetDashboards provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardsQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDashboardsByPluginID provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 	ret := _m.Called(ctx, query)
