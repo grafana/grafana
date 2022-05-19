@@ -430,7 +430,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}
-		err := hs.SQLStore.GetDashboard(c.Req.Context(), query)
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
 			starredDashboards = append(starredDashboards, query.Result)
 		}
