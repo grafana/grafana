@@ -12552,14 +12552,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@welldone-software/why-did-you-render@npm:6.2.3":
-  version: 6.2.3
-  resolution: "@welldone-software/why-did-you-render@npm:6.2.3"
+"@welldone-software/why-did-you-render@npm:7.0.1":
+  version: 7.0.1
+  resolution: "@welldone-software/why-did-you-render@npm:7.0.1"
   dependencies:
     lodash: ^4
   peerDependencies:
-    react: ^16 || ^17
-  checksum: 6c012f0a67c94c19cd2e8221438d547990a26b0593b0d1e8fd57084253d7cd305f4904e5bda984fd38416390b35b95fb0c3631fa485bd41b0b317568f080376c
+    react: ^16 || ^17 || ^18
+  checksum: 0bfc59f1f8613e7dc5fbf189305e88b01c50ee278df2c9b69082ed6abcf8d71758eb468d027235916c6126934a755d6547e9704883007236544763fffad6f48c
   languageName: node
   linkType: hard
 
@@ -21174,7 +21174,7 @@ __metadata:
     "@visx/scale": 2.2.2
     "@visx/shape": 2.10.0
     "@visx/tooltip": 2.10.0
-    "@welldone-software/why-did-you-render": 6.2.3
+    "@welldone-software/why-did-you-render": 7.0.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.6
     angular: 1.8.2
     angular-bindonce: 0.3.1
