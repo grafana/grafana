@@ -359,7 +359,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 		Custom: resultTypeToCustomMeta(resultType),
 	}
 	rsp := &backend.DataResponse{
-		Frames: []*data.Frame{frame},
+		Frames: []*data.Frame{},
 	}
 
 	for iter.ReadArray() {
@@ -420,14 +420,11 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 				frame.Name = "" // only set the name if useful
 			}
 			rsp.Frames = append(rsp.Frames, frame)
-		} else {
-			frame := data.NewFrame("", timeField, valueField)
-			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMany,
-				Custom: resultTypeToCustomMeta(resultType),
-			}
-			rsp.Frames = append(rsp.Frames, frame)
 		}
+	}
+
+	if len(rsp.Frames) == 0 {
+		rsp.Frames = append(rsp.Frames, frame)
 	}
 
 	return rsp

@@ -3,6 +3,46 @@
     {
       "schema": {
         "meta": {
+          "type": "timeseries-wide",
+          "custom": {
+            "resultType": "matrix"
+          }
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            
+          ],
+          [
+            
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
           "type": "heatmap-cells-sparse"
         },
         "fields": [

@@ -43,16 +43,18 @@ func addMetadataToFrame(q *models.Query, frame *data.Frame) {
 	if len(frame.Fields) < 2 {
 		return
 	}
-	frame.Name = getName(q, frame)
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
-	if frame.Name != "" {
-		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: frame.Name}
+	for _, f := range frame.Fields {
+		if f.Name != data.TimeSeriesTimeFieldName {
+			f.Name = getName(q, f)
+		}
 	}
+
 }
 
 // this is based on the logic from the String() function in github.com/prometheus/common/model.go
-func metricNameFromLabels(f *data.Frame) string {
-	labels := f.Fields[1].Labels
+func metricNameFromLabels(f *data.Field) string {
+	labels := f.Labels
 	metricName, hasName := labels["__name__"]
 	numLabels := len(labels) - 1
 	if !hasName {
@@ -81,9 +83,9 @@ func executedQueryString(q *models.Query) string {
 	return "Expr: " + q.Expr + "\n" + "Step: " + q.Step.String()
 }
 
-func getName(q *models.Query, frame *data.Frame) string {
-	labels := frame.Fields[1].Labels
-	legend := metricNameFromLabels(frame)
+func getName(q *models.Query, field *data.Field) string {
+	labels := field.Labels
+	legend := metricNameFromLabels(field)
 
 	if q.LegendFormat == legendFormatAuto && len(labels) > 0 {
 		return ""

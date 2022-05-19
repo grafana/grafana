@@ -3,6 +3,416 @@
     {
       "schema": {
         "meta": {
+          "type": "timeseries-wide",
+          "custom": {
+            "resultType": "matrix"
+          }
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_cardinality_label_names"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_cardinality_label_values"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_label_name_values"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_labels"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_metadata"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_query"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_query_exemplars"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_query_range"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_rules"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_series"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_push"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_rules"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_v1_rules"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "root"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_label_name_values"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_labels"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_query"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_query_range"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_series"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_push"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_v1_push"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "prometheus_api_v1_query"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "prometheus_api_v1_query_range"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "root"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
           "type": "heatmap-cells-sparse"
         },
         "fields": [
