@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
 import React from 'react';
 import selectEvent from 'react-select-event';
@@ -11,23 +11,19 @@ import { ConfigEditor, Props } from './ConfigEditor';
 
 const ds = setupMockedDataSource();
 
-const describeLogGroup = jest.fn().mockResolvedValue(['foo', 'bar']);
-
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
-    loadDatasource: jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        getRegions: jest.fn().mockResolvedValue([
-          {
-            label: 'ap-east-1',
-            value: 'ap-east-1',
-          },
-        ]),
-        describeLogGroup,
-        getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
-        getList: jest.fn().mockImplementation(() => []),
-      })
-    ),
+    loadDatasource: jest.fn().mockResolvedValue({
+      getRegions: jest.fn().mockResolvedValue([
+        {
+          label: 'ap-east-1',
+          value: 'ap-east-1',
+        },
+      ]),
+      describeLogGroups: jest.fn().mockResolvedValue(['foo', 'bar']),
+      getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
+      getList: jest.fn().mockImplementation(() => []),
+    }),
     getList: jest.fn().mockImplementation(() => []),
   }),
 }));
@@ -172,25 +168,15 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should call describeLogGroups when multiselect isopened', async () => {
-    // const wrapper = setup();
-    // const logsSelect = wrapper.find({ label: 'Default Log Groups' });
-    // expect(logsSelect.length).toEqual(1);
-    // logsSelect.simulate('mouseDown', {
-    //   button: 0,
-    // });
-
+  it('should load log groups when multiselect is opened', async () => {
     (window as any).grafanaBootData = {
       settings: {},
     };
 
-    await act(async () => {
-      render(<ConfigEditor {...props} />);
-    });
-    const multiselect = await screen.findByLabelText('Default Log Groups');
-    //await selectOptionInTest(multiselect, 'foo');
+    render(<ConfigEditor {...props} />);
+    const multiselect = await screen.findByLabelText('Log Groups');
+    await screen.findByText('us-east-2');
     selectEvent.openMenu(multiselect);
     expect(await screen.findByText('foo')).toBeInTheDocument();
-    expect(describeLogGroup).toHaveBeenCalled();
   });
 });

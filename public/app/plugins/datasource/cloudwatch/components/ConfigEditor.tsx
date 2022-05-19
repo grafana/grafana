@@ -118,6 +118,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
         >
           <MultiSelect
+            inputId="default-log-groups"
             value={defaultLogGroups ?? []}
             width={60}
             onChange={(groups) => {
