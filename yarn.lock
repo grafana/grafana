@@ -4396,7 +4396,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.5
-    sinon: 13.0.1
+    sinon: 14.0.0
     tinycolor2: 1.4.2
     tslib: 2.4.0
     typescript: 4.6.4
@@ -4460,7 +4460,7 @@ __metadata:
     typescript: 4.6.4
     uuid: 8.3.2
     webpack: 5.72.0
-    yaml: ^1.8.3
+    yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
   languageName: unknown
@@ -4808,7 +4808,7 @@ __metadata:
     monaco-editor: ^0.31.1
     ol: 6.14.1
     postcss: 8.4.12
-    postcss-loader: 6.2.1
+    postcss-loader: 7.0.0
     prismjs: 1.28.0
     process: ^0.11.10
     raw-loader: 4.0.2
@@ -4989,7 +4989,7 @@ __metadata:
     react-dom: 17.0.2
     react-icons: 2.2.7
     reselect: 4.1.5
-    sinon: 13.0.1
+    sinon: 14.0.0
     tinycolor2: 1.4.2
     tslib: 2.4.0
     tween-functions: ^1.2.0
@@ -7959,12 +7959,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@sinonjs/fake-timers@npm:9.0.0"
+"@sinonjs/fake-timers@npm:^9.1.2":
+  version: 9.1.2
+  resolution: "@sinonjs/fake-timers@npm:9.1.2"
   dependencies:
     "@sinonjs/commons": ^1.7.0
-  checksum: b410feff05afe879798056809dc61941fb2703af74cfeee19a46f10f3bebe8cb734b70cdc406c555d7bfc7cd6063fdcb3bd8a8097c55b4201624a201ae7f2035
+  checksum: 7d3aef54e17c1073101cb64d953157c19d62a40e261a30923fa1ee337b049c5f29cc47b1f0c477880f42b5659848ba9ab897607ac8ea4acd5c30ddcfac57fca6
   languageName: node
   linkType: hard
 
@@ -21299,7 +21299,7 @@ __metadata:
     papaparse: 5.3.2
     pluralize: ^8.0.0
     postcss: 8.4.12
-    postcss-loader: 6.2.1
+    postcss-loader: 7.0.0
     postcss-reporter: 7.0.5
     postcss-scss: 4.0.3
     prettier: 2.6.0
@@ -21352,7 +21352,7 @@ __metadata:
     search-query-parser: 1.6.0
     selecto: 1.16.2
     semver: ^7.1.3
-    sinon: 13.0.1
+    sinon: 14.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.1
@@ -29440,17 +29440,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-loader@npm:6.2.1":
-  version: 6.2.1
-  resolution: "postcss-loader@npm:6.2.1"
+"postcss-loader@npm:7.0.0":
+  version: 7.0.0
+  resolution: "postcss-loader@npm:7.0.0"
   dependencies:
     cosmiconfig: ^7.0.0
     klona: ^2.0.5
-    semver: ^7.3.5
+    semver: ^7.3.7
   peerDependencies:
     postcss: ^7.0.0 || ^8.0.1
     webpack: ^5.0.0
-  checksum: e40ae79c3e39df37014677a817b001bd115d8b10dedf53a07b97513d93b1533cd702d7a48831bdd77b9a9484b1ec84a5d4a723f80e83fb28682c75b5e65e8a90
+  checksum: b8e51e99898cae8400de8690752b64af2ca1e3eed7c0d696c9e1ec6fc45dd334c958748247632c48109a519fb59f7545d0b8fe4b52479d982ca3ec4eb8e3b0c9
   languageName: node
   linkType: hard
 
@@ -34270,17 +34270,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:13.0.1":
-  version: 13.0.1
-  resolution: "sinon@npm:13.0.1"
+"sinon@npm:14.0.0":
+  version: 14.0.0
+  resolution: "sinon@npm:14.0.0"
   dependencies:
     "@sinonjs/commons": ^1.8.3
-    "@sinonjs/fake-timers": ^9.0.0
+    "@sinonjs/fake-timers": ^9.1.2
     "@sinonjs/samsam": ^6.1.1
     diff: ^5.0.0
     nise: ^5.1.1
     supports-color: ^7.2.0
-  checksum: d0d90fdc5aea4170b9cbebaf0e2f6cb04c0feeadc4f5d1dfe1eaf22162637840dd3c989c5386a904b8995f44a9ca6bab61bd1bfac40e425112737f5b12b2a2a1
+  checksum: b2aeeb0cdc2cd30f904ccbcd60bae4e1b3dcf3aeeface09c1832db0336be0dbaa461f3b91b769bed84f05c83d45d5072a9da7ee14bc7289daeda2a1214fe173c
   languageName: node
   linkType: hard
 
@@ -38740,10 +38740,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2, yaml@npm:^1.8.3":
+"yaml@npm:^1.10.0, yaml@npm:^1.10.2, yaml@npm:^1.7.2":
   version: 1.10.2
   resolution: "yaml@npm:1.10.2"
   checksum: ce4ada136e8a78a0b08dc10b4b900936912d15de59905b2bf415b4d33c63df1d555d23acb2a41b23cf9fb5da41c256441afca3d6509de7247daa062fd2c5ea5f
+  languageName: node
+  linkType: hard
+
+"yaml@npm:^2.0.0":
+  version: 2.1.0
+  resolution: "yaml@npm:2.1.0"
+  checksum: 59323a8b51b10d9ad0eab951e7a1f315f1076c123b08ffe60441add1df4fa3433b1d5783b21c50a65536e9d853b23fa567921dbd4bc0d711be2dbf14a06be03b
   languageName: node
   linkType: hard
 
