@@ -87,7 +87,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	if r.DashboardUID == nil {
 		return nil, ErrNoDashboard
 	}
-	if r.PanelID == nil {
+	if r.PanelID == nil || *r.PanelID == 0 {
 		return nil, ErrNoPanel
 	}
 
