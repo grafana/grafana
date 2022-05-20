@@ -19,11 +19,11 @@ import (
 	"text/template"
 
 	"cuelang.org/go/cue/cuecontext"
-	cueformat "cuelang.org/go/cue/format"
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
@@ -33,6 +33,8 @@ import (
 var lib = thema.NewLibrary(cuecontext.New())
 
 const sep = string(filepath.Separator)
+
+var diff bool
 
 // Generate Go and Typescript implementations for all coremodels, and populate the
 // coremodel static registry.
@@ -51,6 +53,13 @@ func main() {
 	// TODO this binds us to only having coremodels in a single directory. If we need more, compgen is the way
 	grootp := strings.Split(cwd, sep)
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+
+	// For now, call into the grafana-cli code.
+	// TODO rip this out of grafana-cli and put it...somewhere
+	if err = commands.DoCuetsify(groot, diff); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to generate typescript for plugins: %s", err)
+		os.Exit(1)
+	}
 
 	cmroot := filepath.Join(groot, "pkg", "coremodel")
 	tsroot := filepath.Join(groot, "packages", "grafana-schema", "src", "schema")

@@ -64,13 +64,19 @@ var skipPaths = []string{
 
 const prefix = "/"
 
-//nolint: gocyclo
+// nolint: gocyclo
 func (cmd Command) generateTypescript(c utils.CommandLine) error {
 	root := c.String("grafana-root")
 	if root == "" {
 		return gerrors.New("must provide path to the root of a Grafana repository checkout")
 	}
+	return DoCuetsify(root, c.Bool("diff"))
+}
 
+// DoCuetsify runs cuetsy against plugins' models.cue files.
+//
+// FIXME This is only exposed temporarily while it's relocated to a new home.
+func DoCuetsify(root string, diff bool) error {
 	var fspaths load.BaseLoadPaths
 	var err error
 
@@ -91,8 +97,9 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 	clcfg := &cload.Config{
 		Overlay: overlay,
 		// FIXME these module paths won't work for things not under our cue.mod - AKA third-party plugins
-		// ModuleRoot: prefix,
-		Module: "github.com/grafana/grafana",
+		ModuleRoot: prefix,
+		Module:     "github.com/grafana/grafana",
+		Package:    "grafanaschema",
 	}
 
 	// FIXME hardcoding paths to exclude is not the way to handle this
@@ -131,7 +138,7 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 				return nil
 			}
 			seen[dir] = true
-			clcfg.Dir = dir
+			clcfg.Dir = filepath.Join(root, dir)
 			// FIXME Horrible hack to figure out the identifier used for
 			// imported packages - intercept the parser called by the loader to
 			// look at the ast.Files on their way in to building.
@@ -228,7 +235,6 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 		return gerrors.New(errors.Details(err, nil))
 	}
 
-	diff := c.Bool("diff")
 	var derr bool
 	for of, b := range outfiles {
 		p := filepath.Join(root, of)
