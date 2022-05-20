@@ -8,7 +8,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
-import { isDashboardPubliclyViewed } from '../../utils/publicDashboards';
+import { isPublicDashboardView } from '../../utils/publicDashboards';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
@@ -61,7 +61,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
-                {!isDashboardPubliclyViewed() && (
+                {!isPublicDashboardView() && (
                   <div data-testid="panel-dropdown">
                     <Icon name="angle-down" className="panel-menu-toggle" />
                     <PanelHeaderMenuWrapper

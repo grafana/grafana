@@ -21,7 +21,7 @@ import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
-import { isDashboardPubliclyViewed } from './features/dashboard/utils/publicDashboards';
+import { isPublicDashboardView } from './features/dashboard/utils/publicDashboards';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
@@ -108,20 +108,18 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {!isDashboardPubliclyViewed() && config.featureToggles.commandPalette && <CommandPalette />}
+                    {!isPublicDashboardView() && config.featureToggles.commandPalette && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {!isDashboardPubliclyViewed() && ready && (
-                          <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>
-                        )}
+                        {!isPublicDashboardView() && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
                           ))}
 
                           <AngularRoot />
-                          {!isDashboardPubliclyViewed() && <AppNotificationList />}
-                          {!isDashboardPubliclyViewed() && <SearchWrapper />}
+                          {!isPublicDashboardView() && <AppNotificationList />}
+                          {!isPublicDashboardView() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
