@@ -31,7 +31,7 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
     if (excludeOrgs) {
       let idArray = excludeOrgs.map((anOrg) => anOrg.orgId);
       const filteredOrgs = allOrgs.filter((item) => {
-        return idArray.indexOf(item.value.id) === -1;
+        return !idArray.includes(item.value.id);
       });
       return filteredOrgs;
     } else {
