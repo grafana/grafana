@@ -13,7 +13,6 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
   validateFieldConfig,
-  ValueMapping,
   VizOrientation,
 } from '@grafana/data';
 import { OptionsWithTextFormatting } from '@grafana/schema';
@@ -322,12 +321,4 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
   sortThresholds(copy);
   copy[0].value = -Infinity;
   return copy;
-}
-
-/**
- * @deprecated use convertOldAngularValueMappings instead
- * Convert the angular single stat mapping to new react style
- */
-export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
-  return convertOldAngularValueMappings(panel);
 }
