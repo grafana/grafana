@@ -37,4 +37,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   sigV4AuthToggleEnabled?: boolean;
   /** Azure authentication settings **/
   azureAuthSettings?: AzureAuthSettings;
+  /** If SIGV4 is enabled, provide an editor for SIGV4 connection config  **/
+  renderSigV4Editor?: React.ReactNode;
 }
