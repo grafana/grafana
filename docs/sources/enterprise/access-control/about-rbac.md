@@ -48,11 +48,16 @@ Each basic role is comprised of a number of _permissions_. For example, the view
 - `Action: annotations:write, Scope: annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
 - `Action: annotations:delete, Scope: annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
-You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
-You cannot delete basic roles.
-
 > **Note:** You can't have a Grafana user without a basic role assigned.
 
+### Basic role modification
+
+You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. You can't delete basic roles.
+
+Note that any modification to any of these basic role is not propagated to the other basic roles.
+For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
+
+For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
 To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
 
 ## Fixed roles
