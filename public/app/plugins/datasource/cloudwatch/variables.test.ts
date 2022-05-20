@@ -74,11 +74,24 @@ describe('variables', () => {
       expect(getDimensionValues).not.toBeCalled();
       expect(result).toEqual([]);
     });
+
     it('should run if values are set', async () => {
       const result = await variables.execute(query);
       expect(getDimensionValues).toBeCalledWith(query.region, query.namespace, query.metricName, query.dimensionKey, {
         a: 'b',
       });
+      expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
+    });
+
+    it('should replace empty array filters with empty object', async () => {
+      const result = await variables.execute({ ...query, dimensionFilters: '[]' });
+      expect(getDimensionValues).toBeCalledWith(
+        query.region,
+        query.namespace,
+        query.metricName,
+        query.dimensionKey,
+        {}
+      );
       expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
     });
   });
@@ -129,6 +142,12 @@ describe('variables', () => {
       expect(getEc2InstanceAttribute).toBeCalledWith(query.region, query.attributeName, { env: ['b'] });
       expect(result).toEqual([{ text: 'g', value: 'g', expandable: true }]);
     });
+
+    it('should replace empty array filters with empty object', async () => {
+      const result = await variables.execute({ ...query, ec2Filters: '[]' });
+      expect(getEc2InstanceAttribute).toBeCalledWith(query.region, query.attributeName, {});
+      expect(result).toEqual([{ text: 'g', value: 'g', expandable: true }]);
+    });
   });
 
   describe('resource arns', () => {
@@ -152,6 +171,12 @@ describe('variables', () => {
     it('should run if instance id set', async () => {
       const result = await variables.execute(query);
       expect(getResourceARNs).toBeCalledWith(query.region, query.resourceType, { a: ['InstanceId', 'InstanceType'] });
+      expect(result).toEqual([{ text: 'h', value: 'h', expandable: true }]);
+    });
+
+    it('should replace empty array tags with empty object', async () => {
+      const result = await variables.execute({ ...query, tags: '[]' });
+      expect(getResourceARNs).toBeCalledWith(query.region, query.resourceType, {});
       expect(result).toEqual([{ text: 'h', value: 'h', expandable: true }]);
     });
   });
