@@ -6,10 +6,9 @@ import { CustomScrollbar, Icon, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   children: React.ReactNode;
-  initializeAtBottom?: boolean;
 }
 
-export const NavBarScrollContainer = ({ children, initializeAtBottom = false }: Props) => {
+export const NavBarScrollContainer = ({ children }: Props) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
   const [showScrollBottomIndicator, setShowBottomScrollIndicator] = useState(false);
   const scrollTopMarker = useRef<HTMLDivElement>(null);
@@ -37,12 +36,7 @@ export const NavBarScrollContainer = ({ children, initializeAtBottom = false }: 
   }, []);
 
   return (
-    <CustomScrollbar
-      initializeAtBottom={initializeAtBottom}
-      className={styles.scrollContainer}
-      hideVerticalTrack
-      hideHorizontalTrack
-    >
+    <CustomScrollbar className={styles.scrollContainer} hideVerticalTrack hideHorizontalTrack>
       <div
         className={cx(styles.scrollTopIndicator, {
           [styles.scrollIndicatorVisible]: showScrollTopIndicator,

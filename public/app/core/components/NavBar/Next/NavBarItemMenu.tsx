@@ -67,9 +67,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const contents = [itemComponents, subTitleComponent];
   const contentComponent = (
-    <NavBarScrollContainer initializeAtBottom={reverseMenuDirection}>
-      {reverseMenuDirection ? contents.reverse() : contents}
-    </NavBarScrollContainer>
+    <NavBarScrollContainer>{reverseMenuDirection ? contents.reverse() : contents}</NavBarScrollContainer>
   );
 
   const menu = [headerComponent, contentComponent];
@@ -90,8 +88,8 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       display: flex;
       flex-direction: column;
       list-style: none;
-      max-height: 300px;
-      max-width: 400px;
+      max-height: 400px;
+      max-width: 300px;
       min-width: 140px;
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
