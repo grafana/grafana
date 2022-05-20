@@ -219,7 +219,7 @@ specify a tag or wildcard (leave empty should also work)
 
 ## Get Grafana metrics into Graphite
 
-Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md">}}).
+Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
 
 ## Configure the data source with provisioning
 

@@ -48,7 +48,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. Click **Notification policies**.
 1. From the **Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
 1. To add a top level specific policy, go to the **Specific routing** section and click **New specific policy**.
-1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["Labels and label matchers"]({{< relref "../fundamentals/labels-and-label-matchers.md" >}}).
+1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["Labels and label matchers"]({{< relref "../fundamentals/annotation-label/labels-and-label-matchers.md" >}}).
 1. In **Contact point**, add the [contact point]({{< relref "../contact-points/_index.md" >}}) to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching nested policies even after the alert matched the parent policy. When this option is enabled, you can get more than one notification. Use it to send notification to a catch-all contact point as well as to one of more specific contact points handled by nested policies.
 1. Optionally, enable **Override grouping** to specify the same grouping as the root policy. If this option is not enabled, the root policy grouping is used.
