@@ -140,7 +140,7 @@
     "@types/react-dom": "17.0.14",
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.12",
-    "@types/react-test-renderer": "17.0.1",
+    "@types/react-test-renderer": "18.0.0",
     "@types/react-transition-group": "4.4.4",
     "@types/react-window": "1.8.5",
     "@types/slate": "0.47.2",
