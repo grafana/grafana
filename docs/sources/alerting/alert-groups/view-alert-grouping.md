@@ -2,15 +2,13 @@
 aliases = ["/docs/grafana/latest/alerting/alert-groups/", "/docs/grafana/latest/alerting/unified-alerting/alert-groups/"]
 description = "Alert groups"
 keywords = ["grafana", "alerting", "alerts", "groups"]
-title = "Alert groups"
+title = "View alert groupings"
 weight = 445
 +++
 
-# Alert groups
+# View alert groupings
 
-Alert groups show grouped alerts from an Alertmanager instance. By default, the alerts are grouped by the label keys for the root policy in [notification policies]({{< relref "./notifications/_index.md" >}}). Grouping common alerts into a single alert group prevents duplicate alerts from being fired.
-
-## View alert groupings
+To view alert groupings:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Alert grouping** to open the page listing existing groups.

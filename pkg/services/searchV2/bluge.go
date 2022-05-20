@@ -35,17 +35,37 @@ const (
 	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
 )
 
-func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge.Writer, error) {
+func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Reader, *bluge.Writer, error) {
 	writer, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening writer: %v", err)
 	}
 	// Not closing Writer here since we use it later while processing dashboard change events.
 
-	batch := bluge.NewBatch()
-
 	start := time.Now()
 	label := start
+
+	batch := bluge.NewBatch()
+
+	// In order to reduce memory usage while initial indexing we are limiting
+	// the size of batch here.
+	docsInBatch := 0
+	maxBatchSize := 100
+
+	flushIfRequired := func(force bool) error {
+		docsInBatch++
+		needFlush := force || (maxBatchSize > 0 && docsInBatch >= maxBatchSize)
+		if !needFlush {
+			return nil
+		}
+		err := writer.Batch(batch)
+		if err != nil {
+			return err
+		}
+		docsInBatch = 0
+		batch.Reset()
+		return nil
+	}
 
 	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
@@ -54,7 +74,13 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 			continue
 		}
 		doc := getFolderDashboardDoc(dash)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, nil, err
+		}
 		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, nil, err
+		}
 		uid := dash.uid
 		if uid == "" {
 			uid = "general"
@@ -70,14 +96,26 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 		folderUID := folderIdLookup[dash.folderID]
 		location := folderUID
 		doc := getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, nil, err
+		}
 		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, nil, err
+		}
 
 		// Index each panel in dashboard.
 		location += "/" + dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
+			if err := flushIfRequired(false); err != nil {
+				return nil, nil, err
+			}
 		}
+	}
+	if err := flushIfRequired(true); err != nil {
+		return nil, nil, err
 	}
 	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
 	label = time.Now()
@@ -153,8 +191,6 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 				SearchTermPositions())
 		}
 	}
-
-	// TODO: enterprise, add dashboard sorting fields
 
 	return doc
 }
@@ -281,7 +317,7 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
+func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
 	// Folder listing structure
@@ -387,8 +423,10 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	}
 	req.WithStandardAggregations()
 
-	// SortBy([]string{"-_score", "name"})
-	//	req.SortBy([]string{documentFieldName})
+	// Field must be .Sortable() for sort to work with it.
+	if q.Sort != "" {
+		req.SortBy([]string{q.Sort})
+	}
 
 	for _, t := range q.Facet {
 		lim := t.Limit
@@ -443,6 +481,9 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
 
+	fieldLen := 0
+	ext := extender.GetFramer(frame)
+
 	locationItems := make(map[string]bool, 50)
 
 	// iterate through the document matches
@@ -489,6 +530,8 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 				ds_uids = append(ds_uids, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
+			default:
+				return ext(field, value)
 			}
 			return true
 		})
@@ -536,6 +579,14 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 				fExplain.Append(&jsb)
 			} else {
 				fExplain.Append(nil)
+			}
+		}
+
+		// extend fields to match the longest field
+		fieldLen++
+		for _, f := range frame.Fields {
+			if fieldLen > f.Len() {
+				f.Extend(fieldLen - f.Len())
 			}
 		}
 

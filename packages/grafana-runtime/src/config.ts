@@ -58,6 +58,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
   rbacEnabled = true;
+  rbacBuiltInRoleAssignmentEnabled = false;
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
