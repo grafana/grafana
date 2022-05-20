@@ -200,11 +200,7 @@ export const urlUtil = {
  * that is that used as a state of a single Explore pane so it does not represent full Explore URL.
  *
  * @param urlState
- * @param compact this parameter is deprecated and will be removed in a future release.
  */
-export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact !== undefined) {
-    console.warn('`compact` parameter is deprecated and will be removed in a future release');
-  }
+export function serializeStateToUrlParam(urlState: ExploreUrlState): string {
   return JSON.stringify(urlState);
 }
