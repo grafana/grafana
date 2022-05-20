@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { updateConfig } from '../../../../core/config';
 import { createEmptyQueryResponse } from '../../../explore/state/utils';
 import { DashboardModel, PanelModel } from '../../state';
 
@@ -18,6 +19,8 @@ let dashboardModel = new DashboardModel({}, { isPublic: true });
 let panelData = createEmptyQueryResponse();
 
 describe('Panel Header', () => {
+  updateConfig({ featureToggles: { publicDashboards: true } });
+
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
     window.history.pushState({}, 'Test Title', '/p/abc/123');
 

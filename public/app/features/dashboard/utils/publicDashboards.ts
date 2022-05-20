@@ -1,5 +1,5 @@
-import { config } from '../../../core/config';
+import { getConfig } from '../../../core/config';
 
 export const isPublicDashboardView = () => {
-  return config.featureToggles.publicDashboards && window.location.pathname.split('/')[1] === 'p';
+  return getConfig().featureToggles.publicDashboards && window.location.pathname.split('/')[1] === 'p';
 };
