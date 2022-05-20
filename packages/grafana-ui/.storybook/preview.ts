@@ -18,7 +18,7 @@ import addons from '@storybook/addons';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 const handleThemeChange = (theme: any) => {
-  if (theme !== 'light' || theme !== 'fusebit') {
+  if (theme !== 'light') {
     lightTheme.unuse();
     darkTheme.use();
   } else {
