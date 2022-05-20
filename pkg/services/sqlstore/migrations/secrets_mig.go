@@ -53,6 +53,8 @@ func addSecretsMigration(mg *migrator.Migrator) {
 			Name:   "name",
 			Type:   migrator.DB_NVarchar,
 			Length: 100,
+			Default:  "''",
+			Nullable: false,
 		},
 	))
 
