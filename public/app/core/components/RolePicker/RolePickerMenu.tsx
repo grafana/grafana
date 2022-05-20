@@ -188,7 +188,7 @@ export const RolePickerMenu = ({
         <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
           {showBuiltInRole && (
             <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Built-in roles</div>
+              <div className={customStyles.groupHeader}>Basic roles</div>
               <RadioButtonGroup
                 className={customStyles.builtInRoleSelector}
                 options={BuiltinRoleOption}

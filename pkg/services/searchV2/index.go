@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,9 +53,10 @@ type dashboardIndex struct {
 	eventStore   eventStore
 	logger       log.Logger
 	buildSignals chan int64
+	extender     DocumentExtender
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender) *dashboardIndex {
 	return &dashboardIndex{
 		loader:       dashLoader,
 		eventStore:   evStore,
@@ -60,6 +64,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		perOrgWriter: map[int64]*bluge.Writer{},
 		logger:       log.New("dashboardIndex"),
 		buildSignals: make(chan int64),
+		extender:     extender,
 	}
 }
 
@@ -79,13 +84,10 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		lastEventID = lastEvent.Id
 	}
 
-	// Build on start for orgID 1 but keep lazy for others.
-	started := time.Now()
-	numDashboards, err := i.buildOrgIndex(ctx, 1)
+	err = i.buildInitialIndex(ctx)
 	if err != nil {
-		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+		return fmt.Errorf("can't build initial dashboard search index: %w", err)
 	}
-	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", numDashboards)
 
 	for {
 		select {
@@ -111,6 +113,93 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 }
 
+func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
+	memCtx, memCancel := context.WithCancel(ctx)
+	if os.Getenv("GF_SEARCH_DEBUG") != "" {
+		go i.debugMemStats(memCtx, 200*time.Millisecond)
+	}
+
+	// Build on start for orgID 1 but keep lazy for others.
+	started := time.Now()
+	numDashboards, err := i.buildOrgIndex(ctx, 1)
+	if err != nil {
+		memCancel()
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+	}
+	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", numDashboards)
+	memCancel()
+
+	if os.Getenv("GF_SEARCH_DEBUG") != "" {
+		// May help to estimate size of index when introducing changes. Though it's not a direct
+		// match to a memory consumption, but at least make give some relative difference understanding.
+		// Moreover, changes in indexing can cause additional memory consumption upon initial index build
+		// which is not reflected here.
+		i.reportSizeOfIndexDiskBackup(1)
+	}
+	return nil
+}
+
+func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Duration) {
+	var maxHeapInuse uint64
+	var maxSys uint64
+
+	captureMemStats := func() {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		if m.HeapInuse > maxHeapInuse {
+			maxHeapInuse = m.HeapInuse
+		}
+		if m.Sys > maxSys {
+			maxSys = m.Sys
+		}
+	}
+
+	captureMemStats()
+
+	for {
+		select {
+		case <-ctx.Done():
+			i.logger.Warn("Memory stats during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys))
+			return
+		case <-time.After(frequency):
+			captureMemStats()
+		}
+	}
+}
+
+func (i *dashboardIndex) reportSizeOfIndexDiskBackup(orgID int64) {
+	reader, _ := i.getOrgReader(orgID)
+
+	// create a temp directory to store the index
+	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	if err != nil {
+		i.logger.Error("can't create temp dir", "error", err)
+		return
+	}
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			return
+		}
+	}()
+
+	cancel := make(chan struct{})
+	err = reader.Backup(tmpDir, cancel)
+	if err != nil {
+		i.logger.Error("can't create index disk backup", "error", err)
+		return
+	}
+
+	size, err := dirSize(tmpDir)
+	if err != nil {
+		i.logger.Error("can't calculate dir size", "error", err)
+		return
+	}
+
+	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
+}
+
 func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -124,7 +213,8 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 	orgSearchIndexLoadTime := time.Since(started)
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
-	reader, writer, err := initIndex(dashboards, i.logger)
+	dashboardExtender := i.extender.GetDashboardExtender(orgID)
+	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
@@ -263,7 +353,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	if len(dbDashboards) == 0 {
 		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
 	} else {
-		newReader, err = i.updateDashboard(writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(orgID, writer, reader, dbDashboards[0])
 	}
 	if err != nil {
 		return err
@@ -302,12 +392,17 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
+
+	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
 
 	var doc *bluge.Document
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 	} else {
 		var folderUID string
 		if dash.folderID == 0 {
@@ -322,6 +417,9 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 
 		location := folderUID
 		doc = getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 
 		var actualPanelIDs []string
 

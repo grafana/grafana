@@ -65,10 +65,6 @@ type Store interface {
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
-	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error
-	StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error
-	UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error
-	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
@@ -102,8 +98,6 @@ type Store interface {
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
-	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
-	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error

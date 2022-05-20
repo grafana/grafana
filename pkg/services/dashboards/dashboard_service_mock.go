@@ -69,3 +69,11 @@ func (s *FakeDashboardService) GetDashboard(ctx context.Context, cmd *models.Get
 	cmd.Result = d
 	return nil
 }
+
+func (s *FakeDashboardService) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	return nil
+}
+
+func (s *FakeDashboardService) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return nil
+}
