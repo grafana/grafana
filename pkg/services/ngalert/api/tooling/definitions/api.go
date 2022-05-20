@@ -29,7 +29,6 @@ type ValidationError struct {
 	Msg string `json:"msg"`
 }
 
-
 type Backend int
 
 const (
