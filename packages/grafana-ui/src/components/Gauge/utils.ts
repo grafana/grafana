@@ -6,7 +6,6 @@ import {
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
-  getColorForTheme,
   GrafanaTheme,
   Threshold,
   ThresholdsConfig,
@@ -65,7 +64,9 @@ export function getFormattedThresholds(
 
   const first = getActiveThreshold(min, steps);
   const last = getActiveThreshold(max, steps);
-  const formatted: Threshold[] = [{ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) }];
+  const formatted: Threshold[] = [
+    { value: +min.toFixed(decimals), color: theme.visualization.getColorByName(first.color) },
+  ];
   let skip = true;
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
@@ -76,11 +77,11 @@ export function getFormattedThresholds(
       continue;
     }
     const prev = steps[i - 1];
-    formatted.push({ value: step.value, color: getColorForTheme(prev!.color, theme) });
+    formatted.push({ value: step.value, color: theme.visualization.getColorByName(prev.color) });
     if (step === last) {
       break;
     }
   }
-  formatted.push({ value: +max.toFixed(decimals), color: getColorForTheme(last.color, theme) });
+  formatted.push({ value: +max.toFixed(decimals), color: theme.visualization.getColorByName(last.color) });
   return formatted;
 }
