@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/folder_dashboard_search/"]
+aliases = ["/docs/grafana/latest/developers/http_api/folder_dashboard_search/", "/docs/grafana/latest/http_api/folder_dashboard_search/"]
 description = "Grafana Folder/Dashboard Search HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "search", "folder", "dashboard"]
 title = "Folder/Dashboard Search HTTP API "
