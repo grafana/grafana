@@ -40,7 +40,7 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
    - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
      > **Note:** Once a condition is met, the alert goes into the `Pending` state. If the condition remains active for the duration specified, the alert transitions to the `Firing` state, else it reverts to the `Normal` state.
 1. In Step 4, add additional metadata associated with the rule.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/_index.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value of for each one.
