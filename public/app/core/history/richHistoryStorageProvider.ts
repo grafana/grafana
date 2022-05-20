@@ -16,6 +16,9 @@ export const getRichHistoryStorage = (): RichHistoryStorage => {
 interface RichHistorySupportedFeatures {
   availableFilters: SortOrder[];
   lastUsedDataSourcesAvailable: boolean;
+  clearHistory: boolean;
+  onlyActiveDataSource: boolean;
+  changeRetention: boolean;
 }
 
 export const supportedFeatures = (): RichHistorySupportedFeatures => {
@@ -23,9 +26,15 @@ export const supportedFeatures = (): RichHistorySupportedFeatures => {
     ? {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending],
         lastUsedDataSourcesAvailable: false,
+        clearHistory: false,
+        onlyActiveDataSource: false,
+        changeRetention: false,
       }
     : {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending, SortOrder.DatasourceAZ, SortOrder.DatasourceZA],
         lastUsedDataSourcesAvailable: true,
+        clearHistory: true,
+        onlyActiveDataSource: true,
+        changeRetention: true,
       };
 };
