@@ -79,8 +79,9 @@ const (
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
-	DashboardUIDAnnotation = "__dashboardUid__"
-	PanelIDAnnotation      = "__panelId__"
+	DashboardUIDAnnotation    = "__dashboardUid__"
+	PanelIDAnnotation         = "__panelId__"
+	ScreenshotTokenAnnotation = "__alert_screenshot_token__"
 )
 
 var (
@@ -89,7 +90,11 @@ var (
 		RuleUIDLabel:      {},
 		NamespaceUIDLabel: {},
 	}
-	InternalAnnotationNameSet = map[string]struct{}{}
+	InternalAnnotationNameSet = map[string]struct{}{
+		DashboardUIDAnnotation:    {},
+		PanelIDAnnotation:         {},
+		ScreenshotTokenAnnotation: {},
+	}
 )
 
 // AlertRule is the model for alert rules in unified alerting.

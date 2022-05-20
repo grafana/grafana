@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -33,27 +34,30 @@ var (
 
 const (
 	screenshotTimeout  = 10 * time.Second
-	screenshotCacheTTL = 15 * time.Second
+	screenshotCacheTTL = 60 * time.Second
 )
 
 // ScreenshotImageService takes screenshots of the panel for an alert rule and
 // saves the image in the store. The image contains a unique token that can be
 // passed as an annotation or label to the Alertmanager.
 type ScreenshotImageService struct {
+	log         log.Logger
 	screenshots screenshot.ScreenshotService
 	store       store.ImageStore
 }
 
 func NewScreenshotImageService(screenshots screenshot.ScreenshotService, store store.ImageStore) ImageService {
-	return &ScreenshotImageService{
+	s := &ScreenshotImageService{
 		screenshots: screenshots,
 		store:       store,
 	}
+
+	return s
 }
 
 // NewScreenshotImageServiceFromCfg returns a new ScreenshotImageService
 // from the configuration.
-func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Registerer,
+func NewScreenshotImageServiceFromCfg(log log.Logger, cfg *setting.Cfg, metrics prometheus.Registerer,
 	db *store.DBstore, ds dashboards.DashboardService, rs rendering.Service) (ImageService, error) {
 	if !cfg.UnifiedAlerting.Screenshots.Enabled {
 		return &ScreenshotImageService{
@@ -75,6 +79,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 	s = screenshot.NewObservableScreenshotService(metrics, s)
 
 	return &ScreenshotImageService{
+		log:         log,
 		store:       db,
 		screenshots: s,
 	}, nil
@@ -109,6 +114,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	}
 
 	return &v, nil
+}
+
+type NotAvailableImageService struct{}
+
+func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
+	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 type NoopImageService struct{}

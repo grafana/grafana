@@ -36,6 +36,8 @@ type ImageStore interface {
 
 	// Saves the image or returns an error.
 	SaveImage(ctx context.Context, img *Image) error
+
+	DeleteExpiredImages(ctx context.Context) error
 }
 
 func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {

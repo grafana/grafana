@@ -170,19 +170,30 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	return states
 }
 
-//nolint:unused
-func (st *Manager) newImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
-	if state.Image == nil {
-		image, err := st.imageService.NewImage(ctx, alertRule)
-		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) {
-			// It's not an error if screenshots are disabled.
-			return nil
-		} else if err != nil {
-			st.log.Error("failed to create image", "error", err)
-			return err
-		}
-		state.Image = image
+// Maybe take a screenshot. Do it if:
+// 1. The alert state is transitioning into the "Alerting" state from something else.
+// 2. The alert state has just transitioned to the resolved state.
+// 3. The state is alerting and there is no screenshot annotation on the alert state.
+func (st *Manager) maybeNewImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State, oldState eval.State) error {
+	shouldScreenshot := state.Resolved ||
+		state.State == eval.Alerting && oldState != eval.Alerting ||
+		state.State == eval.Alerting && state.Image == nil
+	if !shouldScreenshot {
+		return nil
 	}
+
+	img, err := st.imageService.NewImage(ctx, alertRule)
+	if err != nil &&
+		errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
+		errors.Is(err, image.ErrNoDashboard) ||
+		errors.Is(err, image.ErrNoPanel) {
+		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
+		return nil
+	} else if err != nil {
+		st.log.Error("failed to create image", "error", err)
+		return err
+	}
+	state.Image = img
 	return nil
 }
 
@@ -218,6 +229,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+
+	err := st.maybeNewImage(ctx, alertRule, currentState, oldState)
+	if err != nil {
+		st.log.Warn("Error generating a screenshot for an alert instance.",
+			"alert_rule", alertRule.UID,
+			"dashboard", alertRule.DashboardUID,
+			"panel", alertRule.PanelID)
+	}
 
 	st.set(currentState)
 	if oldState != currentState.State {
