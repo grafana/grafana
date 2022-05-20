@@ -53,7 +53,6 @@ export interface ThemeTypographyVariant {
 export interface ThemeTypographyInput {
   fontFamily?: string;
   fontFamilyMonospace?: string;
-  fontFamilyMonospaceFusebit?: string;
   fontSize?: number;
   fontWeightLight?: number;
   fontWeightRegular?: number;
