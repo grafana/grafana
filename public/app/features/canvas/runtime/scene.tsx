@@ -25,9 +25,9 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { CanvasContextMenu } from '../../../plugins/panel/canvas/CanvasContextMenu';
 import { Placement } from '../types';
 
 import { constraintViewable, dimensionViewable } from './ables';
@@ -45,7 +45,6 @@ export class Scene {
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
-  readonly showContextMenu = new ReplaySubject<boolean>(1);
 
   root: RootElement;
 

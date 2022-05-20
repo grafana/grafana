@@ -45,8 +45,6 @@ export class CanvasPanel extends Component<Props, State> {
   styles = getStyles(config.theme);
   isEditing = locationService.getSearchObject().editPanel !== undefined;
 
-  showContextMenu = false;
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -105,14 +103,6 @@ export class CanvasPanel extends Component<Props, State> {
                 canvasInstance.scene.clearCurrentSelection(true);
               }
             });
-          },
-        })
-      );
-
-      this.subs.add(
-        this.scene.showContextMenu.subscribe({
-          next: (value) => {
-            this.setState({ refresh: this.state.refresh + 1 });
           },
         })
       );

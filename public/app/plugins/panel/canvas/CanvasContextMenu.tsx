@@ -34,7 +34,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
-      scene.showContextMenu.next(true);
     },
     [scene]
   );
@@ -56,7 +55,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
-    scene.showContextMenu.next(false);
   };
 
   const renderMenuItems = () => {
