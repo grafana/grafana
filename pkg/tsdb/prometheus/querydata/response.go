@@ -22,7 +22,10 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: true, VectorWideSeries: true})
+	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
+		MatrixWideSeries: s.enableWideSeries,
+		VectorWideSeries: s.enableWideSeries,
+	})
 	if r == nil {
 		return nil, fmt.Errorf("received empty response from prometheus")
 	}

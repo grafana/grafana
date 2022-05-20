@@ -58,7 +58,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		tctx := setup()
+		tctx := setup(true)
 
 		qm := models.QueryModel{
 			LegendFormat:  "legend {{app}}",
@@ -119,7 +119,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -165,7 +165,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -207,7 +207,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			JSON: b,
 		}
 
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -277,7 +277,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -315,7 +315,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -389,7 +389,7 @@ type testContext struct {
 	queryData    *querydata.QueryData
 }
 
-func setup() *testContext {
+func setup(wideFrames bool) *testContext {
 	tracer, err := tracing.InitializeTracerForTest()
 	if err != nil {
 		panic(err)
@@ -406,7 +406,7 @@ func setup() *testContext {
 	queryData, _ := querydata.New(
 		httpProvider,
 		setting.NewCfg(),
-		&fakeFeatureToggles{enabled: true},
+		&fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}},
 		tracer,
 		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
 		&fakeLogger{},
@@ -419,11 +419,11 @@ func setup() *testContext {
 }
 
 type fakeFeatureToggles struct {
-	enabled bool
+	flags map[string]bool
 }
 
 func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-	return f.enabled
+	return f.flags[feature]
 }
 
 type fakeHttpClientProvider struct {

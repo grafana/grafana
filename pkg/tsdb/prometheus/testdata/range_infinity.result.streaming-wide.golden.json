@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,7 +24,8 @@
             "name": "1 / 0",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {}
           }

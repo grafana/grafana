@@ -242,5 +242,10 @@ var (
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "prometheusWideSeries",
+			Description: "Enable wide series responses in the Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-wide",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +24,7 @@
             "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "handler": "/api/v1/query_range",

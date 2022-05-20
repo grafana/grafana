@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-wide",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +24,7 @@
             "name": "go_goroutines{job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "go_goroutines",

@@ -3,11 +3,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           },
-          "executedQueryString": "Expr: 1 / 0\nStep: 1s"
+          "executedQueryString": "Expr: \nStep: 1s"
         },
         "fields": [
           {
@@ -21,12 +21,16 @@
             }
           },
           {
-            "name": "1 / 0",
+            "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
-            "labels": {}
+            "labels": {
+              "handler": "/api/v1/query_range",
+              "job": "prometheus"
+            }
           }
         ]
       },
@@ -46,7 +50,7 @@
         "entities": [
           null,
           {
-            "Inf": [
+            "NaN": [
               0,
               1,
               2

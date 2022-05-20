@@ -3,11 +3,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           },
-          "executedQueryString": "Expr: 1 / 0\nStep: 1s"
+          "executedQueryString": "Expr: test1\nStep: 1s"
         },
         "fields": [
           {
@@ -21,37 +21,31 @@
             }
           },
           {
-            "name": "1 / 0",
+            "name": "go_goroutines{job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
-            "labels": {}
+            "labels": {
+              "__name__": "go_goroutines",
+              "job": "prometheus"
+            }
           }
         ]
       },
       "data": {
         "values": [
           [
-            1641889530000,
-            1641889531000,
-            1641889532000
+            1641889533000,
+            1641889534000,
+            1641889537000
           ],
           [
-            null,
-            null,
-            null
+            21,
+            32,
+            43
           ]
-        ],
-        "entities": [
-          null,
-          {
-            "Inf": [
-              0,
-              1,
-              2
-            ]
-          }
         ]
       }
     }

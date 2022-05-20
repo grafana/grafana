@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,11 +24,26 @@
             "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",
               "code": "200",
+              "handler": "/api/v1/query_range",
+              "job": "prometheus"
+            }
+          },
+          {
+            "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "prometheus_http_requests_total",
+              "code": "400",
               "handler": "/api/v1/query_range",
               "job": "prometheus"
             }
@@ -46,53 +61,10 @@
             21,
             32,
             43
-          ]
-        ]
-      }
-    },
-    {
-      "schema": {
-        "meta": {
-          "type": "timeseries-many",
-          "custom": {
-            "resultType": "matrix"
-          },
-          "executedQueryString": "Expr: \nStep: 1s"
-        },
-        "fields": [
-          {
-            "name": "Time",
-            "type": "time",
-            "typeInfo": {
-              "frame": "time.Time"
-            },
-            "config": {
-              "interval": 1000
-            }
-          },
-          {
-            "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
-            "type": "number",
-            "typeInfo": {
-              "frame": "float64"
-            },
-            "labels": {
-              "__name__": "prometheus_http_requests_total",
-              "code": "400",
-              "handler": "/api/v1/query_range",
-              "job": "prometheus"
-            }
-          }
-        ]
-      },
-      "data": {
-        "values": [
-          [
-            1641889530123,
-            1641889532123
           ],
           [
             54,
+            null,
             76
           ]
         ]
