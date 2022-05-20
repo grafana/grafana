@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -13,8 +13,6 @@ export interface FieldValidationMessageProps {
 }
 
 export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const linkColor = colorManipulator.darken(theme.colors.error.contrastText, 0.15);
-
   const baseStyle = `
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
@@ -26,11 +24,12 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       display: inline-block;
 
       a {
-        color: ${linkColor};
+        color: ${theme.colors.error.contrastText};
+        text-decoration: underline;
       }
 
       a:hover {
-        text-decoration: underline;
+        text-decoration: none;
       }
     `;
 

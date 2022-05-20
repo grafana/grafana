@@ -60,9 +60,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
 Tooltip.displayName = 'Tooltip';
 
 function getStyles(theme: GrafanaTheme2) {
-  function buildTooltipTheme(tooltipBg: string, tooltipBorder: string, tooltipText: string, tooltipLink?: string) {
-    const linkColor = tooltipLink ?? colorManipulator.darken(tooltipText, 0.15);
-
+  function buildTooltipTheme(tooltipBg: string, tooltipBorder: string, tooltipText: string) {
     return css`
       background-color: ${tooltipBg};
       border-radius: 3px;
@@ -189,11 +187,12 @@ function getStyles(theme: GrafanaTheme2) {
       }
 
       a {
-        color: ${linkColor};
+        color: ${tooltipText};
+        text-decoration: underline;
       }
 
       a:hover {
-        text-decoration: underline;
+        text-decoration: none;
       }
     `;
   }
@@ -201,8 +200,7 @@ function getStyles(theme: GrafanaTheme2) {
   const info = buildTooltipTheme(
     theme.components.tooltip.background,
     theme.components.tooltip.background,
-    theme.components.tooltip.text,
-    theme.colors.text.link
+    theme.components.tooltip.text
   );
   const error = buildTooltipTheme(theme.colors.error.main, theme.colors.error.main, theme.colors.error.contrastText);
 
