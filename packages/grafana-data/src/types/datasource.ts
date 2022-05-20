@@ -65,34 +65,9 @@ export class DataSourcePlugin<
     return this;
   }
 
-  /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
-  setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreQueryField = ExploreQueryField;
-    return this;
-  }
-
-  /** @deprecated Use `setQueryEditor` instead. */
-  setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreMetricsQueryField = ExploreQueryField;
-    return this;
-  }
-
-  /** @deprecated Use `setQueryEditor` instead. */
-  setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreLogsQueryField = ExploreQueryField;
-    return this;
-  }
-
   setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps<TQuery>>) {
     this.components.QueryEditorHelp = QueryEditorHelp;
     return this;
-  }
-
-  /**
-   * @deprecated prefer using `setQueryEditorHelp`
-   */
-  setExploreStartPage(ExploreStartPage: ComponentType<QueryEditorHelpProps<TQuery>>) {
-    return this.setQueryEditorHelp(ExploreStartPage);
   }
 
   /*
@@ -324,12 +299,6 @@ abstract class DataSourceApi<
    * Used in explore
    */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-
-  /**
-   * @deprecated since version 8.2.0
-   * Not used anymore.
-   */
-  getHighlighterExpression?(query: TQuery): string[];
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
