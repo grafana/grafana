@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { first } from 'rxjs/operators';
 
 import { ContextMenu, MenuItem } from '@grafana/ui';
@@ -25,24 +25,30 @@ export const CanvasContextMenu = ({ scene }: Props) => {
 
   const selectedElements = scene.selecto?.getSelectedTargets();
 
-  useEffect(() => {
-    const handleMouseEvent = (e: MouseEvent) => {
-      e.preventDefault();
-      if (e.currentTarget) {
-        scene.select({ targets: [e.currentTarget as HTMLElement | SVGElement] });
+  const handleContextMenu = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.preventDefault();
+      if (event.currentTarget) {
+        scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
       }
-      setAnchorPoint({ x: e.pageX, y: e.pageY });
+      setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
       scene.showContextMenu.next(true);
-    };
+    },
+    [scene]
+  );
 
-    if (selectedElements) {
-      if (selectedElements.length === 1) {
-        const element = selectedElements[0];
-        element.addEventListener('contextmenu', (ev) => handleMouseEvent(ev as MouseEvent));
-      }
+  useEffect(() => {
+    if (selectedElements && selectedElements.length === 1) {
+      const element = selectedElements[0];
+      element.addEventListener('contextmenu', handleContextMenu);
     }
-  }, [scene, selectedElements]);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [selectedElements, handleContextMenu]);
 
   if (!selectedElements) {
     return <></>;
