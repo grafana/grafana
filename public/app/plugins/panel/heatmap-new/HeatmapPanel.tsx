@@ -47,22 +47,28 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   }, [data, options, theme]);
 
   const facets = useMemo(() => {
-    let xFacet = info.exemplars?.fields[0].values.toArray(); // "Time" field
-    let yFacet: number[];
+    let exemplarsXFacet: number[] = []; // "Time" field
+    let exemplarsyFacet: number[] = [];
 
-    // ordinal/labeled heatmap-buckets?
-    const hasLabeledY = info.yAxisValues != null;
+    if (info.exemplars) {
+      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
-    if (hasLabeledY) {
-      // le bucket / label facet (this needs to back-reference yLabels ordinally)
-      // todo: do better than indexOf!
-      // todo: don't assume le or position of field name (can be pod, cluster, etc)
-      yFacet = info.exemplars?.fields[6].values.toArray().map((le) => info.yAxisValues?.indexOf(le)) as number[];
-    } else {
-      yFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+      // ordinal/labeled heatmap-buckets?
+      const hasLabeledY = info.yAxisValues != null;
+
+      if (hasLabeledY) {
+        // le bucket / label facet (this needs to back-reference yLabels ordinally)
+        // todo: do better than indexOf!
+        // todo: don't assume le or position of field name (can be pod, cluster, etc)
+        exemplarsyFacet = info.exemplars?.fields[6].values
+          .toArray()
+          .map((le) => info.yAxisValues?.indexOf(le)) as number[];
+      } else {
+        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+      }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [xFacet, yFacet]];
+    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars, info.yAxisValues]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -116,7 +122,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       hideThreshold: options.hideThreshold,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev, info.exemplars]);
+  }, [options, data.structureRev]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
