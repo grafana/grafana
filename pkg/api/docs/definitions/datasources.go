@@ -126,6 +126,60 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
+// swagger:route GET /datasources/{datasource_id}/health datasources checkDatasourceHealthByID
+//
+// Check data source health by Id.
+//
+// Please refer to [updated API](#/datasources/checkDatasourceHealth) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
+// swagger:route GET /datasources/uid/{datasource_uid}/health datasources checkDatasourceHealth
+//
+// Check data source health by Id.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
+// swagger:route GET /datasources/{datasource_id}/resources/{datasource_proxy_route} datasources fetchDatasourceResourcesByID
+//
+// Fetch data source resources by Id.
+//
+// Please refer to [updated API](#/datasources/fetchDatasourceResources) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /datasources/uid/{datasource_uid}/resources/{datasource_proxy_route} datasources fetchDatasourceResources
+//
+// Fetch data source resources.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
 // swagger:route GET /datasources/name/{datasource_name} datasources getDatasourceByName
 //
 // Get a single data source by Name.
@@ -264,6 +318,7 @@ import (
 
 // swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 // swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
+// swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
 	// in:path
 	// required:true
@@ -271,6 +326,7 @@ type DatasourceID struct {
 }
 
 // swagger:parameters deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters checkDatasourceHealth fetchDatasourceResources
 type DatasourceUID struct {
 	// in:path
 	// required:true
@@ -286,6 +342,7 @@ type DatasourceName struct {
 
 // swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls datasourceProxyGETByUIDcalls
 // swagger:parameters datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters fetchDatasourceResources fetchDatasourceResourcesByID
 type DatasourceProxyRouteParam struct {
 	// in:path
 	// required:true

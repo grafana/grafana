@@ -154,7 +154,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
 	}
 
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
