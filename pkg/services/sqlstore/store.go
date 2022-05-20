@@ -74,7 +74,6 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error
 	GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error
 	DeleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand) error
 	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error

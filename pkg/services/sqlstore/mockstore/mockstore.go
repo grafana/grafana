@@ -344,16 +344,6 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-	query.Result = &models.DashboardVersion{}
-	for _, dashboardversion := range m.ExpectedDashboardVersions {
-		if dashboardversion.DashboardId == query.DashboardId && dashboardversion.Version == query.Version {
-			query.Result = dashboardversion
-		}
-	}
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
 	return m.ExpectedError
 }
