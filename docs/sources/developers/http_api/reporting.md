@@ -7,11 +7,11 @@ title = "Reporting API"
 
 # Reporting API
 
-This API allows you to interact programmatically with the [Reporting]({{< relref "../enterprise/reporting.md" >}}) feature.
+This API allows you to interact programmatically with the [Reporting]({{< relref "../../enterprise/reporting.md" >}}) feature.
 
-> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Send a report
 
@@ -65,11 +65,11 @@ Content-Length: 29
 
 ### Status Codes
 
-| Code | Description                                                                                 |
-| ---- | ------------------------------------------------------------------------------------------- |
-| 200  | Report was sent.                                                                            |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).          |
-| 401  | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}). |
-| 403  | User is authenticated but is not authorized to generate the report.                         |
-| 404  | Report not found.                                                                           |
-| 500  | Unexpected error or server misconfiguration. Refer to server logs for more details.         |
+| Code | Description                                                                         |
+| ---- | ----------------------------------------------------------------------------------- |
+| 200  | Report was sent.                                                                    |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).  |
+| 401  | Authentication failed, refer to [Authentication API]({{< relref "auth.md" >}}).     |
+| 403  | User is authenticated but is not authorized to generate the report.                 |
+| 404  | Report not found.                                                                   |
+| 500  | Unexpected error or server misconfiguration. Refer to server logs for more details. |

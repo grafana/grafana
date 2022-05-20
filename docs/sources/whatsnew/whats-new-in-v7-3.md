@@ -76,7 +76,7 @@ The updated Google Cloud monitoring data source is shipped with pre-configured d
 
 To import the pre-configured dashboards, go to the configuration page of your Google Cloud Monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards">}})
+For more details, see the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards" >}})
 
 ## Shorten URL for dashboards and Explore
 
@@ -86,7 +86,7 @@ This is an amazing new feature that was created in cooperation with one of our c
 
 You can now configure your Elasticsearch data source to access your Amazon Elasticsearch Service domain directly from Grafana.
 
-For more details, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch/#aws-signature-version-4-authentication">}}).
+For more details, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch/#aws-signature-version-4-authentication" >}}).
 
 ## Chaining pipeline aggregation in Elasticsearch
 
@@ -122,7 +122,7 @@ Example of a login event:
 }
 ```
 
-For more details, see the [Auditing docs]({{<relref "../enterprise/auditing.md">}}).
+For more details, see the [Auditing docs]({{< relref "../enterprise/auditing.md" >}}).
 
 ### Data source usage insights
 
@@ -136,11 +136,11 @@ Insights:
 
 ### SAML single logout
 
-SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}).
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{< relref "../enterprise/saml/#single-logout" >}}).
 
 ### SAML IdP-initiated single sign on
 
-IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}).
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{< relref "../enterprise/saml/#idp-initiated-single-sign-on-sso" >}}).
 
 ## Upgrading
 

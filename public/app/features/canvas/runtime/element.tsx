@@ -83,6 +83,9 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       position: 'absolute',
+      // Minimum element size is 10x10
+      minWidth: '10px',
+      minHeight: '10px',
     };
 
     const translate = ['0px', '0px'];
