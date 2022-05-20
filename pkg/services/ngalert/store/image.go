@@ -25,6 +25,11 @@ type Image struct {
 	ExpiresAt time.Time `xorm:"expires_at"`
 }
 
+// A XORM interface that lets us clean up our SQL session definition.
+func (i *Image) TableName() string {
+	return "alert_image"
+}
+
 type ImageStore interface {
 	// Get returns the image with the token or ErrImageNotFound.
 	GetImage(ctx context.Context, token string) (*Image, error)
@@ -36,7 +41,7 @@ type ImageStore interface {
 func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {
 	var img Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		exists, err := sess.Table("alert_image").Where("token = ?", token).Get(&img)
+		exists, err := sess.Where("token = ?", token).Get(&img)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
 		}
@@ -61,23 +66,16 @@ func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
 			}
 			img.Token = token.String()
 			img.CreatedAt = TimeNow().UTC()
-			if _, err := sess.Table("alert_image").Insert(img); err != nil {
+			if _, err := sess.Insert(img); err != nil {
 				return fmt.Errorf("failed to insert screenshot: %w", err)
 			}
 		} else {
-			// TODO: Something is jacked up with XORM, and it's not properly setting the id field. Let's do it the hard way.
-			// This is what we want, but already-used id keys are getting overwritten
-			//if _, err := sess.Table("alert_image").Update(img); err != nil {
-			//	return fmt.Errorf("failed to update screenshot: %v", err)
-			//}
-
-			updateSQL := st.SQLStore.Dialect.UpsertSQL("alert_image",
-				[]string{"id"},
-				[]string{"id", "token", "path", "url", "created_at", "expires_at"})
-
-			_, err := sess.SQL(updateSQL, []interface{}{img.ID, img.Token, img.Path, img.URL, img.CreatedAt, img.ExpiresAt}...).Query()
+			affected, err := sess.ID(img.ID).Update(img)
 			if err != nil {
 				return fmt.Errorf("failed to update screenshot: %v", err)
+			}
+			if affected == 0 {
+				return fmt.Errorf("update statement had no effect")
 			}
 		}
 		return nil
@@ -87,7 +85,7 @@ func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
 //nolint:unused
 func (st DBstore) DeleteExpiredImages(ctx context.Context) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		n, err := sess.Table("alert_image").Where("expires_at <", TimeNow()).Delete(&Image{})
+		n, err := sess.Where("expires_at < ?", TimeNow()).Delete(&Image{})
 		if err != nil {
 			return fmt.Errorf("failed to delete expired images: %w", err)
 		}

@@ -107,7 +107,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 		Width:           DefaultWidth,
 		Height:          DefaultHeight,
 		Theme:           DefaultTheme,
-		Path:            "d-solo/foo/bar/?orgId=2&panelId=4",
+		Path:            "d-solo/foo/bar?orgId=2&panelId=4",
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 

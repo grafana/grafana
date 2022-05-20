@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
 func createTestImg(fakeUrl string, fakePath string) *store.Image {
@@ -45,20 +46,24 @@ func TestSaveAndGetImage(t *testing.T) {
 
 	// Here are some images to save.
 	imgs := []struct {
-		name string
-		img  *store.Image
+		name   string
+		img    *store.Image
+		errors bool
 	}{
 		{
 			"with file path",
 			createTestImg("", "path"),
+			false,
 		},
 		{
 			"with URL",
 			createTestImg("url", ""),
+			false,
 		},
 		{
-			"ID already exists, should not change",
+			"ID already set, should not change",
 			addToken(addID(createTestImg("Foo", ""), 123)),
+			true,
 		},
 	}
 
@@ -67,6 +72,11 @@ func TestSaveAndGetImage(t *testing.T) {
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 			err := dbstore.SaveImage(ctx, test.img)
+			if test.errors {
+				require.Error(t, err)
+				return
+			}
+
 			require.NoError(t, err)
 			returned, err := dbstore.GetImage(ctx, test.img.Token)
 			assert.NoError(t, err, "Shouldn't error when getting the image")
@@ -82,7 +92,7 @@ func TestSaveAndGetImage(t *testing.T) {
 	}
 }
 
-func Test_deleteExpiredImages(t *testing.T) {
+func TestDeleteExpiredImages(t *testing.T) {
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -116,5 +126,4 @@ func Test_deleteExpiredImages(t *testing.T) {
 	img, err = dbstore.GetImage(ctx, imgs[1].Token)
 	require.Nil(t, img)
 	require.Error(t, err)
-	require.EqualValues(t, imgs[1], img)
 }

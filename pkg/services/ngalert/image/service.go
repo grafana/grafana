@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -21,7 +20,7 @@ import (
 //go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
-	NewImage(ctx context.Context, r *ngmodels.AlertRule, labels data.Labels) (*store.Image, error)
+	NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error)
 }
 
 var (
@@ -84,7 +83,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 // NewImage returns a screenshot of the panel for the alert rule. It returns
 // ErrNoDashboard if the alert rule does not have a dashboard and ErrNoPanel
 // when the alert rule does not have a panel in a dashboard.
-func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule, _ data.Labels) (*store.Image, error) {
+func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
 	if r.DashboardUID == nil {
 		return nil, ErrNoDashboard
 	}
@@ -114,6 +113,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule, _ data.Labels) (*store.Image, error) {
+func (s *NoopImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
 	return &store.Image{}, nil
 }

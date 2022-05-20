@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -172,8 +173,8 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 //nolint:unused
 func (st *Manager) newImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
 	if state.Image == nil {
-		image, err := st.imageService.NewImage(ctx, alertRule, state.Labels)
-		if err == screenshot.ErrScreenshotsUnavailable {
+		image, err := st.imageService.NewImage(ctx, alertRule)
+		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) {
 			// It's not an error if screenshots are disabled.
 			return nil
 		} else if err != nil {
