@@ -159,7 +159,7 @@ export interface DataSourceWithLogsContextSupport {
   ) => Promise<DataQueryResponse>;
 
   /**
-   * This method can be used to show "context" button conditionally (for example based on row model data  or plugin settings, etc.)
+   * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
    */
   showContextToggle(row?: LogRowModel): boolean;
 }
