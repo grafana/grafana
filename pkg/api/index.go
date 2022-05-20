@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -414,18 +415,17 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	starredItemsChildNavs := []*dtos.NavLink{}
 
-	query := models.GetUserStarsQuery{
-		UserId: c.SignedInUser.UserId,
+	query := star.GetUserStarsQuery{
+		UserID: c.SignedInUser.UserId,
 	}
 
-	err := hs.SQLStore.GetUserStars(c.Req.Context(), &query)
+	starredDashboardResult, err := hs.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return nil, err
 	}
 
-	starredDashboardIDs := query.Result
 	starredDashboards := []*models.Dashboard{}
-	for dashboardId := range starredDashboardIDs {
+	for dashboardId := range starredDashboardResult.UserStars {
 		query := &models.GetDashboardQuery{
 			Id:    dashboardId,
 			OrgId: c.OrgId,
