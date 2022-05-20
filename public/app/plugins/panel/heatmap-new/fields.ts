@@ -93,7 +93,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
         field.type === FieldType.number ? field.labels?.[matchByLabel] ?? [] : []
       ),
       yAxisValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field) : []
+        field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
       ),
       ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), exemplars, theme),
     };
@@ -116,7 +116,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     if (heatmapFrame.meta?.type !== DataFrameType.HeatmapScanlines) {
       scanlinesFrame = bucketsToScanlines(scanlinesFrame);
       yAxisValues = frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field) : []
+        field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
       );
     }
 
