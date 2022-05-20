@@ -18,10 +18,7 @@ import React from 'react';
 import TextList from './TextList';
 
 describe('<TextList>', () => {
-  const data = [
-    { key: 'span.kind', value: 'client' },
-    { key: 'omg', value: 'mos-def' },
-  ];
+  const data = ['client', 'mos-def'];
 
   it('renders without exploding', () => {
     expect(() => render(<TextList data={data} />)).not.toThrow();

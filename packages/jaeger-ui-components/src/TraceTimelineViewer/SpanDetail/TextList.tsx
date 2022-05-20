@@ -40,18 +40,6 @@ const getStyles = () => {
   };
 };
 
-const getRow = (row) => {
-  if (typeof row === 'string') {
-    return row;
-  } else {
-    // dict
-    return Object.values(row);
-  }
-};
-type TextListProps = {
-  data: string[];
-};
-
 export default function TextList(props: TextListProps) {
   const { data } = props;
   const styles = useStyles2(getStyles);
@@ -62,7 +50,7 @@ export default function TextList(props: TextListProps) {
           return (
             // `i` is necessary in the key because row.key can repeat
             <li className={styles.item} key={`${i}`}>
-              {getRow(row)}
+              {row}
             </li>
           );
         })}
