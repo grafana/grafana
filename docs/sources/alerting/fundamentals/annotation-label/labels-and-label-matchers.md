@@ -1,17 +1,13 @@
 +++
-title = "Labels and label matchers"
+title = "Label matchers"
 description = "Learn about labels and label matchers in alerting"
 keywords = ["grafana", "alerting", "guide", "fundamentals"]
 weight = 117
 +++
 
-# Labels and label matchers
+# How label matching works
 
-To link alert rules to various other alerting concepts like [notification policies]() and [silences]() you make use of labels and label matchers.
-
-This allows for a very flexible way to manage your alert instances, what policy should handle them and which alerts to silence.
-
-## How label matching works
+Use labels and label matchers to link alert rules to [notification policies]({{< relref "../../notifications/_index.md" >}}) and [silences]({{< relref "../../silences/_index.md" >}}). This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
 A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
@@ -28,16 +24,15 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 | `=~`     | Select labels that regex-match the value.          |
 | `!~`     | Select labels that do not regex-match the value.   |
 
-## Example
+## Example of a label matcher
 
 Imagine we've defined the following set of labels for our alert.
 
 `{ foo=bar, baz=qux, id=12 }`
 
-A label matcher defined as `foo=bar` will match this alert rule.
+In this situation,
 
-A label matcher defined as `foo!=bar` will _not_ match this alert rule.
-
-A label matcher defined as `id=~[0-9]+` will match this alert rule.
-
-A label matcher defined as `baz!~[0-9]+` will match this alert rule.
+- A label matcher defined as `foo=bar` will match this alert rule.
+- A label matcher defined as `foo!=bar` will _not_ match this alert rule.
+- A label matcher defined as `id=~[0-9]+` will match this alert rule.
+- A label matcher defined as `baz!~[0-9]+` will match this alert rule.

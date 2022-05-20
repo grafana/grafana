@@ -250,33 +250,36 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
 	response cloudMonitoringResponse, title, text string) error {
-	frames := data.Frames{}
+	frame := data.NewFrame(timeSeriesFilter.RefID,
+		data.NewField("time", nil, []time.Time{}),
+		data.NewField("title", nil, []string{}),
+		data.NewField("tags", nil, []string{}),
+		data.NewField("text", nil, []string{}),
+	)
+
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
 			continue
 		}
-		annotation := make(map[string][]string)
+
 		for i := len(series.Points) - 1; i >= 0; i-- {
 			point := series.Points[i]
 			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
 			if series.ValueType == "STRING" {
 				value = point.Value.StringValue
 			}
-			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
-			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type,
-				series.Metric.Labels, series.Resource.Labels))
-			annotation["tags"] = append(annotation["tags"], "")
-			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
-				series.Metric.Labels, series.Resource.Labels))
+			annotation := &annotationEvent{
+				Time: point.Interval.EndTime,
+				Title: formatAnnotationText(title, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+				Tags: "",
+				Text: formatAnnotationText(text, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+			}
+			frame.AppendRow(annotation.Time, annotation.Title, annotation.Tags, annotation.Text)
 		}
-		frames = append(frames, data.NewFrame(timeSeriesFilter.getRefID(),
-			data.NewField("time", nil, annotation["time"]),
-			data.NewField("title", nil, annotation["title"]),
-			data.NewField("tags", nil, annotation["tags"]),
-			data.NewField("text", nil, annotation["text"]),
-		))
 	}
-	dr.Frames = frames
+	dr.Frames = append(dr.Frames, frame)
 
 	return nil
 }
