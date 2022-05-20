@@ -8,7 +8,7 @@ weight = 10
 
 Add users when you want to manually provide individuals with access to Grafana.
 
-When you create a user using this method, you must create their password. The user does not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join an organization]({{< relref "../manage-org-users/invite-user-join-org.md">}}).
+When you create a user using this method, you must create their password. The user does not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join an organization]({{< relref "../manage-org-users/invite-user-join-org.md" >}}).
 
 When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth proxy, users are created automatically.
 
@@ -23,6 +23,6 @@ When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth 
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
 
-When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "./add-remove-user-to-org.md">}}).
+When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "./add-remove-user-to-org.md" >}}).
 
-> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles">}}) permissions and _not_ [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../../manage-users-and-permissions/manage-org-users/invite-user-join-org.md" >}}).
+> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators" >}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../../manage-users-and-permissions/manage-org-users/invite-user-join-org.md" >}}).

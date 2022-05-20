@@ -10,7 +10,7 @@ A team is a group of users within an organization that have common dashboard and
 
 A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member's team roles, UI preferences, and home dashboard.
 
-For more information about teams, refer to [Teams and permissions]({{< relref "../about-users-and-permissions/#teams-and-permissions">}}).
+For more information about teams, refer to [Teams and permissions]({{< relref "../about-users-and-permissions/#teams-and-permissions" >}}).
 
 ## Create a team
 
