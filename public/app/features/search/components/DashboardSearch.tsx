@@ -56,7 +56,7 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
@@ -82,7 +82,7 @@ export const DashboardSearchOLD: FC<Props> = memo(({ onCloseSearch }) => {
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
