@@ -11,6 +11,7 @@ import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import ErrorEditor from './components/ErrorEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
+import { HeatmapQueryEditor } from './components/HeatmapQueryEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { RawFrameEditor } from './components/RawFrameEditor';
@@ -113,6 +114,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case 'predictable_csv_wave':
         update.csvWave = defaultCSVWaveQuery;
+        break;
+      case 'heatmap':
+        update.heatmap = { format: 'fields-wide', scale: 'linear' };
         break;
       case 'usa':
         update.usa = {
@@ -249,6 +253,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'heatmap' && <HeatmapQueryEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />}

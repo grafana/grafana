@@ -75,6 +75,29 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           const query = this.serverErrorQuery(target, options);
           query ? streams.push(query) : backendQueries.push(target);
           break;
+
+        // Migrate (pre grafana 9)
+        case 'exponential_heatmap_bucket_data': {
+          target.scenarioId = 'heatmap';
+          target.heatmap = {
+            scale: 'log10',
+            format: 'fields-wide',
+          };
+          backendQueries.push(target);
+          break;
+        }
+
+        // Migrate (pre grafana 9)
+        case 'linear_heatmap_bucket_data': {
+          target.scenarioId = 'heatmap';
+          target.heatmap = {
+            scale: 'linear',
+            format: 'fields-wide',
+          };
+          backendQueries.push(target);
+          break;
+        }
+
         // Unusable since 7, removed in 8
         case 'manual_entry': {
           let csvContent = 'Time,Value\n';
@@ -86,7 +109,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           target.scenarioId = 'csv_content';
           target.csvContent = csvContent;
         }
-
         default:
           backendQueries.push(target);
       }

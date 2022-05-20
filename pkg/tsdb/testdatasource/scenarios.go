@@ -18,31 +18,30 @@ import (
 )
 
 const (
-	randomWalkQuery                   queryType = "random_walk"
-	randomWalkSlowQuery               queryType = "slow_query"
-	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
-	randomWalkTableQuery              queryType = "random_walk_table"
-	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
-	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
-	noDataPointsQuery                 queryType = "no_data_points"
-	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
-	csvMetricValuesQuery              queryType = "csv_metric_values"
-	predictablePulseQuery             queryType = "predictable_pulse"
-	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
-	streamingClientQuery              queryType = "streaming_client"
-	simulation                        queryType = "simulation"
-	usaQueryKey                       queryType = "usa"
-	liveQuery                         queryType = "live"
-	grafanaAPIQuery                   queryType = "grafana_api"
-	arrowQuery                        queryType = "arrow"
-	annotationsQuery                  queryType = "annotations"
-	tableStaticQuery                  queryType = "table_static"
-	serverError500Query               queryType = "server_error_500"
-	logsQuery                         queryType = "logs"
-	nodeGraphQuery                    queryType = "node_graph"
-	rawFrameQuery                     queryType = "raw_frame"
-	csvFileQueryType                  queryType = "csv_file"
-	csvContentQueryType               queryType = "csv_content"
+	randomWalkQuery             queryType = "random_walk"
+	randomWalkSlowQuery         queryType = "slow_query"
+	randomWalkWithErrorQuery    queryType = "random_walk_with_error"
+	randomWalkTableQuery        queryType = "random_walk_table"
+	heatmap                     queryType = "heatmap"
+	noDataPointsQuery           queryType = "no_data_points"
+	datapointsOutsideRangeQuery queryType = "datapoints_outside_range"
+	csvMetricValuesQuery        queryType = "csv_metric_values"
+	predictablePulseQuery       queryType = "predictable_pulse"
+	predictableCSVWaveQuery     queryType = "predictable_csv_wave"
+	streamingClientQuery        queryType = "streaming_client"
+	simulation                  queryType = "simulation"
+	usaQueryKey                 queryType = "usa"
+	liveQuery                   queryType = "live"
+	grafanaAPIQuery             queryType = "grafana_api"
+	arrowQuery                  queryType = "arrow"
+	annotationsQuery            queryType = "annotations"
+	tableStaticQuery            queryType = "table_static"
+	serverError500Query         queryType = "server_error_500"
+	logsQuery                   queryType = "logs"
+	nodeGraphQuery              queryType = "node_graph"
+	rawFrameQuery               queryType = "raw_frame"
+	csvFileQueryType            queryType = "csv_file"
+	csvContentQueryType         queryType = "csv_content"
 )
 
 type queryType string
@@ -57,15 +56,9 @@ type Scenario struct {
 
 func (s *Service) registerScenarios() {
 	s.registerScenario(&Scenario{
-		ID:      string(exponentialHeatmapBucketDataQuery),
-		Name:    "Exponential heatmap bucket data",
-		handler: s.handleExponentialHeatmapBucketDataScenario,
-	})
-
-	s.registerScenario(&Scenario{
-		ID:      string(linearHeatmapBucketDataQuery),
-		Name:    "Linear heatmap bucket data",
-		handler: s.handleLinearHeatmapBucketDataScenario,
+		ID:      string(heatmap),
+		Name:    "Heatmap",
+		handler: s.handleHeatmapScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -495,31 +488,11 @@ func (s *Service) handleArrowScenario(ctx context.Context, req *backend.QueryDat
 	return resp, nil
 }
 
-func (s *Service) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleHeatmapScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	for _, q := range req.Queries {
-		respD := resp.Responses[q.RefID]
-		frame := randomHeatmapData(q, func(index int) float64 {
-			return math.Exp2(float64(index))
-		})
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
-
-func (s *Service) handleLinearHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	for _, q := range req.Queries {
-		respD := resp.Responses[q.RefID]
-		frame := randomHeatmapData(q, func(index int) float64 {
-			return float64(index * 10)
-		})
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
+	for _, dq := range req.Queries {
+		resp.Responses[dq.RefID] = getHeatmapData(dq)
 	}
 
 	return resp, nil
@@ -901,29 +874,6 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 	frame.Fields[1].Labels = parseLabels(model)
 
 	return frame, nil
-}
-
-func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
-	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
-	for i := 0; i < 10; i++ {
-		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
-	}
-
-	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
-	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
-
-	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
-		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-		vals := []interface{}{&t}
-		for n := 1; n < len(frame.Fields); n++ {
-			v := float64(rand.Int63n(100))
-			vals = append(vals, &v)
-		}
-		frame.AppendRow(vals...)
-		timeWalkerMs += query.Interval.Milliseconds() * 50
-	}
-
-	return frame
 }
 
 func doArrowQuery(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {

@@ -21,6 +21,7 @@ export interface TestDataQuery extends DataQuery {
   levelColumn?: boolean;
   channel?: string; // for grafana live
   nodes?: NodesQuery;
+  heatmap?: HeatmapQuery;
   csvFileName?: string;
   csvContent?: string;
   rawFrameContent?: string;
@@ -40,6 +41,15 @@ export interface StreamingQuery {
   noise: number; // wiggle around the signal for min/max
   bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
+}
+
+export interface HeatmapQuery {
+  format: 'fields-wide' | 'fields-many' | 'dense' | 'sparse';
+  scale?: 'linear' | 'log10';
+  exemplars?: boolean;
+  setFrameType?: boolean;
+  numericX?: boolean; // x does not need to be time
+  nameAsLE?: boolean;
 }
 
 export interface SimulationQuery {
