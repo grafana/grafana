@@ -118,7 +118,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                           ))}
 
                           <AngularRoot />
-                          {!isPublicDashboardView() && <AppNotificationList />}
+                          <AppNotificationList />
                           {!isPublicDashboardView() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
