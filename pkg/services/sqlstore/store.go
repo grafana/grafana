@@ -97,7 +97,6 @@ type Store interface {
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
-	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error

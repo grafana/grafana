@@ -32,7 +32,6 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		dialect = sqlStore.Dialect
 		starService = starimpl.ProvideService(sqlStore)
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -517,7 +516,7 @@ func TestDashboard_SortingOptions(t *testing.T) {
 			},
 		},
 	}
-	results, err := sqlStore.FindDashboards(context.Background(), qNoSort)
+	results, err := dashboardStore.FindDashboards(context.Background(), qNoSort)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, dashA.Id, results[0].ID)
@@ -538,7 +537,7 @@ func TestDashboard_SortingOptions(t *testing.T) {
 			},
 		},
 	}
-	results, err = sqlStore.FindDashboards(context.Background(), qSort)
+	results, err = dashboardStore.FindDashboards(context.Background(), qSort)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, dashB.Id, results[0].ID)
@@ -561,7 +560,7 @@ func TestDashboard_Filter(t *testing.T) {
 			},
 		},
 	}
-	results, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
+	results, err := dashboardStore.FindDashboards(context.Background(), qNoFilter)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
@@ -581,7 +580,7 @@ func TestDashboard_Filter(t *testing.T) {
 			},
 		},
 	}
-	results, err = sqlStore.FindDashboards(context.Background(), qFilter)
+	results, err = dashboardStore.FindDashboards(context.Background(), qFilter)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, dashB.Id, results[0].ID)

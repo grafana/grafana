@@ -991,6 +991,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 }
 
 func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	dialect := d.sqlStore.Dialect
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
