@@ -94,9 +94,8 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		Logger:         log.New("context"),
 	}
 
-	// Inject ReqContext into a request context and replace the request instance in the macaron context
+	// Inject ReqContext into http.Request.Context
 	mContext.Req = mContext.Req.WithContext(ctxkey.Set(mContext.Req.Context(), reqContext))
-	mContext.Map(mContext.Req)
 
 	traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
 	if traceID != "" {
@@ -151,8 +150,6 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 			{Num: reqContext.OrgId},
 			{Num: reqContext.UserId}},
 	)
-
-	mContext.Map(reqContext)
 
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
