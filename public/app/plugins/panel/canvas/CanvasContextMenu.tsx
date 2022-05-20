@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { first } from 'rxjs/operators';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { ContextMenu, MenuItem, useTheme2 } from '@grafana/ui';
+import { ContextMenu, MenuItem } from '@grafana/ui';
 
 import { Scene } from '../../../features/canvas/runtime/scene';
 
@@ -22,8 +21,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });
 
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles();
 
   const selectedElements = scene.selecto?.getSelectedTargets();
 
@@ -131,7 +129,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   return <></>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   menuItem: css`
     max-width: 60ch;
     overflow: hidden;

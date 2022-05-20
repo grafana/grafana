@@ -5,16 +5,16 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
+  EventBusExtended,
+  ExplorePanelsState,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
-  EventBusExtended,
-  DataQueryResponse,
-  ExplorePanelsState,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -60,6 +60,11 @@ export interface ExploreState {
    * True if a warning message of hitting the exceeded number of items has been shown already.
    */
   richHistoryLimitExceededWarningShown: boolean;
+
+  /**
+   * True if a warning message about failed rich history has been shown already in this session.
+   */
+  richHistoryMigrationFailed: boolean;
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;

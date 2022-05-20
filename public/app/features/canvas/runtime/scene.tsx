@@ -7,7 +7,7 @@ import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
-import { stylesFactory } from '@grafana/ui';
+import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
@@ -30,6 +30,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { CanvasContextMenu } from '../../../plugins/panel/canvas/CanvasContextMenu';
 import { Placement } from '../types';
 
+import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -230,7 +231,7 @@ export class Scene {
     }
   };
 
-  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+  findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
@@ -313,11 +314,22 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
+      ables: [dimensionViewable, constraintViewable(this)],
+      props: {
+        dimensionViewable: allowChanges,
+        constraintViewable: allowChanges,
+      },
       origin: false,
       className: this.styles.selected,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
+      })
+      .on('dragStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        if (targetedElement) {
+          targetedElement.isMoving = true;
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -332,7 +344,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint();
+          targetedElement.isMoving = false;
         }
 
         this.moved.next(Date.now());
@@ -388,7 +401,11 @@ export class Scene {
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
-        {canShowContextMenu && <CanvasContextMenu scene={this} />}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} />
+          </Portal>
+        )}
       </div>
     );
   }

@@ -37,7 +37,7 @@
     "@types/lodash": "4.14.181",
     "@types/node": "16.11.26",
     "@types/uuid": "8.3.4",
-    "rollup": "2.73.0",
+    "rollup": "2.74.0",
     "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
@@ -60,7 +60,7 @@
     "devtools-protocol": "0.0.982423",
     "execa": "5.1.1",
     "lodash": "4.17.21",
-    "mocha": "9.2.2",
+    "mocha": "10.0.0",
     "resolve-as-bin": "2.1.0",
     "rimraf": "3.0.2",
     "tracelib": "1.0.1",
@@ -68,6 +68,6 @@
     "tslib": "2.4.0",
     "typescript": "4.6.4",
     "uuid": "8.3.2",
-    "yaml": "^1.8.3"
+    "yaml": "^2.0.0"
   }
 }

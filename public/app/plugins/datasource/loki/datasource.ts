@@ -6,6 +6,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 // Types
 import {
+  AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -22,7 +23,6 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  AbstractQuery,
   FieldType,
   getLogLevelFromKey,
   Labels,
@@ -30,12 +30,12 @@ import {
   LogLevel,
   LogRowModel,
   QueryResultMeta,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  rangeUtil,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend, FetchError, getBackendSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -105,6 +105,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  useBackendMode: boolean;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -116,6 +117,9 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    const keepCookiesUsed = (settingsData.keepCookies ?? []).length > 0;
+    // only use backend-mode when keep-cookies is not used
+    this.useBackendMode = !keepCookiesUsed && (config.featureToggles.lokiBackendMode ?? false);
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -168,7 +172,7 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    if (config.featureToggles.lokiBackendMode) {
+    if (this.useBackendMode) {
       // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
       const fixedRequest = {
         ...request,

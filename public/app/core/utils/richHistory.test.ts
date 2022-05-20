@@ -1,4 +1,4 @@
-import { dateTime, DataQuery } from '@grafana/data';
+import { DataQuery, dateTime } from '@grafana/data';
 import store from 'app/core/store';
 
 import { RichHistoryQuery } from '../../types';
@@ -6,14 +6,15 @@ import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHi
 
 import {
   addToRichHistory,
-  updateStarredInRichHistory,
-  updateCommentInRichHistory,
-  mapNumbertoTimeInSlider,
   createDateStringFromTs,
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
+  mapNumbertoTimeInSlider,
+  migrateQueryHistoryFromLocalStorage,
   SortOrder,
+  updateCommentInRichHistory,
+  updateStarredInRichHistory,
 } from './richHistory';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
@@ -21,6 +22,20 @@ const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 jest.mock('../history/richHistoryStorageProvider', () => {
   return {
     getRichHistoryStorage: () => richHistoryStorageMock,
+  };
+});
+
+const richHistoryLocalStorageMock = { getRichHistory: jest.fn() };
+jest.mock('../history/RichHistoryLocalStorage', () => {
+  return function () {
+    return richHistoryLocalStorageMock;
+  };
+});
+
+const richHistoryRemoteStorageMock = { migrate: jest.fn() };
+jest.mock('../history/RichHistoryRemoteStorage', () => {
+  return function () {
+    return richHistoryRemoteStorageMock;
   };
 });
 
@@ -160,6 +175,25 @@ describe('richHistory', () => {
     it('should delete query in query in history', async () => {
       const deletedHistoryId = await deleteQueryInRichHistory('1');
       expect(deletedHistoryId).toEqual('1');
+    });
+  });
+
+  describe('migration', () => {
+    beforeEach(() => {
+      richHistoryRemoteStorageMock.migrate.mockReset();
+    });
+
+    it('migrates history', async () => {
+      const history = [{ id: 'test' }, { id: 'test2' }];
+
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+    });
+    it('does not migrate if there are no entries', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue([]);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
     });
   });
 

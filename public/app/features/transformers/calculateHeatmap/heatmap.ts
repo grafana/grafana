@@ -3,14 +3,14 @@ import { map } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
-  DataTransformerID,
-  FieldType,
-  incrRoundUp,
-  incrRoundDn,
-  SynchronousDataTransformerInfo,
   DataFrameType,
-  getFieldDisplayName,
+  DataTransformerID,
   Field,
+  FieldType,
+  getFieldDisplayName,
+  incrRoundDn,
+  incrRoundUp,
+  SynchronousDataTransformerInfo,
 } from '@grafana/data';
 
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
@@ -188,6 +188,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   if (!xField || !yField) {
     throw 'no heatmap fields found';
+  }
+
+  if (!xs.length || !ys.length) {
+    throw 'no values found';
   }
 
   const heat2d = heatmap(xs, ys, {

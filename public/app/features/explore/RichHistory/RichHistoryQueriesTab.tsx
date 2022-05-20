@@ -8,9 +8,9 @@ import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
-  SortOrder,
   RichHistorySearchFilters,
   RichHistorySettings,
+  SortOrder,
 } from 'app/core/utils/richHistory';
 import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
@@ -138,7 +138,7 @@ export function RichHistoryQueriesTab(props: Props) {
 
   useEffect(() => {
     const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+      !richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
         : [activeDatasourceInstance];
     const filters: RichHistorySearchFilters = {

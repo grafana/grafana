@@ -18,7 +18,7 @@ import (
 func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(features, cfg, provider)
+	s := ProvideOSSAccessControl(cfg, provider)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -32,9 +32,8 @@ func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:       features,
 		cfg:            cfg,
 		provider:       provider,
 		log:            log.New("accesscontrol"),
@@ -48,7 +47,6 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.C
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log            log.Logger
-	features       featuremgmt.FeatureToggles
 	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
 	provider       accesscontrol.PermissionsProvider
@@ -158,7 +156,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	builtInRoles := []string{string(user.OrgRole)}
 
 	// With built-in role simplifying, inheritance is performed upon role registration.
-	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
+	if ac.cfg.RBACBuiltInRoleAssignmentEnabled {
 		for _, br := range user.OrgRole.Children() {
 			builtInRoles = append(builtInRoles, string(br))
 		}
