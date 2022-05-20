@@ -5,13 +5,17 @@ import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
+  KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles } from '@grafana/ui';
 
+import KeyValueInput from '../TraceToLogs/KeyValueInput';
+
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
+  tags?: Array<KeyValue<string>>;
   queries: TraceToMetricQuery[];
 }
 
@@ -69,6 +73,32 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             Clear
           </Button>
         ) : null}
+      </InlineFieldRow>
+
+      {/* 
+        1. Interplate attributes
+        2. Show what a query will actually look like
+        3. Query field - autocomplete would be nice'
+        4. Reorder queries
+      */}
+
+      <InlineFieldRow>
+        <InlineField
+          tooltip="Tags that will be used in the metrics query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          label="Tags"
+          labelWidth={26}
+        >
+          <KeyValueInput
+            keyPlaceholder="Tag"
+            values={options.jsonData.tracesToMetrics?.tags ?? []}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                ...options.jsonData.tracesToMetrics,
+                tags: v,
+              })
+            }
+          />
+        </InlineField>
       </InlineFieldRow>
 
       {options.jsonData.tracesToMetrics?.queries?.map((query, i) => (
