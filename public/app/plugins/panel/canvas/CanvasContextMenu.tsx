@@ -28,7 +28,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const handleContextMenu = useCallback(
     (event) => {
       event.preventDefault();
-      event.preventDefault();
       if (event.currentTarget) {
         scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
       }
@@ -43,10 +42,6 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       const element = selectedElements[0];
       element.addEventListener('contextmenu', handleContextMenu);
     }
-
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-    };
   }, [selectedElements, handleContextMenu]);
 
   if (!selectedElements) {
