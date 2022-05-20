@@ -245,6 +245,37 @@ We would then get :
 
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
+## Grouping to matrix
+
+Use this transformation to adapt your table visualization into a matrix using as rows and colums two specific fields and display a selected value.
+
+**Options**:
+
+- **Column:** Field to be used as the columns in the table
+- **Row:** Field to be used as the rows in the table
+- **Cell Value:** Field to be used as the value for the table cells
+
+Consider the input:
+
+| Server ID | Server Status | CPU Temperature (mean) |
+| --------- | ------------- | ---------------------- |
+| server 1  | Shutdown      | 82                     |
+| server 2  | Shutdown      | 88.6                   |
+| server 3  | Ok            | 59.6                   |
+
+And the selected options as:
+
+- **Column:** Server ID
+- **Row:** Server Status
+- **Cell Value:** CPU Temperature (mean)
+
+it will produce a table in the shape of:
+
+| Server Status\Server ID | server 1 | server 2 | server 3 |
+| ----------------------- | -------- | -------- | -------- |
+| Shutdown                | 82       | 88.6     |          |
+| Ok                      |          |          | 59.6     |
+
 ## Join by field (outer join)
 
 Use this transformation to join multiple time series from a result set by field.
