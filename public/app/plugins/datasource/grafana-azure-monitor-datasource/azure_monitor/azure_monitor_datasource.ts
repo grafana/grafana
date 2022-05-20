@@ -1,4 +1,4 @@
-import { filter, startsWith } from 'lodash';
+import { filter, find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
@@ -197,9 +197,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+    const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
+      ? 'Microsoft.Storage/storageAccounts'
+      : metricDefinition;
     let url =
       `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
-      `$filter=resourceType eq '${metricDefinition}'&` +
+      `$filter=resourceType eq '${validMetricDefinition}'&` +
       `api-version=${this.listByResourceGroupApiVersion}`;
     if (skipToken) {
       url += `&$skiptoken=${skipToken}`;
@@ -240,7 +243,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       resourceName,
       this.apiPreviewVersion
     );
-
     return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
