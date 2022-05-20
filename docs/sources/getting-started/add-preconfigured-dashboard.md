@@ -1,6 +1,6 @@
 +++
 aliases = ["/docs/grafana/latest/getting-started/getting-started/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Learn how to get started with Grafana by adding a preconfigured dashbaord"
+description = "Learn how to get started with Grafana by adding a preconfigured dashboard"
 title = "Add a preconfigured dashboard"
 weight = 200
 +++
