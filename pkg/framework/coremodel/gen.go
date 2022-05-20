@@ -70,7 +70,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var lins []linsrc
+	var lins []extractedCoremodel
 	for _, item := range items {
 		if item.IsDir() {
 			lin, err := processCoremodelDir(filepath.Join(cmroot, item.Name()))
@@ -79,7 +79,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			lin.relpath = filepath.Join(strings.Split(lin.path, sep)[len(grootp)-3:]...)
+			lin.RelativePath = filepath.Join(strings.Split(lin.LineagePath, sep)[len(grootp)-3:]...)
 			lins = append(lins, lin)
 		}
 	}
@@ -99,9 +99,9 @@ func main() {
 }
 
 // Scan the dir and load up its lineage
-func processCoremodelDir(path string) (ls linsrc, err error) {
-	ls.path = filepath.Join(path, "lineage.cue")
-	f, err := os.Open(ls.path)
+func processCoremodelDir(path string) (ls extractedCoremodel, err error) {
+	ls.LineagePath = filepath.Join(path, "lineage.cue")
+	f, err := os.Open(ls.LineagePath)
 	if err != nil {
 		return ls, fmt.Errorf("could not open lineage file under %s: %w", path, err)
 	}
@@ -125,37 +125,21 @@ func processCoremodelDir(path string) (ls linsrc, err error) {
 	return
 }
 
-type linsrc struct {
-	lin     thema.Lineage
-	path    string
-	relpath string
+type extractedCoremodel struct {
+	lin thema.Lineage
+	// Absolute path to the coremodel's lineage.cue file.
+	LineagePath string
+	// Path to the coremodel's lineage.cue file relative to repo root.
+	RelativePath string
 }
 
-// func getCoremodels() map[string]coremodel.Interface {
-//
-// 	dash, err := dashboard.ProvideCoremodel(lib)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return map[string]coremodel.Interface{
-// 		"dashboard": dash,
-// 	}
-// }
-
-func generateGo(path string, ls linsrc) error {
+func generateGo(path string, ls extractedCoremodel) error {
 	lin := ls.lin
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	f, err := openapi.GenerateSchema(sch, nil)
 	if err != nil {
 		return fmt.Errorf("thema openapi generation failed: %w", err)
 	}
-
-	b, err := cueformat.Node(f)
-	if err != nil {
-		return fmt.Errorf("cue format printing failed: %w", err)
-	}
-
-	_ = b
 
 	str, err := yaml.Marshal(lib.Context().BuildFile(f))
 	if err != nil {
@@ -170,7 +154,7 @@ func generateGo(path string, ls linsrc) error {
 		SkipPrune:     true,
 		SkipFmt:       true,
 		UserTemplates: map[string]string{
-			"imports.tmpl": fmt.Sprintf(tmplImports, ls.relpath),
+			"imports.tmpl": fmt.Sprintf(tmplImports, ls.RelativePath),
 			"typedef.tmpl": tmplTypedef,
 		},
 	})
@@ -180,7 +164,7 @@ func generateGo(path string, ls linsrc) error {
 
 	vars := goPkg{
 		Name:        lin.Name(),
-		LineagePath: ls.relpath,
+		LineagePath: ls.RelativePath,
 		LatestSeqv:  sch.Version()[0],
 		LatestSchv:  sch.Version()[1],
 	}
@@ -250,7 +234,7 @@ func (m modelReplacer) replacePrefix(str string) string {
 	return str
 }
 
-func generateTypescript(path string, ls linsrc) error {
+func generateTypescript(path string, ls extractedCoremodel) error {
 	schv := thema.SchemaP(ls.lin, thema.LatestVersion(ls.lin)).UnwrapCUE()
 
 	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{})
@@ -266,7 +250,7 @@ func generateTypescript(path string, ls linsrc) error {
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
 	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
 	parts.Nodes = append(parts.Nodes, top.T, top.D)
-	str := fmt.Sprintf(genHeader, ls.relpath) + fmt.Sprint(parts)
+	str := fmt.Sprintf(genHeader, ls.RelativePath) + fmt.Sprint(parts)
 
 	// Ensure parent directory exists
 	if _, err = os.Stat(path); os.IsNotExist(err) {
