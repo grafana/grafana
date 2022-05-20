@@ -32,7 +32,7 @@ describe('Heatmap Migrations', () => {
             "fill": "dark-orange",
             "mode": "scheme",
             "scale": "exponential",
-            "scheme": "Oranges",
+            "scheme": "BuGn",
             "steps": 256,
           },
           "heatmap": Object {
@@ -46,9 +46,7 @@ describe('Heatmap Migrations', () => {
             },
           },
           "legend": Object {
-            "calcs": Array [],
-            "displayMode": "list",
-            "placement": "bottom",
+            "show": true,
           },
           "showValue": "never",
           "source": "calculate",

@@ -6,6 +6,8 @@ import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
@@ -16,12 +18,13 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-export const sortOrderOptions = [
-  { label: 'Newest first', value: SortOrder.Descending },
-  { label: 'Oldest first', value: SortOrder.Ascending },
-  { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
-  { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
-];
+export const getSortOrderOptions = () =>
+  [
+    { label: 'Newest first', value: SortOrder.Descending },
+    { label: 'Oldest first', value: SortOrder.Ascending },
+    { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
+    { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
+  ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
@@ -32,14 +35,22 @@ export interface RichHistoryProps extends Themeable {
   loadRichHistory: (exploreId: ExploreId) => void;
   clearRichHistoryResults: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
-  activeDatasourceInstance?: string;
+  activeDatasourceInstance: string;
   firstTab: Tabs;
   exploreId: ExploreId;
   height: number;
   onClose: () => void;
 }
 
+type RichHistoryState = {
+  loading: boolean;
+};
+
 class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
+  state: RichHistoryState = {
+    loading: false,
+  };
+
   updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     this.props.updateHistorySettings({ ...this.props.richHistorySettings, ...settingsToUpdate });
   };
@@ -59,6 +70,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
 
   loadRichHistory = debounce(() => {
     this.props.loadRichHistory(this.props.exploreId);
+    this.setState({
+      loading: true,
+    });
   }, 300);
 
   onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -73,9 +87,18 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
+  componentDidUpdate(prevProps: Readonly<RichHistoryProps>, prevState: Readonly<{}>, snapshot?: any) {
+    if (prevProps.richHistory !== this.props.richHistory) {
+      this.setState({
+        loading: false,
+      });
+    }
+  }
+
   render() {
     const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, activeDatasourceInstance } =
       this.props;
+    const { loading } = this.state;
 
     const QueriesTab: TabConfig = {
       label: 'Query history',
@@ -83,6 +106,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryQueriesTab
           queries={richHistory}
+          loading={loading}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
           activeDatasourceInstance={activeDatasourceInstance}
@@ -101,6 +125,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryStarredTab
           queries={richHistory}
+          loading={loading}
           activeDatasourceInstance={activeDatasourceInstance}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}

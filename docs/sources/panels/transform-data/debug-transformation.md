@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/transform-data/debug-transformation/", "/docs/sources/panels/transform-data/debug-transformation/"]
 title = "Debug a transformation"
 weight = 30
-aliases = ["/docs/sources/panels/transform-data/debug-transformation/"]
 +++
 
 # Debug a transformation

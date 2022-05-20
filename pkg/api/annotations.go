@@ -53,7 +53,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 				item.DashboardUID = val
 			} else {
 				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
-				err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+				err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && query.Result != nil {
 					item.DashboardUID = &query.Result.Uid
 					dashboardCache[item.DashboardId] = &query.Result.Uid
@@ -82,7 +82,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
 		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
-		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
 		}
@@ -291,7 +291,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 
 	if cmd.DashboardUID != "" {
 		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
-		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
 		}
@@ -349,6 +349,26 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	}
 
 	return response.Success("Annotations deleted")
+}
+
+func (hs *HTTPServer) GetAnnotationByID(c *models.ReqContext) response.Response {
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	repo := annotations.GetRepository()
+
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	if resp != nil {
+		return resp
+	}
+
+	if annotation.Email != "" {
+		annotation.AvatarUrl = dtos.GetGravatarUrl(annotation.Email)
+	}
+
+	return response.JSON(200, annotation)
 }
 
 func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Response {

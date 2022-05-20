@@ -1,7 +1,7 @@
 +++
-title = "Panels"
+aliases = ["/docs/grafana/latest/features/panels/panels/", "/docs/grafana/latest/panels/", "/docs/sources/panels/"]
 description = "Panels"
-aliases = ["/docs/grafana/latest/features/panels/panels/", "/docs/sources/panels/"]
+title = "Panels"
 weight = 72
 +++
 

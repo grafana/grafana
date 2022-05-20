@@ -1,8 +1,8 @@
 +++
-title = "Time series dimensions"
+aliases = ["/docs/grafana/latest/basics/timeseries-dimensions/", "/docs/grafana/latest/getting-started/timeseries-dimensions/", "/docs/grafana/latest/guides/timeseries-dimensions/"]
 description = "time series dimensions"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries", "labels"]
-aliases = ["/docs/grafana/latest/guides/timeseries-dimensions", "/docs/grafana/latest/getting-started/timeseries-dimensions"]
+title = "Time series dimensions"
 weight = 600
 +++
 

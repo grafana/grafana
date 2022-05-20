@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/explore/explore-inspector/"]
 title = "Inspector in Explore"
 weight = 400
 +++

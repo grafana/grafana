@@ -1,8 +1,8 @@
 +++
-title = "Tempo"
+aliases = ["/docs/grafana/latest/datasources/tempo/", "/docs/grafana/latest/features/datasources/tempo/"]
 description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
 keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
+title = "Tempo"
 weight = 1400
 +++
 
@@ -43,9 +43,13 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
 
-To configure trace to metrics, select the target Prometheus data source and enter the desired query.
+To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
 -- **Data source -** Target data source.
+
+Each linked query consists of:
+
+-- **Link Label -** (Optional) Descriptive label for the linked query.
 -- **Query -** Query that runs when navigating from a trace to the metrics data source.
 
 ### Service Graph

@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 title = "Alerts"
 weight = 114
-aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 +++
 
 # Grafana alerting
@@ -29,7 +29,7 @@ Before you begin, we recommend that you familiarize yourself with some of the [f
 - [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
 - [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
-- [View alert groupings]({{< relref "./alert-groups.md" >}})
+- [View alert groupings]({{< relref "./alert-groups/_index.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points/_index.md" >}})
 - [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
-- [Add or edit silences]({{< relref "./silences.md" >}})
+- [Add or edit silences]({{< relref "./silences/_index.md" >}})

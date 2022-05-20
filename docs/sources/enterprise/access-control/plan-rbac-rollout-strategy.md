@@ -1,8 +1,11 @@
 ---
-title: 'Plan your Grafana RBAC rollout strategy'
-menuTitle: 'Plan your RBAC rollout strategy'
-description: 'Plan your RBAC rollout strategy before you begin assigning roles to users and teams.'
-aliases: ['/docs/grafana/latest/enterprise/access-control/usage-scenarios/']
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/plan-rbac-rollout-strategy/
+  - /docs/grafana/latest/enterprise/access-control/usage-scenarios/
+description: Plan your RBAC rollout strategy before you begin assigning roles to users
+  and teams.
+menuTitle: Plan your RBAC rollout strategy
+title: Plan your Grafana RBAC rollout strategy
 weight: 20
 ---
 
@@ -14,13 +17,13 @@ Your rollout strategy should help you answer the following questions:
 
 - Should I assign basic roles to users, or should I assign fixed roles or custom roles to users?
 - When should I create custom roles?
-- To which entities should I apply fixed and custom roles? Should I apply them to users, teams, or to basic roles?
+- To which entities should I apply fixed and custom roles? Should I apply them to users, teams? Should I modify the basic roles permissions instead?
 - How do I roll out permissions in a way that makes them easy to manage?
 - Which approach should I use when assigning roles? Should I use the Grafana UI, provisioning, or the API?
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to basic roles, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -51,15 +54,15 @@ For example:
 
    For more information about team sync, refer to [Team sync]({{< relref "../team-sync.md" >}}).
 
-3. Within Grafana, assign RBAC permissions to roles and teams.
+3. Within Grafana, assign RBAC permissions to users and teams.
 
 ## When to modify basic roles or create custom roles
 
 Consider the following guidelines when you determine if you should modify basic roles or create custom roles.
 
-- **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove fixed roles from any basic role.
+- **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
 
-  > **Note:** Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../administration/manage-organizations/_index.md" >}}) in the Grafana instance. For example, when you assign the `fixed:users:writer` role to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  > **Note:** Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../administration/manage-organizations/_index.md" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
 
@@ -87,14 +90,14 @@ We've compiled the following permissions rollout scenarios based on current Graf
 
 ### Limit viewer, editor, or admin permissions
 
-1. Review the list of fixed roles associated with the basic role.
-1. [Remove the fixed roles from the basic role]({{< relref "manage-rbac-roles.md#remove-a-fixed-role-from-a-basic-role" >}}).
+1. Review the list of permissions associated with the basic role.
+1. [Change the permissions of the basic role]({{< relref "manage-rbac-roles.md#update-basic-role-permissions" >}}).
 
 ### Allow only members of one team to manage Alerts
 
-1. Remove all fixed roles starting with `fixed:alerts` from the Viewer, Editor, and Admin basic roles.
-2. Create an `Alert Managers` team, and assign that team all applicable Alerting fixed roles.
-3. Add users to the `Alert Managers` team.
+1. Create an `Alert Managers` team, and assign that team all applicable Alerting fixed roles.
+1. Add users to the `Alert Managers` team.
+1. Remove all permissions with actions prefixed with `alert.` from the Viewer, Editor, and Admin basic roles.
 
 ### Provide dashboards to users in two or more geographies
 
@@ -148,28 +151,96 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 ### Enable an editor to create custom roles
 
-By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
+By default, only a Grafana Server Admin can create and manage custom roles. If you want your `Editors` to do the same, [update the `Editor` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
-1. Create a basic role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` basic role.
-1. [Create a custom role]({{< ref "./manage-rbac-roles#create-custom-roles" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a basic role assignment for `Editor` organization role.
+- Add the `fixed:roles:writer` role permissions to the `basic:editor` role using the `role > from` list of your provisioning file:
 
-   > **Note:** any user or service account with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
+```yaml
+apiVersion: 2
+
+roles:
+  - name: 'basic:editor'
+    global: true
+    version: 3
+    from:
+      - name: 'basic:editor'
+        global: true
+      - name: 'fixed:roles:writer'
+        global: true
+```
+
+- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
+
+| action         | scope                       |
+| -------------- | --------------------------- |
+| `roles:list`   | `roles:*`                   |
+| `roles:read`   | `roles:*`                   |
+| `roles:write`  | `permissions:type:delegate` |
+| `roles:delete` | `permissions:type:delegate` |
+
+> **Note:** Any user or service account with the ability to modify roles can only create, update, or delete roles with permissions they have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have or with a subset of them.
 
 ### Enable viewers to create reports
 
-This section describes two ways that you can enable viewers to create reports.
+If you want your `Viewers` to create reports, [update the `Viewer` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
-- Assign the `fixed:reporting:admin:edit` role to the `Viewer` basic role. For more information about assigning a fixed role to a basic role, refer to [Assign a fixed role to a basic role using provisioning]({{< relref "./assign-rbac-roles#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}).
+- Add the `fixed:reports:writer` role permissions to the `basic:viewer` role using the `role > from` list of your provisioning file:
 
-  > **Note:** The `fixed:reporting:admin:edit` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
+```yaml
+apiVersion: 2
 
-- [Create a custom role]({{< ref "./manage-rbac-roles#create-custom-roles" >}}) that includes the `reports.admin:write` permission, and add the custom role to the `Viewer` basic role.
-  - For more information about assigning a custom role to a basic role, refer to [Assign a custom role to a basic role using provisioning]({{< relref "./assign-rbac-roles#assign-a-custom-role-to-a-basic-role-using-provisioning" >}}) or [Assign a custom role to a basic role using the HTTP API]({{< relref "./assign-rbac-roles#assign-a-custom-role-to-a-basic-role-using-the-http-api" >}}).
+roles:
+  - name: 'basic:viewer'
+    global: true
+    version: 3
+    from:
+      - name: 'basic:viewer'
+        global: true
+      - name: 'fixed:reports:writer'
+        global: true
+```
+
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
+
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
+
+| Action                 | Scope                           |
+| ---------------------- | ------------------------------- |
+| `reports.admin:create` | n/a                             |
+| `reports.admin:write`  | `reports:*` <br> `reports:id:*` |
+| `reports:read`         | `reports:*`                     |
+| `reports:send`         | `reports:*`                     |
 
 ### Prevent a Grafana Admin from creating and inviting users
 
-This topic describes how to remove the `users:create` permissions from the Grafana Admin role, which prevents the Grafana Admin from creating users and inviting them to join an organization.
+To prevent a Grafana Admin from creating users and inviting them to join an organization, you must [update a basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}).
+The permissions to remove are:
 
-1. [View basic role assignments]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}) to determine which basic role assignments are available.
-1. To determine which role provides `users:create` permission, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
-1. Use the [Role-based access control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or Grafana provisioning to [Remove a fixed role from a basic role]({{< relref "./manage-rbac-roles#remove-a-fixed-role-from-a-basic-role" >}}).
+| Action          | Scope     |
+| --------------- | --------- |
+| `users:create`  |           |
+| `org.users:add` | `users:*` |
+
+There are two ways to achieve this:
+
+- Use the `role > from` list and `permission > state` option of your provisioning file:
+
+```yaml
+apiVersion: 2
+
+roles:
+  - name: 'basic:editor'
+    global: true
+    version: 3
+    from:
+      - name: 'basic:editor'
+        global: true
+    permissions:
+      - action: 'users:create'
+        state: 'absent'
+      - action: 'org.users:add'
+        scope: 'users:*'
+        state: 'absent'
+```
+
+- Or use [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}).

@@ -1,11 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -14,8 +13,6 @@ import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const LOCATION_COLUMN_WIDTH = 200;
-const TAGS_COLUMN_WIDTH = 300;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -77,9 +74,14 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
+      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let name = access.name.values.get(p.row.index);
+      if (!name?.length) {
+        name = 'Missing title'; // normal for panels
+        classNames += ' ' + styles.missingTitleText;
+      }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
           {name}
         </a>
       );
@@ -111,22 +113,17 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  width = Math.max(availableWidth - TAGS_COLUMN_WIDTH, LOCATION_COLUMN_WIDTH);
+  width = Math.max(availableWidth / 2.5, 200);
+  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
+  availableWidth -= width;
+
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-  if (meta?.locationInfo) {
+  if (meta?.locationInfo && availableWidth > 0) {
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div
-            {...p.cellProps}
-            className={cx(
-              p.cellStyle,
-              css`
-                padding-right: 10px;
-              `
-            )}
-          >
+          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
@@ -143,12 +140,9 @@ export const generateColumns = (
       id: `column-location`,
       field: access.location ?? access.url,
       Header: 'Location',
-      width,
+      width: availableWidth,
     });
-    availableWidth -= width;
   }
-
-  columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
 
   return columns;
 };
@@ -221,11 +215,11 @@ function makeTypeColumn(
   styles: Record<string, string>
 ): TableColumn {
   return {
-    Cell: DefaultCell,
     id: `column-type`,
     field: kindField ?? typeField,
     Header: 'Type',
-    accessor: (row: any, i: number) => {
+    Cell: (p) => {
+      const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
@@ -253,13 +247,15 @@ function makeTypeColumn(
                   icon = v;
                 }
                 txt = info.name;
+              } else {
+                icon = `public/img/icons/unicons/question.svg`; // plugin not found
               }
             }
             break;
         }
       }
       return (
-        <div className={styles.typeText}>
+        <div {...p.cellProps} className={styles.typeText}>
           <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
           {txt}
         </div>

@@ -1,8 +1,8 @@
 +++
-title = "Message templating"
+aliases = ["/docs/grafana/latest/alerting/message-templating/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/"]
 description = "Message templating"
 keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-aliases = ["/docs/grafana/latest/alerting/message-templating/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/"]
+title = "Message templating"
 weight = 400
 +++
 

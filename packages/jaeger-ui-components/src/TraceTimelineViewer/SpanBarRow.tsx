@@ -431,9 +431,9 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             })}
           >
             <SpanTreeOffset
+              onClick={isParent ? this._childrenToggle : undefined}
               childrenVisible={isChildrenExpanded}
               span={span}
-              onClick={isParent ? this._childrenToggle : undefined}
               hoverIndentGuideIds={hoverIndentGuideIds}
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
@@ -524,7 +524,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             [styles.viewExpanded]: isDetailExpanded,
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
           })}
-          data-test-id="span-view"
+          data-testid="span-view"
           style={{ cursor: 'pointer' }}
           width={1 - columnDivision}
           onClick={this._detailToggle}

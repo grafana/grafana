@@ -4,6 +4,7 @@ import { FixedSizeGrid } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
@@ -42,10 +43,20 @@ export const SearchResultsGrid = ({
   const cellWidth = width / numColumns;
   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
   const numRows = Math.ceil(itemCount / numColumns);
+
   return (
     <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>
       {({ onItemsRendered, ref }) => (
         <FixedSizeGrid
+          ref={ref}
+          onItemsRendered={(v) => {
+            onItemsRendered({
+              visibleStartIndex: v.visibleRowStartIndex * numColumns,
+              visibleStopIndex: v.visibleRowStopIndex * numColumns,
+              overscanStartIndex: v.overscanRowStartIndex * numColumns,
+              overscanStopIndex: v.overscanColumnStopIndex * numColumns,
+            });
+          }}
           columnCount={numColumns}
           columnWidth={cellWidth}
           rowCount={numRows}
@@ -60,9 +71,9 @@ export const SearchResultsGrid = ({
             if (index >= view.length) {
               return null;
             }
-
             const item = view.get(index);
             const kind = item.kind ?? 'dashboard';
+
             const facade: DashboardSectionItem = {
               uid: item.uid,
               title: item.name,
@@ -74,6 +85,20 @@ export const SearchResultsGrid = ({
               tags: item.tags ?? [],
               checked: selection ? selection(kind, item.uid) : false,
             };
+
+            if (kind === 'panel') {
+              const type = item.panel_type;
+              facade.icon = 'public/img/icons/unicons/graph-bar.svg';
+              if (type) {
+                const info = config.panels[type];
+                if (info?.name) {
+                  const v = info.info?.logos.small;
+                  if (v && v.endsWith('.svg')) {
+                    facade.icon = v;
+                  }
+                }
+              }
+            }
 
             // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
             // And without this wrapper there is no room for that margin

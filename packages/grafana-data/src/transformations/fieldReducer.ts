@@ -10,10 +10,6 @@ export enum ReducerID {
   min = 'min',
   logmin = 'logmin',
   mean = 'mean',
-  variancePopulation = 'variancePopulation',
-  stddevPopulation = 'stddevPopulation',
-  varianceSample = 'varianceSample',
-  stddevSample = 'stddevSample',
   last = 'last',
   first = 'first',
   count = 'count',
@@ -157,30 +153,6 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
   {
-    id: ReducerID.variancePopulation,
-    name: 'Variance (Population)',
-    description: 'Variance (based on population) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.stddevPopulation,
-    name: 'Standard deviation (Population)',
-    description: 'Standard deviation (based on population) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.varianceSample,
-    name: 'Variance (Sample)',
-    description: 'Variance (based on sample) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.stddevSample,
-    name: 'Standard deviation (Sample)',
-    description: 'Standard deviation (based on sample) of all values in a field',
-    standard: true,
-  },
-  {
     id: ReducerID.sum,
     name: 'Total',
     description: 'The sum of all values',
@@ -284,10 +256,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     min: Number.MAX_VALUE,
     logmin: Number.MAX_VALUE,
     mean: null,
-    variancePopulation: null,
-    stddevPopulation: null,
-    varianceSample: null,
-    stddevSample: null,
     last: null,
     first: null,
     lastNotNull: null,
@@ -305,8 +273,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     // Just used for calculations -- not exposed as a stat
     previousDeltaUp: true,
   } as FieldCalcs;
-
-  let squareSum = 0;
 
   const data = field.values;
   calcs.count = data.length;
@@ -377,10 +343,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
         if (currentValue < calcs.logmin && currentValue > 0) {
           calcs.logmin = currentValue;
         }
-
-        let _oldMean = calcs.mean;
-        calcs.mean += (currentValue - _oldMean) / calcs.nonNullCount;
-        squareSum += (currentValue - _oldMean) * (currentValue - calcs.mean);
       }
 
       if (currentValue !== 0) {
@@ -404,19 +366,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (calcs.nonNullCount > 0) {
-    calcs.variancePopulation = squareSum / calcs.nonNullCount;
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevPopulation = Math.sqrt(calcs.variancePopulation);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.varianceSample = squareSum / (calcs.nonNullCount - 1);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevSample = Math.sqrt(calcs.varianceSample);
+    calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
   if (calcs.allIsNull) {
