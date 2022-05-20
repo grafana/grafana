@@ -23,6 +23,8 @@ interface Props {
   disabled?: boolean;
   id?: string;
   optionLabel?: string;
+  /** List of dashboard UIDs to be excluded from the select options */
+  excludedDashboards?: string[];
 }
 
 /**
@@ -37,8 +39,9 @@ export const DashboardPickerByID: FC<Props> = ({
   disabled,
   id,
   optionLabel = 'label',
+  excludedDashboards,
 }) => {
-  const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel), 300);
+  const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel, excludedDashboards), 300);
   const option = value ? { value, [optionLabel]: value[optionLabel] } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {
     propsOnChange(item?.value);
@@ -62,9 +65,13 @@ export const DashboardPickerByID: FC<Props> = ({
   );
 };
 
-async function getDashboards(query: string, label: string): Promise<Array<SelectableValue<DashboardPickerItem>>> {
+async function getDashboards(
+  query: string,
+  label: string,
+  excludedDashboards?: string[]
+): Promise<Array<SelectableValue<DashboardPickerItem>>> {
   const result = await backendSrv.search({ type: 'dash-db', query, limit: 100 });
-  return result.map(({ id, uid = '', title, folderTitle }) => {
+  const dashboards = result.map(({ id, uid = '', title, folderTitle }) => {
     const value: DashboardPickerItem = {
       id,
       uid,
@@ -73,4 +80,10 @@ async function getDashboards(query: string, label: string): Promise<Array<Select
 
     return { value, [label]: value[label] };
   });
+
+  if (excludedDashboards) {
+    return dashboards.filter(({ value }) => !excludedDashboards.includes(value.uid as string));
+  }
+
+  return dashboards;
 }

@@ -7,7 +7,7 @@ import { DataQuery } from '../../../../packages/grafana-data';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
-import { fromDTO } from './remoteStorageConverter';
+import { fromDTO, toDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -16,6 +16,18 @@ export type RichHistoryRemoteStorageDTO = {
   starred: boolean;
   comment: string;
   queries: DataQuery[];
+};
+
+type RichHistoryRemoteStorageMigrationDTO = {
+  datasourceUid: string;
+  queries: DataQuery[];
+  createdAt: number;
+  starred: boolean;
+  comment: string;
+};
+
+type RichHistoryRemoteStorageMigrationPayloadDTO = {
+  queries: RichHistoryRemoteStorageMigrationDTO[];
 };
 
 type RichHistoryRemoteStorageResultsPayloadDTO = {
@@ -77,6 +89,20 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 
   async updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery> {
     throw new Error('not supported yet');
+  }
+
+  /**
+   * @internal Used only for migration purposes. Will be removed in future.
+   */
+  async migrate(richHistory: RichHistoryQuery[]) {
+    await lastValueFrom(
+      getBackendSrv().fetch({
+        url: '/api/query-history/migrate',
+        method: 'POST',
+        data: { queries: richHistory.map(toDTO) } as RichHistoryRemoteStorageMigrationPayloadDTO,
+        showSuccessAlert: false,
+      })
+    );
   }
 }
 
