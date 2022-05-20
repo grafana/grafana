@@ -3,7 +3,7 @@ import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '../themes';
-import { PanelData } from '../types';
+import { PanelData, DataFrame } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -57,6 +57,9 @@ export interface MapLayerOptions<TConfig = any> {
 
   // Common method to define geometry fields
   location?: FrameGeometrySource;
+
+  // Defines which data query is associated with the layer
+  dataquery?: DataFrame;
 
   // Common properties:
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
