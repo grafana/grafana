@@ -46,11 +46,11 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			RuleOrgID: alertRule1.OrgID,
-			RuleUID:   alertRule1.UID,
-			State:     models.InstanceStateFiring,
-			Reason:    models.InstanceStateError,
-			Labels:    models.InstanceLabels{"test": "testValue"},
+			RuleOrgID:   alertRule1.OrgID,
+			RuleUID:     alertRule1.UID,
+			State:       models.InstanceStateFiring,
+			StateReason: models.InstanceStateError.String(),
+			Labels:      models.InstanceLabels{"test": "testValue"},
 		}
 		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
 		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
-		require.Equal(t, alertRule1.Reason, getCmd.Result.Reason)
+		require.Equal(t, alertRule1.StateReason, getCmd.Result.StateReason)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
