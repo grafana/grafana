@@ -27,8 +27,17 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    updateDashboardName: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
+      const { id, title, url } = action.payload;
+      const starredItems = state.find((navItem) => navItem.id === 'starred');
+      const navItem = starredItems?.children?.find((navItem) => navItem.id === id);
+      if (navItem) {
+        navItem.text = title;
+        navItem.url = url;
+      }
+    },
   },
 });
 
-export const { setStarred } = navTreeSlice.actions;
+export const { setStarred, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;
