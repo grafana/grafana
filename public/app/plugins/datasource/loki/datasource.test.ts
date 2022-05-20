@@ -369,7 +369,7 @@ describe('LokiDatasource', () => {
         const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
 
-        expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+        expect(fieldCache.getFieldByName('Line')?.values.get(0)).toBe('hello');
         expect(dataFrame.meta?.limit).toBe(20);
         expect(dataFrame.meta?.searchWords).toEqual(['foo']);
       });

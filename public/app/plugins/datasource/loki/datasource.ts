@@ -765,7 +765,7 @@ export class LokiDatasource
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const view = new DataFrameView<{ ts: string; line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
 
       view.forEach((row) => {
         const { labels } = row;
@@ -791,9 +791,9 @@ export class LokiDatasource
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
         annotations.push({
-          time: new Date(row.ts).valueOf(),
+          time: new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.line,
+          text: renderLegendFormat(textFormat, labels) || row.Line,
           tags,
         });
       });
