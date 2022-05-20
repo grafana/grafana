@@ -2,6 +2,7 @@
   "frames": [
     {
       "schema": {
+        "name": "1 / 0",
         "meta": {
           "type": "timeseries-many",
           "custom": {
@@ -21,12 +22,15 @@
             }
           },
           {
-            "name": "1 / 0",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
-            "labels": {}
+            "labels": {},
+            "config": {
+              "displayNameFromDS": "1 / 0"
+            }
           }
         ]
       },

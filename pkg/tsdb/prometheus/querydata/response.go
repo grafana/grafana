@@ -32,13 +32,32 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
-		addMetadataToFrame(q, frame)
+		if s.enableWideSeries {
+			addMetadataToWideFrame(q, frame)
+		} else {
+			addMetadataToMultiFrame(q, frame)
+		}
 	}
 
 	return r, nil
 }
 
-func addMetadataToFrame(q *models.Query, frame *data.Frame) {
+func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.ExecutedQueryString = executedQueryString(q)
+	if len(frame.Fields) < 2 {
+		return
+	}
+	frame.Name = getName(q, frame.Fields[1])
+	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
+	if frame.Name != "" {
+		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: frame.Name}
+	}
+}
+
+func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}

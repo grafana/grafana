@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
-var update = true
+var update = false
 
 func TestMatrixResponses(t *testing.T) {
 	tt := []struct {

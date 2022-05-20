@@ -2,6 +2,7 @@
   "frames": [
     {
       "schema": {
+        "name": "go_goroutines{job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-many",
           "custom": {
@@ -21,7 +22,7 @@
             }
           },
           {
-            "name": "go_goroutines{job=\"prometheus\"}",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -29,6 +30,9 @@
             "labels": {
               "__name__": "go_goroutines",
               "job": "prometheus"
+            },
+            "config": {
+              "displayNameFromDS": "go_goroutines{job=\"prometheus\"}"
             }
           }
         ]
