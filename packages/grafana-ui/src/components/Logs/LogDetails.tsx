@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: default;
 
       &:hover {
-        background: none;
+        background: ${theme.isFusebit ? 'none' : theme.colors.background.primary};
       }
     `,
   };
