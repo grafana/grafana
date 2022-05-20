@@ -33,12 +33,10 @@ func TestCloudWatchQuery(t *testing.T) {
 			assert.Empty(t, deepLink)
 		})
 
-		testCases := map[string]struct {
-			linkContainsSubstring string
-			query                 *cloudWatchQuery
-			featureEnabled        bool
-		}{"includes label in case dynamic label is enabled and its a metric stat query": {
-			query: &cloudWatchQuery{
+		t.Run("does not include label in case dynamic label is diabled", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -52,64 +50,57 @@ func TestCloudWatchQuery(t *testing.T) {
 				},
 				MetricQueryType:  MetricQueryTypeSearch,
 				MetricEditorMode: MetricEditorModeBuilder,
-			},
-			featureEnabled: true,
-			// decoded: label: ${PROP('Namespace')}
-			linkContainsSubstring: "label%22%3A%22%24%7BPROP%28%27Namespace%27%29%7D%22%7D%5D%5D%7D",
-		},
-			"does not include label in case dynamic label is diabled": {
-				query: &cloudWatchQuery{
-					RefId:      "A",
-					Region:     "us-east-1",
-					Expression: "",
-					Statistic:  "Average",
-					Period:     300,
-					Id:         "id1",
-					MatchExact: true,
-					Label:      "${PROP('Namespace')}",
-					Dimensions: map[string][]string{
-						"InstanceId": {"i-12345678"},
-					},
-					MetricQueryType:  MetricQueryTypeSearch,
-					MetricEditorMode: MetricEditorModeBuilder,
+			}
+
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
+
+		t.Run("includes label in case dynamic label is enabled and it's a metric stat query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Statistic:  "Average",
+				Period:     300,
+				Id:         "id1",
+				MatchExact: true,
+				Label:      "${PROP('Namespace')}",
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
 				},
-				featureEnabled: true,
-				// decoded: label: ${PROP('Namespace')}
-				linkContainsSubstring: "label%22%3A%22%24%7BPROP%28%27Namespace%27%29%7D%22%7D%5D%5D%7D",
-			},
-			"includes label in case dynamic label is enabled and its a math expression query": {
-				query: &cloudWatchQuery{
-					RefId:      "A",
-					Region:     "us-east-1",
-					Expression: "",
-					Statistic:  "Average",
-					Period:     300,
-					Id:         "id1",
-					MatchExact: true,
-					Label:      "${PROP('Namespace')}",
-					Dimensions: map[string][]string{
-						"InstanceId": {"i-12345678"},
-					},
-					MetricQueryType:  MetricQueryTypeSearch,
-					MetricEditorMode: MetricEditorModeBuilder,
-				},
-				featureEnabled: true,
-				// decoded: label: ${PROP('Namespace')}
-				linkContainsSubstring: "label%22%3A%22%24%7BPROP%28%27Namespace%27%29%7D%22%7D%5D%5D%7D",
-			},
-		}
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeBuilder,
+			}
 
-		for name, tc := range testCases {
-			t.Run(name, func(t *testing.T) {
-				startTime := time.Now()
-				endTime := startTime.Add(2 * time.Hour)
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
 
-				deepLink, err := tc.query.buildDeepLink(startTime, endTime, tc.featureEnabled)
-				require.NoError(t, err)
+		t.Run("includes label in case dynamic label is enabled and it's a math expression query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:            "A",
+				Region:           "us-east-1",
+				Statistic:        "Average",
+				Expression:       "SEARCH(someexpression)",
+				Period:           300,
+				Id:               "id1",
+				MatchExact:       true,
+				Label:            "${PROP('Namespace')}",
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeRaw,
+			}
 
-				assert.Contains(t, deepLink, tc.linkContainsSubstring)
-			})
-		}
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
 	})
 
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
