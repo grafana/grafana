@@ -5,7 +5,6 @@ import { StandardEditorProps } from '@grafana/data';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
-import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { GeomapInstanceState } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';
@@ -55,10 +54,6 @@ export const LayersEditor = (props: LayersEditorProps) => {
     element.onChange({ ...element.options, name });
   };
 
-  const isFrame = (element: MapLayerState<any>) => {
-    return element instanceof FrameState;
-  };
-
   const selection = selected ? [layers[selected]?.getName()] : [];
 
   return (
@@ -74,12 +69,12 @@ export const LayersEditor = (props: LayersEditorProps) => {
 
       <LayerDragDropList
         layers={layers}
+        showActions={() => layers.length > 2} // 2 because base layer is not counted!
         getLayerInfo={getLayerInfo}
         onDragEnd={onDragEnd}
         onSelect={onSelect}
         onDelete={onDelete}
         selection={selection}
-        isFrame={isFrame}
         excludeBaseLayer
         onNameChange={onNameChange}
         verifyLayerNameUniqueness={actions.canRename}

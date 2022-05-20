@@ -13,18 +13,26 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
 
   // rawQuery is OldVariableQuery
   if (typeof rawQuery !== 'string') {
-    const newQuery: VariableQuery = omit(rawQuery, ['ec2Filters', 'tags']);
+    const newQuery: VariableQuery = omit(rawQuery, ['dimensionFilters', 'ec2Filters', 'tags']);
+    newQuery.dimensionFilters = {};
     newQuery.ec2Filters = {};
     newQuery.tags = {};
 
-    if (rawQuery.ec2Filters !== '') {
+    if (rawQuery.dimensionFilters !== '' && rawQuery.ec2Filters !== '[]') {
+      try {
+        newQuery.dimensionFilters = JSON.parse(rawQuery.dimensionFilters);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.dimensionFilters}`);
+      }
+    }
+    if (rawQuery.ec2Filters !== '' && rawQuery.ec2Filters !== '[]') {
       try {
         newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${rawQuery.ec2Filters}`);
       }
     }
-    if (rawQuery.tags !== '') {
+    if (rawQuery.tags !== '' && rawQuery.tags !== '[]') {
       try {
         newQuery.tags = JSON.parse(rawQuery.tags);
       } catch {
@@ -85,7 +93,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
     newQuery.dimensionFilters = {};
-    if (!!dimensionValuesQuery[6]) {
+    if (!!dimensionValuesQuery[6] && dimensionValuesQuery[6] !== '[]') {
       try {
         newQuery.dimensionFilters = JSON.parse(dimensionValuesQuery[6]);
       } catch {
@@ -108,7 +116,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.queryType = VariableQueryType.EC2InstanceAttributes;
     newQuery.region = ec2InstanceAttributeQuery[1];
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
-    if (ec2InstanceAttributeQuery[3]) {
+    if (ec2InstanceAttributeQuery[3] && ec2InstanceAttributeQuery[3] !== '[]') {
       try {
         newQuery.ec2Filters = JSON.parse(ec2InstanceAttributeQuery[3]);
       } catch {
@@ -123,7 +131,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    if (resourceARNsQuery[3]) {
+    if (resourceARNsQuery[3] && resourceARNsQuery[3] !== '[]') {
       try {
         newQuery.tags = JSON.parse(resourceARNsQuery[3]);
       } catch {

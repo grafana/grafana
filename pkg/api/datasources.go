@@ -425,6 +425,33 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
 }
 
+// /api/datasources/uid/:uid/resources/*
+func (hs *HTTPServer) CallDatasourceResourceWithUID(c *models.ReqContext) {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+		return
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
+			return
+		}
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+		return
+	}
+
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		return
+	}
+
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
+}
+
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
@@ -462,6 +489,24 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSou
 	return dto
 }
 
+// CheckDatasourceHealthWithUID sends a health check request to the plugin datasource
+// /api/datasource/uid/:uid/health
+func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *models.ReqContext) response.Response {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		return response.Error(http.StatusBadRequest, "UID is invalid", nil)
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
+	}
+	return hs.checkDatasourceHealth(c, ds)
+}
+
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
@@ -477,10 +522,13 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		}
 		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
 	}
+	return hs.checkDatasourceHealth(c, ds)
+}
 
+func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.DataSource) response.Response {
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
-		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", nil)
 	}
 
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))

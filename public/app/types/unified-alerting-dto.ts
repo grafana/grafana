@@ -24,7 +24,7 @@ export enum PromRuleType {
   Recording = 'recording',
 }
 export enum PromApplication {
-  Cortex = 'Cortex',
+  Lotex = 'Lotex',
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
 }
@@ -44,7 +44,7 @@ export interface PromBuildInfoResponse {
   status: 'success';
 }
 
-export interface PromBuildInfo {
+export interface PromApiFeatures {
   application?: PromApplication;
   features: {
     rulerApiEnabled: boolean;

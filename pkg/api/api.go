@@ -340,9 +340,15 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/uid/:uid/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/proxy/:id", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
+		// Deprecated: use /datasources/uid/:uid/resources API instead.
 		apiRoute.Any("/datasources/:id/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/uid/:uid/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+		// Deprecated: use /datasources/uid/:uid/resources/* API instead.
 		apiRoute.Any("/datasources/:id/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/uid/:uid/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+		// Deprecated: use /datasources/uid/:uid/health API instead.
 		apiRoute.Any("/datasources/:id/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
+		apiRoute.Any("/datasources/uid/:uid/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
@@ -378,14 +384,20 @@ func (hs *HTTPServer) registerRoutes() {
 				})
 			})
 
-			if hs.ThumbService != nil {
-				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
-
-				if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
-					dashboardRoute.Post("/uid/:uid/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.SetImage)
-					dashboardRoute.Put("/uid/:uid/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.UpdateThumbnailState)
+			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
+				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboard))
+					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboard))
 				}
-			}
+
+				if hs.ThumbService != nil {
+					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
+					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
+						dashUidRoute.Post("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.SetImage)
+						dashUidRoute.Put("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.UpdateThumbnailState)
+					}
+				}
+			})
 
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
