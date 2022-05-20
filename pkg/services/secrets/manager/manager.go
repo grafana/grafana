@@ -157,6 +157,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 	var encrypted []byte
 	encrypted, err = s.enc.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
+		s.log.Error("Failed to encrypt secret", "error", err)
 		return nil, err
 	}
 
@@ -302,6 +303,10 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 			"success":   strconv.FormatBool(err == nil),
 			"operation": OpDecrypt,
 		}).Inc()
+
+		if err != nil {
+			s.log.Error("Failed to decrypt secret", "error", err)
+		}
 	}()
 
 	if len(payload) == 0 {
@@ -422,29 +427,34 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 }
 
 func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
+	s.log.Info("Data keys rotation triggered, acquiring lock...")
+
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
+	s.log.Info("Data keys rotation started")
 	err := s.store.DisableDataKeys(ctx)
 	if err != nil {
-		s.log.Error("Failed to disable active data keys", "error", err)
+		s.log.Error("Data keys rotation failed", "error", err)
 		return err
 	}
 
 	s.dataKeyCache.flush()
+	s.log.Info("Data keys rotation finished successfully")
 
 	return nil
 }
 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
+	s.log.Info("Data keys re-encryption triggered")
 	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
 	if err != nil {
-		s.log.Error("Failed to re-encrypt data keys", "error", err)
+		s.log.Error("Data keys re-encryption failed", "error", err)
 		return err
 	}
 
 	s.dataKeyCache.flush()
-
+	s.log.Info("Data keys re-encryption finished successfully")
 	return nil
 }
 
@@ -467,11 +477,11 @@ func (s *SecretsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-gc.C:
-			s.log.Debug("removing expired data encryption keys from cache...")
+			s.log.Debug("Removing expired data keys from cache...")
 			s.dataKeyCache.removeExpired()
-			s.log.Debug("done removing expired data encryption keys from cache")
+			s.log.Debug("Removing expired data keys from cache finished successfully")
 		case <-gCtx.Done():
-			s.log.Debug("grafana is shutting down; stopping...")
+			s.log.Debug("Grafana is shutting down; stopping...")
 			gc.Stop()
 
 			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {

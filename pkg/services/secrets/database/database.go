@@ -43,7 +43,6 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 	}
 
 	if err != nil {
-		ss.log.Error("Failed to get data key", "err", err, "id", id)
 		return nil, fmt.Errorf("failed getting data key: %w", err)
 	}
 
@@ -67,7 +66,6 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) 
 	}
 
 	if err != nil {
-		ss.log.Error("Failed to get data key", "err", err, "name", name)
 		return nil, fmt.Errorf("failed getting data key: %w", err)
 	}
 
@@ -102,11 +100,10 @@ func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKe
 }
 
 func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
-	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(dataKeysTable).
 			Where("active = ?", ss.sqlStore.Dialect.BooleanStr(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
-
 		return err
 	})
 }
@@ -128,13 +125,13 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	providers map[secrets.ProviderID]secrets.Provider,
 	currProvider secrets.ProviderID,
 ) error {
-	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		keys := make([]*secrets.DataKey, 0)
-		if err := sess.Table(dataKeysTable).Find(&keys); err != nil {
-			return err
-		}
+	keys := make([]*secrets.DataKey, 0)
+	if err := ss.sqlStore.NewSession(ctx).Table(dataKeysTable).Find(&keys); err != nil {
+		return err
+	}
 
-		for _, k := range keys {
+	for _, k := range keys {
+		err := ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			provider, ok := providers[kmsproviders.NormalizeProviderID(k.Provider)]
 			if !ok {
 				ss.log.Warn(
@@ -143,7 +140,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 					"name", k.Name,
 					"provider", k.Provider,
 				)
-				continue
+				return nil
 			}
 
 			decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
@@ -155,7 +152,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 					"provider", k.Provider,
 					"err", err,
 				)
-				continue
+				return nil
 			}
 
 			// Updating current data key by re-encrypting it with current provider.
@@ -172,7 +169,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 					"provider", k.Provider,
 					"err", err,
 				)
-				continue
+				return nil
 			}
 
 			if _, err := sess.Table(dataKeysTable).Where("id = ?", k.Id).Update(k); err != nil {
@@ -183,10 +180,16 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 					"provider", k.Provider,
 					"err", err,
 				)
-				continue
+				return nil
 			}
-		}
 
-		return nil
-	})
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

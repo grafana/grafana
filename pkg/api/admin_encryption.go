@@ -12,5 +12,5 @@ func (hs *HTTPServer) AdminRotateDataEncryptionKeys(c *models.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "Failed to rotate data key", err)
 	}
 
-	return response.Empty(http.StatusOK)
+	return response.Respond(http.StatusNoContent, "")
 }
