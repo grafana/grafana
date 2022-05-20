@@ -327,9 +327,6 @@ const (
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
 
-	// Plugin actions
-	ActionPluginsManage = "plugins:manage"
-
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
 
@@ -375,10 +372,8 @@ const (
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions
-	ActionAlertingNotificationsCreate = "alert.notifications:create"
-	ActionAlertingNotificationsRead   = "alert.notifications:read"
-	ActionAlertingNotificationsUpdate = "alert.notifications:update"
-	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+	ActionAlertingNotificationsRead  = "alert.notifications:read"
+	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
