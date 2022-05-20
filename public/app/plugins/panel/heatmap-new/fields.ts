@@ -37,6 +37,8 @@ export interface HeatmapData {
   exemplarsMappings?: HeatmapDataMapping;
 
   yAxisValues?: Array<number | string | null>;
+  matchByLabel?: string; // e.g. le, pod, etc.
+  labelValues?: string[]; // matched ordinally to yAxisValues
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -64,6 +66,9 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
+  const firstLabels = data.series[0].fields.find((f) => f.type === FieldType.number)?.labels ?? {};
+  const matchByLabel = Object.keys(firstLabels)[0];
+
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
     return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
@@ -83,6 +88,10 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
   if (bucketsHeatmap) {
     return {
+      matchByLabel,
+      labelValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? field.labels?.[matchByLabel] ?? [] : []
+      ),
       yAxisValues: frames[0].fields.flatMap((field) =>
         field.type === FieldType.number ? getFieldDisplayName(field) : []
       ),
@@ -106,23 +115,16 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
 
     if (heatmapFrame.meta?.type !== DataFrameType.HeatmapScanlines) {
       scanlinesFrame = bucketsToScanlines(scanlinesFrame);
-      yAxisValues = frames[0].fields.flatMap((field) => {
-        if (field.type === FieldType.number) {
-          let tickLabel = getFieldDisplayName(field);
-
-          if (tickLabel === 'Value') {
-            // TODO: how to select label by which to rename?
-            tickLabel = field.labels?.pod ?? tickLabel;
-          }
-
-          return tickLabel;
-        }
-
-        return [];
-      });
+      yAxisValues = frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? getFieldDisplayName(field) : []
+      );
     }
 
     return {
+      matchByLabel,
+      labelValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? field.labels?.[matchByLabel] ?? [] : []
+      ),
       yAxisValues,
       ...getHeatmapData(scanlinesFrame, exemplars, theme),
     };
