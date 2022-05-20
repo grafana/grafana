@@ -12,6 +12,28 @@ import { splitOpen } from './state/main';
 
 type Mock = jest.Mock;
 
+const defaultUrlParams = (overrideParams) => {
+  const params = { datasource: 'loki', exprValue: 'value', rightDatasource: undefined, ...overrideParams };
+
+  const urlParams = {
+    left: serializeStateToUrlParam({
+      datasource: params.datasource,
+      queries: [{ refId: 'A', expr: `{ label="${params.exprValue}"}` }],
+      range: { from: 'now-1h', to: 'now' },
+    }),
+  };
+
+  if (params.rightDatasource) {
+    urlParams.right = serializeStateToUrlParam({
+      datasource: rightDatasource,
+      queries: [{ refId: 'A', expr: `{ label="${params.exprValue}"}` }],
+      range: { from: 'now-1h', to: 'now' },
+    });
+  }
+
+  return urlParams;
+};
+
 jest.mock('app/core/core', () => {
   return {
     contextSrv: {
@@ -94,7 +116,7 @@ describe('Wrapper', () => {
   });
 
   it('handles url change and runs the new query', async () => {
-    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const urlParams = defaultUrlParams();
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
@@ -102,9 +124,7 @@ describe('Wrapper', () => {
 
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse('different log'));
 
-    locationService.partial({
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
-    });
+    locationService.partial(defaultUrlParams({ exprValue: 'different' }));
 
     // Editor renders the new query
     await screen.findByText(`loki Editor input: { label="different"}`);
@@ -113,7 +133,7 @@ describe('Wrapper', () => {
   });
 
   it('handles url change and runs the new query with different datasource', async () => {
-    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const urlParams = defaultUrlParams();
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
@@ -133,7 +153,7 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
+    const urlParams = defaultUrlParams();
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
@@ -213,10 +233,7 @@ describe('Wrapper', () => {
   });
 
   it('can close a pane from a split', async () => {
-    const urlParams = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
-    };
+    const urlParams = defaultUrlParams({ rightDatasource: 'elastic' });
     setupExplore({ urlParams });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
     await userEvent.click(closeButtons[1]);
@@ -231,13 +248,22 @@ describe('Wrapper', () => {
     const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
+
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
     locationService.partial({
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: '{ label="value"}' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+      right: serializeStateToUrlParam({
+        datasource: 'elastic',
+        queries: [{ refId: 'A', expr: 'error' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
     });
 
     // Editor renders the new query
@@ -265,9 +291,7 @@ describe('Wrapper', () => {
   });
 
   it('changes the document title of the explore page to include the datasource in use', async () => {
-    const urlParams = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-    };
+    const urlParams = defaultUrlParams();
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     // This is mainly to wait for render so that the left pane state is initialized as that is needed for the title
@@ -277,9 +301,7 @@ describe('Wrapper', () => {
     await waitFor(() => expect(document.title).toEqual('Explore - loki - Grafana'));
   });
   it('changes the document title to include the two datasources in use in split view mode', async () => {
-    const urlParams = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-    };
+    const urlParams = defaultUrlParams();
     const { datasources, store } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
