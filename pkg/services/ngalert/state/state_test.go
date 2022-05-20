@@ -143,6 +143,13 @@ func TestNeedsSending(t *testing.T) {
 				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
 			},
 		},
+		{
+			name:     "state: stale, should be re-sent",
+			expected: true,
+			testState: &State{
+				StateReason: ngmodels.StateReasonMissingSeries,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
