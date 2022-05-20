@@ -68,15 +68,19 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 		})
 	}
 
-	added, err := m.sess.Table(&accesscontrol.Permission{}).InsertMulti(toAdd)
-	if err != nil {
-		return fmt.Errorf("failed to insert new permissions:%w", err)
+	if len(toAdd) > 0 {
+		added, err := m.sess.Table(&accesscontrol.Permission{}).InsertMulti(toAdd)
+		if err != nil {
+			return fmt.Errorf("failed to insert new permissions:%w", err)
+		}
+		m.migrator.Logger.Debug(fmt.Sprintf("updated %d of %d roles with new permission %s", added, len(toAdd), accesscontrol.ActionAlertingNotificationsWrite))
 	}
-	m.migrator.Logger.Debug(fmt.Sprintf("updated %d of %d roles with new permission %s", added, len(toAdd), accesscontrol.ActionAlertingNotificationsWrite))
 
-	_, err = m.sess.Table(&accesscontrol.Permission{}).In("id", toDelete...).Delete(accesscontrol.Permission{})
-	if err != nil {
-		return fmt.Errorf("failed to delete deprecated permissions [alert.notifications:update, alert.notifications:create, alert.notifications:delete]:%w", err)
+	if len(toDelete) > 0 {
+		_, err = m.sess.Table(&accesscontrol.Permission{}).In("id", toDelete...).Delete(accesscontrol.Permission{})
+		if err != nil {
+			return fmt.Errorf("failed to delete deprecated permissions [alert.notifications:update, alert.notifications:create, alert.notifications:delete]:%w", err)
+		}
 	}
 
 	return nil
