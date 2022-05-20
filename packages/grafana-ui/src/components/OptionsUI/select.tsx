@@ -7,6 +7,7 @@ import { Select } from '../Select/Select';
 interface State<T> {
   isLoading: boolean;
   options: Array<SelectableValue<T>>;
+  priorOptions: Array<SelectableValue<T>>;
 }
 
 type Props<T> = FieldConfigEditorProps<T, SelectFieldConfigSettings<T>>;
@@ -15,6 +16,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
   state: State<T> = {
     isLoading: true,
     options: [],
+    priorOptions: [],
   };
 
   componentDidMount() {
@@ -46,16 +48,20 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
       this.setState({
         isLoading: false,
         options,
+        priorOptions: this.state.options,
       });
     }
   };
 
   render() {
-    const { options, isLoading } = this.state;
-    const { value, onChange, item } = this.props;
+    const { options, priorOptions, isLoading } = this.state;
+    const { value, onChange, item, context } = this.props;
 
     const { settings } = item;
     let current = options.find((v) => v.value === value);
+    if (settings?.overrideCurrentValue) {
+      current = settings.overrideCurrentValue(context, priorOptions as Array<SelectableValue<T>>, value as T, current);
+    }
     if (!current && value) {
       current = {
         label: `${value}`,
