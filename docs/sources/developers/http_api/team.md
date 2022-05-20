@@ -16,8 +16,7 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
-> Refer to specific endpoints to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Team Search With Paging
 
@@ -27,7 +26,7 @@ or
 
 `GET /api/teams/search?name=myteam`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -90,7 +89,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 
 `GET /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -136,7 +135,7 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 `POST /api/teams`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -181,7 +180,7 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 `PUT /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -224,7 +223,7 @@ Status Codes:
 
 `DELETE /api/teams/:id`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -261,7 +260,7 @@ Status Codes:
 
 `GET /api/teams/:teamId/members`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -314,7 +313,7 @@ Status Codes:
 
 `POST /api/teams/:teamId/members`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -356,7 +355,7 @@ Status Codes:
 
 `DELETE /api/teams/:teamId/members/:userId`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -393,7 +392,7 @@ Status Codes:
 
 `GET /api/teams/:teamId/preferences`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 
@@ -427,7 +426,7 @@ Content-Type: application/json
 
 `PUT /api/teams/:teamId/preferences`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
 

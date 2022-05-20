@@ -11,8 +11,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Fetch settings
 
@@ -20,7 +19,7 @@ must have the Grafana Admin permission. (The default admin user is called `admin
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -192,7 +191,7 @@ Updates / removes and reloads database settings. You must provide either `update
 
 This endpoint only supports changes to `auth.saml` configuration.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -246,7 +245,7 @@ Status codes:
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -328,7 +327,7 @@ Content-Type: application/json
 
 Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -370,7 +369,7 @@ Content-Type: application/json
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 Change password for a specific user.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -403,7 +402,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -436,7 +435,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -504,7 +503,7 @@ Return a list of all auth tokens (devices) that the user currently have logged i
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -563,7 +562,7 @@ and will be required to authenticate again upon next activity.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -603,7 +602,7 @@ and will be required to authenticate again upon next activity.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
@@ -648,7 +647,7 @@ polling for changes in dashboard files and then restart it with new configuratio
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 

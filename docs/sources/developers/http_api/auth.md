@@ -7,9 +7,11 @@ title = "Authentication HTTP API "
 
 # Authentication API
 
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+
 ## Tokens
 
-Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
+Currently, you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
 
 ## X-Grafana-Org-Id Header
 
@@ -76,6 +78,14 @@ curl example:
 
 `GET /api/auth/keys`
 
+**Required permissions**
+
+See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+
+| Action         | Scope       |
+| -------------- | ----------- |
+| `apikeys:read` | `apikeys:*` |
+
 **Example Request**:
 
 ```http
@@ -113,6 +123,14 @@ Content-Type: application/json
 ## Create API Key
 
 `POST /api/auth/keys`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+
+| Action           | Scope |
+| ---------------- | ----- |
+| `apikeys:create` | n/a   |
 
 **Example Request**:
 
@@ -152,6 +170,14 @@ Content-Type: application/json
 ## Delete API Key
 
 `DELETE /api/auth/keys/:id`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+
+| Action           | Scope      |
+| ---------------- | ---------- |
+| `apikeys:delete` | apikeys:\* |
 
 **Example Request**:
 

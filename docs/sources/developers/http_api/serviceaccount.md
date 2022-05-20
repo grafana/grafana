@@ -7,16 +7,15 @@ title = "Service account HTTP API "
 
 # Service account API
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Search service accounts with Paging
 
 `GET /api/serviceaccounts/search?perpage=10&page=1&query=myserviceaccount`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope                     |
 | -------------------- | ------------------------- |
@@ -81,9 +80,9 @@ Content-Type: application/json
 
 `POST /api/serviceaccounts`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -129,9 +128,9 @@ Content-Type: application/json
 
 `GET /api/serviceaccounts/:id`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -172,9 +171,9 @@ Content-Type: application/json
 
 `PATCH /api/serviceaccounts/:id`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -224,9 +223,9 @@ Content-Type: application/json
 
 `GET /api/serviceaccounts/:id/tokens`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -266,9 +265,9 @@ Content-Type: application/json
 
 `POST /api/serviceaccounts/:id/tokens`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -307,9 +306,9 @@ Content-Type: application/json
 
 `DELETE /api/serviceaccounts/:id/tokens/:tokenId`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#serviceaccount-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |

@@ -7,14 +7,13 @@ title = "Data source HTTP API "
 
 # Data source API
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get all data sources
 
 `GET /api/datasources`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -70,7 +69,7 @@ Content-Type: application/json
 
 `GET /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -126,7 +125,7 @@ Content-Type: application/json
 
 `GET /api/datasources/uid/:uid`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -182,7 +181,7 @@ Content-Type: application/json
 
 `GET /api/datasources/name/:name`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -238,7 +237,7 @@ Content-Type: application/json
 
 `GET /api/datasources/id/:name`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -272,7 +271,7 @@ Content-Type: application/json
 
 `POST /api/datasources`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -420,7 +419,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 `PUT /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -500,7 +499,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/:datasourceId`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -532,7 +531,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/uid/:uid`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 
@@ -567,7 +566,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/name/:datasourceName`
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
 

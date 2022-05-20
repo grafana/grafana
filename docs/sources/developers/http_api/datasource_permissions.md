@@ -9,8 +9,7 @@ title = "Datasource Permissions HTTP API "
 
 > The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 
@@ -26,7 +25,7 @@ The permission levels for the permission field:
 
 Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
@@ -71,7 +70,7 @@ Status codes:
 
 Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
@@ -116,7 +115,7 @@ Status codes:
 
 Gets all existing permissions for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
@@ -187,7 +186,7 @@ Status codes:
 
 Adds a user permission for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
@@ -261,7 +260,7 @@ Status codes:
 
 Removes the permission with the given `permissionId` for the data source with the given `id`.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 

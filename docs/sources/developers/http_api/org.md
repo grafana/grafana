@@ -11,8 +11,7 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Current Organization API
 
@@ -20,7 +19,7 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 `GET /api/org/`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -56,7 +55,7 @@ Content-Type: application/json
 Returns all org users within the current organization.
 Accessible to users with org admin role.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -102,7 +101,7 @@ Accessible to users with org admin role, admin in any folder or admin of any tea
 Mainly used by Grafana UI for providing list of users when adding team members and
 when editing folder/dashboard permissions.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -138,7 +137,7 @@ Content-Type: application/json
 
 `PATCH /api/org/users/:userId`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -172,7 +171,7 @@ Content-Type: application/json
 
 `DELETE /api/org/users/:userId`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -202,7 +201,7 @@ Content-Type: application/json
 
 `PUT /api/org`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -238,7 +237,7 @@ Content-Type: application/json
 
 Adds a global user to the current organization.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -283,7 +282,7 @@ is called `admin` and has permission to use this API).
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -325,7 +324,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -367,7 +366,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -410,7 +409,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -452,7 +451,7 @@ Content-Type: application/json
 Update Organization, fields _Address 1_, _Address 2_, _City_ are not implemented yet.
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -487,7 +486,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -517,7 +516,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -558,7 +557,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -594,7 +593,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
@@ -629,7 +628,7 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 

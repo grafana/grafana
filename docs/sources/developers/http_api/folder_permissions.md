@@ -17,11 +17,21 @@ The permission levels for the permission field:
 - 2 = Edit
 - 4 = Admin
 
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+
 ## Get permissions for a folder
 
 `GET /api/folders/:uid/permissions`
 
 Gets all existing permissions for the folder with the given `uid`.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
+
+| Action                     | Scope       |
+| -------------------------- | ----------- |
+| `folders.permissions:read` | `folders:*` |
 
 **Example request**:
 
@@ -93,6 +103,14 @@ Status Codes:
 `POST /api/folders/:uid/permissions`
 
 Updates permissions for a folder. This operation will remove existing permissions if they're not included in the request.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-permission-api" >}}) for an explanation.
+
+| Action                      | Scope       |
+| --------------------------- | ----------- |
+| `folders.permissions:write` | `folders:*` |
 
 **Example request**:
 

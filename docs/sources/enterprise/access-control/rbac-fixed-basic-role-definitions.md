@@ -5,7 +5,7 @@ aliases:
 description: This topic includes a table that lists permission associated with Grafana
   fixed and basic roles.
 menuTitle: RBAC role definitions
-title: RBAC role definitions
+title: Grafana RBAC role definitions
 weight: 70
 ---
 

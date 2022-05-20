@@ -9,8 +9,7 @@ title = "Licensing HTTP API "
 
 Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Check license availability
 
@@ -20,7 +19,7 @@ Refer to specific resources to understand what permissions are required.
 
 Checks if a valid license is available.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
 
@@ -60,7 +59,7 @@ Status codes:
 
 Manually ask license issuer for a new token.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
 
@@ -120,7 +119,7 @@ Status Codes:
 
 Removes the license stored in the Grafana database.
 
-### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
 

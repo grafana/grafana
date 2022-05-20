@@ -9,10 +9,9 @@ title = "RBAC HTTP API"
 
 > Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-The API can be used to create, update, get and list roles, and create or remove assignments.
-To use the API, you would need to [enable role-based access control]({{< relref "../../enterprise/access-control/_index.md#enable-role-based-access-control" >}}).
+The API can be used to create, update, delete, get, and list roles.
 
-The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "auth#basic-auth" >}}).
+To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}}).
 
 ## Get status
 

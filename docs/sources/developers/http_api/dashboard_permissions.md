@@ -17,11 +17,21 @@ The permission levels for the permission field:
 - 2 = Edit
 - 4 = Admin
 
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+
 ## Get permissions for a dashboard
 
 `GET /api/dashboards/uid/:uid/permissions`
 
 Gets all existing permissions for the dashboard with the given `uid`.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
+
+| Action                        | Scope                                 |
+| ----------------------------- | ------------------------------------- |
+| `dashboards.permissions:read` | `dashboards:uid:*`<br>`folders:uid:*` |
 
 **Example request**:
 
@@ -94,6 +104,14 @@ Status Codes:
 
 Updates permissions for a dashboard. This operation will remove existing permissions if they're not included in the request.
 
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
+
+| Action                         | Scope                                 |
+| ------------------------------ | ------------------------------------- |
+| `dashboards.permissions:write` | `dashboards:uid:*`<br>`folders:uid:*` |
+
 **Example request**:
 
 ```http
@@ -152,6 +170,14 @@ Status Codes:
 `GET /api/dashboards/id/:dashboardId/permissions`
 
 Gets all existing permissions for the dashboard with the given `dashboardId`.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
+
+| Action                        | Scope                         |
+| ----------------------------- | ----------------------------- |
+| `dashboards.permissions:read` | `dashboards:*`<br>`folders:*` |
 
 **Example request**:
 
@@ -225,6 +251,14 @@ Status Codes:
 `POST /api/dashboards/id/:dashboardId/permissions`
 
 Updates permissions for a dashboard. This operation will remove existing permissions if they're not included in the request.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
+
+| Action                         | Scope                         |
+| ------------------------------ | ----------------------------- |
+| `dashboards.permissions:write` | `dashboards:*`<br>`folders:*` |
 
 **Example request**:
 

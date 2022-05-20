@@ -7,6 +7,8 @@ title = "Folder HTTP API "
 
 # Folder API
 
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+
 ## Identifier (id) vs unique identifier (uid)
 
 The identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.
@@ -25,6 +27,14 @@ that you cannot use this API for retrieving information about the General folder
 `GET /api/folders`
 
 Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000. You can also pass the `page` query parameter for fetching folders from a page other than the first one.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action         | Scope       |
+| -------------- | ----------- |
+| `folders:read` | `folders:*` |
 
 **Example Request**:
 
@@ -60,6 +70,14 @@ Content-Type: application/json
 `GET /api/folders/:uid`
 
 Will return the folder given the folder uid.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action         | Scope       |
+| -------------- | ----------- |
+| `folders:read` | `folders:*` |
 
 **Example Request**:
 
@@ -105,6 +123,14 @@ Status Codes:
 `POST /api/folders`
 
 Creates a new folder.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action           | Scope |
+| ---------------- | ----- |
+| `folders:create` | n/a   |
 
 **Example Request**:
 
@@ -161,6 +187,14 @@ Status Codes:
 `PUT /api/folders/:uid`
 
 Updates an existing folder identified by uid.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action          | Scope       |
+| --------------- | ----------- |
+| `folders:write` | `folders:*` |
 
 **Example Request**:
 
@@ -241,6 +275,14 @@ Deletes an existing folder identified by UID along with all dashboards (and thei
 
 If [Grafana alerting]({{< relref "../../alerting/_index.md" >}}) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action           | Scope       |
+| ---------------- | ----------- |
+| `folders:delete` | `folders:*` |
+
 **Example Request**:
 
 ```http
@@ -276,6 +318,14 @@ Status Codes:
 `GET /api/folders/id/:id`
 
 Will return the folder identified by id.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+| Action         | Scope       |
+| -------------- | ----------- |
+| `folders:read` | `folders:*` |
 
 **Example Request**:
 

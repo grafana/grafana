@@ -9,14 +9,13 @@ title = "Annotations HTTP API "
 
 This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
-> Refer to specific endpoints to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Find Annotations
 
 `GET /api/annotations?from=1506676478816&to=1507281278816&tags=tag1&tags=tag2&limit=100`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -105,7 +104,7 @@ The format for `time` and `timeEnd` should be epoch numbers in millisecond resol
 
 `POST /api/annotations`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -153,7 +152,7 @@ format (string with multiple tags being separated by a space).
 
 `POST /api/annotations/graphite`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -194,7 +193,7 @@ Content-Type: application/json
 
 Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the [Patch Annotation](#patch-annotation) operation.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -239,7 +238,7 @@ Updates one or more properties of an annotation that matches the specified id.
 
 This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -278,7 +277,7 @@ Content-Type: application/json
 
 Deletes the annotation that matches the specified id.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
@@ -312,7 +311,7 @@ Content-Type: application/json
 
 Find all the event tags created in the annotations.
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
