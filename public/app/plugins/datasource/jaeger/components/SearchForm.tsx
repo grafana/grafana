@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, fuzzyMatch, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -66,17 +65,6 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     [datasource]
   );
 
-  const getServiceOptions = (userQuery: string) => {
-    return loadServices('/api/services', 'services', userQuery);
-  };
-
-  const getOperationOptions = (userQuery: string) => {
-    return loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations', userQuery);
-  };
-
-  const serviceSearch = debounce(getServiceOptions, 500, { leading: true, trailing: true });
-  const operationSearch = debounce(getOperationOptions, 500, { leading: true, trailing: true });
-
   useEffect(() => {
     const getServices = async () => {
       const services = await loadServices('/api/services', 'services');
@@ -102,10 +90,9 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
         <InlineField label="Service" labelWidth={14} grow>
-          <AsyncSelect
+          <Select
             inputId="service"
-            cacheOptions={false}
-            loadOptions={serviceSearch}
+            options={serviceOptions}
             onOpenMenu={() => loadServices('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
@@ -118,17 +105,15 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             menuPlacement="bottom"
             isClearable
-            defaultOptions
             aria-label={'select-service-name'}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
-          <AsyncSelect
+          <Select
             inputId="operation"
-            cacheOptions={false}
-            loadOptions={operationSearch}
+            options={operationOptions}
             onOpenMenu={() =>
               loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
             }
@@ -142,7 +127,6 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             menuPlacement="bottom"
             isClearable
-            defaultOptions
             aria-label={'select-operation-name'}
           />
         </InlineField>
