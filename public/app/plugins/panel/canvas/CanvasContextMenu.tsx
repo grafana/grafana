@@ -122,13 +122,20 @@ export const CanvasContextMenu = ({ scene }: Props) => {
 
   if (isMenuVisible) {
     return (
-      <ContextMenu
-        x={anchorPoint.x}
-        y={anchorPoint.y}
-        onClose={closeContextMenu}
-        renderMenuItems={renderMenuItems}
-        focusOnOpen={false}
-      />
+      <div
+        onContextMenu={(event) => {
+          event.preventDefault();
+          closeContextMenu();
+        }}
+      >
+        <ContextMenu
+          x={anchorPoint.x}
+          y={anchorPoint.y}
+          onClose={closeContextMenu}
+          renderMenuItems={renderMenuItems}
+          focusOnOpen={false}
+        />
+      </div>
     );
   }
 
