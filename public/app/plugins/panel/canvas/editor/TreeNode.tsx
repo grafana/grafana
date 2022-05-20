@@ -51,6 +51,7 @@ export const TreeNode = ({ node, selection }: Props) => {
     return isSelected ? `${styles.treeNodeHeader} ${styles.selected}` : styles.treeNodeHeader;
   };
 
+  // @TODO icons
   const getSvgPath = () => {
     const id = node.item.id;
     const uniconsPath = 'public/img/icons/unicons/';
@@ -78,7 +79,6 @@ export const TreeNode = ({ node, selection }: Props) => {
         path = `${uniconsPath}wind.svg`;
         break;
       default:
-        // placeholder img
         path = `${uniconsPath}apps.svg`;
         break;
     }
