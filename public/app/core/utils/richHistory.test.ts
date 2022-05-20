@@ -6,8 +6,8 @@ import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHi
 
 import {
   addToRichHistory,
-  updateCommentInRichHistory,
   updateStarredInRichHistory,
+  updateCommentInRichHistory,
   mapNumbertoTimeInSlider,
   createDateStringFromTs,
   createQueryHeading,
