@@ -1,6 +1,13 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import { FrameGeometrySourceMode, MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
+import {
+  DataFrame,
+  FrameGeometrySourceMode,
+  MapLayerOptions,
+  MapLayerRegistryItem,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { hasAlphaPanels } from 'app/core/config';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -73,6 +80,61 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         name: 'Layer type', // required, but hide space
         settings: {
           options: layerTypes.options,
+        },
+      });
+
+      builder.addSelect({
+        path: 'dataquery',
+        name: 'Query',
+        settings: {
+          options: [],
+          getOptions: async (ctx) => {
+            return ctx.data.map((value) => {
+              return {
+                value,
+                label: value.refId,
+              } as SelectableValue<DataFrame>;
+            });
+          },
+          overrideCurrentValue: (ctx, priorOptions: Array<SelectableValue<DataFrame>>, prevVal, newVal) => {
+            // User simply selected a new value, use that one
+            if (newVal) {
+              return newVal;
+            }
+            // Previous val is missing, so this is probably a fresh render
+            if (!prevVal) {
+              return undefined;
+            }
+            // Check if the value we had selected is missing from the updated list
+            let updatedVal = ctx.data.find((val) => {
+              return val.refId === prevVal.refId;
+            });
+            if (!updatedVal) {
+              // Previously selected value is missing from the new list.
+              // Find the value that is in the new list but isn't in the old list
+              let changedTo = ctx.data.find((val) => {
+                return !priorOptions.some((val2) => {
+                  return val2.value?.refId === val.refId;
+                });
+              });
+              if (changedTo) {
+                // Found the new value, we assume the old value changed to this one, so we'll use it
+                return {
+                  value: changedTo,
+                  label: changedTo.refId,
+                } as SelectableValue<DataFrame>;
+              } else {
+                // The old value was just deleted, fallback to the first available option
+                return priorOptions.length ? priorOptions[0] : undefined;
+              }
+            } else {
+              //Previously selected value was still in there, use that
+              return {
+                value: updatedVal,
+                label: updatedVal.refId,
+              };
+            }
+          },
         },
       });
 
