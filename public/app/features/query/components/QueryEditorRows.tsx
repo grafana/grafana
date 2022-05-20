@@ -23,6 +23,7 @@ interface Props {
   onQueriesChange: (queries: DataQuery[]) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
+  onQueryRefChange?: () => void;
 
   // Query Response Data
   data: PanelData;
@@ -156,6 +157,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onAddQuery}
                       onRunQuery={this.props.onRunQueries}
+                      onQueryRefChange={this.props.onQueryRefChange}
                       queries={queries}
                       app={app}
                       history={history}
