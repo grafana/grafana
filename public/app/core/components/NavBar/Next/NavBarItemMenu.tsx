@@ -67,7 +67,9 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const contents = [itemComponents, subTitleComponent];
   const contentComponent = (
-    <NavBarScrollContainer>{reverseMenuDirection ? contents.reverse() : contents}</NavBarScrollContainer>
+    <NavBarScrollContainer key="scrollContainer">
+      {reverseMenuDirection ? contents.reverse() : contents}
+    </NavBarScrollContainer>
   );
 
   const menu = [headerComponent, contentComponent];

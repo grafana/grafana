@@ -51,7 +51,6 @@ export const CustomScrollbar: FC<Props> = ({
       scrollRefCallback?.(ref.current.view);
     }
   }, [ref, scrollRefCallback]);
-
   const styles = useStyles2(getStyles);
 
   const updateScroll = () => {
