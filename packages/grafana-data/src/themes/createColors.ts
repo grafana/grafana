@@ -293,16 +293,16 @@ class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.fusebit.white,
-    primary: palette.fusebit.lightBlue,
-    secondary: palette.gray100,
+    canvas: palette.fusebit.blue,
+    primary: palette.fusebit.white,
+    secondary: palette.fusebit.lightBlue,
   };
 
   action = {
-    hover: `rgba(${this.blackBase}, 0.12)`,
+    hover: `rgba(${palette.fusebit.blue}, 0.5)`,
     selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
-    focus: `rgba(${this.blackBase}, 0.12)`,
+    focus: `rgba(${palette.fusebit.blue}, 0.12)`,
     disabledBackground: `rgba(${this.blackBase}, 0.04)`,
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,

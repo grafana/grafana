@@ -44,7 +44,8 @@ export const palette = {
 
   //fusebit
   fusebit: {
-    lightBlue: '#F0F5FF',
+    lightBlue: '#F7FAFE',
+    blue: '#EFF5FF',
     white: '#FFFFFF',
   },
 };

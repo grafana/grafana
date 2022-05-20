@@ -4,7 +4,10 @@ import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.primary, theme);
+  const hoverBgColor = styleMixins.hoverColor(
+    theme.isFusebit ? theme.colors.background.secondary : theme.colors.background.primary,
+    theme
+  );
 
   switch (logLevel) {
     case LogLevel.crit:
