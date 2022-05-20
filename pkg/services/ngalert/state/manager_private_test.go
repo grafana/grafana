@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -103,4 +104,47 @@ func Test_maybeNewImage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsItStale(t *testing.T) {
+	now := time.Now()
+	intervalSeconds := rand.Int63n(10) + 5
+
+	testCases := []struct {
+		name           string
+		lastEvaluation time.Time
+		expectedResult bool
+	}{
+		{
+			name:           "false if last evaluation is now",
+			lastEvaluation: now,
+			expectedResult: false,
+		},
+		{
+			name:           "false if last evaluation is 1 interval before now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds)),
+			expectedResult: false,
+		},
+		{
+			name:           "false if last evaluation is little less than 2 interval before now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2).Add(100 * time.Millisecond),
+			expectedResult: false,
+		},
+		{
+			name:           "true if last evaluation is 2 intervals from now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2),
+			expectedResult: true,
+		},
+		{
+			name:           "true if last evaluation is 3 intervals from now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 3),
+			expectedResult: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
+		})
+	}
+
 }
