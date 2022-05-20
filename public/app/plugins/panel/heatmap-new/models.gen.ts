@@ -3,7 +3,7 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { HideableFieldConfig, VisibilityMode } from '@grafana/schema';
+import { AxisConfig, AxisPlacement, HideableFieldConfig, VisibilityMode } from '@grafana/schema';
 import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
@@ -33,7 +33,6 @@ export interface HeatmapColorOptions {
   steps: number; // 2-128
 
   // Clamp the colors to the value range
-  field?: string;
   min?: number;
   max?: number;
 }
@@ -44,6 +43,13 @@ export interface HeatmapTooltip {
 }
 export interface HeatmapLegend {
   show: boolean;
+}
+
+export interface YAxisConfig extends AxisConfig {
+  unit?: string;
+  reverse?: boolean; 
+  decimals?: number;
+  bucketPlacement: 'auto' | 'middle' | 'top' | 'bottom'; // skip for now
 }
 
 export interface PanelOptions {
@@ -57,8 +63,7 @@ export interface PanelOptions {
   cellSize?: number; // was cardRadius
 
   hideThreshold?: number; // was hideZeroBuckets
-  yAxisLabels?: string;
-  yAxisReverse?: boolean;
+  yAxis: YAxisConfig;
   legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
@@ -81,6 +86,10 @@ export const defaultPanelOptions: PanelOptions = {
   },
   legend: {
     show: true,
+  },
+  yAxis: {
+    axisPlacement: AxisPlacement.Left,
+    bucketPlacement: 'auto',
   },
   cellGap: 1,
 };

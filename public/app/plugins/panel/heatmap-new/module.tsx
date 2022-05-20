@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { Field, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
@@ -19,9 +19,6 @@ import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
-  .useFieldConfig({
-    disableStandardOptions: [FieldConfigProperty.Color, FieldConfigProperty.Thresholds],
-  })
   .setPanelChangeHandler(heatmapChangedHandler)
   .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
@@ -49,17 +46,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     category = ['Colors'];
 
-    builder.addFieldNamePicker({
-      path: `color.field`,
-      name: 'Color with field',
-      category,
-      settings: {
-        filter: (f: Field) => f.type === FieldType.number,
-        noFieldsMessage: 'No numeric fields found',
-        placeholderText: 'Auto',
-      },
-    });
-
     builder.addRadio({
       path: `color.mode`,
       name: 'Mode',
@@ -84,7 +70,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: `color.scale`,
       name: 'Scale',
-      description: '',
       defaultValue: defaultPanelOptions.color.scale,
       category,
       settings: {
@@ -141,7 +126,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addCustomEditor({
         id: '__scale__',
         path: `__scale__`,
-        name: 'Scale',
+        name: '',
         category,
         editor: () => {
           const palette = quantizeScheme(opts.color, config.theme2);
@@ -153,8 +138,83 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
-    category = ['Display'];
+    category = ['Y Axis'];
 
+    builder
+      .addRadio({
+        path: 'yAxis.axisPlacement',
+        name: 'Show axis',
+        defaultValue: defaultPanelOptions.yAxis.axisPlacement,
+        category,
+        settings: {
+          options: [
+            { value: AxisPlacement.Left, label: 'Left' },
+            { value: AxisPlacement.Hidden, label: 'Hidden' },
+          ],
+        },
+      })
+      .addRadio({
+        path: 'yAxis.bucketPlacement',
+        name: 'Bucket placement',
+        description: 'ignored when Y axis has a real scale',
+        defaultValue: defaultPanelOptions.yAxis.bucketPlacement,
+        category,
+        settings: {
+          options: [
+            { value: 'auto', label: 'Auto' },
+            { value: 'middle', label: 'Middle' },
+            { value: 'bottom', label: 'Bottom' },
+            { value: 'top', label: 'Top' },
+          ],
+        },
+      })
+      .addNumberInput({
+        path: 'yAxis.axisWidth',
+        name: 'Display width',
+        defaultValue: defaultPanelOptions.yAxis.axisWidth,
+        settings: {
+          placeholder: 'Auto',
+        },
+        category,
+      })
+      .addTextInput({
+        path: 'yAxis.axisLabel',
+        name: 'Axis label',
+        defaultValue: defaultPanelOptions.yAxis.axisLabel,
+        settings: {
+          placeholder: 'None',
+        },
+        category,
+      })
+      .addBooleanSwitch({
+        path: 'yAxis.reverse',
+        name: 'Reverse direction',
+        defaultValue: defaultPanelOptions.yAxis.reverse === true,
+        category,
+      });
+
+    category = ['Value format'];
+    builder
+      .addUnitPicker({
+        path: 'yAxis.unit',
+        name: 'Unit',
+        defaultValue: defaultPanelOptions.yAxis.unit,
+        category,
+      })
+      .addNumberInput({
+        path: 'yAxis.decimals',
+        name: 'Decimals',
+        defaultValue: defaultPanelOptions.yAxis.decimals,
+        settings: {
+          placeholder: 'Auto',
+          integer: true,
+          min: 0,
+          max: 10,
+        },
+        category,
+      });
+
+    category = ['Display'];
     builder
       // .addRadio({
       //   path: 'showValue',
@@ -184,37 +244,17 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           min: 0,
           max: 25,
         },
-      })
-      // .addSliderInput({
-      //   name: 'Cell radius',
-      //   path: 'cellRadius',
-      //   defaultValue: defaultPanelOptions.cellRadius,
-      //   category,
-      //   settings: {
-      //     min: 0,
-      //     max: 100,
-      //   },
-      // })
-      // .addRadio({
-      //   path: 'yAxisLabels',
-      //   name: 'Axis labels',
-      //   defaultValue: 'auto',
-      //   category,
-      //   settings: {
-      //     options: [
-      //       { value: 'auto', label: 'Auto' },
-      //       { value: 'middle', label: 'Middle' },
-      //       { value: 'bottom', label: 'Bottom' },
-      //       { value: 'top', label: 'Top' },
-      //     ],
-      //   },
-      // })
-      .addBooleanSwitch({
-        path: 'yAxisReverse',
-        name: 'Reverse buckets',
-        defaultValue: defaultPanelOptions.yAxisReverse === true,
-        category,
       });
+    // .addSliderInput({
+    //   name: 'Cell radius',
+    //   path: 'cellRadius',
+    //   defaultValue: defaultPanelOptions.cellRadius,
+    //   category,
+    //   settings: {
+    //     min: 0,
+    //     max: 100,
+    //   },
+    // })
 
     category = ['Tooltip'];
 

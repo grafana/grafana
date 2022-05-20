@@ -1,5 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -48,6 +48,10 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     }
   }
 
+  if (!angular.yAxis) {
+    angular.yAxis = {};
+  }
+
   const options: PanelOptions = {
     source,
     heatmap,
@@ -57,8 +61,13 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     },
     cellGap: asNumber(angular.cards?.cardPadding),
     cellSize: asNumber(angular.cards?.cardRound),
-    yAxisLabels: angular.yBucketBound,
-    yAxisReverse: angular.reverseYBuckets,
+    yAxis: {
+      axisPlacement: !Boolean(angular.yAxis.show) ? AxisPlacement.Hidden : AxisPlacement.Left,
+      reverse: angular.reverseYBuckets,
+      bucketPlacement: angular.yBucketBound,
+      unit: angular.yAxis.format,
+      decimals: angular.yAxis.decimals,
+    },
     legend: {
       show: Boolean(angular.legend.show),
     },
