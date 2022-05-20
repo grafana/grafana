@@ -36,7 +36,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     operations: false,
   });
 
-  const loadServices = useCallback(
+  const loadOptions = useCallback(
     async (url: string, loaderOfType: string, query = ''): Promise<Array<SelectableValue<string>>> => {
       setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
 
@@ -46,14 +46,12 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           return [{ label: `No ${loaderOfType} found`, value: `No ${loaderOfType} found` }];
         }
 
-        const serviceOptions: SelectableValue[] = values.sort().map((service) => ({
-          label: service,
-          value: service,
+        const options: SelectableValue[] = values.sort().map((option) => ({
+          label: option,
+          value: option,
         }));
 
-        const filteredOptions = serviceOptions.filter((item) =>
-          item.value ? fuzzyMatch(item.value, query).found : false
-        );
+        const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
         dispatch(notifyApp(createErrorNotification('Error', error)));
@@ -67,15 +65,15 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
   useEffect(() => {
     const getServices = async () => {
-      const services = await loadServices('/api/services', 'services');
+      const services = await loadOptions('/api/services', 'services');
       setServiceOptions(services);
     };
     getServices();
-  }, [datasource, loadServices]);
+  }, [datasource, loadOptions]);
 
   useEffect(() => {
     const getOperations = async () => {
-      const operations = await loadServices(
+      const operations = await loadOptions(
         `/api/services/${encodeURIComponent(query.service!)}/operations`,
         'operations'
       );
@@ -84,7 +82,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     if (query.service) {
       getOperations();
     }
-  }, [datasource, query.service, loadServices]);
+  }, [datasource, query.service, loadOptions]);
 
   return (
     <div className={css({ maxWidth: '500px' })}>
@@ -93,7 +91,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           <Select
             inputId="service"
             options={serviceOptions}
-            onOpenMenu={() => loadServices('/api/services', 'services')}
+            onOpenMenu={() => loadOptions('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
             onChange={(v) =>
@@ -115,7 +113,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="operation"
             options={operationOptions}
             onOpenMenu={() =>
-              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
+              loadOptions(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
