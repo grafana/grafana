@@ -130,8 +130,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     const { min, max } = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
 
     let hoverValue: number | undefined = undefined;
-    if (hover && info.heatmap.fields && hover.dataIdx === 1) {
-      // 1 is the heatmap
+    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
       hoverValue = countField.values.get(hover.dataIdx);
     }
 
