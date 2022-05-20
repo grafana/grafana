@@ -178,7 +178,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
+		features := featuremgmt.WithFeatures()
 		providerID := secrets.ProviderID("fakeProvider.v1")
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{

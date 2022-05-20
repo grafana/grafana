@@ -12,8 +12,12 @@ const (
 	FlagTrimDefaults = "trimDefaults"
 
 	// FlagEnvelopeEncryption
-	// encrypt secrets
+	// Enable envelope encryption
 	FlagEnvelopeEncryption = "envelopeEncryption"
+
+	// FlagDisableEnvelopeEncryption
+	// Disable envelope encryption (emergency only)
+	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
 	// Experimental. Allow datasources to configure Azure authentication directly via JsonData

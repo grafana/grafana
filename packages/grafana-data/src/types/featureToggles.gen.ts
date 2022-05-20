@@ -18,6 +18,7 @@ export interface FeatureToggles {
 
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
+  disableEnvelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
   serviceAccounts?: boolean;
   database_metrics?: boolean;

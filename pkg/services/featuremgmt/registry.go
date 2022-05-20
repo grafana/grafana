@@ -15,8 +15,13 @@ var (
 		},
 		{
 			Name:        "envelopeEncryption",
-			Description: "encrypt secrets",
-			State:       FeatureStateBeta,
+			Description: "Enable envelope encryption",
+			State:       FeatureStateDeprecated,
+		},
+		{
+			Name:        "disableEnvelopeEncryption",
+			Description: "Disable envelope encryption (emergency only)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "httpclientprovider_azure_auth",
