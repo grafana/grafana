@@ -19,6 +19,7 @@ const navTreeSlice = createSlice({
           url,
         };
         starredItems?.children?.push(newStarredItem);
+        starredItems?.children?.sort((a, b) => a.text.localeCompare(b.text));
       } else {
         const index = starredItems?.children?.findIndex((item) => item.id === id) ?? -1;
         if (index > -1) {

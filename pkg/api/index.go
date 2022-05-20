@@ -437,6 +437,9 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 	}
 
 	if len(starredDashboards) > 0 {
+		sort.Slice(starredDashboards, func(i, j int) bool {
+			return starredDashboards[i].Title < starredDashboards[j].Title
+		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &dtos.NavLink{
 				Id:   starredItem.Uid,

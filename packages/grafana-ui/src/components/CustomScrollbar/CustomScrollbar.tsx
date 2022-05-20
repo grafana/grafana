@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { isNil } from 'lodash';
 import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -19,6 +20,7 @@ interface Props {
   hideTracksWhenNotNeeded?: boolean;
   hideHorizontalTrack?: boolean;
   hideVerticalTrack?: boolean;
+  initializeAtBottom?: boolean;
   scrollRefCallback?: RefCallback<HTMLDivElement>;
   scrollTop?: number;
   setScrollTop?: (position: ScrollbarPosition) => void;
@@ -40,6 +42,7 @@ export const CustomScrollbar: FC<Props> = ({
   hideTracksWhenNotNeeded = false,
   hideHorizontalTrack,
   hideVerticalTrack,
+  initializeAtBottom = false,
   scrollRefCallback,
   updateAfterMountMs,
   scrollTop,
@@ -51,6 +54,12 @@ export const CustomScrollbar: FC<Props> = ({
       scrollRefCallback?.(ref.current.view);
     }
   }, [ref, scrollRefCallback]);
+
+  useEffectOnce(() => {
+    if (initializeAtBottom) {
+      ref.current?.scrollToBottom();
+    }
+  });
   const styles = useStyles2(getStyles);
 
   const updateScroll = () => {
