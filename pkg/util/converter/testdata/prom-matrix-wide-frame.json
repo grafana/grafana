@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           }
@@ -20,48 +20,21 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",
               "instance": "localhost:9090",
               "job": "prometheus"
             }
-          }
-        ]
-      },
-      "data": {
-        "values": [
-          [
-            1435781430781,1435781445781,1435781460781
-          ],
-          [
-            1,1,1
-          ]
-        ]
-      }
-    },
-    {
-      "schema": {
-        "meta": {
-          "type": "timeseries-many",
-          "custom": {
-            "resultType": "matrix"
-          }
-        },
-        "fields": [
-          {
-            "name": "Time",
-            "type": "time",
-            "typeInfo": {
-              "frame": "time.Time"
-            }
           },
           {
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",
@@ -75,6 +48,9 @@
         "values": [
           [
             1435781430781,1435781445781,1435781460781
+          ],
+          [
+            1,1,1
           ],
           [
             0,0,1

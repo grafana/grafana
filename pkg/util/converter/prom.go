@@ -16,8 +16,13 @@ func logf(format string, a ...interface{}) {
 	//fmt.Printf(format, a...)
 }
 
+type Options struct {
+	MatrixWideSeries bool
+	VectorWideSeries bool
+}
+
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
-func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
+func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
 	var rsp *backend.DataResponse
 	status := "unknown"
 	errorType := ""
@@ -30,7 +35,7 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 			status = iter.ReadString()
 
 		case "data":
-			rsp = readPrometheusData(iter)
+			rsp = readPrometheusData(iter, opt)
 
 		case "error":
 			err = iter.ReadString()
@@ -84,7 +89,7 @@ func readWarnings(iter *jsoniter.Iterator) []data.Notice {
 	return warnings
 }
 
-func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
+func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
 	t := iter.WhatIsNext()
 	if t == jsoniter.ArrayValue {
 		return readArrayData(iter)
@@ -107,9 +112,17 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 		case "result":
 			switch resultType {
 			case "matrix":
-				rsp = readMatrixOrVector(iter, resultType)
+				if opt.MatrixWideSeries {
+					rsp = readMatrixOrVectorWide(iter, resultType)
+				} else {
+					rsp = readMatrixOrVectorMulti(iter, resultType)
+				}
 			case "vector":
-				rsp = readMatrixOrVector(iter, resultType)
+				if opt.VectorWideSeries {
+					rsp = readMatrixOrVectorWide(iter, resultType)
+				} else {
+					rsp = readMatrixOrVectorMulti(iter, resultType)
+				}
 			case "streams":
 				rsp = readStream(iter)
 			case "string":
@@ -334,7 +347,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 	t, v, err := readTimeValuePair(iter)
 	if err == nil {
 		timeField.Append(t)
-		valueField.Append(*v)
+		valueField.Append(v)
 	}
 
 	frame := data.NewFrame("", timeField, valueField)
@@ -348,7 +361,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 	}
 }
 
-func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
+func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
 	rowIdx := 0
 	timeMap := map[int64]int{}
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -449,9 +462,104 @@ func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, i
 	}
 
 	timeField.Set(i, t)
-	valueField.Set(i, v)
+	valueField.Set(i, &v)
 
 	return timeMap, rowIdx
+}
+
+func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
+	rsp := &backend.DataResponse{}
+
+	for iter.ReadArray() {
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+		valueField.Name = data.TimeSeriesValueFieldName
+		valueField.Labels = data.Labels{}
+
+		var histogram *histogramInfo
+
+		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+			switch l1Field {
+			case "metric":
+				iter.ReadVal(&valueField.Labels)
+
+			case "value":
+				t, v, err := readTimeValuePair(iter)
+				if err == nil {
+					timeField.Append(t)
+					valueField.Append(v)
+				}
+
+			// nolint:goconst
+			case "values":
+				for iter.ReadArray() {
+					t, v, err := readTimeValuePair(iter)
+					if err == nil {
+						timeField.Append(t)
+						valueField.Append(v)
+					}
+				}
+
+			case "histogram":
+				if histogram == nil {
+					histogram = newHistogramInfo()
+				}
+				err := readHistogram(iter, histogram)
+				if err != nil {
+					rsp.Error = err
+				}
+
+			case "histograms":
+				if histogram == nil {
+					histogram = newHistogramInfo()
+				}
+				for iter.ReadArray() {
+					err := readHistogram(iter, histogram)
+					if err != nil {
+						rsp.Error = err
+					}
+				}
+
+			default:
+				iter.Skip()
+				logf("readMatrixOrVector: %s\n", l1Field)
+			}
+		}
+
+		if histogram != nil {
+			histogram.yMin.Labels = valueField.Labels
+			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			frame.Meta = &data.FrameMeta{
+				Type: "heatmap-cells-sparse",
+			}
+			if frame.Name == data.TimeSeriesValueFieldName {
+				frame.Name = "" // only set the name if useful
+			}
+			rsp.Frames = append(rsp.Frames, frame)
+		} else {
+			frame := data.NewFrame("", timeField, valueField)
+			frame.Meta = &data.FrameMeta{
+				Type:   data.FrameTypeTimeSeriesMany,
+				Custom: resultTypeToCustomMeta(resultType),
+			}
+			rsp.Frames = append(rsp.Frames, frame)
+		}
+	}
+
+	return rsp
+}
+
+func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
+	iter.ReadArray()
+	t := iter.ReadFloat64()
+	iter.ReadArray()
+	v := iter.ReadString()
+	iter.ReadArray()
+
+	tt := timeFromFloat(t)
+	fv, err := strconv.ParseFloat(v, 64)
+	return tt, fv, err
 }
 
 func expandFrame(frame *data.Frame, idx int) {
@@ -460,16 +568,6 @@ func expandFrame(frame *data.Frame, idx int) {
 			f.Extend(idx + 1 - f.Len())
 		}
 	}
-}
-
-func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, *float64, error) {
-	iter.ReadArray()
-	t := timeFromFloat(iter.ReadFloat64())
-	iter.ReadArray()
-	fv, err := strconv.ParseFloat(string(iter.ReadStringAsSlice()), 64)
-	iter.ReadArray()
-
-	return t, &fv, err
 }
 
 type histogramInfo struct {

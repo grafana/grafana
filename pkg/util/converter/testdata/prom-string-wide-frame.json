@@ -5,7 +5,7 @@
         "meta": {
           "type": "timeseries-many",
           "custom": {
-            "resultType": "matrix"
+            "resultType": "string"
           }
         },
         "fields": [
@@ -18,13 +18,12 @@
           },
           {
             "name": "Value",
-            "type": "number",
+            "type": "string",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "string"
             },
             "labels": {
-              "handler": "/api/v1/query_range",
-              "job": "prometheus"
+              
             }
           }
         ]
@@ -32,25 +31,11 @@
       "data": {
         "values": [
           [
-            1641889530000,1641889531000,1641889532000
+            1651680139104
           ],
           [
-            null,null,null
+            "example"
           ]
-        ],
-        "entities": [
-          null,
-          {
-            "NaN": [
-              1
-            ],
-            "Inf": [
-              0
-            ],
-            "NegInf": [
-              2
-            ]
-          }
         ]
       }
     }

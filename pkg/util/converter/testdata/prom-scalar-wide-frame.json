@@ -5,7 +5,7 @@
         "meta": {
           "type": "timeseries-many",
           "custom": {
-            "resultType": "matrix"
+            "resultType": "scalar"
           }
         },
         "fields": [
@@ -23,8 +23,7 @@
               "frame": "float64"
             },
             "labels": {
-              "handler": "/api/v1/query_range",
-              "job": "prometheus"
+              
             }
           }
         ]
@@ -32,25 +31,11 @@
       "data": {
         "values": [
           [
-            1641889530000,1641889531000,1641889532000
+            1651680139104
           ],
           [
-            null,null,null
+            0.00002482
           ]
-        ],
-        "entities": [
-          null,
-          {
-            "NaN": [
-              1
-            ],
-            "Inf": [
-              0
-            ],
-            "NegInf": [
-              2
-            ]
-          }
         ]
       }
     }

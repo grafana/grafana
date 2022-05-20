@@ -22,7 +22,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter)
+	r := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: true, VectorWideSeries: true})
 	if r == nil {
 		return nil, fmt.Errorf("received empty response from prometheus")
 	}
@@ -49,7 +49,6 @@ func addMetadataToFrame(q *models.Query, frame *data.Frame) {
 			f.Name = getName(q, f)
 		}
 	}
-
 }
 
 // this is based on the logic from the String() function in github.com/prometheus/common/model.go
