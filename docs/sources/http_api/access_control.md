@@ -12,7 +12,7 @@ title = "RBAC HTTP API"
 The API can be used to create, update, delete, get, and list roles.
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
 
-To check which basic or fixed roles have required permissions, refer to [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}}).
+To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../enterprise/access-control/rbac-fixed-basic-role-definitions.md" >}}).
 
 ## Get status
 

@@ -7,7 +7,7 @@ title = "Folder HTTP API "
 
 # Folder API
 
-> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
