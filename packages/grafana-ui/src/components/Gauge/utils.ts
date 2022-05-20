@@ -65,8 +65,7 @@ export function getFormattedThresholds(
 
   const first = getActiveThreshold(min, steps);
   const last = getActiveThreshold(max, steps);
-  const formatted: Threshold[] = [];
-  formatted.push({ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) });
+  const formatted: Threshold[] = [{ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) }];
   let skip = true;
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
