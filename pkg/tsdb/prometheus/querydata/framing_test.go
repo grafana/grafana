@@ -75,7 +75,6 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 
 		require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
 	}
-
 }
 
 // we store the prometheus query data in a json file, here is some minimal code
