@@ -11,6 +11,7 @@ const shortcuts = {
     { keys: ['s', 'o'], description: 'Open search' },
     { keys: ['esc'], description: 'Exit edit/setting views' },
     { keys: ['h'], description: 'Show all keyboard shortcuts' },
+    { keys: ['mod+k'], description: 'Open command palette' },
   ],
   Dashboard: [
     { keys: ['mod+s'], description: 'Save dashboard' },
