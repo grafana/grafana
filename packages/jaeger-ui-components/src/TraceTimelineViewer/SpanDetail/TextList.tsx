@@ -40,6 +40,10 @@ const getStyles = () => {
   };
 };
 
+type TextListProps = {
+  data: string[];
+};
+
 export default function TextList(props: TextListProps) {
   const { data } = props;
   const styles = useStyles2(getStyles);
