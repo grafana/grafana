@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
@@ -16,6 +16,12 @@ import { coerceOptions, isValidOptions } from './utils';
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
 export const ConfigEditor = (props: Props) => {
+  // we decide on whether to show access options or not at the point when the config page opens.
+  // whatever happens while the page is open, this decision does not change.
+  // (we do this to avoid situations where you switch access-mode and suddenly
+  // the access-mode-select-box vanishes)
+  const showAccessOptions = useRef(props.options.access === 'direct');
+
   const { options: originalOptions, onOptionsChange } = props;
   const options = coerceOptions(originalOptions);
 
@@ -45,7 +51,7 @@ export const ConfigEditor = (props: Props) => {
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9200"
         dataSourceConfig={options}
-        showAccessOptions
+        showAccessOptions={showAccessOptions.current}
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
