@@ -12,6 +12,7 @@ import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from './editors/LabelsToFieldsTransformerEditor';
+import { limitTransformRegistryItem } from './editors/LimitTransformerEditor';
 import { mergeTransformerRegistryItem } from './editors/MergeTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from './editors/OrganizeFieldsTransformerEditor';
 import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
@@ -51,5 +52,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     extractFieldsTransformRegistryItem,
     heatmapTransformRegistryItem,
     groupingToMatrixTransformRegistryItem,
+    limitTransformRegistryItem,
   ];
 };

@@ -32,4 +32,5 @@ export enum DataTransformerID {
   spatial = 'spatial',
   extractFields = 'extractFields',
   groupingToMatrix = 'groupingToMatrix',
+  limit = 'limit',
 }
