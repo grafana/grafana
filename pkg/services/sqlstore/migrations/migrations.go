@@ -80,6 +80,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
+			accesscontrol.AddAlertingPermissionsMigrator(mg)
 		}
 	}
 	addQueryHistoryStarMigrations(mg)
