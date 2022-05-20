@@ -137,9 +137,7 @@ describe('Receivers', () => {
     mocks.contextSrv.hasPermission.mockImplementation((action) => {
       const permissions = [
         AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsCreate,
-        AccessControlAction.AlertingNotificationsUpdate,
-        AccessControlAction.AlertingNotificationsDelete,
+        AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ];

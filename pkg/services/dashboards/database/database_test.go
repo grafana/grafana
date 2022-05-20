@@ -109,6 +109,14 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsFolder)
 	})
 
+	t.Run("Should be able to get a dashboard UID by ID", func(t *testing.T) {
+		setup()
+		query := models.GetDashboardRefByIdQuery{Id: savedDash.Id}
+		err := dashboardStore.GetDashboardUIDById(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, query.Result.Uid, savedDash.Uid)
+	})
+
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
 		setup()
 		query := models.GetDashboardQuery{
@@ -117,6 +125,19 @@ func TestDashboardDataAccess(t *testing.T) {
 
 		err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
+	})
+
+	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
+		setup()
+		query := models.GetDashboardsQuery{DashboardIds: []int64{savedDash.Id, savedDash2.Id}}
+		err := dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		assert.Equal(t, len(query.Result), 2)
+
+		query = models.GetDashboardsQuery{DashboardUIds: []string{savedDash.Uid, savedDash2.Uid}}
+		err = dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		assert.Equal(t, len(query.Result), 2)
 	})
 
 	t.Run("Should be able to delete dashboard", func(t *testing.T) {
