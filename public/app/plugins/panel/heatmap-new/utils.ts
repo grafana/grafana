@@ -28,7 +28,8 @@ interface PointsBuilderOpts {
 }
 
 export interface HeatmapHoverEvent {
-  index: number;
+  seriesIdx: number;
+  dataIdx: number;
   pageX: number;
   pageY: number;
 }
@@ -147,7 +148,8 @@ export function prepConfig(opts: PrepConfigOpts) {
             }
 
             onhover({
-              index: sel,
+              seriesIdx: i,
+              dataIdx: sel,
               pageX: rect.left + u.cursor.left!,
               pageY: rect.top + u.cursor.top!,
             });

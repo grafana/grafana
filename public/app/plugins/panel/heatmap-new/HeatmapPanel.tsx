@@ -86,6 +86,11 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const onhover = useCallback(
     (evt?: HeatmapHoverEvent | null) => {
+      if (evt?.seriesIdx === 1) {
+        console.log('hover heatmap tile idx ' + evt.dataIdx);
+      } else if (evt?.seriesIdx === 2) {
+        console.log('hover exemplar idx ' + evt.dataIdx);
+      }
       setHover(evt ?? undefined);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,7 +136,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     let hoverValue: number | undefined = undefined;
     if (hover && info.heatmap.fields) {
-      hoverValue = countField.values.get(hover.index);
+      hoverValue = countField.values.get(hover.dataIdx);
     }
 
     return (
