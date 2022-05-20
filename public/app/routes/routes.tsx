@@ -16,6 +16,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
+import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -37,19 +38,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
-    ...(config.featureToggles.publicDashboards
-      ? [
-          {
-            path: '/p/:uid/:slug?',
-            pageClass: 'page-dashboard',
-            routeName: DashboardRoutes.Normal,
-            component: SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/PublicDashboardPage')
-            ),
-          },
-        ]
-      : []),
     {
       path: '/dashboard/:type/:slug',
       pageClass: 'page-dashboard',
@@ -448,6 +436,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
     ...extraRoutes,
+    ...getPublicDashboardRoutes(),
     {
       path: '/*',
       component: ErrorPage,
