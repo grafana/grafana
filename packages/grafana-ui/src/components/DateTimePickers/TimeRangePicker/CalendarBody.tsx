@@ -32,7 +32,7 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
