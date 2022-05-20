@@ -20,6 +20,8 @@ You either have:
 As of Grafana Enterprise Version 8.3, you can purchase (or transition to) combined licensing. With combined licensing, you purchase a specific number of users, and you are free to distribute those users across all roles, in any combination.
 For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, and 60 viewers, or you can have 10 admins, 100 editors, and 40 viewers. This change reduces license complexity.
 
+Before you upgrade to Grafana 8.3+, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana until the active user count returns below the licensed limit.
+
 ### Active users limit
 
 Your Grafana license includes a maximum number of active users.
