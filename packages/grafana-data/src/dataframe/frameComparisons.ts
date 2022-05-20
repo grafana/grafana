@@ -27,6 +27,10 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
     return false;
   }
 
+  if (a.refId !== b.refId) {
+    return false;
+  }
+
   for (let i = 0; i < a.fields.length; i++) {
     const fA = a.fields[i];
     const fB = b.fields[i];
