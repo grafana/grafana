@@ -31,6 +31,12 @@ export type DataHook = (
   setError: SetErrorFn
 ) => AzureMonitorOption[];
 
+export type MetricsMetadataHook = (
+  query: AzureMonitorQuery,
+  datasource: Datasource,
+  onChange: OnChangeFn
+) => MetricMetadata;
+
 export const updateSubscriptions = (
   query: AzureMonitorQuery,
   subscriptionOptions: AzureMonitorOption[],
