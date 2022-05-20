@@ -60,7 +60,17 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
-		// Annotations can change over time for the same alert.
+		// Annotations can change over time, however we also want to maintain
+		// certain annotations across evaluations
+		for k, v := range state.Annotations {
+			if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
+				// If the annotation is not present then it should be copied from the
+				// previous state to the next state
+				if _, ok := annotations[k]; !ok {
+					annotations[k] = v
+				}
+			}
+		}
 		state.Annotations = annotations
 		c.states[alertRule.OrgID][alertRule.UID][id] = state
 		return state
