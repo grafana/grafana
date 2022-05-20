@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { CanvasFrameOptions, canvasElementRegistry } from 'app/features/canvas';
+import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
@@ -71,6 +71,18 @@ export class FrameState extends ElementState {
     result.splice(endIndex, 0, removed);
     this.elements = result;
 
+    this.reinitializeMoveable();
+  }
+
+  doMove(child: ElementState, action: LayerActionID) {
+    const vals = this.elements.filter((v) => v !== child);
+    if (action === LayerActionID.MoveBottom) {
+      vals.unshift(child);
+    } else {
+      vals.push(child);
+    }
+    this.elements = vals;
+    this.scene.save();
     this.reinitializeMoveable();
   }
 
@@ -151,6 +163,11 @@ export class FrameState extends ElementState {
         this.scene.save();
         this.reinitializeMoveable();
         break;
+      case LayerActionID.MoveTop:
+      case LayerActionID.MoveBottom:
+        element.parent?.doMove(element, action);
+        break;
+
       default:
         console.log('DO action', action, element);
         return;

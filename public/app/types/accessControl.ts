@@ -92,10 +92,8 @@ export enum AccessControlAction {
   AlertingInstanceRead = 'alert.instances:read',
 
   // Alerting Notification policies
-  AlertingNotificationsCreate = 'alert.notifications:create',
   AlertingNotificationsRead = 'alert.notifications:read',
-  AlertingNotificationsUpdate = 'alert.notifications:update',
-  AlertingNotificationsDelete = 'alert.notifications:delete',
+  AlertingNotificationsWrite = 'alert.notifications:write',
 
   // External alerting rule actions.
   AlertingRuleExternalWrite = 'alert.rules.external:write',

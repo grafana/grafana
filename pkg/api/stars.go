@@ -6,22 +6,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
-	query := models.GetUserStarsQuery{
-		UserId: c.SignedInUser.UserId,
+	query := star.GetUserStarsQuery{
+		UserID: c.SignedInUser.UserId,
 	}
 
-	err := hs.SQLStore.GetUserStars(c.Req.Context(), &query)
+	iuserstars, err := hs.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(500, "Failed to get user stars", err)
 	}
 
-	iuserstars := query.Result
 	uids := []string{}
-	for dashboardId := range iuserstars {
+	for dashboardId := range iuserstars.UserStars {
 		query := &models.GetDashboardQuery{
 			Id:    dashboardId,
 			OrgId: c.OrgId,
@@ -40,13 +40,13 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	cmd := models.StarDashboardCommand{UserId: c.UserId, DashboardId: id}
+	cmd := star.StarDashboardCommand{UserID: c.UserId, DashboardID: id}
 
-	if cmd.DashboardId <= 0 {
+	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := hs.SQLStore.StarDashboard(c.Req.Context(), &cmd); err != nil {
+	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to star dashboard", err)
 	}
 
@@ -58,13 +58,13 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	cmd := models.UnstarDashboardCommand{UserId: c.UserId, DashboardId: id}
+	cmd := star.UnstarDashboardCommand{UserID: c.UserId, DashboardID: id}
 
-	if cmd.DashboardId <= 0 {
+	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := hs.SQLStore.UnstarDashboard(c.Req.Context(), &cmd); err != nil {
+	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to unstar dashboard", err)
 	}
 
