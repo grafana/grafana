@@ -81,6 +81,14 @@ export interface SelectFieldConfigSettings<T> {
 
   /** Optionally use the context to define the options */
   getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
+
+  /** Optionally modify the current value in response to some prop on the context */
+  overrideCurrentValue?: (
+    context: FieldOverrideContext,
+    previousOptions: Array<SelectableValue<T>>,
+    previousValue: T,
+    wouldBeNewValue?: SelectableValue<T>
+  ) => SelectableValue<T> | undefined;
 }
 
 export const selectOverrideProcessor = (
