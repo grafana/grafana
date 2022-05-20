@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 3px 0; /* Space for box-shadow when focused */
 
     :checked {
-      background-color: ${theme.colors.secondary.contrastText};
+      background-color: ${theme.v1.palette.white};
       border: 5px solid ${theme.colors.primary.main};
     }
 

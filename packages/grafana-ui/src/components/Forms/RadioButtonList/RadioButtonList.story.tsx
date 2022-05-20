@@ -8,11 +8,11 @@ import { RadioButtonList } from './RadioButtonList';
 import mdx from './RadioButtonList.mdx';
 
 const defaultOptions: Array<SelectableValue<string>> = [
-  { label: 'Option 1', value: 'opt-1' },
-  { label: 'Option 2', value: 'opt-2' },
-  { label: 'Option 3', value: 'opt-3' },
-  { label: 'Option 4', value: 'opt-4' },
-  { label: 'Option 5', value: 'opt-5' },
+  { label: 'Option 1', value: 'opt-1', description: 'A description of Option 1' },
+  { label: 'Option 2', value: 'opt-2', description: 'A description of Option 2' },
+  { label: 'Option 3', value: 'opt-3', description: 'A description of Option 3' },
+  { label: 'Option 4', value: 'opt-4', description: 'A description of Option 4' },
+  { label: 'Option 5', value: 'opt-5', description: 'A description of Option 5' },
 ];
 
 export default {
@@ -71,7 +71,7 @@ const longTextOptions: Array<SelectableValue<string>> = [
 
 export const Default: Story<typeof RadioButtonList> = (args) => (
   <div>
-    <RadioButtonList name="default" options={defaultOptions} keySelector={(opt) => opt} {...args} />
+    <RadioButtonList name="default" options={defaultOptions} {...args} />
   </div>
 );
 
