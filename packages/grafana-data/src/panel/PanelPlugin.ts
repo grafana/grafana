@@ -14,7 +14,6 @@ import {
   PanelPluginDataSupport,
   VisualizationSuggestionsSupplier,
 } from '../types';
-import { deprecationWarning } from '../utils';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { createFieldConfigRegistry } from './registryFactories';
@@ -165,30 +164,12 @@ export class PanelPlugin<
     };
   }
 
-  /**
-   * @deprecated setDefaults is deprecated in favor of setPanelOptions
-   */
-  setDefaults(defaults: TOptions) {
-    deprecationWarning('PanelPlugin', 'setDefaults', 'setPanelOptions');
-    this._defaults = defaults;
-    return this;
-  }
-
   get fieldConfigRegistry() {
     if (!this._fieldConfigRegistry) {
       this._fieldConfigRegistry = this._initConfigRegistry();
     }
 
     return this._fieldConfigRegistry;
-  }
-
-  /**
-   * @deprecated setEditor is deprecated in favor of setPanelOptions
-   */
-  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
-    deprecationWarning('PanelPlugin', 'setEditor', 'setPanelOptions');
-    this.editor = editor;
-    return this;
   }
 
   setNoPadding() {
