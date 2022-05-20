@@ -30,7 +30,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 function getCurrentUserTheme() {
-  console.log(config);
   return createTheme({
     colors: {
       mode: config.bootData.user.lightTheme ? 'light' : config.bootData.user.fusebitTheme ? 'fusebit' : 'dark',
