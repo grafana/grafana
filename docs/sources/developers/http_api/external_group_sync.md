@@ -7,9 +7,9 @@ title = "External Group Sync HTTP API "
 
 # External Group Synchronization API
 
-> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-> If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
+> If you have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
 > Refer to specific endpoints to understand what permissions are required.
 
 ## Get External Groups
