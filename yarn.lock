@@ -4775,7 +4775,7 @@ __metadata:
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.4
     "@types/react-window": 1.8.5
-    "@types/slate": 0.47.11
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/testing-library__jest-dom": 5.14.3
     "@types/testing-library__react-hooks": ^3.2.0
@@ -21198,7 +21198,7 @@ __metadata:
     "@types/redux-mock-store": 1.0.3
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.9
-    "@types/slate": 0.47.11
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/testing-library__jest-dom": 5.14.3
     "@types/testing-library__react-hooks": ^3.2.0
