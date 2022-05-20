@@ -63,6 +63,13 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	libraryElements := generatedDash.Get("__elements")
+
+	// No need to keep these in the stored dashboard JSON
+	generatedDash.Del("__elements")
+	generatedDash.Del("__inputs")
+	generatedDash.Del("__requires")
+
 	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
 		OrgId:     req.User.OrgId,
@@ -84,7 +91,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDashboard, req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
 	}
