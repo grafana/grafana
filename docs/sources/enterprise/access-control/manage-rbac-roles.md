@@ -20,7 +20,7 @@ The following example includes the base64 username:password Basic Authorization.
 
 Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../http_api/access_control.md#get-a-role" >}}).
 
-<span id="basic-role-uid-mapping">To see the permissions associated with basic roles, refer to the following basic role UIDs</span>:
+To see the permissions associated with basic roles, refer to the following basic role UIDs:
 
 | Basic role      | UID                   |
 | --------------- | --------------------- |
@@ -243,13 +243,9 @@ Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#create
 
 If the default basic role definitions do not meet your requirements, you can change their permissions.
 
-</br>
-
 **Before you begin:**
 
 - Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
-
-</br>
 
 **To change permissions from a basic role:**
 
