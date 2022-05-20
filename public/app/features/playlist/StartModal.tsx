@@ -33,7 +33,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
   };
 
   return (
-    <Modal isOpen={true} icon="play" title="Start playlist" onDismiss={onDismiss}>
+    <Modal isOpen={true} title="Start playlist" onDismiss={onDismiss}>
       <FieldSet>
         <Field label="Mode">
           <RadioButtonGroup value={mode} options={modes} onChange={setMode} />

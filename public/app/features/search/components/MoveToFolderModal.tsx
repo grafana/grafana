@@ -49,13 +49,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   };
 
   return isOpen ? (
-    <Modal
-      className={styles.modal}
-      title="Choose Dashboard Folder"
-      icon="folder-plus"
-      isOpen={isOpen}
-      onDismiss={onDismiss}
-    >
+    <Modal className={styles.modal} title="Choose Dashboard Folder" isOpen={isOpen} onDismiss={onDismiss}>
       <>
         <div className={styles.content}>
           <p>

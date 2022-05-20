@@ -71,7 +71,6 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
       <Modal
         isOpen={!dismiss}
         title="Dashboard Changed"
-        icon="copy"
         onDismiss={this.onDismiss}
         onClickBackdrop={() => {}}
         className={styles.modal}

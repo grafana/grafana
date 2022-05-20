@@ -82,7 +82,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
   const styles = getConfirmPluginDashboardSaveModalStyles(theme);
 
   return (
-    <Modal className={styles.modal} title="Plugin dashboard" icon="copy" isOpen={true} onDismiss={onDismiss}>
+    <Modal className={styles.modal} title="Plugin dashboard" isOpen={true} onDismiss={onDismiss}>
       <div className={styles.modalText}>
         Your changes will be lost when you update the plugin.
         <br />

@@ -66,7 +66,7 @@ export const ConfirmModal = ({
   }, [isOpen]);
 
   return (
-    <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={styles.modal} title={title} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
         {body}
         {description ? <div className={styles.modalDescription}>{description}</div> : null}

@@ -30,7 +30,7 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   const done = loadingState === LoadingState.Done;
 
   return (
-    <Modal className={styles.modal} title="Delete library panel" icon="trash-alt" onDismiss={onDismiss} isOpen={true}>
+    <Modal className={styles.modal} title="Delete library panel" onDismiss={onDismiss} isOpen={true}>
       {!done ? <LoadingIndicator /> : null}
       {done ? (
         <div>

@@ -13,10 +13,6 @@ import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
 
 export interface Props {
-  /** @deprecated no longer used */
-  icon?: IconName;
-  /** @deprecated no longer used */
-  iconTooltip?: string;
   /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;

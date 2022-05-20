@@ -28,13 +28,7 @@ export function OrgSwitcher({ onDismiss }: Props): ReactElement {
   };
 
   return (
-    <Modal
-      title="Switch Organization"
-      icon="arrow-random"
-      onDismiss={onDismiss}
-      isOpen={true}
-      contentClassName={contentClassName}
-    >
+    <Modal title="Switch Organization" onDismiss={onDismiss} isOpen={true} contentClassName={contentClassName}>
       <CustomScrollbar autoHeightMin="100%">
         <table className="filter-table form-inline">
           <thead>

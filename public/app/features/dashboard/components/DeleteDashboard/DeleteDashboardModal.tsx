@@ -65,7 +65,6 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
   <Modal
     isOpen={true}
     title="Cannot delete provisioned dashboard"
-    icon="trash-alt"
     onDismiss={hideModal}
     className={css`
       width: 500px;

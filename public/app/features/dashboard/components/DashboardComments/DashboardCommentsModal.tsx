@@ -16,7 +16,7 @@ export const DashboardCommentsModal = ({ dashboard, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal isOpen={true} title="Dashboard comments" icon="save" onDismiss={onDismiss} className={styles.modal}>
+    <Modal isOpen={true} title="Dashboard comments" onDismiss={onDismiss} className={styles.modal}>
       <CommentManager objectType={'dashboard'} objectId={dashboard.uid} />
     </Modal>
   );

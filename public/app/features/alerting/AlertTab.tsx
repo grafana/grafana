@@ -152,7 +152,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     const onDismiss = () => this.onToggleModal('showTestRule');
 
     return (
-      <Modal isOpen={true} icon="bug" title="Testing rule" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Modal isOpen={true} title="Testing rule" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
         <TestRuleResult panel={panel} dashboard={dashboard} />
       </Modal>
     );
@@ -203,7 +203,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     const onDismiss = () => this.onToggleModal('showStateHistory');
 
     return (
-      <Modal isOpen={true} icon="history" title="State history" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Modal isOpen={true} title="State history" onDismiss={onDismiss} onClickBackdrop={onDismiss}>
         <StateHistory dashboard={dashboard} panelId={panel.id} onRefresh={() => this.panelCtrl?.refresh()} />
       </Modal>
     );
