@@ -71,6 +71,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const pxRatio = devicePixelRatio;
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  let withExemplars = dataRef.current?.exemplars != null;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -313,33 +314,34 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   // exemplars layer
-  builder.addSeries({
-    facets: [
-      {
-        scale: 'x',
-        auto: true,
-        sorted: 1,
-      },
-      {
-        scale: 'y',
-        auto: true,
-      },
-    ],
-    pathBuilder: heatmapPathsPoints({
-      each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
-        qt.add({
-          x: x - u.bbox.left,
-          y: y - u.bbox.top,
-          w: xSize,
-          h: ySize,
-          sidx: seriesIdx,
-          didx: dataIdx,
-        });
-      },
-    }) as any,
-    theme,
-    scaleKey: '', // facets' scales used (above)
-  });
+  withExemplars &&
+    builder.addSeries({
+      facets: [
+        {
+          scale: 'x',
+          auto: true,
+          sorted: 1,
+        },
+        {
+          scale: 'y',
+          auto: true,
+        },
+      ],
+      pathBuilder: heatmapPathsPoints({
+        each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
+          qt.add({
+            x: x - u.bbox.left,
+            y: y - u.bbox.top,
+            w: xSize,
+            h: ySize,
+            sidx: seriesIdx,
+            didx: dataIdx,
+          });
+        },
+      }) as any,
+      theme,
+      scaleKey: '', // facets' scales used (above)
+    });
 
   builder.setCursor({
     drag: {

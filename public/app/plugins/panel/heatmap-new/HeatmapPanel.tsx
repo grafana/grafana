@@ -116,7 +116,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       hideThreshold: options.hideThreshold,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, data.structureRev, info.exemplars]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
