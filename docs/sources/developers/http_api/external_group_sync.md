@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
+aliases = ["/docs/grafana/latest/developers/http_api/external_group_sync/", "/docs/grafana/latest/http_api/external_group_sync/"]
 description = "Grafana External Group Sync HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group", "member", "enterprise"]
 title = "External Group Sync HTTP API "
