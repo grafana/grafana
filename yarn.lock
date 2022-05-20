@@ -11217,13 +11217,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate@npm:0.47.11":
-  version: 0.47.11
-  resolution: "@types/slate@npm:0.47.11"
+"@types/slate@npm:0.47.2":
+  version: 0.47.2
+  resolution: "@types/slate@npm:0.47.2"
   dependencies:
     "@types/react": "*"
     immutable: ^3.8.2
-  checksum: 57efee2f8cc5c90583b256f332e764f7977ade9aff596513d68f44958b3914763ff0a2e4f4fdf1726bebd4815cc2e16a81f052432450cae52373af5582889cb8
+  checksum: c92350f1ef366b5907356a7f3b7bd41dda548dc1002cc2bd79f6b0ff1356d3189c124a54b363ddbe22cbdeb2a75f9d1b67d4f5b2a1bb6b89b714ecf7cf0c49c2
   languageName: node
   linkType: hard
 
