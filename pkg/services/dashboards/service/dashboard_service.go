@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,6 +27,8 @@ var (
 		m.ActionDashboardsCreate: {m.ScopeFoldersAll},
 		m.ActionDashboardsWrite:  {m.ScopeFoldersAll},
 	}
+	// DashboardServiceImpl implements the DashboardService interface
+	_ m.DashboardService = (*DashboardServiceImpl)(nil)
 )
 
 type DashboardServiceImpl struct {
@@ -510,4 +513,12 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
 	return dr.dashboardStore.GetDashboard(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	return dr.dashboardStore.GetDashboardUIDById(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return dr.dashboardStore.GetDashboards(ctx, query)
 }
