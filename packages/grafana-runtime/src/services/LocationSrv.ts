@@ -44,9 +44,7 @@ export interface LocationUpdate {
  * @public
  * @deprecated in favor of {@link locationService} and will be removed in Grafana 9
  */
-export interface LocationSrv {
-  update(options: LocationUpdate): void;
-}
+export interface LocationSrv {}
 
 let singletonInstance: LocationSrv;
 
