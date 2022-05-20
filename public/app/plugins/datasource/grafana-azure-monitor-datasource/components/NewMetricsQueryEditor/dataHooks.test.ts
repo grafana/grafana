@@ -218,9 +218,18 @@ describe('AzureMonitor: metrics dataHooks', () => {
         azureMonitor: metricsMetadataConfig.emptyQueryPartial,
       };
       const { result, waitForNextUpdate } = renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
-      await waitForNextUpdate();
+      await waitForNextUpdate(WAIT_OPTIONS);
 
       expect(result.current).toEqual(metricsMetadataConfig.expectedOptions);
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          aggregation: result.current.primaryAggType,
+          timeGrain: 'auto',
+          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+        },
+      });
     });
   });
 });
