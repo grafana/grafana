@@ -14,6 +14,8 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+import { DeepPartial } from '../../grafana-data/src/themes/types';
+import { ThemeColorsMode } from '../../grafana-data/src/themes/createColors';
 
 export interface AzureSettings {
   cloud?: string;
@@ -105,7 +107,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   constructor(options: GrafanaBootConfig) {
-    let mode: any = options.bootData.user.lightTheme
+    let mode: DeepPartial<ThemeColorsMode> = options.bootData.user.lightTheme
       ? 'light'
       : options.bootData.user.fusebitTheme
       ? 'fusebit'
