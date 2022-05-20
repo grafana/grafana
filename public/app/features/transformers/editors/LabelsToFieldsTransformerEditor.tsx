@@ -11,6 +11,7 @@ import {
   LabelsToFieldsMode,
   LabelsToFieldsOptions,
 } from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { Stack } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill } from '@grafana/ui';
 
 const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
@@ -79,7 +80,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label={'Labels'} labelWidth={labelWidth}>
-          <>
+          <Stack gap={1} wrap>
             {labelNames.map((o, i) => {
               const label = o.label!;
               return (
@@ -91,7 +92,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
                 />
               );
             })}
-          </>
+          </Stack>
         </InlineField>
       </InlineFieldRow>
       {options.mode !== LabelsToFieldsMode.Rows && (
