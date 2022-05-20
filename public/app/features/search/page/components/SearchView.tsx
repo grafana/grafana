@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Spinner, useStyles2 } from '@grafana/ui';
+import { useStyles2, Spinner, Button } from '@grafana/ui';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
@@ -20,7 +20,7 @@ import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
 import { SearchResultsGrid } from './SearchResultsGrid';
-import { SearchResultsProps, SearchResultsTable } from './SearchResultsTable';
+import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
 type SearchViewProps = {
   queryText: string; // odd that it is not from query.query

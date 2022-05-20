@@ -5,7 +5,7 @@ import {
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { defaultPanelOptions, HeatmapColorMode, HeatmapSourceMode, PanelOptions } from './models.gen';
+import { HeatmapSourceMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
 /**

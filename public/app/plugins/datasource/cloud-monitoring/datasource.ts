@@ -1,4 +1,4 @@
-import { chunk, flatten, isArray, isString } from 'lodash';
+import { chunk, flatten, isString, isArray } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -15,14 +15,14 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import {
-  Aggregation,
   CloudMonitoringOptions,
   CloudMonitoringQuery,
   EditorMode,
   Filter,
   MetricDescriptor,
-  PostResponse,
   QueryType,
+  PostResponse,
+  Aggregation,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 

@@ -3,7 +3,7 @@ import React, { FC, FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 

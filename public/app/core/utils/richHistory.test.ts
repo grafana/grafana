@@ -1,4 +1,4 @@
-import { DataQuery, dateTime } from '@grafana/data';
+import { dateTime, DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
 import { RichHistoryQuery } from '../../types';
@@ -6,15 +6,15 @@ import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHi
 
 import {
   addToRichHistory,
+  updateCommentInRichHistory,
+  updateStarredInRichHistory,
+  mapNumbertoTimeInSlider,
   createDateStringFromTs,
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  mapNumbertoTimeInSlider,
   migrateQueryHistoryFromLocalStorage,
   SortOrder,
-  updateCommentInRichHistory,
-  updateStarredInRichHistory,
 } from './richHistory';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;

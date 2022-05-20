@@ -9,11 +9,11 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import {
+  PanelOptions,
   defaultPanelOptions,
+  HeatmapSourceMode,
   HeatmapColorMode,
   HeatmapColorScale,
-  HeatmapSourceMode,
-  PanelOptions,
 } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';

@@ -7,12 +7,12 @@ import { Input } from '@grafana/ui';
 import { INPUT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import {
-  AlignmentTypes,
+  EditorMode,
+  MetricKind,
   AnnotationMetricQuery,
   CloudMonitoringOptions,
   CloudMonitoringQuery,
-  EditorMode,
-  MetricKind,
+  AlignmentTypes,
 } from '../types';
 
 import { MetricQueryEditor } from './MetricQueryEditor';

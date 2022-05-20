@@ -3,14 +3,14 @@ import { map } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
-  DataFrameType,
   DataTransformerID,
-  Field,
   FieldType,
-  getFieldDisplayName,
-  incrRoundDn,
   incrRoundUp,
+  incrRoundDn,
   SynchronousDataTransformerInfo,
+  DataFrameType,
+  getFieldDisplayName,
+  Field,
 } from '@grafana/data';
 
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';

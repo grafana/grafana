@@ -1,4 +1,4 @@
-import { OldVariableQuery, VariableQueryType } from '../types';
+import { VariableQueryType, OldVariableQuery } from '../types';
 
 import { migrateVariableQuery } from './variableQueryMigrations';
 

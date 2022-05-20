@@ -5,16 +5,16 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
-  DataQueryResponse,
   DataSourceApi,
-  EventBusExtended,
-  ExplorePanelsState,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 

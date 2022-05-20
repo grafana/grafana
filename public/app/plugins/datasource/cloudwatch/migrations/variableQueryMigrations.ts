@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { OldVariableQuery, VariableQuery, VariableQueryType } from '../types';
+import { VariableQuery, VariableQueryType, OldVariableQuery } from '../types';
 
 function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
   return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';

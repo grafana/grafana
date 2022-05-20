@@ -1,4 +1,4 @@
-import { FieldConfigSource, PanelModel } from '@grafana/data';
+import { PanelModel, FieldConfigSource } from '@grafana/data';
 
 import { heatmapChangedHandler } from './migrations';
 

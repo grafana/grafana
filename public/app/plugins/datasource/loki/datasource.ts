@@ -6,7 +6,6 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 // Types
 import {
-  AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -23,6 +22,7 @@ import {
   dateMath,
   DateTime,
   FieldCache,
+  AbstractQuery,
   FieldType,
   getLogLevelFromKey,
   Labels,
@@ -30,12 +30,12 @@ import {
   LogLevel,
   LogRowModel,
   QueryResultMeta,
-  rangeUtil,
   ScopedVars,
   TimeRange,
+  rangeUtil,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, config, DataSourceWithBackend, FetchError, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';

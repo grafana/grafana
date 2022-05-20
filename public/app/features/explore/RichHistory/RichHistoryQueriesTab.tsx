@@ -8,9 +8,9 @@ import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
+  SortOrder,
   RichHistorySearchFilters,
   RichHistorySettings,
-  SortOrder,
 } from 'app/core/utils/richHistory';
 import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
