@@ -57,7 +57,7 @@ To interact with the API and view or modify basic roles permissions, refer to [t
 
 ## Fixed roles
 
-Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams and service accounts. This gives you finer-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
+Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
