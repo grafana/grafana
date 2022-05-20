@@ -10,6 +10,7 @@ import {
   GrafanaTheme2,
   incrRoundDn,
   incrRoundUp,
+  outerJoinDataFrames,
   PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -54,7 +55,7 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
-  const frames = data.series;
+  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
@@ -90,11 +91,41 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   }
 
   if (source === HeatmapSourceMode.Data) {
-    let first = frames[0];
-    if (first.meta?.type !== DataFrameType.HeatmapScanlines) {
-      first = bucketsToScanlines(frames[0]);
+    if (frames.length > 1) {
+      // heatmap-buckets (labeled, no de-accum)
+      frames = [
+        outerJoinDataFrames({
+          frames,
+        })!,
+      ];
     }
-    return getHeatmapData(first, exemplars, theme);
+
+    let heatmapFrame = frames[0];
+    let scanlinesFrame = frames[0];
+    let yAxisValues: string[] | undefined = undefined;
+
+    if (heatmapFrame.meta?.type !== DataFrameType.HeatmapScanlines) {
+      scanlinesFrame = bucketsToScanlines(scanlinesFrame);
+      yAxisValues = frames[0].fields.flatMap((field) => {
+        if (field.type === FieldType.number) {
+          let tickLabel = getFieldDisplayName(field);
+
+          if (tickLabel === 'Value') {
+            // TODO: how to select label by which to rename?
+            tickLabel = field.labels?.pod ?? tickLabel;
+          }
+
+          return tickLabel;
+        }
+
+        return [];
+      });
+    }
+
+    return {
+      yAxisValues,
+      ...getHeatmapData(scanlinesFrame, exemplars, theme),
+    };
   }
 
   // TODO, check for error etc

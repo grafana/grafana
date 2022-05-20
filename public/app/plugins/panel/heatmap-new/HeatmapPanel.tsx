@@ -11,7 +11,6 @@ import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
-//import { testData } from './testframe3';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
@@ -30,9 +29,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
-  // data.series = testData.series;
-  // data.annotations = testData.annotations;
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -60,9 +56,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         // le bucket / label facet (this needs to back-reference yLabels ordinally)
         // todo: do better than indexOf!
         // todo: don't assume le or position of field name (can be pod, cluster, etc)
-        exemplarsyFacet = info.exemplars?.fields[6].values
-          .toArray()
-          .map((le) => info.yAxisValues?.indexOf(le)) as number[];
+
+        // let matchExemplarsBy = info.exemplars?.fields.find(field => field.name === 'le')!.values.toArray(); //
+        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === 'pod')!.values.toArray(); //
+        exemplarsyFacet = matchExemplarsBy.map((label) => info.yAxisValues?.indexOf(label)) as number[];
       } else {
         exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
       }

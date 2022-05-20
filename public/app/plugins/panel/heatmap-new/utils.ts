@@ -517,7 +517,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts) {
 
         let points = new Path2D();
         let fillPaths = [points];
-        let fillPalette = ['rgba(255,255,255, 0.4)'];
+        let fillPalette = ['rgba(255,0,255,0.7)'];
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;
