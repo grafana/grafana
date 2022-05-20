@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -9,9 +9,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.test.tsx:3129955645": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Gauge/Gauge.test.tsx:2525939157": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Graph/Graph.test.tsx:1664091255": [
