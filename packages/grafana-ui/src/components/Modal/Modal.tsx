@@ -5,7 +5,6 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
 import { useTheme2 } from '../../themes';
-import { IconName } from '../../types';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 
@@ -72,7 +71,7 @@ export function Modal(props: PropsWithChildren<Props>) {
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
         <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
+            {typeof title === 'string' && <ModalHeader {...props} title={title} id={titleProps.id} />}
             {
               // FIXME: custom title components won't get an accessible title.
               // Do we really want to support them or shall we just limit this ModalTabsHeader?
@@ -118,14 +117,3 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
 }
 
 Modal.ButtonRow = ModalButtonRow;
-
-interface DefaultModalHeaderProps {
-  id?: string;
-  title: string;
-  icon?: IconName;
-  iconTooltip?: string;
-}
-
-function DefaultModalHeader({ icon, iconTooltip, title, id }: DefaultModalHeaderProps): JSX.Element {
-  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} id={id} />;
-}

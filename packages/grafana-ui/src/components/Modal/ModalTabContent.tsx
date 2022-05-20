@@ -1,16 +1,7 @@
 import React from 'react';
 
-import { IconName } from '../../types';
-
-interface Props {
-  /** @deprecated */
-  icon?: IconName;
-  /** @deprecated */
-  iconClass?: string;
-}
-
 /** @internal */
-export const ModalTabContent: React.FC<Props> = ({ children }) => {
+export const ModalTabContent: React.FC = ({ children }) => {
   return (
     <div className="share-modal-body">
       <div className="share-modal-header">
