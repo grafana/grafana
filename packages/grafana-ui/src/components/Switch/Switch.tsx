@@ -2,23 +2,19 @@ import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { HTMLProps, useRef } from 'react';
 
-import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
-export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'checked'> {
   value?: boolean;
   /** Make switch's background and border transparent */
   transparent?: boolean;
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled, onChange, id, ...inputProps }, ref) => {
-    if (checked) {
-      deprecationWarning('Switch', 'checked prop', 'value');
-    }
-
+  ({ value, disabled, onChange, id, ...inputProps }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme);
     const switchIdRef = useRef(id ? id : uniqueId('switch-'));

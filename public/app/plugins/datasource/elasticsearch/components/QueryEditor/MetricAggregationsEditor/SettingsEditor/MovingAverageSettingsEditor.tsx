@@ -129,7 +129,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
                   })
                 )
               }
-              checked={!!metric.settings?.settings?.pad}
+              value={!!metric.settings?.settings?.pad}
             />
           </InlineField>
         </>
@@ -142,7 +142,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               dispatch(changeMetricSetting({ metric, settingName: 'minimize', newValue: e.target.checked }))
             }
-            checked={!!metric.settings?.minimize}
+            value={!!metric.settings?.minimize}
           />
         </InlineField>
       )}
