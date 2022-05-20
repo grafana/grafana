@@ -1,7 +1,6 @@
 import { map } from 'rxjs/operators';
 
 import { DataTransformerInfo } from '../../types';
-import { DataFrame, Field } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
@@ -24,38 +23,23 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
     source.pipe(
       map((data) => {
         const limitFieldMatch = options.limitField || DEFAULT_LIMIT_FIELD;
-
-        const processed: DataFrame[] = [];
-        const fields: Field[] = [];
-        for (const frame of data) {
-          for (const field of frame.fields) {
-            // No need to process if response < our limit
-            if (field.values.length < limitFieldMatch) {
-              return data;
-            }
-
-            const values = new ArrayVector();
-            for (let i = 0; i < limitFieldMatch; i++) {
-              values.add(field.values.get(i));
-            }
-
-            fields.push({
-              name: field.name,
-              type: field.type,
-              config: {
-                ...field.config,
-              },
-              values: values,
-            });
+        return data.map((frame) => {
+          if (frame.length > limitFieldMatch) {
+            return {
+              ...frame,
+              fields: frame.fields.map((f) => {
+                const vals = f.values.toArray();
+                return {
+                  ...f,
+                  values: new ArrayVector(vals.slice(0, limitFieldMatch)),
+                };
+              }),
+              length: limitFieldMatch,
+            };
           }
-        }
 
-        processed.push({
-          fields,
-          length: limitFieldMatch,
+          return frame;
         });
-
-        return processed;
       })
     ),
 };
