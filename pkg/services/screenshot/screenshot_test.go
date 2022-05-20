@@ -168,7 +168,7 @@ func TestNoopScreenshotService(t *testing.T) {
 }
 
 func TestScreenshotUnavailableService(t *testing.T) {
-	s := ScreenshotsUnavailableService{}
+	s := ScreenshotUnavailableService{}
 	screenshot, err := s.Take(context.Background(), ScreenshotOptions{})
 	assert.Equal(t, err, ErrScreenshotsUnavailable)
 	assert.Nil(t, screenshot)

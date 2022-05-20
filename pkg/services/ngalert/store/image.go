@@ -27,13 +27,13 @@ type Image struct {
 
 type ImageStore interface {
 	// Get returns the image with the token or ErrImageNotFound.
-	Get(ctx context.Context, token string) (*Image, error)
+	GetImage(ctx context.Context, token string) (*Image, error)
 
 	// Saves the image or returns an error.
-	Save(ctx context.Context, img *Image) error
+	SaveImage(ctx context.Context, img *Image) error
 }
 
-func (st DBstore) Get(ctx context.Context, token string) (*Image, error) {
+func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {
 	var img Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Table("alert_image").Where("token = ?", token).Get(&img)
@@ -50,21 +50,33 @@ func (st DBstore) Get(ctx context.Context, token string) (*Image, error) {
 	return &img, nil
 }
 
-func (st DBstore) Save(ctx context.Context, img *Image) error {
+func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		img.ExpiresAt = TimeNow().Add(1 * time.Minute)
-		if img.ID == 0 {
+		// TODO: Is this a good idea?
+		img.ExpiresAt = TimeNow().Add(1 * time.Minute).UTC()
+		if img.ID == 0 { // xorm will generate fill this field on Insert.
 			token, err := uuid.NewV4()
 			if err != nil {
 				return fmt.Errorf("failed to create token: %w", err)
 			}
 			img.Token = token.String()
-			img.CreatedAt = TimeNow()
+			img.CreatedAt = TimeNow().UTC()
 			if _, err := sess.Table("alert_image").Insert(img); err != nil {
 				return fmt.Errorf("failed to insert screenshot: %w", err)
 			}
 		} else {
-			if _, err := sess.Table("alert_image").Update(img); err != nil {
+			// TODO: Something is jacked up with XORM, and it's not properly setting the id field. Let's do it the hard way.
+			// This is what we want, but already-used id keys are getting overwritten
+			//if _, err := sess.Table("alert_image").Update(img); err != nil {
+			//	return fmt.Errorf("failed to update screenshot: %v", err)
+			//}
+
+			updateSQL := st.SQLStore.Dialect.UpsertSQL("alert_image",
+				[]string{"id"},
+				[]string{"id", "token", "path", "url", "created_at", "expires_at"})
+
+			_, err := sess.SQL(updateSQL, []interface{}{img.ID, img.Token, img.Path, img.URL, img.CreatedAt, img.ExpiresAt}...).Query()
+			if err != nil {
 				return fmt.Errorf("failed to update screenshot: %v", err)
 			}
 		}
@@ -73,9 +85,9 @@ func (st DBstore) Save(ctx context.Context, img *Image) error {
 }
 
 //nolint:unused
-func (st DBstore) deleteExpired(ctx context.Context) error {
+func (st DBstore) DeleteExpiredImages(ctx context.Context) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		n, err := sess.Table("alert_image").Where("expires_at >=", TimeNow()).Delete(&Image{})
+		n, err := sess.Table("alert_image").Where("expires_at <", TimeNow()).Delete(&Image{})
 		if err != nil {
 			return fmt.Errorf("failed to delete expired images: %w", err)
 		}

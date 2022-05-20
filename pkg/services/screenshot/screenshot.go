@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -88,22 +90,22 @@ type BrowserScreenshotService struct {
 	screenshotSuccesses prometheus.Counter
 }
 
-func NewBrowserScreenshotService(r prometheus.Registerer, ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
+func NewBrowserScreenshotService(metrics prometheus.Registerer, ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
 	return &BrowserScreenshotService{
 		ds: ds,
 		rs: rs,
-		screenshotDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
+		screenshotDuration: promauto.With(metrics).NewHistogram(prometheus.HistogramOpts{
 			Name:      "browser_screenshot_duration_seconds",
 			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15},
 			Namespace: namespace,
 			Subsystem: subsystem,
 		}),
-		screenshotFailures: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		screenshotFailures: promauto.With(metrics).NewCounter(prometheus.CounterOpts{
 			Name:      "browser_screenshot_failures_total",
 			Namespace: namespace,
 			Subsystem: subsystem,
 		}),
-		screenshotSuccesses: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		screenshotSuccesses: promauto.With(metrics).NewCounter(prometheus.CounterOpts{
 			Name:      "browser_screenshot_successes_total",
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -126,6 +128,19 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 	defer func() { s.screenshotDuration.Observe(time.Since(start).Seconds()) }()
 
 	opts = opts.SetDefaults()
+
+	// Compute the URL to screenshot.
+	renderPath := path.Join("d-solo", q.Result.Uid, q.Result.Slug)
+	url := &url.URL{}
+	url.Path = renderPath
+	qParams := url.Query()
+	qParams.Add("orgId", fmt.Sprint(q.Result.OrgId))
+	if opts.PanelID != 0 {
+		qParams.Add("panelId", fmt.Sprint(opts.PanelID))
+	}
+	url.RawQuery = qParams.Encode()
+	path := url.String()
+
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   q.Result.OrgId,
@@ -142,7 +157,7 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 		Height:          opts.Height,
 		Theme:           opts.Theme,
 		ConcurrentLimit: setting.AlertingRenderLimit,
-		Path:            fmt.Sprintf("d-solo/%s/%s/?orgId=%d&panelId=%d", q.Result.Uid, q.Result.Slug, q.Result.OrgId, opts.PanelID),
+		Path:            path,
 	}
 
 	result, err := s.rs.Render(ctx, renderOpts, nil)
@@ -252,9 +267,9 @@ func (s *ObservableScreenshotService) Take(ctx context.Context, opts ScreenshotO
 	return screenshot, err
 }
 
-type ScreenshotsUnavailableService struct{}
+type ScreenshotUnavailableService struct{}
 
-func (s *ScreenshotsUnavailableService) Take(_ context.Context, _ ScreenshotOptions) (*Screenshot, error) {
+func (s *ScreenshotUnavailableService) Take(_ context.Context, _ ScreenshotOptions) (*Screenshot, error) {
 	return nil, ErrScreenshotsUnavailable
 }
 

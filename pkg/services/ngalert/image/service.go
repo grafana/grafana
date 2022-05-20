@@ -54,26 +54,26 @@ func NewScreenshotImageService(screenshots screenshot.ScreenshotService, store s
 
 // NewScreenshotImageServiceFromCfg returns a new ScreenshotImageService
 // from the configuration.
-func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, r prometheus.Registerer,
+func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Registerer,
 	db *store.DBstore, ds dashboards.DashboardService, rs rendering.Service) (ImageService, error) {
 	if !cfg.UnifiedAlerting.Screenshots.Enabled {
 		return &ScreenshotImageService{
-			screenshots: &screenshot.ScreenshotsUnavailableService{},
+			screenshots: &screenshot.ScreenshotUnavailableService{},
 		}, nil
 	}
 
-	s := screenshot.NewBrowserScreenshotService(r, ds, rs)
+	s := screenshot.NewBrowserScreenshotService(metrics, ds, rs)
 	if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
 		u, err := imguploader.NewImageUploader()
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
 		}
-		s = screenshot.NewUploadingScreenshotService(r, s, u)
+		s = screenshot.NewUploadingScreenshotService(metrics, s, u)
 	}
 	s = screenshot.NewRateLimitScreenshotService(s, cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
 	s = screenshot.NewSingleFlightScreenshotService(s)
-	s = screenshot.NewCachableScreenshotService(r, screenshotCacheTTL, s)
-	s = screenshot.NewObservableScreenshotService(r, s)
+	s = screenshot.NewCachableScreenshotService(metrics, screenshotCacheTTL, s)
+	s = screenshot.NewObservableScreenshotService(metrics, s)
 
 	return &ScreenshotImageService{
 		store:       db,
@@ -105,7 +105,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 		Path: screenshot.Path,
 		URL:  screenshot.URL,
 	}
-	if err := s.store.Save(ctx, &v); err != nil {
+	if err := s.store.SaveImage(ctx, &v); err != nil {
 		return nil, fmt.Errorf("failed to save image: %w", err)
 	}
 
