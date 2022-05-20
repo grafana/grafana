@@ -80,7 +80,9 @@ func TestMySQL(t *testing.T) {
 	require.NoError(t, err)
 
 	sess := x.NewSession()
-	t.Cleanup(sess.Close)
+	t.Cleanup(func () {
+		sess.Close()
+	})
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
