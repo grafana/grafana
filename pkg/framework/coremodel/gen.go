@@ -5,29 +5,15 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"testing/fstest"
-	"text/template"
 
 	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/pkg/encoding/yaml"
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/grafana/cuetsy"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
-	"github.com/grafana/grafana/pkg/cuectx"
+	gcgen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/encoding/openapi"
-	"golang.org/x/tools/imports"
 )
 
 var lib = thema.NewLibrary(cuecontext.New())
@@ -56,10 +42,10 @@ func main() {
 
 	// For now, call into the grafana-cli code.
 	// TODO rip this out of grafana-cli and put it...somewhere
-	if err = commands.DoCuetsify(groot, diff); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to generate typescript for plugins: %s", err)
-		os.Exit(1)
-	}
+	// if err = commands.DoCuetsify(groot, diff); err != nil {
+	// 	fmt.Fprintf(os.Stderr, "failed to generate typescript for plugins: %s", err)
+	// 	os.Exit(1)
+	// }
 
 	cmroot := filepath.Join(groot, "pkg", "coremodel")
 	tsroot := filepath.Join(groot, "packages", "grafana-schema", "src", "schema")
@@ -70,330 +56,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	var lins []extractedCoremodel
+	var lins []*gcgen.ExtractedLineage
 	for _, item := range items {
 		if item.IsDir() {
-			lin, err := processCoremodelDir(filepath.Join(cmroot, item.Name()))
+			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "lineage.cue"), lib)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "could not process coremodels dir %s: %s\n", cmroot, err)
+				fmt.Fprintf(os.Stderr, "could not process coremodel dir %s: %s\n", cmroot, err)
 				os.Exit(1)
 			}
 
-			lin.RelativePath = filepath.Join(strings.Split(lin.LineagePath, sep)[len(grootp)-3:]...)
 			lins = append(lins, lin)
 		}
 	}
 
 	for _, ls := range lins {
-		err = generateGo(filepath.Join(cmroot, ls.lin.Name()), ls)
+		err = ls.GenerateGoCoremodel(filepath.Join(cmroot, ls.Lineage.Name()))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.lin.Name(), err)
+			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.Lineage.Name(), err)
 			os.Exit(1)
 		}
-		err = generateTypescript(filepath.Join(tsroot, ls.lin.Name()), ls)
+		err = ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.lin.Name(), err)
+			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.Lineage.Name(), err)
 			os.Exit(1)
 		}
 	}
 }
-
-// Scan the dir and load up its lineage
-func processCoremodelDir(path string) (ls extractedCoremodel, err error) {
-	ls.LineagePath = filepath.Join(path, "lineage.cue")
-	f, err := os.Open(ls.LineagePath)
-	if err != nil {
-		return ls, fmt.Errorf("could not open lineage file under %s: %w", path, err)
-	}
-
-	byt, err := ioutil.ReadAll(f)
-	if err != nil {
-		return
-	}
-
-	fs := fstest.MapFS{
-		"lineage.cue": &fstest.MapFile{
-			Data: byt,
-		},
-	}
-
-	_, name := filepath.Split(path)
-	ls.lin, err = cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", name), fs, lib)
-	if err != nil {
-		return
-	}
-	return
-}
-
-type extractedCoremodel struct {
-	lin thema.Lineage
-	// Absolute path to the coremodel's lineage.cue file.
-	LineagePath string
-	// Path to the coremodel's lineage.cue file relative to repo root.
-	RelativePath string
-}
-
-func generateGo(path string, ls extractedCoremodel) error {
-	lin := ls.lin
-	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
-	f, err := openapi.GenerateSchema(sch, nil)
-	if err != nil {
-		return fmt.Errorf("thema openapi generation failed: %w", err)
-	}
-
-	str, err := yaml.Marshal(lib.Context().BuildFile(f))
-	if err != nil {
-		return fmt.Errorf("cue-yaml marshaling failed: %w", err)
-	}
-
-	loader := openapi3.NewLoader()
-	oT, err := loader.LoadFromData([]byte(str))
-
-	gostr, err := codegen.Generate(oT, lin.Name(), codegen.Options{
-		GenerateTypes: true,
-		SkipPrune:     true,
-		SkipFmt:       true,
-		UserTemplates: map[string]string{
-			"imports.tmpl": fmt.Sprintf(tmplImports, ls.RelativePath),
-			"typedef.tmpl": tmplTypedef,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("openapi generation failed: %w", err)
-	}
-
-	vars := goPkg{
-		Name:        lin.Name(),
-		LineagePath: ls.RelativePath,
-		LatestSeqv:  sch.Version()[0],
-		LatestSchv:  sch.Version()[1],
-	}
-	var buuf bytes.Buffer
-	err = tmplAddenda.Execute(&buuf, vars)
-	if err != nil {
-		panic(err)
-	}
-
-	fset := token.NewFileSet()
-	gf, err := parser.ParseFile(fset, "coremodel_gen.go", gostr+buuf.String(), parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("generated go file parsing failed: %w", err)
-	}
-	m := makeReplacer(lin.Name())
-	ast.Walk(m, gf)
-
-	var buf bytes.Buffer
-	err = format.Node(&buf, fset, gf)
-	if err != nil {
-		return fmt.Errorf("ast printing failed: %w", err)
-	}
-
-	byt, err := imports.Process("coremodel_gen.go", buf.Bytes(), nil)
-	if err != nil {
-		return fmt.Errorf("goimports processing failed: %w", err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(path, "coremodel_gen.go"), byt, 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated code to file: %s", err)
-	}
-
-	// Generate the assignability test. TODO do this in a framework test instead
-	var buf3 bytes.Buffer
-	err = tmplAssignableTest.Execute(&buf3, vars)
-	if err != nil {
-		return fmt.Errorf("failed generating assignability test file: %w", err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(path, "coremodel_gen_test.go"), buf3.Bytes(), 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated test code to file: %s", err)
-	}
-
-	return nil
-}
-
-func makeReplacer(name string) modelReplacer {
-	return modelReplacer(fmt.Sprintf("%s%s", string(strings.ToUpper(name)[0]), name[1:]))
-}
-
-type modelReplacer string
-
-func (m modelReplacer) Visit(n ast.Node) ast.Visitor {
-	switch x := n.(type) {
-	case *ast.Ident:
-		x.Name = m.replacePrefix(x.Name)
-	}
-	return m
-}
-
-func (m modelReplacer) replacePrefix(str string) string {
-	if len(str) >= len(m) && str[:len(m)] == string(m) {
-		return strings.Replace(str, string(m), "Model", 1)
-	}
-	return str
-}
-
-func generateTypescript(path string, ls extractedCoremodel) error {
-	schv := thema.SchemaP(ls.lin, thema.LatestVersion(ls.lin)).UnwrapCUE()
-
-	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{})
-	if err != nil {
-		return fmt.Errorf("cuetsy parts gen failed: %w", err)
-	}
-
-	top, err := cuetsy.GenerateSingleAST(string(makeReplacer(ls.lin.Name())), schv, cuetsy.TypeInterface)
-	if err != nil {
-		return fmt.Errorf("cuetsy top gen failed: %w", err)
-	}
-
-	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
-	parts.Nodes = append(parts.Nodes, top.T, top.D)
-	str := fmt.Sprintf(genHeader, ls.RelativePath) + fmt.Sprint(parts)
-
-	// Ensure parent directory exists
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.Mkdir(path, os.ModePerm); err != nil {
-			return fmt.Errorf("error while creating parent dir (%s) for typescript model gen: %w", path, err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("could not stat parent dir (%s) for typescript model gen: %w", path, err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(path, ls.lin.Name()+".gen.ts"), []byte(str), 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated typescript model: %w", err)
-	}
-
-	return nil
-}
-
-type goPkg struct {
-	Name                   string
-	LineagePath            string
-	LatestSeqv, LatestSchv uint
-	IsComposed             bool
-}
-
-var genHeader = `// This file is autogenerated. DO NOT EDIT.
-//
-// Derived from the Thema lineage at %s
-
-`
-
-var tmplImports = genHeader + `package {{ .PackageName }}
-
-import (
-	"embed"
-	"bytes"
-	"compress/gzip"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"encoding/xml"
-	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
-	"path/filepath"
-	"strings"
-	"time"
-
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/grafana/thema"
-	"github.com/grafana/grafana/pkg/cuectx"
-)
-`
-
-var tmplAddenda = template.Must(template.New("addenda").Parse(`
-//go:embed lineage.cue
-var cueFS embed.FS
-
-// codegen ensures that this is always the latest Thema schema version
-var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
-
-// Lineage returns the Thema lineage representing a Grafana {{ .Name }}.
-//
-// The lineage is the canonical specification of the current {{ .Name }} schema,
-// all prior schema versions, and the mappings that allow migration between
-// schema versions.
-{{- if .IsComposed }}//
-// This is the base variant of the schema. It does not include any composed
-// plugin schemas.{{ end }}
-func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, lib, opts...)
-}
-
-var _ thema.LineageFactory = Lineage
-
-// Coremodel contains the foundational schema declaration for {{ .Name }}s.
-type Coremodel struct {
-	lin thema.Lineage
-}
-
-// Lineage returns the canonical dashboard Lineage.
-func (c *Coremodel) Lineage() thema.Lineage {
-	return c.lin
-}
-
-// CurrentSchema returns the current (latest) {{ .Name }} Thema schema.
-func (c *Coremodel) CurrentSchema() thema.Schema {
-	return thema.SchemaP(c.lin, currentVersion)
-}
-
-// GoType returns a pointer to an empty Go struct that corresponds to
-// the current Thema schema.
-func (c *Coremodel) GoType() interface{} {
-	return &Model{}
-}
-
-func ProvideCoremodel(lib thema.Library) (*Coremodel, error) {
-	lin, err := Lineage(lib)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Coremodel{
-		lin: lin,
-	}, nil
-}
-`))
-
-var tmplAssignableTest = template.Must(template.New("addenda").Parse(fmt.Sprintf(genHeader, "{{ .LineagePath }}") + `package {{ .Name }}
-
-import (
-	"testing"
-
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/thema"
-)
-
-func TestSchemaAssignability(t *testing.T) {
-	lin, err := Lineage(cuectx.ProvideThemaLibrary())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	sch := thema.SchemaP(lin, currentVersion)
-
-	err = thema.AssignableTo(sch, &Model{})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-`))
-
-var tmplTypedef = `{{range .Types}}
-{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
-{{end}}
-`

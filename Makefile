@@ -83,9 +83,10 @@ clean-api-spec:
 
 ##@ Building
 
-gen-cue: build-cli ## Do all CUE/Thema code generation
+gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./pkg/framework/coremodel
+	go generate ./public/app/plugins
 
 gen-go: $(WIRE)
 	@echo "generate go files"
