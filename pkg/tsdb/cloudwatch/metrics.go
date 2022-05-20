@@ -404,7 +404,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
 	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic", "Node", "Virtual host"},
 	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Stage"},
-	"AWS/AppRunner":               {},
+	"AWS/AppRunner":               {"Instance", "ServiceID", "ServiceName"},
 	"AWS/AppStream":               {"Fleet"},
 	"AWS/AppSync":                 {"GraphQLAPIId"},
 	"AWS/ApplicationELB":          {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
