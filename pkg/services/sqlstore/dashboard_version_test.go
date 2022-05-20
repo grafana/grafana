@@ -5,7 +5,6 @@ package sqlstore
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
