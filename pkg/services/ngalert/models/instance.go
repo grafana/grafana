@@ -12,7 +12,7 @@ type AlertInstance struct {
 	Labels            InstanceLabels    `json:"labels"`
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
-	CurrentReason     InstanceStateType `json:"currentReason"`
+	CurrentReason     string            `json:"currentReason"`
 	CurrentStateSince time.Time         `json:"currentStateSince"`
 	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
@@ -50,7 +50,7 @@ type SaveAlertInstanceCommand struct {
 	RuleUID           string
 	Labels            InstanceLabels
 	State             InstanceStateType
-	Reason            InstanceStateType
+	StateReason       string
 	LastEvalTime      time.Time
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time

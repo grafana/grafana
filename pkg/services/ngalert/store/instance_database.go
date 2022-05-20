@@ -101,7 +101,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertIn
 			Labels:            cmd.Labels,
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
-			CurrentReason:     cmd.Reason,
+			CurrentReason:     cmd.StateReason,
 			CurrentStateSince: cmd.CurrentStateSince,
 			CurrentStateEnd:   cmd.CurrentStateEnd,
 			LastEvalTime:      cmd.LastEvalTime,

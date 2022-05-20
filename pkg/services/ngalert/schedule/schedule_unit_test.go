@@ -693,13 +693,13 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			for _, s := range allInstances {
 				for i := 0; i < 2; i++ {
 					instances = append(instances, &state.AlertInstance{
-						AlertRuleUID:    rule.UID,
-						CacheId:         util.GenerateShortUID(),
-						OrgID:           rule.OrgID,
-						EvaluationState: s,
-						StartsAt:        sch.clock.Now(),
-						EndsAt:          sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
-						Labels:          rule.Labels,
+						AlertRuleUID: rule.UID,
+						CacheId:      util.GenerateShortUID(),
+						OrgID:        rule.OrgID,
+						State:        s,
+						StartsAt:     sch.clock.Now(),
+						EndsAt:       sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
+						Labels:       rule.Labels,
 					})
 				}
 			}

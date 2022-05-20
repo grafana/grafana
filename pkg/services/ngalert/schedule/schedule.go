@@ -635,15 +635,15 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.AlertI
 			RuleOrgID:         s.OrgID,
 			RuleUID:           s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
-			State:             models.InstanceStateType(s.EvaluationState.String()),
-			Reason:            models.InstanceStateType(s.EvaluationReason.String()),
+			State:             models.InstanceStateType(s.State.String()),
+			StateReason:       s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
 		err := sch.instanceStore.SaveAlertInstance(ctx, &cmd)
 		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.EvaluationState.String(), "msg", err.Error())
+			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
 	}
 }

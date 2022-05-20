@@ -51,7 +51,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		startsAt := alertState.StartsAt
 		valString := ""
 
-		if alertState.EvaluationState == eval.Alerting || alertState.EvaluationState == eval.Pending {
+		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
 			valString = formatValues(alertState)
 		}
 
@@ -62,8 +62,8 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
 			State: state.InstanceStateAndReason{
-				State:  alertState.EvaluationState,
-				Reason: alertState.EvaluationReason,
+				State:  alertState.State,
+				Reason: alertState.StateReason,
 			}.String(),
 
 			ActiveAt: &startsAt,
@@ -212,7 +212,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 		for _, alertInstance := range srv.manager.GetInstancesForRuleUID(rule.OrgID, rule.UID) {
 			activeAt := alertInstance.StartsAt
 			valString := ""
-			if alertInstance.EvaluationState == eval.Alerting || alertInstance.EvaluationState == eval.Pending {
+			if alertInstance.State == eval.Alerting || alertInstance.State == eval.Pending {
 				valString = formatValues(alertInstance)
 			}
 
@@ -223,8 +223,8 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
 				State: state.InstanceStateAndReason{
-					State:  alertInstance.EvaluationState,
-					Reason: alertInstance.EvaluationReason,
+					State:  alertInstance.State,
+					Reason: alertInstance.StateReason,
 				}.String(),
 
 				ActiveAt: &activeAt,
@@ -237,7 +237,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 
 			newRule.EvaluationTime = alertInstance.EvaluationDuration.Seconds()
 
-			switch alertInstance.EvaluationState {
+			switch alertInstance.State {
 			case eval.Normal:
 			case eval.Pending:
 				if alertingRule.State == "inactive" {

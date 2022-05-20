@@ -23,8 +23,8 @@ type AlertInstance struct {
 	EndsAt     time.Time
 	LastSentAt time.Time
 
-	EvaluationState      eval.State
-	EvaluationReason     eval.State
+	State                eval.State
+	StateReason          string
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
@@ -58,22 +58,22 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 
 func (a *AlertInstance) resultNormal(_ *models.AlertRule, result eval.Result) {
 	a.Error = nil // should be nil since state is not error
-	if a.EvaluationState != eval.Normal {
+	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
-	a.EvaluationState = eval.Normal
+	a.State = eval.Normal
 }
 
 func (a *AlertInstance) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since the state is not an error
 
-	switch a.EvaluationState {
+	switch a.State {
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.EvaluationState = eval.Alerting
+			a.State = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
@@ -82,9 +82,9 @@ func (a *AlertInstance) resultAlerting(alertRule *models.AlertRule, result eval.
 		a.setEndsAt(alertRule, result)
 		if !(alertRule.For > 0) {
 			// If For is 0, immediately set Alerting
-			a.EvaluationState = eval.Alerting
+			a.State = eval.Alerting
 		} else {
-			a.EvaluationState = eval.Pending
+			a.State = eval.Pending
 		}
 	}
 }
@@ -120,12 +120,12 @@ func (a *AlertInstance) resultError(alertRule *models.AlertRule, result eval.Res
 		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
 	}
 
-	switch a.EvaluationState {
+	switch a.State {
 	case eval.Alerting, eval.Error:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.EvaluationState = execErrState
+			a.State = execErrState
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
@@ -133,9 +133,9 @@ func (a *AlertInstance) resultError(alertRule *models.AlertRule, result eval.Res
 		// For is observed when Alerting is chosen for the alert state
 		// if execution error or timeout.
 		if execErrState == eval.Alerting && alertRule.For > 0 {
-			a.EvaluationState = eval.Pending
+			a.State = eval.Pending
 		} else {
-			a.EvaluationState = execErrState
+			a.State = execErrState
 		}
 		a.StartsAt = result.EvaluatedAt
 		a.setEndsAt(alertRule, result)
@@ -152,16 +152,16 @@ func (a *AlertInstance) resultNoData(alertRule *models.AlertRule, result eval.Re
 
 	switch alertRule.NoDataState {
 	case models.Alerting:
-		a.EvaluationState = eval.Alerting
+		a.State = eval.Alerting
 	case models.NoData:
-		a.EvaluationState = eval.NoData
+		a.State = eval.NoData
 	case models.OK:
-		a.EvaluationState = eval.Normal
+		a.State = eval.Normal
 	}
 }
 
 func (a *AlertInstance) NeedsSending(resendDelay time.Duration) bool {
-	if a.EvaluationState == eval.Pending || a.EvaluationState == eval.Normal && !a.Resolved {
+	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
 		return false
 	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
@@ -174,7 +174,7 @@ func (a *AlertInstance) Equals(b *AlertInstance) bool {
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
 		a.Labels.String() == b.Labels.String() &&
-		a.EvaluationState.String() == b.EvaluationState.String() &&
+		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&

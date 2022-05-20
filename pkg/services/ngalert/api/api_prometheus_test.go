@@ -237,7 +237,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 
 func withAlertingState() forEachState {
 	return func(s *state.AlertInstance) *state.AlertInstance {
-		s.EvaluationState = eval.Alerting
+		s.State = eval.Alerting
 		value := float64(1.1)
 		s.Results = append(s.Results, state.Evaluation{
 			EvaluationState: eval.Alerting,

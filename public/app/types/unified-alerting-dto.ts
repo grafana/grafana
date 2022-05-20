@@ -19,7 +19,7 @@ export enum GrafanaAlertState {
   Error = 'Error',
 }
 
-type GrafanaAlertStateReason = ` (${GrafanaAlertState})` | '';
+type GrafanaAlertStateReason = ` (${string})` | '';
 
 export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
 

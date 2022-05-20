@@ -28,7 +28,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Alerting,
+				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-2 * time.Minute),
 			},
@@ -38,7 +38,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    false,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Alerting,
+				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime,
 			},
@@ -48,7 +48,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Alerting,
+				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
@@ -58,7 +58,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    false,
 			testState: &AlertInstance{
-				EvaluationState: eval.Pending,
+				State: eval.Pending,
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 0 * time.Minute,
 			expected:    true,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Alerting,
+				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime,
 			},
@@ -76,7 +76,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Normal,
+				State:              eval.Normal,
 				Resolved:           true,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
@@ -87,7 +87,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    false,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Normal,
+				State:              eval.Normal,
 				Resolved:           true,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-30 * time.Second),
@@ -98,7 +98,7 @@ func TestNeedsSending(t *testing.T) {
 			resendDelay: 1 * time.Minute,
 			expected:    false,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Normal,
+				State:              eval.Normal,
 				Resolved:           false,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
@@ -109,7 +109,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			resendDelay: 1 * time.Minute,
 			testState: &AlertInstance{
-				EvaluationState:    eval.NoData,
+				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
@@ -119,7 +119,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			resendDelay: 1 * time.Minute,
 			testState: &AlertInstance{
-				EvaluationState:    eval.NoData,
+				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
 			},
@@ -129,7 +129,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			resendDelay: 1 * time.Minute,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Error,
+				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
@@ -139,7 +139,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			resendDelay: 1 * time.Minute,
 			testState: &AlertInstance{
-				EvaluationState:    eval.Error,
+				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
 			},

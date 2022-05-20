@@ -191,8 +191,8 @@ func (c *cache) recordMetrics() {
 		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
 			for _, state := range rule {
-				n := ct[state.EvaluationState]
-				ct[state.EvaluationState] = n + 1
+				n := ct[state.State]
+				ct[state.State] = n + 1
 			}
 		}
 	}

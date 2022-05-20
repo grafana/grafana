@@ -208,7 +208,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
-		if !(s.EvaluationState == eval.Alerting || s.EvaluationState == eval.Error || s.EvaluationState == eval.NoData) {
+		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
 			continue
 		}
 		alert := stateToPostableAlert(s, appURL)
@@ -244,7 +244,7 @@ func randomTimeInPast() time.Time {
 
 func randomState(evalState eval.State) *state.AlertInstance {
 	return &state.AlertInstance{
-		EvaluationState:    evalState,
+		State:              evalState,
 		AlertRuleUID:       util.GenerateShortUID(),
 		StartsAt:           time.Now(),
 		EndsAt:             randomTimeInFuture(),

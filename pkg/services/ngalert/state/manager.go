@@ -114,8 +114,8 @@ func (st *Manager) Warm(ctx context.Context) {
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
 				Labels:               lbs,
-				EvaluationState:      translateInstanceState(entry.CurrentState),
-				EvaluationReason:     translateInstanceReason(entry.CurrentReason),
+				State:                translateInstanceState(entry.CurrentState),
+				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
@@ -168,49 +168,54 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *AlertInstance {
-	currentState := st.getOrCreate(ctx, alertRule, result)
+	instance := st.getOrCreate(ctx, alertRule, result)
 
-	currentState.LastEvaluationTime = result.EvaluatedAt
-	currentState.EvaluationDuration = result.EvaluationDuration
-	currentState.Results = append(currentState.Results, Evaluation{
+	instance.LastEvaluationTime = result.EvaluatedAt
+	instance.EvaluationDuration = result.EvaluationDuration
+	instance.Results = append(instance.Results, Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
 		Condition:       alertRule.Condition,
 	})
-	currentState.LastEvaluationString = result.EvaluationString
-	currentState.TrimResults(alertRule)
-	oldState := currentState.EvaluationState
-	oldReason := currentState.EvaluationReason
+	instance.LastEvaluationString = result.EvaluationString
+	instance.TrimResults(alertRule)
+	oldState := instance.State
+	oldReason := instance.StateReason
 
-	// The underlying reason for a state is always the result of the evaluation.
-	currentState.EvaluationReason = result.State
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(alertRule, result)
+		instance.resultNormal(alertRule, result)
 	case eval.Alerting:
-		currentState.resultAlerting(alertRule, result)
+		instance.resultAlerting(alertRule, result)
 	case eval.Error:
-		currentState.resultError(alertRule, result)
+		instance.resultError(alertRule, result)
 	case eval.NoData:
-		currentState.resultNoData(alertRule, result)
+		instance.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
-		// We don't have a "reason: pending", so reset the Reason field.
-		currentState.EvaluationReason = oldReason
+	}
+
+	// Set reason iff: state is not Pending, reason is different than state, reason is not Alerting or Normal
+	instance.StateReason = ""
+	if instance.State != eval.Pending &&
+		instance.State != result.State &&
+		result.State != eval.Normal &&
+		result.State != eval.Alerting {
+		instance.StateReason = result.State.String()
 	}
 
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
-	currentState.Resolved = oldState == eval.Alerting && currentState.EvaluationState == eval.Normal
+	instance.Resolved = oldState == eval.Alerting && instance.State == eval.Normal
 
-	st.set(currentState)
+	st.set(instance)
 
-	shouldUpdateAnnotation := oldState != currentState.EvaluationState || oldReason != currentState.EvaluationReason
+	shouldUpdateAnnotation := oldState != instance.State || oldReason != instance.StateReason
 	if shouldUpdateAnnotation {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.EvaluationState, Reason: currentState.EvaluationReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
+		go st.annotateState(ctx, alertRule, instance.Labels, result.EvaluatedAt, InstanceStateAndReason{State: instance.State, Reason: instance.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
-	return currentState
+	return instance
 }
 
 func (st *Manager) GetAll(orgID int64) []*AlertInstance {
@@ -257,38 +262,16 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func translateInstanceReason(reason ngModels.InstanceStateType) eval.State {
-	// If there's nothing set in the database, use the "Normal" state.
-	var result eval.State
-	switch reason {
-	case ngModels.InstanceStateFiring:
-		result = eval.Alerting
-	case ngModels.InstanceStateNormal:
-		result = eval.Normal
-	case ngModels.InstanceStateNoData:
-		result = eval.NoData
-	case ngModels.InstanceStateError:
-		result = eval.Error
-	case ngModels.InstanceStatePending:
-		// We shouldn't actually see this one - we should never set the error to pending.
-		result = eval.Pending
-	default:
-		result = eval.Normal
-	}
-
-	return result
-}
-
 // This struct provides grouping of state with reason, and string formatting.
 type InstanceStateAndReason struct {
 	State  eval.State
-	Reason eval.State
+	Reason string
 }
 
 func (i InstanceStateAndReason) String() string {
 	r := fmt.Sprintf("%v", i.State)
 	// We never want to write down (Normal) or (Alerting)
-	if i.State != i.Reason && i.Reason != eval.Normal && i.Reason != eval.Alerting && i.Reason.IsValid() {
+	if len(i.Reason) > 1 && i.State.String() != i.Reason && i.Reason != eval.Alerting.String() {
 		r = r + fmt.Sprintf(" (%v)", i.Reason)
 	}
 	return r
@@ -358,10 +341,10 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 
-			if s.EvaluationState == eval.Alerting {
+			if s.State == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
-					InstanceStateAndReason{State: eval.Normal, Reason: eval.Normal},
-					InstanceStateAndReason{State: s.EvaluationState, Reason: s.EvaluationReason})
+					InstanceStateAndReason{State: eval.Normal, Reason: ""},
+					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
 			}
 		}
 	}

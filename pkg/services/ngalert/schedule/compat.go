@@ -50,11 +50,11 @@ func stateToPostableAlert(alertState *state.AlertInstance, appURL *url.URL) *mod
 		urlStr = ""
 	}
 
-	if alertState.EvaluationState == eval.NoData {
+	if alertState.State == eval.NoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
-	if alertState.EvaluationState == eval.Error {
+	if alertState.State == eval.Error {
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
@@ -133,7 +133,7 @@ func FromAlertsStateToStoppedAlert(firingStates []*state.AlertInstance, appURL *
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {
-		if alertState.EvaluationState == eval.Normal || alertState.EvaluationState == eval.Pending {
+		if alertState.State == eval.Normal || alertState.State == eval.Pending {
 			continue
 		}
 		postableAlert := stateToPostableAlert(alertState, appURL)
