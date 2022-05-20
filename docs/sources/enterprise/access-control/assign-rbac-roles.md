@@ -74,7 +74,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 **Before you begin:**
 
 - [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}})
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
 
 </br>
 
@@ -84,25 +84,25 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute                | Description                                                                                                                                                                                                     |
-   | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                                                |
-   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                              |
-   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                              |
-   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                            |
-   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes.md">}}) |
-   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                                |
-   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                          |
-   | `teams > name`           | Enter the name of the team.                                                                                                                                                                                     |
-   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                                     |
-   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                                     |
-   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                                            |
+   | Attribute                | Description                                                                                                                                                                                                      |
+   | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                                                 |
+   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                               |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                               |
+   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                             |
+   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes.md" >}}) |
+   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                                 |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                           |
+   | `teams > name`           | Enter the name of the team.                                                                                                                                                                                      |
+   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                                      |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                                      |
+   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                                             |
 
    For more information about managing custom roles, refer to [Create custom roles using provisioning]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}).
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example creates the `custom:users:writer` role and assigns it to the `user writers` and `user admins` teams along with the `fixed:users:writer` role:
 

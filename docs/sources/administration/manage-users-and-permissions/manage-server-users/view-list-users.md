@@ -19,4 +19,4 @@ You can see a list of users with accounts on your Grafana server. This action mi
 
 ![Server Admin user list](/static/img/docs/manage-users/server-user-list-7-3.png)
 
-> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles">}}) permissions and _not_ [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can still [view of list of users in a given organization]({{< relref "../../manage-users-and-permissions/manage-org-users/view-list-org-users.md" >}}).
+> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../../manage-users-and-permissions/manage-org-users/view-list-org-users.md" >}}).
