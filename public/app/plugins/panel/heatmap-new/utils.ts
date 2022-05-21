@@ -217,10 +217,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     range: shouldUseLogScale
       ? undefined
       : (u, dataMin, dataMax) => {
-          let bucketSize = dataRef.current?.yBucketSize;
+          const bucketSize = dataRef.current?.yBucketSize;
 
           if (bucketSize) {
-            console.log(bucketSize);
             if (dataRef.current?.yLayout === BucketLayout.le) {
               dataMin -= bucketSize!;
             } else if (dataRef.current?.yLayout === BucketLayout.ge) {
@@ -245,10 +244,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
     splits: hasLabeledY
       ? () => {
-          let ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-          let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+          const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
+          const splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
 
-          let bucketSize = dataRef.current?.yBucketSize!;
+          const bucketSize = dataRef.current?.yBucketSize!;
 
           if (dataRef.current?.yLayout === BucketLayout.le) {
             splits.unshift(ys[0] - bucketSize);
@@ -261,7 +260,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
     values: hasLabeledY
       ? () => {
-          let yAxisValues = dataRef.current?.yAxisValues?.slice()!;
+          const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
 
           if (dataRef.current?.yLayout === BucketLayout.le) {
             yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
@@ -274,7 +273,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
-  let pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
 
   // heatmap layer
   builder.addSeries({
