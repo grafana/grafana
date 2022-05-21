@@ -170,6 +170,7 @@ export function RichHistoryQueriesTab(props: Props) {
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
   const sortOrderOptions = getSortOrderOptions();
+  const partialResults = queries.length && queries.length !== totalQueries;
 
   return (
     <div className={styles.container}>
@@ -235,7 +236,10 @@ export function RichHistoryQueriesTab(props: Props) {
             return (
               <div key={heading}>
                 <div className={styles.heading}>
-                  {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                  {heading}{' '}
+                  {!partialResults && (
+                    <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                  )}
                 </div>
                 {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
                   const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
@@ -252,7 +256,7 @@ export function RichHistoryQueriesTab(props: Props) {
               </div>
             );
           })}
-        {queries.length && queries.length !== totalQueries ? (
+        {partialResults ? (
           <div>
             Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
           </div>
