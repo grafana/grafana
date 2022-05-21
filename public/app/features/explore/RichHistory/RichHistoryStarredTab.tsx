@@ -167,7 +167,7 @@ export function RichHistoryStarredTab(props: Props) {
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>
-            Showing {queries.length} of {totalQueries}. <Button onClick={loadMoreRichHistory}>Load more</Button>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
           </div>
         ) : null}
         <div className={styles.footer}>

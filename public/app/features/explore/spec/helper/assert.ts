@@ -54,7 +54,7 @@ export const assertQueryHistoryElementsShown = (
   total: number,
   exploreId: ExploreId = ExploreId.left
 ) => {
-  expect(withinExplore(exploreId).queryByText(`Showing ${shown} of ${total}.`)).toBeInTheDocument();
+  expect(withinExplore(exploreId).queryByText(`Showing ${shown} of ${total}`)).toBeInTheDocument();
 };
 
 export const assertLoadMoreQueryHistoryNotVisible = (exploreId: ExploreId = ExploreId.left) => {
