@@ -3,9 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { IconButton, useStyles2 } from '@grafana/ui/src';
-
-import { Placement, QuickPlacement } from '../../../../features/canvas';
-import { ElementState } from '../../../../features/canvas/runtime/element';
+import { HorizontalConstraint, Placement, QuickPlacement, VerticalConstraint } from 'app/features/canvas';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { CanvasEditorOptions } from './elementEditor';
 
@@ -18,7 +17,13 @@ type Props = {
 export const QuickPositioning = ({ onPositionChange, element, settings }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const onQuickPositioningChange = (position: string) => {
+  const onQuickPositioningChange = (position: QuickPlacement) => {
+    const defaultConstraint = { vertical: VerticalConstraint.Top, horizontal: HorizontalConstraint.Left };
+    const originalConstraint = { ...element.options.constraint };
+
+    element.options.constraint = defaultConstraint;
+    element.setPlacementFromConstraint();
+
     switch (position) {
       case QuickPlacement.Top:
         onPositionChange(0, 'top');
@@ -39,8 +44,12 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
         onPositionChange(getCenterPosition(element.options.placement?.width ?? 0, 'h'), 'left');
         break;
     }
+
+    element.options.constraint = originalConstraint;
+    element.setPlacementFromConstraint();
   };
 
+  // Basing this on scene will mean that center is based on root for the time being
   const getCenterPosition = (elementSize: number, align: 'h' | 'v') => {
     const sceneSize = align === 'h' ? settings.scene.width : settings.scene.height;
 
@@ -94,7 +103,7 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
         onClick={() => onQuickPositioningChange(QuickPlacement.Bottom)}
         className={styles.button}
         size={'lg'}
-        tooltip={'Align right'}
+        tooltip={'Align bottom'}
       />
     </div>
   );
