@@ -1,4 +1,4 @@
-import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
+import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 import { gte, lt, satisfies } from 'semver';
@@ -24,13 +24,13 @@ import {
   MetricFindValue,
   ScopedVars,
   TimeRange,
-  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logs_model';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { ElasticSearchAnnotationSupport } from './annotationSupport';
 import {
   BucketAggregation,
   isBucketAggregationWithField,
@@ -117,6 +117,7 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.annotations = ElasticSearchAnnotationSupport;
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -237,153 +238,6 @@ export class ElasticDatasource
 
   private post(url: string, data: any): Observable<any> {
     return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
-  }
-
-  annotationQuery(options: any): Promise<any> {
-    const annotation = options.annotation;
-    const timeField = annotation.timeField || '@timestamp';
-    const timeEndField = annotation.timeEndField || null;
-    const queryString = annotation.query;
-    const tagsField = annotation.tagsField || 'tags';
-    const textField = annotation.textField || null;
-
-    const dateRanges = [];
-    const rangeStart: any = {};
-    rangeStart[timeField] = {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
-      format: 'epoch_millis',
-    };
-    dateRanges.push({ range: rangeStart });
-
-    if (timeEndField) {
-      const rangeEnd: any = {};
-      rangeEnd[timeEndField] = {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
-        format: 'epoch_millis',
-      };
-      dateRanges.push({ range: rangeEnd });
-    }
-
-    const queryInterpolated = this.interpolateLuceneQuery(queryString);
-    const query: any = {
-      bool: {
-        filter: [
-          {
-            bool: {
-              should: dateRanges,
-              minimum_should_match: 1,
-            },
-          },
-        ],
-      },
-    };
-
-    if (queryInterpolated) {
-      query.bool.filter.push({
-        query_string: {
-          query: queryInterpolated,
-        },
-      });
-    }
-    const data: any = {
-      query,
-      size: 10000,
-    };
-
-    // fields field not supported on ES 5.x
-    if (lt(this.esVersion, '5.0.0')) {
-      data['fields'] = [timeField, '_source'];
-    }
-
-    const header: any = {
-      search_type: 'query_then_fetch',
-      ignore_unavailable: true,
-    };
-
-    // old elastic annotations had index specified on them
-    if (annotation.index) {
-      header.index = annotation.index;
-    } else {
-      header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
-    }
-
-    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
-
-    return lastValueFrom(
-      this.post('_msearch', payload).pipe(
-        map((res) => {
-          const list = [];
-          const hits = res.responses[0].hits.hits;
-
-          const getFieldFromSource = (source: any, fieldName: any) => {
-            if (!fieldName) {
-              return;
-            }
-
-            const fieldNames = fieldName.split('.');
-            let fieldValue = source;
-
-            for (let i = 0; i < fieldNames.length; i++) {
-              fieldValue = fieldValue[fieldNames[i]];
-              if (!fieldValue) {
-                console.log('could not find field in annotation: ', fieldName);
-                return '';
-              }
-            }
-
-            return fieldValue;
-          };
-
-          for (let i = 0; i < hits.length; i++) {
-            const source = hits[i]._source;
-            let time = getFieldFromSource(source, timeField);
-            if (typeof hits[i].fields !== 'undefined') {
-              const fields = hits[i].fields;
-              if (isString(fields[timeField]) || isNumber(fields[timeField])) {
-                time = fields[timeField];
-              }
-            }
-
-            const event: {
-              annotation: any;
-              time: number;
-              timeEnd?: number;
-              text: string;
-              tags: string | string[];
-            } = {
-              annotation: annotation,
-              time: toUtc(time).valueOf(),
-              text: getFieldFromSource(source, textField),
-              tags: getFieldFromSource(source, tagsField),
-            };
-
-            if (timeEndField) {
-              const timeEnd = getFieldFromSource(source, timeEndField);
-              if (timeEnd) {
-                event.timeEnd = toUtc(timeEnd).valueOf();
-              }
-            }
-
-            // legacy support for title tield
-            if (annotation.titleField) {
-              const title = getFieldFromSource(source, annotation.titleField);
-              if (title) {
-                event.text = title + '\n' + event.text;
-              }
-            }
-
-            if (typeof event.tags === 'string') {
-              event.tags = event.tags.split(',');
-            }
-
-            list.push(event);
-          }
-          return list;
-        })
-      )
-    );
   }
 
   private interpolateLuceneQuery(queryString: string, scopedVars?: ScopedVars) {
