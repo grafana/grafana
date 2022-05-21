@@ -17,6 +17,7 @@ import { HeatmapSourceMode, PanelOptions } from './models.gen';
 export const enum BucketLayout {
   le = 'le',
   ge = 'ge',
+  unknown = 'unknown', // unknown
 }
 
 export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
@@ -186,8 +187,8 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     yBucketCount: yBinQty,
 
     // TODO: improve heuristic
-    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unk,
-    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unk,
+    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unknown,
+    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };

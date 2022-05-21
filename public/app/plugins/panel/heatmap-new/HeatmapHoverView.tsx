@@ -1,14 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-import {
-  DataFrameType,
-  DataFrameView,
-  Field,
-  FieldType,
-  formattedValueToString,
-  getFieldDisplayName,
-  LinkModel,
-} from '@grafana/data';
+import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -171,30 +163,6 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     [index]
   );
 
-  const renderExemplars = () => {
-    const exemplarIndex = data.exemplarsMappings?.lookup; //?.[index];
-    if (!exemplarIndex || !data.exemplars) {
-      return null;
-    }
-
-    const ids = exemplarIndex[index];
-    if (ids) {
-      const view = new DataFrameView(data.exemplars);
-      return (
-        <ul>
-          {ids.map((id) => (
-            <li key={id}>
-              <pre>{JSON.stringify(view.get(id), null, 2)}</pre>
-            </li>
-          ))}
-        </ul>
-      );
-    }
-
-    // should not show anything... but for debugging
-    return <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>;
-  };
-
   if (data.heatmap?.meta?.type === DataFrameType.HeatmapSparse) {
     return (
       <div>
@@ -218,14 +186,17 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
         />
       )}
       <div>
-        <div>
-          Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
-        </div>
+        {data.yLayout === BucketLayout.unknown ? (
+          <div>{yDisp(yBucketMin)}</div>
+        ) : (
+          <div>
+            Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
+          </div>
+        )}
         <div>
           {getFieldDisplayName(countField!, data.heatmap)}: {count}
         </div>
       </div>
-      {renderExemplars()}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (
