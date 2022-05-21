@@ -2,8 +2,6 @@
 //go:build ignore
 // +build ignore
 
-//go:generate go run gen.go
-
 package main
 
 import (
@@ -37,7 +35,6 @@ func main() {
 		}
 		fp := filepath.Join(path, "go.mod")
 		if _, err := os.Stat(fp); err == nil {
-			// if _, err := os.Stat(fp); !errors.Is(err, os.ErrNotExist) {
 			return path, nil
 		}
 		return find(parent)
@@ -53,7 +50,7 @@ func main() {
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		err = wd.Verify()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "generated code is not up to date:\n%s\nrun `make gen-cue` to regenerate\n\n", err)
+			fmt.Fprintf(os.Stderr, "generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate\n\n", err)
 			os.Exit(1)
 		}
 	} else {

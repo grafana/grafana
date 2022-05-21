@@ -20,8 +20,6 @@ var lib = thema.NewLibrary(cuecontext.New())
 
 const sep = string(filepath.Separator)
 
-var diff bool
-
 // Generate Go and Typescript implementations for all coremodels, and populate the
 // coremodel static registry.
 func main() {

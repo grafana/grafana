@@ -25,9 +25,9 @@ import (
 // is identical to the results of code generation. This allows CI to ensure that
 // the results of code generation are always up to date.
 //
-// Note that the statelessness of WriteDiffer means that, if a particular input to the code generator
-// goes away, it will not notice generated files
-// left behind if their inputs are removed.
+// Note that the statelessness of WriteDiffer means that, if a particular input
+// to the code generator goes away, it will not notice generated files left
+// behind if their inputs are removed.
 // TODO introduce a search/match system
 type WriteDiffer map[string][]byte
 
@@ -48,7 +48,7 @@ func (wd WriteDiffer) Verify() error {
 	for _, item := range wd.toSlice() {
 		if _, err := os.Stat(item.path); err != nil {
 			if errors.Is(err, os.ErrNotExist) {
-				result = multierror.Append(result, fmt.Errorf("%s: generated file does not exist", item.path))
+				result = multierror.Append(result, fmt.Errorf("%s: generated file should exist, but does not", item.path))
 			} else {
 				result = multierror.Append(result, fmt.Errorf("%s: could not stat generated file: %w", item.path, err))
 			}

@@ -24,7 +24,7 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 		return gerrors.New("must provide path to the root of a Grafana repository checkout")
 	}
 
-	wd, err := codegen.DoCuetsify(ctx, root)
+	wd, err := codegen.CuetsifyPlugins(ctx, root)
 	if err != nil {
 		return err
 	}
