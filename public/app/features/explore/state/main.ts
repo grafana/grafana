@@ -24,8 +24,9 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction =
-  createAction<{ richHistoryResults: RichHistoryResults; exploreId: ExploreId }>('explore/richHistoryUpdated');
+export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults; exploreId: ExploreId }>(
+  'explore/richHistoryUpdated'
+);
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 export const richHistoryMigrationFailedAction = createAction('explore/richHistoryMigrationFailedAction');
