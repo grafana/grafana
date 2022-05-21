@@ -49,6 +49,7 @@ interface PrepConfigOpts {
   timeZone: string;
   getTimeRange: () => TimeRange;
   palette: string[];
+  exemplarFillColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
 }
@@ -71,6 +72,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const pxRatio = devicePixelRatio;
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarFillColor);
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -329,18 +331,21 @@ export function prepConfig(opts: PrepConfigOpts) {
         auto: true,
       },
     ],
-    pathBuilder: heatmapPathsPoints({
-      each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
-        qt.add({
-          x: x - u.bbox.left,
-          y: y - u.bbox.top,
-          w: xSize,
-          h: ySize,
-          sidx: seriesIdx,
-          didx: dataIdx,
-        });
+    pathBuilder: heatmapPathsPoints(
+      {
+        each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
+          qt.add({
+            x: x - u.bbox.left,
+            y: y - u.bbox.top,
+            w: xSize,
+            h: ySize,
+            sidx: seriesIdx,
+            didx: dataIdx,
+          });
+        },
       },
-    }) as any,
+      exemplarFillColor
+    ) as any,
     theme,
     scaleKey: '', // facets' scales used (above)
   });
@@ -493,7 +498,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
-export function heatmapPathsPoints(opts: PointsBuilderOpts) {
+export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string) {
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
       u,
@@ -521,7 +526,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts) {
 
         let points = new Path2D();
         let fillPaths = [points];
-        let fillPalette = ['rgba(255,0,255,0.7)'];
+        let fillPalette = [exemplarColor ?? 'rgba(255,0,255,0.7)'];
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;

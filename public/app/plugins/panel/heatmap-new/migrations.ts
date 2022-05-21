@@ -5,7 +5,7 @@ import {
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapSourceMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
+import { HeatmapCellData, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
 /**
@@ -29,12 +29,12 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
-  const source = angular.dataFormat === 'tsbuckets' ? HeatmapSourceMode.Data : HeatmapSourceMode.Calculate;
+  const cellData = angular.dataFormat === 'tsbuckets' ? HeatmapCellData.Aggregated : HeatmapCellData.Calculate;
   const heatmap: HeatmapCalculationOptions = {
     ...defaultPanelOptions.heatmap,
   };
 
-  if (source === HeatmapSourceMode.Calculate) {
+  if (cellData === HeatmapCellData.Calculate) {
     if (angular.xBucketSize) {
       heatmap.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
@@ -49,7 +49,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   }
 
   const options: PanelOptions = {
-    source,
+    cellData,
     heatmap,
     color: {
       ...defaultPanelOptions.color,
@@ -66,6 +66,9 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     tooltip: {
       show: Boolean(angular.tooltip?.show),
       yHistogram: Boolean(angular.tooltip?.showHistogram),
+    },
+    exemplars: {
+      ...defaultPanelOptions.exemplars,
     },
   };
 

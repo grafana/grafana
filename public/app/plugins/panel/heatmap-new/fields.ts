@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { HeatmapSourceMode, PanelOptions } from './models.gen';
+import { HeatmapCellData, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
   le = 'le',
@@ -20,16 +20,14 @@ export const enum BucketLayout {
   unknown = 'unknown', // unknown
 }
 
-export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
-
 export interface HeatmapData {
-  // List of heatmap frames
-  heatmap?: DataFrame;
-  exemplars?: DataFrame;
+  heatmap?: DataFrame; // data we will render
+  exemplars?: DataFrame; // optionally linked exemplars
+  exemplarColor?: string;
 
   yAxisValues?: Array<number | string | null>;
+  yLabelValues?: string[]; // matched ordinally to yAxisValues
   matchByLabel?: string; // e.g. le, pod, etc.
-  labelValues?: string[]; // matched ordinally to yAxisValues
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -53,70 +51,58 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return {};
   }
 
-  const { source } = options;
+  const { cellData } = options;
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  const firstLabels = data.series[0].fields.find((f) => f.type === FieldType.number)?.labels ?? {};
-  const matchByLabel = Object.keys(firstLabels)[0];
-
-  if (source === HeatmapSourceMode.Calculate) {
+  if (cellData === HeatmapCellData.Calculate) {
     // TODO, check for error etc
     return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
   }
 
-  const sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
-  if (sparseCellsHeatmap) {
-    return getSparseHeatmapData(sparseCellsHeatmap, exemplars, theme);
+  let bucketHeatmap: DataFrame | undefined = undefined;
+
+  // Check for known heatmap types
+  for (const frame of frames) {
+    switch (frame.meta?.type) {
+      case DataFrameType.HeatmapSparse:
+        return getSparseHeatmapData(frame, exemplars, theme);
+
+      case DataFrameType.HeatmapScanlines:
+        return getHeatmapData(frame, exemplars, theme);
+
+      case DataFrameType.HeatmapBuckets:
+        bucketHeatmap = frame; // the default format
+    }
   }
 
-  // Find a well defined heatmap
-  const scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (scanlinesHeatmap) {
-    return getHeatmapData(scanlinesHeatmap, exemplars, theme);
-  }
-
-  const bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
-  if (bucketsHeatmap) {
-    return {
-      matchByLabel,
-      labelValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? field.labels?.[matchByLabel] ?? [] : []
-      ),
-      yAxisValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
-      ),
-      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), exemplars, theme),
-    };
-  }
-
-  if (source === HeatmapSourceMode.Data) {
+  if (!bucketHeatmap) {
     if (frames.length > 1) {
-      // heatmap-buckets (labeled, no de-accum)
-      frames = [
+      bucketHeatmap = [
         outerJoinDataFrames({
           frames,
         })!,
-      ];
+      ][0];
+    } else {
+      bucketHeatmap = frames[0];
     }
-
-    const scanlinesFrame = bucketsToScanlines(frames[0]);
-    const yAxisValues = frames[0].fields.flatMap((field) =>
-      field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
-    );
-
-    return {
-      matchByLabel,
-      labelValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? field.labels?.[matchByLabel] ?? [] : []
-      ),
-      yAxisValues,
-      ...getHeatmapData(scanlinesFrame, exemplars, theme),
-    };
   }
 
-  // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
+  //
+  if (cellData === HeatmapCellData.Accumulated) {
+    console.log('TODO, deaccumulate the values');
+  }
+
+  const yFields = bucketHeatmap.fields.filter((f) => f.type === FieldType.number);
+  const matchByLabel = Object.keys(yFields[0].labels ?? {})[0];
+
+  const scanlinesFrame = bucketsToScanlines(bucketHeatmap);
+  return {
+    matchByLabel,
+    yLabelValues: matchByLabel ? yFields.map((f) => f.labels?.[matchByLabel] ?? '') : undefined,
+    yAxisValues: yFields.map((f) => getFieldDisplayName(f, bucketHeatmap, frames)),
+    ...getHeatmapData(scanlinesFrame, exemplars, theme),
+  };
 }
 
 const getSparseHeatmapData = (

@@ -50,20 +50,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
-      const hasLabeledY = info.labelValues != null;
+      const hasLabeledY = info.yLabelValues != null;
 
       if (hasLabeledY) {
         let matchExemplarsBy = info.exemplars?.fields
           .find((field) => field.name === info.matchByLabel)!
           .values.toArray();
-        exemplarsyFacet = matchExemplarsBy.map((label) => info.labelValues?.indexOf(label)) as number[];
+        exemplarsyFacet = matchExemplarsBy.map((label) => info.yLabelValues?.indexOf(label)) as number[];
       } else {
         exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
       }
     }
 
     return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
-  }, [info.heatmap, info.exemplars, info.labelValues, info.matchByLabel]);
+  }, [info.heatmap, info.exemplars, info.yLabelValues, info.matchByLabel]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -114,6 +114,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
+      exemplarFillColor: options.exemplars?.fillColor ?? 'rgba(255,0,255,0.7)',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
