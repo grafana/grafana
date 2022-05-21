@@ -68,7 +68,7 @@ func (wd WriteDiffer) Verify() error {
 		}
 		dstr := cmp.Diff(string(ob), string(item.contents))
 		if dstr != "" {
-			result = multierror.Append(result, fmt.Errorf("%s: would have changed:\n%s", item.path, dstr))
+			result = multierror.Append(result, fmt.Errorf("%s would have changed:\n\n%s", item.path, dstr))
 		}
 	}
 
@@ -85,11 +85,11 @@ func (wd WriteDiffer) Write() error {
 		g.Go(func() error {
 			err := os.MkdirAll(filepath.Dir(it.path), os.ModePerm)
 			if err != nil {
-				return fmt.Errorf("%s: failed to ensure parent directory exists: %w", item.path, err)
+				return fmt.Errorf("%s: failed to ensure parent directory exists: %w", it.path, err)
 			}
 
-			if err := os.WriteFile(item.path, item.contents, 0644); err != nil {
-				return fmt.Errorf("%s: error while writing file: %w", item.path, err)
+			if err := os.WriteFile(it.path, it.contents, 0644); err != nil {
+				return fmt.Errorf("%s: error while writing file: %w", it.path, err)
 			}
 			return nil
 		})
@@ -117,4 +117,17 @@ func (wd WriteDiffer) toSlice() writeSlice {
 	})
 
 	return sl
+}
+
+// Merge combines all the entries from the provided WriteDiffer into the callee
+// WriteDiffer. Duplicate paths result in an error.
+func (wd WriteDiffer) Merge(wd2 WriteDiffer) error {
+	for k, v := range wd2 {
+		if _, has := wd[k]; has {
+			return fmt.Errorf("path %s already exists in write differ", k)
+		}
+		wd[k] = v
+	}
+
+	return nil
 }

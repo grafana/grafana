@@ -40,13 +40,6 @@ func main() {
 	grootp := strings.Split(cwd, sep)
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
-	// For now, call into the grafana-cli code.
-	// TODO rip this out of grafana-cli and put it...somewhere
-	// if err = commands.DoCuetsify(groot, diff); err != nil {
-	// 	fmt.Fprintf(os.Stderr, "failed to generate typescript for plugins: %s", err)
-	// 	os.Exit(1)
-	// }
-
 	cmroot := filepath.Join(groot, "pkg", "coremodel")
 	tsroot := filepath.Join(groot, "packages", "grafana-schema", "src", "schema")
 
@@ -69,15 +62,33 @@ func main() {
 		}
 	}
 
+	wd := gcgen.NewWriteDiffer()
 	for _, ls := range lins {
-		err = ls.GenerateGoCoremodel(filepath.Join(cmroot, ls.Lineage.Name()))
+		wdg, err := ls.GenerateGoCoremodel(filepath.Join(cmroot, ls.Lineage.Name()))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.Lineage.Name(), err)
+			fmt.Fprintf(os.Stderr, "failed to generate Go for %s: %s\n", ls.Lineage.Name(), err)
 			os.Exit(1)
 		}
-		err = ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
+		wd.Merge(wdg)
+
+		wdt, err := ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate Go code for %s: %s\n", ls.Lineage.Name(), err)
+			fmt.Fprintf(os.Stderr, "failed to generate TypeScript for %s: %s\n", ls.Lineage.Name(), err)
+			os.Exit(1)
+		}
+		wd.Merge(wdt)
+	}
+
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		err = wd.Verify()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "generated code is not up to date:\n%s\nrun `make gen-cue` to regenerate\n\n", err)
+			os.Exit(1)
+		}
+	} else {
+		err = wd.Write()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
 			os.Exit(1)
 		}
 	}

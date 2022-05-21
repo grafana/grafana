@@ -102,22 +102,22 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
-func (ls *ExtractedLineage) GenerateGoCoremodel(path string) error {
+func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error) {
 	lin, lib := ls.Lineage, ls.Lineage.Library()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
-		return fmt.Errorf("lineage name %q must match final element of path, got %q", lin.Name(), path)
+		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", lin.Name(), path)
 	}
 
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	f, err := openapi.GenerateSchema(sch, nil)
 	if err != nil {
-		return fmt.Errorf("thema openapi generation failed: %w", err)
+		return nil, fmt.Errorf("thema openapi generation failed: %w", err)
 	}
 
 	str, err := yaml.Marshal(lib.Context().BuildFile(f))
 	if err != nil {
-		return fmt.Errorf("cue-yaml marshaling failed: %w", err)
+		return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
 	}
 
 	loader := openapi3.NewLoader()
@@ -133,7 +133,7 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("openapi generation failed: %w", err)
+		return nil, fmt.Errorf("openapi generation failed: %w", err)
 	}
 
 	vars := goPkg{
@@ -151,7 +151,7 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) error {
 	fset := token.NewFileSet()
 	gf, err := parser.ParseFile(fset, "coremodel_gen.go", gostr+buuf.String(), parser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("generated go file parsing failed: %w", err)
+		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
 	}
 	m := makeReplacer(lin.Name())
 	ast.Walk(m, gf)
@@ -159,32 +159,26 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) error {
 	var buf bytes.Buffer
 	err = format.Node(&buf, fset, gf)
 	if err != nil {
-		return fmt.Errorf("ast printing failed: %w", err)
+		return nil, fmt.Errorf("ast printing failed: %w", err)
 	}
 
 	byt, err := imports.Process("coremodel_gen.go", buf.Bytes(), nil)
 	if err != nil {
-		return fmt.Errorf("goimports processing failed: %w", err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(path, "coremodel_gen.go"), byt, 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated code to file: %s", err)
+		return nil, fmt.Errorf("goimports processing failed: %w", err)
 	}
 
 	// Generate the assignability test. TODO do this in a framework test instead
 	var buf3 bytes.Buffer
 	err = tmplAssignableTest.Execute(&buf3, vars)
 	if err != nil {
-		return fmt.Errorf("failed generating assignability test file: %w", err)
+		return nil, fmt.Errorf("failed generating assignability test file: %w", err)
 	}
 
-	err = ioutil.WriteFile(filepath.Join(path, "coremodel_gen_test.go"), buf3.Bytes(), 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated test code to file: %s", err)
-	}
+	wd := NewWriteDiffer()
+	wd[filepath.Join(path, "coremodel_gen.go")] = byt
+	wd[filepath.Join(path, "coremodel_gen_test.go")] = buf3.Bytes()
 
-	return nil
+	return wd, nil
 }
 
 type goPkg struct {
@@ -194,22 +188,22 @@ type goPkg struct {
 	IsComposed             bool
 }
 
-func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) error {
+func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffer, error) {
 	_, name := filepath.Split(path)
 	if name != ls.Lineage.Name() {
-		return fmt.Errorf("lineage name %q must match final element of path, got %q", ls.Lineage.Name(), path)
+		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", ls.Lineage.Name(), path)
 	}
 
 	schv := thema.SchemaP(ls.Lineage, thema.LatestVersion(ls.Lineage)).UnwrapCUE()
 
 	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{})
 	if err != nil {
-		return fmt.Errorf("cuetsy parts gen failed: %w", err)
+		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
 	}
 
 	top, err := cuetsy.GenerateSingleAST(string(makeReplacer(ls.Lineage.Name())), schv, cuetsy.TypeInterface)
 	if err != nil {
-		return fmt.Errorf("cuetsy top gen failed: %w", err)
+		return nil, fmt.Errorf("cuetsy top gen failed: %w", err)
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
@@ -217,21 +211,9 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) error {
 	parts.Nodes = append(parts.Nodes, top.T, top.D)
 	str := fmt.Sprintf(genHeader, ls.RelativePath) + fmt.Sprint(parts)
 
-	// Ensure parent directory exists
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.Mkdir(path, os.ModePerm); err != nil {
-			return fmt.Errorf("error while creating parent dir (%s) for typescript model gen: %w", path, err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("could not stat parent dir (%s) for typescript model gen: %w", path, err)
-	}
-
-	err = ioutil.WriteFile(filepath.Join(path, ls.Lineage.Name()+".gen.ts"), []byte(str), 0644)
-	if err != nil {
-		return fmt.Errorf("error writing generated typescript model: %w", err)
-	}
-
-	return nil
+	wd := NewWriteDiffer()
+	wd[filepath.Join(path, ls.Lineage.Name()+".gen.ts")] = []byte(str)
+	return wd, nil
 }
 
 type modelReplacer string
