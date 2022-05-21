@@ -159,13 +159,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     cellWrapper: css`
       border-right: none;
+      padding: ${theme.spacing(1)};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
       &:hover {
         box-shadow: none;
       }
     `,
     headerCell: css`
-      padding-top: 2px;
-      padding-left: 10px;
+      padding: ${theme.spacing(1)};
     `,
     headerRow: css`
       background-color: ${theme.colors.background.secondary};
@@ -199,20 +203,28 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    missingTitleText: css`
+      color: ${theme.colors.text.disabled};
+      font-style: italic;
+    `,
     invalidDatasourceItem: css`
       color: ${theme.colors.error.main};
       text-decoration: line-through;
     `,
     typeText: css`
       color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
     `,
     locationItem: css`
       color: ${theme.colors.text.secondary};
       margin-right: 12px;
     `,
+    locationCellStyle: css`
+      padding-top: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
+    `,
     checkboxHeader: css`
-      // display: flex;
-      // justify-content: flex-start;
+      margin-left: 2px;
     `,
     checkbox: css`
       margin-left: 10px;
@@ -226,6 +238,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     tagList: css`
+      padding-top: ${theme.spacing(0.5)};
       justify-content: flex-start;
       flex-wrap: nowrap;
     `,

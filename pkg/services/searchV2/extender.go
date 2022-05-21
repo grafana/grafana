@@ -18,7 +18,7 @@ type DocumentExtender interface {
 
 type DashboardIndexExtender interface {
 	GetDocumentExtender() DocumentExtender
-	GetQueryExtender() QueryExtender
+	GetQueryExtender(query DashboardQuery) QueryExtender
 }
 
 type NoopExtender struct{}
@@ -27,7 +27,7 @@ func (n NoopExtender) GetDocumentExtender() DocumentExtender {
 	return &NoopDocumentExtender{}
 }
 
-func (n NoopExtender) GetQueryExtender() QueryExtender {
+func (n NoopExtender) GetQueryExtender(query DashboardQuery) QueryExtender {
 	return &NoopQueryExtender{}
 }
 

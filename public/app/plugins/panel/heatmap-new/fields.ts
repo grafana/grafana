@@ -64,18 +64,18 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
   }
 
-  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
+  const sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
   if (sparseCellsHeatmap) {
     return getSparseHeatmapData(sparseCellsHeatmap, exemplars, theme);
   }
 
   // Find a well defined heatmap
-  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
+  const scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (scanlinesHeatmap) {
     return getHeatmapData(scanlinesHeatmap, exemplars, theme);
   }
 
-  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
+  const bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
   if (bucketsHeatmap) {
     return {
       matchByLabel,
@@ -99,16 +99,10 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
       ];
     }
 
-    let heatmapFrame = frames[0];
-    let scanlinesFrame = frames[0];
-    let yAxisValues: string[] | undefined = undefined;
-
-    if (heatmapFrame.meta?.type !== DataFrameType.HeatmapScanlines) {
-      scanlinesFrame = bucketsToScanlines(scanlinesFrame);
-      yAxisValues = frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
-      );
-    }
+    const scanlinesFrame = bucketsToScanlines(frames[0]);
+    const yAxisValues = frames[0].fields.flatMap((field) =>
+      field.type === FieldType.number ? getFieldDisplayName(field, frames[0], frames) : []
+    );
 
     return {
       matchByLabel,
