@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { HeatmapCellData, PanelOptions } from './models.gen';
+import { HeatmapMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
   le = 'le',
@@ -51,18 +51,17 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return {};
   }
 
-  const { cellData } = options;
+  const { mode } = options;
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  if (cellData === HeatmapCellData.Calculate) {
+  if (mode === HeatmapMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.calculate ?? {}), exemplars, theme);
   }
 
-  let bucketHeatmap: DataFrame | undefined = undefined;
-
   // Check for known heatmap types
+  let bucketHeatmap: DataFrame | undefined = undefined;
   for (const frame of frames) {
     switch (frame.meta?.type) {
       case DataFrameType.HeatmapSparse:
@@ -76,6 +75,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
+  // Everything past here assumes a field for each row in the heatmap (buckets)
   if (!bucketHeatmap) {
     if (frames.length > 1) {
       bucketHeatmap = [
@@ -88,8 +88,8 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  //
-  if (cellData === HeatmapCellData.Accumulated) {
+  // Some datasources return values in ascending order and require math to know the deltas
+  if (mode === HeatmapMode.Accumulated) {
     console.log('TODO, deaccumulate the values');
   }
 

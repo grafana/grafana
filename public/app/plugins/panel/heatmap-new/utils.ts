@@ -49,7 +49,7 @@ interface PrepConfigOpts {
   timeZone: string;
   getTimeRange: () => TimeRange;
   palette: string[];
-  exemplarFillColor: string;
+  exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
 }
@@ -72,7 +72,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const pxRatio = devicePixelRatio;
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
-  const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarFillColor);
+  const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
   let qt: Quadtree;
   let hRect: Rect | null;

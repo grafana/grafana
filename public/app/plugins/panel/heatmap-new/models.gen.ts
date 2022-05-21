@@ -8,7 +8,7 @@ import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHe
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum HeatmapCellData {
+export enum HeatmapMode {
   Aggregated = 'agg',
   Calculate = 'calculate',
   Accumulated = 'acc', // accumulated
@@ -46,14 +46,14 @@ export interface HeatmapLegend {
 }
 
 export interface ExemplarConfig {
-  fillColor: string;
+  color: string;
 }
 
 export interface PanelOptions {
-  cellData: HeatmapCellData;
+  mode: HeatmapMode;
 
   color: HeatmapColorOptions;
-  heatmap?: HeatmapCalculationOptions;
+  calculate?: HeatmapCalculationOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
@@ -69,7 +69,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: PanelOptions = {
-  cellData: HeatmapCellData.Aggregated,
+  mode: HeatmapMode.Aggregated,
   color: {
     mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',
@@ -87,7 +87,7 @@ export const defaultPanelOptions: PanelOptions = {
     show: true,
   },
   exemplars: {
-    fillColor: 'rgba(255,0,255,0.7)',
+    color: 'rgba(255,0,255,0.7)',
   },
   cellGap: 1,
 };

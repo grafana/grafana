@@ -114,7 +114,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
-      exemplarFillColor: options.exemplars?.fillColor ?? 'rgba(255,0,255,0.7)',
+      exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
