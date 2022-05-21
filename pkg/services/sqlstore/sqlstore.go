@@ -160,15 +160,13 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
-		var stats models.SystemUserCountStats
-		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+
+		count, err := sess.Count(&models.User{IsAdmin: true})
+		if err != nil {
 			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}
 
-		if stats.Count > 0 {
+		if count > 0 {
 			return nil
 		}
 
