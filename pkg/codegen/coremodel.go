@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing/fstest"
 	"text/template"
@@ -33,6 +34,10 @@ type ExtractedLineage struct {
 	LineagePath string
 	// Path to the coremodel's lineage.cue file relative to repo root.
 	RelativePath string
+	// Indicates whether the coremodel is considered canonical or not. Generated
+	// code from not-yet-canonical coremodels should include appropriate caveats in
+	// documentation and possibly be hidden from external public API surface areas.
+	IsCanonical bool
 }
 
 // ExtractLineage loads a Grafana Thema lineage from the filesystem.
@@ -60,7 +65,6 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		}
 		fp := filepath.Join(path, "go.mod")
 		if _, err := os.Stat(fp); err == nil {
-			// if _, err := os.Stat(fp); !errors.Is(err, os.ErrNotExist) {
 			return path, nil
 		}
 		return find(parent)
@@ -95,7 +99,17 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 	if err != nil {
 		return ec, err
 	}
+	ec.IsCanonical = isCanonical(ec.Lineage.Name())
 	return ec, nil
+}
+
+func isCanonical(name string) bool {
+	return canonicalCoremodels[name]
+}
+
+// FIXME specificying coremodel canonicality DOES NOT belong here - it should be part of the coremodel declaration.
+var canonicalCoremodels = map[string]bool{
+	"dashboard": false,
 }
 
 // GenerateGoCoremodel generates a standard Go coremodel from a Thema lineage.
@@ -122,6 +136,9 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 
 	loader := openapi3.NewLoader()
 	oT, err := loader.LoadFromData([]byte(str))
+	if err != nil {
+		return nil, fmt.Errorf("loading generated openapi failed; %w", err)
+	}
 
 	gostr, err := codegen.Generate(oT, lin.Name(), codegen.Options{
 		GenerateTypes: true,
@@ -207,9 +224,26 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
 	parts.Nodes = append(parts.Nodes, top.T, top.D)
-	str := fmt.Sprintf(genHeader, ls.RelativePath) + fmt.Sprint(parts)
+	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
+
+	var strb strings.Builder
+	var str string
+	strb.WriteString(fmt.Sprintf(genHeader, ls.RelativePath))
+
+	if !ls.IsCanonical {
+		strb.WriteString(`// This model is not yet canonical, but is on its way. Until then,
+// its members are unexported to exclude it from the public surface area of grafana-schema.
+
+`)
+		strb.WriteString(fmt.Sprint(parts))
+		// TODO replace this regexp with cuetsy config for whether members are exported
+		re := regexp.MustCompile(`(?m)^export `)
+		str = re.ReplaceAllLiteralString(strb.String(), "")
+	} else {
+		strb.WriteString(fmt.Sprint(parts))
+		str = strb.String()
+	}
 
 	wd := NewWriteDiffer()
 	wd[filepath.Join(path, ls.Lineage.Name()+".gen.ts")] = []byte(str)

@@ -61,7 +61,7 @@ var paths = load.GetDefaultLoadPaths()
 
 // CuetsifyPlugins runs cuetsy against plugins' models.cue files.
 func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
-	// TODO this whole func has a lot of old, crufty exceptions in it, needs TLC
+	// TODO this whole func has a lot of old, crufty behavior from the scuemata era; needs TLC
 	var fspaths load.BaseLoadPaths
 	var err error
 

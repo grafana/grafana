@@ -4,7 +4,10 @@
 //
 // Derived from the Thema lineage at pkg/coremodel/dashboard
 
-export interface AnnotationQuery {
+// This model is not yet canonical, but is on its way. Until then,
+// its members are unexported to exclude it from the public surface area of grafana-schema.
+
+interface AnnotationQuery {
   builtIn: number;
   datasource: {};
   enable: boolean;
@@ -17,7 +20,7 @@ export interface AnnotationQuery {
   type: string;
 }
 
-export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   builtIn: 0,
   enable: true,
   hide: false,
@@ -25,13 +28,13 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   type: 'dashboard',
 };
 
-export interface VariableModel {
+interface VariableModel {
   label?: string;
   name: string;
   type: VariableType;
 }
 
-export interface DashboardLink {
+interface DashboardLink {
   asDropdown: boolean;
   icon?: string;
   includeVars: boolean;
@@ -44,7 +47,7 @@ export interface DashboardLink {
   url?: string;
 }
 
-export const defaultDashboardLink: Partial<DashboardLink> = {
+const defaultDashboardLink: Partial<DashboardLink> = {
   asDropdown: false,
   includeVars: false,
   keepTime: false,
@@ -52,11 +55,11 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
   targetBlank: false,
 };
 
-export type DashboardLinkType = 'link' | 'dashboards';
+type DashboardLinkType = 'link' | 'dashboards';
 
-export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
+type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
 
-export enum FieldColorModeId {
+enum FieldColorModeId {
   ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
   PaletteClassic = 'palette-classic',
@@ -64,48 +67,48 @@ export enum FieldColorModeId {
   Thresholds = 'thresholds',
 }
 
-export type FieldColorSeriesByMode = 'min' | 'max' | 'last';
+type FieldColorSeriesByMode = 'min' | 'max' | 'last';
 
-export interface FieldColor {
+interface FieldColor {
   fixedColor?: string;
   mode: FieldColorModeId | string;
   seriesBy?: FieldColorSeriesByMode;
 }
 
-export interface Threshold {
+interface Threshold {
   color: string;
   state?: string;
   value?: number;
 }
 
-export enum ThresholdsMode {
+enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
 }
 
-export interface ThresholdsConfig {
+interface ThresholdsConfig {
   mode: ThresholdsMode;
   steps: Threshold[];
 }
 
-export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
+const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
   steps: [],
 };
 
-export interface Transformation {
+interface Transformation {
   id: string;
   options: {};
 }
 
-export enum DashboardCursorSync {
+enum DashboardCursorSync {
   Crosshair = 1,
   Off = 0,
   Tooltip = 2,
 }
 
-export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
+const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
 
-export interface Panel {
+interface Panel {
   datasource?: {};
   description?: string;
   fieldConfig: {
@@ -145,7 +148,7 @@ export interface Panel {
   type: string;
 }
 
-export const defaultPanel: Partial<Panel> = {
+const defaultPanel: Partial<Panel> = {
   links: [],
   repeatDirection: 'h',
   tags: [],
@@ -156,7 +159,7 @@ export const defaultPanel: Partial<Panel> = {
   transparent: false,
 };
 
-export interface Dashboard {
+interface Dashboard {
   annotations?: {
     list: AnnotationQuery[];
   };
@@ -206,7 +209,7 @@ export interface Dashboard {
   weekStart?: string;
 }
 
-export const defaultDashboard: Partial<Dashboard> = {
+const defaultDashboard: Partial<Dashboard> = {
   editable: true,
   graphTooltip: DashboardCursorSync.Off,
   links: [],
