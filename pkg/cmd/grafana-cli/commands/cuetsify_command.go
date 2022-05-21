@@ -10,14 +10,7 @@ import (
 
 var ctx = cuecontext.New()
 
-// The only import statement we currently allow in any models.cue file
-const allowedImport = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
-
-var importMap = map[string]string{
-	allowedImport: "@grafana/schema",
-}
-
-// nolint: gocyclo
+// TODO remove this whole thing
 func (cmd Command) generateTypescript(c utils.CommandLine) error {
 	root := c.String("grafana-root")
 	if root == "" {
