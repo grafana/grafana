@@ -1,6 +1,19 @@
 import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, toDataQueryResponse, FetchResponse } from '@grafana/runtime';
 
+function uniqueBy<Type>(fn: (t: Type) => any, list: Type[]): Type[] {
+  const set: any = {};
+  const result = [];
+
+  for (const item of list) {
+    const appliedItem = fn(item);
+    if (!(appliedItem in set)) {
+      set[appliedItem] = 0;
+      result.push(item);
+    }
+  }
+  return result;
+}
 export default class ResponseParser {
   transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
     const frames = toDataQueryResponse(raw).data as DataFrame[];
@@ -29,10 +42,7 @@ export default class ResponseParser {
       );
     }
 
-    return Array.from(new Set(values.map((v) => v.text))).map((text) => ({
-      text,
-      value: values.find((v) => v.text === text)?.value,
-    }));
+    return uniqueBy(({ text }) => text, values);
   }
 
   async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
