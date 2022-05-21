@@ -35,13 +35,13 @@ function FlexLayoutChildComponent({
   const { size } = item.useState();
 
   return (
-    <div style={getItemStyles(size, direction)}>
+    <div style={getItemStyles(direction, size)}>
       <item.Component model={item} />
     </div>
   );
 }
 
-function getItemStyles(sizing: SceneItemSizing, direction: FlexLayoutDirection) {
+function getItemStyles(direction: FlexLayoutDirection, sizing: SceneItemSizing = {}) {
   const { vSizing = 'fill', hSizing = 'fill' } = sizing;
 
   const style: CSSProperties = {

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { TimeRange } from '@grafana/data';
+import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 import { SceneItemBase } from './SceneItem';
@@ -16,6 +17,10 @@ export class SceneTimeRange extends SceneItemBase<TimeRangeState> {
   onTimeRangeChange = (timeRange: TimeRange) => {
     this.setState({ timeRange });
   };
+
+  onRunQueries = () => {};
+
+  onIntervalChanged = (_: string) => {};
 }
 
 function SceneTimeRangeRenderer({ model }: { model: SceneTimeRange }) {
@@ -26,16 +31,20 @@ function SceneTimeRangeRenderer({ model }: { model: SceneTimeRange }) {
   }
 
   return (
-    <TimePickerWithHistory
-      value={timeRange}
-      onChange={model.onTimeRangeChange}
-      timeZone={'browser'}
-      fiscalYearStartMonth={0}
-      onMoveBackward={() => {}}
-      onMoveForward={() => {}}
-      onZoom={() => {}}
-      onChangeTimeZone={() => {}}
-      onChangeFiscalYearStartMonth={() => {}}
-    />
+    <ToolbarButtonRow>
+      <TimePickerWithHistory
+        value={timeRange}
+        onChange={model.onTimeRangeChange}
+        timeZone={'browser'}
+        fiscalYearStartMonth={0}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+        onChangeTimeZone={() => {}}
+        onChangeFiscalYearStartMonth={() => {}}
+      />
+
+      <RefreshPicker onRefresh={model.onRunQueries} onIntervalChanged={model.onIntervalChanged} />
+    </ToolbarButtonRow>
   );
 }

@@ -2,15 +2,18 @@ import React, { CSSProperties } from 'react';
 
 import { PageToolbar } from '@grafana/ui';
 
-import { SceneComponentProps, SceneItemBase, SceneItem, SceneLayoutItemChildState } from './SceneItem';
-import { SceneQueryRunner } from './SceneQueryRunner';
-import { SceneTimeRange } from './SceneTimeRange';
+import {
+  SceneComponentProps,
+  SceneItemBase,
+  SceneItem,
+  SceneLayoutItemChildState,
+  SceneContextState,
+} from './SceneItem';
 
 interface SceneState {
   title: string;
   layout: SceneItem<any>;
-  timeRange: SceneTimeRange;
-  queryRunner?: SceneQueryRunner;
+  context?: SceneContextState;
   actions?: Array<SceneItem<any>>;
 }
 
@@ -19,18 +22,17 @@ export class Scene extends SceneItemBase<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, timeRange, actions = [] } = model.useState();
+  const { title, layout, context, actions = [] } = model.useState();
 
   console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
-      {' '}
       <PageToolbar title={title}>
         {actions.map((action) => (
           <action.Component key={action.state.key} model={action} />
         ))}
-        <timeRange.Component model={timeRange} />
+        {context && context.timeRange && <context.timeRange.Component model={context.timeRange} />}
       </PageToolbar>
       <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
         <layout.Component model={layout} />
