@@ -46,27 +46,24 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    if (info.exemplars) {
+    if (info.exemplars && info.matchByLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
-      const hasLabeledY = info.yAxisValues != null;
+      const hasLabeledY = info.labelValues != null;
 
       if (hasLabeledY) {
-        // le bucket / label facet (this needs to back-reference yLabels ordinally)
-        // todo: do better than indexOf!
-        // todo: don't assume le or position of field name (can be pod, cluster, etc)
-
-        // let matchExemplarsBy = info.exemplars?.fields.find(field => field.name === 'le')!.values.toArray(); //
-        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === 'pod')!.values.toArray(); //
-        exemplarsyFacet = matchExemplarsBy.map((label) => info.yAxisValues?.indexOf(label)) as number[];
+        let matchExemplarsBy = info.exemplars?.fields
+          .find((field) => field.name === info.matchByLabel)!
+          .values.toArray();
+        exemplarsyFacet = matchExemplarsBy.map((label) => info.labelValues?.indexOf(label)) as number[];
       } else {
         exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
       }
     }
 
     return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
-  }, [info.heatmap, info.exemplars, info.yAxisValues]);
+  }, [info.heatmap, info.exemplars, info.labelValues, info.matchByLabel]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
