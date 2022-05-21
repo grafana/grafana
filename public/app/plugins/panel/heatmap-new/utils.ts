@@ -13,8 +13,8 @@ interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
   hideThreshold?: number;
-  xCeil?: boolean;
-  yCeil?: boolean;
+  xAlign?: -1 | 0 | 1;
+  yAlign?: -1 | 0 | 1;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -218,10 +218,14 @@ export function prepConfig(opts: PrepConfigOpts) {
           let bucketSize = dataRef.current?.yBucketSize;
 
           if (bucketSize) {
+            console.log(bucketSize);
             if (dataRef.current?.yLayout === BucketLayout.le) {
               dataMin -= bucketSize!;
-            } else {
+            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
               dataMax += bucketSize!;
+            } else {
+              dataMin -= bucketSize! / 2;
+              dataMax += bucketSize! / 2;
             }
           } else {
             // how to expand scale range if inferred non-regular or log buckets?
@@ -259,7 +263,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
           if (dataRef.current?.yLayout === BucketLayout.le) {
             yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else {
+          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
             yAxisValues.push('+Inf');
           }
 
@@ -296,8 +300,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       gap: cellGap,
       hideThreshold,
-      xCeil: dataRef.current?.xLayout === BucketLayout.le,
-      yCeil: dataRef.current?.yLayout === BucketLayout.le,
+      xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
+      yAlign: dataRef.current?.yLayout === BucketLayout.le ? -1 : dataRef.current?.yLayout === BucketLayout.ge ? 1 : 0,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
@@ -384,7 +388,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -444,8 +448,8 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         // let xCeil = false;
         // let yCeil = false;
 
-        let xOffset = xCeil ? -xSize : 0;
-        let yOffset = yCeil ? 0 : -ySize;
+        let xOffset = xAlign === -1 ? -xSize : xAlign === 0 ? -xSize / 2 : 0;
+        let yOffset = yAlign === 1 ? -ySize : yAlign === 0 ? -ySize / 2 : 0;
 
         // pre-compute x and y offsets
         let cys = ys.slice(0, yBinQty).map((y) => round(valToPosY(y, scaleY, yDim, yOff) + yOffset));

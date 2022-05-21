@@ -180,6 +180,9 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
   // The "count" field
   const disp = frame.fields[2].display ?? getValueFormat('short');
+  const xName = frame.fields[0].name;
+  const yName = frame.fields[1].name;
+
   const data: HeatmapData = {
     heatmap: frame,
     exemplars,
@@ -189,8 +192,8 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     yBucketCount: yBinQty,
 
     // TODO: improve heuristic
-    xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
-    yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unk,
+    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unk,
 
     display: (v) => formattedValueToString(disp(v)),
   };
