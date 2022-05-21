@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -35,6 +36,10 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&dashRes)
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	if len(dashRes) == 0 {
 		return nil, models.ErrDashboardNotFound
 	}
@@ -46,7 +51,7 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	// get public dashboards
 	var pdRes []*models.PublicDashboard
 	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		return sess.Where("org_id = ? AND dashboard_uid= ?", orgId, dashboardUid).Find(&pdRes)
+		return sess.Where("org_id = ? AND dashboard_uid = ?", orgId, dashboardUid).Find(&pdRes)
 	})
 
 	if len(pdRes) > 0 {
@@ -58,6 +63,7 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 
 // stores public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
+	fmt.Printf("#%v", cmd)
 	// update isPublic on dashboard entry
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.DashboardUid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
@@ -95,12 +101,27 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
 		}
 
-		if _, err := sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard); err != nil {
+		rowCount, err := sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard)
+		if err != nil {
 			return err
 		}
 
+		fmt.Println()
+		fmt.Println("ROWS:", rowCount)
+
+		var publicDashboards []*models.PublicDashboard
+		err = sess.Find(&publicDashboards)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Println()
+		fmt.Printf("#%v", publicDashboards[0])
+
 		return nil
 	})
+
+	fmt.Println(err)
 
 	if err != nil {
 		return nil, err

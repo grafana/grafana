@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -80,36 +79,55 @@ func TestApiRetrieveConfig(t *testing.T) {
 
 func TestApiPersistsValue(t *testing.T) {
 	testCases := []struct {
-		name                 string
-		dashboardUid         string
-		expectedHttpResponse int
-		saveDashboardError   error
+		Name                  string
+		DashboardUid          string
+		PublicDashboardConfig *models.PublicDashboardConfig
+		ExpectedHttpResponse  int
+		SaveDashboardError    error
 	}{
 		{
-			name:                 "returns 200 when update persists",
-			dashboardUid:         "1",
-			expectedHttpResponse: http.StatusOK,
-			saveDashboardError:   nil,
+			Name:                  "returns 200 when update persists",
+			DashboardUid:          "1",
+			PublicDashboardConfig: &models.PublicDashboardConfig{IsPublic: true},
+			ExpectedHttpResponse:  http.StatusOK,
+			SaveDashboardError:    nil,
 		},
 		{
-			name:                 "returns 500 when not persisted",
-			expectedHttpResponse: http.StatusInternalServerError,
-			saveDashboardError:   errors.New("backend failed to save"),
+			Name:         "it overwrites an existing uid for public dashboard",
+			DashboardUid: "1",
+			PublicDashboardConfig: &models.PublicDashboardConfig{
+				IsPublic: true,
+				PublicDashboard: models.PublicDashboard{
+					Uid:               "",
+					DashboardUid:      "1",
+					OrgId:             1,
+					TemplateVariables: "",
+					TimeVariables:     "",
+				},
+			},
+			ExpectedHttpResponse: http.StatusOK,
 		},
 		{
-			name:                 "returns 404 when dashboard not found",
-			expectedHttpResponse: http.StatusNotFound,
-			saveDashboardError:   models.ErrDashboardNotFound,
+			Name:                  "returns 500 when not persisted",
+			ExpectedHttpResponse:  http.StatusInternalServerError,
+			PublicDashboardConfig: &models.PublicDashboardConfig{},
+			SaveDashboardError:    errors.New("backend failed to save"),
+		},
+		{
+			Name:                  "returns 404 when dashboard not found",
+			ExpectedHttpResponse:  http.StatusNotFound,
+			PublicDashboardConfig: &models.PublicDashboardConfig{},
+			SaveDashboardError:    models.ErrDashboardNotFound,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				PublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: true},
-				PublicDashboardConfigError:  test.saveDashboardError,
+				PublicDashboardConfigResult: test.PublicDashboardConfig,
+				PublicDashboardConfigError:  test.SaveDashboardError,
 			}
 
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -121,14 +139,62 @@ func TestApiPersistsValue(t *testing.T) {
 				t,
 			)
 
-			assert.Equal(t, test.expectedHttpResponse, response.Code)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			// check the result if it's a 200
 			if response.Code == http.StatusOK {
-				respJSON, _ := simplejson.NewJson(response.Body.Bytes())
-				val, _ := respJSON.Get("isPublic").Bool()
-				assert.Equal(t, true, val)
+				val, _ := json.Marshal(test.PublicDashboardConfig)
+				assert.Equal(t, string(val), response.Body.String())
 			}
 		})
 	}
 }
+
+//func TestApiOverwritesExistingPublicDashboard(t *testing.T) {
+//  testCase := struct {
+//    Name                  string
+//    DashboardUid          string
+//    PublicDashboardConfig *models.PublicDashboardConfig
+//    ExpectedHttpResponse  int
+//    SaveDashboardError    error
+//  }{
+//    DashboardUid: "1",
+//    PublicDashboardConfig: &models.PublicDashboardConfig{
+//      IsPublic: true,
+//      PublicDashboard: models.PublicDashboard{
+//        Uid:               "",
+//        DashboardUid:      "1",
+//        OrgId:             1,
+//        TemplateVariables: "",
+//        TimeVariables:     "",
+//      },
+//    },
+//    ExpectedHttpResponse: http.StatusOK,
+//  }
+
+//  t.Run(testCase.Name, func(t *testing.T) {
+//    sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
+
+//    sc.hs.dashboardService = &dashboards.FakeDashboardService{
+//      PublicDashboardConfigResult: testCase.PublicDashboardConfig,
+//      PublicDashboardConfigError:  testCase.SaveDashboardError,
+//    }
+
+//    setInitCtxSignedInViewer(sc.initCtx)
+//    response := callAPI(
+//      sc.server,
+//      http.MethodPost,
+//      "/api/dashboards/uid/1/public-config",
+//      strings.NewReader(`{ "isPublic": true }`),
+//      t,
+//    )
+
+//    assert.Equal(t, testCase.ExpectedHttpResponse, response.Code)
+
+//    // check the result if it's a 200
+//    if response.Code == http.StatusOK {
+//      val, _ := json.Marshal(testCase.PublicDashboardConfig)
+//      assert.Equal(t, string(val), response.Body.String())
+//    }
+//  })
+//}
