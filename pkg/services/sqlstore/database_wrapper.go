@@ -16,7 +16,8 @@ import (
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/core"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/dialects"
 )
 
 var (
@@ -51,7 +52,7 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 
 	driverWithHooks := dbType + "WithHooks"
 	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
-	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
+	dialects.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
 
@@ -118,15 +119,41 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	return err
 }
 
-// databaseQueryWrapperDriver satisfies the xorm.io/core.Driver interface
+var _ dialects.Driver = &databaseQueryWrapperDriver{}
+
+// databaseQueryWrapperDriver satisfies the xorm.io/dialects.Driver interface
 type databaseQueryWrapperDriver struct {
 	dbType string
 }
 
-func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	driver := core.QueryDriver(hp.dbType)
+func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (*dialects.URI, error) {
+	driver := dialects.QueryDriver(hp.dbType)
 	if driver == nil {
 		return nil, fmt.Errorf("could not find driver with name %s", hp.dbType)
 	}
 	return driver.Parse(driverName, dataSourceName)
+}
+
+func (hp *databaseQueryWrapperDriver) Features() *dialects.DriverFeatures {
+	driver := dialects.QueryDriver(hp.dbType)
+	if driver == nil {
+		return nil
+	}
+	return driver.Features()
+}
+
+func (hp *databaseQueryWrapperDriver) GenScanResult(s string) (interface{}, error) {
+	driver := dialects.QueryDriver(hp.dbType)
+	if driver == nil {
+		return nil, fmt.Errorf("could not find driver with name %s", hp.dbType)
+	}
+	return driver.GenScanResult(s)
+}
+
+func (hp *databaseQueryWrapperDriver) Scan(ctx *dialects.ScanContext, r *core.Rows, t []*sql.ColumnType, i ...interface{}) error {
+	driver := dialects.QueryDriver(hp.dbType)
+	if driver == nil {
+		return fmt.Errorf("could not find driver with name %s", hp.dbType)
+	}
+	return driver.Scan(ctx, r, t, i)
 }
