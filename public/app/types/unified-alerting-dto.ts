@@ -25,21 +25,25 @@ export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertSta
 
 /** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
  */
-export function isAlertStateWithReason(s: PromAlertingRuleState | GrafanaAlertStateWithReason): boolean {
+export function isAlertStateWithReason(
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason
+): state is GrafanaAlertStateWithReason {
   return (
-    s !== null && typeof s !== 'undefined' && !Object.values(PromAlertingRuleState).includes(s as PromAlertingRuleState)
+    state !== null &&
+    typeof state !== 'undefined' &&
+    !Object.values(PromAlertingRuleState).includes(state as PromAlertingRuleState)
   );
 }
 
 export function mapStateWithReasonToBaseState(
-  s: GrafanaAlertStateWithReason | PromAlertingRuleState
+  state: GrafanaAlertStateWithReason | PromAlertingRuleState
 ): GrafanaAlertState | PromAlertingRuleState {
-  if (isAlertStateWithReason(s)) {
-    const fields = s.split(' ');
+  if (isAlertStateWithReason(state)) {
+    const fields = state.split(' ');
     return fields[0] as GrafanaAlertState;
+  } else {
+    return state;
   }
-
-  return s as PromAlertingRuleState;
 }
 
 export enum PromRuleType {
