@@ -15,7 +15,6 @@ import {
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
-  AsyncSelect,
   Alert,
   useStyles2,
   fuzzyMatch,
@@ -71,7 +70,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanName: false,
   });
 
-  async function fetchOptionsCallback(name: string, lp: TempoLanguageProvider, query = '') {
+  async function loadOptions(name: string, lp: TempoLanguageProvider, query = '') {
     const lpName = name === 'serviceName' ? 'service.name' : 'name';
     setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
 
@@ -94,7 +93,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const loadOptionsOfType = useCallback(
     (name: string) => {
       setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
-      return fetchOptionsCallback(name, languageProvider);
+      return loadOptions(name, languageProvider);
     },
     [languageProvider]
   );
@@ -108,9 +107,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     const fetchOptions = async () => {
       try {
         await languageProvider.start();
-        const services = await fetchOptionsCallback('serviceName', languageProvider);
+        const services = await loadOptions('serviceName', languageProvider);
         setServiceOptions(services);
-        const spans = await fetchOptionsCallback('spanName', languageProvider);
+        const spans = await loadOptions('spanName', languageProvider);
         setSpanOptions(spans);
         setHasSyntaxLoaded(true);
       } catch (error) {
