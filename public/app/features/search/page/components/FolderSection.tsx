@@ -21,6 +21,7 @@ export interface DashboardSection {
   selected?: boolean; // not used ?  keyboard
   url?: string;
   icon?: string;
+  itemsUIDs?: string[]; // for pseudo folders
 }
 
 interface SectionHeaderProps {
@@ -57,12 +58,9 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       location: section.uid,
     };
     if (section.title === 'Starred') {
-      const stars = await getBackendSrv().get('api/user/stars');
-      if (stars.length > 0) {
-        query = {
-          uid: stars, // array of UIDs
-        };
-      }
+      query = {
+        uid: section.itemsUIDs, // array of UIDs
+      };
       folderUid = undefined;
       folderTitle = undefined;
     } else if (section.title === 'Recent') {
