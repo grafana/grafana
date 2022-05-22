@@ -35,6 +35,7 @@ const mockQuery = {
   queryType: 'nativeSearch',
   key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
   serviceName: 'driver',
+  spanName: 'customer',
 } as TempoQuery;
 
 describe('NativeSearch', () => {
@@ -56,7 +57,7 @@ describe('NativeSearch', () => {
       <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
     );
 
-    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-span-name' });
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
 
     await user.click(asyncServiceSelect);
     const loader = screen.getByText('Loading options...');
@@ -76,7 +77,7 @@ describe('NativeSearch', () => {
       queryType: 'nativeSearch',
       refId: 'A',
       serviceName: 'driver',
-      spanName: 'driver',
+      spanName: 'customer',
     };
 
     render(
@@ -88,12 +89,13 @@ describe('NativeSearch', () => {
       />
     );
 
-    const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-span-name' });
+    const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-service-name' });
 
     expect(asyncServiceSelect).toBeInTheDocument();
     await user.click(asyncServiceSelect);
     jest.advanceTimersByTime(1000);
 
+    await user.type(asyncServiceSelect, 'd');
     const driverOption = await screen.findByText('driver');
     await user.click(driverOption);
 
@@ -105,19 +107,16 @@ describe('NativeSearch', () => {
       <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
     );
 
-    const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-span-name' });
-
-    expect(asyncServiceSelect).toBeInTheDocument();
+    const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-service-name' });
     await user.click(asyncServiceSelect);
     jest.advanceTimersByTime(1000);
+    expect(asyncServiceSelect).toBeInTheDocument();
 
     await user.type(asyncServiceSelect, 'd');
-    jest.advanceTimersByTime(1000);
     var option = await screen.findByText('driver');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'a');
-    jest.advanceTimersByTime(1000);
     option = await screen.findByText('No options found');
     expect(option).toBeDefined();
   });
