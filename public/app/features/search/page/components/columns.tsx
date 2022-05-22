@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -19,6 +19,7 @@ export const generateColumns = (
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
+  clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void
@@ -39,7 +40,7 @@ export const generateColumns = (
         if (selection('*', '*')) {
           return (
             <div className={styles.checkboxHeader}>
-              <IconButton name={'check-square' as any} onClick={() => selectionToggle('x', 'x')} />
+              <IconButton name={'check-square' as any} onClick={clearSelection} />
             </div>
           );
         }

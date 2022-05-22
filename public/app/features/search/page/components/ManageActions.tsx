@@ -15,10 +15,10 @@ type Props = {
   items: Map<string, Set<string>>;
   folder?: FolderDTO; // when we are loading in folder page
   onChange: OnMoveOrDeleleSelectedItems;
-  onDeselectAll: () => void;
+  clearSelection: () => void;
 };
 
-export function ManageActions({ items, folder, onChange, onDeselectAll }: Props) {
+export function ManageActions({ items, folder, onChange, clearSelection }: Props) {
   const styles = useStyles2(getStyles);
 
   const canSave = folder?.canSave;
@@ -48,7 +48,7 @@ export function ManageActions({ items, folder, onChange, onDeselectAll }: Props)
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          <IconButton name={'check-square' as any} onClick={onDeselectAll} title="Uncheck everything" />
+          <IconButton name={'check-square' as any} onClick={clearSelection} title="Uncheck everything" />
           <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
             Move
           </Button>

@@ -21,6 +21,7 @@ export type SearchResultsProps = {
   height: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
 };
@@ -32,7 +33,16 @@ export type TableColumn = Column & {
 const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = React.memo(
-  ({ response, width, height, selection, selectionToggle, onTagSelected, onDatasourceChange }: SearchResultsProps) => {
+  ({
+    response,
+    width,
+    height,
+    selection,
+    selectionToggle,
+    clearSelection,
+    onTagSelected,
+    onDatasourceChange,
+  }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
 
@@ -48,8 +58,17 @@ export const SearchResultsTable = React.memo(
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
-      return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
-    }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+      return generateColumns(
+        response,
+        width,
+        selection,
+        selectionToggle,
+        clearSelection,
+        styles,
+        onTagSelected,
+        onDatasourceChange
+      );
+    }, [response, width, styles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({
