@@ -8,10 +8,10 @@ import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHe
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum HeatmapSourceMode {
-  Auto = 'auto',
+export enum HeatmapMode {
+  Aggregated = 'agg',
   Calculate = 'calculate',
-  Data = 'data', // Use the data as is
+  Accumulated = 'acc', // accumulated
 }
 
 export enum HeatmapColorMode {
@@ -44,7 +44,9 @@ export interface HeatmapTooltip {
 export interface HeatmapLegend {
   show: boolean;
 }
-
+export interface ExemplarConfig {
+  color: string;
+}
 export interface YAxisConfig extends AxisConfig {
   unit?: string;
   reverse?: boolean; 
@@ -53,10 +55,10 @@ export interface YAxisConfig extends AxisConfig {
 }
 
 export interface PanelOptions {
-  source: HeatmapSourceMode;
+  mode: HeatmapMode;
 
   color: HeatmapColorOptions;
-  heatmap?: HeatmapCalculationOptions;
+  calculate?: HeatmapCalculationOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
@@ -67,10 +69,11 @@ export interface PanelOptions {
   legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
+  exemplars: ExemplarConfig;
 }
 
 export const defaultPanelOptions: PanelOptions = {
-  source: HeatmapSourceMode.Auto,
+  mode: HeatmapMode.Aggregated,
   color: {
     mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',
@@ -90,6 +93,9 @@ export const defaultPanelOptions: PanelOptions = {
   yAxis: {
     axisPlacement: AxisPlacement.Left,
     bucketPlacement: 'auto',
+  },
+  exemplars: {
+    color: 'rgba(255,0,255,0.7)',
   },
   cellGap: 1,
 };

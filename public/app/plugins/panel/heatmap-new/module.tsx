@@ -8,13 +8,7 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
-import {
-  PanelOptions,
-  defaultPanelOptions,
-  HeatmapSourceMode,
-  HeatmapColorMode,
-  HeatmapColorScale,
-} from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapMode, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
@@ -27,21 +21,21 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     let category = ['Heatmap'];
 
     builder.addRadio({
-      path: 'source',
-      name: 'Source',
-      defaultValue: HeatmapSourceMode.Auto,
+      path: 'mode',
+      name: 'Data',
+      defaultValue: defaultPanelOptions.mode,
       category,
       settings: {
         options: [
-          { label: 'Auto', value: HeatmapSourceMode.Auto },
-          { label: 'Calculate', value: HeatmapSourceMode.Calculate },
-          { label: 'Raw data', description: 'The results are already heatmap buckets', value: HeatmapSourceMode.Data },
+          { label: 'Aggregated', value: HeatmapMode.Aggregated },
+          { label: 'Calculate', value: HeatmapMode.Calculate },
+          //  { label: 'Accumulated', value: HeatmapMode.Accumulated, description: 'The query response values are accumulated' },
         ],
       },
     });
 
-    if (opts.source === HeatmapSourceMode.Calculate) {
-      addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap, category);
+    if (opts.mode === HeatmapMode.Calculate) {
+      addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
     }
 
     category = ['Colors'];
@@ -278,6 +272,14 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       path: 'legend.show',
       name: 'Show legend',
       defaultValue: defaultPanelOptions.legend.show,
+      category,
+    });
+
+    category = ['Exemplars'];
+    builder.addColorPicker({
+      path: 'exemplars.color',
+      name: 'Color',
+      defaultValue: defaultPanelOptions.exemplars.color,
       category,
     });
   })

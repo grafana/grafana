@@ -24,7 +24,7 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 
 Supported auth providers:
 
-- [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only" >}})
 - [Azure AD OAuth]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})

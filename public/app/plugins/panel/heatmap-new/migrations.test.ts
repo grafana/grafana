@@ -25,6 +25,16 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
+          "calculate": Object {
+            "xAxis": Object {
+              "mode": "count",
+              "value": "100",
+            },
+            "yAxis": Object {
+              "mode": "count",
+              "value": "20",
+            },
+          },
           "cellGap": 2,
           "cellSize": 10,
           "color": Object {
@@ -35,21 +45,14 @@ describe('Heatmap Migrations', () => {
             "scheme": "BuGn",
             "steps": 256,
           },
-          "heatmap": Object {
-            "xAxis": Object {
-              "mode": "count",
-              "value": "100",
-            },
-            "yAxis": Object {
-              "mode": "count",
-              "value": "20",
-            },
+          "exemplars": Object {
+            "color": "rgba(255,0,255,0.7)",
           },
           "legend": Object {
             "show": true,
           },
+          "mode": "calculate",
           "showValue": "never",
-          "source": "calculate",
           "tooltip": Object {
             "show": true,
             "yHistogram": true,

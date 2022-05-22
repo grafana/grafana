@@ -53,20 +53,9 @@ The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then use
 
 The keys you provide should look like:
 
-It should look like:
-
 ```
 -----BEGIN PRIVATE KEY-----
 ...
 ...
 -----END PRIVATE KEY-----
-```
-
-If you have a key that looks like:
-
-```
------BEGIN CERTIFICATE-----
-...
-...
------END CERTIFICATE-----
 ```

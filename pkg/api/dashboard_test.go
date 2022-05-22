@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	service "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -51,6 +54,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg:               cfg,
 		pluginStore:       &fakePluginStore{},
 		SQLStore:          mockstore.NewSQLStoreMock(),
+		CoremodelRegistry: setupDashboardCoremodel(t),
 		preferenceService: prefService,
 	}
 
@@ -127,12 +131,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
 		hs := &HTTPServer{
-			Cfg:              setting.NewCfg(),
-			pluginStore:      &fakePluginStore{},
-			SQLStore:         mockSQLStore,
-			AccessControl:    accesscontrolmock.New(),
-			Features:         featuremgmt.WithFeatures(),
-			dashboardService: dashboardService,
+			Cfg:               setting.NewCfg(),
+			pluginStore:       &fakePluginStore{},
+			SQLStore:          mockSQLStore,
+			CoremodelRegistry: setupDashboardCoremodel(t),
+			AccessControl:     accesscontrolmock.New(),
+			Features:          featuremgmt.WithFeatures(),
+			dashboardService:  dashboardService,
 		}
 
 		setUp := func() {
@@ -235,6 +240,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Live:                  newTestLive(t, sql),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			SQLStore:              mockSQLStore,
 			AccessControl:         accesscontrolmock.New(),
 			dashboardService:      dashboardService,
@@ -914,6 +920,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
+				CoremodelRegistry:            setupDashboardCoremodel(t),
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 				dashboardService:             dashboardService,
@@ -958,6 +965,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryElementService: &libraryElementsService,
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
+		CoremodelRegistry:     setupDashboardCoremodel(t),
 		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, nil, features,
@@ -1026,6 +1034,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			dashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
@@ -1057,6 +1066,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			SQLStore:              sqlmock,
 		}
 
@@ -1090,6 +1100,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			dashboardService:      mock,
 			SQLStore:              sqlStore,
 			Features:              featuremgmt.WithFeatures(),
@@ -1114,6 +1125,16 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		fn(sc)
 	})
+}
+
+func setupDashboardCoremodel(t *testing.T) *coremodel.Registry {
+	// TODO abstract and generalize this further for wider reuse
+	t.Helper()
+	dcm, err := dashboard.ProvideCoremodel(cuectx.ProvideThemaLibrary())
+	require.NoError(t, err)
+	reg, err := coremodel.NewRegistry(dcm)
+	require.NoError(t, err)
+	return reg
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {

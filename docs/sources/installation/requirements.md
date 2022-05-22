@@ -36,7 +36,7 @@ Some features might require more memory or CPUs. Features require more resources
 
 - [Server side rendering of images](https://grafana.com/grafana/plugins/grafana-image-renderer#requirements)
 - [Alerting]({{< relref "../alerting" >}})
-- [Data source proxy]({{< relref "../http_api/data_source" >}})
+- [Data source proxy]({{< relref "../developers/http_api/data_source" >}})
 
 ## Supported databases
 
