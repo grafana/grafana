@@ -8,6 +8,6 @@ weight = 400
 
 Organization administrators can invite users to join their organization. Organization users have access to organization resources based on their role, which is **Admin**, **Editor**, or **Viewer**. Permissions associated with each role determine the tasks a user can perform in the system.
 
-For more information about organization user permissions, refer to [Organization users and permissions]({{< relref "../about-users-and-permissions/#organization-users-and-permissions">}}).
+For more information about organization user permissions, refer to [Organization users and permissions]({{< relref "../about-users-and-permissions/#organization-users-and-permissions" >}}).
 
 {{< section >}}

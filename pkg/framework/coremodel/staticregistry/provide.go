@@ -11,7 +11,9 @@ import (
 func ProvideRegistry(
 	dashboard *dashboard.Coremodel,
 ) (*coremodel.Registry, error) {
-	return coremodel.NewRegistry(
+	cmlist := []coremodel.Interface{
 		dashboard,
-	)
+	}
+
+	return coremodel.NewRegistry(cmlist...)
 }
