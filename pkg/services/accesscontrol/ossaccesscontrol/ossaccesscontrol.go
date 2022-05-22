@@ -11,13 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles,
+func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(features, provider)
+	s := ProvideOSSAccessControl(cfg, provider)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -31,9 +32,9 @@ func ProvideService(features featuremgmt.FeatureToggles,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:       features,
+		cfg:            cfg,
 		provider:       provider,
 		log:            log.New("accesscontrol"),
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
@@ -46,7 +47,7 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log            log.Logger
-	features       featuremgmt.FeatureToggles
+	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
 	provider       accesscontrol.PermissionsProvider
 	registrations  accesscontrol.RegistrationList
@@ -54,10 +55,10 @@ type OSSAccessControlService struct {
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.features == nil {
+	if ac.cfg == nil {
 		return true
 	}
-	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
+	return !ac.cfg.RBACEnabled
 }
 
 func (ac *OSSAccessControlService) GetUsageStats(_ context.Context) map[string]interface{} {
@@ -97,7 +98,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
 }
 
 // GetUserRoles returns user permissions based on built-in roles
@@ -155,7 +156,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	builtInRoles := []string{string(user.OrgRole)}
 
 	// With built-in role simplifying, inheritance is performed upon role registration.
-	if ac.IsDisabled() {
+	if ac.cfg.RBACBuiltInRoleAssignmentEnabled {
 		for _, br := range user.OrgRole.Children() {
 			builtInRoles = append(builtInRoles, string(br))
 		}

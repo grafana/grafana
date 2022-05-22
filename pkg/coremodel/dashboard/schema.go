@@ -81,16 +81,22 @@ type model struct {
 				Type string `json:"type"`
 				Uid  string `json:"uid"`
 			} `json:"datasource"`
-			Enable    bool   `json:"enable"`
-			Hide      bool   `json:"hide,omitempty"`
-			IconColor string `json:"iconColor"`
-			RawQuery  string `json:"rawQuery,omitempty"`
-			ShowIn    int    `json:"showIn"`
+			Enable    bool        `json:"enable"`
+			Hide      bool        `json:"hide,omitempty"`
+			IconColor string      `json:"iconColor"`
+			RawQuery  string      `json:"rawQuery,omitempty"`
+			ShowIn    int         `json:"showIn"`
+			Target    interface{} `json:"target"`
 		} `json:"list"`
 	} `json:"annotations"`
-	Refresh       interface{}   `json:"refresh"` // (bool|string)
-	SchemaVersion int           `json:"schemaVersion"`
-	Panels        []interface{} `json:"panels"`
+	Refresh       interface{} `json:"refresh"` // (bool|string)
+	SchemaVersion int         `json:"schemaVersion"`
+	Links         []struct {
+	} `json:"links"`
+	Panels               []interface{} `json:"panels"`
+	FiscalYearStartMonth string        `json:"fiscalYearStartMonth"`
+	LiveNow              bool          `json:"liveNow"`
+	WeekStart            string        `json:"weekStart"`
 
 	// //
 

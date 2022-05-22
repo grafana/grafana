@@ -1,6 +1,7 @@
 +++
-title = "Advanced variable format options"
+aliases = ["/docs/grafana/latest/variables/advanced-variable-format-options/"]
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
+title = "Advanced variable format options"
 weight = 600
 +++
 

@@ -204,7 +204,7 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 		}
 	}
 
-	if rsp.Frames == nil || stringField.Len() > 0 {
+	if stringField.Len() > 0 {
 		rsp.Frames = append(rsp.Frames, data.NewFrame("", stringField))
 	}
 
@@ -232,9 +232,9 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 		case "exemplars":
 			lookup := make(map[string]*data.Field)
 			timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+			timeField.Name = data.TimeSeriesTimeFieldName
 			valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-			valueField.Name = labels["__name__"]
-			delete(labels, "__name__")
+			valueField.Name = data.TimeSeriesValueFieldName
 			valueField.Labels = labels
 			frame = data.NewFrame("", timeField, valueField)
 			frame.Meta = &data.FrameMeta{
@@ -358,6 +358,8 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Labels = data.Labels{}
 
+		var histogram *histogramInfo
+
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "metric":
@@ -379,15 +381,51 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 						valueField.Append(v)
 					}
 				}
+
+			case "histogram":
+				if histogram == nil {
+					histogram = newHistogramInfo()
+				}
+				err := readHistogram(iter, histogram)
+				if err != nil {
+					rsp.Error = err
+				}
+
+			case "histograms":
+				if histogram == nil {
+					histogram = newHistogramInfo()
+				}
+				for iter.ReadArray() {
+					err := readHistogram(iter, histogram)
+					if err != nil {
+						rsp.Error = err
+					}
+				}
+
+			default:
+				iter.Skip()
+				logf("readMatrixOrVector: %s\n", l1Field)
 			}
 		}
 
-		frame := data.NewFrame("", timeField, valueField)
-		frame.Meta = &data.FrameMeta{
-			Type:   data.FrameTypeTimeSeriesMany,
-			Custom: resultTypeToCustomMeta(resultType),
+		if histogram != nil {
+			histogram.yMin.Labels = valueField.Labels
+			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			frame.Meta = &data.FrameMeta{
+				Type: "heatmap-cells-sparse",
+			}
+			if frame.Name == data.TimeSeriesValueFieldName {
+				frame.Name = "" // only set the name if useful
+			}
+			rsp.Frames = append(rsp.Frames, frame)
+		} else {
+			frame := data.NewFrame("", timeField, valueField)
+			frame.Meta = &data.FrameMeta{
+				Type:   data.FrameTypeTimeSeriesMany,
+				Custom: resultTypeToCustomMeta(resultType),
+			}
+			rsp.Frames = append(rsp.Frames, frame)
 		}
-		rsp.Frames = append(rsp.Frames, frame)
 	}
 
 	return rsp
@@ -403,6 +441,101 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 	tt := timeFromFloat(t)
 	fv, err := strconv.ParseFloat(v, 64)
 	return tt, fv, err
+}
+
+type histogramInfo struct {
+	//XMax (time)	YMin	Ymax	Count	YLayout
+	time    *data.Field
+	yMin    *data.Field // will have labels?
+	yMax    *data.Field
+	count   *data.Field
+	yLayout *data.Field
+}
+
+func newHistogramInfo() *histogramInfo {
+	hist := &histogramInfo{
+		time:    data.NewFieldFromFieldType(data.FieldTypeTime, 0),
+		yMin:    data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
+		yMax:    data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
+		count:   data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
+		yLayout: data.NewFieldFromFieldType(data.FieldTypeInt8, 0),
+	}
+	hist.time.Name = "xMax"
+	hist.yMin.Name = "yMin"
+	hist.yMax.Name = "yMax"
+	hist.count.Name = "count"
+	hist.yLayout.Name = "yLayout"
+	return hist
+}
+
+// This will read a single sparse histogram
+// [ time, { count, sum, buckets: [...] }]
+func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
+	// first element
+	iter.ReadArray()
+	t := timeFromFloat(iter.ReadFloat64())
+
+	var err error
+
+	// next object element
+	iter.ReadArray()
+	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		switch l1Field {
+		case "count":
+			iter.Skip()
+		case "sum":
+			iter.Skip()
+
+		case "buckets":
+			for iter.ReadArray() {
+				hist.time.Append(t)
+
+				iter.ReadArray()
+				hist.yLayout.Append(iter.ReadInt8())
+
+				iter.ReadArray()
+				err = appendValueFromString(iter, hist.yMin)
+				if err != nil {
+					return err
+				}
+
+				iter.ReadArray()
+				err = appendValueFromString(iter, hist.yMax)
+				if err != nil {
+					return err
+				}
+
+				iter.ReadArray()
+				err = appendValueFromString(iter, hist.count)
+				if err != nil {
+					return err
+				}
+
+				if iter.ReadArray() {
+					return fmt.Errorf("expected close array")
+				}
+			}
+
+		default:
+			iter.Skip()
+			logf("[SKIP]readHistogram: %s\n", l1Field)
+		}
+	}
+
+	if iter.ReadArray() {
+		return fmt.Errorf("expected to be done")
+	}
+
+	return nil
+}
+
+func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
+	v, err := strconv.ParseFloat(iter.ReadString(), 64)
+	if err != nil {
+		return err
+	}
+	field.Append(v)
+	return nil
 }
 
 func readStream(iter *jsoniter.Iterator) *backend.DataResponse {

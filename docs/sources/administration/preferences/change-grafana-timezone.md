@@ -1,7 +1,8 @@
 +++
-title = "Change default timezone"
+aliases = ["/docs/grafana/latest/administration/preferences/change-grafana-timezone/"]
 description = "How to change your Grafana timezone"
 keywords = ["grafana", "configuration", "documentation", "home"]
+title = "Change default timezone"
 weight = 400
 +++
 

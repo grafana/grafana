@@ -190,6 +190,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Splunk Infrastructure Monitoring',
       imgUrl: 'public/img/plugins/signalfx-logo.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-azure-devops-datasource',
+      description: 'Azure Devops datasource',
+      name: 'Azure Devops',
+      imgUrl: 'public/img/plugins/azure-devops.png',
+    }),
   ];
 }
 

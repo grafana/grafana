@@ -17,6 +17,7 @@ import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules } from './api/ruler';
 import {
+  disableRBAC,
   mockDataSource,
   MockDataSourceSrv,
   mockPromAlertingRule,
@@ -184,6 +185,7 @@ describe('PanelAlertTabContent', () => {
       any
     >;
     setDataSourceSrv(dsService);
+    disableRBAC();
   });
 
   it('Will take into account panel maxDataPoints', async () => {

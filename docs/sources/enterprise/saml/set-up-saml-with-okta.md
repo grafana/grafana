@@ -1,8 +1,15 @@
 ---
-title: 'Set up SAML authentication with Okta in Grafana'
-menuTitle: 'SAML authentication with Okta'
-description: 'This is a guide to set up SAML authentication with Okta in Grafana'
-keywords: ['grafana', 'saml', 'documentation', 'saml-auth', 'enterprise']
+aliases:
+  - /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
+description: This is a guide to set up SAML authentication with Okta in Grafana
+keywords:
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+  - enterprise
+menuTitle: SAML authentication with Okta
+title: Set up SAML authentication with Okta in Grafana
 weight: 30
 ---
 
@@ -13,7 +20,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 ## Before you begin
 
 - To configure SAML integration with Okta, create integration inside the Okta organization first. [Add integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
-- Ensure you have permission to administer SAML authentication. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#">}}).
+- Ensure you have permission to administer SAML authentication. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#" >}}).
 
 **To set up SAML with Okta:**
 

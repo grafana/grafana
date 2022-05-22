@@ -1,6 +1,7 @@
 +++
-title = "Administration"
+aliases = ["/docs/grafana/latest/administration/"]
 description = "Administration"
+title = "Administration"
 weight = 40
 +++
 
