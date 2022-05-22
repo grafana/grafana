@@ -89,12 +89,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        await languageProvider.start();
         const services = await loadOptions('serviceName');
         setServiceOptions(services);
         const spans = await loadOptions('spanName');
         setSpanOptions(spans);
-        setHasSyntaxLoaded(true);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
         if (error?.status === 404) {
@@ -102,11 +100,22 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         } else {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
-        setHasSyntaxLoaded(true);
       }
     };
     fetchOptions();
   }, [languageProvider, loadOptions]);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        await languageProvider.start();
+        setHasSyntaxLoaded(true);
+      } catch (error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
+      }
+    };
+    fetchTags();
+  }, [languageProvider]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
