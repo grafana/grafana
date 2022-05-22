@@ -329,6 +329,7 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 //nolint: gocyclo
 func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
 	response := &backend.DataResponse{}
+	header := &customMeta{}
 
 	// Folder listing structure
 	idx := strings.Index(q.Query, ":")
@@ -433,10 +434,9 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	}
 	req.WithStandardAggregations()
 
-	sortByField := q.Sort
-	if sortByField != "" {
+	if q.Sort != "" {
 		req.SortBy([]string{q.Sort})
-		sortByField = strings.TrimPrefix(sortByField, "-")
+		header.SortBy = strings.TrimPrefix(q.Sort, "-")
 	}
 
 	for _, t := range q.Facet {
@@ -490,10 +490,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	frame := data.NewFrame("Query results", fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
 	if q.Explain {
 		frame.Fields = append(frame.Fields, fScore, fExplain)
-	}
-
-	header := &customMeta{
-		SortBy: sortByField,
 	}
 	frame.SetMeta(&data.FrameMeta{
 		Type:   "search-results",
