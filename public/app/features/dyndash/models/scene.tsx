@@ -7,13 +7,12 @@ import {
   SceneItemBase,
   SceneItem,
   SceneLayoutItemChildState,
-  SceneContextState,
+  SceneItemStateWithScope,
 } from './SceneItem';
 
-interface SceneState {
+interface SceneState extends SceneItemStateWithScope {
   title: string;
   layout: SceneItem<any>;
-  context?: SceneContextState;
   actions?: Array<SceneItem<any>>;
 }
 
@@ -22,7 +21,7 @@ export class Scene extends SceneItemBase<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, context, actions = [] } = model.useState();
+  const { title, layout, $timeRange, actions = [] } = model.useState();
 
   console.log('render scene');
 
@@ -32,7 +31,7 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
         {actions.map((action) => (
           <action.Component key={action.state.key} model={action} />
         ))}
-        {context && context.timeRange && <context.timeRange.Component model={context.timeRange} />}
+        {$timeRange && <$timeRange.Component model={$timeRange} />}
       </PageToolbar>
       <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
         <layout.Component model={layout} />

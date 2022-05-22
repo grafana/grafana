@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Observer, ReplaySubject, Subscribable, Subscription } from 'rxjs';
 
 import { PanelData, TimeRange, useObservable } from '@grafana/data';
@@ -44,15 +45,38 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
 
   abstract Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
 
+  onMount() {
+    const { $data } = this.state as SceneItemStateWithScope;
+    if ($data) {
+      $data.onMount();
+    }
+  }
+
+  onUnmount() {
+    const { $data } = this.state as SceneItemStateWithScope;
+    if ($data) {
+      $data.onUnmount();
+    }
+  }
+
   useState() {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      this.onMount();
+      return () => this.onUnmount();
+    }, []);
+
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.subject, this.state);
   }
 
+  /**
+   * Will walk up the scene object graph to the closest context.data scene object
+   */
   useData(): SceneDataState | null {
-    const context = (this.state as SceneItemStateWithContext).context;
-    if (context && context.data) {
-      return context.data!.useState();
+    const $data = (this.state as SceneItemStateWithScope).$data;
+    if ($data) {
+      return $data.useState();
     }
 
     if (this.parent) {
@@ -62,10 +86,13 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
     return null;
   }
 
+  /**
+   * Will walk up the scene object graph to the closest context.timeRange scene object
+   */
   getTimeRange(): SceneItem<SceneTimeRangeState> | null {
-    const context = (this.state as SceneItemStateWithContext).context;
-    if (context && context.timeRange) {
-      return context.timeRange;
+    const $timeRange = (this.state as SceneItemStateWithScope).$timeRange;
+    if ($timeRange) {
+      return $timeRange;
     }
 
     if (this.parent) {
@@ -85,15 +112,14 @@ export interface SceneItem<TState> extends Subscribable<TState> {
   Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
   useState(): TState;
   setState(state: TState): void;
+
+  onMount(): void;
+  onUnmount(): void;
 }
 
-export interface SceneContextState {
-  timeRange?: SceneItem<SceneTimeRangeState>;
-  data?: SceneItem<SceneDataState>;
-}
-
-export interface SceneItemStateWithContext {
-  context?: SceneContextState;
+export interface SceneItemStateWithScope {
+  $timeRange?: SceneItem<SceneTimeRangeState>;
+  $data?: SceneItem<SceneDataState>;
 }
 
 export interface SceneLayoutItemChildState {

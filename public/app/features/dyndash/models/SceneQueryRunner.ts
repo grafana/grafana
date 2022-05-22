@@ -30,7 +30,7 @@ export interface DataQueryExtended extends DataQuery {
 export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
   private querySub?: Unsubscribable;
 
-  init() {
+  onMount() {
     const timeRange = this.getTimeRange()!;
 
     this.subs.add(
@@ -42,11 +42,18 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
     );
   }
 
-  destroy() {
-    super.destroy();
+  onUnmount() {
+    this.cleanUp();
+  }
 
+  destroy() {
+    this.cleanUp();
+  }
+
+  cleanUp() {
     if (this.querySub) {
       this.querySub.unsubscribe();
+      this.querySub = undefined;
     }
   }
 
