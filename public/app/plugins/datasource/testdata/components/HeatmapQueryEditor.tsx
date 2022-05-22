@@ -1,27 +1,21 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+import { DataFrameType, SelectableValue } from '@grafana/data';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
 import { HeatmapQuery } from '../types';
 
-// format: 'fields-wide' | 'fields-many' | 'dense' | 'sparse',
-// scale?: 'linear' | 'log10',
-// exemplars?: boolean;
-// setFrameType?: boolean;
-// numericX?: boolean; // x does not need to be time
-
 const formats = [
-  { value: 'fields-wide', label: 'fields-wide' },
-  { value: 'fields-many', label: 'fields-many' },
-  { value: 'dense', label: 'dense' },
-  { value: 'sparse', label: 'sparse' },
+  { value: DataFrameType.TimeSeriesWide, label: DataFrameType.TimeSeriesWide + ' (buckets}' },
+  { value: DataFrameType.TimeSeriesMany, label: DataFrameType.TimeSeriesMany + ' (buckets}' },
+  { value: DataFrameType.HeatmapScanlines, label: DataFrameType.HeatmapScanlines },
+  { value: DataFrameType.HeatmapSparse, label: DataFrameType.HeatmapSparse },
 ];
 
 const scales = [
   { value: 'linear', label: 'linear' },
-  { value: 'log10', label: 'Log(10)' },
+  { value: 'log2', label: 'Exponential' },
   { value: 'alpha', label: 'Alpha' },
 ];
 
@@ -49,8 +43,9 @@ export const HeatmapQueryEditor = ({ onChange, query }: EditorProps) => {
   const onToggleNumericX = () => {
     onUpdate({ ...heatmap, numericX: !Boolean(heatmap.numericX) });
   };
-  const onToggleNameAsLE = () => {
-    onUpdate({ ...heatmap, nameAsLE: !Boolean(heatmap.nameAsLE) });
+
+  const onNameAsLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onUpdate({ ...heatmap, nameAsLabel: e.target.value });
   };
 
   return (
@@ -70,9 +65,14 @@ export const HeatmapQueryEditor = ({ onChange, query }: EditorProps) => {
             onChange={onScaleChange}
           />
         </InlineField>
-        {heatmap.format?.startsWith('fields-') && (
-          <InlineField label="Name as LE" tooltip="the name should be a lable">
-            <InlineSwitch value={Boolean(heatmap.nameAsLE)} onChange={onToggleNameAsLE} />
+        {heatmap.format?.startsWith('timeseries-') && (
+          <InlineField label="As Label" tooltip="the name should be a lable">
+            <Input
+              value={heatmap.nameAsLabel ?? ''}
+              placeholder={`ie: 'le'`}
+              width={12}
+              onChange={onNameAsLabelChange}
+            />
           </InlineField>
         )}
       </InlineFieldRow>

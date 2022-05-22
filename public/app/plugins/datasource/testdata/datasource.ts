@@ -14,6 +14,7 @@ import {
   TimeRange,
   ScopedVars,
   toDataFrame,
+  DataFrameType,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -80,8 +81,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'exponential_heatmap_bucket_data': {
           target.scenarioId = 'heatmap';
           target.heatmap = {
-            scale: 'log10',
-            format: 'fields-wide',
+            scale: 'log2',
+            format: DataFrameType.TimeSeriesWide,
           };
           backendQueries.push(target);
           break;
@@ -92,7 +93,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           target.scenarioId = 'heatmap';
           target.heatmap = {
             scale: 'linear',
-            format: 'fields-wide',
+            format: DataFrameType.TimeSeriesWide,
           };
           backendQueries.push(target);
           break;

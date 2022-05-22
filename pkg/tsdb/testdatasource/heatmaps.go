@@ -28,14 +28,14 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 	// standard buckets format
 	case "":
 		fallthrough
-	case "fields-wide":
+	case data.FrameTypeTimeSeriesWide:
 		fallthrough
-	case "fields-many":
+	case data.FrameTypeTimeSeriesMany:
 		{
 			fn := func(index int) float64 {
 				return float64(index * 10)
 			}
-			if q.Scale == "log10" {
+			if q.Scale == "log2" {
 				fn = func(index int) float64 {
 					return math.Exp2(float64(index))
 				}
@@ -74,19 +74,19 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 			}
 
 			// Simulate prometheus labels "le" bucket
-			if q.NameAsLE {
+			if q.NameAsLabel != "" {
 				for i, field := range frame.Fields {
 					if i == 0 {
 						continue
 					}
 					field.Labels = data.Labels{
-						"le": field.Name,
+						q.NameAsLabel: field.Name,
 					}
 					field.Name = ""
 				}
 			}
 
-			if q.Format == "fields-many" {
+			if q.Format == data.FrameTypeTimeSeriesMany {
 				for i, field := range frame.Fields {
 					if i == 0 {
 						continue
@@ -100,7 +100,7 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 
 	// standard buckets format
 	default:
-		rsp.Error = fmt.Errorf("unsupported heatmap format: %s", q.Format)
+		rsp.Error = fmt.Errorf("Format not yet supported: %s", q.Format)
 		return rsp
 	}
 

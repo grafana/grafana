@@ -5,10 +5,10 @@ type testDataQuery struct {
 }
 
 type heatmapQuery struct {
-	Scale        string `json:"scale"` //?: 'linear' | 'log10',
-	Format       string `json:"type"`  // 'fields-wide' | 'fields-many' | 'dense' | 'sparse',
+	Scale        string `json:"scale"`  //?: 'linear' | 'log2',
+	Format       string `json:"format"` // dataframe type (wide,many,sparse,etc)
 	Exemplars    bool   `json:"exemplars"`
 	SetFrameType bool   `json:"setFrameType"`
 	NumericX     bool   `json:"numericX"`
-	NameAsLE     bool   `json:"nameAsLE"`
+	NameAsLabel  string `json:"nameAsLabel,omitempty"`
 }

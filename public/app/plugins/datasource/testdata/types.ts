@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataFrameType, DataQuery } from '@grafana/data';
 
 export interface Scenario {
   id: string;
@@ -44,12 +44,12 @@ export interface StreamingQuery {
 }
 
 export interface HeatmapQuery {
-  format: 'fields-wide' | 'fields-many' | 'dense' | 'sparse';
-  scale?: 'linear' | 'log10';
+  format: DataFrameType;
+  scale?: 'linear' | 'log2' | 'alpha';
+  nameAsLabel?: string;
   exemplars?: boolean;
   setFrameType?: boolean;
   numericX?: boolean; // x does not need to be time
-  nameAsLE?: boolean;
 }
 
 export interface SimulationQuery {

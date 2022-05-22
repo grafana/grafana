@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { DataFrameType, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
 
@@ -116,7 +116,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         update.csvWave = defaultCSVWaveQuery;
         break;
       case 'heatmap':
-        update.heatmap = { format: 'fields-wide', scale: 'linear' };
+        update.heatmap = { format: DataFrameType.TimeSeriesWide, scale: 'linear' };
         break;
       case 'usa':
         update.usa = {
