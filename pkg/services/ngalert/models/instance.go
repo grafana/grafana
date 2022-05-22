@@ -7,15 +7,15 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
-	RuleUID           string            `xorm:"rule_uid" json:"ruleUIid"`
-	Labels            InstanceLabels    `json:"labels"`
-	LabelsHash        string            `json:"labeHash"`
-	CurrentState      InstanceStateType `json:"currentState"`
-	CurrentReason     string            `json:"currentReason"`
-	CurrentStateSince time.Time         `json:"currentStateSince"`
-	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
-	LastEvalTime      time.Time         `json:"lastEvalTime"`
+	RuleOrgID         int64  `xorm:"rule_org_id"`
+	RuleUID           string `xorm:"rule_uid"`
+	Labels            InstanceLabels
+	LabelsHash        string
+	CurrentState      InstanceStateType
+	CurrentReason     string
+	CurrentStateSince time.Time
+	CurrentStateEnd   time.Time
+	LastEvalTime      time.Time
 }
 
 // InstanceStateType is an enum for instance states.
@@ -68,10 +68,10 @@ type GetAlertInstanceQuery struct {
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	RuleOrgID int64 `json:"-"`
-	RuleUID   string
-	State     InstanceStateType
-	Reason    InstanceStateType
+	RuleOrgID   int64 `json:"-"`
+	RuleUID     string
+	State       InstanceStateType
+	StateReason string
 
 	Result []*AlertInstance
 }

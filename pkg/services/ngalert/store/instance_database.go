@@ -74,8 +74,8 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 			addToQuery(` AND current_state = ?`, cmd.State)
 		}
 
-		if cmd.Reason != "" {
-			addToQuery(` AND current_reason = ?`, cmd.Reason)
+		if cmd.StateReason != "" {
+			addToQuery(` AND current_reason = ?`, cmd.StateReason)
 		}
 
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {

@@ -196,10 +196,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	case eval.Pending: // we do not emit results with this state
 	}
 
-	// Set reason iff: state is not Pending, reason is different than state, reason is not Alerting or Normal
+	// Set reason iff: result is different than state, reason is not Alerting or Normal
 	currentState.StateReason = ""
-	if currentState.State != eval.Pending &&
-		currentState.State != result.State &&
+
+	if currentState.State != result.State &&
 		result.State != eval.Normal &&
 		result.State != eval.Alerting {
 		currentState.StateReason = result.State.String()
@@ -269,12 +269,11 @@ type InstanceStateAndReason struct {
 }
 
 func (i InstanceStateAndReason) String() string {
-	r := fmt.Sprintf("%v", i.State)
-	// We never want to write down (Normal) or (Alerting)
-	if len(i.Reason) > 1 && i.State.String() != i.Reason && i.Reason != eval.Alerting.String() {
-		r = r + fmt.Sprintf(" (%v)", i.Reason)
+	s := fmt.Sprintf("%v", i.State)
+	if len(i.Reason) > 0 {
+		s += fmt.Sprintf(" (%v)", i.Reason)
 	}
-	return r
+	return s
 }
 
 func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
