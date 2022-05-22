@@ -75,7 +75,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 
 	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
-	s := NewBrowserScreenshotService(prometheus.DefaultRegisterer, &d, r)
+	s := NewBrowserScreenshotService(&d, r)
 
 	// a non-existent dashboard should return error
 	d.GetDashboardFn = func(ctx context.Context, cmd *models.GetDashboardQuery) error {

@@ -83,33 +83,14 @@ type ScreenshotService interface {
 
 // BrowserScreenshotService takes screenshots using a headless browser.
 type BrowserScreenshotService struct {
-	ds                  dashboards.DashboardService
-	rs                  rendering.Service
-	screenshotDuration  prometheus.Histogram
-	screenshotFailures  prometheus.Counter
-	screenshotSuccesses prometheus.Counter
+	ds dashboards.DashboardService
+	rs rendering.Service
 }
 
-func NewBrowserScreenshotService(metrics prometheus.Registerer, ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
+func NewBrowserScreenshotService(ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
 	return &BrowserScreenshotService{
 		ds: ds,
 		rs: rs,
-		screenshotDuration: promauto.With(metrics).NewHistogram(prometheus.HistogramOpts{
-			Name:      "browser_screenshot_duration_seconds",
-			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15},
-			Namespace: namespace,
-			Subsystem: subsystem,
-		}),
-		screenshotFailures: promauto.With(metrics).NewCounter(prometheus.CounterOpts{
-			Name:      "browser_screenshot_failures_total",
-			Namespace: namespace,
-			Subsystem: subsystem,
-		}),
-		screenshotSuccesses: promauto.With(metrics).NewCounter(prometheus.CounterOpts{
-			Name:      "browser_screenshot_successes_total",
-			Namespace: namespace,
-			Subsystem: subsystem,
-		}),
 	}
 }
 
@@ -120,12 +101,8 @@ func NewBrowserScreenshotService(metrics prometheus.Registerer, ds dashboards.Da
 func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
 	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
 	if err := s.ds.GetDashboard(ctx, &q); err != nil {
-		defer s.screenshotFailures.Inc()
 		return nil, err
 	}
-
-	start := time.Now()
-	defer func() { s.screenshotDuration.Observe(time.Since(start).Seconds()) }()
 
 	opts = opts.SetDefaults()
 
@@ -162,11 +139,9 @@ func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOpti
 
 	result, err := s.rs.Render(ctx, renderOpts, nil)
 	if err != nil {
-		defer s.screenshotFailures.Inc()
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}
 
-	defer s.screenshotSuccesses.Inc()
 	screenshot := Screenshot{Path: result.FilePath}
 	return &screenshot, nil
 }

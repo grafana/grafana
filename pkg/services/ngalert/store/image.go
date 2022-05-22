@@ -57,9 +57,10 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {
 
 func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// TODO: Is this a good idea?
+		// TODO: Is this a good idea? Do we actually want to automatically expire
+		// rows? See issue https://github.com/grafana/grafana/issues/49366
 		img.ExpiresAt = TimeNow().Add(1 * time.Minute).UTC()
-		if img.ID == 0 { // xorm will generate fill this field on Insert.
+		if img.ID == 0 { // xorm will fill this field on Insert.
 			token, err := uuid.NewV4()
 			if err != nil {
 				return fmt.Errorf("failed to create token: %w", err)
