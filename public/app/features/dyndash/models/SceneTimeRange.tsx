@@ -18,7 +18,10 @@ export class SceneTimeRange extends SceneItemBase<TimeRangeState> {
     this.setState({ timeRange });
   };
 
-  onRunQueries = () => {};
+  onRefresh = () => {
+    // TODO re-eval time range
+    this.setState({ ...this.state });
+  };
 
   onIntervalChanged = (_: string) => {};
 }
@@ -44,7 +47,7 @@ function SceneTimeRangeRenderer({ model }: { model: SceneTimeRange }) {
         onChangeFiscalYearStartMonth={() => {}}
       />
 
-      <RefreshPicker onRefresh={model.onRunQueries} onIntervalChanged={model.onIntervalChanged} />
+      <RefreshPicker onRefresh={model.onRefresh} onIntervalChanged={model.onIntervalChanged} />
     </ToolbarButtonRow>
   );
 }

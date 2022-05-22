@@ -44,7 +44,16 @@ export function getDemoScene(): Scene {
         timeRange: getDefaultTimeRange(),
       }),
       data: new SceneQueryRunner({
-        queries: [],
+        queries: [
+          {
+            refId: 'A',
+            datasource: {
+              uid: 'gdev-testdata',
+              type: 'testdata',
+            },
+            scenarioId: 'random_walk',
+          },
+        ],
       }),
     },
     actions: [

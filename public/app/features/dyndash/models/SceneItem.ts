@@ -1,4 +1,4 @@
-import { ReplaySubject } from 'rxjs';
+import { Observer, ReplaySubject, Subscribable, Subscription } from 'rxjs';
 
 import { PanelData, TimeRange, useObservable } from '@grafana/data';
 
@@ -6,14 +6,15 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   subject = new ReplaySubject<TState>();
   state: TState;
   parent?: SceneItemBase<any>;
+  subs = new Subscription();
 
   constructor(state: TState) {
     this.state = state;
     this.subject.next(state);
-    this.setParents();
+    this.setParent();
   }
 
-  private setParents() {
+  private setParent() {
     for (const propValue of Object.values(this.state)) {
       if (propValue instanceof SceneItemBase) {
         propValue.parent = this;
@@ -28,12 +29,16 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
     }
   }
 
+  subscribe(observer: Partial<Observer<TState>>) {
+    return this.subject.subscribe(observer);
+  }
+
   setState(state: Partial<TState>) {
     this.state = {
       ...this.state,
       ...state,
     };
-    this.setParents();
+    this.setParent();
     this.subject.next(this.state);
   }
 
@@ -69,11 +74,14 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
 
     return null;
   }
+
+  destroy() {
+    this.subs.unsubscribe();
+  }
 }
 
-export interface SceneItem<TState> {
+export interface SceneItem<TState> extends Subscribable<TState> {
   state: TState;
-
   Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
   useState(): TState;
   setState(state: TState): void;
