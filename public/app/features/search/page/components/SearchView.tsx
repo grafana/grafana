@@ -56,9 +56,10 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
     if (!q.query?.length) {
       q.query = '*';
       q.kind = ['dashboard'];
-      if (!q.sort?.length) {
-        q.sort = 'name_sort';
-      }
+    }
+
+    if (q.query === '*' && !q.sort?.length) {
+      q.sort = 'name_sort';
     }
 
     return getGrafanaSearcher().search(q);

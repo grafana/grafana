@@ -1,5 +1,4 @@
 import { SelectableValue } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
 
 const sortFields = [
@@ -16,7 +15,7 @@ export async function getSortOptions(): Promise<SelectableValue[]> {
     { value: '-name_sort', label: 'Alphabetically (Z-A)' },
   ];
 
-  if (config.licenseInfo.edition !== GrafanaEdition.OpenSource) {
+  if (config.licenseInfo.enabledFeatures.analytics) {
     for (const sf of sortFields) {
       opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
       opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
