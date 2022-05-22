@@ -4,7 +4,7 @@ import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Checkbox, CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
@@ -29,6 +29,7 @@ interface SectionHeaderProps {
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
+  tags?: string[];
 }
 
 export const FolderSection: FC<SectionHeaderProps> = ({
@@ -37,6 +38,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   onTagSelected,
   selection,
   renderStandaloneBody,
+  tags,
 }) => {
   const editable = selectionToggle != null;
   const theme = useTheme();
@@ -74,7 +76,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       folderUid = undefined;
       folderTitle = undefined;
     }
-    const raw = await getGrafanaSearcher().search(query);
+    const raw = await getGrafanaSearcher().search({ ...query, tags });
     const v = raw.view.map(
       (item) =>
         ({
@@ -91,7 +93,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
         } as DashboardSectionItem)
     );
     return v;
-  }, [sectionExpanded, section]);
+  }, [sectionExpanded, section, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
@@ -128,7 +130,15 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const renderResults = () => {
     if (!results.value?.length) {
-      return <div>No items found</div>;
+      if (results.loading) {
+        return <Spinner />;
+      }
+
+      return (
+        <Card>
+          <Card.Heading>No results found</Card.Heading>
+        </Card>
+      );
     }
 
     return results.value.map((v) => {

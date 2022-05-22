@@ -23,10 +23,12 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction =
-  createAction<{ richHistory: RichHistoryQuery[]; exploreId: ExploreId }>('explore/richHistoryUpdated');
+export const richHistoryUpdatedAction = createAction<{ richHistory: RichHistoryQuery[]; exploreId: ExploreId }>(
+  'explore/richHistoryUpdated'
+);
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
+export const richHistoryMigrationFailedAction = createAction('explore/richHistoryMigrationFailedAction');
 
 export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings>('explore/richHistorySettingsUpdated');
 export const richHistorySearchFiltersUpdatedAction = createAction<{
@@ -170,6 +172,7 @@ export const initialExploreState: ExploreState = {
   right: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
+  richHistoryMigrationFailed: false,
 };
 
 /**
@@ -228,6 +231,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistoryLimitExceededWarningShown: true,
+    };
+  }
+
+  if (richHistoryMigrationFailedAction.match(action)) {
+    return {
+      ...state,
+      richHistoryMigrationFailed: true,
     };
   }
 

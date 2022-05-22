@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -90,5 +91,8 @@ func contextProvider() web.Handler {
 			SkipCache:    true,
 		}
 		c.Map(reqCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
+		c.Map(c.Req)
 	}
 }

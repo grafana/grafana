@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"xorm.io/xorm"
-
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -201,26 +199,6 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 	})
 }
 
-func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
-			return models.ErrCommandValidationFailed
-		}
-
-		var dashboards = make([]*models.Dashboard, 0)
-		var session *xorm.Session
-		if len(query.DashboardIds) > 0 {
-			session = dbSession.In("id", query.DashboardIds)
-		} else {
-			session = dbSession.In("uid", query.DashboardUIds)
-		}
-
-		err := session.Find(&dashboards)
-		query.Result = dashboards
-		return err
-	})
-}
-
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
 // The function takes in a list of dashboard ids and the user id and role
 func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
@@ -290,25 +268,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 		}
 
 		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
-
-		us := &models.DashboardRef{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(us)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = us
-		return nil
 	})
 }
 
