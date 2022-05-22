@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+// Enterprise only sort field values for dashboards
 const sortFields = [
   { name: 'views_total', display: 'Views total' },
   { name: 'views_last_30_days', display: 'Views 30 days' },
@@ -25,6 +26,7 @@ export async function getSortOptions(): Promise<SelectableValue[]> {
   return opts;
 }
 
+/** Given the internal field name, this gives a reasonable display name for the table colum header */
 export function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
     if (sf.name === name) {
