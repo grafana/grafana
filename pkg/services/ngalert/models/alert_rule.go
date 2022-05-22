@@ -81,7 +81,7 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation    = "__dashboardUid__"
 	PanelIDAnnotation         = "__panelId__"
-	ScreenshotTokenAnnotation = "__alert_screenshot_token__"
+	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
 )
 
 var (

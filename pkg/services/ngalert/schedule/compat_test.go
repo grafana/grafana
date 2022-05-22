@@ -119,7 +119,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					require.Equal(t, expected, result.Annotations)
 				})
 
-				t.Run("add __alert_screenshot_token__ if there is an image token", func(t *testing.T) {
+				t.Run("add __alertScreenshotToken__ if there is an image token", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &store.Image{Token: "test_token"}
@@ -130,7 +130,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					for k, v := range alertState.Annotations {
 						expected[k] = v
 					}
-					expected["__alert_screenshot_token__"] = alertState.Image.Token
+					expected["__alertScreenshotToken__"] = alertState.Image.Token
 
 					require.Equal(t, expected, result.Annotations)
 				})

@@ -190,7 +190,6 @@ func (st *Manager) maybeNewImage(ctx context.Context, alertRule *ngModels.AlertR
 		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
 		return nil
 	} else if err != nil {
-		st.log.Error("failed to create image", "error", err)
 		return err
 	}
 	state.Image = img
