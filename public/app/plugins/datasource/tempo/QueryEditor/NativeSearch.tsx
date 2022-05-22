@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import Prism from 'prismjs';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
@@ -70,46 +69,36 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanName: false,
   });
 
-  async function loadOptions(name: string, lp: TempoLanguageProvider, query = '') {
-    const lpName = name === 'serviceName' ? 'service.name' : 'name';
-    setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
-
-    try {
-      const options = await lp.getOptions(lpName);
-      const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
-      return filteredOptions;
-    } catch (error) {
-      if (error?.status === 404) {
-        setError(error);
-      } else {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
-      }
-      return [];
-    } finally {
-      setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
-    }
-  }
-
-  const loadOptionsOfType = useCallback(
-    (name: string) => {
+  const loadOptions = useCallback(
+    async (name: string, query = '') => {
+      const lpName = name === 'serviceName' ? 'service.name' : 'name';
       setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
-      return loadOptions(name, languageProvider);
+
+      try {
+        const options = await languageProvider.getOptions(lpName);
+        const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        return filteredOptions;
+      } catch (error) {
+        if (error?.status === 404) {
+          setError(error);
+        } else {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+        return [];
+      } finally {
+        setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
+      }
     },
     [languageProvider]
-  );
-
-  const fetchOptionsOfType = useCallback(
-    (name: string) => debounce(() => loadOptionsOfType(name), 500, { leading: true, trailing: true }),
-    [loadOptionsOfType]
   );
 
   useEffect(() => {
     const fetchOptions = async () => {
       try {
         await languageProvider.start();
-        const services = await loadOptions('serviceName', languageProvider);
+        const services = await loadOptions('serviceName');
         setServiceOptions(services);
-        const spans = await loadOptions('spanName', languageProvider);
+        const spans = await loadOptions('spanName');
         setSpanOptions(spans);
         setHasSyntaxLoaded(true);
       } catch (error) {
@@ -123,7 +112,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       }
     };
     fetchOptions();
-  }, [languageProvider, fetchOptionsOfType]);
+  }, [languageProvider, loadOptions]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -153,7 +142,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <Select
               inputId="service"
               options={serviceOptions}
-              onOpenMenu={fetchOptionsOfType('serviceName')}
+              onOpenMenu={() => {
+                loadOptions('serviceName');
+              }}
               isLoading={isLoading.serviceName}
               value={asyncServiceNameValue.value}
               onChange={(v) => {
@@ -177,7 +168,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <Select
               inputId="spanName"
               options={spanOptions}
-              onOpenMenu={fetchOptionsOfType('spanName')}
+              onOpenMenu={() => {
+                loadOptions('spanName');
+              }}
               isLoading={isLoading.spanName}
               value={asyncSpanNameValue.value}
               onChange={(v) => {
