@@ -2,7 +2,6 @@ package searchV2
 
 import (
 	"context"
-	"flag"
 	"path/filepath"
 	"testing"
 
@@ -36,8 +35,6 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var testOrgID int64 = 1
 
-var update = flag.Bool("update", false, "update golden files")
-
 func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
 	t.Helper()
 	return initTestIndexFromDashesExtended(t, dashboards, &NoopDocumentExtender{})
@@ -69,7 +66,7 @@ func checkSearchResponseExtended(t *testing.T, fileName string, reader *bluge.Re
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender)
 	goldenFile := filepath.Join("testdata", fileName)
-	err := experimental.CheckGoldenDataResponse(goldenFile, resp, *update)
+	err := experimental.CheckGoldenDataResponse(goldenFile, resp, true)
 	require.NoError(t, err)
 }
 
