@@ -55,6 +55,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
+      sort: 'name_sort',
     };
     if (section.title === 'Starred') {
       const stars = await getBackendSrv().get('api/user/stars');
