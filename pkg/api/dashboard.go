@@ -16,13 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -37,12 +41,8 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *models.ReqContext, dashID int6
 		return false, nil
 	}
 
-	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := hs.SQLStore.IsStarredByUserCtx(c.Req.Context(), &query); err != nil {
-		return false, err
-	}
-
-	return query.Result, nil
+	query := star.IsStarredByUserQuery{UserID: c.UserId, DashboardID: dashID}
+	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
 }
 
 func dashboardGuardianResponse(err error) response.Response {
@@ -308,6 +308,28 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
+		// Ideally, coremodel validation calls would be integrated into the web
+		// framework. But this does the job for now.
+		if cm, has := hs.CoremodelRegistry.Get("dashboard"); has {
+			schv, err := cmd.Dashboard.Get("schemaVersion").Int()
+
+			// Only try to validate if the schemaVersion is at least the handoff version
+			// (the minimum schemaVersion against which the dashboard schema is known to
+			// work), or if schemaVersion is absent (which will happen once the Thema
+			// schema becomes canonical).
+			if err != nil || schv >= dashboard.HandoffSchemaVersion {
+				// Can't fail, web.Bind() already ensured it's valid JSON
+				b, _ := cmd.Dashboard.Bytes()
+				v, _ := cuectx.JSONtoCUE("dashboard.json", b)
+				if _, err := cm.CurrentSchema().Validate(v); err != nil {
+					return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
+				}
+			}
+		}
+	}
+
 	return hs.postDashboard(c, cmd)
 }
 
@@ -446,7 +468,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
-		err := hs.SQLStore.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		err := hs.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -786,7 +808,7 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.Id = id
-		err = hs.SQLStore.GetDashboardUIDById(c.Req.Context(), q)
+		err = hs.dashboardService.GetDashboardUIDById(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}

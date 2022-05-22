@@ -13,7 +13,6 @@ import {
 import { react2AngularDirective } from 'app/angular/react2angular';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
-import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
 
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
@@ -114,12 +113,6 @@ export function registerAngularDirectives() {
     'onQueryChange',
     'onExecuteQuery',
     ['events', { watchDepth: 'reference' }],
-    ['datasource', { watchDepth: 'reference' }],
-    ['templateSrv', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('cloudMonitoringAnnotationQueryEditor', CloudMonitoringAnnotationQueryEditor, [
-    'target',
-    'onQueryChange',
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
