@@ -31,7 +31,7 @@ const (
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
-func stateToPostableAlert(alertState *state.AlertInstance, appURL *url.URL) *models.PostableAlert {
+func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.PostableAlert {
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
@@ -73,7 +73,7 @@ func stateToPostableAlert(alertState *state.AlertInstance, appURL *url.URL) *mod
 // It effectively replaces the legacy behavior of "Keep Last State" by separating the regular alerting flow from the no data scenario into a separate alerts.
 // The Alert is defined as:
 // {  alertname=DatasourceNoData rulename=original_alertname } + { rule labelset } + { rule annotations }
-func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.AlertInstance, urlStr string) *models.PostableAlert {
+func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.State, urlStr string) *models.PostableAlert {
 	if name, ok := labels[model.AlertNameLabel]; ok {
 		labels[Rulename] = name
 	}
@@ -92,7 +92,7 @@ func noDataAlert(labels data.Labels, annotations data.Labels, alertState *state.
 
 // errorAlert is a special alert sent when evaluation of an alert rule failed due to an error. Like noDataAlert, it
 // replaces the old behaviour of "Keep Last State" creating a separate alert called DatasourceError.
-func errorAlert(labels, annotations data.Labels, alertState *state.AlertInstance, urlStr string) *models.PostableAlert {
+func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr string) *models.PostableAlert {
 	if name, ok := labels[model.AlertNameLabel]; ok {
 		labels[Rulename] = name
 	}
@@ -109,9 +109,9 @@ func errorAlert(labels, annotations data.Labels, alertState *state.AlertInstance
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.AlertInstance, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*state.AlertInstance
+	var sentAlerts []*state.State
 	ts := time.Now()
 
 	for _, alertState := range firingStates {
@@ -129,7 +129,7 @@ func FromAlertStateToPostableAlerts(firingStates []*state.AlertInstance, stateMa
 
 // FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
 // Returns a list of alert instances that have expiration time.Now
-func FromAlertsStateToStoppedAlert(firingStates []*state.AlertInstance, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {

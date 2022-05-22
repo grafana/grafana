@@ -17,7 +17,7 @@ import (
 )
 
 type cache struct {
-	states      map[int64]map[string]map[string]*AlertInstance // orgID > alertRuleUID > stateID > state
+	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
 	mtxStates   sync.RWMutex
 	log         log.Logger
 	metrics     *metrics.State
@@ -26,14 +26,14 @@ type cache struct {
 
 func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
 	return &cache{
-		states:      make(map[int64]map[string]map[string]*AlertInstance),
+		states:      make(map[int64]map[string]map[string]*State),
 		log:         logger,
 		metrics:     metrics,
 		externalURL: externalURL,
 	}
 }
 
-func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *AlertInstance {
+func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
@@ -53,10 +53,10 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
-		c.states[alertRule.OrgID] = make(map[string]map[string]*AlertInstance)
+		c.states[alertRule.OrgID] = make(map[string]map[string]*State)
 	}
 	if _, ok := c.states[alertRule.OrgID][alertRule.UID]; !ok {
-		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*AlertInstance)
+		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*State)
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
@@ -78,7 +78,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 
 	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
 	// do not have data for determining StartsAt otherwise
-	newState := &AlertInstance{
+	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
 		CacheId:            id,
@@ -117,19 +117,19 @@ func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *n
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
-func (c *cache) set(entry *AlertInstance) {
+func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[entry.OrgID]; !ok {
-		c.states[entry.OrgID] = make(map[string]map[string]*AlertInstance)
+		c.states[entry.OrgID] = make(map[string]map[string]*State)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*AlertInstance)
+		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
 	}
 	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*AlertInstance, error) {
+func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
@@ -138,8 +138,8 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*AlertInstance, 
 	return nil, fmt.Errorf("no entry for %s:%s was found", alertRuleUID, stateId)
 }
 
-func (c *cache) getAll(orgID int64) []*AlertInstance {
-	var states []*AlertInstance
+func (c *cache) getAll(orgID int64) []*State {
+	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
@@ -150,8 +150,8 @@ func (c *cache) getAll(orgID int64) []*AlertInstance {
 	return states
 }
 
-func (c *cache) getInstancesForRuleUID(orgID int64, alertRuleUID string) []*AlertInstance {
-	var ruleStates []*AlertInstance
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+	var ruleStates []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, state := range c.states[orgID][alertRuleUID] {
@@ -170,7 +170,7 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) {
 func (c *cache) reset() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	c.states = make(map[int64]map[string]map[string]*AlertInstance)
+	c.states = make(map[int64]map[string]map[string]*State)
 }
 
 func (c *cache) recordMetrics() {

@@ -44,7 +44,7 @@ func TestWarmStateCache(t *testing.T) {
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
 
-	expectedEntries := []*state.AlertInstance{
+	expectedEntries := []*state.State{
 		{
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
@@ -115,7 +115,7 @@ func TestWarmStateCache(t *testing.T) {
 			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
 			require.NoError(t, err)
 
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.AlertInstance{}, "Results")); diff != "" {
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}

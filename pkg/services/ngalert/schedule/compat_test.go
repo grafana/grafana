@@ -198,7 +198,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	}
 
 	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
-	states := make([]*state.AlertInstance, 0, len(evalStates))
+	states := make([]*state.State, 0, len(evalStates))
 	for _, s := range evalStates {
 		states = append(states, randomState(s))
 	}
@@ -242,8 +242,8 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func randomState(evalState eval.State) *state.AlertInstance {
-	return &state.AlertInstance{
+func randomState(evalState eval.State) *state.State {
+	return &state.State{
 		State:              evalState,
 		AlertRuleUID:       util.GenerateShortUID(),
 		StartsAt:           time.Now(),

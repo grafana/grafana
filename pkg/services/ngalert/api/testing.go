@@ -14,22 +14,22 @@ import (
 
 type fakeAlertInstanceManager struct {
 	mtx sync.Mutex
-	// orgID -> RuleID -> AlertInstances
-	states map[int64]map[string][]*state.AlertInstance
+	// orgID -> RuleID -> States
+	states map[int64]map[string][]*state.State
 }
 
 func NewFakeAlertInstanceManager(t *testing.T) *fakeAlertInstanceManager {
 	t.Helper()
 
 	return &fakeAlertInstanceManager{
-		states: map[int64]map[string][]*state.AlertInstance{},
+		states: map[int64]map[string][]*state.State{},
 	}
 }
 
-func (f *fakeAlertInstanceManager) GetAll(orgID int64) []*state.AlertInstance {
+func (f *fakeAlertInstanceManager) GetAll(orgID int64) []*state.State {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	var s []*state.AlertInstance
+	var s []*state.State
 
 	for orgID := range f.states {
 		for _, states := range f.states[orgID] {
@@ -40,14 +40,14 @@ func (f *fakeAlertInstanceManager) GetAll(orgID int64) []*state.AlertInstance {
 	return s
 }
 
-func (f *fakeAlertInstanceManager) GetInstancesForRuleUID(orgID int64, alertRuleUID string) []*state.AlertInstance {
+func (f *fakeAlertInstanceManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	return f.states[orgID][alertRuleUID]
 }
 
 // forEachState represents the callback used when generating alert instances that allows us to modify the generated result
-type forEachState func(s *state.AlertInstance) *state.AlertInstance
+type forEachState func(s *state.State) *state.State
 
 func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRuleUID string, count int, callbacks ...forEachState) {
 	f.mtx.Lock()
@@ -59,14 +59,14 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 	for i := 0; i < count; i++ {
 		_, ok := f.states[orgID]
 		if !ok {
-			f.states[orgID] = map[string][]*state.AlertInstance{}
+			f.states[orgID] = map[string][]*state.State{}
 		}
 		_, ok = f.states[orgID][alertRuleUID]
 		if !ok {
-			f.states[orgID][alertRuleUID] = []*state.AlertInstance{}
+			f.states[orgID][alertRuleUID] = []*state.State{}
 		}
 
-		newState := &state.AlertInstance{
+		newState := &state.State{
 			AlertRuleUID: alertRuleUID,
 			OrgID:        1,
 			Labels: data.Labels{

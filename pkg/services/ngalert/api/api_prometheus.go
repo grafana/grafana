@@ -74,7 +74,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, alertResponse)
 }
 
-func formatValues(alertState *state.AlertInstance) string {
+func formatValues(alertState *state.State) string {
 	var fv string
 	values := alertState.GetLastEvaluationValuesForCondition()
 
@@ -209,35 +209,35 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertInstance := range srv.manager.GetInstancesForRuleUID(rule.OrgID, rule.UID) {
-			activeAt := alertInstance.StartsAt
+		for _, alertState := range srv.manager.GetStatesForRuleUID(rule.OrgID, rule.UID) {
+			activeAt := alertState.StartsAt
 			valString := ""
-			if alertInstance.State == eval.Alerting || alertInstance.State == eval.Pending {
-				valString = formatValues(alertInstance)
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+				valString = formatValues(alertState)
 			}
 
 			alert := &apimodels.Alert{
-				Labels:      alertInstance.GetLabels(labelOptions...),
-				Annotations: alertInstance.Annotations,
+				Labels:      alertState.GetLabels(labelOptions...),
+				Annotations: alertState.Annotations,
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
 				State: state.InstanceStateAndReason{
-					State:  alertInstance.State,
-					Reason: alertInstance.StateReason,
+					State:  alertState.State,
+					Reason: alertState.StateReason,
 				}.String(),
 
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
 
-			if alertInstance.LastEvaluationTime.After(newRule.LastEvaluation) {
-				newRule.LastEvaluation = alertInstance.LastEvaluationTime
+			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
+				newRule.LastEvaluation = alertState.LastEvaluationTime
 			}
 
-			newRule.EvaluationTime = alertInstance.EvaluationDuration.Seconds()
+			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
-			switch alertInstance.State {
+			switch alertState.State {
 			case eval.Normal:
 			case eval.Pending:
 				if alertingRule.State == "inactive" {
@@ -251,8 +251,8 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 				newRule.Health = "nodata"
 			}
 
-			if alertInstance.Error != nil {
-				newRule.LastError = alertInstance.Error.Error()
+			if alertState.Error != nil {
+				newRule.LastError = alertState.Error.Error()
 				newRule.Health = "error"
 			}
 

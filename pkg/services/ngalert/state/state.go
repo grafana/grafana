@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AlertInstance struct {
+type State struct {
 	AlertRuleUID string
 	OrgID        int64
 	CacheId      string
@@ -56,7 +56,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *AlertInstance) resultNormal(_ *models.AlertRule, result eval.Result) {
+func (a *State) resultNormal(_ *models.AlertRule, result eval.Result) {
 	a.Error = nil // should be nil since state is not error
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
@@ -65,7 +65,7 @@ func (a *AlertInstance) resultNormal(_ *models.AlertRule, result eval.Result) {
 	a.State = eval.Normal
 }
 
-func (a *AlertInstance) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
+func (a *State) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since the state is not an error
 
 	switch a.State {
@@ -89,7 +89,7 @@ func (a *AlertInstance) resultAlerting(alertRule *models.AlertRule, result eval.
 	}
 }
 
-func (a *AlertInstance) resultError(alertRule *models.AlertRule, result eval.Result) {
+func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	execErrState := eval.Error
@@ -142,7 +142,7 @@ func (a *AlertInstance) resultError(alertRule *models.AlertRule, result eval.Res
 	}
 }
 
-func (a *AlertInstance) resultNoData(alertRule *models.AlertRule, result eval.Result) {
+func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	if a.StartsAt.IsZero() {
@@ -160,7 +160,7 @@ func (a *AlertInstance) resultNoData(alertRule *models.AlertRule, result eval.Re
 	}
 }
 
-func (a *AlertInstance) NeedsSending(resendDelay time.Duration) bool {
+func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
 		return false
 	}
@@ -169,7 +169,7 @@ func (a *AlertInstance) NeedsSending(resendDelay time.Duration) bool {
 	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
-func (a *AlertInstance) Equals(b *AlertInstance) bool {
+func (a *State) Equals(b *State) bool {
 	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
@@ -181,7 +181,7 @@ func (a *AlertInstance) Equals(b *AlertInstance) bool {
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
-func (a *AlertInstance) TrimResults(alertRule *models.AlertRule) {
+func (a *State) TrimResults(alertRule *models.AlertRule) {
 	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
 	if numBuckets == 0 {
 		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
@@ -199,7 +199,7 @@ func (a *AlertInstance) TrimResults(alertRule *models.AlertRule) {
 // The internal Alertmanager will use this time to know when it should automatically resolve the alert
 // in case it hasn't received additional alerts. Under regular operations the scheduler will continue to send the
 // alert with an updated EndsAt, if the alert is resolved then a last alert is sent with EndsAt = last evaluation time.
-func (a *AlertInstance) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
+func (a *State) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
 	ends := ResendDelay
 	if alertRule.IntervalSeconds > int64(ResendDelay.Seconds()) {
 		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
@@ -208,7 +208,7 @@ func (a *AlertInstance) setEndsAt(alertRule *models.AlertRule, result eval.Resul
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
 }
 
-func (a *AlertInstance) GetLabels(opts ...models.LabelOption) map[string]string {
+func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 	labels := a.Labels.Copy()
 
 	for _, opt := range opts {
@@ -218,7 +218,7 @@ func (a *AlertInstance) GetLabels(opts ...models.LabelOption) map[string]string 
 	return labels
 }
 
-func (a *AlertInstance) GetLastEvaluationValuesForCondition() map[string]float64 {
+func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	if len(a.Results) <= 0 {
 		return nil
 	}

@@ -352,7 +352,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
 	normalStates := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
-	allInstances := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
+	allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
 	randomNormalState := func() eval.State {
 		// pick only supported cases
 		return normalStates[rand.Intn(3)]
@@ -398,9 +398,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			})
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				instances := sch.stateManager.GetInstancesForRuleUID(rule.OrgID, rule.UID)
-				require.Len(t, instances, 1)
-				s := instances[0]
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				require.Len(t, states, 1)
+				s := states[0]
 				t.Logf("State: %v", s)
 				require.Equal(t, rule.UID, s.AlertRuleUID)
 				require.Len(t, s.Results, 1)
@@ -413,7 +413,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			})
 			t.Run("it should save alert instances to storage", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				states := sch.stateManager.GetInstancesForRuleUID(rule.OrgID, rule.UID)
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
 
@@ -689,10 +689,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			var rule = *rulePtr
 
 			// define some state
-			instances := make([]*state.AlertInstance, 0, len(allInstances))
-			for _, s := range allInstances {
+			states := make([]*state.State, 0, len(allStates))
+			for _, s := range allStates {
 				for i := 0; i < 2; i++ {
-					instances = append(instances, &state.AlertInstance{
+					states = append(states, &state.State{
 						AlertRuleUID: rule.UID,
 						CacheId:      util.GenerateShortUID(),
 						OrgID:        rule.OrgID,
@@ -703,9 +703,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 					})
 				}
 			}
-			sch.stateManager.Put(instances)
-			instances = sch.stateManager.GetInstancesForRuleUID(rule.OrgID, rule.UID)
-			expectedToBeSent := FromAlertsStateToStoppedAlert(instances, sch.appURL, sch.clock)
+			sch.stateManager.Put(states)
+			states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			expectedToBeSent := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 			require.NotEmptyf(t, expectedToBeSent.PostableAlerts, "State manger was expected to return at least one state that can be expired")
 
 			go func() {
@@ -735,7 +735,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			wg.Wait()
 
 			require.Eventually(t, func() bool {
-				return len(sch.stateManager.GetInstancesForRuleUID(rule.OrgID, rule.UID)) == 0
+				return len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)) == 0
 			}, 5*time.Second, 100*time.Millisecond)
 
 			var count int

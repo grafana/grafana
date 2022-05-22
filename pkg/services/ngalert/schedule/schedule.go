@@ -507,7 +507,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 
 	clearState := func() {
-		states := sch.stateManager.GetInstancesForRuleUID(key.OrgID, key.UID)
+		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
 		notify(expiredAlerts, logger)
@@ -628,7 +628,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 }
 
-func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.AlertInstance) {
+func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
