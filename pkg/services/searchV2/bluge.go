@@ -254,7 +254,7 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 		sortStr := strings.Trim(strings.ToUpper(name), " ")
 		if len(sortStr) > 0 {
 			if sortStr[0] < 'A' {
-				sortStr = "__" + sortStr // put numbers and punctuation *after* A-Z
+				sortStr = "_" + sortStr // put numbers and punctuation *after* A-Z
 			}
 			doc.AddField(bluge.NewKeywordField(documentFieldName_sort, sortStr).Sortable())
 		}
