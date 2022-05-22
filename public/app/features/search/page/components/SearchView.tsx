@@ -53,15 +53,21 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
     return getGrafanaSearcher().search(q);
   }, [query, layout, queryText, folderDTO]);
 
+  const onDeselectAll = useCallback(() => {
+    searchSelection.items.clear();
+    setSearchSelection({ ...searchSelection });
+  }, [searchSelection]);
+
   const toggleSelection = useCallback(
     (kind: string, uid: string) => {
-      const current = searchSelection.isSelected(kind, uid);
-      if (kind === 'folder') {
-        // ??? also select all children?
+      if (kind === 'x' && uid === 'x') {
+        onDeselectAll();
+        return;
       }
+      const current = searchSelection.isSelected(kind, uid);
       setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
     },
-    [searchSelection]
+    [searchSelection, onDeselectAll]
   );
 
   if (!config.featureToggles.panelTitleSearch) {
@@ -168,7 +174,7 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
   return (
     <>
       {Boolean(searchSelection.items.size > 0) ? (
-        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
+        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} onDeselectAll={onDeselectAll} />
       ) : (
         <ActionRow
           onLayoutChange={(v) => {

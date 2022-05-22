@@ -1,10 +1,10 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -35,17 +35,36 @@ export const generateColumns = (
     columns.push({
       id: `column-checkbox`,
       width,
-      Header: () => (
-        <div className={styles.checkboxHeader}>
-          <Checkbox
-            onChange={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              alert('SELECT ALL!!!');
-            }}
-          />
-        </div>
-      ),
+      Header: () => {
+        if (selection('*', '*')) {
+          return (
+            <div className={styles.checkboxHeader}>
+              <IconButton name={'check-square' as any} onClick={() => selectionToggle('x', 'x')} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.checkboxHeader}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const { view } = response;
+                const count = Math.min(view.length, 50);
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  if (item.uid && item.kind) {
+                    if (!selection(item.kind, item.uid)) {
+                      selectionToggle(item.kind, item.uid);
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        );
+      },
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
