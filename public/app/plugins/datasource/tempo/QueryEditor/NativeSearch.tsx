@@ -51,12 +51,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [asyncServiceNameValue, setAsyncServiceNameValue] = useState<SelectableValue<any>>({
-    value: '',
-  });
-  const [asyncSpanNameValue, setAsyncSpanNameValue] = useState<SelectableValue<any>>({
-    value: '',
-  });
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
   const [error, setError] = useState(null);
@@ -146,11 +140,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('serviceName');
               }}
               isLoading={isLoading.serviceName}
-              value={asyncServiceNameValue.value}
+              value={serviceOptions?.find((v) => v?.value === query.serviceName) || undefined}
               onChange={(v) => {
-                setAsyncServiceNameValue({
-                  value: v,
-                });
                 onChange({
                   ...query,
                   serviceName: v?.value || undefined,
@@ -172,9 +163,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('spanName');
               }}
               isLoading={isLoading.spanName}
-              value={asyncSpanNameValue.value}
+              value={spanOptions?.find((v) => v?.value === query.spanName) || undefined}
               onChange={(v) => {
-                setAsyncSpanNameValue({ value: v });
                 onChange({
                   ...query,
                   spanName: v?.value || undefined,
