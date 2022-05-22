@@ -243,5 +243,11 @@ var (
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "validateDashboardsOnSave",
+			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
 	}
 )
