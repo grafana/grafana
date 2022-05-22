@@ -232,8 +232,9 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	strb.WriteString(fmt.Sprintf(genHeader, ls.RelativePath))
 
 	if !ls.IsCanonical {
-		strb.WriteString(`// This model is not yet canonical, but is on its way. Until then,
-// its members are unexported to exclude it from the public surface area of grafana-schema.
+		strb.WriteString(`
+// This model is a WIP and not yet canonical. Consequently, its members are
+// not exported to exclude it from grafana-schema's public API surface.
 
 `)
 		strb.WriteString(fmt.Sprint(parts))

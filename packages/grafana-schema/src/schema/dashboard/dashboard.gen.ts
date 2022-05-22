@@ -4,8 +4,9 @@
 //
 // Derived from the Thema lineage at pkg/coremodel/dashboard
 
-// This model is not yet canonical, but is on its way. Until then,
-// its members are unexported to exclude it from the public surface area of grafana-schema.
+
+// This model is a WIP and not yet canonical. Consequently, its members are
+// not exported to exclude it from grafana-schema's public API surface.
 
 interface AnnotationQuery {
   builtIn: number;
