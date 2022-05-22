@@ -146,9 +146,8 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		dash.info.Description = ""
 	}
 
-	return newSearchDocument(uid, dash.info.Title, dash.info.Description).
+	return newSearchDocument(uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)).Aggregatable().StoreValue())
 }
 
@@ -156,9 +155,8 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 
 	// Dashboard document
-	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description).
+	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue())
 
 	// Add legacy ID (for lookup by internal ID)
@@ -199,8 +197,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 		}
 
-		doc := newSearchDocument(uid, panel.Title, panel.Description).
-			AddField(bluge.NewKeywordField(documentFieldURL, purl).StoreValue()).
+		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
@@ -246,7 +243,7 @@ var ngramQueryAnalyzer = &analysis.Analyzer{
 }
 
 // Names need to be indexed a few ways to support key features
-func newSearchDocument(uid string, name string, descr string) *bluge.Document {
+func newSearchDocument(uid string, name string, descr string, url string) *bluge.Document {
 	doc := bluge.NewDocument(uid)
 
 	if name != "" {
@@ -264,6 +261,9 @@ func newSearchDocument(uid string, name string, descr string) *bluge.Document {
 	}
 	if descr != "" {
 		doc.AddField(bluge.NewTextField(documentFieldDescription, descr).SearchTermPositions())
+	}
+	if url != "" {
+		doc.AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue())
 	}
 	return doc
 }
@@ -492,6 +492,14 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
 
+	header := &customMeta{
+		SortBy: sortByField,
+	}
+	frame.SetMeta(&data.FrameMeta{
+		Type:   "search-results",
+		Custom: header,
+	})
+
 	fieldLen := 0
 	ext := extender.GetFramer(frame)
 
@@ -515,15 +523,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		var tags []string
 
 		err = match.VisitStoredFields(func(field string, value []byte) bool {
-			// if numericFields[field] {
-			// 	num, err2 := bluge.DecodeNumericFloat64(value)
-			// 	if err2 != nil {
-			// 		vals[field] = num
-			// 	}
-			// } else {
-			// 	vals[field] = string(value)
-			// }
-
 			switch field {
 			case documentFieldUID:
 				uid = string(value)
@@ -542,7 +541,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldTag:
 				tags = append(tags, string(value))
 			default:
-				return ext(field, value)
+				ext(field, value)
 			}
 			return true
 		})
@@ -608,10 +607,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	// Must call after iterating :)
 	aggs := documentMatchIterator.Aggregations()
 
-	header := &customMeta{
-		Count:  aggs.Count(), // Total cound
-		SortBy: sortByField,
-	}
+	header.Count = aggs.Count() // Total cound
 	if q.Explain {
 		header.MaxScore = aggs.Metric("max_score")
 	}
@@ -619,11 +615,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	if len(locationItems) > 0 && !q.SkipLocation {
 		header.Locations = getLocationLookupInfo(ctx, reader, locationItems)
 	}
-
-	frame.SetMeta(&data.FrameMeta{
-		Type:   "search-results",
-		Custom: header,
-	})
 
 	response.Frames = append(response.Frames, frame)
 
