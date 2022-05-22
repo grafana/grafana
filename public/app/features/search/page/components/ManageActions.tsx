@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Button, HorizontalGroup, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
@@ -48,7 +48,7 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          <IconButton name={'check-square' as any} onClick={clearSelection} title="Uncheck everything" />
+          <IconButton name={'check-square' as IconName} onClick={clearSelection} title="Uncheck everything" />
           <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
             Move
           </Button>
