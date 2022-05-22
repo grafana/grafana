@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -15,9 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -41,11 +44,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
+	imageService     image.ImageService
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
-	dashboardService dashboards.DashboardService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -56,6 +60,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
+		imageService:     imageService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -163,6 +168,22 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	}
 	st.staleResultsHandler(ctx, alertRule, processedResults)
 	return states
+}
+
+//nolint:unused
+func (st *Manager) newImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
+	if state.Image == nil {
+		image, err := st.imageService.NewImage(ctx, alertRule)
+		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) {
+			// It's not an error if screenshots are disabled.
+			return nil
+		} else if err != nil {
+			st.log.Error("failed to create image", "error", err)
+			return err
+		}
+		state.Image = image
+	}
+	return nil
 }
 
 // Set the current state based on evaluation results
