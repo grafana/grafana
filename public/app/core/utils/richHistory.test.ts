@@ -184,11 +184,11 @@ describe('richHistory', () => {
     });
 
     it('migrates history', async () => {
-      const history = [{ id: 'test' }, { id: 'test2' }];
+      const history = { richHistory: [{ id: 'test' }, { id: 'test2' }], total: 2 };
 
       richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
       await migrateQueryHistoryFromLocalStorage();
-      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history.richHistory);
     });
     it('does not migrate if there are no entries', async () => {
       richHistoryLocalStorageMock.getRichHistory.mockReturnValue([]);

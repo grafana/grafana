@@ -192,7 +192,7 @@ var (
 	StatsTotalLibraryVariables prometheus.Gauge
 
 	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
-	StatsTotalDataKeys prometheus.Gauge
+	StatsTotalDataKeys *prometheus.GaugeVec
 )
 
 func init() {
@@ -568,11 +568,11 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	StatsTotalDataKeys = prometheus.NewGauge(prometheus.GaugeOpts{
+	StatsTotalDataKeys = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "stat_totals_data_keys",
 		Help:      "total amount of data keys in the database",
 		Namespace: ExporterName,
-	})
+	}, []string{"active"})
 }
 
 // SetBuildInformation sets the build information for this binary
