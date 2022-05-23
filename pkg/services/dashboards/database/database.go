@@ -23,16 +23,14 @@ import (
 type DashboardStore struct {
 	sqlStore *sqlstore.SQLStore
 	log      log.Logger
+	dialect  migrator.Dialect
 }
 
-var (
-	// DashboardStore implements the Store interface
-	_       dashboards.Store = (*DashboardStore)(nil)
-	dialect migrator.Dialect
-)
+// DashboardStore implements the Store interface
+var _ dashboards.Store = (*DashboardStore)(nil)
 
 func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
-	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store")}
+	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), dialect: sqlStore.Dialect}
 }
 
 func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
@@ -997,7 +995,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
 			OrgId:           query.SignedInUser.OrgId,
-			Dialect:         dialect,
+			Dialect:         d.dialect,
 			UserId:          query.SignedInUser.UserId,
 			PermissionLevel: query.Permission,
 		},
@@ -1035,11 +1033,11 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: dialect, Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.dialect, Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: dialect, Type: query.Type})
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.dialect, Type: query.Type})
 	}
 
 	if len(query.FolderIds) > 0 {
@@ -1047,7 +1045,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: dialect, Filters: filters}
+	sb := &searchstore.Builder{Dialect: d.dialect, Filters: filters}
 
 	limit := query.Limit
 	if limit < 1 {
