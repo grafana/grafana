@@ -16,7 +16,6 @@ type PublicDashboard struct {
 	Uid               string `json:"uid" xorm:"uid"`
 	DashboardUid      string `json:"dashboardUid" xorm:"dashboard_uid"`
 	OrgId             int64  `json:"orgId" xorm:"org_id"`
-	RefreshRate       int64  `json:"refreshRate" xorm:"refresh_rate"`
 	TemplateVariables string `json:"templateVariables" xorm:"template_variables"`
 	TimeVariables     string `json:"timeVariables" xorm:"time_variables"`
 }
