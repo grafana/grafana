@@ -315,9 +315,9 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *models.ReqContext) response.Respo
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to update datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 	cmd.Id = ds.Id
 	return hs.updateDataSourceByID(c, ds, cmd)
