@@ -78,6 +78,7 @@ describe('RichHistoryRemoteStorage', () => {
         data: {
           result: {
             queryHistory: returnedDTOs,
+            totalCount: returnedDTOs.length,
           },
         },
       })
@@ -91,14 +92,22 @@ describe('RichHistoryRemoteStorage', () => {
     const expectedLimit = 100;
     const expectedPage = 1;
 
-    const items = await storage.getRichHistory({ search, datasourceFilters, sortOrder, starred, to, from });
+    const { richHistory, total } = await storage.getRichHistory({
+      search,
+      datasourceFilters,
+      sortOrder,
+      starred,
+      to,
+      from,
+    });
 
     expect(fetchMock).toBeCalledWith({
       method: 'GET',
       url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
       requestId: 'query-history-get-all',
     });
-    expect(items).toMatchObject([richHistoryQuery]);
+    expect(richHistory).toMatchObject([richHistoryQuery]);
+    expect(total).toBe(1);
   });
 
   it('read starred home tab preferences', async () => {
