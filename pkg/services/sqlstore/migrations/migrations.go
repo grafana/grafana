@@ -97,6 +97,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addPublicDashboardMigration(mg)
 	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
+
+	accesscontrol.AddManagedPermissionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

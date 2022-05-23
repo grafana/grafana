@@ -204,16 +204,21 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
-				Name:           "slack_testing",
-				Type:           "slack",
-				Settings:       settingsJSON,
-				SecureSettings: secureSettings,
-			}
-
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewSlackConfig(m, decryptFn)
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:           "slack_testing",
+					Type:           "slack",
+					Settings:       settingsJSON,
+					SecureSettings: secureSettings,
+				},
+				ImageStore:          &UnavailableImageStore{},
+				NotificationService: mockNotificationService(),
+				DecryptFunc:         decryptFn,
+			}
+
+			cfg, err := NewSlackConfig(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -246,7 +251,7 @@ func TestSlackNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewSlackNotifier(cfg, tmpl)
+			pn := NewSlackNotifier(cfg, fc.ImageStore, fc.NotificationService, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

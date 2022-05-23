@@ -44,6 +44,29 @@ func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Co
 	return r0
 }
 
+// FindDashboards provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+	ret := _m.Called(ctx, query)
+
+	var r0 []DashboardSearchProjection
+	if rf, ok := ret.Get(0).(func(context.Context, *models.FindPersistedDashboardsQuery) []DashboardSearchProjection); ok {
+		r0 = rf(ctx, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]DashboardSearchProjection)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *models.FindPersistedDashboardsQuery) error); ok {
+		r1 = rf(ctx, query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDashboard provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
 	ret := _m.Called(ctx, query)
@@ -342,6 +365,20 @@ func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDas
 	}
 
 	return r0, r1
+}
+
+// SearchDashboards provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.FindPersistedDashboardsQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // UnprovisionDashboard provides a mock function with given fields: ctx, id
