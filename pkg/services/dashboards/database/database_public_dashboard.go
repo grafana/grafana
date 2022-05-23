@@ -32,6 +32,10 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	// get global dashboard config
 	var dashRes []*models.Dashboard
 
+	if dashboardUid == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&dashRes)
 	})
@@ -63,7 +67,11 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 
 // stores public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-	fmt.Printf("#%v", cmd)
+
+	if len(cmd.PublicDashboardConfig.PublicDashboard.DashboardUid) == 0 {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
 	// update isPublic on dashboard entry
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.DashboardUid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
@@ -92,7 +100,6 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 			if _, err = sess.Exec("DELETE FROM dashboard_public_config WHERE uid=?", cmd.PublicDashboardConfig.PublicDashboard.Uid); err != nil {
 				return err
 			}
-
 		} else {
 			uid, err := generateNewPublicDashboardUid(sess)
 			if err != nil {
@@ -101,22 +108,10 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
 		}
 
-		rowCount, err := sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard)
+		_, err := sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println()
-		fmt.Println("ROWS:", rowCount)
-
-		var publicDashboards []*models.PublicDashboard
-		err = sess.Find(&publicDashboards)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Println()
-		fmt.Printf("#%v", publicDashboards[0])
 
 		return nil
 	})
