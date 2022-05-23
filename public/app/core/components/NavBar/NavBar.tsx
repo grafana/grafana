@@ -1,15 +1,33 @@
 import React, { FC, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { css, cx } from '@emotion/css';
-import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
+import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { KioskMode } from 'app/types';
-import { updateNavIndex } from 'app/core/actions';
+import { cloneDeep } from 'lodash';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { OrgSwitcher } from '../OrgSwitcher';
+import {
+  getPmmSettingsPage,
+  PMM_ADD_INSTANCE_PAGE,
+  PMM_ALERTING_PAGE,
+  PMM_BACKUP_PAGE,
+  PMM_DBAAS_PAGE,
+  PMM_ENTITLEMENTS_PAGE,
+  PMM_ENVIRONMENT_OVERVIEW_PAGE,
+  PMM_INVENTORY_PAGE,
+  PMM_STT_PAGE,
+  PMM_TICKETS_PAGE,
+} from './constants';
+import NavBarItem from './NavBarItem';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenu } from './NavBarMenu';
+import { NavBarSection } from './NavBarSection';
 import {
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
@@ -19,23 +37,6 @@ import {
   isSearchActive,
   SEARCH_ITEM_ID,
 } from './utils';
-import { OrgSwitcher } from '../OrgSwitcher';
-import NavBarItem from './NavBarItem';
-import { NavBarSection } from './NavBarSection';
-import { NavBarMenu } from './NavBarMenu';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
-import {
-  PMM_STT_PAGE,
-  PMM_BACKUP_PAGE,
-  PMM_DBAAS_PAGE,
-  PMM_ALERTING_PAGE,
-  PMM_INVENTORY_PAGE,
-  PMM_TICKETS_PAGE,
-  PMM_ENTITLEMENTS_PAGE,
-  getPmmSettingsPage,
-  PMM_ADD_INSTANCE_PAGE,
-} from './constants';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -85,10 +86,12 @@ export const NavBar: FC = React.memo(() => {
   dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
   dispatch(updateNavIndex(PMM_TICKETS_PAGE));
   dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
+  dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   if (isPlatformUser) {
     topItems.push(PMM_ENTITLEMENTS_PAGE);
     topItems.push(PMM_TICKETS_PAGE);
+    topItems.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
   }
 
   if (isAuthorized) {
