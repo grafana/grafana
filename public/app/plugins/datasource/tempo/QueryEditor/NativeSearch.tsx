@@ -89,9 +89,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const services = await loadOptions('serviceName');
+        const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
         setServiceOptions(services);
-        const spans = await loadOptions('spanName');
         setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
