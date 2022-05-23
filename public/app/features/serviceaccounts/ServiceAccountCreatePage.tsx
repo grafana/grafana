@@ -78,12 +78,8 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
           role: response.role,
           tokens: response.tokens,
         };
-        const updateResponse = await updateServiceAccount(response.id, data);
-        // TODO: error handling
-        console.log(updateResponse);
-        const updateRolesResponse = await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
-        // TODO: error handling
-        console.log(updateRolesResponse);
+        await updateServiceAccount(response.id, data);
+        await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
       } catch (e) {
         console.error(e);
       }
