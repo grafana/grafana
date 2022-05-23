@@ -34,6 +34,7 @@ const navTreeSlice = createSlice({
       if (navItem) {
         navItem.text = title;
         navItem.url = url;
+        starredItems?.children?.sort((a, b) => a.text.localeCompare(b.text));
       }
     },
   },
