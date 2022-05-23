@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
@@ -9,12 +8,8 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 export const NotificationsStep: FC = () => {
   const [hideFlowChart, setHideFlowChart] = useState(false);
-  const { watch } = useFormContext();
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const labels = watch('annotations');
-  const noLabels = true;
-  console.log(labels);
 
   return (
     <RuleEditorSection
@@ -35,18 +30,14 @@ export const NotificationsStep: FC = () => {
           />
         )}
         <div>
-          {noLabels && (
-            <div>
-              <Card className={styles.card}>
-                <Card.Heading>Root route – default for all alerts</Card.Heading>
-                <Card.Description>
-                  Without custom labels, your alert will be routed through the root route. To view and edit the root
-                  route, go to <Link href="/alerting/routes">notification policies</Link> or contact your admin in case
-                  you are using non-Grafana alert management.
-                </Card.Description>
-              </Card>
-            </div>
-          )}
+          <Card className={styles.card}>
+            <Card.Heading>Root route – default for all alerts</Card.Heading>
+            <Card.Description>
+              Without custom labels, your alert will be routed through the root route. To view and edit the root route,
+              go to <Link href="/alerting/routes">notification policies</Link> or contact your admin in case you are
+              using non-Grafana alert management.
+            </Card.Description>
+          </Card>
         </div>
       </div>
     </RuleEditorSection>
