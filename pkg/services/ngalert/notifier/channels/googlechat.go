@@ -140,8 +140,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			},
 		},
 	}
-	screenshots := gcn.buildScreenshotCard(ctx, as)
-	if screenshots != nil {
+	if screenshots := gcn.buildScreenshotCard(ctx, as); screenshots != nil {
 		res.Cards = append(res.Cards, *screenshots)
 	}
 
