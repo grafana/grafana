@@ -322,22 +322,27 @@ const dark = new DarkColors();
 const light = new LightColors();
 const fusebit = new FusebitColors();
 
-export const config = {
+export const themesConfig = {
   dark: {
     base: dark,
+    getShadeColor: (color: string) => lighten(color, dark.tonalOffset),
   },
   light: {
     base: light,
+    getShadeColor: (color: string) => darken(color, light.tonalOffset),
   },
   fusebit: {
     base: fusebit,
+    getShadeColor: (color: string) => darken(color, fusebit.tonalOffset),
   },
 };
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
-  let base: DarkColors | LightColors | FusebitColors = config[colors.mode || 'dark'].base;
+  const colorKey = colors.mode || 'dark';
+  const currentTheme = themesConfig[colorKey];
+  let base = currentTheme.base;
   const {
     primary = base.primary,
     secondary = base.secondary,
@@ -372,8 +377,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.border = color.text;
     }
     if (!color.shade) {
-      color.shade =
-        base.mode === 'light' || 'fusebit' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+      color.shade = currentTheme.getShadeColor(color.main);
     }
     if (!color.transparent) {
       color.transparent = base.mode === 'light' || 'fusebit' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
