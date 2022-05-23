@@ -25,6 +25,9 @@ const (
 	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
+
+	// ImageStoreTimeout should be used by all callers for calles to `Images`
+	ImageStoreTimeout time.Duration = 500 * time.Millisecond
 )
 
 var (

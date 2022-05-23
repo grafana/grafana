@@ -96,6 +96,8 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 		DashboardUID: *r.DashboardUID,
 		PanelID:      *r.PanelID,
 	})
+	// TODO: Check for screenshot upload failures. These images should still be
+	// stored because we have a local disk path that could be useful.
 	if err != nil {
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}

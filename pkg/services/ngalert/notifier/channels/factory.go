@@ -1,7 +1,10 @@
 package channels
 
 import (
+	"context"
 	"errors"
+	"io"
+	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -12,7 +15,15 @@ type FactoryConfig struct {
 	Config              *NotificationChannelConfig
 	NotificationService notifications.Service
 	DecryptFunc         GetDecryptedValueFn
-	Template            *template.Template
+	ImageStore          ImageStore
+	// Used to retrieve image URLs for messages, or data for uploads.
+	Template *template.Template
+}
+
+// A specialization of store.ImageStore, to avoid an import loop.
+type ImageStore interface {
+	GetURL(ctx context.Context, token string) (*url.URL, error)
+	GetData(ctx context.Context, token string) (io.Reader, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
