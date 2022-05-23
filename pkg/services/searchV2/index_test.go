@@ -221,7 +221,6 @@ func TestDashboardIndexSort(t *testing.T) {
 							return
 						}
 					}
-					return
 				}
 			},
 		},
