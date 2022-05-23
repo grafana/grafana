@@ -345,29 +345,27 @@ export const themesConfig = {
 };
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
-  const dark = new DarkColors();
-  const light = new LightColors();
   const colorKey = colors.mode || 'dark';
   const currentTheme = themesConfig[colorKey];
-  let base = currentTheme.base;
   const {
-    primary = base.primary,
-    secondary = base.secondary,
-    info = base.info,
-    warning = base.warning,
-    success = base.success,
-    error = base.error,
-    tonalOffset = base.tonalOffset,
-    hoverFactor = base.hoverFactor,
-    contrastThreshold = base.contrastThreshold,
+    primary = currentTheme.base.primary,
+    secondary = currentTheme.base.secondary,
+    info = currentTheme.base.info,
+    warning = currentTheme.base.warning,
+    success = currentTheme.base.success,
+    error = currentTheme.base.error,
+    tonalOffset = currentTheme.base.tonalOffset,
+    hoverFactor = currentTheme.base.hoverFactor,
+    contrastThreshold = currentTheme.base.contrastThreshold,
     ...other
   } = colors;
 
   function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(dark.text.maxContrast, background, base.background.primary) >= threshold
-        ? dark.text.maxContrast
-        : light.text.maxContrast;
+      getContrastRatio(themesConfig['dark'].base.text.maxContrast, background, currentTheme.base.background.primary) >=
+      threshold
+        ? themesConfig['dark'].base.text.maxContrast
+        : currentTheme.base.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }
@@ -397,7 +395,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
 
   return merge(
     {
-      ...base,
+      ...currentTheme.base,
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
       info: getRichColor({ color: info, name: 'info' }),
