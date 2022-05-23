@@ -58,6 +58,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: unset !important;
       padding: ${theme.spacing(1)};
     `,
+    exploreContainer: css`
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      padding: ${theme.spacing(2)};
+      padding-top: 0;
+    `,
   };
 };
 
@@ -208,9 +215,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   };
 
-  renderEmptyState() {
+  renderEmptyState(exploreContainerStyles: string) {
     return (
-      <div className="explore-container">
+      <div className={cx(exploreContainerStyles)}>
         <NoDataSourceCallToAction />
       </div>
     );
@@ -358,9 +365,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
-        {datasourceMissing ? this.renderEmptyState() : null}
+        {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div className="explore-container">
+          <div className={cx(styles.exploreContainer)}>
             <div className={cx('panel-container', styles.queryContainer)}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions

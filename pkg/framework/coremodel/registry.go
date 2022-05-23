@@ -76,3 +76,12 @@ func (r *Registry) addModels(models []Interface) error {
 
 	return nil
 }
+
+// Get retrieves a coremodel with the given string identifier. nil, false
+// is returned if no such coremodel exists.
+func (r *Registry) Get(name string) (cm Interface, has bool) {
+	r.lock.RLock()
+	cm, has = r.modelIdx[name]
+	r.lock.RUnlock()
+	return
+}

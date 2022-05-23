@@ -28,12 +28,14 @@ export type RichHistoryStorageWarningDetails = {
   message: string;
 };
 
+export type RichHistoryResults = { richHistory: RichHistoryQuery[]; total?: number };
+
 /**
  * @internal
  * @alpha
  */
 export default interface RichHistoryStorage {
-  getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]>;
+  getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults>;
 
   /**
    * Creates new RichHistoryQuery, returns object with unique id and created date

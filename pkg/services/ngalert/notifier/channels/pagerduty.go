@@ -39,6 +39,7 @@ type PagerdutyNotifier struct {
 	tmpl          *template.Template
 	log           log.Logger
 	ns            notifications.WebhookSender
+	images        ImageStore
 }
 
 type PagerdutyConfig struct {
@@ -59,7 +60,7 @@ func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
@@ -79,7 +80,7 @@ func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryp
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, t *template.Template) *PagerdutyNotifier {
+func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *PagerdutyNotifier {
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -103,6 +104,7 @@ func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSende
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + config.Name),
 		ns:        ns,
+		images:    images,
 	}
 }
 
@@ -184,6 +186,24 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
+	for i := range as {
+		imgToken := getTokenFromAnnotations(as[i].Annotations)
+		if len(imgToken) == 0 {
+			continue
+		}
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := pn.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				pn.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		} else {
+			msg.Images = append(msg.Images, pagerDutyImage{Src: imgURL})
+		}
+	}
+
 	if len(msg.Payload.Summary) > 1024 {
 		// This is the Pagerduty limit.
 		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
@@ -215,11 +235,16 @@ type pagerDutyMessage struct {
 	Client      string           `json:"client,omitempty"`
 	ClientURL   string           `json:"client_url,omitempty"`
 	Links       []pagerDutyLink  `json:"links,omitempty"`
+	Images      []pagerDutyImage `json:"images,omitempty"`
 }
 
 type pagerDutyLink struct {
 	HRef string `json:"href"`
 	Text string `json:"text"`
+}
+
+type pagerDutyImage struct {
+	Src string `json:"src"`
 }
 
 type pagerDutyPayload struct {
