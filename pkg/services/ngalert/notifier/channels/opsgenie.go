@@ -220,16 +220,18 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 			dbContext, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
 			imgURL, err := on.images.GetURL(dbContext, imgToken)
+			cancel()
+
 			if err != nil {
 				if !errors.Is(err, ErrImagesUnavailable) {
 					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
 					on.log.Warn("Error reading screenshot data from ImageStore: %v", err)
 				}
-			} else {
+			} else if len(imgURL) != 0 {
 				images = append(images, imgURL)
 			}
-			cancel()
 		}
+
 		if len(images) != 0 {
 			details.Set("image_urls", images)
 		}
