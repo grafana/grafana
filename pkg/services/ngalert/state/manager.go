@@ -174,7 +174,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 // 1. The alert state is transitioning into the "Alerting" state from something else.
 // 2. The alert state has just transitioned to the resolved state.
 // 3. The state is alerting and there is no screenshot annotation on the alert state.
-func (st *Manager) maybeNewImage(ctx context.Context, alertRule *ngModels.AlertRule, state *State, oldState eval.State) error {
+func (st *Manager) maybeTakeScreenshot(
+	ctx context.Context,
+	alertRule *ngModels.AlertRule,
+	state *State,
+	oldState eval.State,
+) error {
 	shouldScreenshot := state.Resolved ||
 		state.State == eval.Alerting && oldState != eval.Alerting ||
 		state.State == eval.Alerting && state.Image == nil
@@ -229,7 +234,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	err := st.maybeNewImage(ctx, alertRule, currentState, oldState)
+	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
 	if err != nil {
 		st.log.Warn("Error generating a screenshot for an alert instance.",
 			"alert_rule", alertRule.UID,

@@ -79,8 +79,11 @@ const (
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
-	DashboardUIDAnnotation    = "__dashboardUid__"
-	PanelIDAnnotation         = "__panelId__"
+	DashboardUIDAnnotation = "__dashboardUid__"
+	PanelIDAnnotation      = "__panelId__"
+
+	// This isn't a hard-coded secret token, hence the nolint.
+	//nolint:gosec
 	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
 )
 
