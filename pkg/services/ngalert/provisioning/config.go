@@ -21,6 +21,12 @@ func serializeAlertmanagerConfig(config definitions.PostableUserConfig) ([]byte,
 	return json.Marshal(config)
 }
 
+type cfgRevision struct {
+	cfg              *definitions.PostableUserConfig
+	concurrencyToken string
+	version          string
+}
+
 func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore) (*cfgRevision, error) {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
@@ -45,10 +51,4 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 		concurrencyToken: concurrencyToken,
 		version:          q.Result.ConfigurationVersion,
 	}, nil
-}
-
-type cfgRevision struct {
-	cfg              *definitions.PostableUserConfig
-	concurrencyToken string
-	version          string
 }
