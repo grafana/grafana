@@ -7,6 +7,7 @@ import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Ico
 import { Role } from '../../../types';
 
 import { ValueContainer } from './ValueContainer';
+import { ROLE_PICKER_WIDTH } from './constants';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
@@ -104,18 +105,12 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
             </div>
           }
         >
-          <div>
-            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
-              numberOfRoles > 1 ? 's' : ''
-            }`}</ValueContainer>
-          </div>
+          <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+            numberOfRoles > 1 ? 's' : ''
+          }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && (
-          <div>
-            <ValueContainer>No roles assigned</ValueContainer>
-          </div>
-        )
+        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
       )}
     </>
   );
@@ -140,7 +135,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        width: 520px;
+        width: ${ROLE_PICKER_WIDTH}px;
         min-height: 32px;
         height: auto;
         flex-direction: row;
@@ -175,6 +170,7 @@ const getRolePickerInputStyles = (
       display: flex;
       align-items: center;
       cursor: ${disabled ? 'not-allowed' : 'pointer'};
+      width: ${ROLE_PICKER_WIDTH}px;
     `,
     tooltip: css`
       p {
