@@ -31,8 +31,7 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := store.GetLatestAlertmanagerConfiguration(ctx, &q)
-	if err != nil {
+	if err := store.GetLatestAlertmanagerConfiguration(ctx, &q); err != nil {
 		return nil, err
 	}
 
