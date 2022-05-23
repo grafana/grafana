@@ -113,13 +113,18 @@ const ServiceAccountListItem = memo(
             </div>
           </a>
         </td>
-        {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
-          <td>
+        <td>
+          <a
+            className="ellipsis"
+            href={editUrl}
+            title="Tokens"
+            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
+          >
             <HorizontalGroup justify="flex-end">
               {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
                 <Button onClick={() => onAddTokenClick(serviceAccount)}>Add token</Button>
               )}
-              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) &&
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
                 (serviceAccount.isDisabled ? (
                   <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
                     Enable
@@ -129,15 +134,17 @@ const ServiceAccountListItem = memo(
                     Disable
                   </Button>
                 ))}
-              <IconButton
-                className={styles.deleteButton}
-                name="trash-alt"
-                size="sm"
-                onClick={() => onRemoveButtonClick(serviceAccount)}
-              />
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+                <IconButton
+                  className={styles.deleteButton}
+                  name="trash-alt"
+                  size="sm"
+                  onClick={() => onRemoveButtonClick(serviceAccount)}
+                />
+              )}
             </HorizontalGroup>
-          </td>
-        )}
+          </a>
+        </td>
       </tr>
     );
   }
