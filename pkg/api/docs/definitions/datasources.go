@@ -37,7 +37,28 @@ import (
 // 409: conflictError
 // 500: internalServerError
 
-// swagger:route PUT /datasources/{datasource_id} datasources updateDatasource
+// swagger:route PUT /datasources/{datasource_id} datasources updateDatasourceByID
+//
+// Update an existing data source by its sequential ID.
+//
+// Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
+// secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
+// encrypted fields are listed under secureJsonFields section in the response.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/updateDatasourceByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: createOrUpdateDatasourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
+// swagger:route PUT /datasources/uid/{datasource_uid} datasources updateDatasourceByUID
 //
 // Update an existing data source.
 //
@@ -316,7 +337,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
+// swagger:parameters updateDatasourceByID deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 // swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
@@ -325,7 +346,7 @@ type DatasourceID struct {
 	DatasourceID string `json:"datasource_id"`
 }
 
-// swagger:parameters deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters updateDatasourceByUID deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
 // swagger:parameters checkDatasourceHealth fetchDatasourceResources
 type DatasourceUID struct {
 	// in:path
@@ -363,7 +384,7 @@ type AddDatasourceParam struct {
 	Body models.AddDataSourceCommand
 }
 
-// swagger:parameters updateDatasource
+// swagger:parameters updateDatasourceByID updateDatasourceByUID
 type UpdateDatasource struct {
 	// in:body
 	// required:true

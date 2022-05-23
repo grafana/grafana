@@ -26,9 +26,10 @@ type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
+  hidePseudoFolders?: boolean; // Recent + starred
 };
 
-export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps) => {
+export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
@@ -132,7 +133,13 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
         );
       }
       return (
-        <FolderView selection={selection} selectionToggle={toggleSelection} tags={query.tag} onTagSelected={onTagAdd} />
+        <FolderView
+          selection={selection}
+          selectionToggle={toggleSelection}
+          tags={query.tag}
+          onTagSelected={onTagAdd}
+          hidePseudoFolders={hidePseudoFolders}
+        />
       );
     }
 
