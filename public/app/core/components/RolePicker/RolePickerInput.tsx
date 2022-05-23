@@ -52,7 +52,7 @@ export const RolePickerInput = ({
   const numberOfRoles = appliedRoles.length;
 
   return !isFocused ? (
-    <div className={styles.selectedRoles} onMouseDown={onOpen}>
+    <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
       {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
       <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
     </div>
@@ -170,7 +170,6 @@ const getRolePickerInputStyles = (
       display: flex;
       align-items: center;
       cursor: ${disabled ? 'not-allowed' : 'pointer'};
-      width: ${ROLE_PICKER_WIDTH}px;
     `,
     tooltip: css`
       p {

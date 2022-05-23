@@ -55,7 +55,7 @@ export const RolePicker = ({
     } else {
       setOffset(-offset);
     }
-  }, [isOpen]);
+  }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
