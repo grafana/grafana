@@ -31,7 +31,7 @@ const UsersTable: FC<Props> = (props) => {
         }
 
         if (
-          !contextSrv.accessControlBuiltinRefactorEnabled() &&
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
           contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
         ) {
           const builtInRoles = await fetchBuiltinRoles(orgId);

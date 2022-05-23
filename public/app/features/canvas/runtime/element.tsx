@@ -26,6 +26,9 @@ export class ElementState implements LayerElement {
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
 
+  // Determine whether or not element is in motion or not (via moveable)
+  isMoving = false;
+
   // Filled in by ref
   div?: HTMLDivElement;
 
@@ -80,6 +83,9 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       position: 'absolute',
+      // Minimum element size is 10x10
+      minWidth: '10px',
+      minHeight: '10px',
     };
 
     const translate = ['0px', '0px'];

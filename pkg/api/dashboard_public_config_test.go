@@ -3,15 +3,18 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestApiRetrieveConfig(t *testing.T) {
@@ -50,11 +53,10 @@ func TestApiRetrieveConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
-
-			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				PublicDashboardConfigResult: test.publicDashboardConfigResult,
-				PublicDashboardConfigError:  test.publicDashboardConfigError,
-			}
+			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(test.publicDashboardConfigResult, test.publicDashboardConfigError)
+			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -93,21 +95,6 @@ func TestApiPersistsValue(t *testing.T) {
 			SaveDashboardError:    nil,
 		},
 		{
-			Name:         "it overwrites an existing uid for public dashboard",
-			DashboardUid: "1",
-			PublicDashboardConfig: &models.PublicDashboardConfig{
-				IsPublic: true,
-				PublicDashboard: models.PublicDashboard{
-					Uid:               "",
-					DashboardUid:      "1",
-					OrgId:             1,
-					TemplateVariables: "",
-					TimeVariables:     "",
-				},
-			},
-			ExpectedHttpResponse: http.StatusOK,
-		},
-		{
 			Name:                  "returns 500 when not persisted",
 			ExpectedHttpResponse:  http.StatusInternalServerError,
 			PublicDashboardConfig: &models.PublicDashboardConfig{},
@@ -125,10 +112,10 @@ func TestApiPersistsValue(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
-			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				PublicDashboardConfigResult: test.PublicDashboardConfig,
-				PublicDashboardConfigError:  test.SaveDashboardError,
-			}
+			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*dashboards.SavePublicDashboardConfigDTO")).
+				Return(&models.PublicDashboardConfig{IsPublic: true}, test.SaveDashboardError)
+			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -144,57 +131,9 @@ func TestApiPersistsValue(t *testing.T) {
 			// check the result if it's a 200
 			if response.Code == http.StatusOK {
 				val, _ := json.Marshal(test.PublicDashboardConfig)
+				fmt.Println("MARSHAL:", string(val))
 				assert.Equal(t, string(val), response.Body.String())
 			}
 		})
 	}
 }
-
-//func TestApiOverwritesExistingPublicDashboard(t *testing.T) {
-//  testCase := struct {
-//    Name                  string
-//    DashboardUid          string
-//    PublicDashboardConfig *models.PublicDashboardConfig
-//    ExpectedHttpResponse  int
-//    SaveDashboardError    error
-//  }{
-//    DashboardUid: "1",
-//    PublicDashboardConfig: &models.PublicDashboardConfig{
-//      IsPublic: true,
-//      PublicDashboard: models.PublicDashboard{
-//        Uid:               "",
-//        DashboardUid:      "1",
-//        OrgId:             1,
-//        TemplateVariables: "",
-//        TimeVariables:     "",
-//      },
-//    },
-//    ExpectedHttpResponse: http.StatusOK,
-//  }
-
-//  t.Run(testCase.Name, func(t *testing.T) {
-//    sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
-
-//    sc.hs.dashboardService = &dashboards.FakeDashboardService{
-//      PublicDashboardConfigResult: testCase.PublicDashboardConfig,
-//      PublicDashboardConfigError:  testCase.SaveDashboardError,
-//    }
-
-//    setInitCtxSignedInViewer(sc.initCtx)
-//    response := callAPI(
-//      sc.server,
-//      http.MethodPost,
-//      "/api/dashboards/uid/1/public-config",
-//      strings.NewReader(`{ "isPublic": true }`),
-//      t,
-//    )
-
-//    assert.Equal(t, testCase.ExpectedHttpResponse, response.Code)
-
-//    // check the result if it's a 200
-//    if response.Code == http.StatusOK {
-//      val, _ := json.Marshal(testCase.PublicDashboardConfig)
-//      assert.Equal(t, string(val), response.Body.String())
-//    }
-//  })
-//}

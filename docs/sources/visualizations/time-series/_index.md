@@ -23,7 +23,7 @@ These options are available whether you are graphing your time series as lines, 
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../../panels/calculation-types.md" >}}) to show in the legend. You can have more than one.
 
 ## Graph styles
 
