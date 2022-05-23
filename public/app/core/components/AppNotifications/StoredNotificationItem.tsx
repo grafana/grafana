@@ -10,7 +10,7 @@ import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
-  className: string;
+  className?: string;
   title: string;
   severity?: AlertVariant;
   timestamp?: number;
