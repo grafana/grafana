@@ -47,8 +47,8 @@ const renderAndSubmitForm = async (
       {...otherProps}
     />
   );
-  const button = screen.getByRole('button', { name: 'Save dashboard button' });
 
+  const button = screen.getByRole('button', { name: 'Save dashboard button' });
   await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
