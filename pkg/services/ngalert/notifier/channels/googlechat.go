@@ -23,6 +23,7 @@ type GoogleChatNotifier struct {
 	URL     string
 	log     log.Logger
 	ns      notifications.WebhookSender
+	images  ImageStore
 	tmpl    *template.Template
 	content string
 }
@@ -41,7 +42,7 @@ func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewGoogleChatNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewGoogleChatNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, error) {
@@ -56,7 +57,7 @@ func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, 
 	}, nil
 }
 
-func NewGoogleChatNotifier(config *GoogleChatConfig, ns notifications.WebhookSender, t *template.Template) *GoogleChatNotifier {
+func NewGoogleChatNotifier(config *GoogleChatConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *GoogleChatNotifier {
 	return &GoogleChatNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -69,6 +70,7 @@ func NewGoogleChatNotifier(config *GoogleChatConfig, ns notifications.WebhookSen
 		URL:     config.URL,
 		log:     log.New("alerting.notifier.googlechat"),
 		ns:      ns,
+		images:  images,
 		tmpl:    t,
 	}
 }
@@ -138,6 +140,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			},
 		},
 	}
+	res.Cards = append(res.Cards, gcn.buildScreenshotCard(ctx, as))
 
 	if tmplErr != nil {
 		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
@@ -174,6 +177,40 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 func (gcn *GoogleChatNotifier) SendResolved() bool {
 	return !gcn.GetDisableResolveMessage()
+}
+
+func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, as []*types.Alert) card {
+	card := card{
+		Header: header{
+			Title: "Screenshots",
+		},
+		Sections: []section{
+			{
+				Widgets: []widget{
+					textParagraphWidget{
+						Text: text{
+							Text: "widget one",
+						},
+					},
+					textParagraphWidget{
+						Text: text{
+							Text: "widget two",
+						},
+					},
+				},
+			},
+			{
+				Widgets: []widget{
+					textParagraphWidget{
+						Text: text{
+							Text: "widget three",
+						},
+					},
+				},
+			},
+		},
+	}
+	return card
 }
 
 // Structs used to build a custom Google Hangouts Chat message card.
