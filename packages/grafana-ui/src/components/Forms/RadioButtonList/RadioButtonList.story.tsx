@@ -1,10 +1,10 @@
-import { ComponentMeta, Story } from '@storybook/react';
-import React from 'react';
+import { ComponentMeta, ComponentStory, Story } from '@storybook/react';
+import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
 import { RadioButtonDot } from './RadioButtonDot';
-import { RadioButtonList } from './RadioButtonList';
+import { RadioButtonList, RadioButtonListProps } from './RadioButtonList';
 import mdx from './RadioButtonList.mdx';
 
 const defaultOptions: Array<SelectableValue<string>> = [
@@ -69,35 +69,33 @@ const longTextOptions: Array<SelectableValue<string>> = [
   },
 ];
 
-export const Default: Story<typeof RadioButtonList> = (args) => (
+export const Default: ComponentStory<typeof RadioButtonList> = ({ disabled, disabledOptions }) => (
   <div>
-    <RadioButtonList name="default" options={defaultOptions} {...args} />
+    <RadioButtonList name="default" options={defaultOptions} disabled={disabled} disabledOptions={disabledOptions} />
   </div>
 );
 
-export const LongLabels = Default.bind({});
-LongLabels.args = {
-  options: longTextOptions,
-};
+export const LongLabels: ComponentStory<typeof RadioButtonList> = ({ disabled, disabledOptions }) => (
+  <div>
+    <RadioButtonList name="default" options={longTextOptions} disabled={disabled} disabledOptions={disabledOptions} />
+  </div>
+);
 
-export const ControlledComponent = Default.bind({});
-ControlledComponent.args = {
-  value: 'opt-2',
-  onChange: () => null,
-};
-ControlledComponent.argTypes = {
-  value: {
-    options: defaultOptions.map((x) => x.value!),
-  },
-  disabledOptions: {
-    control: 'multi-select',
-    options: defaultOptions.map((x) => x.value!),
-  },
-};
-ControlledComponent.parameters = {
-  controls: {
-    exclude: ['name', 'id', 'keySelector', 'onChange', 'className'],
-  },
+export const ControlledComponent: Story<RadioButtonListProps<string>> = ({ disabled, disabledOptions }) => {
+  const [selected, setSelected] = useState<string>(defaultOptions[0].value!);
+
+  return (
+    <div>
+      <RadioButtonList
+        name="default"
+        options={defaultOptions}
+        value={selected}
+        onChange={setSelected}
+        disabled={disabled}
+        disabledOptions={disabledOptions}
+      />
+    </div>
+  );
 };
 
 export const DisabledOptions = Default.bind({});
@@ -105,7 +103,7 @@ DisabledOptions.args = {
   disabledOptions: ['opt-4', 'opt-5'],
 };
 
-export const DisabledCheckedOption = Default.bind({});
+export const DisabledCheckedOption = ControlledComponent.bind({});
 DisabledCheckedOption.args = {
   value: 'opt-2',
   disabledOptions: ['opt-1', 'opt-2', 'opt-3'],
@@ -116,7 +114,7 @@ DisabledList.args = {
   disabled: true,
 };
 
-export const Dots: Story = (args) => {
+export const Dots: Story = () => {
   const Wrapper: React.FC<{ title: string }> = ({ title, children }) => (
     <div style={{ marginBottom: 20 }}>
       <h5>{title}</h5>
@@ -127,7 +125,7 @@ export const Dots: Story = (args) => {
   return (
     <div>
       <Wrapper title="Default">
-        <RadioButtonDot id="1" name="default-empty" label="Radio label" />
+        <RadioButtonDot id="1" name="default-empty" label="Radio label" checked={false} />
       </Wrapper>
 
       <Wrapper title="Checked">
@@ -146,7 +144,6 @@ export const Dots: Story = (args) => {
 };
 Dots.parameters = {
   controls: {
-    include: [],
     hideNoControlsWarning: true,
   },
 };
