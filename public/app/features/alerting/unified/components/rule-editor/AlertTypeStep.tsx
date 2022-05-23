@@ -184,8 +184,8 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
 };
 
 function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
-  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const canCreateGrafanaRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleCreate, contextSrv.hasEditPermissionInFolders);
+  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.hasEditPermissionInFolders);
   const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
 
   const enabledRuleTypes: RuleFormType[] = [];
