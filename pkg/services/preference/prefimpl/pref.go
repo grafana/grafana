@@ -82,7 +82,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	})
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
-			// TODO: need to set Locale preference here
 			preference := &pref.Preference{
 				UserID:          cmd.UserID,
 				OrgID:           cmd.OrgID,
@@ -111,13 +110,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.JSONData = &pref.PreferenceJSONData{
+		Locale: cmd.Locale,
+	}
 
-	if preference.JSONData == nil {
-		preference.JSONData = &pref.PreferenceJSONData{}
-	}
-	if cmd.Locale != "" {
-		preference.JSONData.Locale = cmd.Locale
-	}
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
 	}
