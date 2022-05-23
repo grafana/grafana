@@ -47,6 +47,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       interval: '',
       // Set exemplar to false for alerting queries
       exemplar: props.app === CoreApp.UnifiedAlerting ? false : true,
+      schemaVersion: props.datasource.pluginVersion,
     };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;

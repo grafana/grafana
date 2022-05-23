@@ -31,6 +31,7 @@ import {
   DataSourceWithBackend,
   BackendDataSourceResponse,
   toDataQueryResponse,
+  config,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -88,6 +89,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+  pluginVersion: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -119,6 +121,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.pluginVersion = config.buildInfo.version;
   }
 
   init = async () => {
@@ -476,6 +479,7 @@ export class PrometheusDatasource
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
     const query: PromQueryRequest = {
+      schemaVersion: target.schemaVersion,
       hinting: target.hinting,
       instant: target.instant,
       exemplar: target.exemplar,

@@ -5,7 +5,7 @@ import { changeEditorMode, getQueryWithDefaults } from './state';
 
 describe('getQueryWithDefaults(', () => {
   it('should set defaults', () => {
-    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard)).toEqual({
+    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard, '9.0.0')).toEqual({
       editorMode: 'builder',
       expr: '',
       legendFormat: '__auto',
@@ -15,7 +15,7 @@ describe('getQueryWithDefaults(', () => {
   });
 
   it('should set both range and instant to true when in Explore', () => {
-    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Explore)).toEqual({
+    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Explore, '9.0.0')).toEqual({
       editorMode: 'builder',
       expr: '',
       legendFormat: '__auto',
@@ -30,6 +30,8 @@ describe('getQueryWithDefaults(', () => {
       expect(query.editorMode).toBe(QueryEditorMode.Code);
     });
 
-    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard).editorMode).toEqual(QueryEditorMode.Code);
+    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard, '9.0.0').editorMode).toEqual(
+      QueryEditorMode.Code
+    );
   });
 });

@@ -36,7 +36,7 @@ function getDefaultEditorMode(expr: string) {
 /**
  * Returns query with defaults, and boolean true/false depending on change was required
  */
-export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
+export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined, pluginVersion: string): PromQuery {
   let result = query;
 
   if (!query.editorMode) {
@@ -44,7 +44,7 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
   }
 
   if (query.expr == null) {
-    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
+    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto, schemaVersion: pluginVersion };
   }
 
   if (query.range == null && query.instant == null) {

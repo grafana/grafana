@@ -12,6 +12,7 @@ export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOption
 
 export const PromExploreQueryEditor = memo((props: Props) => {
   const { range, query, data, datasource, history, onChange, onRunQuery } = props;
+  const { pluginVersion } = datasource;
 
   // Setting default values
   useEffect(() => {
@@ -24,9 +25,9 @@ export const PromExploreQueryEditor = memo((props: Props) => {
 
     // Override query type to "Both" only for new queries (no query.expr).
     if (!query.instant && !query.range && !query.expr) {
-      onChange({ ...query, instant: true, range: true });
+      onChange({ ...query, instant: true, range: true, schemaVersion: pluginVersion });
     }
-  }, [onChange, query]);
+  }, [onChange, query, pluginVersion]);
 
   return (
     <PromQueryField
