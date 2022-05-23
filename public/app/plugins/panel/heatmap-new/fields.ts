@@ -1,41 +1,33 @@
 import {
   DataFrame,
   DataFrameType,
-  Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
-  incrRoundDn,
-  incrRoundUp,
+  outerJoinDataFrames,
   PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { HeatmapSourceMode, PanelOptions } from './models.gen';
+import { HeatmapMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
   le = 'le',
   ge = 'ge',
+  unknown = 'unknown', // unknown
 }
-
-export interface HeatmapDataMapping {
-  lookup: Array<number[] | null>;
-  high: number[]; // index of values bigger than the max Y
-  low: number[]; // index of values less than the min Y
-}
-
-export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
 
 export interface HeatmapData {
-  // List of heatmap frames
-  heatmap?: DataFrame;
-  exemplars?: DataFrame;
-  exemplarsMappings?: HeatmapDataMapping;
+  heatmap?: DataFrame; // data we will render
+  exemplars?: DataFrame; // optionally linked exemplars
+  exemplarColor?: string;
 
   yAxisValues?: Array<number | string | null>;
+  yLabelValues?: string[]; // matched ordinally to yAxisValues
+  matchByLabel?: string; // e.g. le, pod, etc.
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -54,112 +46,64 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
-  const frames = data.series;
+  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
-  const { source } = options;
+  const { mode } = options;
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  if (source === HeatmapSourceMode.Calculate) {
+  if (mode === HeatmapMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.calculate ?? {}), exemplars, theme);
   }
 
-  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
-  if (sparseCellsHeatmap) {
-    return getSparseHeatmapData(sparseCellsHeatmap, exemplars, theme);
-  }
+  // Check for known heatmap types
+  let bucketHeatmap: DataFrame | undefined = undefined;
+  for (const frame of frames) {
+    switch (frame.meta?.type) {
+      case DataFrameType.HeatmapSparse:
+        return getSparseHeatmapData(frame, exemplars, theme);
 
-  // Find a well defined heatmap
-  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (scanlinesHeatmap) {
-    return getHeatmapData(scanlinesHeatmap, exemplars, theme);
-  }
+      case DataFrameType.HeatmapScanlines:
+        return getHeatmapData(frame, exemplars, theme);
 
-  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
-  if (bucketsHeatmap) {
-    return {
-      yAxisValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field) : []
-      ),
-      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), exemplars, theme),
-    };
-  }
-
-  if (source === HeatmapSourceMode.Data) {
-    let first = frames[0];
-    if (first.meta?.type !== DataFrameType.HeatmapScanlines) {
-      first = bucketsToScanlines(frames[0]);
+      case DataFrameType.HeatmapBuckets:
+        bucketHeatmap = frame; // the default format
     }
-    return getHeatmapData(first, exemplars, theme);
   }
 
-  // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
-}
-
-const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
-  const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
-  const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
-  const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
-
-  return [xField, yField, countField];
-};
-
-export const getExemplarsMapping = (heatmapData: HeatmapData, rawData: DataFrame): HeatmapDataMapping => {
-  if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
+  // Everything past here assumes a field for each row in the heatmap (buckets)
+  if (!bucketHeatmap) {
+    if (frames.length > 1) {
+      bucketHeatmap = [
+        outerJoinDataFrames({
+          frames,
+        })!,
+      ][0];
+    } else {
+      bucketHeatmap = frames[0];
+    }
   }
 
-  const [fxs, fys] = getHeatmapFields(heatmapData.heatmap!);
-
-  if (!fxs || !fys) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
+  // Some datasources return values in ascending order and require math to know the deltas
+  if (mode === HeatmapMode.Accumulated) {
+    console.log('TODO, deaccumulate the values');
   }
 
-  const mapping: HeatmapDataMapping = {
-    lookup: new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null),
-    high: [],
-    low: [],
+  const yFields = bucketHeatmap.fields.filter((f) => f.type === FieldType.number);
+  const matchByLabel = Object.keys(yFields[0].labels ?? {})[0];
+
+  const scanlinesFrame = bucketsToScanlines(bucketHeatmap);
+  return {
+    matchByLabel,
+    yLabelValues: matchByLabel ? yFields.map((f) => f.labels?.[matchByLabel] ?? '') : undefined,
+    yAxisValues: yFields.map((f) => getFieldDisplayName(f, bucketHeatmap, frames)),
+    ...getHeatmapData(scanlinesFrame, exemplars, theme),
   };
-
-  const xos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
-  const yos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
-
-  if (!xos || !yos) {
-    return mapping;
-  }
-
-  const xsmin = fxs.values.get(0);
-  const ysmin = fys.values.get(0);
-  const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize!;
-  const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize!;
-  xos.forEach((xo: number, i: number) => {
-    const yo = yos[i];
-    const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
-    const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / heatmapData.yBucketSize!, 1e-7), 1e-7));
-
-    if (xo < xsmin || yo < ysmin) {
-      mapping.low.push(i);
-      return;
-    }
-
-    if (xo >= xsmax || yo >= ysmax) {
-      mapping.high.push(i);
-      return;
-    }
-
-    const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
-    if (mapping.lookup[index] === null) {
-      mapping.lookup[index] = [];
-    }
-    mapping.lookup[index]?.push(i);
-  });
-  return mapping;
-};
+}
 
 const getSparseHeatmapData = (
   frame: DataFrame,
@@ -217,6 +161,9 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
   // The "count" field
   const disp = frame.fields[2].display ?? getValueFormat('short');
+  const xName = frame.fields[0].name;
+  const yName = frame.fields[1].name;
+
   const data: HeatmapData = {
     heatmap: frame,
     exemplars,
@@ -226,16 +173,11 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     yBucketCount: yBinQty,
 
     // TODO: improve heuristic
-    xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
-    yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unknown,
+    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };
-
-  if (exemplars) {
-    data.exemplarsMappings = getExemplarsMapping(data, exemplars);
-    console.log('EXEMPLARS', data.exemplarsMappings, data.exemplars);
-  }
 
   return data;
 };
