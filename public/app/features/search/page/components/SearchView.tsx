@@ -50,7 +50,7 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
 
     // Only dashboards have additional properties
     if (q.sort?.length && !q.sort.includes('name')) {
-      q.kind = ['dashboard'];
+      q.kind = ['dashboard', 'folder'];
     }
 
     if (!q.query?.length) {
