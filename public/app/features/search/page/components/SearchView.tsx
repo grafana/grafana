@@ -51,12 +51,14 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
 
     // Only dashboards have additional properties
     if (q.sort?.length && !q.sort.includes('name')) {
-      q.kind = ['dashboard', 'folder'];
+      q.kind = ['dashboard', 'folder']; // skip panels
     }
 
     if (!q.query?.length) {
       q.query = '*';
-      q.kind = ['dashboard'];
+      if (!q.location) {
+        q.kind = ['dashboard', 'folder']; // skip panels
+      }
     }
 
     if (q.query === '*' && !q.sort?.length) {
