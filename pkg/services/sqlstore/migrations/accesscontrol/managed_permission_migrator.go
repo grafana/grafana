@@ -51,14 +51,14 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 	if errFindPermissions := sess.SQL(`SELECT r.name as role_name, r.id as role_id, r.org_id as org_id,p.action, p.scope
 	FROM permission AS p
 	INNER JOIN role AS r ON p.role_id = r.id
-	WHERE r.name LIKE "managed:builtins%"`).
+	WHERE r.name LIKE ?`, "managed:builtins%").
 		Find(&managedPermissions); errFindPermissions != nil {
 		logger.Error("could not get the managed permissions", "error", errFindPermissions)
 		return errFindPermissions
 	}
 
-	roleMap := make(map[int64]map[string]int64)              // map[org_id][role_name] = role_id
-	permissionMap := make(map[int64]map[string][]Permission) // map[org_id][role_name] = []Permission
+	roleMap := make(map[int64]map[string]int64)                     // map[org_id][role_name] = role_id
+	permissionMap := make(map[int64]map[string]map[Permission]bool) // map[org_id][role_name][Permission] = toInsert
 
 	// for each managed permission make a map of which permissions need to be added to inheritors
 	for _, p := range managedPermissions {
@@ -68,13 +68,34 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			roleMap[p.OrgID][p.RoleName] = p.RoleID
 		}
 
-		roleName := ParseRoleFromName(p.RoleName)
-		for _, parent := range models.RoleType(roleName).Parents() {
-			parentManagedRoleName := "managed:builtins:" + strings.ToLower(string(parent)) + ":permissions"
-			if _, ok := permissionMap[p.OrgID]; !ok {
-				permissionMap[p.OrgID] = map[string][]Permission{parentManagedRoleName: {p}}
+		// this ensures we can use p as a key in the map between different permissions
+		// ensuring we're only comparing on the action and scope
+		roleName := p.RoleName
+		p.RoleName = ""
+		p.RoleID = 0
+
+		// Add the permission to the map of permissions as "false" - already exists
+		if _, ok := permissionMap[p.OrgID]; !ok {
+			permissionMap[p.OrgID] = map[string]map[Permission]bool{roleName: {p: false}}
+		} else {
+			if _, ok := permissionMap[p.OrgID][roleName]; !ok {
+				permissionMap[p.OrgID][roleName] = map[Permission]bool{p: false}
 			} else {
-				permissionMap[p.OrgID][parentManagedRoleName] = append(permissionMap[p.OrgID][parentManagedRoleName], p)
+				permissionMap[p.OrgID][roleName][p] = false
+			}
+		}
+
+		// Add parent roles + permissions to the map as "true" -- need to be inserted
+		basicRoleName := ParseRoleFromName(roleName)
+		for _, parent := range models.RoleType(basicRoleName).Parents() {
+			parentManagedRoleName := "managed:builtins:" + strings.ToLower(string(parent)) + ":permissions"
+
+			if _, ok := permissionMap[p.OrgID][parentManagedRoleName]; !ok {
+				permissionMap[p.OrgID][parentManagedRoleName] = map[Permission]bool{p: true}
+			} else {
+				if _, ok := permissionMap[p.OrgID][parentManagedRoleName][p]; !ok {
+					permissionMap[p.OrgID][parentManagedRoleName][p] = true
+				}
 			}
 		}
 	}
@@ -123,17 +144,15 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			}
 
 			// assign permissions if they don't exist to the role
-			existed := 0
 			roleID := roleMap[orgID][managedRole]
-			for _, p := range permissions {
-				perm := accesscontrol.Permission{RoleID: roleID, Action: p.Action, Scope: p.Scope, Created: now, Updated: now}
-				if _, err := sess.Insert(&perm); err != nil {
-					existed++
+			for p, toInsert := range permissions {
+				if toInsert {
+					perm := accesscontrol.Permission{RoleID: roleID, Action: p.Action, Scope: p.Scope, Created: now, Updated: now}
+					if _, err := sess.Insert(&perm); err != nil {
+						logger.Error("Unable to create managed permission", "error", err)
+						return err
+					}
 				}
-			}
-
-			if existed != 0 {
-				logger.Warn("Ignoring already existing inherited managed permissions", "existed", existed)
 			}
 		}
 	}
