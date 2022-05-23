@@ -1,5 +1,7 @@
 +++
 title = "Alert rule types"
+description = "Learn about the different alert rule types"
+keywords = ["grafana", "alerting", "rule types"]
 weight = 101
 +++
 

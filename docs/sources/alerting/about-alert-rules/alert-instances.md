@@ -1,5 +1,7 @@
 +++
 title = "Alert instances"
+description = "Learn about Grafana alert instances"
+keywords = ["grafana", "alerting", "instances"]
 weight = 102
 +++
 
