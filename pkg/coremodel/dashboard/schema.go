@@ -92,9 +92,19 @@ type model struct {
 	Refresh       interface{} `json:"refresh"` // (bool|string)
 	SchemaVersion int         `json:"schemaVersion"`
 	Links         []struct {
+		Title       string   `json:"title"`
+		Type        string   `json:"type"`
+		Icon        string   `json:"icon,omitempty"`
+		Tooltip     string   `json:"tooltip,omitempty"`
+		Url         string   `json:"url,omitempty"`
+		Tags        []string `json:"tags"`
+		AsDropdown  bool     `json:"asDropdown"`
+		TargetBlank bool     `json:"targetBlank"`
+		IncludeVars bool     `json:"includeVars"`
+		KeepTime    bool     `json:"keepTime"`
 	} `json:"links"`
 	Panels               []interface{} `json:"panels"`
-	FiscalYearStartMonth string        `json:"fiscalYearStartMonth"`
+	FiscalYearStartMonth uint8         `json:"fiscalYearStartMonth"`
 	LiveNow              bool          `json:"liveNow"`
 	WeekStart            string        `json:"weekStart"`
 

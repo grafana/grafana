@@ -17,6 +17,7 @@ import (
 
 const baseIntervalSeconds = 10
 
+// Every time this is called, time advances by 1 second.
 func mockTimeNow() {
 	var timeSeed int64
 	store.TimeNow = func() time.Time {
