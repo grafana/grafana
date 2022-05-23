@@ -12,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -78,19 +79,17 @@ func TestBrowserScreenshotService(t *testing.T) {
 	s := NewBrowserScreenshotService(&d, r)
 
 	// a non-existent dashboard should return error
-	d.GetDashboardFn = func(ctx context.Context, cmd *models.GetDashboardQuery) error {
-		return models.ErrDashboardNotFound
-	}
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(models.ErrDashboardNotFound).Once()
 	ctx := context.Background()
 	opts := ScreenshotOptions{}
 	screenshot, err := s.Take(ctx, opts)
 	assert.EqualError(t, err, "Dashboard not found")
 	assert.Nil(t, screenshot)
 
-	d.GetDashboardFn = func(ctx context.Context, cmd *models.GetDashboardQuery) error {
-		cmd.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
-		return nil
-	}
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
+	}).Return(nil)
 
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{

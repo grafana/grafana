@@ -41,6 +41,8 @@ type ImageStore interface {
 
 	GetURL(ctx context.Context, token string) (string, error)
 
+	GetFilepath(ctx context.Context, token string) (string, error)
+
 	// Returns an io.ReadCloser that reads out the image data for the provided
 	// token, if available. May return ErrImageNotFound.
 	GetData(ctx context.Context, token string) (io.ReadCloser, error)
@@ -97,6 +99,14 @@ func (st *DBstore) GetURL(ctx context.Context, token string) (string, error) {
 		return "", err
 	}
 	return img.URL, nil
+}
+
+func (st *DBstore) GetFilepath(ctx context.Context, token string) (string, error) {
+	img, err := st.GetImage(ctx, token)
+	if err != nil {
+		return "", err
+	}
+	return img.Path, nil
 }
 
 func (st *DBstore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
