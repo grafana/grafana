@@ -1,9 +1,11 @@
 import config from 'app/core/config';
+import { GrafanaBootConfig } from '../../../../packages/grafana-runtime/src';
 
-export const getUserThemeMode = () => {
-  if (config.bootData.user.lightTheme) {
+export const getUserThemeMode = (options?: GrafanaBootConfig) => {
+  const user = options?.bootData.user || config.bootData.user;
+  if (user.lightTheme) {
     return 'light';
-  } else if (config.bootData.user.fusebitTheme) {
+  } else if (user.fusebitTheme) {
     return 'fusebit';
   }
 
