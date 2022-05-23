@@ -15,7 +15,7 @@ export const assertQueryHistoryExists = async (query: string, exploreId: Explore
 export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {
-    expect(selector.getByText(`${expectedQueryTexts.length} queries`)).toBeInTheDocument();
+    expect(selector.getByText(new RegExp(`${expectedQueryTexts.length} queries`))).toBeInTheDocument();
     const queryTexts = selector.getAllByLabelText('Query text');
     expectedQueryTexts.forEach((expectedQueryText, queryIndex) => {
       expect(queryTexts[queryIndex]).toHaveTextContent(expectedQueryText);

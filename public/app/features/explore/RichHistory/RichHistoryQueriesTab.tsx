@@ -237,9 +237,10 @@ export function RichHistoryQueriesTab(props: Props) {
               <div key={heading}>
                 <div className={styles.heading}>
                   {heading}{' '}
-                  {!partialResults && (
-                    <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
-                  )}
+                  <span className={styles.queries}>
+                    {partialResults ? 'Displaying ' : ''}
+                    {mappedQueriesToHeadings[heading].length} queries
+                  </span>
                 </div>
                 {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
                   const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
