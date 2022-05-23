@@ -4,6 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const CodeMigrationSQL = "code migration"
+
 func AddMigration(mg *migrator.Migrator) {
 	permissionV1 := migrator.Table{
 		Name: "permission",
@@ -168,5 +170,4 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add column hidden to role table", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
 		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
-
 }

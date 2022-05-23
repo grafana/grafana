@@ -32,7 +32,7 @@ type managedPermissionMigrator struct {
 }
 
 func (sp *managedPermissionMigrator) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return CodeMigrationSQL
 }
 
 func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
