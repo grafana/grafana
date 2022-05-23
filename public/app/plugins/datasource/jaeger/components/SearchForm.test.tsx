@@ -113,12 +113,10 @@ describe('SearchForm', () => {
     expect(asyncServiceSelect).toBeInTheDocument();
 
     await user.type(asyncServiceSelect, 'j');
-    jest.advanceTimersByTime(3000);
     var option = await screen.findByText('jaeger-query');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'c');
-    jest.advanceTimersByTime(3000);
     option = await screen.findByText('No options found');
     expect(option).toBeDefined();
   });
