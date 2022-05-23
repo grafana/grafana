@@ -324,20 +324,20 @@ const fusebit = new FusebitColors();
 
 export const config = {
   dark: {
-    mode: dark,
+    base: dark,
   },
   light: {
-    mode: light,
+    base: light,
   },
   fusebit: {
-    mode: fusebit,
+    base: fusebit,
   },
 };
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
-  let base: DarkColors | LightColors | FusebitColors = config[colors.mode || 'dark'].mode;
+  let base: DarkColors | LightColors | FusebitColors = config[colors.mode || 'dark'].base;
   const {
     primary = base.primary,
     secondary = base.secondary,
