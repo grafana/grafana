@@ -9,11 +9,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/segmentio/encoding/json"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -21,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/segmentio/encoding/json"
 )
 
 type Service interface {
@@ -53,6 +55,7 @@ type thumbService struct {
 	log                        log.Logger
 	canRunCrawler              bool
 	settings                   setting.DashboardPreviewsSettings
+	dashboardService           dashboards.DashboardService
 }
 
 type crawlerScheduleOptions struct {
@@ -65,7 +68,10 @@ type crawlerScheduleOptions struct {
 	auth             CrawlerAuth
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService) Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	lockService *serverlock.ServerLockService, renderService rendering.Service,
+	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
+	dashboardService dashboards.DashboardService) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
@@ -96,7 +102,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		log:                        logger,
 		canRunCrawler:              canRunCrawler,
 		settings:                   cfg.DashboardPreviews,
-
 		scheduleOptions: crawlerScheduleOptions{
 			tickerInterval:   5 * time.Minute,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
@@ -106,6 +111,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
 			auth:             crawlerAuth,
 		},
+		dashboardService: dashboardService,
 	}
 
 	return t
@@ -400,7 +406,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
-	if err := hs.store.GetDashboard(c.Req.Context(), &query); err != nil {
+	if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 		return 0, err
 	}
 

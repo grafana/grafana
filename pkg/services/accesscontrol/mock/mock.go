@@ -103,7 +103,7 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+	return resolvedEvaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions)), nil
 }
 
 // GetUserPermissions returns user permissions.

@@ -22,6 +22,15 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
+
+      a {
+        color: ${theme.colors.error.contrastText};
+        text-decoration: underline;
+      }
+
+      a:hover {
+        text-decoration: none;
+      }
     `;
 
   return {

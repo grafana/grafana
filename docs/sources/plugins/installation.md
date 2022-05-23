@@ -1,6 +1,6 @@
 +++
-title = "Install plugins"
 aliases = ["/docs/grafana/latest/plugins/installation/"]
+title = "Install plugins"
 weight = 1
 +++
 

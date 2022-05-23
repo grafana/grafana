@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery } from '../../types';
+import { RichHistoryQuery, UserPreferencesDTO } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -26,6 +26,16 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => dsMock,
 }));
 
+const preferencesServiceMock = {
+  patch: jest.fn(),
+  load: jest.fn(),
+};
+jest.mock('../services/PreferencesService', () => ({
+  PreferencesService: function () {
+    return preferencesServiceMock;
+  },
+}));
+
 describe('RichHistoryRemoteStorage', () => {
   let storage: RichHistoryRemoteStorage;
 
@@ -34,8 +44,8 @@ describe('RichHistoryRemoteStorage', () => {
     storage = new RichHistoryRemoteStorage();
   });
 
-  it('returns list of query history items', async () => {
-    const expectedViewModel: RichHistoryQuery<any> = {
+  const setup = (): { richHistoryQuery: RichHistoryQuery; dto: RichHistoryRemoteStorageDTO } => {
+    const richHistoryQuery: RichHistoryQuery<any> = {
       id: '123',
       createdAt: 200 * 1000,
       datasourceUid: 'ds1',
@@ -44,21 +54,31 @@ describe('RichHistoryRemoteStorage', () => {
       comment: 'comment',
       queries: [{ foo: 'bar ' }],
     };
-    const returnedDTOs: RichHistoryRemoteStorageDTO[] = [
-      {
-        uid: expectedViewModel.id,
-        createdAt: expectedViewModel.createdAt / 1000,
-        datasourceUid: expectedViewModel.datasourceUid,
-        starred: expectedViewModel.starred,
-        comment: expectedViewModel.comment,
-        queries: expectedViewModel.queries,
-      },
-    ];
+
+    const dto = {
+      uid: richHistoryQuery.id,
+      createdAt: richHistoryQuery.createdAt / 1000,
+      datasourceUid: richHistoryQuery.datasourceUid,
+      starred: richHistoryQuery.starred,
+      comment: richHistoryQuery.comment,
+      queries: richHistoryQuery.queries,
+    };
+
+    return {
+      richHistoryQuery,
+      dto,
+    };
+  };
+
+  it('returns list of query history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    const returnedDTOs: RichHistoryRemoteStorageDTO[] = [dto];
     fetchMock.mockReturnValue(
       of({
         data: {
           result: {
             queryHistory: returnedDTOs,
+            totalCount: returnedDTOs.length,
           },
         },
       })
@@ -72,13 +92,85 @@ describe('RichHistoryRemoteStorage', () => {
     const expectedLimit = 100;
     const expectedPage = 1;
 
-    const items = await storage.getRichHistory({ search, datasourceFilters, sortOrder, starred, to, from });
+    const { richHistory, total } = await storage.getRichHistory({
+      search,
+      datasourceFilters,
+      sortOrder,
+      starred,
+      to,
+      from,
+    });
 
     expect(fetchMock).toBeCalledWith({
       method: 'GET',
       url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
       requestId: 'query-history-get-all',
     });
-    expect(items).toMatchObject([expectedViewModel]);
+    expect(richHistory).toMatchObject([richHistoryQuery]);
+    expect(total).toBe(1);
+  });
+
+  it('read starred home tab preferences', async () => {
+    preferencesServiceMock.load.mockResolvedValue({
+      queryHistory: {
+        homeTab: 'starred',
+      },
+    } as UserPreferencesDTO);
+    const settings = await storage.getSettings();
+    expect(settings).toMatchObject({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: true,
+    });
+  });
+
+  it('uses default home tab preferences', async () => {
+    preferencesServiceMock.load.mockResolvedValue({
+      queryHistory: {
+        homeTab: '',
+      },
+    } as UserPreferencesDTO);
+    const settings = await storage.getSettings();
+    expect(settings).toMatchObject({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: false,
+    });
+  });
+
+  it('updates user settings', async () => {
+    await storage.updateSettings({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: false,
+    });
+    expect(preferencesServiceMock.patch).toBeCalledWith({
+      queryHistory: { homeTab: 'query' },
+    } as Partial<UserPreferencesDTO>);
+
+    await storage.updateSettings({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: true,
+    });
+    expect(preferencesServiceMock.patch).toBeCalledWith({
+      queryHistory: { homeTab: 'starred' },
+    } as Partial<UserPreferencesDTO>);
+  });
+
+  it('migrates provided rich history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    fetchMock.mockReturnValue(of({}));
+    await storage.migrate([richHistoryQuery]);
+    expect(fetchMock).toBeCalledWith({
+      url: '/api/query-history/migrate',
+      method: 'POST',
+      data: { queries: [dto] },
+      showSuccessAlert: false,
+    });
   });
 });

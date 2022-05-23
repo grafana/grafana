@@ -4,10 +4,11 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DataQuery } from '../../../../packages/grafana-data';
+import { PreferencesService } from '../services/PreferencesService';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
-import { fromDTO } from './remoteStorageConverter';
+import { fromDTO, toDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -18,13 +19,32 @@ export type RichHistoryRemoteStorageDTO = {
   queries: DataQuery[];
 };
 
+type RichHistoryRemoteStorageMigrationDTO = {
+  datasourceUid: string;
+  queries: DataQuery[];
+  createdAt: number;
+  starred: boolean;
+  comment: string;
+};
+
+type RichHistoryRemoteStorageMigrationPayloadDTO = {
+  queries: RichHistoryRemoteStorageMigrationDTO[];
+};
+
 type RichHistoryRemoteStorageResultsPayloadDTO = {
   result: {
     queryHistory: RichHistoryRemoteStorageDTO[];
+    totalCount: number;
   };
 };
 
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
+  private readonly preferenceService: PreferencesService;
+
+  constructor() {
+    this.preferenceService = new PreferencesService('user');
+  }
+
   async addToRichHistory(
     newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
@@ -45,8 +65,9 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     throw new Error('not supported yet');
   }
 
-  async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
+
     const queryHistory = await lastValueFrom(
       getBackendSrv().fetch({
         method: 'GET',
@@ -55,15 +76,21 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
         requestId: 'query-history-get-all',
       })
     );
-    return ((queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO).result.queryHistory || []).map(fromDTO);
+
+    const data = queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO;
+    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const total = data.result.totalCount || 0;
+
+    return { richHistory, total };
   }
 
   async getSettings(): Promise<RichHistorySettings> {
+    const preferences = await this.preferenceService.load();
     return {
       activeDatasourceOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
-      starredTabAsFirstTab: false,
+      starredTabAsFirstTab: preferences.queryHistory?.homeTab === 'starred',
     };
   }
 
@@ -71,12 +98,30 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     throw new Error('not supported yet');
   }
 
-  async updateSettings(settings: RichHistorySettings): Promise<void> {
-    throw new Error('not supported yet');
+  updateSettings(settings: RichHistorySettings): Promise<void> {
+    return this.preferenceService.patch({
+      queryHistory: {
+        homeTab: settings.starredTabAsFirstTab ? 'starred' : 'query',
+      },
+    });
   }
 
   async updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery> {
     throw new Error('not supported yet');
+  }
+
+  /**
+   * @internal Used only for migration purposes. Will be removed in future.
+   */
+  async migrate(richHistory: RichHistoryQuery[]) {
+    await lastValueFrom(
+      getBackendSrv().fetch({
+        url: '/api/query-history/migrate',
+        method: 'POST',
+        data: { queries: richHistory.map(toDTO) } as RichHistoryRemoteStorageMigrationPayloadDTO,
+        showSuccessAlert: false,
+      })
+    );
   }
 }
 
@@ -99,7 +144,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   params = params + `&to=${relativeFrom}`;
   params = params + `&from=${relativeTo}`;
   params = params + `&limit=100`;
-  params = params + `&page=1`;
+  params = params + `&page=${filters.page || 1}`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
   }

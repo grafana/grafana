@@ -146,10 +146,6 @@ func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
 
 }
 
-func TestInitializer_getAzureEnvironmentVariables(t *testing.T) {
-
-}
-
 func TestInitializer_handleModuleDefaults(t *testing.T) {
 
 }

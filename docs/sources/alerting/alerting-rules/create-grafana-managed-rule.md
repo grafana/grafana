@@ -1,9 +1,9 @@
 +++
-title = "Create Grafana managed alert rule"
+aliases = ["/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/"]
 description = "Create Grafana managed alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
+title = "Create Grafana managed alert rule"
 weight = 400
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/"]
 +++
 
 # Create a Grafana managed alerting rule
@@ -32,7 +32,7 @@ Grafana allows you to create alerting rules that query one or more data sources,
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
    - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
 1. In Step 4, add additional metadata associated with the rule.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/_index.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.

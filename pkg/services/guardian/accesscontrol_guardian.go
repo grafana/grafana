@@ -2,7 +2,6 @@ package guardian
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,6 +24,7 @@ func NewAccessControlDashboardGuardian(
 	store sqlstore.Store, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardService dashboards.DashboardService,
 ) *AccessControlDashboardGuardian {
 	return &AccessControlDashboardGuardian{
 		ctx:                         ctx,
@@ -35,6 +35,7 @@ func NewAccessControlDashboardGuardian(
 		ac:                          ac,
 		folderPermissionsService:    folderPermissionsService,
 		dashboardPermissionsService: dashboardPermissionsService,
+		dashboardService:            dashboardService,
 	}
 }
 
@@ -49,6 +50,7 @@ type AccessControlDashboardGuardian struct {
 	ac                          accesscontrol.AccessControl
 	folderPermissionsService    accesscontrol.FolderPermissionsService
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService
+	dashboardService            dashboards.DashboardService
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
@@ -180,7 +182,7 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		svc = a.dashboardPermissionsService
 	}
 
-	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))
+	permissions, err := svc.GetPermissions(a.ctx, a.user, a.dashboard.Uid)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +266,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
 		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
-		if err := a.store.GetDashboard(a.ctx, query); err != nil {
+		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
 		if !query.Result.IsFolder {
@@ -284,7 +286,7 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*mode
 		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
 	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
-	if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {
+	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}
 	return folderQuery.Result, nil
