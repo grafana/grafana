@@ -60,7 +60,12 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
         .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
         // or remove
         .filter((query) => query.id !== deletedId);
-      dispatch(richHistoryUpdatedAction({ richHistory: newRichHistory, exploreId }));
+      dispatch(
+        richHistoryUpdatedAction({
+          richHistoryResults: { richHistory: newRichHistory, total: item.richHistoryTotal },
+          exploreId,
+        })
+      );
     });
   };
 };
@@ -118,8 +123,12 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 export const deleteRichHistory = (): ThunkResult<void> => {
   return async (dispatch) => {
     await deleteAllFromRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId: ExploreId.left }));
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId: ExploreId.right }));
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.left })
+    );
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.right })
+    );
   };
 };
 
@@ -127,8 +136,24 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const filters = getState().explore![exploreId]?.richHistorySearchFilters;
     if (filters) {
-      const richHistory = await getRichHistory(filters);
-      dispatch(richHistoryUpdatedAction({ richHistory, exploreId }));
+      const richHistoryResults = await getRichHistory(filters);
+      dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
+    }
+  };
+};
+
+export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    if (currentFilters && currentRichHistory) {
+      const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
+      const moreRichHistory = await getRichHistory(nextFilters);
+      const richHistory = [...currentRichHistory, ...moreRichHistory.richHistory];
+      dispatch(richHistorySearchFiltersUpdatedAction({ filters: nextFilters, exploreId }));
+      dispatch(
+        richHistoryUpdatedAction({ richHistoryResults: { richHistory, total: moreRichHistory.total }, exploreId })
+      );
     }
   };
 };
@@ -136,7 +161,7 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 export const clearRichHistoryResults = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch) => {
     dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined, exploreId }));
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId }));
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
   };
 };
 
