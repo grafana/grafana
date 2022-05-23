@@ -1381,7 +1381,7 @@ Configures Query history in Explore.
 
 ### enabled
 
-Enable or disable the Query history. Default is `disabled`.
+Enable or disable the Query history. Default is `enabled`.
 
 ## [metrics]
 
