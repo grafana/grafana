@@ -186,17 +186,22 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
-	imgToken := getTokenFromAnnotations(as[0].Annotations)
-	timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	imgURL, err := pn.images.GetURL(timeoutCtx, imgToken)
-	cancel()
-	if err != nil {
-		if !errors.Is(err, ErrImagesUnavailable) {
-			// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-			pn.log.Warn("failed to retrieve image url from store", "error", err)
+	for i := range as {
+		imgToken := getTokenFromAnnotations(as[i].Annotations)
+		if len(imgToken) == 0 {
+			continue
 		}
-	} else {
-		msg.Images = append(msg.Images, pagerDutyImage{Src: imgURL})
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := pn.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				pn.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		} else {
+			msg.Images = append(msg.Images, pagerDutyImage{Src: imgURL})
+		}
 	}
 
 	if len(msg.Payload.Summary) > 1024 {
