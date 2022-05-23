@@ -29,16 +29,14 @@ export const NotificationsStep: FC = () => {
             alt="notification policy flow chart"
           />
         )}
-        <div>
-          <Card className={styles.card}>
-            <Card.Heading>Root route – default for all alerts</Card.Heading>
-            <Card.Description>
-              Without custom labels, your alert will be routed through the root route. To view and edit the root route,
-              go to <Link href="/alerting/routes">notification policies</Link> or contact your admin in case you are
-              using non-Grafana alert management.
-            </Card.Description>
-          </Card>
-        </div>
+        <Card className={styles.card}>
+          <Card.Heading>Root route – default for all alerts</Card.Heading>
+          <Card.Description>
+            Without custom labels, your alert will be routed through the root route. To view and edit the root route, go
+            to <Link href="/alerting/routes">notification policies</Link> or contact your admin in case you are using
+            non-Grafana alert management.
+          </Card.Description>
+        </Card>
       </div>
     </RuleEditorSection>
   );
@@ -56,5 +54,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   card: css`
     max-width: 500px;
+    margin-left: ${theme.spacing(3)};
   `,
 });
