@@ -133,7 +133,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
