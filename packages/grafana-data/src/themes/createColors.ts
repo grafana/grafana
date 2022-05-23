@@ -66,6 +66,7 @@ export interface ThemeColorsBase<TColor> {
   hoverFactor: number;
   contrastThreshold: number;
   tonalOffset: number;
+  transparency: number;
 }
 
 export interface ThemeHoverStrengh {}
@@ -156,6 +157,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.15;
+  transparency = 0.15;
 }
 
 class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
@@ -236,6 +238,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
+  transparency = 0.08;
 }
 
 class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
@@ -316,6 +319,7 @@ class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
+  transparency = 0.08;
 }
 
 const dark = new DarkColors();
@@ -326,14 +330,17 @@ export const themesConfig = {
   dark: {
     base: dark,
     getShadeColor: (color: string) => lighten(color, dark.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, dark.transparency),
   },
   light: {
     base: light,
     getShadeColor: (color: string) => darken(color, light.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, light.transparency),
   },
   fusebit: {
     base: fusebit,
     getShadeColor: (color: string) => darken(color, fusebit.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, fusebit.transparency),
   },
 };
 
@@ -380,7 +387,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.shade = currentTheme.getShadeColor(color.main);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' || 'fusebit' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = currentTheme.getTransparentColor(color.main);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
