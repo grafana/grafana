@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+const defaultTimeout = 10
+
 // Config holds list of connections to LDAP
 type Config struct {
 	Servers []*ServerConfig `toml:"servers"`
@@ -142,8 +144,8 @@ func readConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
-	// set default org id
 	for _, server := range result.Servers {
+		// set default org id
 		err = assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		if err != nil {
 			return nil, errutil.Wrap("Failed to validate SearchFilter section", err)
@@ -161,6 +163,11 @@ func readConfig(configFile string) (*Config, error) {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
+		}
+		
+		// set default timeout if unspecified
+		if server.Timeout == 0 {
+			server.Timeout = defaultTimeout
 		}
 	}
 
