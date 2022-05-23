@@ -5,7 +5,6 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   AbstractLabelOperator,
-  AnnotationQueryRequest,
   CoreApp,
   DataFrame,
   dateTime,
@@ -588,108 +587,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when calling annotationQuery', () => {
-    const getTestContext = (response: any, options: any = []) => {
-      const query = makeAnnotationQueryRequest(options);
-      fetchMock.mockImplementation(() => of(response));
-
-      const ds = createLokiDSForTests();
-      const promise = ds.annotationQuery(query);
-
-      return { promise };
-    };
-
-    it('should transform the loki data to annotation response', async () => {
-      const response: FetchResponse = {
-        data: {
-          data: {
-            resultType: LokiResultType.Stream,
-            result: [
-              {
-                stream: {
-                  label: 'value',
-                  label2: 'value ',
-                },
-                values: [['1549016857498000000', 'hello']],
-              },
-              {
-                stream: {
-                  label: '', // empty value gets filtered
-                  label2: 'value2',
-                  label3: ' ', // whitespace value gets trimmed then filtered
-                },
-                values: [['1549024057498000000', 'hello 2']],
-              },
-            ],
-          },
-          status: 'success',
-        },
-      } as unknown as FetchResponse;
-      const { promise } = getTestContext(response, { stepInterval: '15s' });
-
-      const res = await promise;
-
-      expect(res.length).toBe(2);
-      expect(res[0].text).toBe('hello');
-      expect(res[0].tags).toEqual(['value']);
-
-      expect(res[1].text).toBe('hello 2');
-      expect(res[1].tags).toEqual(['value2']);
-    });
-    describe('Formatting', () => {
-      const response: FetchResponse = {
-        data: {
-          data: {
-            resultType: LokiResultType.Stream,
-            result: [
-              {
-                stream: {
-                  label: 'value',
-                  label2: 'value2',
-                  label3: 'value3',
-                },
-                values: [['1549016857498000000', 'hello']],
-              },
-            ],
-          },
-          status: 'success',
-        },
-      } as unknown as FetchResponse;
-      describe('When tagKeys is set', () => {
-        it('should only include selected labels', async () => {
-          const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
-
-          const res = await promise;
-
-          expect(res.length).toBe(1);
-          expect(res[0].text).toBe('hello');
-          expect(res[0].tags).toEqual(['value2', 'value3']);
-        });
-      });
-      describe('When textFormat is set', () => {
-        it('should fromat the text accordingly', async () => {
-          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
-
-          const res = await promise;
-
-          expect(res.length).toBe(1);
-          expect(res[0].text).toBe('hello value2');
-        });
-      });
-      describe('When titleFormat is set', () => {
-        it('should fromat the title accordingly', async () => {
-          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
-
-          const res = await promise;
-
-          expect(res.length).toBe(1);
-          expect(res[0].title).toBe('Title value2');
-          expect(res[0].text).toBe('hello');
-        });
-      });
-    });
-  });
-
   describe('metricFindQuery', () => {
     const getTestContext = (mock: LokiDatasource) => {
       const ds = createLokiDSForTests();
@@ -1070,30 +967,4 @@ function createLokiDSForTests(
   const customSettings = { ...instanceSettings, jsonData: customData };
 
   return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
-}
-
-function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {
-  const timeRange = {
-    from: dateTime(),
-    to: dateTime(),
-  };
-  return {
-    annotation: {
-      expr: '{test=test}',
-      refId: '',
-      datasource: 'loki',
-      enable: true,
-      name: 'test-annotation',
-      iconColor: 'red',
-      ...options,
-    },
-    dashboard: {
-      id: 1,
-    } as any,
-    range: {
-      ...timeRange,
-      raw: timeRange,
-    },
-    rangeRaw: timeRange,
-  };
 }
