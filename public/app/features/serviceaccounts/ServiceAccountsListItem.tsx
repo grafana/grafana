@@ -23,10 +23,6 @@ const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
 
-const getServiceAccountsEnabledStatus = (disabled: boolean) => {
-  return disabled ? 'Disabled' : 'Enabled';
-};
-
 const ServiceAccountListItem = memo(
   ({
     serviceAccount,
@@ -100,16 +96,6 @@ const ServiceAccountListItem = memo(
             />
           </td>
         )}
-        <td className="link-td max-width-10">
-          <a
-            className="ellipsis"
-            href={editUrl}
-            title={getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
-            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
-          >
-            {getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
-          </a>
-        </td>
         <td className="link-td max-width-10">
           <a
             className="ellipsis"
