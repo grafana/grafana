@@ -214,14 +214,14 @@ func TestDashboardIndexSort(t *testing.T) {
 					frame.Fields,
 					testNum,
 				)
-				return func(field string, value []byte) bool {
+				return func(field string, value []byte) {
 					if field == "test" {
 						if num, err := bluge.DecodeNumericFloat64(value); err == nil {
 							testNum.Append(num)
-							return true
+							return
 						}
 					}
-					return true
+					return
 				}
 			},
 		},
