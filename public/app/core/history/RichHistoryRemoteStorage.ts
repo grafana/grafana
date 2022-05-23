@@ -91,8 +91,8 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     throw new Error('not supported yet');
   }
 
-  async updateSettings(settings: RichHistorySettings): Promise<void> {
-    await this.preferenceService.patch({
+  updateSettings(settings: RichHistorySettings): Promise<void> {
+    return this.preferenceService.patch({
       queryHistory: {
         homeTab: settings.starredTabAsFirstTab ? 'starred' : 'query',
       },
