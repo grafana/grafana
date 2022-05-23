@@ -1,4 +1,4 @@
-import { mount } from 'enzyme';
+import { screen, render, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
@@ -31,7 +31,7 @@ const prepareDashboardMock = (
   };
 };
 const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
-  const container = mount(
+  render(
     <SaveDashboardForm
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
@@ -55,14 +55,14 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
 
   // @ts-ignore strict null error below
   await act(async () => {
-    const button = container.find('button[aria-label="Dashboard settings Save Dashboard Modal Save button"]');
-    button.simulate('submit');
+    const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
+    fireEvent.submit(button);
   });
 };
 describe('SaveDashboardAsForm', () => {
   describe('time and variables toggle rendering', () => {
     it('renders switches when variables or timerange', () => {
-      const container = mount(
+      render(
         <SaveDashboardForm
           dashboard={prepareDashboardMock(true, true, jest.fn(), jest.fn()) as any}
           onCancel={() => {}}
@@ -83,15 +83,15 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      const variablesCheckbox = container.find(
-        'input[aria-label="Dashboard settings Save Dashboard Modal Save variables checkbox"]'
-      );
-      const timeRangeCheckbox = container.find(
-        'input[aria-label="Dashboard settings Save Dashboard Modal Save timerange checkbox"]'
-      );
+      const variablesCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
+      });
+      const timeRangeCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+      });
 
-      expect(variablesCheckbox).toHaveLength(1);
-      expect(timeRangeCheckbox).toHaveLength(1);
+      expect(variablesCheckbox).toBeInTheDocument();
+      expect(timeRangeCheckbox).toBeInTheDocument();
     });
   });
 
