@@ -52,7 +52,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 		dashboardLoader,
 		&store.MockEntityEventsService{},
 		extender,
-		func(folderId int64) (string, error) { return "x", nil })
+		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-delete", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.removeDashboard(writer, reader, "2")
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2")
 		require.NoError(t, err)
 
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
@@ -125,7 +125,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-create", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
+		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  3,
 			uid: "3",
 			info: &extract.DashboardInfo{
@@ -142,7 +142,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-update", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
+		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  2,
 			uid: "2",
 			info: &extract.DashboardInfo{

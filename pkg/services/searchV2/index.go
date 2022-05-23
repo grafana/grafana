@@ -36,7 +36,7 @@ type eventStore interface {
 
 // While we migrate away from internal IDs... this lets us lookup values in SQL
 // NOTE: folderId is unique across all orgs
-type folderUIDLookup = func(folderId int64) (string, error)
+type folderUIDLookup = func(ctx context.Context, folderId int64) (string, error)
 
 type dashboard struct {
 	id       int64
@@ -357,9 +357,9 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 
 	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
-		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
+		newReader, err = i.removeDashboard(ctx, writer, reader, dashboardUID)
 	} else {
-		newReader, err = i.updateDashboard(orgID, writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(ctx, orgID, writer, reader, dbDashboards[0])
 	}
 	if err != nil {
 		return err
@@ -368,7 +368,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	return nil
 }
 
-func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
+func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
 	// Find all panel docs to remove with dashboard.
 	panelIDs, err := getDashboardPanelIDs(reader, dashboardUID)
 	if err != nil {
@@ -398,7 +398,7 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
 
 	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
@@ -415,7 +415,7 @@ func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, read
 			folderUID = "general"
 		} else {
 			var err error
-			folderUID, err = i.folderIdLookup(dash.folderID)
+			folderUID, err = i.folderIdLookup(ctx, dash.folderID)
 			if err != nil {
 				return nil, err
 			}
@@ -554,14 +554,14 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 }
 
 func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
-	return func(folderId int64) (string, error) {
+	return func(ctx context.Context, folderID int64) (string, error) {
 		uid := ""
-		err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			sess.Table("dashboard").
-				Where("id = ?", folderId).
+				Where("id = ?", folderID).
 				Cols("uid")
 
-			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderId)
+			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
 			if err != nil {
 				return err
 			}
