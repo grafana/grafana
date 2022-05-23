@@ -1,3 +1,11 @@
+// This migration ensures that permissions attributed to a managed role are also granted
+// to parent roles.
+// Example setup:
+// editor read, query datasources:uid:2
+// editor read, query datasources:uid:1
+// admin read, query, write datasources:uid:1
+// we'd need to create admin read, query, write datasources:uid:2
+
 package accesscontrol
 
 import (
@@ -8,8 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"xorm.io/xorm"
 )
+
+const ManagedPermissionsMigrationID = "managed permissions migration"
+
+func AddManagedPermissionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(ManagedPermissionsMigrationID, &managedPermissionMigrator{})
+}
 
 type managedPermissionMigrator struct {
 	migrator.MigrationBase
@@ -30,7 +46,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 		Scope    string
 	}
 
-	// get all orgs
+	// get all permissions associated with a managed builtin role
 	managedPermissions := []Permission{}
 	if errFindPermissions := sess.SQL(`SELECT r.name as role_name, r.id as role_id, r.org_id as org_id,p.action, p.scope
 	FROM permission AS p
@@ -41,8 +57,8 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 		return errFindPermissions
 	}
 
-	roleMap := make(map[int64]map[string]int64)
-	permissionMap := make(map[int64]map[string][]Permission)
+	roleMap := make(map[int64]map[string]int64)              // map[org_id][role_name] = role_id
+	permissionMap := make(map[int64]map[string][]Permission) // map[org_id][role_name] = []Permission
 
 	// for each managed permission make a map of which permissions need to be added to inheritors
 	for _, p := range managedPermissions {
@@ -52,7 +68,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			roleMap[p.OrgID][p.RoleName] = p.RoleID
 		}
 
-		roleName := parseRoleFromName(p.RoleName)
+		roleName := ParseRoleFromName(p.RoleName)
 		for _, parent := range models.RoleType(roleName).Parents() {
 			parentManagedRoleName := "managed:builtins:" + strings.ToLower(string(parent)) + ":permissions"
 			if _, ok := permissionMap[p.OrgID]; !ok {
@@ -60,7 +76,6 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			} else {
 				permissionMap[p.OrgID][parentManagedRoleName] = append(permissionMap[p.OrgID][parentManagedRoleName], p)
 			}
-
 		}
 	}
 
@@ -94,7 +109,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 				connection := accesscontrol.BuiltinRole{
 					RoleID:  createdRole.ID,
 					OrgID:   orgID,
-					Role:    parseRoleFromName(createdRole.Name),
+					Role:    ParseRoleFromName(createdRole.Name),
 					Created: now,
 					Updated: now,
 				}
@@ -126,6 +141,9 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 	return nil
 }
 
-func parseRoleFromName(roleName string) string {
-	return strings.Title(strings.TrimSuffix(strings.TrimPrefix(roleName, "managed:builtins:"), ":permissions"))
+// Converts from managed:builtins:<role>:permissions to <Role>
+// Example: managed:builtins:editor:permissions -> Editor
+func ParseRoleFromName(roleName string) string {
+	return cases.Title(language.AmericanEnglish).
+		String(strings.TrimSuffix(strings.TrimPrefix(roleName, "managed:builtins:"), ":permissions"))
 }

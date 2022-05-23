@@ -22,6 +22,16 @@ type rawPermission struct {
 	Action, Scope string
 }
 
+func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.Permission {
+	return accesscontrol.Permission{
+		RoleID:  roleID,
+		Action:  rp.Action,
+		Scope:   rp.Scope,
+		Updated: ts,
+		Created: ts,
+	}
+}
+
 // Setup users
 var (
 	now = time.Now()

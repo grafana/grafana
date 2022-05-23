@@ -4,8 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-const ManagedPermissionsMigrationID = "managed permissions migration"
-
 func AddMigration(mg *migrator.Migrator) {
 	permissionV1 := migrator.Table{
 		Name: "permission",
@@ -171,5 +169,4 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
 
-	mg.AddMigration(ManagedPermissionsMigrationID, &managedPermissionMigrator{})
 }
