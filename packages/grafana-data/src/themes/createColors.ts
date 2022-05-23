@@ -64,6 +64,7 @@ export interface ThemeColorsBase<TColor> {
     disabledOpacity: number;
   };
 
+  logLevelUnknown: string;
   hoverFactor: number;
   contrastThreshold: number;
   tonalOffset: number;
@@ -155,6 +156,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
   };
 
+  logLevelUnknown = '#8e8e8e';
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.15;
@@ -236,6 +238,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
+  logLevelUnknown = '#dde4ed';
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
@@ -317,6 +320,7 @@ class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
+  logLevelUnknown = '#dde4ed';
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
