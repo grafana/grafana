@@ -7,29 +7,27 @@ import { CloudWatchAnnotationQuery, CloudWatchQuery, LegacyAnnotationQuery } fro
 export const CloudWatchAnnotationSupport = {
   // converts legacy angular style queries to new format. Also sets the same default values as in the deprecated angular directive
   prepareAnnotation: (
-    query: AnnotationQuery<CloudWatchAnnotationQuery>
+    query: LegacyAnnotationQuery | AnnotationQuery<CloudWatchAnnotationQuery>
   ): AnnotationQuery<CloudWatchAnnotationQuery> => {
     if (isCloudWatchAnnotation(query)) {
       return query;
     }
 
-    const legacyQuery: LegacyAnnotationQuery = query;
-
     return {
       // setting AnnotationQuery props explicitly since spreading would incorrectly use props that should be on the target only
-      datasource: legacyQuery.datasource,
-      enable: legacyQuery.enable,
-      iconColor: legacyQuery.iconColor,
-      name: legacyQuery.name,
-      builtIn: legacyQuery.builtIn,
-      hide: legacyQuery.hide,
+      datasource: query.datasource,
+      enable: query.enable,
+      iconColor: query.iconColor,
+      name: query.name,
+      builtIn: query.builtIn,
+      hide: query.hide,
       target: {
-        ...legacyQuery.target,
-        ...legacyQuery,
-        statistic: legacyQuery.statistic || 'Average',
-        region: legacyQuery.region || 'default',
+        ...query.target,
+        ...query,
+        statistic: query.statistic || 'Average',
+        region: query.region || 'default',
         queryMode: 'Annotations',
-        refId: legacyQuery.refId || 'annotationQuery',
+        refId: query.refId || 'annotationQuery',
       },
     };
   },

@@ -2,6 +2,7 @@ import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AnnotationEvent, DataSourceApi } from '@grafana/data';
+import { shouldUseLegacyRunner } from 'app/features/annotations/standardAnnotationSupport';
 
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
@@ -12,7 +13,7 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return false;
     }
 
-    if (datasource.annotations?.useLegacyRunner) {
+    if (shouldUseLegacyRunner(datasource)) {
       return true;
     }
 

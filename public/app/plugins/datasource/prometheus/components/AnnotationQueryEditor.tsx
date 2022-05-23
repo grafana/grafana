@@ -11,12 +11,14 @@ import { PromQuery } from '../types';
 import { PromQueryEditorProps } from './types';
 
 type Props = PromQueryEditorProps & {
-  annotation: AnnotationQuery<PromQuery>;
-  onAnnotationChange: (annotation: AnnotationQuery<PromQuery>) => void;
+  annotation?: AnnotationQuery<PromQuery>;
+  onAnnotationChange?: (annotation: AnnotationQuery<PromQuery>) => void;
 };
 
 export function AnnotationQueryEditor(props: Props) {
-  const { annotation, onAnnotationChange } = props;
+  // This is because of problematic typing. See AnnotationQueryEditorProps in grafana-data/annotations.ts.
+  const annotation = props.annotation!;
+  const onAnnotationChange = props.onAnnotationChange!;
   return (
     <>
       <PromQueryEditorSelector
@@ -31,7 +33,7 @@ export function AnnotationQueryEditor(props: Props) {
           options: {
             exemplars: false,
             type: false,
-            format: true,
+            format: false,
             minStep: true,
             legend: false,
             resolution: false,

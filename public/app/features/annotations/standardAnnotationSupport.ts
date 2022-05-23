@@ -9,6 +9,7 @@ import {
   AnnotationQuery,
   AnnotationSupport,
   DataFrame,
+  DataSourceApi,
   Field,
   FieldType,
   getFieldDisplayName,
@@ -20,7 +21,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * Assume the stored value is standard model.
    */
-  prepareAnnotation: (json) => {
+  prepareAnnotation: (json: any) => {
     if (isString(json?.query)) {
       const { query, ...rest } = json;
       return {
@@ -224,4 +225,22 @@ export function getAnnotationsFromData(
       return events;
     })
   );
+}
+
+// These opt outs are here only for quicker and easier migration to react based annotations editors and because
+// annotation support API needs some work to support less "standard" editors like prometheus and here it is not
+// polluting public API.
+
+/**
+ * Opt out of using the default mapping functionality on frontend.
+ */
+export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
+  return datasource.type !== 'prometheus';
+}
+
+/**
+ * Use legacy runner. Used only as an escape hatch for easier transition to React based annotation editor.
+ */
+export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
+  return datasource.type === 'prometheus';
 }
