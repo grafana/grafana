@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -10,9 +11,11 @@ import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
+import { getSortFieldDisplayName } from './sorting';
 
 const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -28,9 +31,12 @@ export const generateColumns = (
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  if (sortField) {
+    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+  }
 
   let width = 50;
-
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
@@ -161,6 +167,28 @@ export const generateColumns = (
       field: access.location ?? access.url,
       Header: 'Location',
       width: availableWidth,
+    });
+  }
+
+  if (sortField) {
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>{getSortFieldDisplayName(sortField.name)}</div>,
+      Cell: (p) => {
+        let value = sortField.values.get(p.row.index);
+        try {
+          if (isNumber(value)) {
+            value = Number(value).toLocaleString();
+          }
+        } catch {}
+        return (
+          <div {...p.cellProps} className={styles.sortedItems}>
+            {value}
+          </div>
+        );
+      },
+      id: `column-sort-field`,
+      field: sortField,
+      width: SORT_FIELD_WIDTH,
     });
   }
 

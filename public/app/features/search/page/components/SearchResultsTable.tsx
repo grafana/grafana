@@ -238,6 +238,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
       margin-right: 12px;
     `,
+    sortedHeader: css`
+      text-align: right;
+    `,
+    sortedItems: css`
+      text-align: right;
+      padding: ${theme.spacing(1)};
+    `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};
       padding-right: ${theme.spacing(1)};
