@@ -11,4 +11,4 @@ weight: 30
 
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
 
-When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources. For more information about creating API keys, refer to [Create an API key]({{< relref "./create-api-key.md#">}}).
+When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources. For more information about creating API keys, refer to [Create an API key]({{< relref "./create-api-key.md#" >}}).

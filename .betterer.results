@@ -110,9 +110,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:381298544": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/common/CopyIcon.test.js:187212136": [
-      [15, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/common/NewWindowIcon.test.js:1750458349": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -195,9 +192,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/CreateTeam.test.tsx:1750035593": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamGroupSync.test.tsx:2526985933": [
