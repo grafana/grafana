@@ -36,6 +36,19 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
 }));
 
+jest.mock('app/core/services/PreferencesService', () => ({
+  PreferencesService: function () {
+    return {
+      patch: jest.fn(),
+      load: jest.fn().mockResolvedValue({
+        queryHistory: {
+          homeTab: 'query',
+        },
+      }),
+    };
+  },
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
