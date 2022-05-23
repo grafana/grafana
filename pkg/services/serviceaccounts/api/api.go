@@ -169,6 +169,13 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
+
+	tokens, err := api.store.ListTokens(ctx.Req.Context(), serviceAccount.OrgId, serviceAccount.Id)
+	if err != nil {
+		api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccount.Id)
+	}
+	serviceAccount.Tokens = int64(len(tokens))
+
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 

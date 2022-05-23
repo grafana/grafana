@@ -65,6 +65,12 @@ export function createServiceAccountToken(
     const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, token);
     onTokenCreated(result.key);
     dispatch(loadServiceAccountTokens(saID));
+    try {
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`, accessControlQueryParam());
+      dispatch(serviceAccountUpdated(response));
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 
