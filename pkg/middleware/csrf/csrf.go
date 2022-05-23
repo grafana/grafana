@@ -67,7 +67,6 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 					return
 				}
 			}
-
 			// Skip CSRF checks for "safe" endpoints
 			for endpoint, _ := range i.safeEndpoints {
 				if r.URL.Path == endpoint {
@@ -75,14 +74,12 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 					return
 				}
 			}
-
 			// Otherwise - verify that Origin matches the server origin
 			netAddr, err := util.SplitHostPortDefault(r.Host, "", "0") // we ignore the port
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-
 			origins := map[string]struct{}{}
 			for header := range i.originHeaders {
 				origin, err := url.Parse(r.Header.Get(header))
@@ -127,6 +124,7 @@ func (i *Implementation) AddOriginHeader(headerName string) {
 	i.originHeaders[headerName] = struct{}{}
 }
 
+// AddSafeEndpoint is used for endpoints requests to skip CSRF check
 func (i *Implementation) AddSafeEndpoint(endpoint string) {
 	i.safeEndpoints[endpoint] = struct{}{}
 }
