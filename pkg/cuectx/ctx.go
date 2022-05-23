@@ -84,7 +84,8 @@ func LoadGrafanaInstancesWithThema(
 
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 	m := fstest.MapFS{
-		filepath.Join("cue.mod", "module.cue"): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
+		// fstest can recognize only forward slashes.
+		filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
 	}
 
 	prefix = filepath.FromSlash(prefix)
@@ -107,8 +108,8 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 		if err != nil {
 			return err
 		}
-
-		m[filepath.Join(prefix, path)] = &fstest.MapFile{Data: b}
+		// fstest can recognize only forward slashes.
+		m[filepath.ToSlash(filepath.Join(prefix, path))] = &fstest.MapFile{Data: b}
 		return nil
 	}))
 
