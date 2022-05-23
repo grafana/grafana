@@ -75,7 +75,7 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         {contextSrv.licensedAccessControlEnabled() ? (
-          <td className={cx('link-td', styles.iconRow)}>
+          <td>
             {displayRolePicker && (
               <UserRolePicker
                 userId={serviceAccount.id}
@@ -89,7 +89,7 @@ const ServiceAccountListItem = memo(
             )}
           </td>
         ) : (
-          <td className={cx('link-td', styles.iconRow)}>
+          <td>
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
