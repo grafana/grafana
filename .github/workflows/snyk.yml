@@ -8,7 +8,7 @@ on:
 
 jobs:
   snyk_scans:
-    
+
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args:  --all-projects --sarif-file-output=snyk.sarif --strict-out-of-sync=false
+          args:  --all-projects --sarif-file-output=${{ env.GITHUB_REPOSITORY }}.sarif --strict-out-of-sync=false
 
       - name: Run Snyk to check for vulnerabilities - json output
         continue-on-error: true
@@ -30,7 +30,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          args: --json --all-projects --json-file-output=snyk.json  --strict-out-of-sync=false
+          args: --json --all-projects --json-file-output=${{ env.GITHUB_REPOSITORY }}.json  --strict-out-of-sync=false
 
       - name: Use Node.js 18.x
         uses: actions/setup-node@v2
@@ -41,19 +41,19 @@ jobs:
       - name: install snyk-to-html
         run: |
           npm install snyk-to-html snyk2spdx -g
-          snyk-to-html -i snyk.json -o snyk.html
-          
+          snyk-to-html -i snyk.json -o ${{ env.GITHUB_REPOSITORY }}.html
+          cat snyk.json | snyk2spdx --output ${{ env.GITHUB_REPOSITORY }}.spdx
+
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: snyk.sarif
+          sarif_file: ${{ env.GITHUB_REPOSITORY }}.sarif
 
       - name: Create results dir
-        run: mkdir -p snyk_scans && cp -v snyk.sarif snyk.json snyk.html snyk_scans/
+        run: mkdir -p snyk_scans && cp -v ${{ env.GITHUB_REPOSITORY }}* snyk_scans/
 
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v2
         with:
           name: snyk_scans
           path: snyk_scans
-
