@@ -5,7 +5,7 @@ import { singleFrameFromPanelData } from 'app/features/annotations/standardAnnot
 
 import { renderLegendFormat } from '../prometheus/legend';
 
-export const LokiSearchAnnotationSupport = {
+export const LokiAnnotationSupport = {
   processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
     return getLokiAnnotationsFromData(data, anno.mappings);
   },

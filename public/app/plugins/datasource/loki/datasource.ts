@@ -6,11 +6,9 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 // Types
 import {
-  AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
-  DataFrameView,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -43,10 +41,9 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
-import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
-import { LokiSearchAnnotationSupport } from './annotationSupport';
+import { LokiAnnotationSupport } from './annotationSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
@@ -121,7 +118,7 @@ export class LokiDatasource
     const keepCookiesUsed = (settingsData.keepCookies ?? []).length > 0;
     // only use backend-mode when keep-cookies is not used
     this.useBackendMode = !keepCookiesUsed && (config.featureToggles.lokiBackendMode ?? false);
-    this.annotations = LokiSearchAnnotationSupport;
+    this.annotations = LokiAnnotationSupport;
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
