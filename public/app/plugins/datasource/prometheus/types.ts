@@ -3,6 +3,7 @@ import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@gra
 import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
+  schemaVersion?: string;
   expr: string;
   format?: string;
   instant?: boolean;

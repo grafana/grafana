@@ -64,7 +64,7 @@ describe('PromQueryBuilderOptions', () => {
   });
 
   it('Handle defaults with undefined range', async () => {
-    setup(getQueryWithDefaults({ refId: 'A', expr: '', range: undefined, instant: true }, CoreApp.Dashboard));
+    setup(getQueryWithDefaults({ refId: 'A', expr: '', range: undefined, instant: true }, CoreApp.Dashboard, '9.0.0'));
 
     expect(screen.getByText('Type: Instant')).toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe('PromQueryBuilderOptions', () => {
 function setup(queryOverrides: Partial<PromQuery> = {}) {
   const props = {
     query: {
-      ...getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.PanelEditor),
+      ...getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.PanelEditor, '9.0.0'),
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),

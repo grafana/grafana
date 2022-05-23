@@ -25,7 +25,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
-  const query = getQueryWithDefaults(props.query, app);
+  const query = getQueryWithDefaults(props.query, app, props.datasource.pluginVersion);
   const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
@@ -116,7 +116,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} query={query} />}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}

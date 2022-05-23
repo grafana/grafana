@@ -28,6 +28,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
 
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
+    schemaVersion: '9.0.0',
     createQuery: jest.fn((q) => q),
     getPrometheusTime: jest.fn((date, roundup) => 123),
     languageProvider: {
