@@ -90,12 +90,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
 
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
-    const q: SearchQuery = {
-      ...searchQuery, // use the same query as the page!
-      sort: undefined,
-      tags: query.tag,
-    };
-    return getGrafanaSearcher().tags(q);
+    return getGrafanaSearcher().tags(searchQuery);
   };
 
   // function to update items when dashboards or folders are moved or deleted
@@ -148,6 +143,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
             selectionToggle={toggleSelection}
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
+            tags={query.tag}
           />
         );
       }
