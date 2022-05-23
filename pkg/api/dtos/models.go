@@ -73,6 +73,18 @@ type MetricRequest struct {
 	HTTPRequest *http.Request `json:"-"`
 }
 
+// swagger:model
+type TimeRangeOnlyMetricRequest struct {
+	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now-1h
+	From string `json:"from"`
+	// To End time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now
+	To string `json:"to"`
+}
+
 func GetGravatarUrl(text string) string {
 	if setting.DisableGravatar {
 		return setting.AppSubUrl + "/public/img/user_profile.png"
