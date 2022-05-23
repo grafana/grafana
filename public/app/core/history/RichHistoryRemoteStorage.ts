@@ -58,7 +58,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async deleteRichHistory(id: string): Promise<void> {
-    await getBackendSrv().delete(`/api/query-history/${id}`);
+    getBackendSrv().delete(`/api/query-history/${id}`);
   }
 
   async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
