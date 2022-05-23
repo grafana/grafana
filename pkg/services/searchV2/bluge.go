@@ -222,11 +222,13 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	return docs
 }
 
+const ngramEdgeFilterMaxLength = 7
+
 var ngramIndexAnalyzer = &analysis.Analyzer{
 	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
 	TokenFilters: []analysis.TokenFilter{
 		token.NewLowerCaseFilter(),
-		token.NewEdgeNgramFilter(token.FRONT, 1, 7),
+		token.NewEdgeNgramFilter(token.FRONT, 1, ngramEdgeFilterMaxLength),
 	},
 }
 
@@ -378,6 +380,9 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 
 		if len(q.Query) > 4 {
 			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
+		}
+		if len(q.Query) > ngramEdgeFilterMaxLength && !strings.Contains(q.Query, " ") {
+			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(q.Query)).SetField(documentFieldName)).SetBoost(6)
 		}
 		fullQuery.AddMust(bq)
 	}

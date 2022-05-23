@@ -322,6 +322,25 @@ func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 	})
 }
 
+var longPrefixDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "Eyjafjallajökull Eruption data",
+		},
+	},
+}
+
+func TestDashboardIndex_PrefixNgramExceeded(t *testing.T) {
+	t.Run("prefix-search-ngram-exceeded", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, longPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Eyjafjallajöku"},
+		)
+	})
+}
+
 var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
