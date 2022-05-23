@@ -51,7 +51,7 @@ jobs:
           sarif_file: ${{ github.event.repository.name }}.sarif
 
       - name: Create results dir
-        run: mkdir -p snyk_scans && cp -v ${{ github.event.repository.name }}* snyk_scans/
+        run: mkdir -p snyk_scans && cp -v *.{html,json,sarif,spdx} snyk_scans/
 
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v2
