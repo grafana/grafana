@@ -45,7 +45,7 @@ const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
                   invalid={!!errors.name}
                   error={errors.name ? 'Display name is required' : undefined}
                 >
-                  <Input id="display-name-input" {...register('name', { required: true })} />
+                  <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
                 </Field>
                 <Button type="submit">Create</Button>
               </>
