@@ -15,17 +15,28 @@ type ServiceAccountListItemProps = {
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
   onSetToRemove: (serviceAccount: ServiceAccountDTO) => void;
+  onDisable: (serviceAccount: ServiceAccountDTO) => void;
+  onEnable: (serviceAccount: ServiceAccountDTO) => void;
 };
 
 const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
+
 const getServiceAccountsEnabledStatus = (disabled: boolean) => {
   return disabled ? 'Disabled' : 'Enabled';
 };
 
 const ServiceAccountListItem = memo(
-  ({ serviceAccount, onRoleChange, roleOptions, builtInRoles, onSetToRemove }: ServiceAccountListItemProps) => {
+  ({
+    serviceAccount,
+    onRoleChange,
+    roleOptions,
+    builtInRoles,
+    onSetToRemove,
+    onDisable,
+    onEnable,
+  }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
@@ -118,11 +129,11 @@ const ServiceAccountListItem = memo(
             <HorizontalGroup>
               {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) &&
                 (serviceAccount.isDisabled ? (
-                  <Button variant="primary" onClick={() => {}}>
+                  <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
                     Enable
                   </Button>
                 ) : (
-                  <Button variant="secondary" onClick={() => {}}>
+                  <Button variant="secondary" onClick={() => onDisable(serviceAccount)}>
                     Disable
                   </Button>
                 ))}

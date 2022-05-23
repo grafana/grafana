@@ -62,7 +62,6 @@ const ServiceAccountsListPageUnconnected = ({
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
     await dispatch(updateServiceAccount(updatedServiceAccount));
-    await dispatch(fetchServiceAccounts());
   };
 
   const onQueryChange = (value: string) => {
@@ -71,6 +70,18 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onStateFilterChange = (value: ServiceAccountStateFilter) => {
     dispatch(changeStateFilter(value));
+  };
+
+  const onRemove = (serviceAccount: ServiceAccountDTO) => {
+    dispatch(setServiceAccountToRemove);
+  };
+
+  const onDisable = (serviceAccount: ServiceAccountDTO) => {
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: true }));
+  };
+
+  const onEnable = (serviceAccount: ServiceAccountDTO) => {
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
   };
 
   return (
@@ -159,7 +170,9 @@ const ServiceAccountsListPageUnconnected = ({
                       builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
-                      onSetToRemove={setServiceAccountToRemove}
+                      onSetToRemove={onRemove}
+                      onDisable={onDisable}
+                      onEnable={onEnable}
                     />
                   ))}
               </tbody>

@@ -102,6 +102,7 @@ export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkRe
       ...serviceAccount,
     });
     dispatch(serviceAccountLoaded(response));
+    dispatch(fetchServiceAccounts());
   };
 }
 
