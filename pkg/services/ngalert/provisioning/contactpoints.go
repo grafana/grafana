@@ -344,7 +344,7 @@ func (ecp *ContactPointService) getCurrentConfig(ctx context.Context, orgID int6
 	if err != nil {
 		return nil, "", err
 	}
-	cfg, err := DeserializeAlertmanagerConfig([]byte(query.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return nil, "", err
 	}

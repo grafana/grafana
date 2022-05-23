@@ -38,7 +38,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, err
 	}
 
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -73,14 +73,14 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return err
 	}
 
 	cfg.AlertmanagerConfig.Config.Route = &tree
 
-	serialized, err := SerializeAlertmanagerConfig(*cfg)
+	serialized, err := serializeAlertmanagerConfig(*cfg)
 	if err != nil {
 		return err
 	}
