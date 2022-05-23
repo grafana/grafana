@@ -3,6 +3,7 @@ import { config, GrafanaBootConfig, ThemeChangedEvent } from '@grafana/runtime';
 import { ThemeContext } from '@grafana/ui';
 import { appEvents } from '../core';
 import { createTheme } from '@grafana/data';
+import { getUserThemeMode } from './theme';
 
 export const ConfigContext = React.createContext<GrafanaBootConfig>(config);
 export const ConfigConsumer = ConfigContext.Consumer;
@@ -32,7 +33,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 function getCurrentUserTheme() {
   return createTheme({
     colors: {
-      mode: config.bootData.user.lightTheme ? 'light' : config.bootData.user.fusebitTheme ? 'fusebit' : 'dark',
+      mode: getUserThemeMode(),
     },
   });
 }
