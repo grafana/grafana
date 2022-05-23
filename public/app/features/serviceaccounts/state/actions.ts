@@ -19,6 +19,7 @@ import {
   serviceAccountsFetchEnd,
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
+  serviceAccountUpdated,
   stateFilterChanged,
 } from './reducers';
 
@@ -102,7 +103,7 @@ export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkRe
       ...serviceAccount,
     });
     dispatch(serviceAccountLoaded(response));
-    dispatch(fetchServiceAccounts());
+    dispatch(serviceAccountUpdated(response));
   };
 }
 

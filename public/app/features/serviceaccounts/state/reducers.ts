@@ -77,6 +77,12 @@ const serviceAccountsSlice = createSlice({
     serviceAccountsFetchEnd: (state) => {
       return { ...state, isLoading: false };
     },
+    serviceAccountUpdated: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountsState => {
+      const serviceAccountsUpdated = state.serviceAccounts.map((sa) => {
+        return sa.id === action.payload.id ? { ...sa, ...action.payload } : sa;
+      });
+      return { ...state, serviceAccounts: serviceAccountsUpdated };
+    },
     acOptionsLoaded: (state, action: PayloadAction<Role[]>): ServiceAccountsState => {
       return { ...state, roleOptions: action.payload };
     },
@@ -109,6 +115,7 @@ export const {
   serviceAccountsFetchBegin,
   serviceAccountsFetchEnd,
   serviceAccountsFetched,
+  serviceAccountUpdated,
   acOptionsLoaded,
   builtInRolesLoaded,
   serviceAccountToRemoveLoaded,
