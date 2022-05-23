@@ -3,7 +3,6 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-
 import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
