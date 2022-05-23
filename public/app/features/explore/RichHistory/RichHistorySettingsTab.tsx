@@ -86,7 +86,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         </Field>
       ) : (
         <Alert severity="info" title="History time span">
-          Grafana will keep entries that are no older than {selectedOption?.label}.
+          Grafana will keep entries up to {selectedOption?.label}.
         </Alert>
       )}
       <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">
