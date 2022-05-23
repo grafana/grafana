@@ -132,17 +132,17 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = DialWithTimeout("tcp", address, timeout)
+				server.Connection, err = dialWithTimeout("tcp", address, timeout)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				server.Connection, err = DialTLSWithTimeout("tcp", address, tlsCfg, timeout)
+				server.Connection, err = dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
 			}
 		} else {
-			server.Connection, err = DialWithTimeout("tcp", address, timeout)
+			server.Connection, err = dialWithTimeout("tcp", address, timeout)
 		}
 
 		if err == nil {
@@ -152,7 +152,9 @@ func (server *Server) Dial() error {
 	return err
 }
 
-func DialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
+// dialWithTimeout applies the specified timeout
+// and connects to the given address on the given network using net.Dial
+func dialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
 	c, err := net.DialTimeout(network, addr, timeout)
 	if err != nil {
 		return nil, err
@@ -162,7 +164,9 @@ func DialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, e
 	return conn, nil
 }
 
-func DialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
+// dialTLSWithTimeout applies the specified timeout
+// connects to the given address on the given network using tls.Dial
+func dialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
 	c, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, network, addr, config)
 	if err != nil {
 		return nil, err
