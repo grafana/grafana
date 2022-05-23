@@ -1,5 +1,6 @@
 import { merge } from 'lodash';
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
+import { getDarkHues, getLightHues } from './createVisualizationColors';
 import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';
 
@@ -331,16 +332,19 @@ export const themesConfig = {
     base: dark,
     getShadeColor: (color: string) => lighten(color, dark.tonalOffset),
     getTransparentColor: (color: string) => alpha(color, dark.transparency),
+    hues: getDarkHues(),
   },
   light: {
     base: light,
     getShadeColor: (color: string) => darken(color, light.tonalOffset),
     getTransparentColor: (color: string) => alpha(color, light.transparency),
+    hues: getLightHues(),
   },
   fusebit: {
     base: fusebit,
     getShadeColor: (color: string) => darken(color, fusebit.tonalOffset),
     getTransparentColor: (color: string) => alpha(color, fusebit.transparency),
+    hues: getLightHues(),
   },
 };
 
