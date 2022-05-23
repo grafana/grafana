@@ -120,6 +120,7 @@ func (st *Manager) Warm(ctx context.Context) {
 				CacheId:              cacheId,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
+				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
@@ -216,6 +217,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
+	oldReason := currentState.StateReason
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
@@ -228,6 +230,15 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	case eval.NoData:
 		currentState.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
+	}
+
+	// Set reason iff: result is different than state, reason is not Alerting or Normal
+	currentState.StateReason = ""
+
+	if currentState.State != result.State &&
+		result.State != eval.Normal &&
+		result.State != eval.Alerting {
+		currentState.StateReason = result.State.String()
 	}
 
 	// Set Resolved property so the scheduler knows to send a postable alert
@@ -243,8 +254,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	st.set(currentState)
-	if oldState != currentState.State {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+
+	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
+	if shouldUpdateAnnotation {
+		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
@@ -281,6 +294,7 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
+// TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	switch {
 	case state == ngModels.InstanceStateFiring:
@@ -292,17 +306,31 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state eval.State, previousState eval.State) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
+// This struct provides grouping of state with reason, and string formatting.
+type InstanceStateAndReason struct {
+	State  eval.State
+	Reason string
+}
+
+func (i InstanceStateAndReason) String() string {
+	s := fmt.Sprintf("%v", i.State)
+	if len(i.Reason) > 0 {
+		s += fmt.Sprintf(" (%v)", i.Reason)
+	}
+	return s
+}
+
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", currentData.String(), "oldState", previousData.String())
 
 	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state.String())
+	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), currentData.String())
 
 	item := &annotations.Item{
 		AlertId:   alertRule.ID,
 		OrgId:     alertRule.OrgID,
-		PrevState: previousState.String(),
-		NewState:  state.String(),
+		PrevState: previousData.String(),
+		NewState:  currentData.String(),
 		Text:      annotationText,
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
@@ -357,7 +385,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			}
 
 			if s.State == eval.Alerting {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
+					InstanceStateAndReason{State: eval.Normal, Reason: ""},
+					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
 			}
 		}
 	}

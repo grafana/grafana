@@ -9,7 +9,9 @@ import { ExploreId } from '../../../types';
 
 import {
   assertDataSourceFilterVisibility,
+  assertLoadMoreQueryHistoryNotVisible,
   assertQueryHistory,
+  assertQueryHistoryElementsShown,
   assertQueryHistoryExists,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
@@ -18,6 +20,7 @@ import {
   closeQueryHistory,
   deleteQueryHistory,
   inputQuery,
+  loadMoreQueryHistory,
   openQueryHistory,
   runQuery,
   selectOnlyActiveDataSource,
@@ -26,7 +29,13 @@ import {
   switchToQueryHistoryTab,
 } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, setupLocalStorageRichHistory, tearDown, waitForExplore } from './helper/setup';
+import {
+  localStorageHasAlreadyBeenMigrated,
+  setupExplore,
+  setupLocalStorageRichHistory,
+  tearDown,
+  waitForExplore,
+} from './helper/setup';
 
 const fetchMock = jest.fn();
 const postMock = jest.fn();
@@ -34,6 +43,19 @@ const getMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
+}));
+
+jest.mock('app/core/services/PreferencesService', () => ({
+  PreferencesService: function () {
+    return {
+      patch: jest.fn(),
+      load: jest.fn().mockResolvedValue({
+        queryHistory: {
+          homeTab: 'query',
+        },
+      }),
+    };
+  },
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -201,5 +223,27 @@ describe('Explore: Query History', () => {
         })
       );
     });
+  });
+
+  it('pagination', async () => {
+    config.queryHistoryEnabled = true;
+    localStorageHasAlreadyBeenMigrated();
+    const { datasources } = setupExplore();
+    (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
+    fetchMock.mockReturnValue(
+      of({
+        data: { result: { queryHistory: [{ datasourceUid: 'loki', queries: [{ expr: 'query' }] }], totalCount: 2 } },
+      })
+    );
+    await waitForExplore();
+
+    await openQueryHistory();
+    await assertQueryHistory(['{"expr":"query"}']);
+    assertQueryHistoryElementsShown(1, 2);
+
+    await loadMoreQueryHistory();
+    await assertQueryHistory(['{"expr":"query"}', '{"expr":"query"}']);
+
+    assertLoadMoreQueryHistoryNotVisible();
   });
 });

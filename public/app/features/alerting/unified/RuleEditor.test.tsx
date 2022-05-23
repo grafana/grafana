@@ -98,6 +98,7 @@ describe('RuleEditor', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
   });
 
   disableRBAC();

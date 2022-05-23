@@ -1,7 +1,9 @@
 package channels
 
 import (
+	"context"
 	"errors"
+	"io"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -12,11 +14,20 @@ type FactoryConfig struct {
 	Config              *NotificationChannelConfig
 	NotificationService notifications.Service
 	DecryptFunc         GetDecryptedValueFn
-	Template            *template.Template
+	ImageStore          ImageStore
+	// Used to retrieve image URLs for messages, or data for uploads.
+	Template *template.Template
+}
+
+// A specialization of store.ImageStore, to avoid an import loop.
+type ImageStore interface {
+	GetURL(ctx context.Context, token string) (string, error)
+	GetFilepath(ctx context.Context, token string) (string, error)
+	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
-	decryptFunc GetDecryptedValueFn, template *template.Template) (FactoryConfig, error) {
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}
@@ -25,11 +36,16 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 	if config.SecureSettings == nil {
 		config.SecureSettings = map[string][]byte{}
 	}
+
+	if imageStore == nil {
+		imageStore = &UnavailableImageStore{}
+	}
 	return FactoryConfig{
 		Config:              config,
 		NotificationService: notificationService,
 		DecryptFunc:         decryptFunc,
 		Template:            template,
+		ImageStore:          imageStore,
 	}, nil
 }
 

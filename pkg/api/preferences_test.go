@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -34,12 +34,12 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
-	dashSvc := &dashboards.FakeDashboardService{
-		GetDashboardFn: func(ctx context.Context, cmd *models.GetDashboardQuery) error {
-			cmd.Result = &models.Dashboard{Uid: "home", Id: 1}
-			return nil
-		},
-	}
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
+
 	sc.hs.dashboardService = dashSvc
 
 	prefService := preftest.NewPreferenceServiceFake()
@@ -164,7 +164,11 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
 	sc.hs.dashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)

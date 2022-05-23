@@ -25,6 +25,7 @@ type WebhookNotifier struct {
 	MaxAlerts  int
 	log        log.Logger
 	ns         notifications.WebhookSender
+	images     ImageStore
 	tmpl       *template.Template
 	orgID      int64
 }
@@ -46,7 +47,7 @@ func WebHookFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewWebHookNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewWebHookNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*WebhookConfig, error) {
@@ -66,7 +67,7 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, t *template.Template) *WebhookNotifier {
+func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *WebhookNotifier {
 	return &WebhookNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -83,6 +84,7 @@ func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, t
 		MaxAlerts:  config.MaxAlerts,
 		log:        log.New("alerting.notifier.webhook"),
 		ns:         ns,
+		images:     images,
 		tmpl:       t,
 	}
 }
@@ -111,9 +113,34 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
+	// Get screenshot reference tokens out of data before private annotations are cleared.
+	imgTokens := make([]string, 0, len(as))
+	for i := range as {
+		imgTokens = append(imgTokens, getTokenFromAnnotations(as[i].Annotations))
+	}
+
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
 	var tmplErr error
 	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
+
+	// Augment our Alert data with ImageURLs if available.
+	for i := range data.Alerts {
+		imgURL := ""
+		if len(imgTokens[i]) != 0 {
+			timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+			imgURL, err = wn.images.GetURL(timeoutCtx, imgTokens[i])
+			cancel()
+			if err != nil {
+				if !errors.Is(err, ErrImagesUnavailable) {
+					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+					wn.log.Warn("failed to retrieve image url from store", "error", err)
+				}
+			} else if len(imgURL) != 0 {
+				data.Alerts[i].ImageURL = imgURL
+			}
+		}
+	}
+
 	msg := &webhookMessage{
 		Version:         "1",
 		ExtendedData:    data,
