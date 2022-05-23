@@ -95,6 +95,9 @@ const (
 
 	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
 	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
+
+	// StateReasonAnnotation is annotation that will contain a reason for the state in the evaluation state is different from the alert state (for example, mapped NoData or Error state or StateReasonMissingSeries).
+	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
 )
 
 var (
