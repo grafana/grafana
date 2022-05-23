@@ -29,14 +29,14 @@ export function StoredNotifications() {
   });
 
   const clearSelectedNotifications = () => {
-    selectedNotificationIds.forEach((id) => {
-      dispatch(clearNotification(id));
-    });
+    if (allNotificationsSelected) {
+      dispatch(clearAllNotifications());
+    } else {
+      selectedNotificationIds.forEach((id) => {
+        dispatch(clearNotification(id));
+      });
+    }
     setSelectedNotificationIds([]);
-  };
-
-  const clearAllNotifs = () => {
-    dispatch(clearAllNotifications());
   };
 
   const handleAllCheckboxToggle = (isChecked: boolean) => {
@@ -73,10 +73,7 @@ export function StoredNotifications() {
           value={allNotificationsSelected}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
-        <Button
-          disabled={selectedNotificationIds.length === 0}
-          onClick={selectedNotificationIds.length === 0 ? clearAllNotifs : clearSelectedNotifications}
-        >
+        <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>
           Dismiss notifications
         </Button>
       </div>
