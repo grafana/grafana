@@ -1,6 +1,6 @@
 +++
 aliases = ["/docs/grafana/latest/getting-started/getting-started-prometheus/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Learn how to build your first Prometheus dashbard in Grafana."
+description = "Learn how to build your first Prometheus dashboard in Grafana."
 title = "Build a Prometheus dashboard"
 weight = 300
 +++
