@@ -1,9 +1,10 @@
 package web
 
 import (
-	"github.com/grafana/grafana/pkg/infra/log"
 	"net/http"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestContext_RemoteAddr(t *testing.T) {
