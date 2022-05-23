@@ -4370,7 +4370,7 @@ __metadata:
     "@types/node": 16.11.36
     "@types/papaparse": 5.3.2
     "@types/react": 17.0.42
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": 18.0.5
     "@types/sinon": 10.0.11
     "@types/testing-library__jest-dom": 5.14.3
     "@types/testing-library__react-hooks": ^3.2.0
@@ -4549,7 +4549,7 @@ __metadata:
     "@types/jest": 27.4.1
     "@types/lodash": 4.14.182
     "@types/react": 17.0.42
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": 18.0.5
     "@types/systemjs": ^0.20.6
     history: 4.10.1
     lodash: 4.17.21
@@ -4769,7 +4769,7 @@ __metadata:
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-calendar": 3.5.1
     "@types/react-color": 3.0.6
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": 18.0.5
     "@types/react-router-dom": 5.3.3
     "@types/react-table": 7.7.12
     "@types/react-test-renderer": 17.0.1
@@ -10876,12 +10876,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:17.0.14":
-  version: 17.0.14
-  resolution: "@types/react-dom@npm:17.0.14"
+"@types/react-dom@npm:18.0.5":
+  version: 18.0.5
+  resolution: "@types/react-dom@npm:18.0.5"
   dependencies:
     "@types/react": "*"
-  checksum: b54cd0ef573236b3d87fe7493e6d1c36d8b4ca37a3b46364272a5c91ac178e3296b68ea1aeb299ce68f12ad663c5720ee890d0539b14881c6754bdcbdb0befa0
+  checksum: cd48b81950f499b52a3f0c08261f00046f9b7c96699fa249c9664e257e820daf6ecac815cd1028cebc9d105094adc39d047d1efd79214394b8b2d515574c0787
   languageName: node
   linkType: hard
 
@@ -21182,7 +21182,7 @@ __metadata:
     "@types/rc-time-picker": 3.4.1
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": 18.0.5
     "@types/react-grid-layout": 1.3.2
     "@types/react-highlight-words": 0.16.4
     "@types/react-loadable": 5.5.6

@@ -60,7 +60,7 @@
     "@types/node": "16.11.36",
     "@types/papaparse": "5.3.2",
     "@types/react": "17.0.42",
-    "@types/react-dom": "17.0.14",
+    "@types/react-dom": "18.0.5",
     "@types/sinon": "10.0.11",
     "@types/testing-library__jest-dom": "5.14.3",
     "@types/testing-library__react-hooks": "^3.2.0",
