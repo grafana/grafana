@@ -20,11 +20,9 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
           value: 'ap-east-1',
         },
       ]),
-      describeLogGroups: jest.fn().mockResolvedValue(['foo', 'bar']),
+      describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
       getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
-      getList: jest.fn().mockImplementation(() => []),
     }),
-    getList: jest.fn().mockImplementation(() => []),
   }),
 }));
 
@@ -37,21 +35,6 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     put: jest.fn().mockResolvedValue({ datasource: ds.datasource }),
   }),
-  setTemplateSrv: jest.fn(),
-  config: {
-    loginError: false,
-    buildInfo: {
-      version: 'v1.0',
-      commit: '1',
-      env: 'production',
-      edition: 'Open Source',
-    },
-    licenseInfo: {
-      stateInfo: '',
-      licenseUrl: '',
-    },
-    appSubUrl: '',
-  },
 }));
 
 const props: Props = {
@@ -175,8 +158,7 @@ describe('Render', () => {
 
     render(<ConfigEditor {...props} />);
     const multiselect = await screen.findByLabelText('Log Groups');
-    await screen.findByText('us-east-2');
     selectEvent.openMenu(multiselect);
-    expect(await screen.findByText('foo')).toBeInTheDocument();
+    expect(await screen.findByText('logGroup-foo')).toBeInTheDocument();
   });
 });

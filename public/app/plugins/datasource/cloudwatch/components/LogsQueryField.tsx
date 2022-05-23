@@ -31,9 +31,6 @@ const rowGap = css`
   gap: 3px;
 `;
 
-export const MAX_LOG_GROUPS = 20;
-export const MAX_VISIBLE_LOG_GROUPS = 4;
-
 interface State {
   hint:
     | {
@@ -69,10 +66,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   }
 
   componentDidMount = () => {
-    const { query, onChange } = this.props;
+    const { query, datasource, onChange } = this.props;
 
     if (onChange) {
-      onChange({ ...query, logGroupNames: query.logGroupNames ?? [] });
+      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.defaultLogGroups });
     }
   };
 
@@ -138,7 +135,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             inputEl={
               <LogGroupSelector
                 region={region}
-                selectedLogGroups={logGroupNames ?? []}
+                selectedLogGroups={logGroupNames ?? datasource.defaultLogGroups}
                 datasource={datasource}
                 onChange={function (logGroups: string[]): void {
                   onChange({ ...query, logGroupNames: logGroups });

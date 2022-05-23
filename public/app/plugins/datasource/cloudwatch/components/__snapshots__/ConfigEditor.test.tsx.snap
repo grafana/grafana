@@ -85,22 +85,15 @@ exports[`Render should disable access key id field 1`] = `
     <InlineField
       label="Default Log Groups"
       labelWidth={28}
-      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+      tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
-      <MultiSelect
+      <LogGroupSelector
         allowCustomValue={true}
-        aria-label="Log Groups"
-        inputId="default-log-groups"
-        isClearable={true}
-        isLoading={false}
-        isOptionDisabled={[Function]}
-        maxVisibleValues={4}
-        noOptionsMessage="No log groups available"
         onChange={[Function]}
         onOpenMenu={[Function]}
-        options={Array []}
-        placeholder="Choose Log Groups"
-        value={Array []}
+        region="us-east-2"
+        saved={true}
+        selectedLogGroups={Array []}
         width={60}
       />
     </InlineField>
@@ -191,22 +184,15 @@ exports[`Render should render component 1`] = `
     <InlineField
       label="Default Log Groups"
       labelWidth={28}
-      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+      tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
-      <MultiSelect
+      <LogGroupSelector
         allowCustomValue={true}
-        aria-label="Log Groups"
-        inputId="default-log-groups"
-        isClearable={true}
-        isLoading={false}
-        isOptionDisabled={[Function]}
-        maxVisibleValues={4}
-        noOptionsMessage="No log groups available"
         onChange={[Function]}
         onOpenMenu={[Function]}
-        options={Array []}
-        placeholder="Choose Log Groups"
-        value={Array []}
+        region="us-east-2"
+        saved={true}
+        selectedLogGroups={Array []}
         width={60}
       />
     </InlineField>
@@ -302,22 +288,15 @@ exports[`Render should show access key and secret access key fields 1`] = `
     <InlineField
       label="Default Log Groups"
       labelWidth={28}
-      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+      tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
-      <MultiSelect
+      <LogGroupSelector
         allowCustomValue={true}
-        aria-label="Log Groups"
-        inputId="default-log-groups"
-        isClearable={true}
-        isLoading={false}
-        isOptionDisabled={[Function]}
-        maxVisibleValues={4}
-        noOptionsMessage="No log groups available"
         onChange={[Function]}
         onOpenMenu={[Function]}
-        options={Array []}
-        placeholder="Choose Log Groups"
-        value={Array []}
+        region="us-east-2"
+        saved={true}
+        selectedLogGroups={Array []}
         width={60}
       />
     </InlineField>
@@ -413,22 +392,15 @@ exports[`Render should show arn role field 1`] = `
     <InlineField
       label="Default Log Groups"
       labelWidth={28}
-      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+      tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
-      <MultiSelect
+      <LogGroupSelector
         allowCustomValue={true}
-        aria-label="Log Groups"
-        inputId="default-log-groups"
-        isClearable={true}
-        isLoading={false}
-        isOptionDisabled={[Function]}
-        maxVisibleValues={4}
-        noOptionsMessage="No log groups available"
         onChange={[Function]}
         onOpenMenu={[Function]}
-        options={Array []}
-        placeholder="Choose Log Groups"
-        value={Array []}
+        region="us-east-2"
+        saved={true}
+        selectedLogGroups={Array []}
         width={60}
       />
     </InlineField>
@@ -524,22 +496,15 @@ exports[`Render should show credentials profile name field 1`] = `
     <InlineField
       label="Default Log Groups"
       labelWidth={28}
-      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+      tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
-      <MultiSelect
+      <LogGroupSelector
         allowCustomValue={true}
-        aria-label="Log Groups"
-        inputId="default-log-groups"
-        isClearable={true}
-        isLoading={false}
-        isOptionDisabled={[Function]}
-        maxVisibleValues={4}
-        noOptionsMessage="No log groups available"
         onChange={[Function]}
         onOpenMenu={[Function]}
-        options={Array []}
-        placeholder="Choose Log Groups"
-        value={Array []}
+        region="us-east-2"
+        saved={true}
+        selectedLogGroups={Array []}
         width={60}
       />
     </InlineField>

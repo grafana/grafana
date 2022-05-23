@@ -1,4 +1,3 @@
-import { unionBy } from 'lodash';
 import React, { FC, useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -8,74 +7,45 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
-  SelectableValue,
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField, MultiSelect } from '@grafana/ui';
+import { Input, InlineField } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { dispatch, store } from 'app/store/store';
+import { store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
-import { toOption } from '../utils/utils';
 
-import { MAX_LOG_GROUPS, MAX_VISIBLE_LOG_GROUPS } from './LogsQueryField';
+import { LogGroupSelector } from './LogGroupSelector';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
-  const { defaultLogGroups, logsTimeout } = options.jsonData;
+  const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
+  const [saved, setSaved] = useState(true);
 
-  const { datasource, setSaved } = useDatasource(options.name);
+  const datasource = useDatasource(options.name, saved);
   useAuthenticationWarning(options.jsonData);
   const logsTimeoutError = useTimoutValidation(logsTimeout);
-  const [logGroups, setLogGroups] = useState<SelectableValue[]>([]);
-  const [loadingLogGroups, setLoadingLogGroups] = useState(false);
+  useEffect(() => {
+    setSaved(false);
+  }, [options.jsonData.authType, options.secureJsonData, defaultRegion]);
 
   const saveOptions = async (): Promise<void> => {
+    if (saved) {
+      return;
+    }
     await getBackendSrv()
       .put(`/api/datasources/${options.id}`, options)
       .then((result: { datasource: any }) => {
         updateDatasourcePluginOption(props, 'version', result.datasource.version);
       });
     setSaved(true);
-  };
-
-  const loadLogGroups = async () => {
-    await saveOptions();
-
-    // Don't call describeLogGroups if datasource or region doesn't exist
-    if (!datasource || !datasource.getActualRegion()) {
-      const missingConfig = !datasource ? 'Datasource' : 'Region';
-      dispatch(notifyApp(createErrorNotification(`Failed to get log groups: ${missingConfig} not configured`)));
-      setLogGroups([]);
-      return;
-    }
-
-    setLoadingLogGroups(true);
-    try {
-      const groups = await datasource
-        .describeLogGroups({ region: datasource.getActualRegion() })
-        .then((lg) => lg.map(toOption));
-      setLogGroups(groups);
-    } catch (err) {
-      let errMessage = 'unknown error';
-      if (typeof err !== 'string') {
-        try {
-          errMessage = JSON.stringify(err);
-        } catch (e) {}
-      } else {
-        errMessage = err;
-      }
-      dispatch(notifyApp(createErrorNotification(errMessage)));
-      setLogGroups([]);
-    }
-    setLoadingLogGroups(false);
   };
 
   return (
@@ -118,29 +88,16 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           labelWidth={28}
           tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
         >
-          <MultiSelect
-            inputId="default-log-groups"
-            value={defaultLogGroups ?? []}
-            width={60}
-            onChange={(groups) => {
-              updateDatasourcePluginJsonDataOption(
-                props,
-                'defaultLogGroups',
-                groups.map(({ value }) => {
-                  return value;
-                })
-              );
+          <LogGroupSelector
+            region={defaultRegion ?? ''}
+            selectedLogGroups={defaultLogGroups ?? []}
+            datasource={datasource}
+            onChange={(logGroups) => {
+              updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
             }}
-            options={unionBy(logGroups, defaultLogGroups?.map(toOption), 'value')}
-            isLoading={loadingLogGroups}
-            onOpenMenu={loadLogGroups}
-            isOptionDisabled={() => !!defaultLogGroups && defaultLogGroups.length >= MAX_LOG_GROUPS}
-            placeholder="Choose Log Groups"
-            maxVisibleValues={MAX_VISIBLE_LOG_GROUPS}
-            noOptionsMessage="No log groups available"
-            aria-label="Log Groups"
-            isClearable={true}
-            allowCustomValue
+            onOpenMenu={saveOptions}
+            width={60}
+            saved={saved}
           />
         </InlineField>
       </div>
@@ -171,12 +128,14 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
   }, [jsonData.authType, jsonData.database, jsonData.profile]);
 }
 
-function useDatasource(datasourceName: string) {
+function useDatasource(datasourceName: string, saved: boolean) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
-  // If saveOptions is called, the datasource needs to be reloaded
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    // reload the datasource when it's saved
+    if (!saved) {
+      return;
+    }
     getDatasourceSrv()
       .loadDatasource(datasourceName)
       .then((datasource) => {
@@ -184,10 +143,9 @@ function useDatasource(datasourceName: string) {
         // So a "as" type assertion here is a necessary evil.
         setDatasource(datasource as CloudWatchDatasource);
       });
-    setSaved(false);
   }, [datasourceName, saved]);
 
-  return { datasource, setSaved };
+  return datasource;
 }
 
 function useTimoutValidation(value: string | undefined) {
