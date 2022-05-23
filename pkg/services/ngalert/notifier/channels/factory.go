@@ -23,11 +23,11 @@ type FactoryConfig struct {
 // A specialization of store.ImageStore, to avoid an import loop.
 type ImageStore interface {
 	GetURL(ctx context.Context, token string) (*url.URL, error)
-	GetData(ctx context.Context, token string) (io.Reader, error)
+	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
-	decryptFunc GetDecryptedValueFn, template *template.Template) (FactoryConfig, error) {
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}

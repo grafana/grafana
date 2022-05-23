@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"io"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +18,16 @@ import (
 
 type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
+}
+
+func (f *FakeConfigStore) GetURL(ctx context.Context, token string) (*url.URL, error) {
+	return nil, store.ErrImageNotFound
+}
+
+// Returns an io.ReadCloser that reads out the image data for the provided
+// token, if available. May return ErrImageNotFound.
+func (f *FakeConfigStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
+	return nil, store.ErrImageNotFound
 }
 
 func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
