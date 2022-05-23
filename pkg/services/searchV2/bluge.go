@@ -25,14 +25,13 @@ const (
 	documentFieldTag         = "tag"
 	documentFieldURL         = "url"
 	documentFieldName        = "name"
-	documentFieldName_ngram  = "name_ngram"
+	documentFieldNameNgram   = "name_ngram"
 	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
-	documentFieldInternalID  = "__internal_id" // only for migrations! (indexed as a string)
 )
 
 func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Reader, *bluge.Writer, error) {
@@ -149,10 +148,9 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue()).
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
-		AddField(getNameNGramField(dash.info.Title)).
 		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions()).
-		// Add legacy ID (for lookup by internal ID)
-		AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)).Aggregatable().StoreValue())
+		AddField(getNameNGramField(dash.info.Title)).
+		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
 }
 
 func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
@@ -166,9 +164,6 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 		AddField(bluge.NewTextField(documentFieldName, dash.info.Title).StoreValue().SearchTermPositions()).
 		AddField(getNameNGramField(dash.info.Title)).
 		AddField(bluge.NewTextField(documentFieldDescription, dash.info.Description).SearchTermPositions())
-
-	// Add legacy ID (for lookup by internal ID)
-	doc.AddField(bluge.NewKeywordField(documentFieldInternalID, fmt.Sprintf("%d", dash.id)))
 
 	for _, tag := range dash.info.Tags {
 		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
@@ -255,36 +250,7 @@ var ngramQueryAnalyzer = &analysis.Analyzer{
 }
 
 func getNameNGramField(name string) bluge.Field {
-	return bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer)
-}
-
-func getDashboardFolderUID(reader *bluge.Reader, folderID int64) (string, error) {
-	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(strconv.FormatInt(folderID, 10)).SetField(documentFieldInternalID))
-	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindFolder)).SetField(documentFieldKind))
-	req := bluge.NewAllMatches(fullQuery)
-	req.WithStandardAggregations()
-	documentMatchIterator, err := reader.Search(context.Background(), req)
-	if err != nil {
-		return "", err
-	}
-	var uid string
-	match, err := documentMatchIterator.Next()
-	for err == nil && match != nil {
-		// load the identifier for this match
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
-			if field == documentFieldUID {
-				uid = string(value)
-			}
-			return true
-		})
-		if err != nil {
-			return "", err
-		}
-		// load the next document match
-		match, err = documentMatchIterator.Next()
-	}
-	return uid, err
+	return bluge.NewTextField(documentFieldNameNgram, name).WithAnalyzer(ngramIndexAnalyzer)
 }
 
 func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
@@ -293,7 +259,6 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
-	req.WithStandardAggregations()
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
 		return nil, err
@@ -320,7 +285,7 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
-	// Folder listing structure
+	// Folder listing structure.
 	idx := strings.Index(q.Query, ":")
 	if idx > 0 {
 		key := q.Query[0:idx]
@@ -345,7 +310,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(newPermissionFilter(filter, logger))
 
-	// Only show dashboard / folders
+	// Only show dashboard / folders / panels.
 	if len(q.Kind) > 0 {
 		bq := bluge.NewBooleanQuery()
 		for _, k := range q.Kind {
@@ -400,7 +365,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
 			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
-				SetField(documentFieldName_ngram).
+				SetField(documentFieldNameNgram).
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
@@ -446,8 +411,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 
 	dvfieldNames := []string{"type"}
 	sctx := search.NewSearchContext(0, 0)
-
-	// numericFields := map[string]bool{"schemaVersion": true, "panelCount": true}
 
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -500,19 +463,10 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		name := ""
 		url := ""
 		loc := ""
-		var ds_uids []string
+		var dsUIDs []string
 		var tags []string
 
 		err = match.VisitStoredFields(func(field string, value []byte) bool {
-			// if numericFields[field] {
-			// 	num, err2 := bluge.DecodeNumericFloat64(value)
-			// 	if err2 != nil {
-			// 		vals[field] = num
-			// 	}
-			// } else {
-			// 	vals[field] = string(value)
-			// }
-
 			switch field {
 			case documentFieldUID:
 				uid = string(value)
@@ -527,7 +481,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldLocation:
 				loc = string(value)
 			case documentFieldDSUID:
-				ds_uids = append(ds_uids, string(value))
+				dsUIDs = append(dsUIDs, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
 			default:
@@ -563,8 +517,8 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			fTags.Append(nil)
 		}
 
-		if len(ds_uids) > 0 {
-			js, _ := json.Marshal(ds_uids)
+		if len(dsUIDs) > 0 {
+			js, _ := json.Marshal(dsUIDs)
 			jsb := json.RawMessage(js)
 			fDSUIDs.Append(&jsb)
 		} else {
@@ -598,7 +552,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	aggs := documentMatchIterator.Aggregations()
 
 	header := &customMeta{
-		Count: aggs.Count(), // Total cound
+		Count: aggs.Count(), // Total count.
 	}
 	if q.Explain {
 		header.MaxScore = aggs.Metric("max_score")
