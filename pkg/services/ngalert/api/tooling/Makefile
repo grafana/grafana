@@ -20,8 +20,7 @@ spec.json spec-stable.json: $(GO_PKG_FILES)
 		--entrypoint sh \
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 		-c \
-		"swagger generate spec -m -o $@; swagger generate spec -m --include-tag=stable -o spec-stable.json" \
-
+		"swagger generate spec -m -o $@; swagger generate spec -m --include-tag=stable -o spec-stable.json"
 
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
