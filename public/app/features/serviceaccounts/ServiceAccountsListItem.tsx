@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmButton, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmButton, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
@@ -115,17 +115,29 @@ const ServiceAccountListItem = memo(
         </td>
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
           <td>
-            <ConfirmButton
-              size="sm"
-              onConfirm={() => {
-                onSetToRemove(serviceAccount);
-              }}
-              aria-label="Delete service account"
-              confirmText="Delete"
-              confirmVariant="destructive"
-            >
-              <IconButton className={styles.deleteButton} name="trash-alt" size="sm" />
-            </ConfirmButton>
+            <HorizontalGroup>
+              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) &&
+                (serviceAccount.isDisabled ? (
+                  <Button variant="primary" onClick={() => {}}>
+                    Enable
+                  </Button>
+                ) : (
+                  <Button variant="secondary" onClick={() => {}}>
+                    Disable
+                  </Button>
+                ))}
+              <ConfirmButton
+                size="sm"
+                onConfirm={() => {
+                  onSetToRemove(serviceAccount);
+                }}
+                aria-label="Delete service account"
+                confirmText="Delete"
+                confirmVariant="destructive"
+              >
+                <IconButton className={styles.deleteButton} name="trash-alt" size="sm" />
+              </ConfirmButton>
+            </HorizontalGroup>
           </td>
         )}
       </tr>
