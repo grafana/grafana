@@ -1,4 +1,4 @@
-import { mount } from 'enzyme';
+import { screen, render, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
@@ -35,7 +35,7 @@ const renderAndSubmitForm = async (
   submitSpy: jest.Mock,
   otherProps: Partial<SaveDashboardAsFormProps> = {}
 ) => {
-  const container = mount(
+  render(
     <SaveDashboardAsForm
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
@@ -50,8 +50,8 @@ const renderAndSubmitForm = async (
 
   // @ts-ignore strict null error below
   await act(async () => {
-    const button = container.find('button[aria-label="Save dashboard button"]');
-    button.simulate('submit');
+    const button = screen.getByRole('button', { name: 'Save dashboard button' });
+    fireEvent.submit(button);
   });
 };
 describe('SaveDashboardAsForm', () => {
