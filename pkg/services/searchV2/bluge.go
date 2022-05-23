@@ -300,7 +300,6 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
-	req.WithStandardAggregations()
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
 		return nil, err
