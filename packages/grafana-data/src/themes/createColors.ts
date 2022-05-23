@@ -318,14 +318,26 @@ class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   tonalOffset = 0.2;
 }
 
+const dark = new DarkColors();
+const light = new LightColors();
+const fusebit = new FusebitColors();
+
+export const config = {
+  dark: {
+    mode: dark,
+  },
+  light: {
+    mode: light,
+  },
+  fusebit: {
+    mode: fusebit,
+  },
+};
+
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const dark = new DarkColors();
   const light = new LightColors();
-  const fusebit = new FusebitColors();
-  let base: DarkColors | LightColors | FusebitColors = (colors.mode ?? 'dark') === 'dark' ? dark : light;
-  if (colors.mode === 'fusebit') {
-    base = fusebit;
-  }
+  let base: DarkColors | LightColors | FusebitColors = config[colors.mode || 'dark'].mode;
   const {
     primary = base.primary,
     secondary = base.secondary,
