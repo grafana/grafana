@@ -27,11 +27,11 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
-	t.Run("returns isPublic along with empty struct when no public dashboard", func(t *testing.T) {
+	t.Run("returns isPublic and set dashboardUid and orgId", func(t *testing.T) {
 		setup()
 		pdc, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
-		assert.Equal(t, &models.PublicDashboardConfig{IsPublic: false, PublicDashboard: models.PublicDashboard{}}, pdc)
+		assert.Equal(t, &models.PublicDashboardConfig{IsPublic: false, PublicDashboard: models.PublicDashboard{DashboardUid: savedDashboard.Uid, OrgId: savedDashboard.OrgId}}, pdc)
 	})
 
 	t.Run("returns dashboard errDashboardIdentifierNotSet", func(t *testing.T) {
@@ -49,8 +49,9 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: true,
 				PublicDashboard: models.PublicDashboard{
-					DashboardUid: savedDashboard.Uid,
-					OrgId:        savedDashboard.OrgId,
+					DashboardUid:  savedDashboard.Uid,
+					OrgId:         savedDashboard.OrgId,
+					TimeVariables: "{from: now, to: then}",
 				},
 			},
 		})

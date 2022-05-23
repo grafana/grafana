@@ -60,6 +60,11 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 
 	if len(pdRes) > 0 {
 		pdc.PublicDashboard = *pdRes[0]
+	} else {
+		pdc.PublicDashboard = models.PublicDashboard{
+			OrgId:        orgId,
+			DashboardUid: dashboardUid,
+		}
 	}
 
 	return pdc, err

@@ -27,11 +27,6 @@ export const SharePublicDashboard = (props: Props) => {
   useEffect(() => {
     getPublicDashboardConfig(dashboardUid)
       .then((pdc: PublicDashboardConfig) => {
-        // empty uid means there isn't a public dashboard entry yet
-        if (pdc.publicDashboard.dashboardUid === '') {
-          pdc.publicDashboard.dashboardUid = dashboardUid;
-          pdc.publicDashboard.orgId = orgId;
-        }
         setPublicDashboardConfig(pdc);
       })
       .catch(() => {
