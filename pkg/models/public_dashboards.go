@@ -13,11 +13,10 @@ type PublicDashboardConfig struct {
 }
 
 type PublicDashboard struct {
-	Uid               string `json:"uid" xorm:"uid"`
-	DashboardUid      string `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId             int64  `json:"orgId" xorm:"org_id"`
-	TemplateVariables string `json:"templateVariables" xorm:"template_variables"`
-	TimeVariables     string `json:"timeVariables" xorm:"time_variables"`
+	Uid           string `json:"uid" xorm:"uid"`
+	DashboardUid  string `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId         int64  `json:"orgId" xorm:"org_id"`
+	TimeVariables string `json:"timeVariables" xorm:"time_variables"`
 }
 
 func (pd PublicDashboard) TableName() string {

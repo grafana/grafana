@@ -7,7 +7,6 @@ export interface PublicDashboardConfig {
     uid: string;
     dashboardUid: string;
     orgId: number;
-    templateVariables?: object;
     timeVariables?: object;
   };
 }

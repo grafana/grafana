@@ -141,10 +141,10 @@ func TestSavePublicDashboard(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: false,
 				PublicDashboard: models.PublicDashboard{
-					Uid:               pdUid,
-					DashboardUid:      savedDashboard.Uid,
-					OrgId:             savedDashboard.OrgId,
-					TemplateVariables: "{}",
+					Uid:           pdUid,
+					DashboardUid:  savedDashboard.Uid,
+					OrgId:         savedDashboard.OrgId,
+					TimeVariables: "{}",
 				},
 			},
 		})
