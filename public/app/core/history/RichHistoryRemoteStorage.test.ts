@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery } from '../../types';
+import { RichHistoryQuery, UserPreferencesDTO } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -24,6 +24,16 @@ jest.mock('@grafana/runtime', () => ({
     fetch: fetchMock,
   }),
   getDataSourceSrv: () => dsMock,
+}));
+
+const preferencesServiceMock = {
+  patch: jest.fn(),
+  load: jest.fn(),
+};
+jest.mock('../services/PreferencesService', () => ({
+  PreferencesService: function () {
+    return preferencesServiceMock;
+  },
 }));
 
 describe('RichHistoryRemoteStorage', () => {
@@ -89,6 +99,58 @@ describe('RichHistoryRemoteStorage', () => {
       requestId: 'query-history-get-all',
     });
     expect(items).toMatchObject([richHistoryQuery]);
+  });
+
+  it('read starred home tab preferences', async () => {
+    preferencesServiceMock.load.mockResolvedValue({
+      queryHistory: {
+        homeTab: 'starred',
+      },
+    } as UserPreferencesDTO);
+    const settings = await storage.getSettings();
+    expect(settings).toMatchObject({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: true,
+    });
+  });
+
+  it('uses default home tab preferences', async () => {
+    preferencesServiceMock.load.mockResolvedValue({
+      queryHistory: {
+        homeTab: '',
+      },
+    } as UserPreferencesDTO);
+    const settings = await storage.getSettings();
+    expect(settings).toMatchObject({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: false,
+    });
+  });
+
+  it('updates user settings', async () => {
+    await storage.updateSettings({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: false,
+    });
+    expect(preferencesServiceMock.patch).toBeCalledWith({
+      queryHistory: { homeTab: 'query' },
+    } as Partial<UserPreferencesDTO>);
+
+    await storage.updateSettings({
+      activeDatasourceOnly: false,
+      lastUsedDatasourceFilters: undefined,
+      retentionPeriod: 14,
+      starredTabAsFirstTab: true,
+    });
+    expect(preferencesServiceMock.patch).toBeCalledWith({
+      queryHistory: { homeTab: 'starred' },
+    } as Partial<UserPreferencesDTO>);
   });
 
   it('migrates provided rich history items', async () => {

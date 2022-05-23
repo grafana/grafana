@@ -173,10 +173,13 @@ export class LokiDatasource
     };
 
     if (this.useBackendMode) {
-      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+      const queries = request.targets
+        .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
+        .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
+
       const fixedRequest = {
         ...request,
-        targets: request.targets.map(getNormalizedLokiQuery),
+        targets: queries,
       };
 
       const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
@@ -464,8 +467,15 @@ export class LokiDatasource
     if (url.startsWith('/')) {
       throw new Error(`invalid metadata request url: ${url}`);
     }
-    const res = await this.getResource(url, params);
-    return res.data || [];
+
+    if (this.useBackendMode) {
+      const res = await this.getResource(url, params);
+      return res.data || [];
+    } else {
+      const lokiURL = `${LOKI_ENDPOINT}/${url}`;
+      const res = await lastValueFrom(this._request(lokiURL, params, { hideFromInspector: true }));
+      return res.data.data || [];
+    }
   }
 
   async metricFindQuery(query: string) {

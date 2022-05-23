@@ -12,6 +12,7 @@ type AlertInstance struct {
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
+	CurrentReason     string
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
@@ -49,6 +50,7 @@ type SaveAlertInstanceCommand struct {
 	RuleUID           string
 	Labels            InstanceLabels
 	State             InstanceStateType
+	StateReason       string
 	LastEvalTime      time.Time
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
@@ -66,23 +68,12 @@ type GetAlertInstanceQuery struct {
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	RuleOrgID int64 `json:"-"`
-	RuleUID   string
-	State     InstanceStateType
+	RuleOrgID   int64 `json:"-"`
+	RuleUID     string
+	State       InstanceStateType
+	StateReason string
 
-	Result []*ListAlertInstancesQueryResult
-}
-
-// ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
-type ListAlertInstancesQueryResult struct {
-	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
-	RuleUID           string            `xorm:"rule_uid" json:"ruleUid"`
-	Labels            InstanceLabels    `json:"labels"`
-	LabelsHash        string            `json:"labeHash"`
-	CurrentState      InstanceStateType `json:"currentState"`
-	CurrentStateSince time.Time         `json:"currentStateSince"`
-	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
-	LastEvalTime      time.Time         `json:"lastEvalTime"`
+	Result []*AlertInstance
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,

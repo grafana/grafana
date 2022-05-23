@@ -1,46 +1,43 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { formatDistanceToNow } from 'date-fns';
 import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
+  className?: string;
   title: string;
   severity?: AlertVariant;
   timestamp?: number;
   traceId?: string;
   children?: ReactNode;
-  onRemove?: (event: React.MouseEvent) => void;
 }
 
 export const StoredNotificationItem = ({
+  className,
   title,
   severity = 'error',
   traceId,
   timestamp,
   children,
-  onRemove,
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, severity);
   const showTraceId = config.featureToggles.tracing && traceId;
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)}>
       <div className={styles.icon}>
         <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
       </div>
       <div className={styles.title}>{title}</div>
       <div className={styles.body}>{children}</div>
       <span className={styles.trace}>{showTraceId && `Trace ID: ${traceId}`}</span>
-      <div className={styles.close}>
-        <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
-      </div>
       {timestamp && <span className={styles.timestamp}>{formatDistanceToNow(timestamp, { addSuffix: true })}</span>}
     </div>
   );
@@ -78,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant) => {
       alignSelf: 'center',
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
+      paddingTop: theme.spacing(1),
     }),
     body: css({
       gridArea: 'body',
@@ -95,13 +93,6 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant) => {
       paddingBottom: theme.spacing(1),
       fontSize: theme.typography.pxToRem(10),
       color: theme.colors.text.secondary,
-    }),
-    close: css({
-      gridArea: 'close',
-      display: 'flex',
-      justifySelf: 'end',
-      padding: theme.spacing(1, 0.5),
-      background: 'none',
     }),
     timestamp: css({
       gridArea: 'timestamp',

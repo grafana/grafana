@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Field, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -8,13 +8,7 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
-import {
-  PanelOptions,
-  defaultPanelOptions,
-  HeatmapSourceMode,
-  HeatmapColorMode,
-  HeatmapColorScale,
-} from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapMode, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
@@ -30,35 +24,24 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     let category = ['Heatmap'];
 
     builder.addRadio({
-      path: 'source',
-      name: 'Source',
-      defaultValue: HeatmapSourceMode.Auto,
+      path: 'mode',
+      name: 'Data',
+      defaultValue: defaultPanelOptions.mode,
       category,
       settings: {
         options: [
-          { label: 'Auto', value: HeatmapSourceMode.Auto },
-          { label: 'Calculate', value: HeatmapSourceMode.Calculate },
-          { label: 'Raw data', description: 'The results are already heatmap buckets', value: HeatmapSourceMode.Data },
+          { label: 'Aggregated', value: HeatmapMode.Aggregated },
+          { label: 'Calculate', value: HeatmapMode.Calculate },
+          //  { label: 'Accumulated', value: HeatmapMode.Accumulated, description: 'The query response values are accumulated' },
         ],
       },
     });
 
-    if (opts.source === HeatmapSourceMode.Calculate) {
-      addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap, category);
+    if (opts.mode === HeatmapMode.Calculate) {
+      addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
     }
 
     category = ['Colors'];
-
-    builder.addFieldNamePicker({
-      path: `color.field`,
-      name: 'Color with field',
-      category,
-      settings: {
-        filter: (f: Field) => f.type === FieldType.number,
-        noFieldsMessage: 'No numeric fields found',
-        placeholderText: 'Auto',
-      },
-    });
 
     builder.addRadio({
       path: `color.mode`,
@@ -84,7 +67,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: `color.scale`,
       name: 'Scale',
-      description: '',
       defaultValue: defaultPanelOptions.color.scale,
       category,
       settings: {
@@ -141,7 +123,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addCustomEditor({
         id: '__scale__',
         path: `__scale__`,
-        name: 'Scale',
+        name: '',
         category,
         editor: () => {
           const palette = quantizeScheme(opts.color, config.theme2);
@@ -238,6 +220,14 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       path: 'legend.show',
       name: 'Show legend',
       defaultValue: defaultPanelOptions.legend.show,
+      category,
+    });
+
+    category = ['Exemplars'];
+    builder.addColorPicker({
+      path: 'exemplars.color',
+      name: 'Color',
+      defaultValue: defaultPanelOptions.exemplars.color,
       category,
     });
   })

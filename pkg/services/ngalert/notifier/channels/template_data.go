@@ -29,6 +29,7 @@ type ExtendedAlert struct {
 	DashboardURL string      `json:"dashboardURL"`
 	PanelURL     string      `json:"panelURL"`
 	ValueString  string      `json:"valueString"`
+	ImageURL     string      `json:"imageURL,omitempty"`
 }
 
 type ExtendedAlerts []ExtendedAlert
