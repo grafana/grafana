@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -47,6 +48,40 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, pdc)
+}
+
+// QueryPublicDashboard returns all results for the panels on a public dashboard
+// POST /api/public/dashboard/:publicUid/query
+func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Response {
+	timeRangeDTO := dtos.TimeRangeOnlyMetricRequest{}
+	if err := web.Bind(c.Req, &timeRangeDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	dashboard, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
+	}
+
+	queries := models.GetQueriesFromDashboard(dashboard.Data)
+
+	reqDTO := dtos.MetricRequest{
+		To:      timeRangeDTO.To,
+		From:    timeRangeDTO.From,
+		Queries: nil,
+	}
+
+	for _, panel := range queries {
+		for _, query := range panel {
+			reqDTO.Queries = append(reqDTO.Queries, query)
+		}
+	}
+
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	if err != nil {
+		return hs.handleQueryMetricsError(err)
+	}
+	return hs.toJsonStreamingResponse(resp)
 }
 
 // util to help us unpack a dashboard err or use default http code and message
