@@ -260,10 +260,8 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 
 func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []byte, attachments []discordAttachment) (*models.SendWebhookSync, error) {
 	cmd := &models.SendWebhookSync{
-		Url:         url,
-		HttpMethod:  "POST",
-		ContentType: "application/json",
-		Body:        string(body),
+		Url:        url,
+		HttpMethod: "POST",
 	}
 	if len(attachments) == 0 {
 		cmd.ContentType = "application/json"
