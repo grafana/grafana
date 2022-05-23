@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
 import {
@@ -18,6 +18,7 @@ import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import usePanelScroll from './usePanelScroll';
 import usePopulateData from './usePopulateData';
+import useNotifyHeight from './useNotifyHeight';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -42,19 +43,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const scrollbar = document.querySelector('.scrollbar-view');
-      const panelTitle = document.querySelector('.panel-title');
-      if (scrollbar && panelTitle) {
-        const height = `${scrollbar?.scrollHeight + panelTitle?.clientHeight}px`;
-        window.parent.postMessage(height, '*');
-      }
-    }, 0);
-
-    return () => clearInterval(interval);
-  }, []);
-
+  useNotifyHeight();
   usePanelScroll({
     isAscending,
     messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],
