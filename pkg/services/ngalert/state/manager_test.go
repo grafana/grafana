@@ -757,7 +757,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					State:       eval.Alerting,
+					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1061,6 +1062,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1073,7 +1075,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					State:       eval.Normal,
+					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1138,7 +1141,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					State:       eval.Alerting,
+					StateReason: eval.NoData.String(),
+
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1203,7 +1208,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					State:       eval.Pending,
+					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1292,7 +1298,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					State:       eval.Alerting,
+					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -1436,7 +1443,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 0,
+			expectedAnnotations: 1,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1449,8 +1456,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
-					Error: nil,
+					State:       eval.Normal,
+					StateReason: eval.Error.String(),
+					Error:       nil,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1521,8 +1529,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
-					Error: nil,
+					State:       eval.Normal,
+					StateReason: eval.Error.String(),
+					Error:       nil,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1590,7 +1599,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1677,7 +1686,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -1790,9 +1799,19 @@ func TestProcessEvalResults(t *testing.T) {
 
 			require.Eventuallyf(t, func() bool {
 				return tc.expectedAnnotations == fakeAnnoRepo.Len()
-			}, time.Second, 100*time.Millisecond, "only %d annotations are present", fakeAnnoRepo.Len())
+			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items))
 		})
 	}
+}
+
+func printAllAnnotations(annos []*annotations.Item) string {
+	str := "["
+	for _, anno := range annos {
+		str += fmt.Sprintf("%+v, ", *anno)
+	}
+	str += "]"
+
+	return str
 }
 
 func TestStaleResultsHandler(t *testing.T) {
