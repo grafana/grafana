@@ -38,6 +38,10 @@ type RichHistoryRemoteStorageResultsPayloadDTO = {
   };
 };
 
+type RichHistoryRemoteStorageUpdatePayloadDTO = {
+  result: RichHistoryRemoteStorageDTO;
+};
+
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   private readonly preferenceService: PreferencesService;
 
@@ -62,7 +66,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async deleteRichHistory(id: string): Promise<void> {
-    throw new Error('not supported yet');
+    getBackendSrv().delete(`/api/query-history/${id}`);
   }
 
   async getRichHistory(filters: RichHistorySearchFilters) {
@@ -95,7 +99,10 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery> {
-    throw new Error('not supported yet');
+    const dto: RichHistoryRemoteStorageUpdatePayloadDTO = await getBackendSrv().patch(`/api/query-history/${id}`, {
+      comment: comment,
+    });
+    return fromDTO(dto.result);
   }
 
   updateSettings(settings: RichHistorySettings): Promise<void> {
@@ -107,7 +114,13 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery> {
-    throw new Error('not supported yet');
+    let dto: RichHistoryRemoteStorageUpdatePayloadDTO;
+    if (starred) {
+      dto = await getBackendSrv().post(`/api/query-history/star/${id}`);
+    } else {
+      dto = await getBackendSrv().delete(`/api/query-history/star/${id}`);
+    }
+    return fromDTO(dto.result);
   }
 
   /**
