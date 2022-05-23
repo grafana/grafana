@@ -44,7 +44,7 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined,
   }
 
   if (query.expr == null) {
-    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto, schemaVersion: pluginVersion };
+    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto, pluginVersion: pluginVersion };
   }
 
   if (query.range == null && query.instant == null) {

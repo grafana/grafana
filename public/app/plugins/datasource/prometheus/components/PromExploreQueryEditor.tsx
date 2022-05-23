@@ -25,7 +25,7 @@ export const PromExploreQueryEditor = memo((props: Props) => {
 
     // Override query type to "Both" only for new queries (no query.expr).
     if (!query.instant && !query.range && !query.expr) {
-      onChange({ ...query, instant: true, range: true, schemaVersion: pluginVersion });
+      onChange({ ...query, instant: true, range: true, pluginVersion: pluginVersion });
     }
   }, [onChange, query, pluginVersion]);
 

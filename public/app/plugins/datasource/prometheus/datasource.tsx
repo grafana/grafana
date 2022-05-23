@@ -479,7 +479,7 @@ export class PrometheusDatasource
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
     const query: PromQueryRequest = {
-      schemaVersion: target.schemaVersion,
+      pluginVersion: target.pluginVersion,
       hinting: target.hinting,
       instant: target.instant,
       exemplar: target.exemplar,

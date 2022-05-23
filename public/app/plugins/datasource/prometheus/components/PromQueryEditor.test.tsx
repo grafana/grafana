@@ -28,7 +28,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
 
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
-    schemaVersion: '9.0.0',
+    pluginVersion: '9.0.0',
     createQuery: jest.fn((q) => q),
     getPrometheusTime: jest.fn((date, roundup) => 123),
     languageProvider: {
@@ -72,5 +72,36 @@ describe('Render PromQueryEditor with basic options', () => {
     setup({ app: CoreApp.UnifiedAlerting });
     expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
     expect(screen.queryByTestId(testIds.exemplar)).not.toBeInTheDocument();
+  });
+
+  it('should add pluginVersion to new queries', () => {
+    const onChange = jest.fn();
+    setup({ app: CoreApp.Dashboard, onChange, query: { expr: null, refId: 'A' } });
+    expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.exemplar)).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith({
+      exemplar: false,
+      expr: null,
+      hide: undefined,
+      interval: '',
+      legendFormat: '',
+      refId: 'A',
+      pluginVersion: '9.0.0',
+    });
+  });
+
+  it('should not add pluginVersion to existing queries', () => {
+    const onChange = jest.fn();
+    setup({ app: CoreApp.Dashboard, onChange, query: { expr: 'ALERTS{}', refId: 'A' } });
+    expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.exemplar)).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith({
+      exemplar: false,
+      expr: 'ALERTS{}',
+      hide: undefined,
+      interval: '',
+      legendFormat: '',
+      refId: 'A',
+    });
   });
 });

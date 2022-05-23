@@ -21,6 +21,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
 
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
+    pluginVersion: '9.0.0',
     languageProvider: {
       syntax: () => {},
       getLabelKeys: () => [],
@@ -125,7 +126,9 @@ describe('PromExploreQueryEditor', () => {
     let query = { expr: '', exemplar: true };
     render(setup({ onChange, query }));
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ instant: true, range: true }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ instant: true, range: true, pluginVersion: '9.0.0' })
+    );
   });
 
   it('should not set default value for instant and range with truthy expr', async () => {

@@ -34,35 +34,42 @@ interface State {
   exemplar: boolean;
 }
 
+export function applyDefaultQuery(query: PromQuery, app: CoreApp | undefined, pluginVersion: string): PromQuery {
+  // Use default query to prevent undefined input values
+  const defaultQuery: Partial<PromQuery> = {
+    expr: '',
+    legendFormat: '',
+    interval: '',
+    // Set exemplar to false for alerting queries
+    exemplar: app === CoreApp.UnifiedAlerting ? false : true,
+  };
+  const q = Object.assign({}, defaultQuery, query);
+  if (!q.expr) {
+    q.pluginVersion = pluginVersion;
+  }
+  return q;
+}
+
 export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> {
   // Query target to be modified and used for queries
   query: PromQuery;
 
   constructor(props: PromQueryEditorProps) {
     super(props);
-    // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = {
-      expr: '',
-      legendFormat: '',
-      interval: '',
-      // Set exemplar to false for alerting queries
-      exemplar: props.app === CoreApp.UnifiedAlerting ? false : true,
-      schemaVersion: props.datasource.pluginVersion,
-    };
-    const query = Object.assign({}, defaultQuery, props.query);
-    this.query = query;
     // Query target properties that are fully controlled inputs
+    this.query = applyDefaultQuery(props.query, props.app, props.datasource.pluginVersion);
     this.state = {
       // Fully controlled text inputs
-      interval: query.interval,
-      legendFormat: query.legendFormat,
+      interval: this.query.interval,
+      legendFormat: this.query.legendFormat,
       // Select options
-      formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
+      formatOption: FORMAT_OPTIONS.find((option) => option.value === this.query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
-        INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
+        INTERVAL_FACTOR_OPTIONS.find((option) => option.value === this.query.intervalFactor) ||
+        INTERVAL_FACTOR_OPTIONS[0],
       // Switch options
-      instant: Boolean(query.instant),
-      exemplar: Boolean(query.exemplar),
+      instant: Boolean(this.query.instant),
+      exemplar: Boolean(this.query.exemplar),
     };
   }
 
