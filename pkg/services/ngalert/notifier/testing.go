@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -20,8 +19,8 @@ type FakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
 }
 
-func (f *FakeConfigStore) GetURL(ctx context.Context, token string) (*url.URL, error) {
-	return nil, store.ErrImageNotFound
+func (f *FakeConfigStore) GetURL(ctx context.Context, token string) (string, error) {
+	return "", store.ErrImageNotFound
 }
 
 // Returns an io.ReadCloser that reads out the image data for the provided

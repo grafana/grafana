@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"time"
 
@@ -40,7 +39,7 @@ type ImageStore interface {
 	// Saves the image or returns an error.
 	SaveImage(ctx context.Context, img *Image) error
 
-	GetURL(ctx context.Context, token string) (*url.URL, error)
+	GetURL(ctx context.Context, token string) (string, error)
 
 	// Returns an io.ReadCloser that reads out the image data for the provided
 	// token, if available. May return ErrImageNotFound.
@@ -92,12 +91,12 @@ func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
 	})
 }
 
-func (st *DBstore) GetURL(ctx context.Context, token string) (*url.URL, error) {
+func (st *DBstore) GetURL(ctx context.Context, token string) (string, error) {
 	img, err := st.GetImage(ctx, token)
 	if err != nil {
-		return &url.URL{}, err
+		return "", err
 	}
-	return url.Parse(img.URL)
+	return img.URL, nil
 }
 
 func (st *DBstore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {

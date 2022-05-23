@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -22,7 +21,7 @@ type FactoryConfig struct {
 
 // A specialization of store.ImageStore, to avoid an import loop.
 type ImageStore interface {
-	GetURL(ctx context.Context, token string) (*url.URL, error)
+	GetURL(ctx context.Context, token string) (string, error)
 	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
@@ -36,11 +35,16 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 	if config.SecureSettings == nil {
 		config.SecureSettings = map[string][]byte{}
 	}
+
+	if imageStore == nil {
+		imageStore = &UnavailableImageStore{}
+	}
 	return FactoryConfig{
 		Config:              config,
 		NotificationService: notificationService,
 		DecryptFunc:         decryptFunc,
 		Template:            template,
+		ImageStore:          imageStore,
 	}, nil
 }
 
