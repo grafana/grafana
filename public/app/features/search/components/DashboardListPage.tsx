@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { FC, memo } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { useAsync } from 'react-use';
@@ -45,14 +46,23 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
 
   return (
     <Page navModel={value?.pageNavModel ?? navModel}>
-      <Page.Contents isLoading={loading}>
-        {/*Todo: remove the false to test, or when we feel confident with thsi approach */}
-        {false && config.featureToggles.panelTitleSearch ? (
+      {/*Todo: remove the false to test, or when we feel confident with thsi approach */}
+      {false && config.featureToggles.panelTitleSearch ? (
+        <Page.Contents
+          isLoading={loading}
+          className={css`
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          `}
+        >
           <ManageDashboardsNew folder={value?.folder} />
-        ) : (
+        </Page.Contents>
+      ) : (
+        <Page.Contents isLoading={loading}>
           <ManageDashboards folder={value?.folder} />
-        )}
-      </Page.Contents>
+        </Page.Contents>
+      )}
     </Page>
   );
 });
