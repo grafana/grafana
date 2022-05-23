@@ -34,6 +34,7 @@ type RichHistoryRemoteStorageMigrationPayloadDTO = {
 type RichHistoryRemoteStorageResultsPayloadDTO = {
   result: {
     queryHistory: RichHistoryRemoteStorageDTO[];
+    totalCount: number;
   };
 };
 
@@ -64,8 +65,9 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     throw new Error('not supported yet');
   }
 
-  async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
+
     const queryHistory = await lastValueFrom(
       getBackendSrv().fetch({
         method: 'GET',
@@ -74,7 +76,12 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
         requestId: 'query-history-get-all',
       })
     );
-    return ((queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO).result.queryHistory || []).map(fromDTO);
+
+    const data = queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO;
+    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const total = data.result.totalCount || 0;
+
+    return { richHistory, total };
   }
 
   async getSettings(): Promise<RichHistorySettings> {
@@ -137,7 +144,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   params = params + `&to=${relativeFrom}`;
   params = params + `&from=${relativeTo}`;
   params = params + `&limit=100`;
-  params = params + `&page=1`;
+  params = params + `&page=${filters.page || 1}`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
   }
