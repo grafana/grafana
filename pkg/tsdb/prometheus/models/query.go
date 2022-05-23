@@ -44,7 +44,7 @@ const (
 var safeResolution = 11000
 
 type QueryModel struct {
-	SchemaVersion  string `json:"schemaVersion"`
+	PluginVersion  string `json:"pluginVersion"`
 	Expr           string `json:"expr"`
 	LegendFormat   string `json:"legendFormat"`
 	Interval       string `json:"interval"`
