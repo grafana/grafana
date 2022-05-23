@@ -103,11 +103,6 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 	now := time.Now()
 
 	// Create missing permissions
-	// Example setup:
-	// editor read, query datasources:uid:2
-	// editor read, query datasources:uid:1
-	// admin read, query, write datasources:uid:1
-	// we'd need to create admin read, query, write datasources:uid:2
 	for orgID, orgMap := range permissionMap {
 		for managedRole, permissions := range orgMap {
 			// ensure managed role exists, create and add to map if it doesn't
