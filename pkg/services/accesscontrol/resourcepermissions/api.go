@@ -65,9 +65,15 @@ func (a *api) registerEndpoints() {
 		readEvaluator, writeEvaluator := a.getEvaluators(actionRead, actionWrite, scope)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", inheritanceSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+		if a.service.options.Assignments.Users {
+			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
+		}
+		if a.service.options.Assignments.Teams {
+			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
+		}
+		if a.service.options.Assignments.BuiltInRoles {
+			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+		}
 	})
 }
 

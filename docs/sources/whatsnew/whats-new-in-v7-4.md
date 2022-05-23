@@ -1,11 +1,12 @@
 +++
-title = "What's New in Grafana v7.4"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/", "/docs/grafana/latest/whatsnew/whats-new-in-v7-4/"]
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
+title = "What's New in Grafana v7.4"
 weight = -31
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
+
 [_build]
-list = false
+  list = false
 +++
 
 # What's new in Grafana v7.4
@@ -136,7 +137,7 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
-For more information, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch.md">}}).
+For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch.md" >}}).
 
 ### Azure Monitor updates
 
@@ -178,7 +179,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md">}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md" >}}).
 
 ## Grafana Enterprise features
 

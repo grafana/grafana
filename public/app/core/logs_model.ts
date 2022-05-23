@@ -316,11 +316,11 @@ function getAllLabels(fields: LogFields): Labels[] {
 
   const { stringField, labelsField } = fields;
 
-  const fieldLabels = stringField.labels !== undefined ? [stringField.labels] : [];
-
-  const labelsFieldLabels: Labels[] = labelsField !== undefined ? labelsField.values.toArray() : [];
-
-  return [...fieldLabels, ...labelsFieldLabels];
+  if (labelsField !== undefined) {
+    return labelsField.values.toArray();
+  } else {
+    return [stringField.labels ?? {}];
+  }
 }
 
 function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
@@ -329,10 +329,11 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
 
   const { stringField, labelsField } = fields;
 
-  return {
-    ...stringField.labels,
-    ...labelsField?.values.get(index),
-  };
+  if (labelsField !== undefined) {
+    return labelsField.values.get(index);
+  } else {
+    return stringField.labels ?? {};
+  }
 }
 
 /**
@@ -357,7 +358,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
       const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-      const labelsField = fieldCache.getFieldByName('labels');
+      // NOTE: this is experimental, please do not use in your code.
+      // we will get this custom-frame-type into the "real" frame-type list soon,
+      // but the name might change, so please do not use it until then.
+      const labelsField =
+        series.meta?.custom?.frameType === 'LabeledTimeValues' ? fieldCache.getFieldByName('labels') : undefined;
 
       if (stringField !== undefined && timeField !== undefined) {
         const info = {

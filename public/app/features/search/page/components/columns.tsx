@@ -1,39 +1,40 @@
+import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { DataFrameView, DataSourceRef, Field } from '@grafana/data';
+import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-import { LocationInfo } from '../../service';
+import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
-import { FieldAccess, TableColumn } from './SearchResultsTable';
+import { TableColumn } from './SearchResultsTable';
+
+const TYPE_COLUMN_WIDTH = 250;
+const DATASOURCE_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
-  data: DataFrameView<FieldAccess>,
-  isDashboardList: boolean,
+  response: QueryResponse,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
   styles: { [key: string]: string },
-  tags: string[],
-  onTagFilterChange: (tags: string[]) => void,
-  onDatasourceChange: (datasource?: string) => void
+  onTagSelected: (tag: string) => void,
+  onDatasourceChange?: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  const uidField = data.fields.uid!;
-  const kindField = data.fields.kind!;
-  const access = data.fields;
+  const access = response.view.fields;
+  const uidField = access.uid;
+  const kindField = access.kind;
 
-  availableWidth -= 8; // ???
   let width = 50;
 
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
       id: `column-checkbox`,
+      width,
       Header: () => (
         <div className={styles.checkboxHeader}>
           <Checkbox
@@ -45,7 +46,6 @@ export const generateColumns = (
           />
         </div>
       ),
-      width,
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
@@ -71,55 +71,38 @@ export const generateColumns = (
   }
 
   // Name column
-  width = Math.max(availableWidth * 0.2, 200);
+  width = Math.max(availableWidth * 0.2, 300);
   columns.push({
-    Cell: DefaultCell,
+    Cell: (p) => {
+      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let name = access.name.values.get(p.row.index);
+      if (!name?.length) {
+        name = 'Missing title'; // normal for panels
+        classNames += ' ' + styles.missingTitleText;
+      }
+      return (
+        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
+          {name}
+        </a>
+      );
+    },
     id: `column-name`,
     field: access.name!,
     Header: 'Name',
-    accessor: (row: any, i: number) => {
-      const name = access.name!.values.get(i);
-      return name;
-    },
     width,
   });
   availableWidth -= width;
 
-  const TYPE_COLUMN_WIDTH = 130;
-  const DATASOURCE_COLUMN_WIDTH = 200;
-  const INFO_COLUMN_WIDTH = 100;
-  const LOCATION_COLUMN_WIDTH = 200;
-  const TAGS_COLUMN_WIDTH = 200;
-
   width = TYPE_COLUMN_WIDTH;
-  if (isDashboardList) {
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-type`,
-      field: access.name!,
-      Header: 'Type',
-      accessor: (row: any, i: number) => {
-        return (
-          <div className={styles.typeText}>
-            <Icon name={'apps'} className={styles.typeIcon} />
-            Dashboard
-          </div>
-        );
-      },
-      width,
-    });
-    availableWidth -= width;
-  } else {
-    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
-    availableWidth -= width;
-  }
+  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
+  availableWidth -= width;
 
   // Show datasources if we have any
-  if (access.datasource && hasFieldValue(access.datasource)) {
+  if (access.ds_uid && onDatasourceChange) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
       makeDataSourceColumn(
-        access.datasource,
+        access.ds_uid,
         width,
         styles.typeIcon,
         styles.datasourceItem,
@@ -130,71 +113,39 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  // Show tags if we have any
-  if (access.tags && hasFieldValue(access.tags)) {
-    width = TAGS_COLUMN_WIDTH;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
-    availableWidth -= width;
-  }
+  width = Math.max(availableWidth / 2.5, 200);
+  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
+  availableWidth -= width;
 
-  if (isDashboardList) {
-    width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
+  const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
+  if (meta?.locationInfo && availableWidth > 0) {
     columns.push({
-      Cell: DefaultCell,
-      id: `column-info`,
-      field: access.url!,
-      Header: 'Info',
-      accessor: (row: any, i: number) => {
-        const panelCount = access.panelCount?.values.get(i);
-        return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
+      Cell: (p) => {
+        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        return (
+          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
+            {parts.map((p) => {
+              const info = meta.locationInfo[p];
+              return info ? (
+                <a key={p} href={info.url} className={styles.locationItem}>
+                  <Icon name={getIconForKind(info.kind)} /> {info.name}
+                </a>
+              ) : (
+                <span key={p}>{p}</span>
+              );
+            })}
+          </div>
+        );
       },
-      width: width,
-    });
-  } else {
-    width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    columns.push({
-      Cell: DefaultCell,
       id: `column-location`,
       field: access.location ?? access.url,
       Header: 'Location',
-      accessor: (row: any, i: number) => {
-        const location = access.location?.values.get(i) as LocationInfo[];
-        if (location) {
-          return (
-            <div>
-              {location.map((v, id) => (
-                <span
-                  key={id}
-                  className={styles.locationItem}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('CLICK: ' + v.name);
-                  }}
-                >
-                  <Icon name={getIconForKind(v.kind)} /> {v.name}
-                </span>
-              ))}
-            </div>
-          );
-        }
-        return null;
-      },
-      width: width,
+      width: availableWidth,
     });
   }
 
   return columns;
 };
-
-function hasFieldValue(field: Field): boolean {
-  for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
-    if (v && v.length) {
-      return true;
-    }
-  }
-  return false;
-}
 
 function getIconForKind(v: string): IconName {
   if (v === 'dashboard') {
@@ -207,52 +158,51 @@ function getIconForKind(v: string): IconName {
 }
 
 function makeDataSourceColumn(
-  field: Field<DataSourceRef[]>,
+  field: Field<string[]>,
   width: number,
   iconClass: string,
   datasourceItemClass: string,
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
+  const srv = getDataSourceSrv();
   return {
-    Cell: DefaultCell,
     id: `column-datasource`,
     field,
     Header: 'Data source',
-    accessor: (row: any, i: number) => {
-      const dslist = field.values.get(i);
-      if (dslist?.length) {
-        const srv = getDataSourceSrv();
-        return (
-          <div className={datasourceItemClass}>
-            {dslist.map((v, i) => {
-              const settings = srv.getInstanceSettings(v);
-              const icon = settings?.meta?.info?.logos?.small;
-              if (icon) {
-                return (
-                  <span
-                    key={i}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      onDatasourceChange(settings.uid);
-                    }}
-                  >
-                    <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
-                    {settings.name}
-                  </span>
-                );
-              }
+    Cell: (p) => {
+      const dslist = field.values.get(p.row.index);
+      if (!dslist?.length) {
+        return null;
+      }
+      return (
+        <div {...p.cellProps} className={cx(p.cellStyle, datasourceItemClass)}>
+          {dslist.map((v, i) => {
+            const settings = srv.getInstanceSettings(v);
+            const icon = settings?.meta?.info?.logos?.small;
+            if (icon) {
               return (
-                <span className={invalidDatasourceItemClass} key={i}>
-                  {v.type}
+                <span
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onDatasourceChange(settings.uid);
+                  }}
+                >
+                  <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  {settings.name}
                 </span>
               );
-            })}
-          </div>
-        );
-      }
-      return null;
+            }
+            return (
+              <span className={invalidDatasourceItemClass} key={i}>
+                {v}
+              </span>
+            );
+          })}
+        </div>
+      );
     },
     width,
   };
@@ -262,15 +212,14 @@ function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
-  typeTextClass: string,
-  iconClass: string
+  styles: Record<string, string>
 ): TableColumn {
   return {
-    Cell: DefaultCell,
     id: `column-type`,
     field: kindField ?? typeField,
     Header: 'Type',
-    accessor: (row: any, i: number) => {
+    Cell: (p) => {
+      const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
@@ -298,15 +247,16 @@ function makeTypeColumn(
                   icon = v;
                 }
                 txt = info.name;
+              } else {
+                icon = `public/img/icons/unicons/question.svg`; // plugin not found
               }
             }
             break;
         }
       }
-
       return (
-        <div className={typeTextClass}>
-          <SVG src={icon} width={14} height={14} title={txt} className={iconClass} />
+        <div {...p.cellProps} className={styles.typeText}>
+          <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
           {txt}
         </div>
       );
@@ -319,27 +269,20 @@ function makeTagsColumn(
   field: Field<string[]>,
   width: number,
   tagListClass: string,
-  currentTagFilter: string[],
-  onTagFilterChange: (tags: string[]) => void
+  onTagSelected: (tag: string) => void
 ): TableColumn {
-  const updateTagFilter = (tag: string) => {
-    if (!currentTagFilter.includes(tag)) {
-      onTagFilterChange([...currentTagFilter, tag]);
-    }
-  };
-
   return {
-    Cell: DefaultCell,
+    Cell: (p) => {
+      const tags = field.values.get(p.row.index);
+      return tags ? (
+        <div {...p.cellProps} className={p.cellStyle}>
+          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+        </div>
+      ) : null;
+    },
     id: `column-tags`,
     field: field,
     Header: 'Tags',
-    accessor: (row: any, i: number) => {
-      const tags = field.values.get(i);
-      if (tags) {
-        return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
-      }
-      return null;
-    },
     width,
   };
 }

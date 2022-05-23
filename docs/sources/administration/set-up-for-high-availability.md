@@ -1,7 +1,7 @@
 +++
-title = "Set up Grafana for high availability"
+aliases = ["/docs/grafana/latest/administration/set-up-for-high-availability/", "/docs/grafana/latest/tutorials/ha_setup/"]
 keywords = ["grafana", "tutorials", "HA", "high availability"]
-aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
+title = "Set up Grafana for high availability"
 weight = 1200
 +++
 
@@ -32,7 +32,7 @@ Legacy Grafana alerting supports a limited form of high availability. In this mo
 
 ## Grafana Live
 
-Grafana Live works with limitations in highly available setup. For details, refer to the [Grafana Live documentation]({{< relref "../live/live-ha-setup.md" >}}).
+Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ## User sessions
 

@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/library-panels/manage-library-panel/", "/docs/sources/panels/library-panels/manage-library-panel/"]
 title = "Manage Grafana library panels"
 weight = 40
-aliases = ["/docs/sources/panels/library-panels/manage-library-panel/"]
 +++
 
 # Manage Grafana library panels

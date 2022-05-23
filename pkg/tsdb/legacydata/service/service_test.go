@@ -41,7 +41,8 @@ func TestHandleRequest(t *testing.T) {
 		}
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		datasourcePermissions := acmock.NewMockedPermissionsService()
+		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions)
 		s := ProvideService(client, nil, dsService)
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}

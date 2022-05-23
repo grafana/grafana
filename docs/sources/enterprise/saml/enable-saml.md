@@ -1,9 +1,16 @@
 ---
-title: 'Enable SAML authentication in Grafana'
-menuTitle: 'Enable SAML authentication'
-description: 'This contains information to enable SAML authentication in Grafana'
-keywords: ['grafana', 'saml', 'documentation', 'saml-auth', 'enterprise']
-aliases: ['/docs/grafana/latest/auth/saml/']
+aliases:
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/enterprise/saml/enable-saml/
+description: This contains information to enable SAML authentication in Grafana
+keywords:
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+  - enterprise
+menuTitle: Enable SAML authentication
+title: Enable SAML authentication in Grafana
 weight: 30
 ---
 
@@ -46,20 +53,9 @@ The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then use
 
 The keys you provide should look like:
 
-It should look like:
-
 ```
 -----BEGIN PRIVATE KEY-----
 ...
 ...
 -----END PRIVATE KEY-----
-```
-
-If you have a key that looks like:
-
-```
------BEGIN CERTIFICATE-----
-...
-...
------END CERTIFICATE-----
 ```

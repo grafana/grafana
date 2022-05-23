@@ -14,3 +14,9 @@ type SaveDashboardDTO struct {
 	Overwrite bool
 	Dashboard *models.Dashboard
 }
+
+type SavePublicDashboardConfigDTO struct {
+	Uid                   string
+	OrgId                 int64
+	PublicDashboardConfig models.PublicDashboardConfig
+}

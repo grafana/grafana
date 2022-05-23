@@ -71,7 +71,7 @@ func setup(t *testing.T) *testContext {
 
 	ss := kvstore.SetupTestService(t)
 	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	return &testContext{
 		pluginContext:          pc,

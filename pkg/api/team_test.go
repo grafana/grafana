@@ -104,7 +104,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.PermissionsService, userID, orgID, teamID int64,
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.TeamPermissionsService, userID, orgID, teamID int64,
 			permission string) error {
 			addTeamMemberCalled++
 			return nil
@@ -369,10 +369,6 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	_, err := sc.db.CreateTeam("team1", "", 1)
 
 	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
 	sc.hs.SQLStore = sqlstore
 
 	prefService := preftest.NewPreferenceServiceFake()

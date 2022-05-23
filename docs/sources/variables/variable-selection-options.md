@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/variables/variable-selection-options/"]
 title = "Variable selection options"
 weight = 400
 +++

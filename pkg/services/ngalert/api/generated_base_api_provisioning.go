@@ -23,6 +23,8 @@ type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteDeleteTemplate(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
+	RouteGetMuteTiming(*models.ReqContext) response.Response
+	RouteGetMuteTimings(*models.ReqContext) response.Response
 	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RouteGetTemplate(*models.ReqContext) response.Response
 	RouteGetTemplates(*models.ReqContext) response.Response
@@ -42,6 +44,14 @@ func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) resp
 
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetMuteTiming(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetMuteTimings(ctx)
 }
 
 func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
@@ -117,6 +127,26 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodGet,
 				"/api/provisioning/contact-points",
 				srv.RouteGetContactpoints,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/provisioning/mute-timings/{name}"),
+			api.authorize(http.MethodGet, "/api/provisioning/mute-timings/{name}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/mute-timings/{name}",
+				srv.RouteGetMuteTiming,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/provisioning/mute-timings"),
+			api.authorize(http.MethodGet, "/api/provisioning/mute-timings"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/mute-timings",
+				srv.RouteGetMuteTimings,
 				m,
 			),
 		)

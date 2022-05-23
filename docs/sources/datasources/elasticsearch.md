@@ -1,8 +1,8 @@
 +++
-title = "Elasticsearch"
+aliases = ["/docs/grafana/latest/datasources/elasticsearch/", "/docs/grafana/latest/features/datasources/elasticsearch/"]
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
+title = "Elasticsearch"
 weight = 325
 +++
 
@@ -25,32 +25,12 @@ Supported Elasticsearch versions:
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-| Name      | Description                                                                                                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                          |
-| `Default` | Default data source means that it will be pre-selected for new panels.                                                                                                                                                         |
-| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                                                                                                                                  |
-| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release. |
-
-Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
-
-### Server access mode (Default)
-
-All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
-
-### Browser (Direct) access
-
-> **Warning:** Browser (Direct) access is deprecated and will be removed in a future release.
-
-All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
-
-If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
-Elasticsearch from the browser. You do this by specifying these two options in your **elasticsearch.yml** config file.
-
-```bash
-http.cors.enabled: true
-http.cors.allow-origin: "*"
-```
+| Name      | Description                                                                       |
+| --------- | --------------------------------------------------------------------------------- |
+| `Name`    | Data source name. This is how you refer to the data source in panels and queries. |
+| `Default` | Data source is pre-selected for new panels.                                       |
+| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                     |
+| `Access`  | Do not use Access. Use "Server (default)" or the datasource won't function.       |
 
 ### Index settings
 
