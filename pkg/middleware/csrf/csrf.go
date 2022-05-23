@@ -2,8 +2,10 @@ package csrf
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +58,14 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If request has no login cookie - skip CSRF checks
+
+			if strings.Contains(r.URL.Path, "saml") {
+				fmt.Printf("path: %s\n", r.URL.Path)
+			}
+			fmt.Printf("cookie inside the middleware: %s\n", i.cfg.LoginCookieName)
+			fmt.Printf("cookie %v+\n", r.Cookies())
 			if _, err := r.Cookie(i.cfg.LoginCookieName); errors.Is(err, http.ErrNoCookie) {
+				fmt.Print("next HTTP because of cookie")
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -70,6 +79,8 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 			// Skip CSRF checks for "safe" endpoints
 			for endpoint, _ := range i.safeEndpoints {
 				if r.URL.Path == endpoint {
+					fmt.Printf("inside safeEndpoints w. endpoint: %s\n", endpoint)
+					fmt.Printf("inside safeEndpoints w. r.URL.Path: %s\n", r.URL.Path)
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -93,6 +104,7 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 
 			// No Origin header sent, skip CSRF check.
 			if len(origins) == 0 {
+				fmt.Printf("inside len(origins) == 0\n")
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -126,5 +138,9 @@ func (i *Implementation) AddOriginHeader(headerName string) {
 
 // AddSafeEndpoint is used for endpoints requests to skip CSRF check
 func (i *Implementation) AddSafeEndpoint(endpoint string) {
+	// remove slash prefix
+	endpoint = strings.TrimPrefix(endpoint, "/")
+	// debug incase endpoint is set with prefix slash /{endpoint}
+	// i.lo.Debug("CSRF: Adding safe endpoint", "endpoint", endpoint)
 	i.safeEndpoints[endpoint] = struct{}{}
 }
