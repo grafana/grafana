@@ -42,7 +42,7 @@ jobs:
         run: |
           npm install snyk-to-html snyk2spdx -g
           snyk-to-html -i ${{ github.event.repository.name }}.json -o ${{ github.event.repository.name }}.html
-          cat ${{ github.event.repository.name }}.json | snyk2spdx --output ${{ github.event.repository.name }}.spdx
+          cat ${{ github.event.repository.name }}.json | DEBUG=snyk* snyk2spdx --output ${{ github.event.repository.name }}.spdx
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
