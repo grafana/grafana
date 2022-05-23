@@ -37,8 +37,7 @@ func TestProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 
 		ProvideFolderService(
-			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, folderPermissions, ac,
+			cfg, dashboardService, store, nil, features, folderPermissions, ac,
 		)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
