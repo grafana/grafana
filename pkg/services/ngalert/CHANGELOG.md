@@ -56,6 +56,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
 - [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
 - [BUGFIX] Allow anonymous access to alerts #49203 
+- [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
 
 ## 8.5.3
 

@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -15,9 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -41,11 +44,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
+	imageService     image.ImageService
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
-	dashboardService dashboards.DashboardService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -56,6 +60,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
+		imageService:     imageService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -165,6 +170,37 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	return states
 }
 
+// Maybe take a screenshot. Do it if:
+// 1. The alert state is transitioning into the "Alerting" state from something else.
+// 2. The alert state has just transitioned to the resolved state.
+// 3. The state is alerting and there is no screenshot annotation on the alert state.
+func (st *Manager) maybeTakeScreenshot(
+	ctx context.Context,
+	alertRule *ngModels.AlertRule,
+	state *State,
+	oldState eval.State,
+) error {
+	shouldScreenshot := state.Resolved ||
+		state.State == eval.Alerting && oldState != eval.Alerting ||
+		state.State == eval.Alerting && state.Image == nil
+	if !shouldScreenshot {
+		return nil
+	}
+
+	img, err := st.imageService.NewImage(ctx, alertRule)
+	if err != nil &&
+		errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
+		errors.Is(err, image.ErrNoDashboard) ||
+		errors.Is(err, image.ErrNoPanel) {
+		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
+		return nil
+	} else if err != nil {
+		return err
+	}
+	state.Image = img
+	return nil
+}
+
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(ctx, alertRule, result)
@@ -197,6 +233,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+
+	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
+	if err != nil {
+		st.log.Warn("Error generating a screenshot for an alert instance.",
+			"alert_rule", alertRule.UID,
+			"dashboard", alertRule.DashboardUID,
+			"panel", alertRule.PanelID)
+	}
 
 	st.set(currentState)
 	if oldState != currentState.State {

@@ -42,9 +42,28 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
   }, [data, options, theme]);
 
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const facets = useMemo(() => {
+    let exemplarsXFacet: number[] = []; // "Time" field
+    let exemplarsyFacet: number[] = [];
 
-  //console.log(facets);
+    if (info.exemplars && info.matchByLabel) {
+      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
+
+      // ordinal/labeled heatmap-buckets?
+      const hasLabeledY = info.yLabelValues != null;
+
+      if (hasLabeledY) {
+        let matchExemplarsBy = info.exemplars?.fields
+          .find((field) => field.name === info.matchByLabel)!
+          .values.toArray();
+        exemplarsyFacet = matchExemplarsBy.map((label) => info.yLabelValues?.indexOf(label)) as number[];
+      } else {
+        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+      }
+    }
+
+    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
+  }, [info.heatmap, info.exemplars, info.yLabelValues, info.matchByLabel]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -95,6 +114,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
+      exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
@@ -111,8 +131,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     const { min, max } = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
 
     let hoverValue: number | undefined = undefined;
-    if (hover && info.heatmap.fields) {
-      hoverValue = countField.values.get(hover.index);
+    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+      hoverValue = countField.values.get(hover.dataIdx);
     }
 
     return (

@@ -13,8 +13,8 @@ interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
   hideThreshold?: number;
-  xCeil?: boolean;
-  yCeil?: boolean;
+  xAlign?: -1 | 0 | 1;
+  yAlign?: -1 | 0 | 1;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -23,8 +23,13 @@ interface PathbuilderOpts {
   };
 }
 
+interface PointsBuilderOpts {
+  each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
+}
+
 export interface HeatmapHoverEvent {
-  index: number;
+  seriesIdx: number;
+  dataIdx: number;
   pageX: number;
   pageY: number;
 }
@@ -44,6 +49,7 @@ interface PrepConfigOpts {
   timeZone: string;
   getTimeRange: () => TimeRange;
   palette: string[];
+  exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
 }
@@ -66,6 +72,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const pxRatio = devicePixelRatio;
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -143,7 +150,8 @@ export function prepConfig(opts: PrepConfigOpts) {
             }
 
             onhover({
-              index: sel,
+              seriesIdx: i,
+              dataIdx: sel,
               pageX: rect.left + u.cursor.left!,
               pageY: rect.top + u.cursor.top!,
             });
@@ -209,13 +217,16 @@ export function prepConfig(opts: PrepConfigOpts) {
     range: shouldUseLogScale
       ? undefined
       : (u, dataMin, dataMax) => {
-          let bucketSize = dataRef.current?.yBucketSize;
+          const bucketSize = dataRef.current?.yBucketSize;
 
           if (bucketSize) {
             if (dataRef.current?.yLayout === BucketLayout.le) {
               dataMin -= bucketSize!;
-            } else {
+            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
               dataMax += bucketSize!;
+            } else {
+              dataMin -= bucketSize! / 2;
+              dataMax += bucketSize! / 2;
             }
           } else {
             // how to expand scale range if inferred non-regular or log buckets?
@@ -233,10 +244,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
     splits: hasLabeledY
       ? () => {
-          let ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-          let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+          const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
+          const splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
 
-          let bucketSize = dataRef.current?.yBucketSize!;
+          const bucketSize = dataRef.current?.yBucketSize!;
 
           if (dataRef.current?.yLayout === BucketLayout.le) {
             splits.unshift(ys[0] - bucketSize);
@@ -249,11 +260,11 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
     values: hasLabeledY
       ? () => {
-          let yAxisValues = dataRef.current?.yAxisValues?.slice()!;
+          const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
 
           if (dataRef.current?.yLayout === BucketLayout.le) {
             yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else {
+          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
             yAxisValues.push('+Inf');
           }
 
@@ -262,8 +273,9 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
-  let pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
 
+  // heatmap layer
   builder.addSeries({
     facets: [
       {
@@ -289,8 +301,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       gap: cellGap,
       hideThreshold,
-      xCeil: dataRef.current?.xLayout === BucketLayout.le,
-      yCeil: dataRef.current?.yLayout === BucketLayout.le,
+      xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
+      yAlign: dataRef.current?.yLayout === BucketLayout.le ? -1 : dataRef.current?.yLayout === BucketLayout.ge ? 1 : 0,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
@@ -301,6 +313,38 @@ export function prepConfig(opts: PrepConfigOpts) {
         },
       },
     }) as any,
+    theme,
+    scaleKey: '', // facets' scales used (above)
+  });
+
+  // exemplars layer
+  builder.addSeries({
+    facets: [
+      {
+        scale: 'x',
+        auto: true,
+        sorted: 1,
+      },
+      {
+        scale: 'y',
+        auto: true,
+      },
+    ],
+    pathBuilder: heatmapPathsPoints(
+      {
+        each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
+          qt.add({
+            x: x - u.bbox.left,
+            y: y - u.bbox.top,
+            w: xSize,
+            h: ySize,
+            sidx: seriesIdx,
+            didx: dataIdx,
+          });
+        },
+      },
+      exemplarFillColor
+    ) as any,
     theme,
     scaleKey: '', // facets' scales used (above)
   });
@@ -348,7 +392,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -408,8 +452,8 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         // let xCeil = false;
         // let yCeil = false;
 
-        let xOffset = xCeil ? -xSize : 0;
-        let yOffset = yCeil ? 0 : -ySize;
+        let xOffset = xAlign === -1 ? -xSize : xAlign === 0 ? -xSize / 2 : 0;
+        let yOffset = yAlign === 1 ? -ySize : yAlign === 0 ? -ySize / 2 : 0;
 
         // pre-compute x and y offsets
         let cys = ys.slice(0, yBinQty).map((y) => round(valToPosY(y, scaleY, yDim, yOff) + yOffset));
@@ -453,6 +497,65 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
   };
 }
 
+export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: string) {
+  return (u: uPlot, seriesIdx: number) => {
+    uPlot.orient(
+      u,
+      seriesIdx,
+      (
+        series,
+        dataX,
+        dataY,
+        scaleX,
+        scaleY,
+        valToPosX,
+        valToPosY,
+        xOff,
+        yOff,
+        xDim,
+        yDim,
+        moveTo,
+        lineTo,
+        rect,
+        arc
+      ) => {
+        //console.time('heatmapPathsSparse');
+
+        [dataX, dataY] = dataY as unknown as number[][];
+
+        let points = new Path2D();
+        let fillPaths = [points];
+        let fillPalette = [exemplarColor ?? 'rgba(255,0,255,0.7)'];
+
+        for (let i = 0; i < dataX.length; i++) {
+          let yVal = dataY[i]!;
+          yVal -= 0.5; // center vertically in bucket (when tiles are le)
+          // y-randomize vertically to distribute exemplars in same bucket at same time
+          let randSign = Math.round(Math.random()) * 2 - 1;
+          yVal += randSign * 0.5 * Math.random();
+
+          let x = valToPosX(dataX[i], scaleX, xDim, xOff);
+          let y = valToPosY(yVal, scaleY, yDim, yOff);
+          let w = 8;
+          let h = 8;
+
+          rect(points, x - w / 2, y - h / 2, w, h);
+
+          opts.each(u, seriesIdx, i, x - w / 2, y - h / 2, w, h);
+        }
+
+        u.ctx.save();
+        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+        u.ctx.clip();
+        fillPaths.forEach((p, i) => {
+          u.ctx.fillStyle = fillPalette[i];
+          u.ctx.fill(p);
+        });
+        u.ctx.restore();
+      }
+    );
+  };
+}
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
 export function heatmapPathsSparse(opts: PathbuilderOpts) {

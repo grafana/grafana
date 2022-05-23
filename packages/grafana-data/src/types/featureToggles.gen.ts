@@ -59,4 +59,5 @@ export interface FeatureToggles {
   azureMonitorExperimentalUI?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
+  validateDashboardsOnSave?: boolean;
 }
