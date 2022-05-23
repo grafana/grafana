@@ -36,7 +36,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
   },
 
   /**
-   * Default is ot just return target from the annotation.
+   * Default will just return target from the annotation.
    */
   prepareQuery: (anno: AnnotationQuery) => anno.target,
 
