@@ -37,12 +37,6 @@ type RichHistoryRemoteStorageResultsPayloadDTO = {
   };
 };
 
-export type RichHistoryRemoteStorageSettingsPayloadDTO = {
-  queryHistory?: {
-    homeTab: 'query' | 'starred';
-  };
-};
-
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   private readonly preferenceService: PreferencesService;
 
