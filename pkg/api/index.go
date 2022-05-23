@@ -425,7 +425,13 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 	}
 
 	starredDashboards := []*models.Dashboard{}
+	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
+		// Set a loose limit to the first 50 starred dashboards found
+		if starredDashboardsCounter > 50 {
+			break
+		}
+		starredDashboardsCounter++
 		query := &models.GetDashboardQuery{
 			Id:    dashboardId,
 			OrgId: c.OrgId,
