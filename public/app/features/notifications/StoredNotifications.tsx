@@ -18,9 +18,6 @@ export function StoredNotifications() {
   const dispatch = useDispatch();
   const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
-  const allNotificationsSelected = notifications.every((notification) =>
-    selectedNotificationIds.includes(notification.id)
-  );
   const lastReadTimestamp = useRef(useSelector((state) => selectLastReadTimestamp(state.appNotifications)));
   const styles = useStyles2(getStyles);
 
@@ -29,26 +26,24 @@ export function StoredNotifications() {
   });
 
   const clearSelectedNotifications = () => {
-    if (allNotificationsSelected) {
-      dispatch(clearAllNotifications());
-    } else {
-      selectedNotificationIds.forEach((id) => {
-        dispatch(clearNotification(id));
-      });
-    }
+    selectedNotificationIds.forEach((id) => {
+      dispatch(clearNotification(id));
+    });
     setSelectedNotificationIds([]);
   };
 
-  const handleAllCheckboxToggle = (isChecked: boolean) => {
-    setSelectedNotificationIds(isChecked ? notifications.map((n) => n.id) : []);
+  const clearAllNotifs = () => {
+    dispatch(clearAllNotifications());
   };
 
   const handleCheckboxToggle = (id: string, isChecked: boolean) => {
-    if (isChecked && !selectedNotificationIds.includes(id)) {
-      setSelectedNotificationIds([...selectedNotificationIds, id]);
-    } else if (!isChecked && selectedNotificationIds.includes(id)) {
-      setSelectedNotificationIds(selectedNotificationIds.filter((notificationId) => notificationId !== id));
-    }
+    setSelectedNotificationIds((prevState) => {
+      if (isChecked && !prevState.includes(id)) {
+        return [...prevState, id];
+      } else {
+        return prevState.filter((notificationId) => notificationId !== id);
+      }
+    });
   };
 
   if (notifications.length === 0) {
@@ -64,17 +59,12 @@ export function StoredNotifications() {
     <div className={styles.wrapper}>
       This page displays all past errors and warnings. Once dismissed, they cannot be retrieved.
       <div className={styles.topRow}>
-        <Checkbox
-          value={allNotificationsSelected}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
-        />
         <Button
           variant="destructive"
-          disabled={selectedNotificationIds.length === 0}
-          onClick={clearSelectedNotifications}
+          onClick={selectedNotificationIds.length === 0 ? clearAllNotifs : clearSelectedNotifications}
           className={styles.clearAll}
         >
-          Clear selected notifications
+          {selectedNotificationIds.length === 0 ? 'Clear all notifications' : 'Clear selected notifications'}
         </Button>
       </div>
       <ul className={styles.list}>
@@ -107,8 +97,7 @@ function getStyles(theme: GrafanaTheme2) {
     topRow: css({
       alignItems: 'center',
       display: 'flex',
-      gap: theme.spacing(2),
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
     }),
     smallText: css({
       fontSize: theme.typography.pxToRem(10),
