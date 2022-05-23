@@ -141,10 +141,6 @@ func TestManagedPermissionsMigration(t *testing.T) {
 					require.NoError(t, errInsertRole)
 					require.Equal(t, int64(1), roleCount)
 
-					// stored := accesscontrol.BuiltinRole{}
-					// errFindRole := x.Where("uid = ?", uid).Find(&stored)
-					// require.NoError(t, errFindRole)
-
 					br := accesscontrol.BuiltinRole{
 						// ID:      1,
 						RoleID:  role.ID,
