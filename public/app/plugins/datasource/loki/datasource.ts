@@ -46,6 +46,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { LokiSearchAnnotationSupport } from './annotationSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
@@ -120,6 +121,7 @@ export class LokiDatasource
     const keepCookiesUsed = (settingsData.keepCookies ?? []).length > 0;
     // only use backend-mode when keep-cookies is not used
     this.useBackendMode = !keepCookiesUsed && (config.featureToggles.lokiBackendMode ?? false);
+    this.annotations = LokiSearchAnnotationSupport;
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -748,68 +750,6 @@ export class LokiDatasource
         return { status: 'error', message: message };
       }
     );
-  }
-
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
-
-    if (!expr) {
-      return [];
-    }
-
-    const id = `annotation-${options.annotation.name}`;
-
-    const query: LokiQuery = {
-      refId: id,
-      expr,
-      maxLines,
-      instant,
-      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
-    };
-
-    const request = makeRequest(query, options.range, CoreApp.Dashboard, id);
-
-    const { data } = await lastValueFrom(this.query(request));
-
-    const annotations: AnnotationEvent[] = [];
-    const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
-
-    for (const frame of data) {
-      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
-
-      view.forEach((row) => {
-        const { labels } = row;
-
-        const maybeDuplicatedTags = Object.entries(labels)
-          .map(([key, val]) => [key, val.trim()]) // trim all label-values
-          .filter(([key, val]) => {
-            if (val === '') {
-              // remove empty
-              return false;
-            }
-
-            // if tags are specified, remove label if does not match tags
-            if (splitKeys.length && !splitKeys.includes(key)) {
-              return false;
-            }
-
-            return true;
-          })
-          .map(([key, val]) => val); // keep only the label-value
-
-        // remove duplicates
-        const tags = Array.from(new Set(maybeDuplicatedTags));
-
-        annotations.push({
-          time: new Date(row.Time).valueOf(),
-          title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.Line,
-          tags,
-        });
-      });
-    }
-
-    return annotations;
   }
 
   showContextToggle(row?: LogRowModel): boolean {
