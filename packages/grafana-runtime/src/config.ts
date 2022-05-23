@@ -108,7 +108,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   constructor(options: GrafanaBootConfig) {
-    let mode: DeepPartial<ThemeColorsMode> = getUserThemeMode(options);
+    const mode: DeepPartial<ThemeColorsMode> = getUserThemeMode(options);
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
 
