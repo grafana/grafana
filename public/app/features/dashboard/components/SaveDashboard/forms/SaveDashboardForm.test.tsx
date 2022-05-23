@@ -53,7 +53,6 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
     />
   );
 
-  // @ts-ignore strict null error below
   await act(async () => {
     const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
     fireEvent.submit(button);
