@@ -19,19 +19,9 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strconv"
 	"strings"
 )
-
-// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
-type ContextInvoker func(ctx *Context)
-
-// Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
-func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(*Context))
-	return nil, nil
-}
 
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
@@ -63,19 +53,13 @@ func (ctx *Context) Next() {
 
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		if _, err := ctx.Invoke(ctx.handler()); err != nil {
-			panic(err)
-		}
+		ctx.handler().ServeHTTP(ctx.Resp, ctx.Req)
+
 		ctx.index++
 		if ctx.Resp.Written() {
 			return
 		}
 	}
-}
-
-func (ctx *Context) Invoke(h http.Handler) ([]reflect.Value, error) {
-	h.ServeHTTP(ctx.Resp, ctx.Req)
-	return nil, nil
 }
 
 // RemoteAddr returns more real IP address.
