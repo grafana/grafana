@@ -80,7 +80,7 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     }, 100);
   };
 
-  const constraint = element.shouldUseTempConstraint ? element.tempConstraint : element.options.constraint ?? {};
+  const constraint = element.tempConstraint ?? layout ?? {};
 
   return (
     <div>

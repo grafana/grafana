@@ -29,10 +29,8 @@ export class ElementState implements LayerElement {
   // Determine whether or not element is in motion or not (via moveable)
   isMoving = false;
 
-  // Determine whether or not to use temp stored constraint for visualization purposes
-  // (switch to top / left constraint to simplify some functionality)
-  shouldUseTempConstraint = false;
-  tempConstraint: Constraint = {};
+  // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
+  tempConstraint: Constraint | undefined;
 
   // Filled in by ref
   div?: HTMLDivElement;

@@ -355,7 +355,6 @@ export class Scene {
 
         if (targetedElement) {
           targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-          targetedElement.shouldUseTempConstraint = true;
           targetedElement.options.constraint = defaultConstraint;
           targetedElement.setPlacementFromConstraint();
         }
@@ -377,8 +376,7 @@ export class Scene {
 
         if (targetedElement) {
           targetedElement.options.constraint = targetedElement.tempConstraint;
-          targetedElement.shouldUseTempConstraint = false;
-          targetedElement.tempConstraint = {};
+          targetedElement.tempConstraint = undefined;
           targetedElement.setPlacementFromConstraint();
         }
       });
