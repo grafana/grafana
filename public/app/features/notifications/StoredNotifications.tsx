@@ -43,6 +43,7 @@ export function StoredNotifications() {
 
   return (
     <div className={styles.wrapper}>
+      This page displays all past errors and warnings. Once dismissed, they cannot be retrieved.
       <Button variant="destructive" onClick={clearAllNotifs} className={styles.clearAll}>
         Clear all notifications
       </Button>
