@@ -57,11 +57,11 @@ The new table panel introduced in 7.0 was missing a few features that the old ta
 
 ## Ad hoc filtering in the new table panel
 
-[Ad hoc filtering]({{<relref "../variables/variable-types/_index.md#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
+[Ad hoc filtering]({{< relref "../variables/variable-types/_index.md#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
 
 ## Stat panel text mode
 
-The [stat panel]({{<relref "../visualizations/stat-panel.md#text-mode" >}}) has a new **Text mode** option to control what text to show.
+The [stat panel]({{< relref "../visualizations/stat-panel.md#text-mode" >}}) has a new **Text mode** option to control what text to show.
 
 By default, the Stat panel displays:
 
@@ -74,7 +74,7 @@ You can use the Text mode option to control what text the panel renders. If the 
 
 ## Provisioning of apps
 
-Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. For more information about provisioning of app, refer to [provisioning plugin]({{<relref "../administration/provisioning.md#plugins" >}}).
+Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. For more information about provisioning of app, refer to [provisioning plugin]({{< relref "../administration/provisioning.md#plugins" >}}).
 
 ## Azure Monitor data source
 
@@ -84,7 +84,7 @@ Additionally, the Raw Edit mode for Application Insights Analytics has been repl
 
 ## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) data source
 
-A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console]({{<relref "../datasources/google-cloud-monitoring/_index.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
+A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console]({{< relref "../datasources/google-cloud-monitoring/_index.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console" >}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
 
 ## Time range picker update
 
@@ -98,15 +98,15 @@ General features are included in the Grafana Enterprise edition software.
 
 ### Support for HashiCorp Vault
 
-You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. For more information about HashiCorp Vault, refer to [vault]({{<relref "../enterprise/vault.md">}}).
+You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. For more information about HashiCorp Vault, refer to [vault]({{< relref "../enterprise/vault.md" >}}).
 
 ### Support for monthly schedules in reports
 
-With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{<relref "../enterprise/reporting.md#scheduling">}}).
+With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../enterprise/reporting.md#scheduling" >}}).
 
 ## Upgrading
 
-See [upgrade notes]({{<relref "../installation/upgrading.md">}}).
+See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 ## Changelog
 

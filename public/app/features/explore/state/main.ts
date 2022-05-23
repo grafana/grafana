@@ -5,8 +5,9 @@ import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } fro
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 
+import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
@@ -23,7 +24,7 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction = createAction<{ richHistory: RichHistoryQuery[]; exploreId: ExploreId }>(
+export const richHistoryUpdatedAction = createAction<{ richHistoryResults: RichHistoryResults; exploreId: ExploreId }>(
   'explore/richHistoryUpdated'
 );
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');

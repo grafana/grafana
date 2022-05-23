@@ -507,6 +507,14 @@
         "operationId": "addUserRole",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -514,14 +522,6 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -548,6 +548,14 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -560,14 +568,6 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -3257,7 +3257,7 @@
         }
       }
     },
-    "/datasources/id/{datasource_name}": {
+    "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -3267,7 +3267,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3291,7 +3291,7 @@
         }
       }
     },
-    "/datasources/name/{datasource_name}": {
+    "/datasources/name/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -3301,7 +3301,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3330,7 +3330,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3354,7 +3354,7 @@
         }
       }
     },
-    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+    "/datasources/proxy/uid/{uid}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": ["datasources"],
@@ -3364,7 +3364,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3406,7 +3406,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3451,7 +3451,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3485,17 +3485,18 @@
         }
       }
     },
-    "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
+    "/datasources/proxy/{id}/{datasource_proxy_route}": {
       "get": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy GET calls.",
         "operationId": "datasourceProxyGETcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3529,15 +3530,16 @@
         }
       },
       "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy POST calls.",
         "operationId": "datasourceProxyPOSTcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3582,15 +3584,16 @@
         }
       },
       "delete": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3624,7 +3627,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}": {
+    "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
@@ -3634,7 +3637,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3660,6 +3663,43 @@
           }
         }
       },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
+        "tags": ["datasources"],
+        "summary": "Update an existing data source.",
+        "operationId": "updateDatasourceByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
@@ -3669,7 +3709,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3693,7 +3733,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}/health": {
+    "/datasources/uid/{uid}/health": {
       "get": {
         "tags": ["datasources"],
         "summary": "Check data source health by Id.",
@@ -3702,7 +3742,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3726,7 +3766,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}/resources/{datasource_proxy_route}": {
+    "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
       "get": {
         "tags": ["datasources"],
         "summary": "Fetch data source resources.",
@@ -3735,7 +3775,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3769,112 +3809,6 @@
         }
       }
     },
-    "/datasources/{datasource_id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDatasourceByID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Update an existing data source.",
-        "operationId": "updateDatasource",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDataSourceCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDatasourceByID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/datasources/{datasource_id}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
@@ -3885,7 +3819,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -3922,7 +3856,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -3949,41 +3883,6 @@
         }
       }
     },
-    "/datasources/{datasource_id}/health": {
-      "get": {
-        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealth) instead",
-        "tags": ["datasources"],
-        "summary": "Check data source health by Id.",
-        "operationId": "checkDatasourceHealthByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/datasources/{datasource_id}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
@@ -3994,7 +3893,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -4027,15 +3926,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -4059,7 +3958,151 @@
         }
       }
     },
-    "/datasources/{datasource_id}/resources/{datasource_proxy_route}": {
+    "/datasources/{id}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Get a single data source by Id.",
+        "operationId": "getDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Update an existing data source by its sequential ID.",
+        "operationId": "updateDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Delete an existing data source by id.",
+        "operationId": "deleteDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/health": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealth) instead",
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealthByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/resources/{datasource_proxy_route}": {
       "get": {
         "description": "Please refer to [updated API](#/datasources/fetchDatasourceResources) instead",
         "tags": ["datasources"],
@@ -4070,7 +4113,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -6281,11 +6324,12 @@
     },
     "/reports/render/pdf/{DashboardID}": {
       "get": {
-        "description": "Available to all users and with a valid license.",
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": ["application/pdf"],
         "tags": ["reports", "enterprise"],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -6295,6 +6339,29 @@
             "required": true
           }
         ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for multiple dashboards.",
+        "operationId": "renderReportPDFs",
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -6989,14 +7056,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7004,6 +7063,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7037,16 +7104,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -9054,6 +9121,13 @@
           "type": "string",
           "x-go-name": "DashboardUID"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
+        },
         "enableCsv": {
           "type": "boolean",
           "x-go-name": "EnableCSV"
@@ -9264,6 +9338,13 @@
         "dashboardUid": {
           "type": "string",
           "x-go-name": "DashboardUID"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
         },
         "enableCsv": {
           "type": "boolean",
@@ -9555,6 +9636,22 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object",
+          "x-go-name": "ReportVariables"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
+    },
     "DashboardFullWithMeta": {
       "type": "object",
       "properties": {
@@ -9694,6 +9791,25 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardReportDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "DashboardSnapshot": {
       "description": "DashboardSnapshot model",
@@ -11060,7 +11176,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "target": {
           "type": "string",
@@ -11075,7 +11191,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NavbarPreference": {
       "type": "object",
@@ -11088,7 +11204,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -11541,7 +11657,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",

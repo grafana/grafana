@@ -15,6 +15,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
+  RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
@@ -80,7 +81,7 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
   return await getRichHistoryStorage().getRichHistory(filters);
 }
 
@@ -135,7 +136,7 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
   const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
   try {
-    const richHistory: RichHistoryQuery[] = await richHistoryLocalStorage.getRichHistory({
+    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
       datasourceFilters: [],
       from: 0,
       search: '',

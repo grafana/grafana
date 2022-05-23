@@ -144,7 +144,7 @@ function formatOptions(
   const options = rawResults.map(toOption);
 
   // account for custom values that might have been set in json file like ones crafted with a template variable (ex: "cloud-datasource-resource-$Environment")
-  if (selectedValue && !options.find((option) => option.value === selectedValue)) {
+  if (selectedValue && !options.find((option) => option.value === selectedValue.toLowerCase())) {
     options.push({ label: selectedValue, value: selectedValue });
   }
 
