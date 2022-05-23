@@ -140,7 +140,10 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			},
 		},
 	}
-	res.Cards = append(res.Cards, gcn.buildScreenshotCard(ctx, as))
+	screenshots := gcn.buildScreenshotCard(ctx, as)
+	if screenshots != nil {
+		res.Cards = append(res.Cards, *screenshots)
+	}
 
 	if tmplErr != nil {
 		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
@@ -179,38 +182,51 @@ func (gcn *GoogleChatNotifier) SendResolved() bool {
 	return !gcn.GetDisableResolveMessage()
 }
 
-func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, as []*types.Alert) card {
+func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts []*types.Alert) *card {
 	card := card{
 		Header: header{
 			Title: "Screenshots",
 		},
-		Sections: []section{
-			{
-				Widgets: []widget{
-					textParagraphWidget{
-						Text: text{
-							Text: "widget one",
-						},
-					},
-					textParagraphWidget{
-						Text: text{
-							Text: "widget two",
-						},
-					},
-				},
-			},
-			{
-				Widgets: []widget{
-					textParagraphWidget{
-						Text: text{
-							Text: "widget three",
-						},
-					},
-				},
-			},
-		},
+		Sections: []section{},
 	}
-	return card
+	for _, alert := range alerts {
+		imgToken := getTokenFromAnnotations(alert.Annotations)
+		if len(imgToken) == 0 {
+			continue
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := gcn.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				gcn.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		}
+
+		if len(imgURL) > 0 {
+			section := section{
+				Widgets: []widget{
+					textParagraphWidget{
+						Text: text{
+							Text: fmt.Sprintf("%s: %s", alert.Status(), alert.Name()),
+						},
+					},
+					imageWidget{
+						Image: imageData{
+							ImageURL: imgURL,
+						},
+					},
+				},
+			}
+			card.Sections = append(card.Sections, section)
+		}
+	}
+	if len(card.Sections) == 0 {
+		return nil
+	}
+	return &card
 }
 
 // Structs used to build a custom Google Hangouts Chat message card.
@@ -243,6 +259,14 @@ type buttonWidget struct {
 
 type textParagraphWidget struct {
 	Text text `json:"textParagraph"`
+}
+
+type imageWidget struct {
+	Image imageData `json:"image"`
+}
+
+type imageData struct {
+	ImageURL string `json:"imageUrl"`
 }
 
 type text struct {
