@@ -1,6 +1,6 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { DashboardModel } from 'app/features/dashboard/state';
 import * as api from 'app/features/manage-dashboards/state/actions';
@@ -47,11 +47,9 @@ const renderAndSubmitForm = async (
       {...otherProps}
     />
   );
+  const button = screen.getByRole('button', { name: 'Save dashboard button' });
 
-  await act(async () => {
-    const button = screen.getByRole('button', { name: 'Save dashboard button' });
-    fireEvent.submit(button);
-  });
+  await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
   describe('default values', () => {
