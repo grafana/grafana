@@ -1,24 +1,28 @@
 import { cx } from '@emotion/css';
+import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
+import { getSortFieldDisplayName } from './sorting';
 
 const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
+  clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void
@@ -27,25 +31,47 @@ export const generateColumns = (
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  if (sortField) {
+    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+  }
 
   let width = 50;
-
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
       id: `column-checkbox`,
       width,
-      Header: () => (
-        <div className={styles.checkboxHeader}>
-          <Checkbox
-            onChange={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              alert('SELECT ALL!!!');
-            }}
-          />
-        </div>
-      ),
+      Header: () => {
+        if (selection('*', '*')) {
+          return (
+            <div className={styles.checkboxHeader}>
+              <IconButton name={'check-square' as any} onClick={clearSelection} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.checkboxHeader}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const { view } = response;
+                const count = Math.min(view.length, 50);
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  if (item.uid && item.kind) {
+                    if (!selection(item.kind, item.uid)) {
+                      selectionToggle(item.kind, item.uid);
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        );
+      },
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
@@ -141,6 +167,28 @@ export const generateColumns = (
       field: access.location ?? access.url,
       Header: 'Location',
       width: availableWidth,
+    });
+  }
+
+  if (sortField) {
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>{getSortFieldDisplayName(sortField.name)}</div>,
+      Cell: (p) => {
+        let value = sortField.values.get(p.row.index);
+        try {
+          if (isNumber(value)) {
+            value = Number(value).toLocaleString();
+          }
+        } catch {}
+        return (
+          <div {...p.cellProps} className={styles.sortedItems}>
+            {value}
+          </div>
+        );
+      },
+      id: `column-sort-field`,
+      field: sortField,
+      width: SORT_FIELD_WIDTH,
     });
   }
 

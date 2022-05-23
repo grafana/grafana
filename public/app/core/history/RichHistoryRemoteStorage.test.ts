@@ -18,10 +18,16 @@ dsMock.init(
 );
 
 const fetchMock = jest.fn();
+const postMock = jest.fn();
+const deleteMock = jest.fn();
+const patchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     fetch: fetchMock,
+    post: postMock,
+    delete: deleteMock,
+    patch: patchMock,
   }),
   getDataSourceSrv: () => dsMock,
 }));
@@ -41,6 +47,9 @@ describe('RichHistoryRemoteStorage', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
+    postMock.mockReset();
+    deleteMock.mockReset();
+    patchMock.mockReset();
     storage = new RichHistoryRemoteStorage();
   });
 
@@ -172,5 +181,42 @@ describe('RichHistoryRemoteStorage', () => {
       data: { queries: [dto] },
       showSuccessAlert: false,
     });
+  });
+
+  it('stars query history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    postMock.mockResolvedValue({
+      result: dto,
+    });
+    const query = await storage.updateStarred('test', true);
+    expect(postMock).toBeCalledWith('/api/query-history/star/test');
+    expect(query).toMatchObject(richHistoryQuery);
+  });
+
+  it('unstars query history items', async () => {
+    const { richHistoryQuery, dto } = setup();
+    deleteMock.mockResolvedValue({
+      result: dto,
+    });
+    const query = await storage.updateStarred('test', false);
+    expect(deleteMock).toBeCalledWith('/api/query-history/star/test');
+    expect(query).toMatchObject(richHistoryQuery);
+  });
+
+  it('updates query history comments', async () => {
+    const { richHistoryQuery, dto } = setup();
+    patchMock.mockResolvedValue({
+      result: dto,
+    });
+    const query = await storage.updateComment('test', 'just a comment');
+    expect(patchMock).toBeCalledWith('/api/query-history/test', {
+      comment: 'just a comment',
+    });
+    expect(query).toMatchObject(richHistoryQuery);
+  });
+
+  it('deletes query history items', async () => {
+    await storage.deleteRichHistory('test');
+    expect(deleteMock).toBeCalledWith('/api/query-history/test');
   });
 });
