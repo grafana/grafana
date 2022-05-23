@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -46,6 +46,11 @@ export const SearchResultsTable = React.memo(
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
 
+    // We create a reference for the InfiniteLoader
+    const infiniteLoaderRef = useRef<InfiniteLoader>(null);
+    const listRef = useRef<FixedSizeList>(null);
+    const hasMountedRef = useRef(false);
+
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
@@ -55,6 +60,18 @@ export const SearchResultsTable = React.memo(
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
       return Array(response.totalRows).fill(0);
     }, [response]);
+
+    useEffect(() => {
+      // We only need to reset cached items when "sortOrder" changes.
+      // This effect will run on mount too; there's no need to reset in that case.
+      if (hasMountedRef.current && infiniteLoaderRef.current) {
+        infiniteLoaderRef.current.resetloadMoreItemsCache();
+      }
+      if (listRef.current) {
+        listRef.current.scrollTo(0);
+      }
+      hasMountedRef.current = true;
+    }, [memoizedData]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -133,13 +150,14 @@ export const SearchResultsTable = React.memo(
 
         <div {...getTableBodyProps()}>
           <InfiniteLoader
+            ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
             {({ onItemsRendered, ref }) => (
               <FixedSizeList
-                ref={ref}
+                ref={listRef}
                 onItemsRendered={onItemsRendered}
                 height={height - HEADER_HEIGHT}
                 itemCount={rows.length}
