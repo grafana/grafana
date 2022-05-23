@@ -1,6 +1,6 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -53,10 +53,8 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
     />
   );
 
-  await act(async () => {
-    const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
-    fireEvent.submit(button);
-  });
+  const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
+  await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
   describe('time and variables toggle rendering', () => {
