@@ -214,7 +214,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
 
-If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../http_api/user.md#change-password" >}}).
+If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../developers/http_api/user.md#change-password" >}}).
 
 ### Migrate data and encrypt passwords
 
