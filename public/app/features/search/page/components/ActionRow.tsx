@@ -77,7 +77,7 @@ export const ActionRow: FC<Props> = ({
               value={layout}
             />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">

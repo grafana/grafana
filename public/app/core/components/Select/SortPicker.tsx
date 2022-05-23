@@ -13,6 +13,7 @@ export interface Props {
   placeholder?: string;
   getSortOptions?: () => Promise<SelectableValue[]>;
   filter?: string[];
+  isClearable?: boolean;
 }
 
 const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
@@ -21,7 +22,7 @@ const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
   });
 };
 
-export function SortPicker({ onChange, value, placeholder, filter, getSortOptions }: Props) {
+export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable }: Props) {
   // Using sync Select and manual options fetching here since we need to find the selected option by value
   const options = useAsync<() => Promise<SelectableValue[]>>(async () => {
     const vals = await (getSortOptions ?? defaultSortOptionsGetter)();
@@ -46,7 +47,7 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
       aria-label="Sort"
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
-      isClearable={true}
+      isClearable={isClearable}
     />
   );
 }
