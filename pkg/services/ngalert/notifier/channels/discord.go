@@ -236,7 +236,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 			base := filepath.Base(fp)
 			url := fmt.Sprintf("attachment://%s", base)
 			timeoutCtx, cancel = context.WithTimeout(ctx, ImageStoreTimeout)
-			reader, err := d.images.GetData(ctx, imgToken)
+			reader, err := d.images.GetData(timeoutCtx, imgToken)
 			cancel()
 			if err != nil {
 				if !errors.Is(err, ErrImagesUnavailable) {
