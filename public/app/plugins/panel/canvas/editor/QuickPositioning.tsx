@@ -116,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 12px 0 12px 0;
   `,
   button: css`
-    margin-right: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
   `,
 });
