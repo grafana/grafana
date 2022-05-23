@@ -33,7 +33,7 @@ var (
 
 const (
 	screenshotTimeout  = 10 * time.Second
-	screenshotCacheTTL = 15 * time.Second
+	screenshotCacheTTL = 60 * time.Second
 )
 
 // ScreenshotImageService takes screenshots of the panel for an alert rule and
@@ -109,6 +109,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	}
 
 	return &v, nil
+}
+
+type NotAvailableImageService struct{}
+
+func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
+	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 type NoopImageService struct{}

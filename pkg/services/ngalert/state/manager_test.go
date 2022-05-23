@@ -1770,7 +1770,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		ss := mockstore.NewSQLStoreMock()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, ss, &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, ss, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{})
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
