@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
 
-import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
+import { enableRBAC, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
@@ -21,7 +21,7 @@ const mocks = {
 
 describe('useIsRuleEditable', () => {
   describe('RBAC enabled', () => {
-    jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
+    enableRBAC();
     describe('Grafana rules', () => {
       it('Should allow editing when the user has the alert rule update permission and folder permissions', () => {
         mockPermissions([AccessControlAction.AlertingRuleUpdate]);
@@ -81,6 +81,10 @@ describe('useIsRuleEditable', () => {
     });
 
     describe('Cloud rules', () => {
+      beforeEach(() => {
+        contextSrv.isEditor = true;
+      });
+
       it('Should allow editing and deleting when the user has alert rule external write permission', () => {
         mockPermissions([AccessControlAction.AlertingRuleExternalWrite]);
         const wrapper = getProviderWrapper();

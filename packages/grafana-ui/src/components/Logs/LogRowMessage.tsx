@@ -120,8 +120,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-
-    const highlightClassName = cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
 
     return (
@@ -145,7 +143,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, highlightClassName)}
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
           {showContextToggle?.(row) && (
             <span

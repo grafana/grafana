@@ -438,7 +438,16 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	// TODO: this preallocation is very naive.
 	// We should figure out a better approximation here.
 	events := make([]ExemplarEvent, 0, len(response)*2)
-
+	// Prometheus treats empty value as same as null, so `event.Labels` may not be consistent across `events`,
+	// leading errors like "frame has different field lengths, field 0 is len 5 but field 14 is len 2", need a fix.
+	eventLabels := make(map[string]struct{})
+	for _, exemplarData := range response {
+		for _, exemplar := range exemplarData.Exemplars {
+			for label := range exemplar.Labels {
+				eventLabels[string(label)] = struct{}{}
+			}
+		}
+	}
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
@@ -453,6 +462,15 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
 				event.Labels[string(seriesLabel)] = string(seriesValue)
+			}
+
+			if len(event.Labels) != len(eventLabels) {
+				// Fill event labels with empty value.
+				for label := range eventLabels {
+					if _, ok := event.Labels[label]; !ok {
+						event.Labels[label] = ""
+					}
+				}
 			}
 
 			events = append(events, event)
@@ -569,7 +587,7 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMany,
 		Custom: map[string]string{
-			"resultType": typ,
+			"resultType": typ, // Note: SSE depends on this property and map type
 		},
 	}
 
