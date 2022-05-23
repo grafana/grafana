@@ -67,7 +67,7 @@ type ServiceAccountProfileDTO struct {
 	AvatarUrl     string          `json:"avatarUrl" xorm:"-"`
 	Role          string          `json:"role" xorm:"role"`
 	Teams         []string        `json:"teams" xorm:"-"`
-	Tokens        int64           `json:"tokens"`
+	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
 
