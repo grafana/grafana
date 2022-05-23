@@ -37,6 +37,7 @@ interface Props {
 export class QueryEditorRows extends PureComponent<Props> {
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
+    this.props.onQueryRefChange && this.props.onQueryRefChange();
   };
 
   onChangeQuery(query: DataQuery, index: number) {

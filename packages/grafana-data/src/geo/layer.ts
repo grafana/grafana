@@ -3,7 +3,7 @@ import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '../themes';
-import { PanelData, DataFrame } from '../types';
+import { PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
