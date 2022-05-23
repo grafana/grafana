@@ -46,10 +46,8 @@ export const SearchResultsTable = React.memo(
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
 
-    // We create a reference for the InfiniteLoader
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const hasMountedRef = useRef(false);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -61,16 +59,14 @@ export const SearchResultsTable = React.memo(
       return Array(response.totalRows).fill(0);
     }, [response]);
 
+    // Scroll to the top and clear loader cache when the query results change
     useEffect(() => {
-      // We only need to reset cached items when "sortOrder" changes.
-      // This effect will run on mount too; there's no need to reset in that case.
-      if (hasMountedRef.current && infiniteLoaderRef.current) {
+      if (infiniteLoaderRef.current) {
         infiniteLoaderRef.current.resetloadMoreItemsCache();
       }
       if (listRef.current) {
         listRef.current.scrollTo(0);
       }
-      hasMountedRef.current = true;
     }, [memoizedData]);
 
     // React-table column definitions
@@ -155,7 +151,7 @@ export const SearchResultsTable = React.memo(
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
-            {({ onItemsRendered, ref }) => (
+            {({ onItemsRendered }) => (
               <FixedSizeList
                 ref={listRef}
                 onItemsRendered={onItemsRendered}
