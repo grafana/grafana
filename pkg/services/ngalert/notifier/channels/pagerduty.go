@@ -243,10 +243,6 @@ type pagerDutyLink struct {
 	Text string `json:"text"`
 }
 
-type pagerDutyImages struct {
-	Images []pagerDutyImage `json:"images"`
-}
-
 type pagerDutyImage struct {
 	Src string `json:"src"`
 }
