@@ -38,7 +38,6 @@ export const initialStateList: ServiceAccountsState = {
   isLoading: true,
   builtInRoles: {},
   roleOptions: [],
-  serviceAccountToRemove: null,
   query: '',
   page: 0,
   perPage: 50,
@@ -89,9 +88,6 @@ const serviceAccountsSlice = createSlice({
     builtInRolesLoaded: (state, action: PayloadAction<Record<string, Role[]>>): ServiceAccountsState => {
       return { ...state, builtInRoles: action.payload };
     },
-    serviceAccountToRemoveLoaded: (state, action: PayloadAction<ServiceAccountDTO | null>): ServiceAccountsState => {
-      return { ...state, serviceAccountToRemove: action.payload };
-    },
     queryChanged: (state, action: PayloadAction<string>) => {
       return {
         ...state,
@@ -118,7 +114,6 @@ export const {
   serviceAccountUpdated,
   acOptionsLoaded,
   builtInRolesLoaded,
-  serviceAccountToRemoveLoaded,
   pageChanged,
   stateFilterChanged,
   queryChanged,

@@ -54,7 +54,6 @@ export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
   roleOptions: Role[];
-  serviceAccountToRemove: ServiceAccountDTO | null;
   builtInRoles: Record<string, Role[]>;
 
   // search / filtering

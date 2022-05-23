@@ -18,7 +18,6 @@ import {
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
   serviceAccountTokensLoaded,
-  serviceAccountToRemoveLoaded,
   serviceAccountUpdated,
   stateFilterChanged,
 } from './reducers';
@@ -40,16 +39,6 @@ export function fetchACOptions(): ThunkResult<void> {
         const builtInRoles = await fetchBuiltinRoles();
         dispatch(builtInRolesLoaded(builtInRoles));
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-}
-
-export function setServiceAccountToRemove(serviceAccount: ServiceAccountDTO | null): ThunkResult<void> {
-  return async (dispatch) => {
-    try {
-      dispatch(serviceAccountToRemoveLoaded(serviceAccount));
     } catch (error) {
       console.error(error);
     }

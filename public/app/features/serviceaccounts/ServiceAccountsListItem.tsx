@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Button, ConfirmButton, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
@@ -14,9 +14,10 @@ type ServiceAccountListItemProps = {
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
-  onSetToRemove: (serviceAccount: ServiceAccountDTO) => void;
+  onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void;
   onDisable: (serviceAccount: ServiceAccountDTO) => void;
   onEnable: (serviceAccount: ServiceAccountDTO) => void;
+  onAddTokenClick: (serviceAccount: ServiceAccountDTO) => void;
 };
 
 const getServiceAccountsAriaLabel = (name: string) => {
@@ -29,9 +30,10 @@ const ServiceAccountListItem = memo(
     onRoleChange,
     roleOptions,
     builtInRoles,
-    onSetToRemove,
+    onRemoveButtonClick,
     onDisable,
     onEnable,
+    onAddTokenClick,
   }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
@@ -103,16 +105,20 @@ const ServiceAccountListItem = memo(
             title="Tokens"
             aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
           >
-            <span>
-              <Icon name={'key-skeleton-alt'}></Icon>
-            </span>
-            &nbsp;
-            {serviceAccount.tokens}
+            <div className={cx(styles.tokensInfo, { [styles.tokensInfoSecondary]: !serviceAccount.tokens })}>
+              <span>
+                <Icon name="key-skeleton-alt"></Icon>
+              </span>
+              {serviceAccount.tokens || 'No tokens'}
+            </div>
           </a>
         </td>
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
           <td>
-            <HorizontalGroup>
+            <HorizontalGroup justify="flex-end">
+              {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
+                <Button onClick={() => onAddTokenClick(serviceAccount)}>Add token</Button>
+              )}
               {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) &&
                 (serviceAccount.isDisabled ? (
                   <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
@@ -123,17 +129,12 @@ const ServiceAccountListItem = memo(
                     Disable
                   </Button>
                 ))}
-              <ConfirmButton
+              <IconButton
+                className={styles.deleteButton}
+                name="trash-alt"
                 size="sm"
-                onConfirm={() => {
-                  onSetToRemove(serviceAccount);
-                }}
-                aria-label="Delete service account"
-                confirmText="Delete"
-                confirmVariant="destructive"
-              >
-                <IconButton className={styles.deleteButton} name="trash-alt" size="sm" />
-              </ConfirmButton>
+                onClick={() => onRemoveButtonClick(serviceAccount)}
+              />
             </HorizontalGroup>
           </td>
         )}
@@ -157,6 +158,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       `
     ),
     deleteButton: css`
+      color: ${theme.colors.text.secondary};
+    `,
+    tokensInfo: css`
+      span {
+        margin-right: ${theme.spacing(1)};
+      }
+    `,
+    tokensInfoSecondary: css`
       color: ${theme.colors.text.secondary};
     `,
   };

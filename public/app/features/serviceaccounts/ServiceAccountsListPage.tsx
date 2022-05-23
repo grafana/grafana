@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
@@ -12,6 +12,7 @@ import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
+import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import ServiceAccountListItem from './ServiceAccountsListItem';
 import {
   changeQuery,
@@ -19,8 +20,8 @@ import {
   fetchServiceAccounts,
   removeServiceAccount,
   updateServiceAccount,
-  setServiceAccountToRemove,
   changeStateFilter,
+  createServiceAccountToken,
 } from './state/actions';
 
 interface OwnProps {}
@@ -44,10 +45,13 @@ const ServiceAccountsListPageUnconnected = ({
   builtInRoles,
   query,
   serviceAccountStateFilter,
-  serviceAccountToRemove,
 }: Props): JSX.Element => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [newToken, setNewToken] = useState('');
+  const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
 
   useEffect(() => {
     dispatch(fetchServiceAccounts());
@@ -72,8 +76,16 @@ const ServiceAccountsListPageUnconnected = ({
     dispatch(changeStateFilter(value));
   };
 
-  const onRemove = (serviceAccount: ServiceAccountDTO) => {
-    dispatch(setServiceAccountToRemove);
+  const onRemoveButtonClick = (serviceAccount: ServiceAccountDTO) => {
+    setCurrentServiceAccount(serviceAccount);
+    setIsRemoveModalOpen(true);
+  };
+
+  const onServiceAccountRemove = async () => {
+    if (currentServiceAccount) {
+      await dispatch(removeServiceAccount(currentServiceAccount.id));
+    }
+    onRemoveModalClose();
   };
 
   const onDisable = (serviceAccount: ServiceAccountDTO) => {
@@ -82,6 +94,28 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onEnable = (serviceAccount: ServiceAccountDTO) => {
     dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
+  };
+
+  const onTokenAdd = (serviceAccount: ServiceAccountDTO) => {
+    setCurrentServiceAccount(serviceAccount);
+    setIsAddModalOpen(true);
+  };
+
+  const onTokenCreate = (token: ServiceAccountToken) => {
+    if (currentServiceAccount) {
+      dispatch(createServiceAccountToken(currentServiceAccount.id, token, setNewToken));
+    }
+  };
+
+  const onAddModalClose = () => {
+    setIsAddModalOpen(false);
+    setCurrentServiceAccount(null);
+    setNewToken('');
+  };
+
+  const onRemoveModalClose = () => {
+    setIsRemoveModalOpen(false);
+    setCurrentServiceAccount(null);
   };
 
   return (
@@ -169,40 +203,42 @@ const ServiceAccountsListPageUnconnected = ({
                       builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
-                      onSetToRemove={onRemove}
+                      onRemoveButtonClick={onRemoveButtonClick}
                       onDisable={onDisable}
                       onEnable={onEnable}
+                      onAddTokenClick={onTokenAdd}
                     />
                   ))}
               </tbody>
             </table>
           </div>
         </>
-        {serviceAccountToRemove && (
+        {currentServiceAccount && (
           <ConfirmModal
             body={
               <div>
-                Are you sure you want to delete &apos;{serviceAccountToRemove.name}&apos;
-                {Boolean(serviceAccountToRemove.tokens) &&
-                  ` and ${serviceAccountToRemove.tokens} accompanying ${pluralize(
+                Are you sure you want to delete &apos;{currentServiceAccount.name}&apos;
+                {Boolean(currentServiceAccount.tokens) &&
+                  ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
                     'token',
-                    serviceAccountToRemove.tokens
+                    currentServiceAccount.tokens
                   )}`}
                 ?
               </div>
             }
             confirmText="Delete"
             title="Delete service account"
-            onDismiss={() => {
-              setServiceAccountToRemove(null);
-            }}
-            isOpen={true}
-            onConfirm={() => {
-              removeServiceAccount(serviceAccountToRemove.id);
-              setServiceAccountToRemove(null);
-            }}
+            onDismiss={onRemoveModalClose}
+            isOpen={isRemoveModalOpen}
+            onConfirm={onServiceAccountRemove}
           />
         )}
+        <CreateTokenModal
+          isOpen={isAddModalOpen}
+          token={newToken}
+          onCreateToken={onTokenCreate}
+          onClose={onAddModalClose}
+        />
       </Page.Contents>
     </Page>
   );

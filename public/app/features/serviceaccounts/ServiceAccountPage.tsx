@@ -107,14 +107,7 @@ const ServiceAccountPageUnconnected = ({
         {tokens && (
           <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
         )}
-        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && (
-          <CreateTokenModal
-            isOpen={isModalOpen}
-            token={newToken}
-            onCreateToken={onCreateToken}
-            onClose={onModalClose}
-          />
-        )}
+        <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>
     </Page>
   );
