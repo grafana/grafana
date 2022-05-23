@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -40,7 +40,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
-  const results = useAsync(() => {
+  const searchQuery = useMemo(() => {
     const q: SearchQuery = {
       query: queryText,
       tags: query.tag as string[],
@@ -64,9 +64,12 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
     if (q.query === '*' && !q.sort?.length) {
       q.sort = 'name_sort';
     }
+    return q;
+  }, [query, queryText, folderDTO]);
 
-    return getGrafanaSearcher().search(q);
-  }, [query, layout, queryText, folderDTO]);
+  const results = useAsync(() => {
+    return getGrafanaSearcher().search(searchQuery);
+  }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -88,9 +91,9 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
     const q: SearchQuery = {
-      query: query.query?.length ? query.query : '*',
+      ...searchQuery, // use the same query as the page!
+      sort: undefined,
       tags: query.tag,
-      ds_uid: query.datasource,
     };
     return getGrafanaSearcher().tags(q);
   };
