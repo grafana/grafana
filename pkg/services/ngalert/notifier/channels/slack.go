@@ -26,6 +26,7 @@ import (
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
+var SlackImageAPIEndpoint = "https://slack.com/api/files.upload"
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
@@ -37,6 +38,7 @@ type SlackNotifier struct {
 	webhookSender notifications.WebhookSender
 
 	URL            *url.URL
+	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -52,6 +54,7 @@ type SlackNotifier struct {
 type SlackConfig struct {
 	*NotificationChannelConfig
 	URL            *url.URL
+	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -79,6 +82,7 @@ func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
 	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
+	imageUploadURL := channelConfig.Settings.Get("imageUploadUrl").MustString(SlackImageAPIEndpoint)
 	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", channelConfig.Settings.Get("url").MustString())
 	if slackURL == "" {
 		slackURL = endpointURL
@@ -122,6 +126,7 @@ func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
 		MentionUsers:              mentionUsers,
 		MentionGroups:             mentionGroups,
 		URL:                       apiURL,
+		ImageUploadURL:            imageUploadURL,
 		Username:                  channelConfig.Settings.Get("username").MustString("Grafana"),
 		IconEmoji:                 channelConfig.Settings.Get("icon_emoji").MustString(),
 		IconURL:                   channelConfig.Settings.Get("icon_url").MustString(),
@@ -146,6 +151,7 @@ func NewSlackNotifier(config *SlackConfig,
 			Settings:              config.Settings,
 		}),
 		URL:            config.URL,
+		ImageUploadURL: config.ImageUploadURL,
 		Recipient:      config.Recipient,
 		MentionUsers:   config.MentionUsers,
 		MentionGroups:  config.MentionGroups,
@@ -178,7 +184,7 @@ type attachment struct {
 	Title      string              `json:"title,omitempty"`
 	TitleLink  string              `json:"title_link,omitempty"`
 	Text       string              `json:"text"`
-	ImageURL   string              `json:"image_url"`
+	ImageURL   string              `json:"image_url,omitempty"`
 	Fallback   string              `json:"fallback"`
 	Fields     []config.SlackField `json:"fields,omitempty"`
 	Footer     string              `json:"footer"`
@@ -238,19 +244,19 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
 		}
 		return true, nil
-	} else {
-		defer func() {
-			// Nothing for us to do.
-			_ = imgData.Close()
-		}()
-
-		err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
-		if err != nil {
-			sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
-		}
-
-		return true, nil
 	}
+
+	defer func() {
+		// Nothing for us to do.
+		_ = imgData.Close()
+	}()
+
+	err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
+	if err != nil {
+		sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+	}
+
+	return true, nil
 }
 
 // sendSlackRequest sends a request to the Slack API.
@@ -403,12 +409,12 @@ func (sn *SlackNotifier) SendResolved() bool {
 
 func (sn *SlackNotifier) slackFileUpload(ctx context.Context, data io.Reader, recipient, token string) error {
 	sn.log.Info("Uploading to slack via file.upload API")
-	headers, uploadBody, err := sn.generateSlackBody(data, token, recipient)
+	headers, uploadBody, err := sn.generateFileUploadBody(data, token, recipient)
 	if err != nil {
 		return err
 	}
 	cmd := &models.SendWebhookSync{
-		Url: "https://slack.com/api/files.upload", Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
+		Url: sn.ImageUploadURL, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
 	}
 	if err := sn.webhookSender.SendWebhookSync(ctx, cmd); err != nil {
 		sn.log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
@@ -417,7 +423,7 @@ func (sn *SlackNotifier) slackFileUpload(ctx context.Context, data io.Reader, re
 	return nil
 }
 
-func (sn *SlackNotifier) generateSlackBody(data io.Reader, token string, recipient string) (map[string]string, bytes.Buffer, error) {
+func (sn *SlackNotifier) generateFileUploadBody(data io.Reader, token string, recipient string) (map[string]string, bytes.Buffer, error) {
 	// Slack requires all POSTs to files.upload to present
 	// an "application/x-www-form-urlencoded" encoded querystring
 	// See https://api.slack.com/methods/files.upload
