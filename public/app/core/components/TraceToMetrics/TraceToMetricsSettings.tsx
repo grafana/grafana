@@ -75,19 +75,8 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      {/* 
-        1. Interplate attributes
-        2. Show what a query will actually look like
-        3. Query field - autocomplete would be nice'
-        4. Reorder queries
-      */}
-
       <InlineFieldRow>
-        <InlineField
-          tooltip="Tags that will be used in the metrics query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
-          label="Tags"
-          labelWidth={26}
-        >
+        <InlineField tooltip="Tags that will be used in the metrics query." label="Tags" labelWidth={26}>
           <KeyValueInput
             keyPlaceholder="Tag"
             values={options.jsonData.tracesToMetrics?.tags ?? []}
@@ -122,7 +111,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           <InlineField
             label="Query"
             labelWidth={10}
-            tooltip="The Prometheus query that will run when navigating from a trace to metrics"
+            tooltip="The Prometheus query that will run when navigating from a trace to metrics. Interpolate tags using the `$__tags` keyword."
             grow
           >
             <Input
