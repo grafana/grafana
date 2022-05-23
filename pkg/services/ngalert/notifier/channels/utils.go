@@ -51,6 +51,10 @@ func (n *UnavailableImageStore) GetURL(ctx context.Context, token string) (strin
 	return "", ErrImagesUnavailable
 }
 
+func (n *UnavailableImageStore) GetFilepath(ctx context.Context, token string) (string, error) {
+	return "", ErrImagesUnavailable
+}
+
 func (n *UnavailableImageStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
 	return nil, ErrImagesUnavailable
 }
