@@ -1805,11 +1805,11 @@ func TestProcessEvalResults(t *testing.T) {
 }
 
 func printAllAnnotations(annos []*annotations.Item) string {
-	str := fmt.Sprint("[")
+	str := "["
 	for _, anno := range annos {
 		str += fmt.Sprintf("%+v, ", *anno)
 	}
-	str += fmt.Sprint("]")
+	str += "]"
 
 	return str
 }
