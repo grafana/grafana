@@ -323,7 +323,7 @@ describe('AzureMonitor: metrics dataHooks', () => {
       .fn()
       .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
 
-    datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+    const getMetricMetadata = jest.fn().mockResolvedValue({
       primaryAggType: 'Average',
       supportedAggTypes: ['Average'],
       supportedTimeGrains: [
@@ -339,6 +339,8 @@ describe('AzureMonitor: metrics dataHooks', () => {
       ],
       dimensions: [],
     });
+
+    datasource.getMetricMetadata = jest.fn().mockImplementation(getMetricMetadata);
   });
 
   describe.each(testTable)('scenario %#: $name', (scenario) => {
