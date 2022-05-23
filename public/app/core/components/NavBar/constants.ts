@@ -245,3 +245,11 @@ export const PMM_ENTITLEMENTS_PAGE: NavModelItem = {
   subTitle: 'Percona Entitlements',
   url: `${config.appSubUrl}/entitlements`,
 };
+
+export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
+  id: 'environment-overview',
+  icon: 'clouds',
+  text: 'Environment Overview',
+  subTitle: 'Percona Environment Overview',
+  url: `${config.appSubUrl}/environment-overview`,
+};

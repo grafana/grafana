@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector, connect, ConnectedProps, useDispatch } from 'react-redux';
+import { connect, ConnectedProps, useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
@@ -21,15 +21,16 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarSection } from './NavBarSection';
 import {
-  PMM_STT_PAGE,
-  PMM_BACKUP_PAGE,
-  PMM_DBAAS_PAGE,
-  PMM_ALERTING_PAGE,
-  PMM_INVENTORY_PAGE,
-  PMM_TICKETS_PAGE,
-  PMM_ENTITLEMENTS_PAGE,
   getPmmSettingsPage,
   PMM_ADD_INSTANCE_PAGE,
+  PMM_ALERTING_PAGE,
+  PMM_BACKUP_PAGE,
+  PMM_DBAAS_PAGE,
+  PMM_ENTITLEMENTS_PAGE,
+  PMM_ENVIRONMENT_OVERVIEW_PAGE,
+  PMM_INVENTORY_PAGE,
+  PMM_STT_PAGE,
+  PMM_TICKETS_PAGE,
 } from './constants';
 import {
   buildIntegratedAlertingMenuItem,
@@ -97,10 +98,12 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
   dispatch(updateNavIndex(PMM_TICKETS_PAGE));
   dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
+  dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   if (isPlatformUser) {
     topItems.push(PMM_ENTITLEMENTS_PAGE);
     topItems.push(PMM_TICKETS_PAGE);
+    topItems.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
   }
 
   if (isAuthorized) {

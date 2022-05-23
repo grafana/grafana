@@ -662,6 +662,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "TicketsPage" */ 'app/percona/tickets/TicketsPage')
       ),
     },
+    {
+      path: '/environment-overview',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "EnvironmentOverview" */ 'app/percona/environment-overview/EnvironmentOverview')
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
