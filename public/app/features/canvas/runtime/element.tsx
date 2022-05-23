@@ -11,7 +11,7 @@ import {
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -28,6 +28,11 @@ export class ElementState implements LayerElement {
 
   // Determine whether or not element is in motion or not (via moveable)
   isMoving = false;
+
+  // Determine whether or not to use temp stored constraint for visualization purposes
+  // (switch to top / left constraint to simplify some functionality)
+  shouldUseTempConstraint = false;
+  tempConstraint: Constraint = {};
 
   // Filled in by ref
   div?: HTMLDivElement;

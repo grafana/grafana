@@ -28,7 +28,7 @@ import {
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement } from '../types';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
@@ -349,6 +349,17 @@ export class Scene {
 
         this.moved.next(Date.now());
       })
+      .on('resizeStart', (event) => {
+        const defaultConstraint = { vertical: VerticalConstraint.Top, horizontal: HorizontalConstraint.Left };
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.shouldUseTempConstraint = true;
+          targetedElement.options.constraint = defaultConstraint;
+          targetedElement.setPlacementFromConstraint();
+        }
+      })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyResize(event);
@@ -365,7 +376,10 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          targetedElement.options.constraint = targetedElement.tempConstraint;
+          targetedElement.shouldUseTempConstraint = false;
+          targetedElement.tempConstraint = {};
+          targetedElement.setPlacementFromConstraint();
         }
       });
 

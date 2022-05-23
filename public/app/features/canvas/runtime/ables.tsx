@@ -55,7 +55,9 @@ export const constraintViewable = (scene: Scene) => ({
     let verticalConstraintVisualization = null;
     let horizontalConstraintVisualization = null;
 
-    const constraint = targetElement?.options.constraint ?? {};
+    const constraint = targetElement?.shouldUseTempConstraint
+      ? targetElement.tempConstraint ?? {}
+      : targetElement?.options.constraint ?? {};
 
     const borderStyle = '1px dashed #4af';
 
