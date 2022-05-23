@@ -152,6 +152,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				if err == nil {
 					cmd.EmbeddedFiles = []string{imgPath}
 					cmd.Data["EmbeddedImage"] = file.Name()
+				} else {
+					en.log.Warn("failed to access email notification image attachment data", "error", err)
 				}
 			}
 		}
