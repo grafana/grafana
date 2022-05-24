@@ -850,6 +850,19 @@ func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
 	return nil
 }
 
+type MuteTimeInterval struct {
+	config.MuteTimeInterval
+	Provenance models.Provenance `json:"provenance,omitempty"`
+}
+
+func (mt *MuteTimeInterval) ResourceType() string {
+	return "muteTimeInterval"
+}
+
+func (mt *MuteTimeInterval) ResourceID() string {
+	return mt.MuteTimeInterval.Name
+}
+
 type PostableApiAlertingConfig struct {
 	Config `yaml:",inline"`
 
