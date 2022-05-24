@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	legacyMetrics "github.com/grafana/grafana/pkg/services/alerting/metrics"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -279,20 +278,14 @@ func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
 func Instrument(
 	method,
 	path string,
-	action interface{},
+	action func(*models.ReqContext) response.Response,
 	metrics *API,
 ) web.Handler {
 	normalizedPath := MakeLabelValue(path)
 
 	return func(c *models.ReqContext) {
 		start := time.Now()
-		var res response.Response
-		val, err := c.Invoke(action)
-		if err == nil && val != nil && len(val) > 0 {
-			res = val[0].Interface().(response.Response)
-		} else {
-			res = routing.ServerError(err)
-		}
+		res := action(c)
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string

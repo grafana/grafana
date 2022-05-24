@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardProvisioningTest(t *testing.T) {
+func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
