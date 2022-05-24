@@ -94,6 +94,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	if !hs.License.FeatureEnabled("accesscontrol.enforcement") {
+		datasourcesReaderRole.Grants = []string{string(models.ROLE_VIEWER)}
+	}
+
 	datasourcesWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     3,
@@ -130,21 +134,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					Action: datasources.ActionIDRead,
 					Scope:  datasources.ScopeAll,
 				},
-			},
-		},
-		Grants: []string{string(models.ROLE_VIEWER)},
-	}
-
-	datasourcesCompatibilityReaderRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Version:     3,
-			Name:        "fixed:datasources:compatibility:querier",
-			DisplayName: "Data source compatibility querier",
-			Description: "Only used for open source compatibility. Query data sources.",
-			Group:       "Infrequently used",
-			Permissions: []ac.Permission{
-				{Action: datasources.ActionQuery},
-				{Action: datasources.ActionRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -419,8 +408,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
