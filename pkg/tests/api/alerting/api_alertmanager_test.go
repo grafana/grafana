@@ -2308,6 +2308,7 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
+			expectedMessage:    func() string { return "" },
 			expectedStatusCode: func() int { return http.StatusOK },
 			expectedResponse: func() string {
 				return `{
@@ -2371,6 +2372,7 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
+			expectedMessage:    func() string { return "" },
 			expectedStatusCode: func() int { return http.StatusOK },
 			expectedResponse: func() string {
 				return `{
@@ -2438,6 +2440,7 @@ func TestEval(t *testing.T) {
 			expectedMessage: func() string {
 				return "invalid condition: condition B not found in any query or expression: it should be one of: [A]"
 			},
+			expectedResponse: func() string { return "" },
 		},
 		{
 			desc: "unknown query datasource",
@@ -2473,6 +2476,7 @@ func TestEval(t *testing.T) {
 				}
 				return "invalid condition: invalid query A: data source not found: unknown"
 			},
+			expectedResponse: func() string { return "" },
 		},
 	}
 
@@ -2493,7 +2497,7 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
 			if tc.expectedResponse() != "" {
 				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
@@ -2533,6 +2537,7 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
+			expectedMessage:    func() string { return "" },
 			expectedStatusCode: func() int { return http.StatusOK },
 			expectedResponse: func() string {
 				return `{
@@ -2588,6 +2593,7 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
+			expectedMessage:    func() string { return "" },
 			expectedStatusCode: func() int { return http.StatusOK },
 			expectedResponse: func() string {
 				return `{
@@ -2641,6 +2647,7 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
+			expectedResponse: func() string { return "" },
 			expectedStatusCode: func() int {
 				if setting.IsEnterprise {
 					return http.StatusUnauthorized
@@ -2673,11 +2680,10 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
 			if tc.expectedResponse() != "" {
 				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-
 			if tc.expectedMessage() != "" {
 				require.Equal(t, tc.expectedMessage(), res.Message)
 				require.NotEmpty(t, res.TraceID)
