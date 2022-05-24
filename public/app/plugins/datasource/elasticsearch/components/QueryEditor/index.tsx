@@ -16,18 +16,9 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { changeAliasPattern, changeQuery } from './state';
 
-export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions> & {
-  showQueryOnly?: boolean;
-};
+export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor = ({
-  query,
-  onChange,
-  onRunQuery,
-  datasource,
-  range,
-  showQueryOnly,
-}: ElasticQueryEditorProps) => {
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
   if (!isSupportedVersion(datasource.esVersion)) {
     return (
       <Alert
@@ -43,7 +34,7 @@ export const QueryEditor = ({
       query={query}
       range={range || getDefaultTimeRange()}
     >
-      <QueryEditorForm value={query} showQueryOnly={showQueryOnly || false} />
+      <QueryEditorForm value={query} />
     </ElasticsearchProvider>
   );
 };
@@ -59,65 +50,62 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 interface Props {
-  value: ElasticsearchQuery;
-  showQueryOnly: boolean;
+  value?: ElasticsearchQuery;
 }
 
-const QueryEditorForm = ({ value, showQueryOnly }: Props) => {
-  const dispatch = useDispatch();
-  const nextId = useNextId();
+export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; onChange: (v: string) => void }) => {
   const styles = useStyles2(getStyles);
 
-  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-  const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
-
-  const showBucketAggregationsEditor = value.metrics?.every(
-    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
-  );
-
-  const queryField = (
+  return (
     <div className={styles.queryFieldWrapper}>
       <QueryField
-        query={value.query}
+        query={value}
         // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
         // And slate will claim the focus, making it impossible to leave the field.
         onBlur={() => {}}
-        onChange={(query) => dispatch(changeQuery(query))}
+        onChange={onChange}
         placeholder="Lucene Query"
         portalOrigin="elasticsearch"
       />
     </div>
   );
+};
+
+const QueryEditorForm = ({ value }: Props) => {
+  const dispatch = useDispatch();
+  const nextId = useNextId();
+  const styles = useStyles2(getStyles);
+
+  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
+  const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+
+  const showBucketAggregationsEditor = value?.metrics?.every(
+    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+  );
 
   return (
     <>
-      {showQueryOnly && <>{queryField}</>}
+      <div className={styles.root}>
+        <InlineLabel width={17}>Query</InlineLabel>
+        <ElasticSearchQueryField onChange={(query) => dispatch(changeQuery(query))} value={value?.query} />
 
-      {!showQueryOnly && (
-        <>
-          <div className={styles.root}>
-            <InlineLabel width={17}>Query</InlineLabel>
-            {queryField}
+        <InlineField
+          label="Alias"
+          labelWidth={15}
+          disabled={!isTimeSeriesQuery}
+          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+        >
+          <Input
+            id={`ES-query-${value?.refId}_alias`}
+            placeholder="Alias Pattern"
+            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+            defaultValue={value?.alias}
+          />
+        </InlineField>
+      </div>
 
-            <InlineField
-              label="Alias"
-              labelWidth={15}
-              disabled={!isTimeSeriesQuery}
-              tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
-            >
-              <Input
-                id={`ES-query-${value.refId}_alias`}
-                placeholder="Alias Pattern"
-                onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
-                defaultValue={value.alias}
-              />
-            </InlineField>
-          </div>
-
-          <MetricAggregationsEditor nextId={nextId} />
-          {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
-        </>
-      )}
+      <MetricAggregationsEditor nextId={nextId} />
+      {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
     </>
   );
 };

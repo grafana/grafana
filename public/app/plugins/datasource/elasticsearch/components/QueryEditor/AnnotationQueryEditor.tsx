@@ -1,43 +1,32 @@
-import React, { memo } from 'react';
+import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { EditorRow, EditorField } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import { ElasticsearchQuery } from '../../types';
-import { ElasticsearchQueryEditorProps } from '../types';
 
-import { QueryEditor } from './index';
+import { ElasticQueryEditorProps, ElasticSearchQueryField } from './index';
 
-type Props = ElasticsearchQueryEditorProps & {
+type Props = ElasticQueryEditorProps & {
   annotation?: AnnotationQuery<ElasticsearchQuery>;
   onAnnotationChange?: (annotation: AnnotationQuery<ElasticsearchQuery>) => void;
 };
 
-export const ElasticsearchAnnotationsQueryEditor = memo(function ElasticsearchAnnotationQueryEditor(props: Props) {
+export function ElasticsearchAnnotationsQueryEditor(props: Props) {
   const annotation = props.annotation!;
   const onAnnotationChange = props.onAnnotationChange!;
 
   return (
     <>
-      <QueryEditor
-        datasource={props.datasource}
-        query={{
-          refId: 'Anno',
-          alias: annotation.target?.alias,
-          query: annotation.target?.query,
-          bucketAggs: annotation.target?.bucketAggs,
-          metrics: annotation.target?.metrics,
-          timeField: annotation.target?.timeField,
-        }}
-        onChange={(query: ElasticsearchQuery) => {
+      <ElasticSearchQueryField
+        value={annotation.target?.query}
+        onChange={(query) => {
           onAnnotationChange({
             ...annotation,
-            query: query.query,
+            query,
           });
         }}
-        onRunQuery={() => {}}
-        showQueryOnly={true}
       />
 
       <EditorRow>
@@ -94,4 +83,4 @@ export const ElasticsearchAnnotationsQueryEditor = memo(function ElasticsearchAn
       </EditorRow>
     </>
   );
-});
+}
