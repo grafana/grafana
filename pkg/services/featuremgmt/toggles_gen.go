@@ -182,4 +182,8 @@ const (
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagAdxOnBehalfOf
+	// Enable the beta feature On-Behalf-Of in the ADX data source
+	FlagAdxOnBehalfOf = "adxOnBehalfOf"
 )

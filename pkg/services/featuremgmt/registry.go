@@ -249,5 +249,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "adxOnBehalfOf",
+			Description: "Enable the beta feature On-Behalf-Of in the ADX data source",
+			State:       FeatureStateBeta,
+		},
 	}
 )
