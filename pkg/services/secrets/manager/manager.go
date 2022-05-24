@@ -54,7 +54,7 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
+	enabled := !features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption)
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
 		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
 	))
@@ -94,7 +94,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+		if !s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -131,8 +131,8 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 }
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
-	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
+	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -291,8 +291,8 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
-	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
+	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 

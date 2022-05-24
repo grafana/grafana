@@ -53,7 +53,7 @@ export function Modal(props: PropsWithChildren<Props>) {
   // Handle interacting outside the dialog and pressing
   // the Escape key to close the modal.
   const { overlayProps, underlayProps } = useOverlay(
-    { isKeyboardDismissDisabled: closeOnEscape, isOpen, onClose: onDismiss },
+    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
     ref
   );
 
