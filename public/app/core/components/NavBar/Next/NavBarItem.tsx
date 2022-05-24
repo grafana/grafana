@@ -68,6 +68,11 @@ const NavBarItem = ({
 
   const translationKey = link.id && menuItemTranslations[link.id];
   const linkText = translationKey ? i18n._(translationKey) : link.text;
+  if (link.id === 'alerting-legacy') {
+    console.log(translationKey);
+    console.log(link.text);
+    console.log(linkText);
+  }
 
   if (!showMenu) {
     return (
