@@ -2,17 +2,17 @@
 aliases:
   - /docs/grafana/latest/guides/what-is-grafana/
   - /docs/grafana/latest/introduction/oss-details/
-title: What is Grafana OSS
-weight: 5
+title: Grafana OSS
+weight: 100
 ---
 
-# What is Grafana OSS
+# Grafana OSS
 
-[Grafana open source software](https://grafana.com/oss/) allows you to query, visualize, alert on, and understand your data no matter where it’s stored. With Grafana you can create, explore and share all of your data through elegant, flexible dashboards.
+[Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
 
 After you have [installed Grafana]({{< relref "../installation/_index.md" >}}) and set up your first dashboard using instructions in [Build your first dashboard]({{< relref "../getting-started/build-first-dashboard" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../auth/_index.md" >}}).
 
-In the following sections, you can get an overview of the capabilities of Grafana features as well as links to the product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
+The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
 ## Explore metrics, logs, and traces
 
@@ -61,3 +61,13 @@ For example, if you're spinning up a new Kubernetes cluster, you can also spin u
 ## Permissions
 
 When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards]({{< relref "../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}), and down to the [data source level]({{< relref "../enterprise/datasource_permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
+
+## Other products in the Grafana OSS stack
+
+In addition to Grafana, Grafana Labs also provides the following open source projects:
+
+**Grafana Loki:** Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Grafana Loki documentation](https://grafana.com/docs/loki/latest/).
+
+**Grafana Tempo:** Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
+
+**Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).
