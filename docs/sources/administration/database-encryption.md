@@ -33,12 +33,12 @@ through the `secret_key` attribute in your
 ## Implicit breaking change
 
 As stated above, envelope encryption represents an implicit breaking change because it changes the way secrets stored
-into the Grafana database are encrypted. That means Grafana administrators will be able to transition to Grafana v9.0
+in the Grafana database are encrypted. That means Grafana administrators will be able to transition to Grafana v9.0
 with no action required from the database encryption perspective, but will need to be extremely careful if they need
-to roll back to a previous version (e.g. Grafana v8.5) after being updated, because secrets created or modified after
-the update to Grafana v9.0 won't be decryptable on previous versions.
+to roll back to a previous version (e.g. Grafana v8.5) after being updated, because secrets created or modified after upgrade
+the update to Grafana v9.0 won't be decryptable in previous versions.
 
-Fortunately though, envelope encryption was added since Grafana v8.3 behind a feature toggle. So, in case of emergency,
+Fortunately though, envelope encryption was added in Grafana v8.3 behind a feature toggle. So, in case of emergency,
 Grafana administrators will be able to downgrade up to Grafana v8.3 and enable envelope encryption as a workaround.
 
 > **Note:** In Grafana releases between v8.3 and v8.5, you can turn envelope encryption on by adding the term
@@ -47,7 +47,7 @@ Grafana administrators will be able to downgrade up to Grafana v8.3 and enable e
 
 # Operational work
 
-From the database encryption perspective, there are several operations that a Grafana administrator may want to perform:
+From the database encryption perspective, there are several operations that Grafana administrator may want to perform:
 
 - [**Re-encrypt secrets**](#re-encrypt-secrets): re-encrypt secrets with envelope encryption and a fresh data key.
 - [**Roll back secrets**](#roll-back-secrets): decrypt secrets encrypted with envelope encryption and re-encrypt them with legacy encryption.
