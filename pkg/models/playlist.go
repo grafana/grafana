@@ -38,13 +38,12 @@ type PlaylistItemDTO struct {
 }
 
 type PlaylistItem struct {
-	Id          int64
-	PlaylistUid string
-	PlaylistId  int
-	Type        string
-	Value       string
-	Order       int
-	Title       string
+	Id         int64
+	PlaylistId int
+	Type       string
+	Value      string
+	Order      int
+	Title      string
 }
 
 type Playlists []*Playlist

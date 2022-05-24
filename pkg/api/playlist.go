@@ -84,12 +84,11 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgI
 
 	for _, item := range playlistitems {
 		playlistDTOs = append(playlistDTOs, models.PlaylistItemDTO{
-			Id:          item.Id,
-			PlaylistUid: item.PlaylistUid,
-			Type:        item.Type,
-			Value:       item.Value,
-			Order:       item.Order,
-			Title:       item.Title,
+			Id:    item.Id,
+			Type:  item.Type,
+			Value: item.Value,
+			Order: item.Order,
+			Title: item.Title,
 		})
 	}
 
