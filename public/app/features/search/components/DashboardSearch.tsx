@@ -140,6 +140,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       max-width: 1400px;
       margin: 0 auto;
       padding: ${theme.spacing(2)};
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.components.panel.borderColor};
+      margin-top: ${theme.spacing(4)};
 
       height: 100%;
 
