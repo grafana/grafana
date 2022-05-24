@@ -49,11 +49,11 @@ You can switch between the text edit mode (Code) and the UI builder mode while h
 
 Loki also has complex and powerful query language in LogQL. In many ways it’s more complex and has more syntax to remember than PromQL. Luckily the new query builder we are introducing in Grafana v 9.0 will help you write and understand Loki queries without knowing any of the syntax. Take a look at this example log query.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Prometheus query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
 
 In the query builder you can add and edit label filters, line filters, parsers and functions. The image above shows a log query but you can also do metric queries.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Prometheus query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
 
 The Loki query builder supports all the features listed for the prometheus query builder above, including support for nested binary operations, explain mode and switching between text editor and builder while preserving changes.
 
