@@ -37,6 +37,8 @@ type Dialect interface {
 	DropIndexSQL(tableName string, index *Index) string
 
 	RenameTable(oldName string, newName string) string
+	RenameColumn(table Table, oldName, newName string) string
+
 	UpdateTableSQL(tableName string, columns []*Column) string
 
 	IndexCheckSQL(tableName, indexName string) (string, []interface{})
@@ -207,6 +209,11 @@ func (b *BaseDialect) DropTable(tableName string) string {
 func (b *BaseDialect) RenameTable(oldName string, newName string) string {
 	quote := b.dialect.Quote
 	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
+}
+
+func (b *BaseDialect) RenameColumn(table Table, oldName, newName string) string {
+	quote := b.dialect.Quote
+	return fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s", quote(table.Name), quote(oldName), quote(newName))
 }
 
 func (b *BaseDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {

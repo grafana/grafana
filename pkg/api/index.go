@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +42,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPersistNotifications) {
 		children = append(children, &dtos.NavLink{
-			Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
+			Text: "Notification history", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
 		})
 	}
 
@@ -173,18 +174,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
-		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
+		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Saved items",
-			Id:         "saved-items",
-			Icon:       "bookmark",
+			Text:       "Starred",
+			Id:         "starred",
+			Icon:       "star",
 			SortWeight: dtos.WeightSavedItems,
 			Section:    dtos.NavSectionCore,
-			Children:   savedItemsLinks,
+			Children:   starredItemsLinks,
 		})
 	}
 
@@ -411,24 +412,50 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 	return navTree
 }
 
-func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
-	savedItemsChildNavs := []*dtos.NavLink{}
+func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
+	starredItemsChildNavs := []*dtos.NavLink{}
 
-	// query preferences table for any saved items
-	savedItems := prefs.JSONData.Navbar.SavedItems
+	query := star.GetUserStarsQuery{
+		UserID: c.SignedInUser.UserId,
+	}
 
-	if len(savedItems) > 0 {
-		for _, savedItem := range savedItems {
-			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
-				Id:     savedItem.ID,
-				Text:   savedItem.Text,
-				Url:    savedItem.Url,
-				Target: savedItem.Target,
+	starredDashboardResult, err := hs.starService.GetByUser(c.Req.Context(), &query)
+	if err != nil {
+		return nil, err
+	}
+
+	starredDashboards := []*models.Dashboard{}
+	starredDashboardsCounter := 0
+	for dashboardId := range starredDashboardResult.UserStars {
+		// Set a loose limit to the first 50 starred dashboards found
+		if starredDashboardsCounter > 50 {
+			break
+		}
+		starredDashboardsCounter++
+		query := &models.GetDashboardQuery{
+			Id:    dashboardId,
+			OrgId: c.OrgId,
+		}
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
+		if err == nil {
+			starredDashboards = append(starredDashboards, query.Result)
+		}
+	}
+
+	if len(starredDashboards) > 0 {
+		sort.Slice(starredDashboards, func(i, j int) bool {
+			return starredDashboards[i].Title < starredDashboards[j].Title
+		})
+		for _, starredItem := range starredDashboards {
+			starredItemsChildNavs = append(starredItemsChildNavs, &dtos.NavLink{
+				Id:   starredItem.Uid,
+				Text: starredItem.Title,
+				Url:  starredItem.GetUrl(),
 			})
 		}
 	}
 
-	return savedItemsChildNavs, nil
+	return starredItemsChildNavs, nil
 }
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {

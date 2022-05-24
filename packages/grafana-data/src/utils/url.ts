@@ -196,8 +196,8 @@ export const urlUtil = {
 };
 
 /**
- * Create an string that is used in URL to represent the Explore state. This is basically just a stringified json
- * that is that used as a state of a single Explore pane so it does not represent full Explore URL.
+ * Create an string that is used in URL to represent the Explore state. This is stringified json
+ * that is used as a state of a single Explore pane - it does not represent full Explore URL.
  *
  * @param urlState
  */

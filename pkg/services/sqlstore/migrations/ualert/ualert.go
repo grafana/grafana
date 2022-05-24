@@ -475,7 +475,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil)
+			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil)
 			if err != nil {
 				return err
 			}

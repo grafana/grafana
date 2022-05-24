@@ -49,7 +49,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../../http_api/data_source.md#data-source-proxy-calls" >}}).
+- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source.md#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
 - Return static resources, such as images or files.
 - Send a command to a device, such as a micro controller or IOT device.

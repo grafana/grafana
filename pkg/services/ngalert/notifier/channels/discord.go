@@ -1,14 +1,20 @@
 package channels
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,6 +27,7 @@ type DiscordNotifier struct {
 	*Base
 	log                log.Logger
 	ns                 notifications.WebhookSender
+	images             ImageStore
 	tmpl               *template.Template
 	Content            string
 	AvatarURL          string
@@ -35,6 +42,16 @@ type DiscordConfig struct {
 	WebhookURL         string
 	UseDiscordUsername bool
 }
+
+type discordAttachment struct {
+	url       string
+	reader    io.ReadCloser
+	name      string
+	alertName string
+	state     model.AlertStatus
+}
+
+const DiscordMaxEmbeds = 10
 
 func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error) {
 	discordURL := config.Settings.Get("url").MustString()
@@ -58,10 +75,10 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewDiscordNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewDiscordNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
-func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, t *template.Template) *DiscordNotifier {
+func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *DiscordNotifier {
 	return &DiscordNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -76,6 +93,7 @@ func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, t
 		WebhookURL:         config.WebhookURL,
 		log:                log.New("alerting.notifier.discord"),
 		ns:                 ns,
+		images:             images,
 		tmpl:               t,
 		UseDiscordUsername: config.UseDiscordUsername,
 	}
@@ -116,18 +134,33 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		"icon_url": "https://grafana.com/assets/img/fav32.png",
 	}
 
-	embed := simplejson.New()
-	embed.Set("title", tmpl(DefaultMessageTitleEmbed))
-	embed.Set("footer", footer)
-	embed.Set("type", "rich")
+	linkEmbed := simplejson.New()
+	linkEmbed.Set("title", tmpl(DefaultMessageTitleEmbed))
+	linkEmbed.Set("footer", footer)
+	linkEmbed.Set("type", "rich")
 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
-	embed.Set("color", color)
+	linkEmbed.Set("color", color)
 
 	ruleURL := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list", d.log)
-	embed.Set("url", ruleURL)
+	linkEmbed.Set("url", ruleURL)
 
-	bodyJSON.Set("embeds", []interface{}{embed})
+	embeds := []interface{}{linkEmbed}
+
+	attachments := d.constructAttachments(ctx, as, DiscordMaxEmbeds-1)
+	for _, a := range attachments {
+		color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
+		embed := map[string]interface{}{
+			"image": map[string]interface{}{
+				"url": a.url,
+			},
+			"color": color,
+			"title": a.alertName,
+		}
+		embeds = append(embeds, embed)
+	}
+
+	bodyJSON.Set("embeds", embeds)
 
 	if tmplErr != nil {
 		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
@@ -144,11 +177,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	if err != nil {
 		return false, err
 	}
-	cmd := &models.SendWebhookSync{
-		Url:         u,
-		HttpMethod:  "POST",
-		ContentType: "application/json",
-		Body:        string(body),
+
+	cmd, err := d.buildRequest(ctx, u, body, attachments)
+	if err != nil {
+		return false, err
 	}
 
 	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
@@ -160,4 +192,112 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 func (d DiscordNotifier) SendResolved() bool {
 	return !d.GetDisableResolveMessage()
+}
+
+func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.Alert, embedQuota int) []discordAttachment {
+	attachments := make([]discordAttachment, 0)
+	for i := range as {
+		if embedQuota == 0 {
+			break
+		}
+		imgToken := getTokenFromAnnotations(as[i].Annotations)
+		if len(imgToken) == 0 {
+			continue
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := d.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				d.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		}
+
+		if len(imgURL) > 0 {
+			attachments = append(attachments, discordAttachment{
+				url:       imgURL,
+				state:     as[i].Status(),
+				alertName: as[i].Name(),
+			})
+		} else {
+			// Need to upload the file. Tell Discord that we're embedding an attachment.
+			timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+			fp, err := d.images.GetFilepath(timeoutCtx, imgToken)
+			cancel()
+			if err != nil {
+				if !errors.Is(err, ErrImagesUnavailable) {
+					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+					d.log.Warn("failed to retrieve image filepath from store", "error", err)
+				}
+			}
+
+			base := filepath.Base(fp)
+			url := fmt.Sprintf("attachment://%s", base)
+			timeoutCtx, cancel = context.WithTimeout(ctx, ImageStoreTimeout)
+			reader, err := d.images.GetData(timeoutCtx, imgToken)
+			cancel()
+			if err != nil {
+				if !errors.Is(err, ErrImagesUnavailable) {
+					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+					d.log.Warn("failed to retrieve image data from store", "error", err)
+				}
+			}
+
+			attachments = append(attachments, discordAttachment{
+				url:       url,
+				name:      base,
+				reader:    reader,
+				state:     as[i].Status(),
+				alertName: as[i].Name(),
+			})
+		}
+		embedQuota++
+	}
+	return attachments
+}
+
+func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []byte, attachments []discordAttachment) (*models.SendWebhookSync, error) {
+	cmd := &models.SendWebhookSync{
+		Url:        url,
+		HttpMethod: "POST",
+	}
+	if len(attachments) == 0 {
+		cmd.ContentType = "application/json"
+		cmd.Body = string(body)
+		return cmd, nil
+	}
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	defer func() {
+		if err := w.Close(); err != nil {
+			// Shouldn't matter since we already close w explicitly on the non-error path
+			d.log.Warn("Failed to close multipart writer", "err", err)
+		}
+	}()
+
+	payload, err := w.CreateFormField("payload_json")
+	if err != nil {
+		return nil, err
+	}
+	if _, err := payload.Write(body); err != nil {
+		return nil, err
+	}
+	for _, a := range attachments {
+		part, err := w.CreateFormFile("", a.name)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := io.Copy(part, a.reader); err != nil {
+			return nil, err
+		}
+	}
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+	cmd.ContentType = w.FormDataContentType()
+	cmd.Body = b.String()
+	return cmd, nil
 }

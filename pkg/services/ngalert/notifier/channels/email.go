@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/prometheus/alertmanager/template"
@@ -24,6 +25,7 @@ type EmailNotifier struct {
 	Message     string
 	log         log.Logger
 	ns          notifications.EmailSender
+	images      ImageStore
 	tmpl        *template.Template
 }
 
@@ -42,7 +44,7 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
@@ -62,7 +64,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *template.Template) *EmailNotifier {
+func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -76,6 +78,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *temp
 		Message:     config.Message,
 		log:         log.New("alerting.notifier.email"),
 		ns:          ns,
+		images:      images,
 		tmpl:        t,
 	}
 }
@@ -119,6 +122,41 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			SingleEmail: en.SingleEmail,
 			Template:    "ng_alert_notification",
 		},
+	}
+
+	// TODO: modify the email sender code to support multiple file or image URL
+	// fields. We cannot use images from every alert yet.
+	imgToken := getTokenFromAnnotations(as[0].Annotations)
+	if len(imgToken) != 0 {
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := en.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				en.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		} else if len(imgURL) > 0 {
+			cmd.Data["ImageLink"] = imgURL
+		} else { // Try to upload
+			timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+			imgPath, err := en.images.GetFilepath(timeoutCtx, imgToken)
+			cancel()
+			if err != nil {
+				if !errors.Is(err, ErrImagesUnavailable) {
+					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+					en.log.Warn("failed to retrieve image url from store", "error", err)
+				}
+			} else if len(imgPath) != 0 {
+				file, err := os.Stat(imgPath)
+				if err == nil {
+					cmd.EmbeddedFiles = []string{imgPath}
+					cmd.Data["EmbeddedImage"] = file.Name()
+				} else {
+					en.log.Warn("failed to access email notification image attachment data", "error", err)
+				}
+			}
+		}
 	}
 
 	if tmplErr != nil {

@@ -2,7 +2,6 @@ package searchV2
 
 import (
 	"context"
-	"flag"
 	"path/filepath"
 	"testing"
 
@@ -36,8 +35,6 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var testOrgID int64 = 1
 
-var update = flag.Bool("update", false, "update golden files")
-
 func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
 	t.Helper()
 	return initTestIndexFromDashesExtended(t, dashboards, &NoopDocumentExtender{})
@@ -48,7 +45,11 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{}, extender)
+	index := newDashboardIndex(
+		dashboardLoader,
+		&store.MockEntityEventsService{},
+		extender,
+		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -69,7 +70,7 @@ func checkSearchResponseExtended(t *testing.T, fileName string, reader *bluge.Re
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender)
 	goldenFile := filepath.Join("testdata", fileName)
-	err := experimental.CheckGoldenDataResponse(goldenFile, resp, *update)
+	err := experimental.CheckGoldenDataResponse(goldenFile, resp, true)
 	require.NoError(t, err)
 }
 
@@ -110,7 +111,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-delete", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.removeDashboard(writer, reader, "2")
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2")
 		require.NoError(t, err)
 
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
@@ -121,7 +122,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-create", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
+		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  3,
 			uid: "3",
 			info: &extract.DashboardInfo{
@@ -138,7 +139,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-update", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.updateDashboard(testOrgID, writer, reader, dashboard{
+		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  2,
 			uid: "2",
 			info: &extract.DashboardInfo{
@@ -217,14 +218,13 @@ func TestDashboardIndexSort(t *testing.T) {
 					frame.Fields,
 					testNum,
 				)
-				return func(field string, value []byte) bool {
+				return func(field string, value []byte) {
 					if field == "test" {
 						if num, err := bluge.DecodeNumericFloat64(value); err == nil {
 							testNum.Append(num)
-							return true
+							return
 						}
 					}
-					return true
 				}
 			},
 		},
@@ -318,6 +318,25 @@ func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "cument sy"},
+		)
+	})
+}
+
+var longPrefixDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "Eyjafjallajökull Eruption data",
+		},
+	},
+}
+
+func TestDashboardIndex_PrefixNgramExceeded(t *testing.T) {
+	t.Run("prefix-search-ngram-exceeded", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, longPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "Eyjafjallajöku"},
 		)
 	})
 }

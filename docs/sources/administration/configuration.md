@@ -1381,7 +1381,7 @@ Configures Query history in Explore.
 
 ### enabled
 
-Enable or disable the Query history. Default is `disabled`.
+Enable or disable the Query history. Default is `enabled`.
 
 ## [metrics]
 
@@ -1945,3 +1945,7 @@ Maximum duration of a single crawl. Default is 1h.
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
 Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.
+
+## [rbac]
+
+Refer to [Role-based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for more information.
