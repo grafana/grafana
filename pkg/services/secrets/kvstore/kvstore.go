@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -13,11 +14,19 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service) SecretsKVStore {
+func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, sm plugins.SecretsManagerManager) SecretsKVStore {
+	logger := log.New("secrets.kvstore")
+	if shouldUseRemoteSecretsPlugin(&sm) {
+		return &secretsKVStorePlugin{
+			secretsPlugin:  sm.SecretsManager().SecretsManager,
+			secretsService: secretsService,
+			log:            logger,
+		}
+	}
 	return &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
-		log:            log.New("secrets.kvstore"),
+		log:            logger,
 		decryptionCache: decryptionCache{
 			cache: make(map[int64]cachedDecrypted),
 		},
