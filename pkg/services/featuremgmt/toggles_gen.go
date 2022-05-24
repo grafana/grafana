@@ -182,4 +182,8 @@ const (
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagCanvasPanelNesting
+	// Show tree view in Canvas
+	FlagCanvasPanelNesting = "canvasPanelNesting"
 )
