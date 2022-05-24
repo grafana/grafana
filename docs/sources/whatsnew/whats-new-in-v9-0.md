@@ -146,6 +146,8 @@ If you have information spread across several dashboards that you’d like to se
 
 Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/#reporting).
 
+{{< figure src="/static/img/docs/dashboards/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
+
 ## Breaking Changes
 
 This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES)
@@ -176,9 +178,9 @@ Support for Elasticsearch versions that are after their end of life ( based on h
 
 In the Elasticsearch data source, browser access mode was deprecated in grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the data source configuration page.
 
-### InfluxDB: Support for browser access mode removed (should this stay??)
+<!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/_index.md##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning.
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/_index.md##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
@@ -186,18 +188,18 @@ The rename by regex transformation has been improved to allow global patterns of
 
 ## ## A note on Grafana Enterprise licensing
 
-The Rename by regex transformation has been improved to allow global patterns of the form /<stringToReplace>/g. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), e.g. (._) would become /(._)/
+The Rename by regex transformation has been improved to allow global patterns of the form /<stringToReplace>/g. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), e.g. (._) becomes /(._)/
 Github Issue #48179
 
 ## Deprecation Notices
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
-{{< figure src="/static/static/img/docs/enterprise/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
+{{< figure src="/static/img/docs/enterprise/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
 
 You will see this:
 
-{{< figure src="/static/static/img/docs/enterprise/combined-licenses.png" max-width="1025px" caption="Combined license" >}}
+{{< figure src="/static/img/docs/enterprise/combined-licenses.png" max-width="1025px" caption="Combined license" >}}
 
 It also means that Grafana will count all users the same, regardless of their role, including org roles (Viewer, Editor, Admin) and fine-grained roles (Dashboard Editor, Reports Editor, etc.). You won’t see a separate warning banner or see users locked out if you hit your limit of viewers or editor-admins, only your total combined limit of active users.
 
