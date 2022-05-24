@@ -13,4 +13,5 @@ This section includes information for Grafana administrators, team administrator
 - [Configuration]({{< relref "configuration" >}})
 - [Configure Docker image]({{< relref "configure-docker" >}})
 - [Security]({{< relref "security" >}})
+- [Database encryption]({{< relref "database-encryption" >}})
 - [Service accounts]({{< relref "service-accounts" >}})

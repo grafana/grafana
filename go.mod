@@ -247,7 +247,7 @@ require (
 	github.com/blugelabs/bluge v0.1.9
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
-	github.com/grafana/thema v0.0.0-20220427204245-a557e8970249
+	github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751
 	go.etcd.io/etcd v3.3.25+incompatible
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
