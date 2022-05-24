@@ -53,33 +53,30 @@ export const ConditionField: FC = () => {
     }
   }, [condition, expressions, options, setValue]);
 
-  return (
+  return options.length ? (
     <Card>
       <Card.Heading>Set alert condition</Card.Heading>
       <Card.Meta>Select one of your queries or expressions set above that contains your alert condition.</Card.Meta>
       <Card.Actions>
-        {options.length && (
-          <Field error={errors.condition?.message} invalid={!!errors.condition?.message}>
-            <InputControl
-              name="condition"
-              render={({ field: { onChange, ref, ...field } }) => (
-                <RadioButtonList options={options} onChange={onChange} {...field} />
-              )}
-              rules={{
-                required: {
-                  value: true,
-                  message: 'Please select the condition to alert on',
-                },
-              }}
-            />
-          </Field>
-        )}
-        {!options.length && (
-          <Alert title="Neither queries nor expressions have been configured" severity="warning">
-            Create at least one query or expression to be alerted on
-          </Alert>
-        )}
+        <Field error={errors.condition?.message} invalid={!!errors.condition?.message}>
+          <InputControl
+            name="condition"
+            render={({ field: { onChange, ref, ...field } }) => (
+              <RadioButtonList options={options} onChange={onChange} {...field} />
+            )}
+            rules={{
+              required: {
+                value: true,
+                message: 'Please select the condition to alert on',
+              },
+            }}
+          />
+        </Field>
       </Card.Actions>
     </Card>
+  ) : (
+    <Alert title="No queries or expressions have been configured" severity="warning">
+      Create at least one query or expression to be alerted on
+    </Alert>
   );
 };
