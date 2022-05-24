@@ -41,7 +41,7 @@ the update to Grafana v9.0 won't be decryptable on previous versions.
 Fortunately though, envelope encryption was added since Grafana v8.3 behind a feature toggle. So, in case of emergency,
 Grafana administrators will be able to downgrade up to Grafana v8.3 and enable envelope encryption as a workaround.
 
-> **Note:** In Grafana releases between v8.3 and v8.5, you can turn on envelope encryption on by adding the term
+> **Note:** In Grafana releases between v8.3 and v8.5, you can turn envelope encryption on by adding the term
 > `envelopeEncryption` to the list of feature toggles in your
 > [Grafana configuration]({{< relref "../administration/configuration/#feature_toggles" >}}).
 
@@ -86,13 +86,13 @@ re-encrypt them with a completely different key encryption key.
 ## Rotate data keys
 
 Data keys rotation can be performed to disable the active data key and therefore stop using them for encryption operations.
-For high-availability setups, you may need to wait data keys cache's TTL (time-to-live) to ensure that all rotated data
-keys are no longer being used for encryption operations.
+For high-availability setups, you may need to wait until the data keys cache's TTL (time-to-live) expires to ensure that all
+rotated data keys are no longer being used for encryption operations.
 
 New data keys for encryption operations are generated on-demand.
 
 > **Note:** It does not imply secrets re-encryption. Therefore, rotated data keys will continue being used to decrypt
-> those secrets still encrypted with it. Look at [secrets re-encryption](#re-encrypt-secrets) to stop completely using
+> those secrets still encrypted with it. Look at [secrets re-encryption](#re-encrypt-secrets) to completely stop using
 > rotated data keys for both encryption and decryption.
 
 > **Note:** This operation is available through Grafana [Admin API]({{< relref "../developers/configuration/admin/#rotate-data-encryption-keys" >}}).
