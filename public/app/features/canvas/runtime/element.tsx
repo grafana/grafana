@@ -11,7 +11,7 @@ import {
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -28,6 +28,9 @@ export class ElementState implements LayerElement {
 
   // Determine whether or not element is in motion or not (via moveable)
   isMoving = false;
+
+  // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
+  tempConstraint: Constraint | undefined;
 
   // Filled in by ref
   div?: HTMLDivElement;
@@ -377,68 +380,32 @@ export class ElementState implements LayerElement {
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize) => {
-    const { options } = this;
-    const { placement, constraint } = options;
-    const { vertical, horizontal } = constraint ?? {};
-
-    const top = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
-    const bottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
-    const left = horizontal === HorizontalConstraint.Left || horizontal === HorizontalConstraint.LeftRight;
-    const right = horizontal === HorizontalConstraint.Right || horizontal === HorizontalConstraint.LeftRight;
+    const placement = this.options.placement!;
 
     const style = event.target.style;
     const deltaX = event.delta[0];
     const deltaY = event.delta[1];
     const dirLR = event.direction[0];
     const dirTB = event.direction[1];
+
     if (dirLR === 1) {
-      // RIGHT
-      if (right) {
-        placement!.right! -= deltaX;
-        style.right = `${placement!.right}px`;
-        if (!left) {
-          placement!.width = event.width;
-          style.width = `${placement!.width}px`;
-        }
-      } else {
-        placement!.width! = event.width;
-        style.width = `${placement!.width}px`;
-      }
+      placement.width = event.width;
+      style.width = `${placement.width}px`;
     } else if (dirLR === -1) {
-      // LEFT
-      if (left) {
-        placement!.left! -= deltaX;
-        placement!.width! = event.width;
-        style.left = `${placement!.left}px`;
-        style.width = `${placement!.width}px`;
-      } else {
-        placement!.width! += deltaX;
-        style.width = `${placement!.width}px`;
-      }
+      placement.left! -= deltaX;
+      placement.width = event.width;
+      style.left = `${placement.left}px`;
+      style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
-      // TOP
-      if (top) {
-        placement!.top! -= deltaY;
-        placement!.height = event.height;
-        style.top = `${placement!.top}px`;
-        style.height = `${placement!.height}px`;
-      } else {
-        placement!.height = event.height;
-        style.height = `${placement!.height}px`;
-      }
+      placement.top! -= deltaY;
+      placement.height = event.height;
+      style.top = `${placement.top}px`;
+      style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
-      // BOTTOM
-      if (bottom) {
-        placement!.bottom! -= deltaY;
-        placement!.height! = event.height;
-        style.bottom = `${placement!.bottom}px`;
-        style.height = `${placement!.height}px`;
-      } else {
-        placement!.height! = event.height;
-        style.height = `${placement!.height}px`;
-      }
+      placement.height = event.height;
+      style.height = `${placement.height}px`;
     }
   };
 
