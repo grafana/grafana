@@ -131,9 +131,8 @@ func (i *Implementation) AddOriginHeader(headerName string) {
 
 // AddSafeEndpoint is used for endpoints requests to skip CSRF check
 func (i *Implementation) AddSafeEndpoint(endpoint string) {
-	// remove slash prefix
+	// TODO: force trimprefix or add prefix.
+	// unclear when we have one or the other
 	endpoint = strings.TrimPrefix(endpoint, "/")
-	// debug incase endpoint is set with prefix slash /{endpoint}
-	// i.lo.Debug("CSRF: Adding safe endpoint", "endpoint", endpoint)
 	i.safeEndpoints[endpoint] = struct{}{}
 }
