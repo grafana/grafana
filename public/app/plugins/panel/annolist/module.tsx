@@ -1,20 +1,19 @@
-import { truncate } from '@sentry/utils';
 import React from 'react';
 
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 
 import { AnnoListPanel } from './AnnoListPanel';
-import { AnnoOptions } from './types';
+import { defaultPanelOptions, PanelOptions } from './models.gen';
 
-export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
+export const plugin = new PanelPlugin<PanelOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {
     builder
       .addRadio({
         category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
         name: 'Query filter',
-        defaultValue: false,
+        defaultValue: defaultPanelOptions.onlyFromThisDashboard,
         settings: {
           options: [
             { value: false, label: 'All dashboards' },
@@ -72,7 +71,7 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         category: ['Link behavior'],
         path: 'navigateToPanel',
         name: 'Link target',
-        defaultValue: truncate,
+        defaultValue: true,
         settings: {
           options: [
             { value: true, label: 'Panel' },
@@ -96,9 +95,9 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
       });
   })
   // TODO, we should support this directly in the plugin infrastructure
-  .setPanelChangeHandler((panel: PanelModel<AnnoOptions>, prevPluginId: string, prevOptions: any) => {
+  .setPanelChangeHandler((panel: PanelModel<PanelOptions>, prevPluginId: string, prevOptions: any) => {
     if (prevPluginId === 'ryantxu-annolist-panel') {
-      return prevOptions as AnnoOptions;
+      return prevOptions as PanelOptions;
     }
     return panel.options;
   });

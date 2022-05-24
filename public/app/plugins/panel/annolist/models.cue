@@ -14,15 +14,21 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
-
 Panel: {
     lineages: [
         [
             {
                 PanelOptions: {
-                    onlyFromThisDashboard:bool
-                    showThresholdMarkers: bool
+                    onlyFromThisDashboard: bool | *false
+                    onlyInTimeRange: bool | *false
+                    tags: [...string]
+                    limit: uint32 | *10
+                    showUser: bool | *true
+                    showTime: bool | *true
+                    showTags: bool | *true
+                    navigateToPanel: bool | *true
+                    navigateBefore: string | *"10m"
+                    navigateAfter: string | *"10m"
                 } @cuetsy(kind="interface")
             }
         ]

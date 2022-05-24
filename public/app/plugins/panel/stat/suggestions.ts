@@ -1,5 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode } from '@grafana/ui';
+import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { PanelOptions } from './models.gen';
