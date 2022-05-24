@@ -90,6 +90,7 @@ var (
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
+	ProxyForwardedHostHeader string
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -263,6 +264,7 @@ type Cfg struct {
 	// CSPTemplate contains the Content Security Policy template.
 	CSPTemplate           string
 	AngularSupportEnabled bool
+	ProxyForwardedHostHeader string
 
 	TempDataLifetime                 time.Duration
 	PluginsEnableAlpha               bool
@@ -1239,6 +1241,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	for _, hostAndIP := range util.SplitString(securityStr) {
 		DataProxyWhiteList[hostAndIP] = true
 	}
+
+	cfg.ProxyForwardedHostHeader = valueAsString(security, "proxy_forwarded_host_header", "")
 
 	// admin
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)

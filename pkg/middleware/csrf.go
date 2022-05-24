@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Handler {
+func CSRF(loginCookieName string, proxyHostHeader string, logger log.Logger) func(http.Handler) http.Handler {
 	// As per RFC 7231/4.2.2 these methods are idempotent:
 	// (GET is excluded because it may have side effects in some APIs)
 	safeMethods := []string{"HEAD", "OPTIONS", "TRACE"}
@@ -28,8 +28,14 @@ func CSRF(loginCookieName string, logger log.Logger) func(http.Handler) http.Han
 					return
 				}
 			}
+
+			requestHost := r.Host
+			if proxyHostHeader != "" {
+				requestHost = r.Header.Get(proxyHostHeader)
+			}
+
 			// Otherwise - verify that Origin matches the server origin
-			netAddr, err := util.SplitHostPortDefault(r.Host, "", "0") // we ignore the port
+			netAddr, err := util.SplitHostPortDefault(requestHost, "", "0") // we ignore the port
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return

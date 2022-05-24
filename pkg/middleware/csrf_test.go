@@ -16,6 +16,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 		method     string
 		origin     string
 		host       string
+		proxyHostHeader string
+		proxyHostHeaderValue string
 		code       int
 	}{
 		{
@@ -24,6 +26,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			method:     "GET",
 			origin:     "http://notLocalhost",
 			host:       "localhost",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			code:       http.StatusForbidden,
 		},
 		{
@@ -32,6 +36,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			method:     "TRACE",
 			origin:     "http://notLocalhost",
 			host:       "localhost",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			code:       http.StatusOK,
 		},
 		{
@@ -40,6 +46,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			method:     "GET",
 			origin:     "http://notLocalhost",
 			host:       "localhost",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			code:       http.StatusOK,
 		},
 		{
@@ -47,6 +55,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "localhost:80:80",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			code:       http.StatusBadRequest,
 		},
 		{
@@ -54,6 +64,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "localhost",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			origin:     "http://localhost",
 			code:       http.StatusOK,
 		},
@@ -62,6 +74,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "localhost:80",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			origin:     "http://localhost:3000",
 			code:       http.StatusOK,
 		},
@@ -70,6 +84,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "[::1]:3000",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			origin:     "http://[::1]:3000",
 			code:       http.StatusOK,
 		},
@@ -78,6 +94,8 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "[2001:db8::1]:3000",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			origin:     "http://[2001:db8::1]:3000",
 			code:       http.StatusOK,
 		},
@@ -86,19 +104,31 @@ func TestMiddlewareCSRF(t *testing.T) {
 			cookieName: "foo",
 			method:     "GET",
 			host:       "[2001:db8::1]",
+			proxyHostHeader: "",
+			proxyHostHeaderValue: "bar",
 			origin:     "http://[2001:db8::1]",
+			code:       http.StatusOK,
+		},
+		{
+			name:       "proxy host overrides host header when set",
+			cookieName: "foo",
+			method:     "GET",
+			host:       "notLocalhost",
+			proxyHostHeader: "X-Forwarded-Host",
+			proxyHostHeaderValue: "localhost",
+			origin:     "http://localhost",
 			code:       http.StatusOK,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rr := csrfScenario(t, tt.cookieName, tt.method, tt.origin, tt.host)
+			rr := csrfScenario(t, tt.cookieName, tt.method, tt.origin, tt.host, tt.proxyHostHeader, tt.proxyHostHeaderValue)
 			require.Equal(t, tt.code, rr.Code)
 		})
 	}
 }
 
-func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httptest.ResponseRecorder {
+func csrfScenario(t *testing.T, cookieName, method, origin, host, proxyHostHeader, proxyHostHeaderValue string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -110,6 +140,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	// Note: Not sure where host header populates req.Host, or how that works.
 	req.Host = host
 	req.Header.Set("HOST", host)
+	req.Header.Set(proxyHostHeader, proxyHostHeaderValue)
 
 	req.Header.Set("ORIGIN", origin)
 
@@ -118,7 +149,7 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, log.New())(testHandler)
+	handler := CSRF(cookieName, proxyHostHeader, log.New())(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }
