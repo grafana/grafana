@@ -411,10 +411,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		c.Map(initCtx)
-
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
-		c.Map(c.Req)
 	})
 
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
