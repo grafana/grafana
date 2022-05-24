@@ -12,13 +12,13 @@ import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from
 import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
+import { fetchACOptions } from './state/actions';
 import {
   createServiceAccountToken,
   deleteServiceAccountToken,
-  fetchACOptions,
   loadServiceAccount,
   loadServiceAccountTokens,
-} from './state/actions';
+} from './state/actionsServiceAccountPage';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;

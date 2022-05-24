@@ -18,7 +18,7 @@ import {
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
-  removeServiceAccount,
+  deleteServiceAccount,
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
@@ -54,7 +54,7 @@ const ServiceAccountsListPageUnconnected = ({
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
 
   useEffect(() => {
-    dispatch(fetchServiceAccounts());
+    dispatch(fetchServiceAccounts({ withLoadingIndicator: true }));
     if (contextSrv.licensedAccessControlEnabled()) {
       dispatch(fetchACOptions());
     }
@@ -65,7 +65,7 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-    await dispatch(updateServiceAccount(updatedServiceAccount));
+    dispatch(updateServiceAccount(updatedServiceAccount));
   };
 
   const onQueryChange = (value: string) => {
@@ -83,7 +83,7 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onServiceAccountRemove = async () => {
     if (currentServiceAccount) {
-      await dispatch(removeServiceAccount(currentServiceAccount.id));
+      dispatch(deleteServiceAccount(currentServiceAccount.id));
     }
     onRemoveModalClose();
   };
@@ -101,7 +101,7 @@ const ServiceAccountsListPageUnconnected = ({
     setIsAddModalOpen(true);
   };
 
-  const onTokenCreate = (token: ServiceAccountToken) => {
+  const onTokenCreate = async (token: ServiceAccountToken) => {
     if (currentServiceAccount) {
       dispatch(createServiceAccountToken(currentServiceAccount.id, token, setNewToken));
     }
