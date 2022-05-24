@@ -35,10 +35,13 @@ interface Props {
 }
 
 export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Props) => {
+  let tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   const [newTokenName, setNewTokenName] = useState('');
   const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
-  const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>('');
-  const [isExpirationDateValid, setIsExpirationDateValid] = useState(false);
+  const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>(tomorrow);
+  const [isExpirationDateValid, setIsExpirationDateValid] = useState(newTokenExpirationDate !== '');
   const styles = useStyles2(getStyles);
 
   const onExpirationDateChange = (value: Date | string) => {
@@ -50,8 +53,8 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
   const onCloseInternal = () => {
     setNewTokenName('');
     setIsWithExpirationDate(false);
-    setNewTokenExpirationDate('');
-    setIsExpirationDateValid(false);
+    setNewTokenExpirationDate(tomorrow);
+    setIsExpirationDateValid(newTokenExpirationDate !== '');
     onClose();
   };
 
@@ -102,7 +105,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
                   onChange={onExpirationDateChange}
                   value={newTokenExpirationDate}
                   placeholder=""
-                  minDate={new Date()}
+                  minDate={tomorrow}
                 />
               </Field>
             )}
