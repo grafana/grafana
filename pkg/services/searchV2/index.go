@@ -229,6 +229,12 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		"orgSearchDashboardCount", len(dashboards))
 
 	i.mu.Lock()
+	if oldReader, ok := i.perOrgReader[orgID]; ok {
+		_ = oldReader.Close()
+	}
+	if oldWriter, ok := i.perOrgWriter[orgID]; ok {
+		_ = oldWriter.Close()
+	}
 	i.perOrgReader[orgID] = reader
 	i.perOrgWriter[orgID] = writer
 	i.mu.Unlock()
@@ -341,6 +347,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		// Skip event for org not yet fully indexed.
 		return nil
 	}
+	// TODO: should we release index lock while performing removeDashboard/updateDashboard?
 	reader, ok := i.perOrgReader[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
@@ -358,6 +365,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	if err != nil {
 		return err
 	}
+	_ = reader.Close()
 	i.perOrgReader[orgID] = newReader
 	return nil
 }
