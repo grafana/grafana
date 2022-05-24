@@ -29,7 +29,7 @@ This new query builder allows you to easily search and select a metric as well a
 
 ### Operations
 
-All functions, aggregations and binary operations are added via the + Operation button. Operations are presented in the order they are executed, not in the inverted order they are written in the text query. This makes queries a lot easier to read and reason about as you now clearly see what function parameter is going to which function as well as information about parameter names and function documentation integrated into the builder.  
+All functions, aggregations and binary operations are added via the + Operation button. Operations are presented in the order they are executed, not in the inverted order they are written in the text query. This makes queries a lot easier to read and reason about as you now clearly see what function parameter is going to which function as well as information about parameter names and function documentation integrated into the builder.
 
 ### Range vector
 
@@ -41,11 +41,11 @@ Simple binary operations like multiple or divide by scaler are represented via s
 
 ### Switch between code and builder
 
-You can switch between the text edit mode (Code) and the UI builder mode while having your text changes preserved as the visual builder model is derived from the text query using a full featured PromQL query parser. 
+You can switch between the text edit mode (Code) and the UI builder mode while having your text changes preserved as the visual builder model is derived from the text query using a full featured PromQL query parser.
 
 ## Loki query builder
 
-Loki also has complex and powerful query language in LogQL. In many ways it’s more complex and has more syntax to remember than PromQL. Luckily the new query builder we are introducing in Grafana v 9.0 will help you write and understand Loki queries without knowing any of the syntax. Take a look at this example log query.  
+Loki also has complex and powerful query language in LogQL. In many ways it’s more complex and has more syntax to remember than PromQL. Luckily the new query builder we are introducing in Grafana v 9.0 will help you write and understand Loki queries without knowing any of the syntax. Take a look at this example log query.
 
 {{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Prometheus query builder" >}}
 
@@ -62,6 +62,7 @@ We are replacing the old heatmap panel with a new modern panel that is using the
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_panel.png" max-width="1025px" caption="New heatmap panel" >}}
 
 New new heatmap panel has a number enhancements compared to the old version.
+
 - Multiple orders of magnitude faster
 - Supports showing exemplars (traces) overlay
 - Supports Prometheus sparse histograms
@@ -77,7 +78,7 @@ The new heatmap by default assumes that the data is pre-bucked. So if your query
 
 Unified alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the unified alerting interface.
 
-Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits.  To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/opt-in.md#disable-grafana-alertsd#" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/opt-in.md#disable-grafana-alertsd#" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
@@ -145,39 +146,48 @@ Reporting is all about convenience - getting info to eyeballs as quickly as poss
 
 ## Breaking Changes
 
-This is a partial list of notable breaking changes. For the complete list, please see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES)
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES)
 
-### Role-based access control: changes for GA
+### Role-based access control: changes for general release
 
-Fine-grained access control is now called Role-based access control. As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
+Fine-grained access control is now called "Role-based access control". As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
 
-Built-in roles are now called basic roles, and they now consist of permissions, not roles
-The Terraform builtin_role_assignment resource is going away.
-Grafana provisioning has a new schema, please refer to the documentation for more information.
-Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
-Loki: logs data format changed
-In the Loki data source, the data format used to represent Loki logs-data has been changed to a more efficient format. (NOTE: this change applies to logs data only, it does not apply to numeric data)
-The logs are represented by a single dataframe with a "labels" field added, instead of separate dataframes for every label combination. Displaying logs data in explore, or in a dashboard using the logs panel will continue to work without changes. But, when displaying logs data in other dashboard panels, for example in a table visualization, changes will be visible, and configurations might need to be adjusted. For example, if the "Labels to fields" transformation was used,  it has to be replaced with an “Extract fields” transformation, where the “labels” field is chosen as the source.
+- Built-in roles are now called basic roles, and they now consist of permissions, not roles
+- The Terraform [builtin_role_assignment](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/builtin_role_assignment) resource is going away.
+- Grafana provisioning has a new schema, refer to the [documentation]({{< relref "../enterprise/access-control/rbac-provisioning.md" >}}). for more information.
+- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
 
-Loki: NaN values representation changed in numeric data
+### Loki: logs data format changed
+
+In the Loki data source, the data format used to represent Loki logs-data has been changed to a more efficient format.
+
+> **Note:** this change applies to logs data only, it does not apply to numeric data.
+
+The logs are represented by a single dataframe with a "labels" field added, instead of separate dataframes for every label combination. Displaying logs data in explore, or in a dashboard using the logs panel will continue to work without changes. But, when displaying logs data in other dashboard panels, for example in a table visualization, changes will be visible, and configurations might need to be adjusted. For example, if the "Labels to fields" transformation was used, it has to be replaced with an “Extract fields” transformation, where the “labels” field is chosen as the source.
+
+### Loki: NaN values representation changed in numeric data
+
 In the Loki data source, when grafana receives numeric data from Loki, it may contain NaN (not a number) values. For consistency and performance reasons we changed how we represent such values in Grafana. In previous versions, the behavior was different between alerting queries and other queries (like dashboard queries or explore queries). Alerting queries kept NaN values unchanged, but other queries converted these values to “null”. Starting with grafana 9.0.0, we will always keep these values unchanged. In other words, queries in dashboards and explore will behave the same as alerting queries in this regard.
 
-Elasticsearch: Support for versions after their end of life was removed
+### Elasticsearch: Support for versions after their end of life was removed
+
 Support for Elasticsearch versions that are after their end of life ( based on https://www.elastic.co/support/eol ) was removed. This means that versions older than Elasticseach 7.10.0 will not be supported in Grafana 9.0.0.
 
-Elasticsearch: Support for browser access mode removed
-In the Elasticsearch data source, browser access mode was deprecated in grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the datasource configuration page.
+### Elasticsearch: Support for browser access mode removed
 
-InfluxDB: Support for browser access mode removed
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to switch to server access mode on the datasource configuration page or you can do this via provisioning.
+In the Elasticsearch data source, browser access mode was deprecated in grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the data source configuration page.
 
-Transformations: Allow more complex regex expressions in Rename by regex
+### InfluxDB: Support for browser access mode removed (should this stay??)
 
-The Rename by regex transformation has been improved to allow global patterns of the form /<stringToReplace>/g. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), e.g. (.*) would become /(.*)/
-Github Issue #48179
-## Deprecation Notices
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/_index.md##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning.
+
+### Transformations: Allow more complex regex expressions in rename by regex
+
+The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+
+## ## A note on Grafana Enterprise licensing
+
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
-
 
 You will see this:
 
@@ -186,5 +196,3 @@ It also means that Grafana will count all users the same, regardless of their ro
 For example, if you have a license for 10 active admins and 100 active viewers in your Grafana Enterprise license, then starting in v9.0 you will have a limit of 110 active users, and it doesn’t matter what roles those users have, they will all be counted and enforced the same.
 
 This is a more permissive policy than before.
-
-## Security Fixes
