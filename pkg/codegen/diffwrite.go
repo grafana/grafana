@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// WriteDiffer is a virtual filesystem that supports batch-writing its contents
+// WriteDiffer is a pseudo-filesystem that supports batch-writing its contents
 // to the real filesystem, or batch-comparing its contents to the real
 // filesystem. Its intended use is for idiomatic `go generate`-style code
 // generators, where it is expected that the results of codegen are committed to
@@ -23,7 +23,8 @@ import (
 // In such cases, the normal behavior of a generator is to write files to disk,
 // but in CI, that behavior should change to verify that what is already on disk
 // is identical to the results of code generation. This allows CI to ensure that
-// the results of code generation are always up to date.
+// the results of code generation are always up to date. WriteDiffer supports
+// these related behaviors through its Write() and Verify() methods, respectively.
 //
 // Note that the statelessness of WriteDiffer means that, if a particular input
 // to the code generator goes away, it will not notice generated files left
