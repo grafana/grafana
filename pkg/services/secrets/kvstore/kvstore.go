@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -14,11 +13,11 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, sm plugins.SecretsManagerManager) SecretsKVStore {
+func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
 	logger := log.New("secrets.kvstore")
-	if shouldUseRemoteSecretsPlugin(&sm) {
+	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		return &secretsKVStorePlugin{
-			secretsPlugin:  sm.SecretsManager().SecretsManager,
+			secretsPlugin:  remoteCheck.GetManager().SecretsManager().SecretsManager,
 			secretsService: secretsService,
 			log:            logger,
 		}
