@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,34 +9,16 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-var (
-	// ErrImageNotFound is returned when the image does not exist.
-	ErrImageNotFound = errors.New("image not found")
-)
-
-type Image struct {
-	ID        int64     `xorm:"pk autoincr 'id'"`
-	Token     string    `xorm:"token"`
-	Path      string    `xorm:"path"`
-	URL       string    `xorm:"url"`
-	CreatedAt time.Time `xorm:"created_at"`
-	ExpiresAt time.Time `xorm:"expires_at"`
-}
-
-// A XORM interface that lets us clean up our SQL session definition.
-func (i *Image) TableName() string {
-	return "alert_image"
-}
-
 type ImageStore interface {
 	// Get returns the image with the token or ErrImageNotFound.
-	GetImage(ctx context.Context, token string) (*Image, error)
+	GetImage(ctx context.Context, token string) (*models.Image, error)
 
 	// Saves the image or returns an error.
-	SaveImage(ctx context.Context, img *Image) error
+	SaveImage(ctx context.Context, img *models.Image) error
 
 	GetURL(ctx context.Context, token string) (string, error)
 
@@ -48,15 +29,15 @@ type ImageStore interface {
 	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
-func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {
-	var img Image
+func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+	var img models.Image
 	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Where("token = ?", token).Get(&img)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
 		}
 		if !exists {
-			return ErrImageNotFound
+			return models.ErrImageNotFound
 		}
 		return nil
 	}); err != nil {
@@ -65,7 +46,7 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*Image, error) {
 	return &img, nil
 }
 
-func (st DBstore) SaveImage(ctx context.Context, img *Image) error {
+func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: Is this a good idea? Do we actually want to automatically expire
 		// rows? See issue https://github.com/grafana/grafana/issues/49366
@@ -119,7 +100,7 @@ func (st *DBstore) GetData(ctx context.Context, token string) (io.ReadCloser, er
 	}
 
 	if len(img.Path) == 0 {
-		return nil, ErrImageNotFound
+		return nil, models.ErrImageNotFound
 	}
 
 	f, err := os.Open(img.Path)
@@ -133,7 +114,7 @@ func (st *DBstore) GetData(ctx context.Context, token string) (io.ReadCloser, er
 //nolint:unused
 func (st DBstore) DeleteExpiredImages(ctx context.Context) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		n, err := sess.Where("expires_at < ?", TimeNow()).Delete(&Image{})
+		n, err := sess.Where("expires_at < ?", TimeNow()).Delete(&models.Image{})
 		if err != nil {
 			return fmt.Errorf("failed to delete expired images: %w", err)
 		}

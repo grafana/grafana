@@ -88,7 +88,7 @@ type ClusterPeer interface {
 
 type AlertingStore interface {
 	store.AlertingStore
-	channels.ImageStore
+	store.ImageStore
 }
 
 type Alertmanager struct {
