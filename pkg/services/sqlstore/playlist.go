@@ -33,12 +33,11 @@ func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlayli
 		playlistItems := make([]models.PlaylistItem, 0)
 		for _, item := range cmd.Items {
 			playlistItems = append(playlistItems, models.PlaylistItem{
-				PlaylistUid: playlist.Uid,
-				PlaylistId:  playlist.Id,
-				Type:        item.Type,
-				Value:       item.Value,
-				Order:       item.Order,
-				Title:       item.Title,
+				PlaylistId: playlist.Id,
+				Type:       item.Type,
+				Value:      item.Value,
+				Order:      item.Order,
+				Title:      item.Title,
 			})
 		}
 
@@ -65,7 +64,6 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 
 		cmd.Result = &models.PlaylistDTO{
 			Id:       playlist.Id,
-			Uid:      playlist.Uid,
 			OrgId:    playlist.OrgId,
 			Name:     playlist.Name,
 			Interval: playlist.Interval,
@@ -76,8 +74,8 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 			return err
 		}
 
-		rawSQL := "DELETE FROM playlist_item WHERE playlist_uid = ?"
-		_, err = sess.Exec(rawSQL, playlist.Uid)
+		rawSQL := "DELETE FROM playlist_item WHERE playlist_id = ?"
+		_, err = sess.Exec(rawSQL, playlist.Id)
 
 		if err != nil {
 			return err
@@ -87,12 +85,11 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 
 		for index, item := range cmd.Items {
 			playlistItems = append(playlistItems, models.PlaylistItem{
-				PlaylistUid: playlist.Uid,
-				PlaylistId:  playlist.Id,
-				Type:        item.Type,
-				Value:       item.Value,
-				Order:       index + 1,
-				Title:       item.Title,
+				PlaylistId: playlist.Id,
+				Type:       item.Type,
+				Value:      item.Value,
+				Order:      index + 1,
+				Title:      item.Title,
 			})
 		}
 
@@ -124,17 +121,22 @@ func (ss *SQLStore) DeletePlaylist(ctx context.Context, cmd *models.DeletePlayli
 	}
 
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		var rawPlaylistSQL = "DELETE FROM playlist WHERE uid = ? and org_id = ?"
-		_, err := sess.Exec(rawPlaylistSQL, cmd.Uid, cmd.OrgId)
-
+		playlist := models.Playlist{Uid: cmd.Uid, OrgId: cmd.OrgId}
+		_, err := sess.Get(&playlist)
 		if err != nil {
 			return err
 		}
 
-		var rawItemSQL = "DELETE FROM playlist_item WHERE playlist_uid = ?"
-		_, err2 := sess.Exec(rawItemSQL, cmd.Uid)
+		var rawPlaylistSQL = "DELETE FROM playlist WHERE uid = ? and org_id = ?"
+		_, err = sess.Exec(rawPlaylistSQL, cmd.Uid, cmd.OrgId)
+		if err != nil {
+			return err
+		}
 
-		return err2
+		var rawItemSQL = "DELETE FROM playlist_item WHERE playlist_id = ?"
+		_, err = sess.Exec(rawItemSQL, playlist.Id)
+
+		return err
 	})
 }
 
