@@ -10,7 +10,7 @@ A data request can take a long time to finish. During the time between when a re
 
 If we wait for canceled requests to complete, it might create unnecessary load on data sources.
 
-Grafana uses a concept called _request cancelation_ to cancel any ongoing request that Grafana doesn't need.
+Grafana uses a concept called _request cancellation_ to cancel any ongoing request that Grafana doesn't need.
 
 #### Before Grafana 7.2
 
@@ -29,7 +29,7 @@ Migrating the core data sources to the new `fetch` function [is an ongoing proce
 
 ## Request queue
 
-Depending on how the web browser implements the protocol for HTTP 1.1, it will limit the number of parallel requests, lets call this limit _max_parallel_browser_request_.
+Depending on how the web browser implements the protocol for HTTP 1.1, it will limit the number of parallel requests; let's call this limit _max_parallel_browser_request_.
 
 Unless you have configured Grafana to use HTTP2, the browser limits parallel data requests according to the browser's implementation. For more information on how to enable HTTP2, refer to [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/#protocol).
 
