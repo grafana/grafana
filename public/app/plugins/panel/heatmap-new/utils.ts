@@ -52,6 +52,7 @@ interface PrepConfigOpts {
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
+  yAxisReverse?: boolean;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -67,6 +68,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     palette,
     cellGap,
     hideThreshold,
+    yAxisReverse,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -210,7 +212,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
-    direction: ScaleDirection.Up,
+    direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
     log: 2,
