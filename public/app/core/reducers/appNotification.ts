@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { config } from '@grafana/runtime';
 import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
+const MAX_STORED_NOTIFICATIONS = 25;
 export const STORAGE_KEY = 'notifications';
 export const NEW_NOTIFS_KEY = `${STORAGE_KEY}/lastRead`;
 type StoredNotification = Omit<AppNotification, 'component'>;
@@ -111,6 +112,8 @@ function serializeNotifications(notifs: Record<string, StoredNotification>) {
 
   const reducedNotifs = Object.values(notifs)
     .filter(isAtLeastWarning)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_STORED_NOTIFICATIONS)
     .reduce<Record<string, StoredNotification>>((prev, cur) => {
       prev[cur.id] = {
         id: cur.id,
@@ -125,5 +128,11 @@ function serializeNotifications(notifs: Record<string, StoredNotification>) {
 
       return prev;
     }, {});
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedNotifs));
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedNotifs));
+  } catch (err) {
+    console.error('Unable to persist notifications to local storage');
+    console.error(err);
+  }
 }

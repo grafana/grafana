@@ -54,8 +54,6 @@ In both cases, the assignment applies only to the user or team within the affect
 
 ![User role picker in an organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
 
-<br/>
-
 **To assign a fixed role as a server administrator:**
 
 1. Sign in to Grafana, hover your cursor over **Server Admin** (the shield icon) in the left navigation menu, and click **Users**.
@@ -69,14 +67,10 @@ In both cases, the assignment applies only to the user or team within the affect
 
 Instead of using the Grafana role picker, you can use file-based provisioning to assign fixed roles to teams. If you have a large number of teams, provisioning can provide an easier approach to assigning and managing role assignments.
 
-</br>
-
 **Before you begin:**
 
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
-
-</br>
+- Refer to [Role provisioning]({{< relref "./rbac-provisioning#rbac-provisioning" >}})
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}})
 
 **To assign a role to a team:**
 

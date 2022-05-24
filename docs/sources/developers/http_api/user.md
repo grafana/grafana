@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/user/"]
+aliases = ["/docs/grafana/latest/developers/http_api/user/", "/docs/grafana/latest/http_api/user/"]
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
 title = "User HTTP API "
@@ -7,14 +7,13 @@ title = "User HTTP API "
 
 # User API
 
-> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
-> Refer to specific resources to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Search Users
 
 `GET /api/users?perpage=10&page=1`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -69,7 +68,7 @@ Content-Type: application/json
 
 `GET /api/users/search?perpage=10&page=1&query=mygraf`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -130,7 +129,7 @@ Content-Type: application/json
 
 `GET /api/users/:id`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -176,7 +175,7 @@ Content-Type: application/json
 
 `GET /api/users/lookup?loginOrEmail=user@mygraf.com`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -231,7 +230,7 @@ Content-Type: application/json
 
 `PUT /api/users/:id`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -270,7 +269,7 @@ Content-Type: application/json
 
 `GET /api/users/:id/orgs`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
@@ -308,7 +307,7 @@ Content-Type: application/json
 
 `GET /api/users/:id/teams`
 
-#### Required permissions
+**Required permissions**
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 

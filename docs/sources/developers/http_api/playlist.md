@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/playlist/"]
+aliases = ["/docs/grafana/latest/developers/http_api/playlist/", "/docs/grafana/latest/http_api/playlist/"]
 description = "Playlist Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "playlist"]
 title = "Playlist HTTP API "

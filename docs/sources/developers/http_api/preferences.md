@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/preferences/"]
+aliases = ["/docs/grafana/latest/developers/http_api/preferences/", "/docs/grafana/latest/http_api/preferences/"]
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "preferences"]
 title = "HTTP Preferences API "

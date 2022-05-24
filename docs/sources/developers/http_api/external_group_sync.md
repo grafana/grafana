@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
+aliases = ["/docs/grafana/latest/developers/http_api/external_group_sync/", "/docs/grafana/latest/http_api/external_group_sync/"]
 description = "Grafana External Group Sync HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group", "member", "enterprise"]
 title = "External Group Sync HTTP API "
@@ -9,16 +9,15 @@ title = "External Group Sync HTTP API "
 
 > External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
 
-> If you have [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
-> Refer to specific endpoints to understand what permissions are required.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get External Groups
 
 `GET /api/teams/:teamId/groups`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -58,9 +57,9 @@ Status Codes:
 
 `POST /api/teams/:teamId/groups`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -100,9 +99,9 @@ Status Codes:
 
 `DELETE /api/teams/:teamId/groups/:groupId`
 
-#### Required permissions
+**Required permissions**
 
-See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |

@@ -1,11 +1,13 @@
 +++
-aliases = ["/docs/grafana/latest/http_api/dashboard/"]
+aliases = ["/docs/grafana/latest/developers/http_api/dashboard/", "/docs/grafana/latest/http_api/dashboard/"]
 description = "Grafana Dashboard HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard"]
 title = "Dashboard HTTP API "
 +++
 
 # Dashboard API
+
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -23,6 +25,14 @@ The uid can have a maximum length of 40 characters.
 `POST /api/dashboards/db`
 
 Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` or the `folderUid` property, then the dashboard(s) are moved to the General folder. (You need to define only one property, not both).
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+
+| Action              | Scope       |
+| ------------------- | ----------- |
+| `dashboards:create` | `folders:*` |
 
 **Example Request for new dashboard**:
 
@@ -272,6 +282,14 @@ In case of title already exists the `status` property will be `name-exists`.
 
 Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+
+| Action            | Scope          |
+| ----------------- | -------------- |
+| `dashboards:read` | `dashboards:*` |
+
 **Example Request**:
 
 ```http
@@ -319,6 +337,14 @@ Status Codes:
 `DELETE /api/dashboards/uid/:uid`
 
 Will delete the dashboard given the specified unique identifier (uid).
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+
+| Action              | Scope                         |
+| ------------------- | ----------------------------- |
+| `dashboards:delete` | `dashboards:*`<br>`folders:*` |
 
 **Example Request**:
 

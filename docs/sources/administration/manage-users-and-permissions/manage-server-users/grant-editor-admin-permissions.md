@@ -15,6 +15,8 @@ When `editors_can_admin` is enabled:
 - Users with the Editor role in an organization are Administrators for new dashboards and folders they create, meaning they can edit dashboard permissions. To learn more about dashboard permissions, refer to [Manage dashboard permissions]({{< relref "../manage-dashboard-permissions/_index.md" >}}).
 - Users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Manage teams]({{< relref "../manage-teams/_index.md" >}})
 
+> **Note**: If you use Grafana Enterprise and customize users' permissions using RBAC, the RBAC permissions override the functionality enabled by the `editors_can_admin` flag.
+
 ## Before you begin
 
 - Ensure that you have access to the Grafana server

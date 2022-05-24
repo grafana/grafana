@@ -6,7 +6,7 @@ aliases:
 description: Learn how to view permissions associated with roles, create custom roles,
   and update and delete roles in Grafana.
 menuTitle: Manage RBAC roles
-title: Manage RBAC roles
+title: Manage Grafana RBAC roles
 weight: 50
 ---
 
@@ -14,17 +14,13 @@ weight: 50
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
-**Before you begin:**
-
-- [Enable role-based access control]({{< relref "./enable-rbac-and-provisioning#enable-rback" >}}).
-
 The following example includes the base64 username:password Basic Authorization. You cannot use authorization tokens in the request.
 
 ### List permissions associated with roles
 
 Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../developers/http_api/access_control.md#get-a-role" >}}).
 
-<span id="basic-role-uid-mapping">To see the permissions associated with basic roles, refer to the following basic role UIDs</span>:
+To see the permissions associated with basic roles, refer to the following basic role UIDs:
 
 | Basic role      | UID                   |
 | --------------- | --------------------- |
@@ -92,7 +88,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}}).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions actions and scopes]({{< relref "./custom-role-actions-scopes.md" >}}).
-- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-rbac" >}}).
+- [Enable role provisioning]({{< relref "./rbac-provisioning" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
@@ -219,8 +215,6 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 }'
 ```
 
-</br>
-
 **Example response**
 
 ```
@@ -249,13 +243,9 @@ Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_contro
 
 If the default basic role definitions do not meet your requirements, you can change their permissions.
 
-</br>
-
 **Before you begin:**
 
 - Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
-
-</br>
 
 **To change permissions from a basic role:**
 
@@ -320,7 +310,7 @@ This section describes how to reset the basic roles to their default:
 
 1. Open the YAML configuration file and locate the `roles` section.
 
-1. Grant the `action: "roles:write", scope: "permissions:type:escalate` permission to `Grafana Admin`.
+1. Grant the `action: "roles:write", scope: "permissions:type:escalate` permission to `Grafana Admin`. Note that this permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
 
    ```yaml
    apiVersion: 2
@@ -337,24 +327,16 @@ This section describes how to reset the basic roles to their default:
           scope: 'permissions:type:escalate'
    ```
 
-> **Note**: This permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
-
 1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
 Delete a custom role when you no longer need it. When you delete a custom role, the custom role is removed from users and teams to which it is assigned.
 
-> **Note:** If you use the same configuration file to both add and remove roles, the system deletes roles identified in the `deleteRoles` section before it adds roles identified in the `roles` section.
-
-</br>
-
 **Before you begin:**
 
 - Identify the role or roles that you want to delete.
 - Ensure that you have access to the YAML configuration file.
-
-</br>
 
 **To delete a custom role:**
 
@@ -367,7 +349,7 @@ Delete a custom role when you no longer need it. When you delete a custom role, 
    | `name`    | The name of the custom role you want to delete. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`   | Identifies the organization to which the role belongs.                                                                                     |
    | `state`   | The state of the role set to `absent` to trigger its removal.                                                                              |
-   | `force`   | Sets the force parameter.                                                                                                                  |
+   | `force`   | When set to `true`, the roles are removed even if there are existing assignments.                                                          |
 
 1. Reload the provisioning configuration file.
 

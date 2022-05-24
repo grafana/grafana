@@ -93,6 +93,7 @@ var (
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "prometheus_azure_auth",
@@ -241,6 +242,12 @@ var (
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "validateDashboardsOnSave",
+			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 	}
 )

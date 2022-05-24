@@ -20,6 +20,8 @@ You can assign a user one of three types of permissions:
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
+> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< ref "#organization-roles" >}}).
+
 A server administrator can perform the following tasks:
 
 - Manage users and permissions
