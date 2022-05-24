@@ -11,7 +11,7 @@ import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from
 
 import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
+import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
 import { fetchACOptions } from './state/actions';
 import {
   createServiceAccountToken,

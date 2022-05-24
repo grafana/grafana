@@ -13,7 +13,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
-import ServiceAccountListItem from './ServiceAccountsListItem';
+import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
   fetchACOptions,

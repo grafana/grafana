@@ -5,9 +5,8 @@ import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
+import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
-
-import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;

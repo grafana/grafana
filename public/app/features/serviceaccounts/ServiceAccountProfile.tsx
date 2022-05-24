@@ -7,8 +7,8 @@ import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
-import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
-import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
+import { ServiceAccountProfileRow } from './components/ServiceAccountProfileRow';
+import { ServiceAccountRoleRow } from './components/ServiceAccountRoleRow';
 import { deleteServiceAccount, updateServiceAccount } from './state/actionsServiceAccountPage';
 
 interface Props {
