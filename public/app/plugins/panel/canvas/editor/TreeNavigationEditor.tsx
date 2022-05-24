@@ -15,20 +15,16 @@ type Props = StandardEditorProps<any, TreeViewEditorProps, PanelOptions>;
 
 export class TreeNavigationEditor extends PureComponent<Props> {
   render() {
-    const settings = this.props.item.settings;
+    const { settings } = this.props.item;
     if (!settings) {
       return <div>No settings</div>;
     }
 
-    const layer = settings.layer;
-    if (!layer) {
-      return <div>Missing layer?</div>;
-    }
-
-    const elements = settings.scene?.root.elements;
     const styles = getStyles();
 
+    const elements = settings.scene?.root.elements;
     const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
+
     return (
       <div>
         {elements.map((element: ElementState | FrameState) => {
@@ -38,8 +34,8 @@ export class TreeNavigationEditor extends PureComponent<Props> {
 
           return (
             <div key={element.UID}>
-              <ul className={styles.treeContainer}>
-                <TreeNode node={element} selection={selection} />
+              <ul className={styles.treeListContainer}>
+                <TreeNode node={element} selection={selection} settings={settings} />
               </ul>
             </div>
           );
@@ -51,7 +47,7 @@ export class TreeNavigationEditor extends PureComponent<Props> {
 
 const getStyles = stylesFactory(() => {
   return {
-    treeContainer: css`
+    treeListContainer: css`
       list-style: none;
     `,
   };
