@@ -64,7 +64,7 @@ function formatDate(timeZone: TimeZone, expiration?: string): string {
 }
 
 function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): string {
-  const days = Math.floor(secondsUntilExpiration / (3600 * 24));
+  const days = Math.ceil(secondsUntilExpiration / (3600 * 24));
   const daysFormat = days > 1 ? `${days} days` : `${days} day`;
   return `Expires in ${daysFormat}`;
 }
