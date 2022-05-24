@@ -5,7 +5,7 @@ import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePic
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
-import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
+import { ServiceAccountToken } from '../components/CreateTokenModal';
 
 import {
   acOptionsLoaded,

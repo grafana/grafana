@@ -9,8 +9,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
-import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
+import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
 import { fetchACOptions } from './state/actions';
 import {

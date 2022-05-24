@@ -27,14 +27,14 @@ export type ServiceAccountToken = {
   secondsToLive: number;
 };
 
-interface CreateTokenModalProps {
+interface Props {
   isOpen: boolean;
   token: string;
   onCreateToken: (token: ServiceAccountToken) => void;
   onClose: () => void;
 }
 
-export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: CreateTokenModalProps) => {
+export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Props) => {
   const [newTokenName, setNewTokenName] = useState('');
   const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
   const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>('');
@@ -63,9 +63,15 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
   );
 
   return (
-    <Modal isOpen={isOpen} title={modalTitle} onDismiss={onCloseInternal} className={styles.modal}>
+    <Modal
+      isOpen={isOpen}
+      title={modalTitle}
+      onDismiss={onCloseInternal}
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+    >
       {!token ? (
-        <>
+        <div>
           <FieldSet>
             <Field
               label="Display name"
@@ -107,7 +113,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
           >
             Generate token
           </Button>
-        </>
+        </div>
       ) : (
         <>
           <FieldSet>
@@ -156,6 +162,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css`
       width: 550px;
+    `,
+    modalContent: css`
+      overflow: visible;
     `,
     modalRow: css`
       margin-bottom: ${theme.spacing(4)};

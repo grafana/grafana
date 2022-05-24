@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
-import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
+import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
