@@ -2,7 +2,7 @@
 title = "Organising alert rules"
 description = "Learn how to organize alert rules"
 keywords = ["grafana", "alerting", "organization"]
-weight = 103
+weight = 104
 +++
 
 ## Namespaces and groups

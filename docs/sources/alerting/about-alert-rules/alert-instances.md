@@ -2,7 +2,7 @@
 title = "Alert instances"
 description = "Learn about Grafana alert instances"
 keywords = ["grafana", "alerting", "instances"]
-weight = 102
+weight = 103
 +++
 
 # Alert instances
@@ -19,4 +19,4 @@ sum by(cpu) (
 
 A rule using this expression will create as many alert instances as the amount of CPUs we are observing after the first evaluation, allowing a single rule to report the status of each CPU.
 
-![@TODO: SCREENSHOT HERE]()
+{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="A multi-dimensional Grafana managed alert rule" >}}
