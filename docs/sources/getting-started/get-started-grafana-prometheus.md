@@ -1,11 +1,11 @@
 +++
 aliases = ["/docs/grafana/latest/getting-started/getting-started-prometheus/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
 description = "Learn how to build your first Prometheus dashboard in Grafana."
-title = "Build a Prometheus dashboard"
+title = "Get started with Grafana and Prometheus"
 weight = 300
 +++
 
-# Build a Prometheus dashboard
+# Get started with Grafana and Prometheus
 
 Prometheus is an open source monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
@@ -13,20 +13,20 @@ Prometheus is an open source monitoring system for which Grafana provides out-of
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
-## Download Prometheus and node_exporter
+#### Download Prometheus and node_exporter
 
 Prometheus, like Grafana, can be installed on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/), which lists all stable versions of Prometheus components. Download the following components:
 
 - [Prometheus](https://prometheus.io/download/#prometheus)
 - [node_exporter](https://prometheus.io/download/#node_exporter)
 
-## Install Prometheus node_exporter
+#### Install Prometheus node_exporter
 
 Prometheus node_exporter is a widely used tool that exposes system metrics. Install node_exporter on all hosts you want to monitor. For instructions on how to install node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in Prometheus documentation.
 
 > **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
 
-## Install and configure Prometheus
+#### Install and configure Prometheus
 
 1. Install Prometheus following instructions in the [Installation](https://prometheus.io/docs/prometheus/latest/installation/) topic in the Prometheus documentation.
 
@@ -50,17 +50,17 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. Inst
     ./prometheus --config.file=./prometheus.yml
    ```
 
-## Check Prometheus metrics in Grafana Explore view
+#### Check Prometheus metrics in Grafana Explore view
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/_index.md#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
 
-## Start building dashboards
+#### Start building dashboards
 
 Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
 
 The following image shows a dashboard with three panels showing some system metrics.
 
-<img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
+![Prometheus dashboards](/static/img/docs/getting-started/simple_grafana_prom_dashboard.png)
 
 To learn more:
 

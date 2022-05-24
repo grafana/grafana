@@ -1,21 +1,21 @@
 +++
 aliases = ["/docs/grafana/latest/getting-started/getting-started/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
 description = "Learn how to get started with Grafana by adding a preconfigured dashboard."
-title = "Add a preconfigured dashboard"
+title = "Build your first dashboard"
 weight = 200
 +++
 
-# Add a preconfigured dashboard
+# Build your first dashboard
 
 This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
 > **Note:** Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
 
-## Install Grafana
+#### Install Grafana
 
 Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
 
-## Sign in to Grafana
+#### Sign in to Grafana
 
 To sign in to Grafana for the first time:
 
@@ -26,7 +26,7 @@ To sign in to Grafana for the first time:
 
 > **Note:** We strongly recommend that you change the default administrator password.
 
-## Create a dashboard
+#### Create a dashboard
 
 To create your first dashboard:
 
@@ -39,7 +39,7 @@ To create your first dashboard:
 
 Congratulations, you have created your first dashboard and it is displaying results.
 
-## Next steps
+#### Next steps
 
 Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
@@ -48,7 +48,7 @@ Continue to experiment with what you have built, try the [explore workflow]({{< 
 - [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
-### Admins
+##### Admins
 
 The following topics are of interest to Grafana server admin users:
 

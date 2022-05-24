@@ -4,10 +4,10 @@ aliases:
 title: First step of Getting started with...
 ---
 
-## Install Grafana and add your first dashboard
+#### Install Grafana and add your first dashboard
 
-Use the instructions in [Add a preconfigured dashboard]({{< relref "../../getting-started/add-preconfigured-dashboard" >}}) to:
+Use the instructions in [Build your first dashboard]({{< relref "../../getting-started/build-first-dashboard" >}}) to:
 
 - Install Grafana.
 - Sign in to Grafana.
-- Add a preconfigured dashboard.
+- Build your first dashboard.
