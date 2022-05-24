@@ -1,7 +1,5 @@
-import { lastValueFrom } from 'rxjs';
-
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, MutableDataFrame } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataFrameView, getDisplayProcessor, MutableDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -11,6 +9,18 @@ import { LocationInfo } from './types';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
+interface APIQuery {
+  title?: string;
+  tags?: string;
+  Limit?: number;
+  page?: number;
+  isStarred?: boolean;
+  type?: string;
+  // DashboardIds []int64
+  // FolderIds    []int64
+  sort?: string;
+}
+
 export class SQLSearcher implements GrafanaSearcher {
   locationInfo: Record<string, LocationInfo> = {}; // share location info with everyone
 
@@ -18,22 +28,26 @@ export class SQLSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw 'facets not supported!';
     }
-    return this.doSearchQuery(query);
+    const q: APIQuery = {};
+    if (query.tags) {
+      q.tags = query.tags.join(',');
+    }
+    return this.doAPIQuery(q);
   }
 
+  // location is the folderUID
   async list(location: string): Promise<QueryResponse> {
-    return this.doSearchQuery({ query: `list:${location ?? ''}` });
+    console.log('LIST', location);
+
+    return this.doAPIQuery({});
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     return backendSrv.get('/api/dashboards/tags');
   }
 
-  async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-    const apiSearchQuery: any = {
-      // legacy query
-    };
-    const rsp = (await backendSrv.get('/api/search', apiSearchQuery)) as DashboardSearchHit[];
+  async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
+    const rsp = (await backendSrv.get('/api/search', query)) as DashboardSearchHit[];
 
     console.log('GOT', rsp);
 
