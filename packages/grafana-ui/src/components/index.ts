@@ -1,3 +1,11 @@
+import { FormField } from './FormField/FormField';
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
+import { Switch } from './Forms/Legacy/Switch/Switch';
+import { SecretFormField } from './SecretFormField/SecretFormField';
+
 export { Icon } from './Icon/Icon';
 export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
@@ -6,7 +14,7 @@ export { Tooltip } from './Tooltip/Tooltip';
 export { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
-export { Portal } from './Portal/Portal';
+export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
@@ -42,7 +50,6 @@ export { FilterPill } from './FilterPill/FilterPill';
 export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
-// Code editor
 export { CodeEditor } from './Monaco/CodeEditor';
 
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
@@ -84,6 +91,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';
+export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
@@ -207,6 +215,7 @@ export * from './Select/types';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
 export { FilterInput } from './FilterInput/FilterInput';
@@ -228,18 +237,6 @@ export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatu
 
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
-
-// Select
-import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
-import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
-import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
-
-//Input
-import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
-import { FormField } from './FormField/FormField';
-import { SecretFormField } from './SecretFormField/SecretFormField';
-
-import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
   SecretFormField,

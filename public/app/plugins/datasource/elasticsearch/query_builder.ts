@@ -1,5 +1,7 @@
-import { InternalTimeZones } from '@grafana/data';
 import { gte, lt } from 'semver';
+
+import { InternalTimeZones } from '@grafana/data';
+
 import {
   Filters,
   Histogram,

@@ -21,9 +21,8 @@ Panel: {
                 PanelOptions: {
                     // empty/missing will default to grafana blog
                     feedUrl?: string
-                    useProxy?: bool
                     showImage?: bool | *true
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

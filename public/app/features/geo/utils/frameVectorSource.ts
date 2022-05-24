@@ -1,7 +1,9 @@
-import { DataFrame } from '@grafana/data';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
+
+import { DataFrame } from '@grafana/data';
+
 import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}

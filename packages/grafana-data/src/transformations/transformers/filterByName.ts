@@ -1,8 +1,9 @@
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
-import { filterFieldsTransformer } from './filter';
 import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
+
+import { filterFieldsTransformer } from './filter';
+import { DataTransformerID } from './ids';
 
 export interface FilterFieldsByNameTransformerOptions {
   include?: RegexpOrNamesMatcherOptions;

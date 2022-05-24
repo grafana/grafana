@@ -1,5 +1,6 @@
-import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import React from 'react';
+
 import {
   dateMath,
   dateTime,
@@ -11,8 +12,8 @@ import {
   toDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions } from './types';

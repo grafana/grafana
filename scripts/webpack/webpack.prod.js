@@ -1,12 +1,13 @@
 'use strict';
 
-const { merge } = require('webpack-merge');
-const TerserPlugin = require('terser-webpack-plugin');
-const common = require('./webpack.common.js');
-const path = require('path');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
+const { merge } = require('webpack-merge');
+
+const common = require('./webpack.common.js');
 
 module.exports = (env = {}) =>
   merge(common, {

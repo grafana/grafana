@@ -1,15 +1,17 @@
 import { each, map } from 'lodash';
+import { expect } from 'test/lib/common';
+
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { config } from 'app/core/config';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+
+import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
-import { VariableHide } from '../../variables/types';
-import { config } from 'app/core/config';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -1447,7 +1449,7 @@ describe('DashboardModel', () => {
     });
 
     it('should ignore fieldConfig.defaults', () => {
-      expect(model.panels[0].panels[0].fieldConfig.defaults).toEqual(undefined);
+      expect(model.panels[0].panels?.[0].fieldConfig.defaults).toEqual(undefined);
     });
   });
 
@@ -1747,8 +1749,8 @@ describe('DashboardModel', () => {
             },
           ],
         });
-        panel1Targets = nestedModel.panels[0].panels[0].targets;
-        panel2Targets = nestedModel.panels[0].panels[1].targets;
+        panel1Targets = nestedModel.panels[0].panels?.[0].targets;
+        panel2Targets = nestedModel.panels[0].panels?.[1].targets;
       });
 
       it('multiple stats query should have been split into one query per stat', () => {
@@ -1849,7 +1851,7 @@ describe('DashboardModel', () => {
     });
 
     it('should update datasources in panels collapsed rows', () => {
-      expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+      expect(model.panels[3].panels?.[0].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
     });
   });
 

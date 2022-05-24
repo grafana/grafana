@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
 

@@ -1,5 +1,7 @@
-import { SelectableValue } from '@grafana/data';
 import { FeatureLike } from 'ol/Feature';
+
+import { SelectableValue } from '@grafana/data';
+
 import { GeometryTypeId } from '../style/types';
 
 export interface LayerContentInfo {

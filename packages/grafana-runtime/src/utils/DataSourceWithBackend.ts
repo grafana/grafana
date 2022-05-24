@@ -1,3 +1,6 @@
+import { merge, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -13,8 +16,8 @@ import {
   DataSourceRef,
   dataFrameToJSON,
 } from '@grafana/data';
-import { merge, Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+
+import { config } from '../config';
 import {
   getBackendSrv,
   getDataSourceSrv,
@@ -22,7 +25,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
 } from '../services';
-import { config } from '../config';
+
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -31,6 +34,7 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
+  name: 'Expression',
 });
 
 /**

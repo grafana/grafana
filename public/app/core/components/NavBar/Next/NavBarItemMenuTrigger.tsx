@@ -1,19 +1,22 @@
-import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { MenuTriggerProps } from '@react-types/menu';
-import { useMenuTriggerState } from '@react-stately/menu';
-import { useMenuTrigger } from '@react-aria/menu';
-import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
 import { useDialog } from '@react-aria/dialog';
-import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
+import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
+import { useMenuTrigger } from '@react-aria/menu';
+import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
+import { useMenuTriggerState } from '@react-stately/menu';
+import { MenuTriggerProps } from '@react-types/menu';
+import React, { ReactElement, useEffect, useState } from 'react';
 
-import { NavBarItemMenuContext, useNavBarContext } from '../context';
-import { NavFeatureHighlight } from '../NavFeatureHighlight';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportExperimentView } from '@grafana/runtime';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+
+import { NavFeatureHighlight } from '../NavFeatureHighlight';
+import { NavBarItemMenuContext, useNavBarContext } from '../context';
+
+import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
@@ -47,23 +50,23 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onHoverChange: (isHovering) => {
       if (isHovering) {
         state.open();
-        setMenuIdOpen(ref.current?.id || null);
+        setMenuIdOpen(item.id);
       } else {
         state.close();
+        setMenuIdOpen(undefined);
       }
     },
   });
 
   useEffect(() => {
     // close the menu when changing submenus
-    // or when the state of the overlay changes (i.e hovering outside)
-    if (menuIdOpen !== ref.current?.id || !state.isOpen) {
+    if (menuIdOpen !== item.id) {
       state.close();
       setMenuHasFocus(false);
     } else {
       state.open();
     }
-  }, [menuIdOpen, state]);
+  }, [menuIdOpen, state, item.id]);
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -71,11 +74,12 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         case 'ArrowRight':
           if (!state.isOpen) {
             state.open();
+            setMenuIdOpen(item.id);
           }
           setMenuHasFocus(true);
           break;
         case 'Tab':
-          setMenuIdOpen(null);
+          setMenuIdOpen(undefined);
           break;
         default:
           break;
@@ -99,6 +103,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       className={styles.element}
       {...buttonProps}
       {...keyboardProps}
+      {...hoverProps}
       ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={item?.onClick}
       aria-label={label}
@@ -113,6 +118,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         <Link
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           href={item.url}
           target={item.target}
@@ -129,6 +135,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           onClick={item?.onClick}
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           className={styles.element}
           aria-label={label}
@@ -142,7 +149,10 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
-      onClose: () => state.close(),
+      onClose: () => {
+        state.close();
+        setMenuIdOpen(undefined);
+      },
       isOpen: state.isOpen,
       isDismissable: true,
     },
@@ -160,7 +170,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onFocusWithin: (e) => {
       if (e.target.id === ref.current?.id) {
         // If focussing on the trigger itself, set the menu id that is open
-        setMenuIdOpen(ref.current?.id);
+        setMenuIdOpen(item.id);
         state.open();
       }
     },
@@ -168,16 +178,16 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       if (e.target?.getAttribute('role') === 'menuitem' && !overlayRef.current?.contains(e.relatedTarget)) {
         // If it is blurring from a menuitem to an element outside the current overlay
         // close the menu that is open
-        setMenuIdOpen(null);
+        setMenuIdOpen(undefined);
       }
     },
   });
 
   return (
-    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
       {element}
       {state.isOpen && (
-        <OverlayContainer>
+        <OverlayContainer portalContainer={getNavMenuPortalContainer()}>
           <NavBarItemMenuContext.Provider
             value={{
               menuProps,

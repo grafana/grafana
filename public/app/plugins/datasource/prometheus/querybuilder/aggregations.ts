@@ -1,18 +1,11 @@
-import pluralize from 'pluralize';
-import { LabelParamEditor } from './components/LabelParamEditor';
 import { addOperationWithRangeVector } from './operations';
 import {
-  defaultAddOperationHandler,
-  functionRendererLeft,
+  createAggregationOperation,
+  createAggregationOperationWithParam,
   getPromAndLokiOperationDisplayName,
   getRangeVectorParamDef,
 } from './shared/operationUtils';
-import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-  QueryWithOperations,
-} from './shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
 import { PromVisualQueryOperationCategory, PromOperationId } from './types';
 
 export function getAggregationOperations(): QueryBuilderOperationDef[] {
@@ -22,8 +15,18 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation(PromOperationId.Min),
     ...createAggregationOperation(PromOperationId.Max),
     ...createAggregationOperation(PromOperationId.Count),
-    ...createAggregationOperation(PromOperationId.TopK),
-    ...createAggregationOperation(PromOperationId.BottomK),
+    ...createAggregationOperationWithParam(PromOperationId.TopK, {
+      params: [{ name: 'K-value', type: 'number' }],
+      defaultParams: [5],
+    }),
+    ...createAggregationOperationWithParam(PromOperationId.BottomK, {
+      params: [{ name: 'K-value', type: 'number' }],
+      defaultParams: [5],
+    }),
+    ...createAggregationOperationWithParam(PromOperationId.CountValues, {
+      params: [{ name: 'Identifier', type: 'string' }],
+      defaultParams: ['count'],
+    }),
     createAggregationOverTime(PromOperationId.SumOverTime),
     createAggregationOverTime(PromOperationId.AvgOverTime),
     createAggregationOverTime(PromOperationId.MinOverTime),
@@ -34,162 +37,6 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     createAggregationOverTime(PromOperationId.AbsentOverTime),
     createAggregationOverTime(PromOperationId.StddevOverTime),
   ];
-}
-
-/**
- * This function is shared between Prometheus and Loki variants
- */
-export function createAggregationOperation<T extends QueryWithOperations>(
-  name: string,
-  overrides: Partial<QueryBuilderOperationDef> = {}
-): QueryBuilderOperationDef[] {
-  const operations: QueryBuilderOperationDef[] = [
-    {
-      id: name,
-      name: getPromAndLokiOperationDisplayName(name),
-      params: [
-        {
-          name: 'By label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-        },
-      ],
-      defaultParams: [],
-      alternativesKey: 'plain aggregations',
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: functionRendererLeft,
-      paramChangedHandler: getOnLabelAdddedHandler(`__${name}_by`),
-      explainHandler: getAggregationExplainer(name, ''),
-      addOperationHandler: defaultAddOperationHandler,
-      ...overrides,
-    },
-    {
-      id: `__${name}_by`,
-      name: `${getPromAndLokiOperationDisplayName(name)} by`,
-      params: [
-        {
-          name: 'Label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-          editor: LabelParamEditor,
-        },
-      ],
-      defaultParams: [''],
-      alternativesKey: 'aggregations by',
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: getAggregationByRenderer(name),
-      paramChangedHandler: getLastLabelRemovedHandler(name),
-      explainHandler: getAggregationExplainer(name, 'by'),
-      addOperationHandler: defaultAddOperationHandler,
-      hideFromList: true,
-      ...overrides,
-    },
-    {
-      id: `__${name}_without`,
-      name: `${getPromAndLokiOperationDisplayName(name)} without`,
-      params: [
-        {
-          name: 'Label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-          editor: LabelParamEditor,
-        },
-      ],
-      defaultParams: [''],
-      alternativesKey: 'aggregations by',
-      category: PromVisualQueryOperationCategory.Aggregations,
-      renderer: getAggregationWithoutRenderer(name),
-      paramChangedHandler: getLastLabelRemovedHandler(name),
-      explainHandler: getAggregationExplainer(name, 'without'),
-      addOperationHandler: defaultAddOperationHandler,
-      hideFromList: true,
-      ...overrides,
-    },
-  ];
-
-  // Handle some special aggregations that have parameters
-  if (name === 'topk' || name === 'bottomk') {
-    const param: QueryBuilderOperationParamDef = {
-      name: 'K-value',
-      type: 'number',
-    };
-    operations[0].params.unshift(param);
-    operations[1].params.unshift(param);
-    operations[0].defaultParams = [5];
-    operations[1].defaultParams = [5, ''];
-    operations[1].renderer = getAggregationByRendererWithParameter(name);
-  }
-
-  return operations;
-}
-
-function getAggregationByRenderer(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
-  };
-}
-
-function getAggregationWithoutRenderer(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
-  };
-}
-
-/**
- * Very simple poc implementation, needs to be modified to support all aggregation operators
- */
-function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
-  return function aggregationExplainer(model: QueryBuilderOperation) {
-    const labels = model.params.map((label) => `\`${label}\``).join(' and ');
-    const labelWord = pluralize('label', model.params.length);
-
-    switch (mode) {
-      case 'by':
-        return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
-      case 'without':
-        return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
-      default:
-        return `Calculates ${aggregationName} over the dimensions.`;
-    }
-  };
-}
-
-function getAggregationByRendererWithParameter(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    const firstParam = model.params[0];
-    const restParams = model.params.slice(1);
-    return `${aggregation} by(${restParams.join(', ')}) (${firstParam}, ${innerExpr})`;
-  };
-}
-
-/**
- * This function will transform operations without labels to their plan aggregation operation
- */
-function getLastLabelRemovedHandler(changeToOperartionId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
-    // If definition has more params then is defined there are no optional rest params anymore
-    // We then transform this operation into a different one
-    if (op.params.length < def.params.length) {
-      return {
-        ...op,
-        id: changeToOperartionId,
-      };
-    }
-
-    return op;
-  };
-}
-
-export function getOnLabelAdddedHandler(changeToOperartionId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation) {
-    return {
-      ...op,
-      id: changeToOperartionId,
-    };
-  };
 }
 
 function createAggregationOverTime(name: string): QueryBuilderOperationDef {

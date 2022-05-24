@@ -1,12 +1,16 @@
 import { lastValueFrom } from 'rxjs';
+
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
+import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
+
+import { contextSrv } from '../../../core/services/context_srv';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -23,7 +27,6 @@ import {
   testDataSourceSucceeded,
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -217,6 +220,9 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
     await getDatasourceSrv().reload();
+
+    await contextSrv.fetchUserPermissions();
+
     locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }

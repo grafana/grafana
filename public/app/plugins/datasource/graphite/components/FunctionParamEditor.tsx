@@ -1,7 +1,8 @@
-import React from 'react';
-import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
 
 export type EditableParam = {
   name: string;

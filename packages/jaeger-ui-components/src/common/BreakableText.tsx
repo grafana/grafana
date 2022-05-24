@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
+import * as React from 'react';
+
 import { useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {

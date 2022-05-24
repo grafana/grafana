@@ -1,24 +1,17 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
-import {
-  Portal,
-  UPlotChart,
-  useStyles2,
-  useTheme2,
-  VizLayout,
-  VizTooltipContainer,
-  LegendDisplayMode,
-} from '@grafana/ui';
-import { PanelDataErrorView } from '@grafana/runtime';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { HeatmapData, prepareHeatmapData } from './fields';
+import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+
+import { HeatmapHoverView } from './HeatmapHoverView';
+import { prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
-import { HeatmapHoverView } from './HeatmapHoverView';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { ColorScale } from './ColorScale';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -41,11 +34,36 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
+  const info = useMemo(() => {
+    try {
+      return prepareHeatmapData(data, options, theme);
+    } catch (ex) {
+      return { warning: `${ex}` };
+    }
+  }, [data, options, theme]);
 
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const facets = useMemo(() => {
+    let exemplarsXFacet: number[] = []; // "Time" field
+    let exemplarsyFacet: number[] = [];
 
-  //console.log(facets);
+    if (info.exemplars && info.matchByLabel) {
+      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
+
+      // ordinal/labeled heatmap-buckets?
+      const hasLabeledY = info.yLabelValues != null;
+
+      if (hasLabeledY) {
+        let matchExemplarsBy = info.exemplars?.fields
+          .find((field) => field.name === info.matchByLabel)!
+          .values.toArray();
+        exemplarsyFacet = matchExemplarsBy.map((label) => info.yLabelValues?.indexOf(label)) as number[];
+      } else {
+        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+      }
+    }
+
+    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
+  }, [info.heatmap, info.exemplars, info.yLabelValues, info.matchByLabel]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -75,17 +93,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   );
 
   // ugh
-  const dataRef = useRef<HeatmapData>(info);
+  const dataRef = useRef(info);
   dataRef.current = info;
 
   const builder = useMemo(() => {
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : null,
+      onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
-        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        const delta = evt.xMax - evt.xMin;
+        if (delta > 1) {
+          onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+        }
       },
       isToolTipOpen,
       timeZone,
@@ -93,34 +114,47 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
+      exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
   const renderLegend = () => {
-    if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
+    if (!info.heatmap || !options.legend.show) {
       return null;
     }
 
-    const field = info.heatmap.fields[2];
-    const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-    const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
+    let heatmapType = dataRef.current?.heatmap?.meta?.type;
+    let countFieldIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
+    const countField = info.heatmap.fields[countFieldIdx];
+
+    const { min, max } = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
 
     let hoverValue: number | undefined = undefined;
-    if (hover && info.heatmap.fields) {
-      const countField = info.heatmap.fields[2];
-      hoverValue = countField?.values.get(hover.index);
+    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+      hoverValue = countField.values.get(hover.dataIdx);
     }
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
+        <div className={styles.colorScaleWrapper}>
+          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
+        </div>
       </VizLayout.Legend>
     );
   };
 
   if (info.warning || !info.heatmap) {
-    return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsNumberField={true}
+        message={info.warning}
+      />
+    );
   }
 
   return (
@@ -133,7 +167,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         )}
       </VizLayout>
       <Portal>
-        {hover && (
+        {hover && options.tooltip.show && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
             offset={{ x: 10, y: 10 }}
@@ -156,5 +190,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   closeButtonSpacer: css`
     margin-bottom: 15px;
+  `,
+  colorScaleWrapper: css`
+    margin-left: 25px;
+    padding: 10px 0;
   `,
 });

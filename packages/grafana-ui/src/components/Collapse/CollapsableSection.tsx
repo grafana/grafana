@@ -1,9 +1,11 @@
-import React, { FC, ReactNode, useRef, useState } from 'react';
-import { uniqueId } from 'lodash';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '../../themes';
-import { Icon, Spinner } from '..';
+import { uniqueId } from 'lodash';
+import React, { FC, ReactNode, useRef, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { Icon, Spinner } from '..';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
@@ -60,7 +62,7 @@ export const CollapsableSection: FC<Props> = ({
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
+            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`}>

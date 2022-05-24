@@ -23,6 +23,7 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
 
+  ServiceAccountsRead = 'serviceaccounts:read',
   ServiceAccountsCreate = 'serviceaccounts:create',
   ServiceAccountsWrite = 'serviceaccounts:write',
   ServiceAccountsDelete = 'serviceaccounts:delete',
@@ -91,10 +92,8 @@ export enum AccessControlAction {
   AlertingInstanceRead = 'alert.instances:read',
 
   // Alerting Notification policies
-  AlertingNotificationsCreate = 'alert.notifications:create',
   AlertingNotificationsRead = 'alert.notifications:read',
-  AlertingNotificationsUpdate = 'alert.notifications:update',
-  AlertingNotificationsDelete = 'alert.notifications:delete',
+  AlertingNotificationsWrite = 'alert.notifications:write',
 
   // External alerting rule actions.
   AlertingRuleExternalWrite = 'alert.rules.external:write',
@@ -107,6 +106,10 @@ export enum AccessControlAction {
   // External alerting notifications actions.
   AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
+
+  ActionAPIKeysRead = 'apikeys:read',
+  ActionAPIKeysCreate = 'apikeys:create',
+  ActionAPIKeysDelete = 'apikeys:delete',
 }
 
 export interface Role {

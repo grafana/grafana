@@ -1,13 +1,14 @@
+import { isEqual } from 'lodash';
 import React, { createRef } from 'react';
 import ReactDOM from 'react-dom';
-import { isEqual } from 'lodash';
 import { FixedSizeList } from 'react-window';
+
+import { ThemeContext } from '../../themes/ThemeContext';
+import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
+import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
 
 import { TypeaheadInfo } from './TypeaheadInfo';
 import { TypeaheadItem } from './TypeaheadItem';
-import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 

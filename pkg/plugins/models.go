@@ -97,12 +97,11 @@ type Includes struct {
 	ID string `json:"-"`
 }
 
-func (e Includes) GetSlugOrUIDLink() string {
-	if len(e.UID) > 0 {
-		return "/d/" + e.UID
-	} else {
-		return "/dashboard/db/" + e.Slug
+func (e Includes) DashboardURLPath() string {
+	if e.Type != "dashboard" || len(e.UID) == 0 {
+		return ""
 	}
+	return "/d/" + e.UID
 }
 
 type Dependency struct {

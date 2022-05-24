@@ -1,5 +1,6 @@
-import { Field, FieldType } from '@grafana/data';
 import { isString, isUndefined } from 'lodash';
+
+import { Field, FieldType } from '@grafana/data';
 
 export function convertToType(value: any, field: Field): any {
   switch (field.type) {

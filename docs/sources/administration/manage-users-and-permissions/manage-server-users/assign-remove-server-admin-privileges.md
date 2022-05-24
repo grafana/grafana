@@ -1,18 +1,18 @@
 +++
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/assign-remove-server-admin-privileges/"]
 title = "Assign or remove Grafana server administrator privileges"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/assign-remove-server-admin-privileges.md"]
 weight = 20
 +++
 
 # Assign or remove Grafana server administrator privileges
 
-Grafana server administrators are responsible for creating users, organizations, and managing permissions. For more information about the server administration role, refer to [Grafana server administrators]({{< relref "../about-users-and-permissions/#grafana-server-administrators">}}).
+Grafana server administrators are responsible for creating users, organizations, and managing permissions. For more information about the server administration role, refer to [Grafana server administrators]({{< relref "../about-users-and-permissions/#grafana-server-administrators" >}}).
 
 > **Note:** Server administrators are "super-admins" with full permissions to create, read, update, and delete all resources and users in all organizations, as well as update global settings such as licenses. Only grant this permission to trusted users.
 
 ## Before you begin
 
-- [Add a user]({{< relref "./add-user.md">}})
+- [Add a user]({{< relref "./add-user.md" >}})
 - Ensure you have Grafana server administrator privileges
 
 **To assign or remove Grafana administrator privileges**:

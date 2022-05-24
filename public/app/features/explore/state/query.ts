@@ -1,5 +1,8 @@
-import { mergeMap, throttleTime } from 'rxjs/operators';
+import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import deepEqual from 'fast-deep-equal';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { mergeMap, throttleTime } from 'rxjs/operators';
+
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -16,7 +19,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-
+import { config } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -27,26 +30,20 @@ import {
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
-import { addToRichHistory } from 'app/core/utils/richHistory';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
-import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+
 import { notifyApp } from '../../../core/actions';
+import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { createErrorNotification } from '../../../core/copy/appNotification';
-import {
-  richHistoryStorageFullAction,
-  richHistoryLimitExceededAction,
-  richHistoryUpdatedAction,
-  stateSave,
-} from './main';
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+
+import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { stateSave } from './main';
 import { updateTime } from './time';
-import { historyUpdatedAction } from './history';
 import { createCacheKey, getResultsFromCache } from './utils';
-import deepEqual from 'fast-deep-equal';
 
 //
 // Actions and Payloads
@@ -320,29 +317,15 @@ async function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const {
-    richHistory: nextRichHistory,
-    richHistoryStorageFull,
-    limitExceeded,
-  } = await addToRichHistory(
-    state.richHistory || [],
-    datasource.uid,
-    datasource.name,
-    queries,
-    false,
-    '',
-    !state.richHistoryStorageFull,
-    !state.richHistoryLimitExceededWarningShown
-  );
   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-  dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-  if (richHistoryStorageFull) {
-    dispatch(richHistoryStorageFullAction());
-  }
-  if (limitExceeded) {
-    dispatch(richHistoryLimitExceededAction());
-  }
+  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+
+  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+  // used filters. Instead, we refresh the query history list.
+  // TODO: run only if Query History list is opened (#47252)
+  await dispatch(loadRichHistory(ExploreId.left));
+  await dispatch(loadRichHistory(ExploreId.right));
 }
 
 /**
@@ -852,7 +835,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -862,7 +846,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }

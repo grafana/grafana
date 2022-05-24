@@ -1,4 +1,5 @@
 import { from, Observable } from 'rxjs';
+
 import { ArrayDataFrame, DataQueryResponse, FieldType } from '@grafana/data';
 
 export function makeLogsQueryResponse(marker = ''): Observable<DataQueryResponse> {

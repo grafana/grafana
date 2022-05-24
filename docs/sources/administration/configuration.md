@@ -1,8 +1,8 @@
 +++
-title = "Configuration"
+aliases = ["/docs/grafana/latest/administration/configuration/", "/docs/grafana/latest/installation/configuration/"]
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/latest/installation/configuration/"]
+title = "Configuration"
 weight = 150
 +++
 
@@ -134,6 +134,10 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
+
+### force_migration
+
+Force migration will run migrations that might cause data loss. Default is `false`.
 
 <hr />
 
@@ -461,7 +465,13 @@ value is `true`.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
+Set to false, disables checking for new versions of Grafana from Grafana's GitHub repository. When enabled, the check for a new version runs every 10 minutes. It will notify, via the UI, when a new version is available. The check itself will not prompt any auto-updates of the Grafana software, nor will it send any sensitive information.
+
+### check_for_plugin_updates
+
+> **Note**: Available in Grafana v8.5.0 and later versions.
+
+Set to false disables checking for new versions of installed plugins from https://grafana.com. When enabled, the check for a new plugin runs every 10 minutes. It will notify, via the UI, when a new plugin update exists. The check itself will not prompt any auto-updates of the plugin, nor will it send any sensitive information.
 
 ### google_analytics_ua_id
 
@@ -502,6 +512,10 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
     	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
+
+### enable_feedback_links
+
+If set to false will remove all feedback links from the UI. Defaults to true.
 
 ## [security]
 
@@ -1167,7 +1181,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1360,6 +1374,14 @@ Configures the Profile section.
 ### enabled
 
 Enable or disable the Profile section. Default is `enabled`.
+
+## [query_history]
+
+Configures Query history in Explore.
+
+### enabled
+
+Enable or disable the Query history. Default is `enabled`.
 
 ## [metrics]
 
@@ -1678,7 +1700,7 @@ Enter a comma-separated list of plugin identifiers to hide in the plugin catalog
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+Refer to [Grafana Live configuration documentation]({{< relref "../live/set-up-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 
@@ -1707,7 +1729,7 @@ allowed_origins = "https://*.example.com"
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
 
-For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ### ha_engine_address
 
@@ -1899,3 +1921,31 @@ default_baselayer_config = `{
 ### enable_custom_baselayers
 
 Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+
+## [dashboard_previews]
+
+### [crawler]
+
+> **Note:** This feature is available in Grafana v9.0 and later versions.
+
+#### thread_count
+
+Number of dashboards rendered in parallel. Default is 6
+
+#### rendering_timeout
+
+Timeout passed down to the Image Renderer plugin. It is used in two separate places within a single rendering request - during the initial navigation to the dashboard, and when waiting for all the panels to load. Default is 20s.
+
+#### max_crawl_duration
+
+Maximum duration of a single crawl. Default is 1h.
+
+#### scheduler_interval
+
+Minimum interval between two subsequent scheduler runs. Default is 12h.
+
+Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.
+
+## [rbac]
+
+Refer to [Role-based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for more information.

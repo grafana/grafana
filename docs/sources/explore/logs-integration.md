@@ -1,7 +1,8 @@
 +++
-title = "Logs in Explore"
+aliases = ["/docs/grafana/latest/explore/logs-integration/"]
 description = "Logs in Explore"
-keywords = ["explore", "logs",]
+keywords = ["explore", "logs"]
+title = "Logs in Explore"
 weight = 15
 +++
 
@@ -96,6 +97,17 @@ You can change the order of received logs from the default descending order (new
 ### Labels and detected fields
 
 Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+
+### Escaping newlines
+
+Explore automatically detects some incorrectly escaped sequences in log lines, such as newlines (`\n`, `\r`) or tabs (`\t`). When it detects such sequences, Explore provides an "Escape newlines" option.
+
+To automatically fix incorrectly escaped sequences that Explore has detected:
+
+1. Click "Escape newlines" to replace the sequences.
+2. Manually review the replacements to confirm their correctness.
+
+Explore replaces these sequences. When it does so, the option will change from "Escape newlines" to "Remove escaping". Evaluate the changes as the parsing may not be accurate based on the input received. You can revert the replacements by clicking "Remove escaping".
 
 #### Derived fields links
 

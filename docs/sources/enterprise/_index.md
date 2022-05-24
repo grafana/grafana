@@ -1,7 +1,8 @@
 +++
-title = "Grafana Enterprise"
+aliases = ["/docs/grafana/latest/enterprise/"]
 description = "Grafana Enterprise overview"
 keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
+title = "Grafana Enterprise"
 weight = 150
 +++
 
@@ -23,13 +24,13 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 
 Supported auth providers:
 
-- [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only" >}})
 - [Azure AD OAuth]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -37,13 +38,13 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "saml.md" >}}) enables your Grafana Enterprise users to authenticate with SAML.
+[SAML authentication]({{< relref "./saml" >}}) enables your Grafana Enterprise users to authenticate with SAML.
 
 ## Enterprise features
 
-With Grafana Enterprise, you get access to new features, including:
+With Grafana Enterprise, you get access to the following features:
 
-- [Fine-grained access control]({{< relref "access-control/_index.md" >}}) to control access with fine-grained roles and permissions.
+- [Role-based access control]({{< relref "./access-control/_index.md" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
@@ -59,20 +60,21 @@ With Grafana Enterprise, you get access to new features, including:
 
 With a Grafana Enterprise license, you get access to premium data sources, including:
 
-- [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
-- [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
-- [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [AppDynamics](https://grafana.com/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Azure Devops](https://grafana.com/grafana/plugins/grafana-azuredevops-datasource)
+- [DataDog](https://grafana.com/grafana/plugins/grafana-datadog-datasource)
+- [Dynatrace](https://grafana.com/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](https://grafana.com/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](https://grafana.com/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](https://grafana.com/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
-- [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
-- [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
-- [Salesforce](https://grafana.com/grafana/plugins/grafana-salesforce-datasource/)
-- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource/)
+- [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
+- [Oracle Database](https://grafana.com/grafana/plugins/grafana-oracle-datasource)
+- [Salesforce](https://grafana.com/grafana/plugins/grafana-salesforce-datasource)
+- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
-- [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](https://grafana.com/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Wavefront](https://grafana.com/grafana/plugins/grafana-wavefront-datasource)
 

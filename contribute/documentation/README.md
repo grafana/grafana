@@ -212,10 +212,10 @@ of the sentence. When you write in passive voice, the recipient of the action (a
 Active-voice sentences are more direct and clearly identify _who_ is doing _what_. Not all tasks are completed by a user; sometimes the system can also be a performer (and by extension, the subject of the sentence). When you write in active voice you clearly make that distinction, which results in more engaging and less wordy content.
 
 | Use (active)                                          | Avoid (passive)                                                      |
-| ----------------------------------------------------- | -------------------------------------------------------------------- | --- |
+| ----------------------------------------------------- | -------------------------------------------------------------------- |
 | After you upgrade the software, restart the computer. | After the software has been upgraded, the computer can be restarted. |
 | Click **OK** to save the dashboard.                   | The dashboard is saved when the **OK** button is clicked.            |
-| Create a dashboard.                                   | A dashboard is created by you.                                       | .   |
+| Create a dashboard.                                   | A dashboard is created by you.                                       |
 
 ### Avoid obscure non-English words and abbreviations
 

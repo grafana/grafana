@@ -1,12 +1,14 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
-import pluralize from 'pluralize';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { Alert } from 'app/types/unified-alerting';
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { css } from '@emotion/css';
-import { GroupMode, UnifiedAlertListOptions } from './types';
+import pluralize from 'pluralize';
+import React, { FC, useCallback, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { Alert } from 'app/types/unified-alerting';
+
+import { GroupMode, UnifiedAlertListOptions } from './types';
 import { filterAlerts } from './util';
 
 interface Props {

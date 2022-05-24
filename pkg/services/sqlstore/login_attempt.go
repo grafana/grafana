@@ -5,17 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 var getTimeNow = time.Now
-
-func (ss *SQLStore) addLoginAttemptQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.CreateLoginAttempt)
-	bus.AddHandler("sql", ss.DeleteOldLoginAttempts)
-	bus.AddHandler("sql", ss.GetUserLoginAttemptCount)
-}
 
 func (ss *SQLStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {

@@ -1,6 +1,8 @@
 import React from 'react';
+
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { HorizontalGroup, Input, RadioButtonGroup } from '@grafana/ui';
+
 import { HeatmapCalculationAxisConfig, HeatmapCalculationMode } from '../models.gen';
 
 const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [

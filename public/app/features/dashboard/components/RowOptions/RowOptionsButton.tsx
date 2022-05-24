@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
+
 import { Icon, ModalsController } from '@grafana/ui';
 
-import { RowOptionsModal } from './RowOptionsModal';
 import { OnRowOptionsUpdate } from './RowOptionsForm';
+import { RowOptionsModal } from './RowOptionsModal';
 
 export interface RowOptionsButtonProps {
   title: string;

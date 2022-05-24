@@ -49,3 +49,13 @@ func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, qu
 	query.Result = a.ExpectedExternalUser
 	return a.ExpectedError
 }
+
+type AuthenticatorFake struct {
+	ExpectedUser  *models.User
+	ExpectedError error
+}
+
+func (a *AuthenticatorFake) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+	query.User = a.ExpectedUser
+	return a.ExpectedError
+}

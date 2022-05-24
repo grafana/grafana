@@ -1,7 +1,8 @@
-import { Task, TaskRunner } from './task';
 import chalk from 'chalk';
-import { coerce, satisfies } from 'semver';
 import { readFileSync } from 'fs';
+import { coerce, satisfies } from 'semver';
+
+import { Task, TaskRunner } from './task';
 
 interface FailedVersionCheck {
   file: string;

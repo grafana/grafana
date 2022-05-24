@@ -1,6 +1,6 @@
+import { NavModel, NavModelItem } from '@grafana/data';
 import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
-import { NavModel, NavModelItem } from '@grafana/data';
 
 interface Nav {
   breadcrumbs: NavModelItem[];

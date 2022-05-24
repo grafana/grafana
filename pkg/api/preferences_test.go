@@ -1,13 +1,21 @@
 package api
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 )
 
 var (
@@ -16,15 +24,27 @@ var (
 	patchOrgPreferencesUrl  = "/api/org/preferences/"
 	patchUserPreferencesUrl = "/api/user/preferences/"
 
-	testUpdateOrgPreferencesCmd    = `{ "theme": "light", "homeDashboardId": 1 }`
-	testPatchOrgPreferencesCmd     = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
-	testPatchOrgPreferencesCmdBad  = `this is not json`
-	testPatchUserPreferencesCmd    = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
-	testPatchUserPreferencesCmdBad = `this is not json`
+	testUpdateOrgPreferencesCmd                     = `{ "theme": "light", "homeDashboardId": 1 }`
+	testPatchOrgPreferencesCmd                      = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
+	testPatchOrgPreferencesCmdBad                   = `this is not json`
+	testPatchUserPreferencesCmd                     = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
+	testPatchUserPreferencesCmdBad                  = `this is not json`
+	testUpdateOrgPreferencesWithHomeDashboardUIDCmd = `{ "theme": "light", "homeDashboardUID": "home"}`
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
+
+	sc.hs.dashboardService = dashSvc
+
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
+	sc.hs.preferenceService = prefService
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -39,12 +59,21 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	t.Run("Org Admin can get org preferences", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
+		var resp map[string]interface{}
+		b, err := ioutil.ReadAll(response.Body)
+		assert.NoError(t, err)
+		assert.NoError(t, json.Unmarshal(b, &resp))
+		assert.Equal(t, "home", resp["homeDashboardUID"])
 	})
 }
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
+
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
+	sc.hs.preferenceService = prefService
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -133,6 +162,17 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
+	sc.hs.dashboardService = dashSvc
+	t.Run("Returns 200 on success", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
 	})
 }
 

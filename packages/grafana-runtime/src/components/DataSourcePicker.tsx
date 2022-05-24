@@ -2,7 +2,6 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -11,6 +10,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
 /**
@@ -164,7 +165,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         <Select
           aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
-          menuShouldPortal
           className="ds-picker select-container"
           isMulti={false}
           isClearable={isClearable}

@@ -6,11 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,195 +22,7 @@ func init() {
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
-func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboard)
-	bus.AddHandler("sql", ss.GetDashboardUIDById)
-	bus.AddHandler("sql", ss.GetDashboardTags)
-	bus.AddHandler("sql", ss.SearchDashboards)
-	bus.AddHandler("sql", ss.GetDashboards)
-	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
-	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardSlugById)
-	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
-}
-
 var generateNewUid func() string = util.GenerateShortUID
-
-func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
-			return models.ErrDashboardIdentifierNotSet
-		}
-
-		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-		has, err := dbSession.Get(&dashboard)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
-		}
-
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
-		query.Result = &dashboard
-		return nil
-	})
-}
-
-type DashboardSearchProjection struct {
-	ID          int64  `xorm:"id"`
-	UID         string `xorm:"uid"`
-	Title       string
-	Slug        string
-	Term        string
-	IsFolder    bool
-	FolderID    int64  `xorm:"folder_id"`
-	FolderUID   string `xorm:"folder_uid"`
-	FolderSlug  string
-	FolderTitle string
-	SortMeta    int64
-}
-
-func (ss *SQLStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	filters := []interface{}{
-		permissions.DashboardPermissionFilter{
-			OrgRole:         query.SignedInUser.OrgRole,
-			OrgId:           query.SignedInUser.OrgId,
-			Dialect:         dialect,
-			UserId:          query.SignedInUser.UserId,
-			PermissionLevel: query.Permission,
-		},
-	}
-
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		// if access control is enabled, overwrite the filters so far
-		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
-		}
-	}
-
-	for _, filter := range query.Sort.Filter {
-		filters = append(filters, filter)
-	}
-
-	filters = append(filters, query.Filters...)
-
-	if query.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
-	} else if query.SignedInUser.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgId})
-	}
-
-	if len(query.Tags) > 0 {
-		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
-	}
-
-	if len(query.DashboardIds) > 0 {
-		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
-	}
-
-	if query.IsStarred {
-		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserId})
-	}
-
-	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: dialect, Title: query.Title})
-	}
-
-	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: dialect, Type: query.Type})
-	}
-
-	if len(query.FolderIds) > 0 {
-		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
-	}
-
-	var res []DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: dialect, Filters: filters}
-
-	limit := query.Limit
-	if limit < 1 {
-		limit = 1000
-	}
-
-	page := query.Page
-	if page < 1 {
-		page = 1
-	}
-
-	sql, params := sb.ToSQL(limit, page)
-
-	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		return dbSession.SQL(sql, params...).Find(&res)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (ss *SQLStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
-	res, err := ss.FindDashboards(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	makeQueryResult(query, res)
-
-	return nil
-}
-
-func getHitType(item DashboardSearchProjection) models.HitType {
-	var hitType models.HitType
-	if item.IsFolder {
-		hitType = models.DashHitFolder
-	} else {
-		hitType = models.DashHitDB
-	}
-
-	return hitType
-}
-
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
-
-	for _, item := range res {
-		hit, exists := hits[item.ID]
-		if !exists {
-			hit = &models.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
-				Type:        getHitType(item),
-				FolderID:    item.FolderID,
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			query.Result = append(query.Result, hit)
-			hits[item.ID] = hit
-		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
-		}
-	}
-}
 
 func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
@@ -230,20 +38,6 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 		query.Result = make([]*models.DashboardTagCloudItem, 0)
 		sess := dbSession.SQL(sql, query.OrgId)
 		err := sess.Find(&query.Result)
-		return err
-	})
-}
-
-func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 {
-			return models.ErrCommandValidationFailed
-		}
-
-		var dashboards = make([]*models.Dashboard, 0)
-
-		err := dbSession.In("id", query.DashboardIds).Find(&dashboards)
-		query.Result = dashboards
 		return err
 	})
 }
@@ -317,47 +111,6 @@ func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *m
 		}
 
 		return err
-	})
-}
-
-type DashboardSlugDTO struct {
-	Slug string
-}
-
-func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-		var slug = DashboardSlugDTO{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = slug.Slug
-		return nil
-	})
-}
-
-func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
-
-		us := &models.DashboardRef{}
-
-		exists, err := dbSession.SQL(rawSQL, query.Id).Get(us)
-
-		if err != nil {
-			return err
-		} else if !exists {
-			return models.ErrDashboardNotFound
-		}
-
-		query.Result = us
-		return nil
 	})
 }
 

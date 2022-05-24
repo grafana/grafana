@@ -3,9 +3,7 @@
     "baseUrl": "./",
     "declarationDir": "dist",
     "outDir": "compiled",
-    "rootDirs": [".", "stories"],
-    "incremental": true,
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+    "rootDirs": [".", "stories"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

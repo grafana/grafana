@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;
@@ -102,24 +103,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
         background-color: ${theme.colors.action.hover};
       }
     }
-
-    > .pin-button {
-      opacity: 0;
-    }
-
-    &:hover > .pin-button,
-    &:focus-visible > .pin-button {
-      opacity: 100%;
-    }
-  `,
-  pinButton: css`
-    position: relative;
-    flex-shrink: 2;
-    color: ${theme.colors.text.secondary};
-
-    &:focus-visible {
-      opacity: 100%;
-    }
   `,
   element: css`
     align-items: center;
@@ -132,10 +115,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     padding: 5px 12px 5px 10px;
     text-align: left;
     white-space: nowrap;
-
-    &:focus-visible + .pin-button {
-      opacity: 100%;
-    }
 
     &:focus-visible {
       outline: none;

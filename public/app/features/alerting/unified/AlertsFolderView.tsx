@@ -1,4 +1,9 @@
 import { css } from '@emotion/css';
+import { isEqual, orderBy, uniqWith } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useDebounce } from 'react-use';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
@@ -6,10 +11,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { isEqual, orderBy, uniqWith } from 'lodash';
-import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useDebounce } from 'react-use';
+
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
@@ -54,7 +56,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
     useAlertsFolderViewParams();
 
   const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
-  const alertRules = matchingNamespace?.groups[0]?.rules ?? [];
+  const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
 
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
 
@@ -175,7 +177,7 @@ function filterAndSortRules(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
 
-  return orderBy(rules, (x) => x.name, [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
+  return orderBy(rules, (x) => x.name.toLowerCase(), [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

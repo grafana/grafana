@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -34,9 +35,8 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 	key, err := apikeygen.New(orgID, keyName)
 	require.NoError(t, err)
 
-	cmd := models.AddApiKeyCommand{
+	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
-		Role:          "Viewer",
 		OrgId:         orgID,
 		Key:           key.HashedKey,
 		SecondsToLive: secondsToLive,
@@ -149,6 +149,14 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 				assert.Equal(t, sa.Id, *query.Result.ServiceAccountId)
 				assert.Equal(t, sa.OrgId, query.Result.OrgId)
+				assert.True(t, strings.HasPrefix(actualBody["key"].(string), "glsa"))
+
+				keyInfo, err := apikeygenprefix.Decode(actualBody["key"].(string))
+				assert.NoError(t, err)
+
+				hash, err := keyInfo.Hash()
+				require.NoError(t, err)
+				require.Equal(t, query.Result.Key, hash)
 			}
 		})
 	}

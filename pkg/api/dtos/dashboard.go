@@ -33,6 +33,7 @@ type DashboardMeta struct {
 	Provisioned            bool                  `json:"provisioned"`
 	ProvisionedExternalId  string                `json:"provisionedExternalId"`
 	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
+	IsPublic               bool                  `json:"isPublic"`
 }
 type AnnotationPermission struct {
 	Dashboard    AnnotationActions `json:"dashboard"`
@@ -40,6 +41,7 @@ type AnnotationPermission struct {
 }
 
 type AnnotationActions struct {
+	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
 }

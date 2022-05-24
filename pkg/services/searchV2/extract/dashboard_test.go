@@ -44,12 +44,13 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash := ReadDashboard(f, ds)
+		dash, err := ReadDashboard(f, ds)
+		require.NoError(t, err)
 		out, err := json.MarshalIndent(dash, "", "  ")
 		require.NoError(t, err)
 
 		update := false
-		savedPath := "testdata/" + input + "-info.json"
+		savedPath := filepath.Join("testdata/", input+"-info.json")
 		saved, err := os.ReadFile(savedPath)
 		if err != nil {
 			update = true

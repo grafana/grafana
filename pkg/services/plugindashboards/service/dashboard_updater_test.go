@@ -569,8 +569,6 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		sCtx.dashboardService,
 	)
 
-	t.Cleanup(bus.ClearBusHandlers)
-
 	t.Run(desc, func(t *testing.T) {
 		f(sCtx)
 	})

@@ -1,16 +1,18 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon, HorizontalGroup } from '@grafana/ui';
 
-import { InstallControls } from './InstallControls';
-import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
-import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
-import { PluginLogo } from './PluginLogo';
+import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
+
 import { PluginDisabledBadge } from './Badges';
 import { GetStartedWithPlugin } from './GetStartedWithPlugin';
-import { getLatestCompatibleVersion } from '../helpers';
+import { InstallControls } from './InstallControls';
+import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependencies';
+import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
+import { PluginLogo } from './PluginLogo';
 
 type Props = {
   currentUrl: string;
@@ -24,75 +26,79 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
 
   return (
-    <div className={styles.headerContainer}>
-      <PluginLogo
-        alt={`${plugin.name} logo`}
-        src={plugin.info.logos.small}
-        className={css`
-          object-fit: contain;
-          width: 100%;
-          height: 68px;
-          max-width: 68px;
-        `}
-      />
+    <div>
+      <div className="page-container">
+        <div className={styles.headerContainer}>
+          <PluginLogo
+            alt={`${plugin.name} logo`}
+            src={plugin.info.logos.small}
+            className={css`
+              object-fit: contain;
+              width: 100%;
+              height: 68px;
+              max-width: 68px;
+            `}
+          />
 
-      <div className={styles.headerWrapper}>
-        {/* Title & navigation */}
-        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          <ol>
-            <li>
-              <a className={styles.textUnderline} href={parentUrl}>
-                Plugins
-              </a>
-            </li>
-            <li>
-              <a href={currentUrl} aria-current="page">
-                {plugin.name}
-              </a>
-            </li>
-          </ol>
-        </nav>
+          <div className={styles.headerWrapper}>
+            {/* Title & navigation */}
+            <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+              <ol>
+                <li>
+                  <a className={styles.textUnderline} href={parentUrl}>
+                    Plugins
+                  </a>
+                </li>
+                <li>
+                  <a href={currentUrl} aria-current="page">
+                    {plugin.name}
+                  </a>
+                </li>
+              </ol>
+            </nav>
 
-        <div className={styles.headerInformationRow}>
-          {/* Org name */}
-          <span>{plugin.orgName}</span>
+            <div className={styles.headerInformationRow}>
+              {/* Org name */}
+              <span>{plugin.orgName}</span>
 
-          {/* Links */}
-          {plugin.details?.links.map((link: any) => (
-            <a key={link.name} href={link.url}>
-              {link.name}
-            </a>
-          ))}
+              {/* Links */}
+              {plugin.details?.links.map((link: any) => (
+                <a key={link.name} href={link.url}>
+                  {link.name}
+                </a>
+              ))}
 
-          {/* Downloads */}
-          {plugin.downloads > 0 && (
-            <span>
-              <Icon name="cloud-download" />
-              {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
-            </span>
-          )}
+              {/* Downloads */}
+              {plugin.downloads > 0 && (
+                <span>
+                  <Icon name="cloud-download" />
+                  {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
+                </span>
+              )}
 
-          {/* Version */}
-          {Boolean(version) && <span>{version}</span>}
+              {/* Version */}
+              {Boolean(version) && <span>{version}</span>}
 
-          {/* Signature information */}
-          <PluginDetailsHeaderSignature plugin={plugin} />
+              {/* Signature information */}
+              <PluginDetailsHeaderSignature plugin={plugin} />
 
-          {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
+              {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
+            </div>
+
+            <PluginDetailsHeaderDependencies
+              plugin={plugin}
+              latestCompatibleVersion={latestCompatibleVersion}
+              className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
+            />
+
+            <p>{plugin.description}</p>
+
+            <HorizontalGroup height="auto">
+              <InstallControls plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
+              <GetStartedWithPlugin plugin={plugin} />
+            </HorizontalGroup>
+          </div>
         </div>
-
-        <PluginDetailsHeaderDependencies
-          plugin={plugin}
-          latestCompatibleVersion={latestCompatibleVersion}
-          className={cx(styles.headerInformationRow, styles.headerInformationRowSecondary)}
-        />
-
-        <p>{plugin.description}</p>
-
-        <HorizontalGroup height="auto">
-          <InstallControls plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
-          <GetStartedWithPlugin plugin={plugin} />
-        </HorizontalGroup>
       </div>
     </div>
   );
@@ -140,6 +146,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
       font-size: ${theme.typography.h4.fontSize};
+
+      a {
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     `,
     headerInformationRowSecondary: css`
       font-size: ${theme.typography.body.fontSize};

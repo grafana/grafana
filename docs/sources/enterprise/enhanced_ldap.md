@@ -1,7 +1,8 @@
 +++
-title = "Enhanced LDAP Integration"
+aliases = ["/docs/grafana/latest/enterprise/enhanced_ldap/"]
 description = "Grafana Enhanced LDAP Integration Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory", "enterprise"]
+title = "Enhanced LDAP Integration"
 weight = 600
 +++
 
@@ -11,7 +12,7 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 > Enhanced LDAP integration is only available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-> Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+> Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
 ## LDAP group synchronization for teams
 
@@ -24,7 +25,7 @@ Grafana keeps track of all synchronized users in teams, and you can see which us
 This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also allows you to manually add
 a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-[Learn more about team sync.]({{< relref "team-sync.md">}})
+[Learn more about team sync.]({{< relref "team-sync.md" >}})
 
 <div class="clearfix"></div>
 
@@ -48,13 +49,13 @@ Removed users are automatically logged out and their account disabled. These acc
 # @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
 # @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
 # @hourly                | Run once an hour, beginning of hour        | 0 0 * * * *
-sync_cron = "0 0 1 * * *" # This is default value (At 1 am every day)
-# This cron expression format uses 6 space-separated fields (including seconds), for example
-# sync_cron = "* */10 * * * *"
+sync_cron = "0 1 * * *" # This is default value (At 1 am every day)
+# This cron expression format uses 5 space-separated fields, for example
+# sync_cron = "*/10 * * * *"
 # This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the Grafana sync times i.e. you cannot set it for every 9th minute
 
 # You can also disable active LDAP synchronization
 active_sync_enabled = true # enabled by default
 ```
 
-Single bind configuration (as in the [Single bind example]({{< relref "../auth/ldap.md#single-bind-example">}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
+Single bind configuration (as in the [Single bind example]({{< relref "../auth/ldap.md#single-bind-example" >}})) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.

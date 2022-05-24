@@ -1,10 +1,10 @@
 +++
+aliases = ["/docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/", "/docs/grafana/latest/features/dashboard/dashboards/"]
 title = "Dashboard rows"
-aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
 weight = 80
 +++
 
-# Dshboard rows
+# Dashboard rows
 
 A dashboard row is a logical divider within a dashboard. It is used to group panels together.
 

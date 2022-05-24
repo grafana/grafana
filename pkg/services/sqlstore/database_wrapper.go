@@ -16,7 +16,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
 	"xorm.io/core"
 )
 
@@ -83,7 +82,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	elapsed := time.Since(begin)
 
 	histogram := databaseQueryHistogram.WithLabelValues(status)
-	if traceID, ok := cw.ExtractSampledTraceID(ctx); ok {
+	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		// Need to type-convert the Observer to an
 		// ExemplarObserver. This will always work for a
 		// HistogramVec.

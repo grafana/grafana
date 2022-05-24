@@ -5,20 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	service "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -35,16 +32,19 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	defer dashboardStore.AssertExpectations(t)
 
 	features := featuremgmt.WithFeatures()
-	permissionsServices := accesscontrolmock.NewPermissionsServicesMock()
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 	hs := &HTTPServer{
-		Cfg:                settings,
-		Features:           features,
-		folderService:      folderService,
-		permissionServices: permissionsServices,
+		Cfg:                         settings,
+		Features:                    features,
+		folderService:               folderService,
+		folderPermissionsService:    folderPermissions,
+		dashboardPermissionsService: dashboardPermissions,
 		dashboardService: service.ProvideDashboardService(
-			settings, dashboardStore, nil, features, permissionsServices,
+			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
 		),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
@@ -355,8 +355,6 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 
 func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {

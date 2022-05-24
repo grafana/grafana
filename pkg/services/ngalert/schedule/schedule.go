@@ -31,8 +31,6 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	Pause() error
-	Unpause() error
 
 	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
 	// organization.
@@ -123,7 +121,7 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
@@ -152,24 +150,6 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
-}
-
-func (sch *schedule) Pause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Pause()
-	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Unpause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Unpause()
-	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
-	return nil
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
@@ -656,6 +636,7 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 			RuleUID:           s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
 			State:             models.InstanceStateType(s.State.String()),
+			StateReason:       s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
@@ -667,129 +648,11 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 	}
 }
 
-type alertRuleRegistry struct {
-	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
-}
-
-// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
-// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		info = newAlertRuleInfo(context)
-		r.alertRuleInfo[key] = info
-	}
-	return info, !ok
-}
-
-// get returns the channel for the specific alert rule
-// if the key does not exist returns an error
-func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		return nil, fmt.Errorf("%v key not found", key)
-	}
-	return info, nil
-}
-
-func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	_, ok := r.alertRuleInfo[key]
-	return ok
-}
-
-// del removes pair that has specific key from alertRuleInfo.
-// Returns 2-tuple where the first element is value of the removed pair
-// and the second element indicates whether element with the specified key existed.
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	info, ok := r.alertRuleInfo[key]
-	if ok {
-		delete(r.alertRuleInfo, key)
-	}
-	return info, ok
-}
-
-func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
-	c := make(chan models.AlertRuleKey)
-
-	f := func() {
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		for k := range r.alertRuleInfo {
-			c <- k
-		}
-		close(c)
-	}
-	go f()
-
-	return c
-}
-
-func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
-	definitionsIDs := make(map[models.AlertRuleKey]struct{})
-	for k := range r.iter() {
-		definitionsIDs[k] = struct{}{}
-	}
-	return definitionsIDs
-}
-
-type alertRuleInfo struct {
-	evalCh   chan *evaluation
-	updateCh chan struct{}
-	ctx      context.Context
-	stop     context.CancelFunc
-}
-
-func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
-}
-
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
-	select {
-	case a.evalCh <- &evaluation{
-		scheduledAt: t,
-		version:     version,
-	}:
-		return true
-	case <-a.ctx.Done():
-		return false
-	}
-}
-
-// update signals the rule evaluation routine to update the internal state. Does nothing if the loop is stopped
-func (a *alertRuleInfo) update() bool {
-	select {
-	case a.updateCh <- struct{}{}:
-		return true
-	case <-a.ctx.Done():
-		return false
-	}
-}
-
-type evaluation struct {
-	scheduledAt time.Time
-	version     int64
-}
-
 // overrideCfg is only used on tests.
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
-	sch.ticker = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }

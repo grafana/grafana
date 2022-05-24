@@ -5,6 +5,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -149,6 +150,23 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	apikeyReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:apikeys:reader",
+			DisplayName: "APIKeys reader",
+			Description: "Gives access to read api keys.",
+			Group:       "API Keys",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionAPIKeyRead,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
 	apikeyWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     1,
@@ -156,19 +174,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "APIKeys writer",
 			Description: "Gives access to add and delete api keys.",
 			Group:       "API Keys",
-			Permissions: []ac.Permission{
+			Permissions: ac.ConcatPermissions(apikeyReaderRole.Role.Permissions, []ac.Permission{
 				{
 					Action: ac.ActionAPIKeyCreate,
-				},
-				{
-					Action: ac.ActionAPIKeyRead,
-					Scope:  ac.ScopeAPIKeysAll,
 				},
 				{
 					Action: ac.ActionAPIKeyDelete,
 					Scope:  ac.ScopeAPIKeysAll,
 				},
-			},
+			}),
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
@@ -314,7 +328,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -328,7 +342,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all dashboards.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -342,11 +356,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Dashboards",
 			Description: "Create, read, write or delete all dashboards and their permissions.",
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeDashboardsAll},
 			}),
 		},
 		Grants: []string{"Admin"},
@@ -375,7 +389,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: ac.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -394,11 +408,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					{Action: dashboards.ActionFoldersCreate},
 					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 					{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
 				}),
 		},
 		Grants: []string{"Admin"},
@@ -410,7 +424,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 	)
 }
 
@@ -461,6 +475,12 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 		ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
 	),
 )
+
+// apiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
+
+// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
+var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

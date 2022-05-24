@@ -9,7 +9,9 @@ import {
   createTheme,
   DataFrame,
 } from '@grafana/data';
+
 import { getTheme } from '../../themes';
+
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (

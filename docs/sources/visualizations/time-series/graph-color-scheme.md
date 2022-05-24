@@ -1,7 +1,7 @@
 +++
-title = "Graph and color schemes "
+aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/", "/docs/grafana/latest/visualizations/time-series/graph-color-scheme/"]
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/"]
+title = "Graph and color schemes "
 weight = 400
 +++
 

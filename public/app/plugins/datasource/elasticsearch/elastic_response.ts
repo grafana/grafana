@@ -1,7 +1,5 @@
 import { clone, filter, find, identity, isArray, keys, map, uniq, values as _values } from 'lodash';
-import flatten from 'app/core/utils/flatten';
-import * as queryDef from './query_def';
-import TableModel from 'app/core/table_model';
+
 import {
   DataQueryResponse,
   DataFrame,
@@ -10,14 +8,18 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import TableModel from 'app/core/table_model';
+import flatten from 'app/core/utils/flatten';
+
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
   TopMetrics,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import * as queryDef from './query_def';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { describeMetric, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 type TopMetricMetric = Record<string, number>;

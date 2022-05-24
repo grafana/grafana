@@ -7,15 +7,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/alertmanager/api/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/models"
+	legacyMetrics "github.com/grafana/grafana/pkg/services/alerting/metrics"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -52,6 +54,7 @@ type Scheduler struct {
 	EvalDuration             *prometheus.SummaryVec
 	GetAlertRulesDuration    prometheus.Histogram
 	SchedulePeriodicDuration prometheus.Histogram
+	Ticker                   *legacyMetrics.Ticker
 }
 
 type MultiOrgAlertmanager struct {
@@ -179,6 +182,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
+		Ticker: legacyMetrics.NewTickerMetrics(r),
 	}
 }
 
@@ -292,8 +296,8 @@ func Instrument(
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string
-		recipient := web.Params(c.Req)[":Recipient"]
-		if recipient == apimodels.GrafanaBackend.String() || recipient == "" {
+		datasourceID := web.Params(c.Req)[":DatasourceID"]
+		if datasourceID == apimodels.GrafanaBackend.String() || datasourceID == "" {
 			backend = GrafanaBackend
 		} else {
 			backend = ProxyBackend

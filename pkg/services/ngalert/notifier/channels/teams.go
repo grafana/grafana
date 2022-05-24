@@ -17,17 +17,22 @@ import (
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	*Base
-	URL     string
-	Message string
-	tmpl    *template.Template
-	log     log.Logger
-	ns      notifications.WebhookSender
+	URL          string
+	Message      string
+	Title        string
+	SectionTitle string
+	tmpl         *template.Template
+	log          log.Logger
+	ns           notifications.WebhookSender
+	images       ImageStore
 }
 
 type TeamsConfig struct {
 	*NotificationChannelConfig
-	URL     string
-	Message string
+	URL          string
+	Message      string
+	Title        string
+	SectionTitle string
 }
 
 func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -38,7 +43,7 @@ func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewTeamsNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
@@ -50,11 +55,17 @@ func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
 		NotificationChannelConfig: config,
 		URL:                       URL,
 		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		SectionTitle:              config.Settings.Get("sectiontitle").MustString(""),
 	}, nil
 }
 
+type teamsImage struct {
+	Image string `json:"image"`
+}
+
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *template.Template) *TeamsNotifier {
+func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *TeamsNotifier {
 	return &TeamsNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -63,11 +74,14 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *te
 			DisableResolveMessage: config.DisableResolveMessage,
 			Settings:              config.Settings,
 		}),
-		URL:     config.URL,
-		Message: config.Message,
-		log:     log.New("alerting.notifier.teams"),
-		ns:      ns,
-		tmpl:    t,
+		URL:          config.URL,
+		Message:      config.Message,
+		Title:        config.Title,
+		SectionTitle: config.SectionTitle,
+		log:          log.New("alerting.notifier.teams"),
+		ns:           ns,
+		images:       images,
+		tmpl:         t,
 	}
 }
 
@@ -78,7 +92,36 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
-	title := tmpl(DefaultMessageTitleEmbed)
+	images := []teamsImage{}
+	for i := range as {
+		imgToken := getTokenFromAnnotations(as[i].Annotations)
+		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+		imgURL, err := tn.images.GetURL(timeoutCtx, imgToken)
+		cancel()
+		if err != nil {
+			if !errors.Is(err, ErrImagesUnavailable) {
+				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+				tn.log.Warn("failed to retrieve image url from store", "error", err)
+			}
+		}
+		if len(imgURL) > 0 {
+			images = append(images, teamsImage{Image: imgURL})
+		}
+	}
+
+	// Note: these template calls must remain in this order
+	title := tmpl(tn.Title)
+	sections := []map[string]interface{}{
+		{
+			"title": tmpl(tn.SectionTitle),
+			"text":  tmpl(tn.Message),
+		},
+	}
+
+	if len(images) != 0 {
+		sections[0]["images"] = images
+	}
+
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -87,12 +130,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		"summary":    title,
 		"title":      title,
 		"themeColor": getAlertStatusColor(types.Alerts(as...).Status()),
-		"sections": []map[string]interface{}{
-			{
-				"title": "Details",
-				"text":  tmpl(tn.Message),
-			},
-		},
+		"sections":   sections,
 		"potentialAction": []map[string]interface{}{
 			{
 				"@context": "http://schema.org",

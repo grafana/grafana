@@ -1,7 +1,8 @@
-import React, { PureComponent, ChangeEvent } from 'react';
 import classNames from 'classnames';
-import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
+import React, { PureComponent, ChangeEvent } from 'react';
+
 import { ValidationEvents, ValidationRule } from '../../../../types';
+import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
 
 export enum LegacyInputStatus {
   Invalid = 'invalid',

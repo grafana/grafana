@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceKeyValuePair, TraceSpan } from '../types/trace';
 import { TNil } from '../types';
+import { TraceKeyValuePair, TraceSpan } from '../types/trace';
 
 export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
   if (!spans) {

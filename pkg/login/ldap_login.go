@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -59,7 +58,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
-	err = bus.Dispatch(ctx, upsert)
+	err = loginService.UpsertUser(ctx, upsert)
 	if err != nil {
 		return true, err
 	}

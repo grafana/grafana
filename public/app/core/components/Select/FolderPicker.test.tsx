@@ -1,9 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import * as api from 'app/features/manage-dashboards/state/actions';
+
+import { DashboardSearchHit } from '../../../features/search/types';
 
 import { FolderPicker, getInitialValues } from './FolderPicker';
-import * as api from 'app/features/manage-dashboards/state/actions';
-import { DashboardSearchHit } from '../../../features/search/types';
 
 describe('FolderPicker', () => {
   it('should render', () => {

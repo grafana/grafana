@@ -1,7 +1,7 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from '@emotion/css';
-import { Collapse } from '@grafana/ui';
+
 import {
   AbsoluteTimeRange,
   Field,
@@ -10,16 +10,19 @@ import {
   LogRowModel,
   RawTimeRange,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { getTimeZone } from '../profile/state/selectors';
+
+import { LiveLogsWithTheme } from './LiveLogs';
+import { Logs } from './Logs';
 import { splitOpen } from './state/main';
 import { addResultsToCache, clearCache } from './state/query';
 import { updateTimeRange } from './state/time';
-import { getTimeZone } from '../profile/state/selectors';
-import { LiveLogsWithTheme } from './LiveLogs';
-import { Logs } from './Logs';
-import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
+import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps extends PropsFromRedux {
@@ -124,6 +127,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
             <Logs
+              exploreId={exploreId}
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}

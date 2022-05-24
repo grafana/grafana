@@ -1,4 +1,5 @@
 import { AnnotationEvent, DataFrame } from '../types';
+
 import { BusEventBase, BusEventWithPayload } from './types';
 
 /**

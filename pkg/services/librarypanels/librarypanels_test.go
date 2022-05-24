@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -186,8 +186,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -204,8 +203,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -401,8 +399,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 					},
 				},
@@ -438,10 +435,9 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
-						"type": fmt.Sprintf("Name: \"%s\", UID: \"%s\"", sc.initialResult.Result.Name, sc.initialResult.Result.UID),
+						"type": fmt.Sprintf("Library panel with UID: \"%s\"", sc.initialResult.Result.UID),
 					},
 				},
 			}
@@ -476,8 +472,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 						"title": "Text - Library Panel",
 						"type":  "text",
@@ -515,8 +510,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 					},
 				},
@@ -586,8 +580,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -604,8 +597,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -663,8 +655,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 									"y": 13,
 								},
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 							},
 						},
@@ -678,8 +669,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"y": 19,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 					},
 				},
@@ -729,46 +719,6 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 			err := sc.service.CleanLibraryPanelsForDashboard(dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
-
-	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel without name, it should fail",
-		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]interface{}{
-						"id": int64(2),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
-							"uid": sc.initialResult.Result.UID,
-						},
-						"title": "Text - Library Panel",
-						"type":  "text",
-					},
-				},
-			}
-			dash := models.Dashboard{
-				Title: "Testing CleanLibraryPanelsForDashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-
-			err := sc.service.CleanLibraryPanelsForDashboard(dashInDB)
-			require.EqualError(t, err, errLibraryPanelHeaderNameMissing.Error())
-		})
 }
 
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
@@ -795,8 +745,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 						"title": "Text - Library Panel",
 						"type":  "text",
@@ -877,8 +826,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -895,8 +843,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -997,8 +944,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  unused.UID,
-							"name": unused.Name,
+							"uid": unused.UID,
 						},
 						"title":       "Unused Libray Panel",
 						"description": "Unused description",
@@ -1034,8 +980,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 					"datasource": "${DS_GDEV-TESTDATA}",
 					"libraryPanel": map[string]interface{}{
-						"uid":  sc.initialResult.Result.UID,
-						"name": sc.initialResult.Result.Name,
+						"uid": sc.initialResult.Result.UID,
 					},
 					"title": "Text - Library Panel",
 					"type":  "text",
@@ -1422,10 +1367,12 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := dashboardservice.ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, dashAlertService,
-		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		cfg, dashboardStore, dashAlertService,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -1437,13 +1384,15 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, permissionsServices)
 	ac := acmock.New()
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, permissionsServices, ac, nil)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	features := featuremgmt.WithFeatures()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions)
+	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
@@ -1536,17 +1485,18 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 
 		features := featuremgmt.WithFeatures()
-		permissionsServices := acmock.NewPermissionsServicesMock()
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
 
 		dashboardService := dashboardservice.ProvideDashboardService(
 			cfg, dashboardStore, &alerting.DashAlertExtractorService{},
-			features, permissionsServices,
+			features, folderPermissions, dashboardPermissions,
 		)
 		ac := acmock.New()
 
 		folderService := dashboardservice.ProvideFolderService(
 			cfg, dashboardService, dashboardStore, nil,
-			features, permissionsServices, ac, nil,
+			features, folderPermissions, ac,
 		)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)

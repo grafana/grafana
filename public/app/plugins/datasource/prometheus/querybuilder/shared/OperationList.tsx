@@ -1,10 +1,14 @@
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { useMountedState, usePrevious } from 'react-use';
+
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
-import React, { useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
+
 import { OperationEditor } from './OperationEditor';
 
 export interface Props<T extends QueryWithOperations> {
@@ -25,6 +29,8 @@ export function OperationList<T extends QueryWithOperations>({
 }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
+
+  const opsToHighlight = useOperationsHighlight(operations);
 
   const [cascaderOpen, setCascaderOpen] = useState(false);
 
@@ -86,7 +92,7 @@ export function OperationList<T extends QueryWithOperations>({
                 <div className={styles.operationList} ref={provided.innerRef} {...provided.droppableProps}>
                   {operations.map((op, index) => (
                     <OperationEditor
-                      key={index}
+                      key={op.id + index}
                       queryModeller={queryModeller}
                       index={index}
                       operation={op}
@@ -95,6 +101,7 @@ export function OperationList<T extends QueryWithOperations>({
                       onChange={onOperationChange}
                       onRemove={onRemove}
                       onRunQuery={onRunQuery}
+                      highlight={opsToHighlight[index]}
                     />
                   ))}
                   {provided.placeholder}
@@ -123,6 +130,49 @@ export function OperationList<T extends QueryWithOperations>({
       </Stack>
     </Stack>
   );
+}
+
+/**
+ * Returns indexes of operations that should be highlighted. We check the diff of operations added but at the same time
+ * we want to highlight operations only after the initial render, so we check for mounted state and calculate the diff
+ * only after.
+ * @param operations
+ */
+function useOperationsHighlight(operations: QueryBuilderOperation[]) {
+  const isMounted = useMountedState();
+  const prevOperations = usePrevious(operations);
+
+  if (!isMounted()) {
+    return operations.map(() => false);
+  }
+
+  if (!prevOperations) {
+    return operations.map(() => true);
+  }
+
+  let newOps: boolean[] = [];
+
+  if (prevOperations.length - 1 === operations.length && operations.every((op) => prevOperations.includes(op))) {
+    // In case we remove one op and does not change any ops then don't highlight anything.
+    return operations.map(() => false);
+  }
+  if (prevOperations.length + 1 === operations.length && prevOperations.every((op) => operations.includes(op))) {
+    // If we add a single op just find it and highlight just that.
+    const newOp = operations.find((op) => !prevOperations.includes(op));
+    newOps = operations.map((op) => {
+      return op === newOp;
+    });
+  } else {
+    // Default diff of all ops.
+    newOps = operations.map((op, index) => {
+      return !isSameOp(op.id, prevOperations[index]?.id);
+    });
+  }
+  return newOps;
+}
+
+function isSameOp(op1?: string, op2?: string) {
+  return op1 === op2 || `__${op1}_by` === op2 || op1 === `__${op2}_by`;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

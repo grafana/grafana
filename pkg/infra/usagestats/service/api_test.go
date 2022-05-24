@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -73,11 +74,11 @@ func getUsageStats(t *testing.T, server *web.Mux) (*models.SystemStats, *httptes
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 
-	var usageStats *models.SystemStats
+	var usageStats models.SystemStats
 	if recorder.Code == http.StatusOK {
 		require.NoError(t, json.NewDecoder(recorder.Body).Decode(&usageStats))
 	}
-	return usageStats, recorder
+	return &usageStats, recorder
 }
 
 func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStats) *web.Mux {
@@ -103,5 +104,8 @@ func contextProvider(tc *testContext) web.Handler {
 			Logger:       log.New("test"),
 		}
 		c.Map(reqCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
+		c.Map(c.Req)
 	}
 }

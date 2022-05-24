@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { LegendDisplayMode } from '@grafana/schema';
+import React, { useMemo, useRef, useState } from 'react';
+
 import {
   CartesianCoords2D,
   compareDataFrameStructures,
@@ -11,6 +11,8 @@ import {
   TimeRange,
   VizOrientation,
 } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   GraphNG,
   GraphNGProps,
@@ -26,15 +28,15 @@ import {
   VizLegend,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { PanelDataErrorView } from '@grafana/runtime';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-import { PanelOptions } from './models.gen';
-import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+
 import { HoverEvent, setupConfig } from './config';
+import { PanelOptions } from './models.gen';
+import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;
 
@@ -63,7 +65,15 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<PanelOptions> {}
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({
+  data,
+  options,
+  fieldConfig,
+  width,
+  height,
+  timeZone,
+  id,
+}) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
@@ -133,7 +143,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
   if (!info.viz[0]?.fields.length) {
-    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        message={info.warn}
+        needsNumberField={true}
+      />
+    );
   }
 
   const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {

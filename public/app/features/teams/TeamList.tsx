@@ -1,18 +1,21 @@
 import React, { PureComponent } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
+
 import { NavModel } from '@grafana/data';
+import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
-import { deleteTeam, loadTeams } from './state/actions';
-import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { config } from 'app/core/config';
-import { contextSrv, User } from 'app/core/services/context_srv';
-import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import Page from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { config } from 'app/core/config';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { contextSrv, User } from 'app/core/services/context_srv';
+import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+
+import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+
+import { deleteTeam, loadTeams } from './state/actions';
+import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
 

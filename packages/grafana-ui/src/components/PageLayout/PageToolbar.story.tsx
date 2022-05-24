@@ -1,10 +1,13 @@
-import React from 'react';
-import { ToolbarButton, VerticalGroup } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { PageToolbar } from './PageToolbar';
-import { StoryExample } from '../../utils/storybook/StoryExample';
 import { action } from '@storybook/addon-actions';
+import React from 'react';
+
+import { ToolbarButton, VerticalGroup } from '@grafana/ui';
+
+import { StoryExample } from '../../utils/storybook/StoryExample';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { IconButton } from '../IconButton/IconButton';
+
+import { PageToolbar } from './PageToolbar';
 
 export default {
   title: 'Layout/PageToolbar',

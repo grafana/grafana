@@ -1,14 +1,16 @@
-import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
-import { LokiQuery, LokiQueryType } from './types';
+import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+
+import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { makeIdField } from './makeIdField';
+import { dataFrameHasLokiError } from './responseUtils';
+import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
 }
 
-// returns a new frame, with meta merged with it's original meta
+// returns a new frame, with meta shallow merged with it's original meta
 function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   const { meta: oldMeta, ...rest } = frame;
   // meta maybe be undefined, we need to handle that
@@ -19,41 +21,44 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
-function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
+function processStreamFrame(
+  frame: DataFrame,
+  query: LokiQuery | undefined,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame {
+  const custom: Record<string, string> = {
+    ...frame.meta?.custom, // keep the original meta.custom
+    // used by logs_model
+    lokiQueryStatKey: 'Summary: total bytes processed',
+  };
+
+  if (dataFrameHasLokiError(frame)) {
+    custom.error = 'Error when parsing some of the logs';
+  }
+
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
+    limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
-    custom: {
-      // used by logs_model
-      lokiQueryStatKey: 'Summary: total bytes processed',
-    },
+    custom,
   };
+
   const newFrame = setFrameMeta(frame, meta);
-  const newFields = frame.fields.map((field) => {
-    // the nanosecond-timestamp field must have a type-time
-    if (field.name === 'tsNs') {
-      return {
-        ...field,
-        type: FieldType.time,
-      };
-    } else {
-      return field;
-    }
-  });
-
-  // we add a calculated id-field
-  newFields.push(makeIdField(frame));
-
+  const derivedFields = getDerivedFields(newFrame, derivedFieldConfigs);
   return {
     ...newFrame,
-    fields: newFields,
+    fields: [...newFrame.fields, ...derivedFields],
   };
 }
 
-function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
+function processStreamsFrames(
+  frames: DataFrame[],
+  queryMap: Map<string, LokiQuery>,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query);
+    return processStreamFrame(frame, query, derivedFieldConfigs);
   });
 }
 
@@ -98,7 +103,8 @@ function groupFrames(
 
 export function transformBackendResult(
   response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery>
+  queries: LokiQuery[],
+  derivedFieldConfigs: DerivedFieldConfig[]
 ): DataQueryResponse {
   const { data, ...rest } = response;
 
@@ -112,7 +118,7 @@ export function transformBackendResult(
     return d;
   });
 
-  const queryMap = new Map(request.targets.map((query) => [query.refId, query]));
+  const queryMap = new Map(queries.map((query) => [query.refId, query]));
 
   const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 
@@ -121,7 +127,7 @@ export function transformBackendResult(
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap),
+      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
     ],
   };
 }

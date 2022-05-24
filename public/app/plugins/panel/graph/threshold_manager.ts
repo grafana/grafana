@@ -1,10 +1,11 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import { isNumber } from 'lodash';
+
 import { getColorForTheme } from '@grafana/data';
-import { CoreEvents } from 'app/types';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { config } from 'app/core/config';
+import { CoreEvents } from 'app/types';
 
 export class ThresholdManager {
   plot: any;

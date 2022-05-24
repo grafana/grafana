@@ -1,3 +1,6 @@
+import { descending, deviation } from 'd3';
+import { partition, groupBy } from 'lodash';
+
 import {
   ArrayDataFrame,
   ArrayVector,
@@ -20,8 +23,8 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { partition, groupBy } from 'lodash';
-import { descending, deviation } from 'd3';
+
+import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -34,10 +37,9 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
-import { renderLegendFormat } from './legend';
 
-const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
-const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+// handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
+const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
 
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
@@ -72,16 +74,8 @@ export function transformV2(
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
-  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition<DataFrame>(framesWithoutTable, (df) =>
-    isHeatmapResult(df, request)
-  );
-
-  const processedHeatmapFrames = mergeHeatmapFrames(
-    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
-  );
-
-  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
-    framesWithoutTableAndHeatmaps,
+  const [exemplarFrames, framesWithoutTableAndExemplars] = partition<DataFrame>(
+    framesWithoutTable,
     (df) => df.meta?.custom?.resultType === 'exemplar'
   );
 
@@ -102,6 +96,15 @@ export function transformV2(
 
     return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
   });
+
+  const [heatmapResults, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
+    framesWithoutTableAndExemplars,
+    (df) => isHeatmapResult(df, request)
+  );
+
+  const processedHeatmapFrames = mergeHeatmapFrames(
+    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
+  );
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
@@ -608,13 +611,10 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseSampleValue(value: string): number {
-  switch (value) {
-    case POSITIVE_INFINITY_SAMPLE_VALUE:
-      return Number.POSITIVE_INFINITY;
-    case NEGATIVE_INFINITY_SAMPLE_VALUE:
-      return Number.NEGATIVE_INFINITY;
-    default:
-      return parseFloat(value);
+/** @internal */
+export function parseSampleValue(value: string): number {
+  if (INFINITY_SAMPLE_REGEX.test(value)) {
+    return value[0] === '-' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   }
+  return parseFloat(value);
 }

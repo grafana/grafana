@@ -1,16 +1,17 @@
 import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
+import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import PostgresQueryModel from 'app/plugins/datasource/postgres/postgres_query_model';
+
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import ResponseParser from './response_parser';
-import PostgresQueryModel from 'app/plugins/datasource/postgres/postgres_query_model';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-//Types
 import { PostgresOptions, PostgresQuery, PostgresQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, PostgresOptions> {
   id: any;

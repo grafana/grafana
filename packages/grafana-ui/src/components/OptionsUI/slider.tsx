@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { FieldConfigEditorProps, SliderFieldConfigSettings } from '@grafana/data';
+
 import { Slider } from '../Slider/Slider';
 
 export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFieldConfigSettings>> = ({

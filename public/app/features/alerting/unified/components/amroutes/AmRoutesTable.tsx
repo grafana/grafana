@@ -1,14 +1,19 @@
+import { intersectionWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
+
+import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { EmptyArea } from '../EmptyArea';
+import { Matchers } from '../silences/Matchers';
+
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
-import { Matchers } from '../silences/Matchers';
-import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
-import { intersectionWith, isEqual } from 'lodash';
-import { EmptyArea } from '../EmptyArea';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -18,6 +23,7 @@ export interface AmRoutesTableProps {
   routes: FormAmRoute[];
   filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
+  alertManagerSourceName: string;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
@@ -57,8 +63,8 @@ export const updatedRoute = (routes: FormAmRoute[], updatedRoute: FormAmRoute): 
   return newRoutes;
 };
 
-export const deleteRoute = (routes: FormAmRoute[], routeToRemove: FormAmRoute): FormAmRoute[] => {
-  return routes.filter((route) => route.id !== routeToRemove.id);
+export const deleteRoute = (routes: FormAmRoute[], routeId: string): FormAmRoute[] => {
+  return routes.filter((route) => route.id !== routeId);
 };
 
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
@@ -69,9 +75,16 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   routes,
   filters,
   readOnly = false,
+  alertManagerSourceName,
 }) => {
   const [editMode, setEditMode] = useState(false);
+  const [deletingRouteId, setDeletingRouteId] = useState<string | undefined>(undefined);
   const [expandedId, setExpandedId] = useState<string | number>();
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canEditRoutes = contextSrv.hasPermission(permissions.update);
+  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
+
+  const showActions = !readOnly && (canEditRoutes || canDeleteRoutes);
 
   const expandItem = useCallback((item: RouteTableItemProps) => setExpandedId(item.id), []);
   const collapseItem = useCallback(() => setExpandedId(undefined), []);
@@ -81,7 +94,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />,
+      renderCell: (item) => {
+        return item.data.object_matchers.length ? (
+          <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />
+        ) : (
+          <span>Matches all alert instances</span>
+        );
+      },
       size: 10,
     },
     {
@@ -102,7 +121,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       renderCell: (item) => item.data.muteTimeIntervals.join(', ') || '-',
       size: 5,
     },
-    ...(readOnly
+    ...(!showActions
       ? []
       : [
           {
@@ -120,27 +139,28 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               };
 
               return (
-                <HorizontalGroup>
-                  <Button
-                    aria-label="Edit route"
-                    icon="pen"
-                    onClick={expandWithCustomContent}
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                  >
-                    Edit
-                  </Button>
-                  <IconButton
-                    aria-label="Delete route"
-                    name="trash-alt"
-                    onClick={() => {
-                      const newRoutes = deleteRoute(routes, item.data);
-                      onChange(newRoutes);
-                    }}
-                    type="button"
-                  />
-                </HorizontalGroup>
+                <>
+                  <HorizontalGroup>
+                    <Button
+                      aria-label="Edit route"
+                      icon="pen"
+                      onClick={expandWithCustomContent}
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                    >
+                      Edit
+                    </Button>
+                    <IconButton
+                      aria-label="Delete route"
+                      name="trash-alt"
+                      onClick={() => {
+                        setDeletingRouteId(item.data.id);
+                      }}
+                      type="button"
+                    />
+                  </HorizontalGroup>
+                </>
               );
             },
             size: '100px',
@@ -177,44 +197,62 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   }
 
   return (
-    <DynamicTable
-      cols={cols}
-      isExpandable={true}
-      items={dynamicTableRoutes}
-      testIdGenerator={() => 'am-routes-row'}
-      onCollapse={collapseItem}
-      onExpand={expandItem}
-      isExpanded={(item) => expandedId === item.id}
-      renderExpandedContent={(item: RouteTableItemProps) =>
-        isAddMode || editMode ? (
-          <AmRoutesExpandedForm
-            onCancel={() => {
-              if (isAddMode) {
-                onCancelAdd();
-              }
-              setEditMode(false);
-            }}
-            onSave={(data) => {
-              const newRoutes = updatedRoute(routes, data);
+    <>
+      <DynamicTable
+        cols={cols}
+        isExpandable={true}
+        items={dynamicTableRoutes}
+        testIdGenerator={() => 'am-routes-row'}
+        onCollapse={collapseItem}
+        onExpand={expandItem}
+        isExpanded={(item) => expandedId === item.id}
+        renderExpandedContent={(item: RouteTableItemProps) =>
+          isAddMode || editMode ? (
+            <AmRoutesExpandedForm
+              onCancel={() => {
+                if (isAddMode) {
+                  onCancelAdd();
+                }
+                setEditMode(false);
+              }}
+              onSave={(data) => {
+                const newRoutes = updatedRoute(routes, data);
 
-              setEditMode(false);
-              onChange(newRoutes);
-            }}
-            receivers={receivers}
-            routes={item.data}
-          />
-        ) : (
-          <AmRoutesExpandedRead
-            onChange={(data) => {
-              const newRoutes = updatedRoute(routes, data);
-              onChange(newRoutes);
-            }}
-            receivers={receivers}
-            routes={item.data}
-            readOnly={readOnly}
-          />
-        )
-      }
-    />
+                setEditMode(false);
+                onChange(newRoutes);
+              }}
+              receivers={receivers}
+              routes={item.data}
+            />
+          ) : (
+            <AmRoutesExpandedRead
+              onChange={(data) => {
+                const newRoutes = updatedRoute(routes, data);
+                onChange(newRoutes);
+              }}
+              receivers={receivers}
+              routes={item.data}
+              readOnly={readOnly}
+              alertManagerSourceName={alertManagerSourceName}
+            />
+          )
+        }
+      />
+      <ConfirmModal
+        isOpen={!!deletingRouteId}
+        title="Delete notification policy"
+        body="Deleting this notification policy will permanently remove it. Are you sure you want to delete this policy?"
+        confirmText="Yes, delete"
+        icon="exclamation-triangle"
+        onConfirm={() => {
+          if (deletingRouteId) {
+            const newRoutes = deleteRoute(routes, deletingRouteId);
+            onChange(newRoutes);
+            setDeletingRouteId(undefined);
+          }
+        }}
+        onDismiss={() => setDeletingRouteId(undefined)}
+      />
+    </>
   );
 };

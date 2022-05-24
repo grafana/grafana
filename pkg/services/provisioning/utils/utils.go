@@ -12,6 +12,10 @@ type OrgStore interface {
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 }
 
+type DashboardStore interface {
+	GetDashboard(context.Context, *models.GetDashboardQuery) error
+}
+
 func CheckOrgExists(ctx context.Context, store OrgStore, orgID int64) error {
 	query := models.GetOrgByIdQuery{Id: orgID}
 	if err := store.GetOrgById(ctx, &query); err != nil {

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { TextArea } from '@grafana/ui';
 
 export interface Props {

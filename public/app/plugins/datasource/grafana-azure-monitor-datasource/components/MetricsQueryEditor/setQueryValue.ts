@@ -1,5 +1,20 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
+export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
+  return {
+    ...query,
+    azureMonitor: {
+      ...query.azureMonitor,
+      resourceUri: resourceURI,
+      metricNamespace: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
+    },
+  };
+}
+
 export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: string): AzureMonitorQuery {
   if (query.subscription === subscriptionID) {
     return query;
@@ -10,6 +25,7 @@ export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: stri
     subscription: subscriptionID,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceGroup: undefined,
       metricDefinition: undefined,
       metricNamespace: undefined,
@@ -31,6 +47,7 @@ export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceGroup: resourceGroup,
       metricDefinition: undefined,
       metricNamespace: undefined,
@@ -53,6 +70,7 @@ export function setResourceType(query: AzureMonitorQuery, resourceType: string |
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       metricDefinition: resourceType,
       resourceName: undefined,
       metricNamespace: undefined,
@@ -75,6 +93,7 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceName: resourceName,
       metricNamespace: undefined,
       metricName: undefined,
@@ -90,6 +109,23 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
     return query;
   }
 
+  let resourceUri = query.azureMonitor?.resourceUri;
+
+  // Storage Account URIs need to be handled differently due to the additional storage services (blob/queue/table/file).
+  // When one of these namespaces is selected it does not form a part of the URI for the storage account and so must be appended.
+  // The 'default' path must also be appended. Without these two paths any API call will fail.
+  if (resourceUri && metricNamespace?.includes('Microsoft.Storage/storageAccounts')) {
+    const splitUri = resourceUri.split('/');
+    const accountNameIndex = splitUri.findIndex((item) => item === 'storageAccounts') + 1;
+    const baseUri = splitUri.slice(0, accountNameIndex + 1).join('/');
+    if (metricNamespace === 'Microsoft.Storage/storageAccounts') {
+      resourceUri = baseUri;
+    } else {
+      const subNamespace = metricNamespace.split('/')[2];
+      resourceUri = `${baseUri}/${subNamespace}/default`;
+    }
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -99,6 +135,7 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
       aggregation: undefined,
       timeGrain: '',
       dimensionFilters: [],
+      resourceUri,
     },
   };
 }
@@ -166,7 +203,7 @@ export function appendDimensionFilter(
   query: AzureMonitorQuery,
   dimension = '',
   operator = 'eq',
-  filter = ''
+  filters: string[] = []
 ): AzureMonitorQuery {
   const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
 
@@ -175,7 +212,7 @@ export function appendDimensionFilter(
     {
       dimension,
       operator,
-      filter,
+      filters,
     },
   ]);
 }
@@ -197,6 +234,9 @@ export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
   const newFilters = [...existingFilters];
   const newFilter = newFilters[index];
   newFilter[fieldName] = value;
+  if (fieldName === 'dimension' || fieldName === 'operator') {
+    newFilter.filters = [];
+  }
   return setDimensionFilters(query, newFilters);
 }
 

@@ -10,8 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -39,6 +40,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
 
+	cfg.IsFeatureToggleEnabled = func(key string) bool {
+		// Enable alert provisioning FF when running tests.
+		return key == featuremgmt.FlagAlertProvisioning
+	}
+
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -46,26 +52,28 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
-		features, permissionsServices,
+		features, folderPermissions, dashboardPermissions,
 	)
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices, ac, nil,
+		features, folderPermissions, ac,
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m, folderService, ac,
+		cfg, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
-		SQLStore:     ng.SQLStore,
-		BaseInterval: baseInterval * time.Second,
-		Logger:       log.New("ngalert-test"),
+		SQLStore:         ng.SQLStore,
+		BaseInterval:     baseInterval * time.Second,
+		Logger:           log.New("ngalert-test"),
+		DashboardService: dashboardService,
 	}
 }
 
@@ -76,45 +84,44 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 
 func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.UpsertAlertRules(ctx, []store.UpsertRule{
+	err := dbstore.InsertAlertRules(ctx, []models.AlertRule{
 		{
-			New: models.AlertRule{
-				ID:        0,
-				OrgID:     orgID,
-				Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
-				Condition: "A",
-				Data: []models.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+
+			ID:        0,
+			OrgID:     orgID,
+			Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
+			Condition: "A",
+			Data: []models.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 										"datasourceUid": "-100",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
-						RelativeTimeRange: models.RelativeTimeRange{
-							From: models.Duration(5 * time.Hour),
-							To:   models.Duration(3 * time.Hour),
-						},
-						RefID: "A",
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
+					RefID: "A",
 				},
-				Labels:          labels,
-				Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
-				IntervalSeconds: intervalSeconds,
-				NamespaceUID:    "namespace",
-				RuleGroup:       ruleGroup,
-				NoDataState:     models.NoData,
-				ExecErrState:    models.AlertingErrState,
 			},
+			Labels:          labels,
+			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
+			IntervalSeconds: intervalSeconds,
+			NamespaceUID:    "namespace",
+			RuleGroup:       ruleGroup,
+			NoDataState:     models.NoData,
+			ExecErrState:    models.AlertingErrState,
 		},
 	})
 	require.NoError(t, err)
 
-	q := models.GetAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroup:    &ruleGroup,
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{"namespace"},
+		RuleGroup:     ruleGroup,
 	}
-	err = dbstore.GetAlertRules(ctx, &q)
+	err = dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

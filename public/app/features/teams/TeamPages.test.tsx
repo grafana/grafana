@@ -1,11 +1,14 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, TeamPages } from './TeamPages';
-import { OrgRole, Team, TeamMember } from '../../types';
-import { getMockTeam } from './__mocks__/teamMocks';
-import { User } from 'app/core/services/context_srv';
+import React from 'react';
+
 import { NavModel, createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { User } from 'app/core/services/context_srv';
+
+import { OrgRole, Team, TeamMember } from '../../types';
+
+import { Props, TeamPages } from './TeamPages';
+import { getMockTeam } from './__mocks__/teamMocks';
 
 jest.mock('@grafana/runtime/src/config', () => ({
   ...(jest.requireActual('@grafana/runtime/src/config') as unknown as object),

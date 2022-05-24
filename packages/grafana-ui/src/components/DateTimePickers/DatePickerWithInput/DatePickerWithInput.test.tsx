@@ -1,7 +1,9 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { DatePickerWithInput } from './DatePickerWithInput';
+import React from 'react';
+
 import { dateTimeFormat } from '@grafana/data';
+
+import { DatePickerWithInput } from './DatePickerWithInput';
 
 describe('DatePickerWithInput', () => {
   it('renders date input', () => {

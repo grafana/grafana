@@ -1,9 +1,11 @@
+import { truncate } from '@sentry/utils';
 import React from 'react';
+
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
+
 import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions } from './types';
-import { truncate } from '@sentry/utils';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {

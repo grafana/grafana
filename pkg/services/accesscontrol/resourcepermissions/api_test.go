@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -167,16 +168,7 @@ func TestApi_getPermissions(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -426,25 +418,27 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-type uidSolverTestCase struct {
+type inheritSolverTestCase struct {
 	desc           string
-	uid            string
 	resourceID     string
 	expectedStatus int
 }
 
-func TestApi_UidSolver(t *testing.T) {
-	tests := []uidSolverTestCase{
+func TestApi_InheritSolver(t *testing.T) {
+	tests := []inheritSolverTestCase{
 		{
-			desc:           "expect uid to be mapped to id",
-			uid:            "resourceUID",
-			resourceID:     "1",
+			desc:           "expect parents permission to apply",
+			resourceID:     "resourceID",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:           "expect 404 when uid is not mapped to an id",
-			uid:            "notfound",
-			resourceID:     "1",
+			desc:           "expect direct permissions to apply (no inheritance)",
+			resourceID:     "orphanedID",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "expect 404 when resource is not found",
+			resourceID:     "notfound",
 			expectedStatus: http.StatusNotFound,
 		},
 	}
@@ -452,41 +446,35 @@ func TestApi_UidSolver(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			userPermissions := []*accesscontrol.Permission{
-				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: "dashboards.permissions:read", Scope: "parents:id:parentID"},      // Inherited permission
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:orphanedID"}, // Direct permission
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
 				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			}
-
-			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
+			// Add the inheritance solver "resourceID -> [parentID]" "orphanedID -> []"
+			service, sql := setupTestEnvironment(t, userPermissions,
+				withInheritance(testOptions, testInheritedScopeSolver, testInheritedScopePrefixes),
+			)
 			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
 				1: accesscontrol.GroupScopesByAction(userPermissions),
 			}}, service)
 
+			// Seed permissions for users/teams/built-in roles specific to the test case resourceID
 			seedPermissions(t, tt.resourceID, sql, service)
 
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
+			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
+			require.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
-			} else {
-				assert.Equal(t, tt.expectedStatus, recorder.Code)
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
 }
 
-func withSolver(options Options, solver UidSolver) Options {
-	options.UidSolver = solver
+func withInheritance(options Options, solver InheritedScopesSolver, inheritedPrefixes []string) Options {
+	options.InheritedScopesSolver = solver
+	options.InheritedScopePrefixes = inheritedPrefixes
 	return options
 }
 
@@ -513,6 +501,9 @@ func contextProvider(tc *testContext) web.Handler {
 			Logger:       log.New("test"),
 		}
 		c.Map(reqCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
+		c.Map(c.Req)
 	}
 }
 
@@ -530,11 +521,15 @@ var testOptions = Options{
 	},
 }
 
-var testSolver = func(ctx context.Context, orgID int64, uid string) (int64, error) {
-	if uid == "resourceUID" {
-		return 1, nil
+var testInheritedScopePrefixes = []string{"parents:id:"}
+var testInheritedScopeSolver = func(ctx context.Context, orgID int64, id string) ([]string, error) {
+	if id == "resourceID" { // Has parent
+		return []string{"parents:id:parentID"}, nil
 	}
-	return 0, errors.New("not found")
+	if id == "orphanedID" { // Exists but with no parent
+		return nil, nil
+	}
+	return nil, errors.New("not found")
 }
 
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
@@ -559,6 +554,19 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
+	assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
+	for _, p := range permissions {
+		if p.UserID != 0 {
+			assert.Equal(t, "View", p.Permission)
+		} else if p.TeamID != 0 {
+			assert.Equal(t, "Edit", p.Permission)
+		} else {
+			assert.Equal(t, "Edit", p.Permission)
+		}
+	}
 }
 
 func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {

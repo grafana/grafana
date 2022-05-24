@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { ConfirmModal } from '@grafana/ui';
 
 import { PanelModel } from '../../../dashboard/state';
