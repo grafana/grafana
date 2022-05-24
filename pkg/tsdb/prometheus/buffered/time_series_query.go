@@ -587,7 +587,7 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMany,
 		Custom: map[string]string{
-			"resultType": typ,
+			"resultType": typ, // Note: SSE depends on this property and map type
 		},
 	}
 

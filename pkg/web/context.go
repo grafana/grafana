@@ -17,11 +17,14 @@ package web
 import (
 	"encoding/json"
 	"html/template"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
@@ -44,6 +47,7 @@ type Context struct {
 	Req      *http.Request
 	Resp     ResponseWriter
 	template *template.Template
+	logger   log.Logger
 }
 
 func (ctx *Context) handler() Handler {
@@ -84,12 +88,22 @@ func (ctx *Context) RemoteAddr() string {
 		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
 	}
 
+	// parse user inputs from headers to prevent log forgery
+	if len(addr) > 0 {
+		if parsedIP := net.ParseIP(addr); parsedIP == nil {
+			// if parsedIP is nil we clean addr and populate with RemoteAddr below
+			ctx.logger.Warn("Received invalid IP address in request headers, removed for log forgery prevention")
+			addr = ""
+		}
+	}
+
 	if len(addr) == 0 {
 		addr = ctx.Req.RemoteAddr
 		if i := strings.LastIndex(addr, ":"); i > -1 {
 			addr = addr[:i]
 		}
 	}
+
 	return addr
 }
 

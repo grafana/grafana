@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
@@ -22,8 +23,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			OrgId: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
-					ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
-					ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+					ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
+					ac.ActionOrgUsersRead:      []string{ac.ScopeUsersAll},
+					serviceaccounts.ActionRead: []string{serviceaccounts.ScopeAll},
 				},
 			},
 		}
@@ -362,6 +364,39 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, getTeamQuery.Result.MemberCount, 2)
 			})
+
+			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
+				sqlStore = InitTestDB(t)
+				setup()
+				userCmd = models.CreateUserCommand{
+					Email:            fmt.Sprint("sa", 1, "@test.com"),
+					Name:             fmt.Sprint("sa", 1),
+					Login:            fmt.Sprint("login-sa", 1),
+					IsServiceAccount: true,
+				}
+				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				require.NoError(t, err)
+
+				groupId := team2.Id
+				// add service account to team
+				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, groupId, false, 0)
+				require.NoError(t, err)
+
+				// add user to team
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
+				require.NoError(t, err)
+
+				teamMembersQuery := &models.GetTeamMembersQuery{
+					OrgId:        testOrgID,
+					SignedInUser: testUser,
+					TeamId:       groupId,
+				}
+				err = sqlStore.GetTeamMembers(context.Background(), teamMembersQuery)
+				require.NoError(t, err)
+				// should not receive service account from query
+				require.Equal(t, len(teamMembersQuery.Result), 1)
+			})
+
 		})
 	})
 }

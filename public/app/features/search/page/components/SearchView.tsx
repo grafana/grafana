@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -40,26 +40,45 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
-  const results = useAsync(() => {
-    let qstr = queryText;
-    if (!qstr?.length) {
-      qstr = '*';
-    }
+  const searchQuery = useMemo(() => {
     const q: SearchQuery = {
-      query: qstr,
+      query: queryText,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
+      sort: query.sort?.value,
     };
-    return getGrafanaSearcher().search(q);
-  }, [query, layout, queryText, folderDTO]);
+
+    // Only dashboards have additional properties
+    if (q.sort?.length && !q.sort.includes('name')) {
+      q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (!q.query?.length) {
+      q.query = '*';
+      if (!q.location) {
+        q.kind = ['dashboard', 'folder']; // skip panels
+      }
+    }
+
+    if (q.query === '*' && !q.sort?.length) {
+      q.sort = 'name_sort';
+    }
+    return q;
+  }, [query, queryText, folderDTO]);
+
+  const results = useAsync(() => {
+    return getGrafanaSearcher().search(searchQuery);
+  }, [searchQuery]);
+
+  const clearSelection = useCallback(() => {
+    searchSelection.items.clear();
+    setSearchSelection({ ...searchSelection });
+  }, [searchSelection]);
 
   const toggleSelection = useCallback(
     (kind: string, uid: string) => {
       const current = searchSelection.isSelected(kind, uid);
-      if (kind === 'folder') {
-        // ??? also select all children?
-      }
       setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
     },
     [searchSelection]
@@ -71,12 +90,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
 
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
-    const q: SearchQuery = {
-      query: query.query?.length ? query.query : '*',
-      tags: query.tag,
-      ds_uid: query.datasource,
-    };
-    return getGrafanaSearcher().tags(q);
+    return getGrafanaSearcher().tags(searchQuery);
   };
 
   // function to update items when dashboards or folders are moved or deleted
@@ -129,6 +143,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
             selectionToggle={toggleSelection}
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
+            tags={query.tag}
           />
         );
       }
@@ -151,6 +166,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
               response: value!,
               selection,
               selectionToggle: toggleSelection,
+              clearSelection,
               width: width,
               height: height,
               onTagSelected: onTagAdd,
@@ -175,7 +191,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   return (
     <>
       {Boolean(searchSelection.items.size > 0) ? (
-        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
+        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} clearSelection={clearSelection} />
       ) : (
         <ActionRow
           onLayoutChange={(v) => {
