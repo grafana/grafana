@@ -23,8 +23,8 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			OrgId: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
-					ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
-					ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+					ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
+					ac.ActionOrgUsersRead:      []string{ac.ScopeUsersAll},
 					serviceaccounts.ActionRead: []string{serviceaccounts.ScopeAll},
 				},
 			},
@@ -389,7 +389,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				teamMembersQuery := &models.GetTeamMembersQuery{
 					OrgId:        testOrgID,
 					SignedInUser: testUser,
-					TeamId: groupId,
+					TeamId:       groupId,
 				}
 				err = sqlStore.GetTeamMembers(context.Background(), teamMembersQuery)
 				require.NoError(t, err)
