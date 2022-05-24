@@ -22,7 +22,7 @@ The following example includes the base64 username:password Basic Authorization.
 
 ### List permissions associated with roles
 
-Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../http_api/access_control.md#get-a-role" >}}).
+Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../developers/http_api/access_control.md#get-a-role" >}}).
 
 <span id="basic-role-uid-mapping">To see the permissions associated with basic roles, refer to the following basic role UIDs</span>:
 
@@ -80,7 +80,7 @@ curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk'
 }
 ```
 
-Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#get-a-role" >}}) for more details.
+Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#get-a-role" >}}) for more details.
 
 ## Create custom roles
 
@@ -123,7 +123,7 @@ File-based provisioning is one method you can use to create custom roles.
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example creates a local role:
 
@@ -192,7 +192,7 @@ roles:
 
 ### Create custom roles using the HTTP API
 
-The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}).
+The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role]({{< relref "../../developers/http_api/access_control.md#create-a-new-custom-role" >}}).
 
 > **Note:** You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
 
@@ -243,7 +243,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 }
 ```
 
-Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) for more details.
+Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#create-a-new-custom-role" >}}) for more details.
 
 ## Update basic role permissions
 
@@ -273,7 +273,7 @@ If the default basic role definitions do not meet your requirements, you can cha
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example modifies the `Grafana Admin` basic role permissions.
 
@@ -312,7 +312,7 @@ roles:
 > **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
 > <br/> **Note**: Make sure to **increment** the role version for the changes to be accounted for.
 
-You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}) for more details.
+You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}) for more details.
 
 ## Reset basic roles to their default
 
@@ -339,7 +339,7 @@ This section describes how to reset the basic roles to their default:
 
 > **Note**: This permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
 
-1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
+1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
@@ -371,7 +371,7 @@ Delete a custom role when you no longer need it. When you delete a custom role, 
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example deletes a custom role:
 
@@ -386,4 +386,4 @@ roles:
     force: true
 ```
 
-You can also delete a custom role using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#delete-a-custom-role" >}}) for more details.
+You can also delete a custom role using the API. Refer to the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#delete-a-custom-role" >}}) for more details.

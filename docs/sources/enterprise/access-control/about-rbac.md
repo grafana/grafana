@@ -63,7 +63,7 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../alerting/_index.md">}})
+- [Alerting]({{< relref "../../alerting/_index.md" >}})
 - [Annotations]({{< relref "../../dashboards/annotations.md" >}})
 - [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
 - [Dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
@@ -98,7 +98,7 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 You can use either of the following methods to create, assign, and manage custom roles:
 
 - Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles.md" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../http_api/access_control.md" >}}).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../developers/http_api/access_control.md" >}}).
 
 ## Limitation
 
