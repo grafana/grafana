@@ -147,7 +147,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       height: 100%;
 
       ${theme.breakpoints.up('md')} {
-        padding: ${theme.spacing(4)};
+        padding: ${theme.spacing(3)};
       }
     `,
     closeBtn: css`
@@ -163,7 +163,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding-bottom: ${theme.spacing(3)};
+      padding: ${theme.spacing(2, 0, 3, 0)};
     `,
     input: css`
       box-sizing: border-box;
