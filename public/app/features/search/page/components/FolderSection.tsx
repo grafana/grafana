@@ -21,6 +21,7 @@ export interface DashboardSection {
   selected?: boolean; // not used ?  keyboard
   url?: string;
   icon?: string;
+  itemsUIDs?: string[]; // for pseudo folders
 }
 
 interface SectionHeaderProps {
@@ -55,14 +56,12 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
+      sort: 'name_sort',
     };
     if (section.title === 'Starred') {
-      const stars = await getBackendSrv().get('api/user/stars');
-      if (stars.length > 0) {
-        query = {
-          uid: stars, // array of UIDs
-        };
-      }
+      query = {
+        uid: section.itemsUIDs, // array of UIDs
+      };
       folderUid = undefined;
       folderTitle = undefined;
     } else if (section.title === 'Recent') {
@@ -188,7 +187,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && (
+            {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>

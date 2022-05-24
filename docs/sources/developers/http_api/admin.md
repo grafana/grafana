@@ -704,3 +704,28 @@ Content-Type: application/json
   "message": "LDAP config reloaded"
 }
 ```
+
+## Rotate data encryption keys
+
+`POST /api/admin/encryption/rotate-data-keys`
+
+Rotates data encryption keys, so all the active keys are disabled
+and no longer used for encryption but kept for decryption operations.
+
+Secrets encrypted with one of the deactivated keys need to be re-encrypted
+to actually stop using those keys for both encryption and decryption.
+
+**Example Request**:
+
+```http
+POST /api/admin/encryption/rotate-data-keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 204
+Content-Type: application/json
+```

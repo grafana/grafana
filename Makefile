@@ -35,7 +35,7 @@ node_modules: package.json yarn.lock ## Install node modules.
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
 MERGED_SPEC_TARGET := public/api-merged.json
-NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/post.json
+NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 
 $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	docker run --rm -it \
@@ -53,10 +53,10 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 $(NGALERT_SPEC_TARGET):
-	+$(MAKE) -C pkg/services/ngalert/api/tooling post.json
+	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
 $(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) ## Merge generated and ngalert API specs
-	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/post.json
+	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/api.json
 
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)

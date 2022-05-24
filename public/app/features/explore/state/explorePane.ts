@@ -257,9 +257,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = historyReducer(state, action);
 
   if (richHistoryUpdatedAction.match(action)) {
+    const { richHistory, total } = action.payload.richHistoryResults;
     return {
       ...state,
-      richHistory: action.payload.richHistory,
+      richHistory,
+      richHistoryTotal: total,
     };
   }
 
