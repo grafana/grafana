@@ -65,9 +65,18 @@ const getDerivedFields = memoizeOne(
     return (
       row.dataFrame.fields
         .map((field, index) => ({ ...field, index }))
-        // Remove Id which we use for react key and entry field which we are showing as the log message. Also remove hidden fields.
         .filter(
-          (field, index) => !('id' === field.name || row.entryFieldIndex === index || field.config.custom?.hidden)
+          // remove some fields
+          (field, index) =>
+            !(
+              'id' === field.name || //  id-field is used internally
+              row.entryFieldIndex === index || // the log-message field
+              field.config.custom?.hidden ||
+              // NOTE: this is an experimental custom-frame-type, please do not use in your code.
+              // we will get this custom-frame-type into the "real" frame-type list soon,
+              // but the name might change, so please do not use it until then.
+              (row.dataFrame.meta?.custom?.frameType === 'LabeledTimeValues' && field.name === 'labels')
+            )
         )
         // Filter out fields without values. For example in elastic the fields are parsed from the document which can
         // have different structure per row and so the dataframe is pretty sparse.
