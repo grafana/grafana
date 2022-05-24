@@ -188,10 +188,7 @@ function getAvailableRuleTypes() {
     AccessControlAction.AlertingRuleCreate,
     contextSrv.hasEditPermissionInFolders
   );
-  const canCreateCloudRules = contextSrv.hasAccess(
-    AccessControlAction.AlertingRuleExternalWrite,
-    contextSrv.hasEditPermissionInFolders
-  );
+  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
   const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
 
   const enabledRuleTypes: RuleFormType[] = [];

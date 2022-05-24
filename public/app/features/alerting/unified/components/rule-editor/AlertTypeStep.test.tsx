@@ -8,6 +8,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
+import { enableRBAC } from '../../mocks';
+
 import { AlertTypeStep } from './AlertTypeStep';
 
 const ui = {
@@ -36,6 +38,8 @@ function renderAlertTypeStep() {
 
 describe('RuleTypePicker', () => {
   describe('FGAC', () => {
+    enableRBAC();
+
     it('Should display grafana, mimir alert and mimir recording buttons when user has rule create and write permissions', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => {
         return [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite].includes(
