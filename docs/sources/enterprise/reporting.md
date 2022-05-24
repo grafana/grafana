@@ -148,7 +148,7 @@ You can pause sending of reports from the report list view by clicking the pause
 
 ## Send report via the API
 
-You can send reports programmatically with the [send report]({{< relref "../http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../http_api" >}}).
+You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api" >}}).
 
 ## Rendering configuration
 
@@ -158,7 +158,7 @@ To make a panel more legible, you can set a scale factor for the rendered images
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
-These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
+These options are available in the [configuration]({{< relref "../administration/configuration.md" >}}) file.
 
 ```ini
 [reporting]

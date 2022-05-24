@@ -38,6 +38,17 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   role: OrgRole;
 }
 
+export interface ServiceAccountCreateApiResponse {
+  avatarUrl?: string;
+  id: number;
+  isDisabled: boolean;
+  login: string;
+  name: string;
+  orgId: number;
+  role: OrgRole;
+  tokens: number;
+}
+
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
   isLoading: boolean;

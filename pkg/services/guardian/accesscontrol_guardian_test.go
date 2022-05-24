@@ -101,8 +101,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions)
-
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
 			can, err := guardian.CanSave()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
@@ -193,7 +192,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions)
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
 
 			if tt.viewersCanEdit {
 				setting.ViewersCanEdit = true
@@ -277,7 +276,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions)
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
 
 			can, err := guardian.CanView()
 			require.NoError(t, err)
@@ -381,7 +380,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions)
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
 
 			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
@@ -461,7 +460,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions)
+			guardian, _ := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, testDashSvc(t))
 
 			can, err := guardian.CanDelete()
 			require.NoError(t, err)
@@ -525,7 +524,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, "0", tt.permissions)
+			guardian, _ := setupAccessControlGuardianTest(t, "0", tt.permissions, nil)
 
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
@@ -557,7 +556,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian, _ := setupAccessControlGuardianTest(t, "1", nil)
+			guardian, _ := setupAccessControlGuardianTest(t, "1", nil, testDashSvc(t))
 
 			mocked := accesscontrolmock.NewMockedPermissionsService()
 			guardian.dashboardPermissionsService = mocked
@@ -579,7 +578,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	}
 }
 
-func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*accesscontrol.Permission) (*AccessControlDashboardGuardian, *models.Dashboard) {
+func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *models.Dashboard) {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
 
@@ -601,6 +600,20 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
 		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), &dashboards.FakeDashboardStore{})
 	require.NoError(t, err)
+	if dashboardSvc == nil {
+		dashboardSvc = &dashboards.FakeDashboardService{}
+	}
+	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
+}
 
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, &dashboards.FakeDashboardService{}), dash
+func testDashSvc(t *testing.T) dashboards.DashboardService {
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		d := models.NewDashboard("mocked")
+		d.Id = 1
+		d.Uid = "1"
+		q.Result = d
+	}).Return(nil)
+	return dashSvc
 }

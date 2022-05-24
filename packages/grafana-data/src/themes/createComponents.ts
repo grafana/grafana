@@ -36,6 +36,10 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  textHighlight: {
+    background: string;
+    text: string;
+  };
   sidemenu: {
     width: number;
   };
@@ -90,6 +94,10 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     },
     menuTabs: {
       height: 41,
+    },
+    textHighlight: {
+      text: colors.warning.contrastText,
+      background: colors.warning.main,
     },
     horizontalDrawer: {
       defaultHeight: 400,

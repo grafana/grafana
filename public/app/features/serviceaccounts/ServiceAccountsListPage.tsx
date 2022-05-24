@@ -66,6 +66,9 @@ const ServiceAccountsListPageUnconnected = ({
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
     dispatch(updateServiceAccount(updatedServiceAccount));
+    if (contextSrv.licensedAccessControlEnabled()) {
+      dispatch(fetchACOptions());
+    }
   };
 
   const onQueryChange = (value: string) => {
