@@ -36,6 +36,7 @@ There are four-layer types to choose from in the Geomap visualization.
 - **Marker** renders a marker at each data point.
 - **Heatmap** visualizes a heatmap of the data.
 - **GeoJSON** renders static data from a geojson file.
+- **XYZ** renders a custom tile server defined by the user.
 
 ### Layer Controls
 
@@ -105,6 +106,13 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
   - **Color** configures the color of the style for the current rule
   - **Opacity** configures the transparency level for the current rule
 - **Add style rule** creates additional style rules.
+
+### XYZ layer
+
+The XYZ layer allows you to add an overlay to the base layer from a custom xyz tile server. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load an overlay. Example: https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png
+
+- **URL** sets the tile server to be used.
+- **Attribution** sets the attribution for the used tile server.
 
 ## Base layer
 
