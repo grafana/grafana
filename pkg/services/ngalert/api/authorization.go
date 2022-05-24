@@ -52,6 +52,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+		fallback = middleware.ReqSignedIn // if RBAC is disabled then we need to delegate permission check to folder because its permissions can allow editing for Viewer role
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAny(

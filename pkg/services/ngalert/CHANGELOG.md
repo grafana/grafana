@@ -57,6 +57,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
 - [BUGFIX] Allow anonymous access to alerts #49203 
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
+- [BUGFIX] Fix access to alerts for Viewer role with editor permissions in folder #49270
 
 ## 8.5.3
 

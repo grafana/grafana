@@ -611,7 +611,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "Permission denied"}`,
+			expectedResponse: `{"message":"user does not have permissions to edit the namespace: user does not have permissions to edit the namespace", "traceID":"00000000000000000000000000000000"}`,
 		},
 		{
 			desc:             "editor request should succeed",
