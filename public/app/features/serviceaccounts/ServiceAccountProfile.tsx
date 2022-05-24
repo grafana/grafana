@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
@@ -26,20 +26,12 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
-  const deleteServiceAccountRef = useRef<HTMLButtonElement | null>(null);
   const showDeleteServiceAccountModal = (show: boolean) => () => {
     setShowDeleteModal(show);
-    if (!show && deleteServiceAccountRef.current) {
-      deleteServiceAccountRef.current.focus();
-    }
   };
 
-  const disableServiceAccountRef = useRef<HTMLButtonElement | null>(null);
   const showDisableServiceAccountModal = (show: boolean) => () => {
     setShowDisableModal(show);
-    if (!show && disableServiceAccountRef.current) {
-      disableServiceAccountRef.current.focus();
-    }
   };
 
   const handleServiceAccountDelete = () => {
@@ -111,7 +103,6 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
               type={'button'}
               variant="destructive"
               onClick={showDeleteServiceAccountModal(true)}
-              ref={deleteServiceAccountRef}
               disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete)}
             >
               Delete service account
@@ -135,7 +126,6 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
                 type={'button'}
                 variant="secondary"
                 onClick={showDisableServiceAccountModal(true)}
-                ref={disableServiceAccountRef}
                 disabled={!ableToWrite}
               >
                 Disable service account
