@@ -91,8 +91,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	//pubdash
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/p/:uid/:slug", redirectFromLegacyPanelEditURL, hs.Index)
-		r.Get("/p/:uid", redirectFromLegacyPanelEditURL, hs.Index)
+		r.Get("/public-dashboards/:uid", redirectFromLegacyPanelEditURL, hs.Index)
 	}
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
