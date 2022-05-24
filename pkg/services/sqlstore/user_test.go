@@ -15,7 +15,6 @@ import (
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
-
 	ss := InitTestDB(t)
 	user := &models.SignedInUser{
 		OrgId:       1,
@@ -50,6 +49,52 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, query.Result.Rands, 10)
 		require.Len(t, query.Result.Salt, 10)
 		require.False(t, query.Result.IsDisabled)
+
+		t.Run("Get User by email case insensitive", func(t *testing.T) {
+			setting.CaseInsensitiveID = true
+			query := models.GetUserByEmailQuery{Email: "USERtest@TEST.COM"}
+			err = ss.GetUserByEmail(context.Background(), &query)
+			require.Nil(t, err)
+
+			require.Equal(t, query.Result.Email, "usertest@test.com")
+			require.Equal(t, query.Result.Password, "")
+			require.Len(t, query.Result.Rands, 10)
+			require.Len(t, query.Result.Salt, 10)
+			require.False(t, query.Result.IsDisabled)
+
+			setting.CaseInsensitiveID = false
+		})
+
+		t.Run("Get User by login - case insensitive", func(t *testing.T) {
+			setting.CaseInsensitiveID = true
+
+			query := models.GetUserByLoginQuery{LoginOrEmail: "USER_test_login"}
+			err = ss.GetUserByLogin(context.Background(), &query)
+			require.Nil(t, err)
+
+			require.Equal(t, query.Result.Email, "usertest@test.com")
+			require.Equal(t, query.Result.Password, "")
+			require.Len(t, query.Result.Rands, 10)
+			require.Len(t, query.Result.Salt, 10)
+			require.False(t, query.Result.IsDisabled)
+
+			setting.CaseInsensitiveID = false
+		})
+
+		t.Run("Get User by login - email fallback case insensitive", func(t *testing.T) {
+			setting.CaseInsensitiveID = true
+			query := models.GetUserByLoginQuery{LoginOrEmail: "USERtest@TEST.COM"}
+			err = ss.GetUserByLogin(context.Background(), &query)
+			require.Nil(t, err)
+
+			require.Equal(t, query.Result.Email, "usertest@test.com")
+			require.Equal(t, query.Result.Password, "")
+			require.Len(t, query.Result.Rands, 10)
+			require.Len(t, query.Result.Salt, 10)
+			require.False(t, query.Result.IsDisabled)
+
+			setting.CaseInsensitiveID = false
+		})
 	})
 
 	t.Run("Testing DB - creates and loads disabled user", func(t *testing.T) {
