@@ -114,36 +114,29 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         <td>
-          <a
-            className="ellipsis"
-            href={editUrl}
-            title="Tokens"
-            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
-          >
-            <HorizontalGroup justify="flex-end">
-              {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
-                <Button onClick={() => onAddTokenClick(serviceAccount)}>Add token</Button>
-              )}
-              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
-                (serviceAccount.isDisabled ? (
-                  <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
-                    Enable
-                  </Button>
-                ) : (
-                  <Button variant="secondary" onClick={() => onDisable(serviceAccount)}>
-                    Disable
-                  </Button>
-                ))}
-              {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
-                <IconButton
-                  className={styles.deleteButton}
-                  name="trash-alt"
-                  size="sm"
-                  onClick={() => onRemoveButtonClick(serviceAccount)}
-                />
-              )}
-            </HorizontalGroup>
-          </a>
+          <HorizontalGroup justify="flex-end">
+            {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
+              <Button onClick={() => onAddTokenClick(serviceAccount)}>Add token</Button>
+            )}
+            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
+              (serviceAccount.isDisabled ? (
+                <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
+                  Enable
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => onDisable(serviceAccount)}>
+                  Disable
+                </Button>
+              ))}
+            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+              <IconButton
+                className={styles.deleteButton}
+                name="trash-alt"
+                size="sm"
+                onClick={() => onRemoveButtonClick(serviceAccount)}
+              />
+            )}
+          </HorizontalGroup>
         </td>
       </tr>
     );
