@@ -329,10 +329,11 @@ func TestGoogleChatNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			imageStore := &UnavailableImageStore{}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewGoogleChatNotifier(cfg, webhookSender, tmpl)
+			pn := NewGoogleChatNotifier(cfg, imageStore, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

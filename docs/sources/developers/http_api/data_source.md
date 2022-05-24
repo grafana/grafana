@@ -65,9 +65,11 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data source by Id
+## Get a single data source by id
 
 `GET /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid) or to the [API for getting a single data source by its name](#get-a-single-data-source-by-name).
 
 **Required permissions**
 
@@ -121,7 +123,7 @@ Content-Type: application/json
 }
 ```
 
-## Get a single data source by UID
+## Get a single data source by uid
 
 `GET /api/datasources/uid/:uid`
 
@@ -177,7 +179,7 @@ Content-Type: application/json
 }
 ```
 
-## Get a single data source by Name
+## Get a single data source by name
 
 `GET /api/datasources/name/:name`
 
@@ -233,7 +235,7 @@ Content-Type: application/json
 }
 ```
 
-## Get data source Id by Name
+## Get data source Id by name
 
 `GET /api/datasources/id/:name`
 
@@ -415,9 +417,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-## Update an existing data source
+## Update an existing data source by id
 
 `PUT /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source update API](#update-an-existing-data-source).
 
 **Required permissions**
 
@@ -466,6 +470,7 @@ Content-Type: application/json
 {
   "datasource": {
     "id": 1,
+    "uid": "kLtEtcRGk",
     "orgId": 1,
     "name": "test_datasource",
     "type": "graphite",
@@ -495,9 +500,93 @@ Content-Type: application/json
 
 > **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 
+## Update an existing data source
+
+`PUT /api/datasources/uid/:uid`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action            | Scope                                                                                  |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| datasources:write | datasources:\*<br>datasources:uid:\*<br>datasources:uid:kLtEtcRGk (single data source) |
+
+### Examples
+
+**Example Request**:
+
+```http
+PUT /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "id":1,
+  "uid": "updated UID",
+  "orgId":1,
+  "name":"test_datasource",
+  "type":"graphite",
+  "access":"proxy",
+  "url":"http://mydatasource.com",
+  "password":"",
+  "user":"",
+  "database":"",
+  "basicAuth":true,
+  "basicAuthUser":"basicuser",
+  "secureJsonData": {
+    "basicAuthPassword": "basicpassword"
+  },
+  "isDefault":false,
+  "jsonData":null
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "datasource": {
+    "id": 1,
+    "uid": "updated UID",
+    "orgId": 1,
+    "name": "test_datasource",
+    "type": "graphite",
+    "typeLogoUrl": "",
+    "access": "proxy",
+    "url": "http://mydatasource.com",
+    "password": "",
+    "user": "",
+    "database": "",
+    "basicAuth": true,
+    "basicAuthUser": "basicuser",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {},
+    "secureJsonFields": {
+      "basicAuthPassword": true
+    },
+    "version": 1,
+    "readOnly": false
+  },
+  "id": 102,
+  "message": "Datasource updated",
+  "name": "test_datasource"
+}
+```
+
+> **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.## Update an existing data source by id
+
 ## Delete an existing data source by id
 
 `DELETE /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid) or to the [API for deleting an existing data source by its name](#delete-an-existing-data-source-by-name)
 
 **Required permissions**
 
@@ -527,7 +616,7 @@ Content-Type: application/json
 {"message":"Data source deleted"}
 ```
 
-## Delete an existing data source by UID
+## Delete an existing data source by uid
 
 `DELETE /api/datasources/uid/:uid`
 
@@ -597,11 +686,19 @@ Content-Type: application/json
 }
 ```
 
-## Data source proxy calls
+## Data source proxy calls by id
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
 
 `GET /api/datasources/proxy/:datasourceId/*`
 
-Proxies all calls to the actual data source.
+Proxies all calls to the actual data source identified by the `datasourceId`.
+
+## Data source proxy calls
+
+`GET /api/datasources/proxy/uid/:uid/*`
+
+Proxies all calls to the actual data source identified by the `uid`.
 
 ## Check data source health by id
 
@@ -860,9 +957,9 @@ In addition, specific properties of each data source should be added in a reques
 
 The following resources have been deprecated. They will be removed in a future release.
 
-### Query a data source by ID
+### Query a data source by id
 
-> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
+> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source).
 
 Queries a data source having a backend implementation.
 

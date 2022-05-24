@@ -5,7 +5,7 @@ import {
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapSourceMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
+import { HeatmapMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
 /**
@@ -29,28 +29,28 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
-  const source = angular.dataFormat === 'tsbuckets' ? HeatmapSourceMode.Data : HeatmapSourceMode.Calculate;
-  const heatmap: HeatmapCalculationOptions = {
-    ...defaultPanelOptions.heatmap,
+  const mode = angular.dataFormat === 'tsbuckets' ? HeatmapMode.Aggregated : HeatmapMode.Calculate;
+  const calculate: HeatmapCalculationOptions = {
+    ...defaultPanelOptions.calculate,
   };
 
-  if (source === HeatmapSourceMode.Calculate) {
+  if (mode === HeatmapMode.Calculate) {
     if (angular.xBucketSize) {
-      heatmap.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+      calculate.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
-      heatmap.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+      calculate.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
     }
 
     if (angular.yBucketSize) {
-      heatmap.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+      calculate.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
-      heatmap.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+      calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
     }
   }
 
   const options: PanelOptions = {
-    source,
-    heatmap,
+    mode,
+    calculate,
     color: {
       ...defaultPanelOptions.color,
       steps: 256, // best match with existing colors
@@ -66,6 +66,9 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     tooltip: {
       show: Boolean(angular.tooltip?.show),
       yHistogram: Boolean(angular.tooltip?.showHistogram),
+    },
+    exemplars: {
+      ...defaultPanelOptions.exemplars,
     },
   };
 
