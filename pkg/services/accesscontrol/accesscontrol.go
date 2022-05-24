@@ -23,9 +23,6 @@ type AccessControl interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
-
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 

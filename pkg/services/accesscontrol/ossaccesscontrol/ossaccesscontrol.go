@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -99,11 +98,6 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		return false, err
 	}
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
-}
-
-// GetUserRoles returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
-	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
