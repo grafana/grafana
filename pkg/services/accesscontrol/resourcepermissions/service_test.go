@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/licensing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -222,7 +224,10 @@ func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission,
 	store := database.ProvideService(sql)
 	cfg := setting.NewCfg()
 	cfg.IsEnterprise = true
-	service, err := New(ops, cfg, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
+	service, err := New(
+		ops, cfg, routing.NewRouteRegister(), &licensing.OSSLicensingService{},
+		accesscontrolmock.New().WithPermissions(permissions), store, sql,
+	)
 	require.NoError(t, err)
 
 	return service, sql
