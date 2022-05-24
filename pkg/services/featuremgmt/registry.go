@@ -241,7 +241,8 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
+			Expression:  "true", // Enabled by default
 		},
 		{
 			Name:            "validateDashboardsOnSave",
