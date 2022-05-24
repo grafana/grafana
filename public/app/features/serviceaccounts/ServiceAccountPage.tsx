@@ -100,7 +100,7 @@ const ServiceAccountPageUnconnected = ({
             Tokens
           </h3>
           <Button onClick={() => setIsModalOpen(true)} disabled={tokenActionsDisabled}>
-            Add token
+            Add service account token
           </Button>
         </div>
         {tokens && (
