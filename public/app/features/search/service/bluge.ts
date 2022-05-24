@@ -16,10 +16,6 @@ export class BlugeSearcher implements GrafanaSearcher {
     return doSearchQuery(query);
   }
 
-  async list(location: string): Promise<QueryResponse> {
-    return doSearchQuery({ query: `list:${location ?? ''}` });
-  }
-
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
     const target = {

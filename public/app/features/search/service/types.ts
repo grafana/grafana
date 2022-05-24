@@ -32,7 +32,6 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
-  score?: number;
 }
 
 export interface LocationInfo {
@@ -62,6 +61,5 @@ export interface QueryResponse {
 
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
-  list: (location: string) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
 }
