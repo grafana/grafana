@@ -4,7 +4,7 @@ import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Checkbox, CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
@@ -21,6 +21,7 @@ export interface DashboardSection {
   selected?: boolean; // not used ?  keyboard
   url?: string;
   icon?: string;
+  itemsUIDs?: string[]; // for pseudo folders
 }
 
 interface SectionHeaderProps {
@@ -28,16 +29,25 @@ interface SectionHeaderProps {
   selectionToggle?: SelectionToggle;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
+  renderStandaloneBody?: boolean; // render the body on its own
+  tags?: string[];
 }
 
-export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle, onTagSelected, selection }) => {
+export const FolderSection: FC<SectionHeaderProps> = ({
+  section,
+  selectionToggle,
+  onTagSelected,
+  selection,
+  renderStandaloneBody,
+  tags,
+}) => {
   const editable = selectionToggle != null;
   const theme = useTheme();
   const styles = getSectionHeaderStyles(theme, section.selected, editable);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(getSectionStorageKey(section.title), false);
 
   const results = useAsync(async () => {
-    if (!sectionExpanded) {
+    if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([] as DashboardSectionItem[]);
     }
     let folderUid: string | undefined = section.uid;
@@ -46,14 +56,12 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
+      sort: 'name_sort',
     };
     if (section.title === 'Starred') {
-      const stars = await getBackendSrv().get('api/user/stars');
-      if (stars.length > 0) {
-        query = {
-          uid: stars, // array of UIDs
-        };
-      }
+      query = {
+        uid: section.itemsUIDs, // array of UIDs
+      };
       folderUid = undefined;
       folderTitle = undefined;
     } else if (section.title === 'Recent') {
@@ -67,7 +75,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       folderUid = undefined;
       folderTitle = undefined;
     }
-    const raw = await getGrafanaSearcher().search(query);
+    const raw = await getGrafanaSearcher().search({ ...query, tags });
     const v = raw.view.map(
       (item) =>
         ({
@@ -84,7 +92,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
         } as DashboardSectionItem)
     );
     return v;
-  }, [sectionExpanded, section]);
+  }, [sectionExpanded, section, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
@@ -121,7 +129,15 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
 
   const renderResults = () => {
     if (!results.value?.length) {
-      return <div>No items found</div>;
+      if (results.loading) {
+        return <Spinner />;
+      }
+
+      return (
+        <Card>
+          <Card.Heading>No results found</Card.Heading>
+        </Card>
+      );
     }
 
     return results.value.map((v) => {
@@ -143,6 +159,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       );
     });
   };
+
+  // Skip the folder wrapper
+  if (renderStandaloneBody) {
+    return <div>{renderResults()}</div>;
+  }
 
   return (
     <CollapsableSection
@@ -166,7 +187,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && (
+            {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>

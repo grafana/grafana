@@ -1,8 +1,8 @@
 +++
-title = "White labeling"
+aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
 description = "Change the look of Grafana to match your corporate brand"
 keywords = ["grafana", "white-labeling", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
+title = "White labeling"
 weight = 1300
 +++
 
@@ -31,7 +31,7 @@ You can change the following elements:
 
 {{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
-The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md">}}).
+The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md" >}}).
 
 ```ini
 # Enterprise only

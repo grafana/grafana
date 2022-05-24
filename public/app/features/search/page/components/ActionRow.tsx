@@ -9,6 +9,8 @@ import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQuery, SearchLayout } from '../../types';
 
+import { getSortOptions } from './sorting';
+
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
   { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
@@ -58,15 +60,24 @@ export const ActionRow: FC<Props> = ({
   hideLayout,
 }) => {
   const styles = useStyles2(getStyles);
+  const layout = getValidQueryLayout(query);
+
+  // Disabled folder layout option when query is present
+  const disabledOptions = query.query ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
           {!hideLayout && (
-            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={getValidQueryLayout(query)} />
+            <RadioButtonGroup
+              options={layoutOptions}
+              disabledOptions={disabledOptions}
+              onChange={onLayoutChange}
+              value={layout}
+            />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">

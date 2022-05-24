@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/variables/variable-types/"]
 title = "Add variables"
 weight = 140
 +++

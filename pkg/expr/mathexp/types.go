@@ -2,6 +2,7 @@ package mathexp
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -33,6 +34,7 @@ type Value interface {
 	GetMeta() interface{}
 	SetMeta(interface{})
 	AsDataFrame() *data.Frame
+	AddNotice(notice data.Notice)
 }
 
 // Scalar is the type that holds a single number constant.
@@ -55,7 +57,21 @@ func (s Scalar) GetMeta() interface{} {
 }
 
 func (s Scalar) SetMeta(v interface{}) {
-	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s Scalar) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // AsDataFrame returns the underlying *data.Frame.
@@ -121,7 +137,21 @@ func (n Number) GetMeta() interface{} {
 }
 
 func (n Number) SetMeta(v interface{}) {
-	n.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := n.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		n.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (n Number) AddNotice(notice data.Notice) {
+	m := n.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		n.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // FloatField is a *float64 or a float64 data.Field with methods to always
