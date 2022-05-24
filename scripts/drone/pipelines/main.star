@@ -13,7 +13,6 @@ load(
     'shellcheck_step',
     'test_backend_step',
     'test_new_backend_integration_step',
-    'test_backend_integration_step',
     'test_frontend_step',
     'build_backend_step',
     'build_frontend_step',
@@ -104,7 +103,6 @@ def main_test_backend():
         lint_backend_step(edition="oss"),
         test_backend_step(edition="oss"),
         test_new_backend_integration_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
         name='main-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
@@ -127,7 +125,6 @@ def get_steps(edition):
         lint_frontend_step(),
         test_backend_step(edition=edition),
         test_new_backend_integration_step(edition=edition),
-        test_backend_integration_step(edition=edition),
         test_frontend_step(),
     ]
     build_steps = [

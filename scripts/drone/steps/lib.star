@@ -522,20 +522,6 @@ def test_new_backend_integration_step(edition):
         ],
     }
 
-
-def test_backend_integration_step(edition):
-    return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
-        ],
-    }
-
-
 def test_frontend_step():
     return {
         'name': 'test-frontend',

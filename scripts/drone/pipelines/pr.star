@@ -16,7 +16,6 @@ load(
     'build_plugins_step',
     'test_backend_step',
     'test_new_backend_integration_step',
-    'test_backend_integration_step',
     'test_frontend_step',
     'package_step',
     'grafana_server_step',
@@ -102,7 +101,6 @@ def pr_test_backend():
         lint_backend_step(edition="oss"),
         test_backend_step(edition="oss"),
         test_new_backend_integration_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
         name='pr-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,

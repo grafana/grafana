@@ -138,12 +138,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
-- commands:
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
 trigger:
   event:
   - pull_request
@@ -808,12 +802,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
-- commands:
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
 trigger:
   branch: main
   event:
@@ -1895,12 +1883,6 @@ steps:
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
-- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -2543,12 +2525,6 @@ steps:
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
-- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -2570,12 +2546,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration-enterprise2
 trigger:
   event:
     exclude:
@@ -3687,12 +3657,6 @@ steps:
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
-- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -4307,12 +4271,6 @@ steps:
   image: grafana/build-container:1.5.4
   name: test_new_backend_integration
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration
-- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -4334,12 +4292,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.4
-  name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4703,6 +4655,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f2cb1f503b0a2cfadb0123552788f1e655469082c6815bd37152082a5a50c691
+hmac: 017fed907b0f2b02469d6464047846872830ac5ec688301d723b1443d08ce142
 
 ...
