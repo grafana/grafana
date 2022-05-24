@@ -9,7 +9,6 @@ import {
   MetricMetadata,
   MetricsMetadataHook,
   updateSubscriptions,
-  useAsyncState,
   useMetricMetadata,
   useMetricNames,
   useMetricNamespaces,
