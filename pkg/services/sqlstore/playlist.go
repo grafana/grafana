@@ -57,7 +57,7 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 			Interval: cmd.Interval,
 		}
 
-		existingPlaylist := sess.Where("uid = ? AND org_id = ?", cmd.Uid, cmd.OrgId).Find(playlist)
+		existingPlaylist := sess.Where("uid = ? AND org_id = ?", cmd.Uid, cmd.OrgId).Find(models.Playlist{})
 		if existingPlaylist == nil {
 			return models.ErrPlaylistNotFound
 		}
@@ -94,9 +94,6 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 		}
 
 		_, err = sess.Insert(&playlistItems)
-		if err != nil {
-			panic(err)
-		}
 		return err
 	})
 }
