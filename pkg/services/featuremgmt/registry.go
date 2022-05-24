@@ -249,5 +249,11 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Show tree view in Canvas",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
