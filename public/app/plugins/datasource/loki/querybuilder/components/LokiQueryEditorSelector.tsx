@@ -24,6 +24,8 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query);
+  // This should be filled in from the defaults by now.
+  const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
@@ -54,8 +56,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     onChange({ ...query, rawQuery: isEnabled });
   };
 
-  // If no expr (ie new query) then default to builder
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   return (
     <>
       <ConfirmModal

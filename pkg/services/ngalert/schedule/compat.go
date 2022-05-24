@@ -39,6 +39,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		nA["__value_string__"] = alertState.LastEvaluationString
 	}
 
+	if alertState.Image != nil {
+		nA[ngModels.ScreenshotTokenAnnotation] = alertState.Image.Token
+	}
+
 	var urlStr string
 	if uid := nL[ngModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL

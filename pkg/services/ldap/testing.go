@@ -4,6 +4,9 @@ import (
 	"crypto/tls"
 
 	"gopkg.in/ldap.v3"
+
+	//TODO(sh0rez): remove once import cycle resolved
+	_ "github.com/grafana/grafana/pkg/api/response"
 )
 
 type searchFunc = func(request *ldap.SearchRequest) (*ldap.SearchResult, error)

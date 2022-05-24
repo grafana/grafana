@@ -71,10 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrolBuiltins
-	// Simplify access control builtin roles
-	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
-
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -182,4 +178,8 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 )

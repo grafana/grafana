@@ -35,6 +35,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
 			})
+
+			t.Run("Should be able to get key by hash", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+
+				assert.Nil(t, err)
+				assert.NotNil(t, key)
+			})
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {

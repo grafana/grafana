@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getBackendSrv } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
@@ -12,23 +13,28 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-export const FolderView = ({
-  selection,
-  selectionToggle,
-  onTagSelected,
-}: Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'>) => {
+type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'> & {
+  tags?: string[];
+  hidePseudoFolders?: boolean;
+};
+export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hidePseudoFolders }: Props) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
+    const folders: DashboardSection[] = [];
+    if (!hidePseudoFolders) {
+      const stars = await getBackendSrv().get('api/user/stars');
+      if (stars.length > 0) {
+        folders.push({ title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred', itemsUIDs: stars });
+      }
+      folders.push({ title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent' });
+    }
+    folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
+
     const rsp = await getGrafanaSearcher().search({
       query: '*',
       kind: ['folder'],
     });
-    const folders: DashboardSection[] = [
-      { title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent' },
-      { title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred' },
-      { title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID }, // not sure why this is not in the index
-    ];
     for (const row of rsp.view) {
       folders.push({
         title: row.name,
@@ -59,6 +65,7 @@ export const FolderView = ({
                 selectionToggle={selectionToggle}
                 onTagSelected={onTagSelected}
                 section={section}
+                tags={tags}
               />
             )}
           </div>
@@ -83,6 +90,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       > ul {
         list-style: none;
       }
+
+      border: solid 1px ${theme.v1.colors.border2};
     `,
     section: css`
       display: flex;

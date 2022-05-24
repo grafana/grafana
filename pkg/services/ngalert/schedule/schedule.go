@@ -636,6 +636,7 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 			RuleUID:           s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
 			State:             models.InstanceStateType(s.State.String()),
+			StateReason:       s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
