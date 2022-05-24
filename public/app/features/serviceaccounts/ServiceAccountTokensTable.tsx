@@ -11,10 +11,11 @@ import { ApiKey } from '../../types';
 interface Props {
   tokens: ApiKey[];
   timeZone: TimeZone;
+  tokenActionsDisabled?: boolean;
   onDelete: (token: ApiKey) => void;
 }
 
-export const ServiceAccountTokensTable = ({ tokens, timeZone, onDelete }: Props): JSX.Element => {
+export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabled, onDelete }: Props): JSX.Element => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -40,7 +41,12 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, onDelete }: Props)
                 <td>{formatDate(timeZone, key.created)}</td>
                 {contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
                   <td>
-                    <DeleteButton aria-label="Delete service account token" size="sm" onConfirm={() => onDelete(key)} />
+                    <DeleteButton
+                      aria-label="Delete service account token"
+                      size="sm"
+                      onConfirm={() => onDelete(key)}
+                      disabled={tokenActionsDisabled}
+                    />
                   </td>
                 )}
               </tr>

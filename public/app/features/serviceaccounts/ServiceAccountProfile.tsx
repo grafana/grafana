@@ -1,14 +1,15 @@
-import { css, cx } from '@emotion/css';
-import React, { PureComponent, useRef, useState } from 'react';
+import { css } from '@emotion/css';
+import React, { useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
-import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
+import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
-import { deleteServiceAccount, updateServiceAccount } from './state/actions';
+import { deleteServiceAccount, updateServiceAccount } from './state/actionsServiceAccountPage';
 
 interface Props {
   serviceAccount: ServiceAccountDTO;
@@ -85,9 +86,9 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
                 label="Name"
                 value={serviceAccount.name}
                 onChange={onServiceAccountNameChange}
-                disabled={!ableToWrite}
+                disabled={!ableToWrite || serviceAccount.isDisabled}
               />
-              <ServiceAccountProfileRow label="ID" value={serviceAccount.login} />
+              <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
               <ServiceAccountRoleRow
                 label="Roles"
                 serviceAccount={serviceAccount}
@@ -99,6 +100,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
+                disabled={serviceAccount.isDisabled}
               />
             </tbody>
           </table>
@@ -164,123 +166,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-
-interface ServiceAccountProfileRowProps {
-  label: string;
-  value?: string;
-  inputType?: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-}
-
-interface ServiceAccountProfileRowState {
-  value: string;
-  editing: boolean;
-}
-
-export class ServiceAccountProfileRow extends PureComponent<
-  ServiceAccountProfileRowProps,
-  ServiceAccountProfileRowState
-> {
-  inputElem?: HTMLInputElement;
-
-  static defaultProps: Partial<ServiceAccountProfileRowProps> = {
-    value: '',
-    inputType: 'text',
-  };
-
-  state = {
-    editing: false,
-    value: this.props.value || '',
-  };
-
-  setInputElem = (elem: any) => {
-    this.inputElem = elem;
-  };
-
-  onEditClick = () => {
-    this.setState({ editing: true }, this.focusInput);
-  };
-
-  onCancelClick = () => {
-    this.setState({ editing: false, value: this.props.value || '' });
-  };
-
-  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
-    if (status === LegacyInputStatus.Invalid) {
-      return;
-    }
-
-    this.setState({ value: event.target.value });
-  };
-
-  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
-    if (status === LegacyInputStatus.Invalid) {
-      return;
-    }
-
-    this.setState({ value: event.target.value });
-  };
-
-  focusInput = () => {
-    if (this.inputElem && this.inputElem.focus) {
-      this.inputElem.focus();
-    }
-  };
-
-  onSave = () => {
-    this.setState({ editing: false });
-    if (this.props.onChange) {
-      this.props.onChange(this.state.value);
-    }
-  };
-
-  render() {
-    const { label, inputType } = this.props;
-    const { value } = this.state;
-    const labelClass = cx(
-      'width-16',
-      css`
-        font-weight: 500;
-      `
-    );
-
-    const inputId = `${label}-input`;
-    return (
-      <tr>
-        <td className={labelClass}>
-          <label htmlFor={inputId}>{label}</label>
-        </td>
-        <td className="width-25" colSpan={2}>
-          {!this.props.disabled && this.state.editing ? (
-            <Input
-              id={inputId}
-              type={inputType}
-              defaultValue={value}
-              onBlur={this.onInputBlur}
-              onChange={this.onInputChange}
-              ref={this.setInputElem}
-              width={30}
-            />
-          ) : (
-            <span>{this.props.value}</span>
-          )}
-        </td>
-        <td>
-          {this.props.onChange && (
-            <ConfirmButton
-              closeOnConfirm
-              confirmText="Save"
-              onConfirm={this.onSave}
-              onClick={this.onEditClick}
-              onCancel={this.onCancelClick}
-              disabled={this.props.disabled}
-            >
-              Edit
-            </ConfirmButton>
-          )}
-        </td>
-      </tr>
-    );
-  }
-}

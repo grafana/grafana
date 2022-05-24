@@ -58,6 +58,8 @@ const ServiceAccountPageUnconnected = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
   const serviceAccountId = parseInt(match.params.id, 10);
+  const tokenActionsDisabled =
+    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
 
   useEffect(() => {
     dispatch(loadServiceAccount(serviceAccountId));
@@ -97,15 +99,17 @@ const ServiceAccountPageUnconnected = ({
           <h3 className="page-heading" style={{ marginBottom: '0px' }}>
             Tokens
           </h3>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite)}
-          >
+          <Button onClick={() => setIsModalOpen(true)} disabled={tokenActionsDisabled}>
             Add token
           </Button>
         </div>
         {tokens && (
-          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+          <ServiceAccountTokensTable
+            tokens={tokens}
+            timeZone={timezone}
+            onDelete={onDeleteServiceAccountToken}
+            tokenActionsDisabled={tokenActionsDisabled}
+          />
         )}
         <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>

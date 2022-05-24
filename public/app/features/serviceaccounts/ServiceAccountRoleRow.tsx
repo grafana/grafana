@@ -26,7 +26,7 @@ export const ServiceAccountRoleRow = ({
   const inputId = `${label}-input`;
   const styles = useStyles(getStyles);
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
-  const rolePickerDisabled = !canUpdateRole;
+  const rolePickerDisabled = !canUpdateRole || serviceAccount.isDisabled;
 
   return (
     <tr>
@@ -48,7 +48,7 @@ export const ServiceAccountRoleRow = ({
           <OrgRolePicker
             aria-label="Role"
             value={serviceAccount.role}
-            disabled={!canUpdateRole}
+            disabled={rolePickerDisabled}
             onChange={onRoleChange}
             // TODO: check if we actually need it since <UserRolePicker /> cannot be activated with htmlFor
             inputId={inputId}
