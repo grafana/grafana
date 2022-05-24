@@ -350,12 +350,14 @@ export class Scene {
         this.moved.next(Date.now());
       })
       .on('resizeStart', (event) => {
-        const defaultConstraint = { vertical: VerticalConstraint.Top, horizontal: HorizontalConstraint.Left };
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
           targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-          targetedElement.options.constraint = defaultConstraint;
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
           targetedElement.setPlacementFromConstraint();
         }
       })
@@ -375,8 +377,11 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement.options.constraint = targetedElement.tempConstraint;
-          targetedElement.tempConstraint = undefined;
+          if (targetedElement.tempConstraint) {
+            targetedElement.options.constraint = targetedElement.tempConstraint;
+            targetedElement.tempConstraint = undefined;
+          }
+
           targetedElement.setPlacementFromConstraint();
         }
       });
