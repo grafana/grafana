@@ -37,7 +37,28 @@ import (
 // 409: conflictError
 // 500: internalServerError
 
-// swagger:route PUT /datasources/{datasource_id} datasources updateDatasource
+// swagger:route PUT /datasources/{id} datasources updateDatasourceByID
+//
+// Update an existing data source by its sequential ID.
+//
+// Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
+// secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
+// encrypted fields are listed under secureJsonFields section in the response.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/updateDatasourceByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: createOrUpdateDatasourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
+// swagger:route PUT /datasources/uid/{uid} datasources updateDatasourceByUID
 //
 // Update an existing data source.
 //
@@ -54,12 +75,16 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route DELETE /datasources/{datasource_id} datasources deleteDatasourceByID
+// swagger:route DELETE /datasources/{id} datasources deleteDatasourceByID
 //
 // Delete an existing data source by id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/deleteDatasourceByUID) instead
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -68,7 +93,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route DELETE /datasources/uid/{datasource_uid} datasources deleteDatasourceByUID
+// swagger:route DELETE /datasources/uid/{uid} datasources deleteDatasourceByUID
 //
 // Delete an existing data source by UID.
 //
@@ -82,7 +107,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /datasources/name/{datasource_name} datasources deleteDatasourceByName
+// swagger:route DELETE /datasources/name/{name} datasources deleteDatasourceByName
 //
 // Delete an existing data source by name.
 //
@@ -96,12 +121,16 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/{datasource_id} datasources getDatasourceByID
+// swagger:route GET /datasources/{id} datasources getDatasourceByID
 //
 // Get a single data source by Id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/getDatasourceByUID) instead
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDatasourceResponse
@@ -111,7 +140,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/uid/{datasource_uid} datasources getDatasourceByUID
+// swagger:route GET /datasources/uid/{uid} datasources getDatasourceByUID
 //
 // Get a single data source by UID.
 //
@@ -126,7 +155,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/{datasource_id}/health datasources checkDatasourceHealthByID
+// swagger:route GET /datasources/{id}/health datasources checkDatasourceHealthByID
 //
 // Check data source health by Id.
 //
@@ -141,7 +170,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /datasources/uid/{datasource_uid}/health datasources checkDatasourceHealth
+// swagger:route GET /datasources/uid/{uid}/health datasources checkDatasourceHealth
 //
 // Check data source health by Id.
 //
@@ -152,7 +181,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /datasources/{datasource_id}/resources/{datasource_proxy_route} datasources fetchDatasourceResourcesByID
+// swagger:route GET /datasources/{id}/resources/{datasource_proxy_route} datasources fetchDatasourceResourcesByID
 //
 // Fetch data source resources by Id.
 //
@@ -168,7 +197,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/uid/{datasource_uid}/resources/{datasource_proxy_route} datasources fetchDatasourceResources
+// swagger:route GET /datasources/uid/{uid}/resources/{datasource_proxy_route} datasources fetchDatasourceResources
 //
 // Fetch data source resources.
 //
@@ -180,7 +209,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/name/{datasource_name} datasources getDatasourceByName
+// swagger:route GET /datasources/name/{name} datasources getDatasourceByName
 //
 // Get a single data source by Name.
 //
@@ -193,7 +222,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /datasources/id/{datasource_name} datasources getDatasourceIdByName
+// swagger:route GET /datasources/id/{name} datasources getDatasourceIdByName
 //
 // Get data source Id by Name.
 //
@@ -207,7 +236,25 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyGETcalls
+// swagger:route GET /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyGETcalls
+//
+// Data source proxy GET calls.
+//
+// Proxies all calls to the actual data source.
+//
+// Please refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /datasources/proxy/uid/{uid}/{datasource_proxy_route} datasources datasourceProxyGETByUIDcalls
 //
 // Data source proxy GET calls.
 //
@@ -221,21 +268,26 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyGETByUIDcalls
+// swagger:route POST /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyPOSTcalls
 //
-// Data source proxy GET calls.
+// Data source proxy POST calls.
 //
-// Proxies all calls to the actual data source.
+// Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
+//
+// Please refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead
+//
+// Deprecated: true
 //
 // Responses:
-// 200:
+// 201:
+// 202:
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyPOSTcalls
+// swagger:route POST /datasources/proxy/uid/{uid}/{datasource_proxy_route} datasources datasourceProxyPOSTByUIDcalls
 //
 // Data source proxy POST calls.
 //
@@ -250,27 +302,16 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyPOSTByUIDcalls
-//
-// Data source proxy POST calls.
-//
-// Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
-//
-// Responses:
-// 201:
-// 202:
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:route DELETE /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyDELETEcalls
+// swagger:route DELETE /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyDELETEcalls
 //
 // Data source proxy DELETE calls.
 //
 // Proxies all calls to the actual data source.
 //
+// Please refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead
+//
+// Deprecated: true
+//
 // Responses:
 // 202:
 // 400: badRequestError
@@ -279,7 +320,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyDELETEByUIDcalls
+// swagger:route DELETE /datasources/proxy/uid/{uid}/{datasource_proxy_route} datasources datasourceProxyDELETEByUIDcalls
 //
 // Data source proxy DELETE calls.
 //
@@ -316,28 +357,28 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters updateDatasource deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
+// swagger:parameters updateDatasourceByID deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 // swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
 	// in:path
 	// required:true
-	DatasourceID string `json:"datasource_id"`
+	DatasourceID string `json:"id"`
 }
 
-// swagger:parameters deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters updateDatasourceByUID deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
 // swagger:parameters checkDatasourceHealth fetchDatasourceResources
 type DatasourceUID struct {
 	// in:path
 	// required:true
-	DatasourceUID string `json:"datasource_uid"`
+	DatasourceUID string `json:"uid"`
 }
 
 // swagger:parameters getDatasourceByName deleteDatasourceByName getDatasourceIdByName
 type DatasourceName struct {
 	// in:path
 	// required:true
-	DatasourceName string `json:"datasource_name"`
+	DatasourceName string `json:"name"`
 }
 
 // swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls datasourceProxyGETByUIDcalls
@@ -363,7 +404,7 @@ type AddDatasourceParam struct {
 	Body models.AddDataSourceCommand
 }
 
-// swagger:parameters updateDatasource
+// swagger:parameters updateDatasourceByID updateDatasourceByUID
 type UpdateDatasource struct {
 	// in:body
 	// required:true

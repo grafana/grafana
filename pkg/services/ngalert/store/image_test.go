@@ -39,7 +39,7 @@ func addToken(img *store.Image) *store.Image {
 	return img
 }
 
-func TestSaveAndGetImage(t *testing.T) {
+func TestIntegrationSaveAndGetImage(t *testing.T) {
 	mockTimeNow()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
@@ -92,7 +92,7 @@ func TestSaveAndGetImage(t *testing.T) {
 	}
 }
 
-func TestDeleteExpiredImages(t *testing.T) {
+func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -109,17 +109,26 @@ func TestDeleteExpiredImages(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	// Images are availabile
+	img, err := dbstore.GetImage(ctx, imgs[0].Token)
+	require.NoError(t, err)
+	require.NotNil(t, img)
+
+	img, err = dbstore.GetImage(ctx, imgs[1].Token)
+	require.NoError(t, err)
+	require.NotNil(t, img)
+
 	// Wait until timeout.
 	for i := 0; i < 120; i++ {
 		store.TimeNow()
 	}
 
 	// Call expired
-	err := dbstore.DeleteExpiredImages(ctx)
+	err = dbstore.DeleteExpiredImages(ctx)
 	require.NoError(t, err)
 
 	// All images are gone.
-	img, err := dbstore.GetImage(ctx, imgs[0].Token)
+	img, err = dbstore.GetImage(ctx, imgs[0].Token)
 	require.Nil(t, img)
 	require.Error(t, err)
 

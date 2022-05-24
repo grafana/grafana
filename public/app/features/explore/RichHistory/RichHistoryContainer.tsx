@@ -13,6 +13,7 @@ import {
   deleteRichHistory,
   initRichHistory,
   loadRichHistory,
+  loadMoreRichHistory,
   clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
@@ -30,9 +31,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;
   const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
-  const { richHistory } = item;
+  const { richHistory, richHistoryTotal } = item;
   return {
     richHistory,
+    richHistoryTotal,
     firstTab,
     activeDatasourceInstance: datasourceInstance!.name,
     richHistorySettings,
@@ -43,6 +45,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 const mapDispatchToProps = {
   initRichHistory,
   loadRichHistory,
+  loadMoreRichHistory,
   clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
@@ -64,6 +67,7 @@ export function RichHistoryContainer(props: Props) {
 
   const {
     richHistory,
+    richHistoryTotal,
     width,
     firstTab,
     activeDatasourceInstance,
@@ -71,6 +75,7 @@ export function RichHistoryContainer(props: Props) {
     deleteRichHistory,
     initRichHistory,
     loadRichHistory,
+    loadMoreRichHistory,
     clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
@@ -96,6 +101,7 @@ export function RichHistoryContainer(props: Props) {
     >
       <RichHistory
         richHistory={richHistory}
+        richHistoryTotal={richHistoryTotal}
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
@@ -107,6 +113,7 @@ export function RichHistoryContainer(props: Props) {
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
         loadRichHistory={loadRichHistory}
+        loadMoreRichHistory={loadMoreRichHistory}
         clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>

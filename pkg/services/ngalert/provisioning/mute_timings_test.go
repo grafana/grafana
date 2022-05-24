@@ -26,7 +26,7 @@ func TestMuteTimingService(t *testing.T) {
 		require.Equal(t, "asdf", result[0].Name)
 	})
 
-	t.Run("service returns empty map when config file contains no templates", func(t *testing.T) {
+	t.Run("service returns empty list when config file contains no mute timings", func(t *testing.T) {
 		sut := createMuteTimingSvcSut()
 		sut.config.(*MockAMConfigStore).EXPECT().
 			getsConfig(models.AlertConfiguration{

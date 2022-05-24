@@ -1,5 +1,5 @@
 {
-  "name": "Dark",
+  "name": "Light",
   "isDark": false,
   "isLight": true,
   "colors": {
@@ -151,6 +151,10 @@
     },
     "menuTabs": {
       "height": 41
+    },
+    "textHighlight": {
+      "text": "#000000",
+      "background": "#FAD34A"
     },
     "horizontalDrawer": {
       "defaultHeight": 400
@@ -505,7 +509,7 @@
     "portal": 1061
   },
   "v1": {
-    "name": "Dark",
+    "name": "Light",
     "typography": {
       "fontFamily": {
         "sansSerif": "\"Roboto\", \"Helvetica\", \"Arial\", sans-serif",

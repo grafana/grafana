@@ -33,7 +33,7 @@ var (
 
 const (
 	screenshotTimeout  = 10 * time.Second
-	screenshotCacheTTL = 15 * time.Second
+	screenshotCacheTTL = 60 * time.Second
 )
 
 // ScreenshotImageService takes screenshots of the panel for an alert rule and
@@ -96,6 +96,8 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 		DashboardUID: *r.DashboardUID,
 		PanelID:      *r.PanelID,
 	})
+	// TODO: Check for screenshot upload failures. These images should still be
+	// stored because we have a local disk path that could be useful.
 	if err != nil {
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}
@@ -109,6 +111,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	}
 
 	return &v, nil
+}
+
+type NotAvailableImageService struct{}
+
+func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
+	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 type NoopImageService struct{}

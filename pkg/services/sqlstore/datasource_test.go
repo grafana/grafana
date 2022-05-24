@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDataAccess(t *testing.T) {
+func TestIntegrationDataAccess(t *testing.T) {
 	defaultAddDatasourceCommand := models.AddDataSourceCommand{
 		OrgId:  10,
 		Name:   "nisse",
@@ -431,7 +431,7 @@ func TestDataAccess(t *testing.T) {
 	})
 }
 
-func TestGetDefaultDataSource(t *testing.T) {
+func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	InitTestDB(t)
 
 	t.Run("should return error if there is no default datasource", func(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStatsDataAccess(t *testing.T) {
+func TestIntegrationStatsDataAccess(t *testing.T) {
 	sqlStore := InitTestDB(t)
 	populateDB(t, sqlStore)
 
