@@ -206,8 +206,30 @@ func (i *dashboardIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
 }
 
+func (i *dashboardIndex) closeReader(orgID int64) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if reader, ok := i.perOrgReader[orgID]; ok {
+		reader.Close()
+		delete(i.perOrgReader, orgID)
+	}
+}
+
+func (i *dashboardIndex) closeWriter(orgID int64) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if writer, ok := i.perOrgWriter[orgID]; ok {
+		writer.Close()
+		delete(i.perOrgWriter, orgID)
+	}
+}
+
 func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
 	started := time.Now()
+
+	i.closeReader(orgID)
+	i.closeWriter(orgID)
+
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
@@ -239,9 +261,9 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 	i.perOrgWriter[orgID] = writer
 	i.mu.Unlock()
 
-	if orgID == 1 {
-		go updateUsageStats(context.Background(), reader, i.logger)
-	}
+	//if orgID == 1 {
+	//	go updateUsageStats(context.Background(), reader, i.logger)
+	//}
 	return len(dashboards), nil
 }
 
@@ -339,19 +361,21 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		return err
 	}
 
-	i.mu.Lock()
-	defer i.mu.Unlock()
+	i.mu.RLock()
 
 	writer, ok := i.perOrgWriter[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
+		i.mu.RUnlock()
 		return nil
 	}
 	reader, ok := i.perOrgReader[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
+		i.mu.RUnlock()
 		return nil
 	}
+	i.mu.RUnlock()
 
 	var newReader *bluge.Reader
 
@@ -364,7 +388,11 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	if err != nil {
 		return err
 	}
+
+	i.closeReader(orgID)
+	i.mu.Lock()
 	i.perOrgReader[orgID] = newReader
+	i.mu.Unlock()
 	return nil
 }
 

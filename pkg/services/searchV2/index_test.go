@@ -2,6 +2,7 @@ package searchV2
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -35,12 +36,12 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var testOrgID int64 = 1
 
-func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
+func initTestIndexFromDashes(t testing.TB, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer, *testDashboardLoader) {
 	t.Helper()
 	return initTestIndexFromDashesExtended(t, dashboards, &NoopDocumentExtender{})
 }
 
-func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, extender DocumentExtender) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
+func initTestIndexFromDashesExtended(t testing.TB, dashboards []dashboard, extender DocumentExtender) (*dashboardIndex, *bluge.Reader, *bluge.Writer, *testDashboardLoader) {
 	t.Helper()
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
@@ -58,7 +59,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	require.True(t, ok)
 	writer, ok := index.getOrgWriter(testOrgID)
 	require.True(t, ok)
-	return index, reader, writer
+	return index, reader, writer, dashboardLoader
 }
 
 func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery) {
@@ -93,14 +94,14 @@ var testDashboards = []dashboard{
 
 func TestDashboardIndex(t *testing.T) {
 	t.Run("basic-search", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
 
 	t.Run("basic-filter", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testDisallowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
@@ -109,7 +110,7 @@ func TestDashboardIndex(t *testing.T) {
 
 func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-delete", func(t *testing.T) {
-		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+		index, reader, writer, _ := initTestIndexFromDashes(t, testDashboards)
 
 		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2")
 		require.NoError(t, err)
@@ -120,7 +121,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	})
 
 	t.Run("dashboard-create", func(t *testing.T) {
-		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+		index, reader, writer, _ := initTestIndexFromDashes(t, testDashboards)
 
 		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  3,
@@ -137,7 +138,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	})
 
 	t.Run("dashboard-update", func(t *testing.T) {
-		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+		index, reader, writer, _ := initTestIndexFromDashes(t, testDashboards)
 
 		newReader, err := index.updateDashboard(context.Background(), testOrgID, writer, reader, dashboard{
 			id:  2,
@@ -151,6 +152,54 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
 			DashboardQuery{Query: "nginx"},
 		)
+	})
+}
+
+func Benchmark_DashboardIndexUpdates(b *testing.B) {
+	d := []dashboard{}
+
+	for i := 0; i < 200; i++ {
+		d = append(d, dashboard{
+			id:  int64(i),
+			uid: fmt.Sprintf("%d", i),
+			info: &extract.DashboardInfo{
+				Title: fmt.Sprintf("boom-%d", i),
+			},
+		})
+	}
+
+	b.Run("dashboard-delete", func(b *testing.B) {
+		b.ResetTimer()
+		index, _, _, loader := initTestIndexFromDashes(b, d)
+		loader.dashboards = []dashboard{}
+		for i := 0; i < b.N; i++ {
+			err := index.applyDashboardEvent(context.Background(), testOrgID, fmt.Sprintf("%d", 1), store.EntityEventTypeDelete)
+			require.NoError(b, err)
+		}
+		index.perOrgReader[testOrgID].Close()
+		index.perOrgWriter[testOrgID].Close()
+	})
+
+	b.Run("dashboard-update", func(b *testing.B) {
+		b.ResetTimer()
+		index, _, _, _ := initTestIndexFromDashes(b, d)
+		for i := 0; i < b.N; i++ {
+			err := index.applyDashboardEvent(context.Background(), testOrgID, fmt.Sprintf("%d", i), store.EntityEventTypeUpdate)
+			require.NoError(b, err)
+		}
+
+		index.perOrgReader[testOrgID].Close()
+		index.perOrgWriter[testOrgID].Close()
+	})
+
+	b.Run("reindex", func(b *testing.B) {
+		b.ResetTimer()
+		index, _, _, _ := initTestIndexFromDashes(b, d)
+		for i := 0; i < b.N; i++ {
+			index.reIndexFromScratch(context.Background())
+		}
+		index.perOrgReader[testOrgID].Close()
+		index.perOrgWriter[testOrgID].Close()
 	})
 }
 
@@ -231,14 +280,14 @@ func TestDashboardIndexSort(t *testing.T) {
 	}
 
 	t.Run("sort-asc", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
+		_, reader, _, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
 		checkSearchResponseExtended(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "test"}, extender.GetQueryExtender(),
 		)
 	})
 
 	t.Run("sort-desc", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
+		_, reader, _, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
 		checkSearchResponseExtended(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "-test"}, extender.GetQueryExtender(),
 		)
@@ -264,28 +313,28 @@ var testPrefixDashboards = []dashboard{
 
 func TestDashboardIndex_PrefixSearch(t *testing.T) {
 	t.Run("prefix-search-beginning", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "Arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "Syn"},
 		)
 	})
 
 	t.Run("prefix-search-beginning-lower", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle-lower", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "syn"},
 		)
@@ -294,28 +343,28 @@ func TestDashboardIndex_PrefixSearch(t *testing.T) {
 
 func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 	t.Run("multiple-tokens-beginning", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "Archer da"},
 		)
 	})
 
 	t.Run("multiple-tokens-beginning-lower", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "archer da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "rcher Da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle-lower", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "cument sy"},
 		)
@@ -334,7 +383,7 @@ var longPrefixDashboards = []dashboard{
 
 func TestDashboardIndex_PrefixNgramExceeded(t *testing.T) {
 	t.Run("prefix-search-ngram-exceeded", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, longPrefixDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, longPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "Eyjafjallajöku"},
 		)
@@ -360,13 +409,13 @@ var scatteredTokensDashboards = []dashboard{
 
 func TestDashboardIndex_MultipleTokensScattered(t *testing.T) {
 	t.Run("scattered-tokens-match", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "dead secret"},
 		)
 	})
 	t.Run("scattered-tokens-match-reversed", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
+		_, reader, _, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "powerful secret"},
 		)

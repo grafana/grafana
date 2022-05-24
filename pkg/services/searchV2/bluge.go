@@ -36,7 +36,7 @@ const (
 )
 
 func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Reader, *bluge.Writer, error) {
-	writer, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
+	writer, err := bluge.OpenWriter(bluge.DefaultConfig("bluge.db"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening writer: %v", err)
 	}
