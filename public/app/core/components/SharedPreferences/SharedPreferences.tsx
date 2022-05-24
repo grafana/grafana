@@ -22,18 +22,16 @@ import { PreferencesService } from 'app/core/services/PreferencesService';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 
+import { UserPreferencesDTO } from '../../../types';
+
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
 }
 
-export interface State {
-  homeDashboardId: number;
-  theme: string;
-  timezone: string;
-  weekStart: string;
+export type State = UserPreferencesDTO & {
   dashboards: DashboardSearchHit[];
-}
+};
 
 const themes: SelectableValue[] = [
   { value: '', label: t({ id: 'shared-preferences.theme.default-label', message: 'Default' }) },
@@ -54,6 +52,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       dashboards: [],
+      queryHistory: { homeTab: '' },
     };
   }
 
@@ -90,12 +89,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       dashboards: [defaultDashboardHit, ...dashboards],
+      queryHistory: prefs.queryHistory,
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone, weekStart } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone, weekStart });
+    const { homeDashboardId, theme, timezone, weekStart, queryHistory } = this.state;
+    await this.service.update({ homeDashboardId, theme, timezone, weekStart, queryHistory });
     window.location.reload();
   };
 

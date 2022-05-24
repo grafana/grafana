@@ -16,7 +16,7 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an <!--[external authentication provider]({{< relref "../../auth/_index.md">}})--> external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+> **Note**: If your Grafana instance uses an <!--[external authentication provider]({{< relref "../../auth/_index.md" >}})--> external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
 
 **To change your password**:
 
@@ -41,7 +41,7 @@ Your profile includes your name, user name, and email address, which you can upd
 
 ## Edit your preferences
 
-You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana preferences]({{< relref "../../administration/preferences/_index.md">}}).
+You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana preferences]({{< relref "../../administration/preferences/_index.md" >}}).
 
 - **UI theme** determines whether Grafana appears in light mode or dark mode. By default, UI theme is set to dark mode.
 - **Home dashboard** refers to the dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.

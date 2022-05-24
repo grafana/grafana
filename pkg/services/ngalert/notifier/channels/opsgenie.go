@@ -40,6 +40,7 @@ type OpsgenieNotifier struct {
 	tmpl             *template.Template
 	log              log.Logger
 	ns               notifications.WebhookSender
+	images           ImageStore
 }
 
 type OpsgenieConfig struct {
@@ -59,7 +60,7 @@ func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.Template, fc.DecryptFunc), nil
+	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template, fc.DecryptFunc), nil
 }
 
 func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*OpsgenieConfig, error) {
@@ -84,7 +85,7 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
+func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
 	return &OpsgenieNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -101,6 +102,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		tmpl:             t,
 		log:              log.New("alerting.notifier." + config.Name),
 		ns:               ns,
+		images:           images,
 	}
 }
 
@@ -207,6 +209,31 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	if on.sendDetails() {
 		for k, v := range lbls {
 			details.Set(k, v)
+		}
+
+		images := []string{}
+		for i := range as {
+			imgToken := getTokenFromAnnotations(as[i].Annotations)
+			if len(imgToken) == 0 {
+				continue
+			}
+
+			dbContext, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+			imgURL, err := on.images.GetURL(dbContext, imgToken)
+			cancel()
+
+			if err != nil {
+				if !errors.Is(err, ErrImagesUnavailable) {
+					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+					on.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+				}
+			} else if len(imgURL) != 0 {
+				images = append(images, imgURL)
+			}
+		}
+
+		if len(images) != 0 {
+			details.Set("image_urls", images)
 		}
 	}
 

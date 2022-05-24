@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,19 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type DashboardStore struct {
 	sqlStore *sqlstore.SQLStore
 	log      log.Logger
+	dialect  migrator.Dialect
 }
 
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
 func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
-	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store")}
+	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), dialect: sqlStore.Dialect}
 }
 
 func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
@@ -903,4 +908,104 @@ func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.
 		query.Result = us
 		return nil
 	})
+}
+
+func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
+			return models.ErrCommandValidationFailed
+		}
+
+		var dashboards = make([]*models.Dashboard, 0)
+		var session *xorm.Session
+		if len(query.DashboardIds) > 0 {
+			session = sess.In("id", query.DashboardIds)
+		} else {
+			session = sess.In("uid", query.DashboardUIds)
+		}
+
+		err := session.Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
+}
+
+func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	filters := []interface{}{
+		permissions.DashboardPermissionFilter{
+			OrgRole:         query.SignedInUser.OrgRole,
+			OrgId:           query.SignedInUser.OrgId,
+			Dialect:         d.dialect,
+			UserId:          query.SignedInUser.UserId,
+			PermissionLevel: query.Permission,
+		},
+	}
+
+	if !ac.IsDisabled(d.sqlStore.Cfg) {
+		// if access control is enabled, overwrite the filters so far
+		filters = []interface{}{
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
+		}
+	}
+
+	for _, filter := range query.Sort.Filter {
+		filters = append(filters, filter)
+	}
+
+	filters = append(filters, query.Filters...)
+
+	if query.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+	} else if query.SignedInUser.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgId})
+	}
+
+	if len(query.Tags) > 0 {
+		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
+	}
+
+	if query.IsStarred {
+		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserId})
+	}
+
+	if len(query.Title) > 0 {
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.dialect, Title: query.Title})
+	}
+
+	if len(query.Type) > 0 {
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.dialect, Type: query.Type})
+	}
+
+	if len(query.FolderIds) > 0 {
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
+	}
+
+	var res []dashboards.DashboardSearchProjection
+	sb := &searchstore.Builder{Dialect: d.dialect, Filters: filters}
+
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	sql, params := sb.ToSQL(limit, page)
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

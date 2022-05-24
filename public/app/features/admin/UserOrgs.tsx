@@ -17,10 +17,10 @@ import {
   withTheme,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Organization, OrgRole, UserDTO, UserOrg } from 'app/types';
+import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
 
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -88,7 +88,13 @@ export class UserOrgs extends PureComponent<Props, State> {
               </Button>
             )}
           </div>
-          <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.dismissOrgAddModal} />
+          <AddToOrgModal
+            user={user}
+            userOrgs={orgs}
+            isOpen={showAddOrgModal}
+            onOrgAdd={onOrgAdd}
+            onDismiss={this.dismissOrgAddModal}
+          />
         </div>
       </>
     );
@@ -155,8 +161,9 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     }
   }
 
-  onOrgRemove = () => {
-    const { org } = this.props;
+  onOrgRemove = async () => {
+    const { org, user } = this.props;
+    user && (await updateUserRoles([], user.id, org.orgId));
     this.props.onOrgRemove(org.orgId);
   };
 
@@ -272,7 +279,8 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
 
 interface AddToOrgModalProps {
   isOpen: boolean;
-
+  user?: UserDTO;
+  userOrgs: UserOrg[];
   onOrgAdd(orgId: number, role: string): void;
 
   onDismiss?(): void;
@@ -281,16 +289,32 @@ interface AddToOrgModalProps {
 interface AddToOrgModalState {
   selectedOrg: Organization | null;
   role: OrgRole;
+  roleOptions: Role[];
+  pendingOrgId: number | null;
+  pendingUserId: number | null;
+  pendingRoles: Role[];
 }
 
 export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
   state: AddToOrgModalState = {
     selectedOrg: null,
-    role: OrgRole.Admin,
+    role: OrgRole.Viewer,
+    roleOptions: [],
+    pendingOrgId: null,
+    pendingUserId: null,
+    pendingRoles: [],
   };
 
   onOrgSelect = (org: OrgSelectItem) => {
-    this.setState({ selectedOrg: org.value! });
+    const userOrg = this.props.userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
+    this.setState({ selectedOrg: org.value!, role: userOrg?.role || OrgRole.Viewer });
+    if (contextSrv.licensedAccessControlEnabled()) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        fetchRoleOptions(org.value?.id)
+          .then((roles) => this.setState({ roleOptions: roles }))
+          .catch((e) => console.error(e));
+      }
+    }
   };
 
   onOrgRoleChange = (newRole: OrgRole) => {
@@ -299,20 +323,48 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     });
   };
 
-  onAddUserToOrg = () => {
+  onAddUserToOrg = async () => {
     const { selectedOrg, role } = this.state;
     this.props.onOrgAdd(selectedOrg!.id, role);
+    // add the stored userRoles also
+    if (contextSrv.licensedAccessControlEnabled()) {
+      if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
+        if (this.state.pendingUserId) {
+          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
+          // clear pending state
+          this.state.pendingOrgId = null;
+          this.state.pendingRoles = [];
+          this.state.pendingUserId = null;
+        }
+      }
+    }
   };
 
   onCancel = () => {
+    // clear selectedOrg when modal is canceled
+    this.setState({
+      selectedOrg: null,
+      pendingRoles: [],
+      pendingOrgId: null,
+      pendingUserId: null,
+    });
     if (this.props.onDismiss) {
       this.props.onDismiss();
     }
   };
 
+  onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
+    // keep the new role assignments for user
+    this.setState({
+      pendingRoles: roles,
+      pendingOrgId: orgId!,
+      pendingUserId: userId,
+    });
+  };
+
   render() {
-    const { isOpen } = this.props;
-    const { role } = this.state;
+    const { isOpen, user, userOrgs } = this.props;
+    const { role, roleOptions, selectedOrg } = this.state;
     const styles = getAddToOrgModalStyles();
     return (
       <Modal
@@ -323,17 +375,31 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         onDismiss={this.onCancel}
       >
         <Field label="Organization">
-          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} autoFocus />
+          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
         </Field>
-        <Field label="Role">
-          <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
+        <Field label="Role" disabled={selectedOrg === null}>
+          {contextSrv.accessControlEnabled() ? (
+            <UserRolePicker
+              userId={user?.id || 0}
+              orgId={selectedOrg?.id}
+              builtInRole={role}
+              onBuiltinRoleChange={this.onOrgRoleChange}
+              builtinRolesDisabled={false}
+              roleOptions={roleOptions}
+              updateDisabled={true}
+              onApplyRoles={this.onRoleUpdate}
+              pendingRoles={this.state.pendingRoles}
+            />
+          ) : (
+            <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
+          )}
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">
             <Button variant="secondary" fill="outline" onClick={this.onCancel}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={this.onAddUserToOrg}>
+            <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
               Add to organization
             </Button>
           </HorizontalGroup>

@@ -21,6 +21,7 @@ import * as ruleId from '../../utils/rule-id';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { NotificationsStep } from './NotificationsStep';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
 
@@ -155,6 +156,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
                   <DetailsStep />
+                  <NotificationsStep />
                 </>
               )}
             </div>

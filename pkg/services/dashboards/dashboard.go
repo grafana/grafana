@@ -6,24 +6,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// Generating mocks is handled by vektra/mockery
-// 1. install go mockery https://github.com/vektra/mockery#go-install
-// 2. add your method to the relevant services
-// 3. from the same directory as this file run `go generate` and it will update the mock
-// If you don't see any output, this most likely means your OS can't find the mockery binary
-// `which mockery` to confirm and follow one of the installation methods
-
+//go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
+	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error)
+	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
 
@@ -45,13 +42,15 @@ type DashboardProvisioningService interface {
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 // Store is a dashboard store.
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
