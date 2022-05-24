@@ -52,7 +52,7 @@ From the database encryption perspective, there are several operations that a Gr
 - [**Re-encrypt secrets**](#re-encrypt-secrets): re-encrypt secrets with envelope encryption and a fresh data key.
 - [**Roll back secrets**](#roll-back-secrets): decrypt secrets encrypted with envelope encryption and re-encrypt them with legacy encryption.
 - [**Re-encrypt data keys**](#re-encrypt-data-keys): re-encrypt data keys with a fresh key encryption key and a [KMS integration](#kms-integration).
-- [**Rotate data keys**](#rotate-data-keys): to de-active active data keys and stop using them for encryption in favor of a fresh one.
+- [**Rotate data keys**](#rotate-data-keys): disable active data keys and stop using them for encryption in favor of a fresh one.
 
 Find more details about each of those below.
 
