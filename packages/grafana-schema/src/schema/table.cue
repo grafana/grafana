@@ -9,7 +9,8 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "gauge" | "js
 
 TableCellOptions: {
 	displayMode: TableCellDisplayMode
-	subDisplayMode?: GaugeDisplayMode | BackgroundDisplayMode
+	gaugeDisplayMode?: GaugeDisplayMode
+	backgroundDisplayMode?: BackgroundDisplayMode
 } @cuetsy(kind="interface")
 
 TableFieldOptions: {

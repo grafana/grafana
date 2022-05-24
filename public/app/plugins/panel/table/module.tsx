@@ -7,7 +7,7 @@ import {
   standardEditorsRegistry,
 } from '@grafana/data';
 import { TableFieldOptions } from '@grafana/schema';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableCellDisplayMode, BarGaugeDisplayMode } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TablePanel } from './TablePanel';
@@ -73,6 +73,31 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             ],
           },
           defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
+        })
+        .addSelect({
+          path: 'cellOptions.gaugeDisplayMode',
+          name: 'Display type',
+          description: 'The type background or gauge (gradient, retro, etc.) to display',
+          settings: {
+            options: [
+              { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
+              { value: BarGaugeDisplayMode.Gradient, label: 'Gradient' },
+              { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
+            ],
+          },
+          showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.Gauge,
+        })
+        .addSelect({
+          path: 'cellOptions.backgroundDisplayMode',
+          name: 'Background Type',
+          description: 'The type of background to display',
+          settings: {
+            options: [
+              { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
+              { value: BarGaugeDisplayMode.Gradient, label: 'Gradient' },
+            ],
+          },
+          showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.ColorBackground,
         })
         .addBooleanSwitch({
           path: 'inspect',
