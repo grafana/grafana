@@ -13,3 +13,10 @@ export interface PanelOptions extends ui.SingleStatBaseOptions {
   justifyMode: ui.BigValueJustifyMode;
   textMode: ui.BigValueTextMode;
 }
+
+export const defaultPanelOptions: Partial<PanelOptions> = {
+  colorMode: ui.BigValueColorMode.Value,
+  graphMode: ui.BigValueGraphMode.Area,
+  justifyMode: ui.BigValueJustifyMode.Auto,
+  textMode: ui.BigValueTextMode.Auto,
+};
