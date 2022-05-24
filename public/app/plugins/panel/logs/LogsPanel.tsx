@@ -18,6 +18,7 @@ import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import usePanelScroll from './usePanelScroll';
 import usePopulateData from './usePopulateData';
+import useNotifyHeight from './useNotifyHeight';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -39,10 +40,10 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 }) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
-
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
 
+  useNotifyHeight();
   usePanelScroll({
     isAscending,
     messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],

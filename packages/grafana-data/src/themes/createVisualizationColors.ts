@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR } from '../types';
-import { ThemeColors } from './createColors';
+import { ThemeColors, themesConfig } from './createColors';
 
 /**
  * @alpha
@@ -35,13 +35,7 @@ export interface ThemeVizHue {
  * @internal
  */
 export function createVisualizationColors(colors: ThemeColors): ThemeVisualizationColors {
-  let hues: ThemeVizHue[] = [];
-
-  if (colors.mode === 'dark') {
-    hues = getDarkHues();
-  } else if (colors.mode === 'light') {
-    hues = getLightHues();
-  }
+  const hues: ThemeVizHue[] = themesConfig[colors.mode].hues;
 
   const byNameIndex: Record<string, string> = {};
 
@@ -97,7 +91,7 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
   };
 }
 
-function getDarkHues(): ThemeVizHue[] {
+export function getDarkHues(): ThemeVizHue[] {
   return [
     {
       name: 'red',
@@ -162,7 +156,7 @@ function getDarkHues(): ThemeVizHue[] {
   ];
 }
 
-function getLightHues(): ThemeVizHue[] {
+export function getLightHues(): ThemeVizHue[] {
   return [
     {
       name: 'red',

@@ -23,7 +23,7 @@ export interface NewThemeOptions {
 /** @internal */
 export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const {
-    name = 'Dark',
+    name = 'Fusebit',
     colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
@@ -44,6 +44,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     name,
     isDark: colors.mode === 'dark',
     isLight: colors.mode === 'light',
+    isFusebit: colors.mode === 'fusebit',
     colors,
     breakpoints,
     spacing,

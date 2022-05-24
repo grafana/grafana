@@ -19,6 +19,7 @@ module.exports = (env = {}) =>
       app: './public/app/index.ts',
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
+      fusebit: './public/sass/grafana.fusebit.scss',
     },
 
     // If we enabled watch option via CLI
@@ -97,7 +98,7 @@ module.exports = (env = {}) =>
         template: path.resolve(__dirname, '../../public/views/error-template.html'),
         inject: false,
         chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light', 'fusebit'],
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
@@ -105,7 +106,7 @@ module.exports = (env = {}) =>
         hash: true,
         inject: false,
         chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light', 'fusebit'],
       }),
       new DefinePlugin({
         'process.env': {

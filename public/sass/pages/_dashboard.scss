@@ -9,7 +9,7 @@
 
 .panel-container {
   background-color: $panel-bg;
-  border: $panel-border;
+  border: $panel-bg;
   position: relative;
   border-radius: 3px;
   height: 100%;
@@ -17,20 +17,11 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
-  box-shadow: $panel-box-shadow;
 
   &--transparent {
     background-color: transparent;
     border: 1px solid transparent;
     box-shadow: none;
-  }
-
-  &:hover {
-    .panel-menu-toggle {
-      visibility: visible;
-      transition: opacity 0.1s ease-in 0.2s;
-      opacity: 1;
-    }
   }
 
   &--is-editing {
@@ -43,6 +34,7 @@
 }
 
 .panel-content {
+  color: $text-color;
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;

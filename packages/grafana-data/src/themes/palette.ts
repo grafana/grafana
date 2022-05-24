@@ -1,5 +1,5 @@
 export const palette = {
-  white: '#fff',
+  white: '#FFFFFF',
   black: '#000',
 
   gray25: '#2c3235',
@@ -41,4 +41,11 @@ export const palette = {
   greenLightText: '#0A764E',
   orangeLightMain: '#FAD34A',
   orangeLightText: '#8A6C00',
+
+  //fusebit
+  fusebit: {
+    lightBlue: '#F7FAFE',
+    blue: '#EFF5FF',
+    white: '#FFFFFF',
+  },
 };

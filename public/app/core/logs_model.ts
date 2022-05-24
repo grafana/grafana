@@ -37,9 +37,10 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { Observable, throwError, timeout } from 'rxjs';
+import { themesConfig } from '../../../packages/grafana-data/src/themes/createColors';
+import { getUserThemeMode } from './utils/theme';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -51,7 +52,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: themesConfig[getUserThemeMode()].base.logLevelUnknown,
 };
 
 const MILLISECOND = 1;

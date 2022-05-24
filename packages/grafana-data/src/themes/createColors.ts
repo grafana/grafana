@@ -1,10 +1,11 @@
 import { merge } from 'lodash';
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
+import { getDarkHues, getLightHues } from './createVisualizationColors';
 import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';
 
 /** @internal */
-export type ThemeColorsMode = 'light' | 'dark';
+export type ThemeColorsMode = 'light' | 'dark' | 'fusebit';
 
 /** @internal */
 export interface ThemeColorsBase<TColor> {
@@ -63,9 +64,11 @@ export interface ThemeColorsBase<TColor> {
     disabledOpacity: number;
   };
 
+  logLevelUnknown: string;
   hoverFactor: number;
   contrastThreshold: number;
   tonalOffset: number;
+  transparency: number;
 }
 
 export interface ThemeHoverStrengh {}
@@ -153,9 +156,11 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
   };
 
+  logLevelUnknown = '#8e8e8e';
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.15;
+  transparency = 0.15;
 }
 
 class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
@@ -233,33 +238,142 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
+  logLevelUnknown = '#dde4ed';
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
+  transparency = 0.08;
 }
 
+class FusebitColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
+  mode: ThemeColorsMode = 'fusebit';
+
+  blackBase = '36, 41, 46';
+
+  primary = {
+    main: palette.blueLightMain,
+    border: palette.blueLightText,
+    text: palette.blueLightText,
+  };
+
+  text = {
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
+    link: this.primary.text,
+    maxContrast: palette.black,
+  };
+
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
+
+  secondary = {
+    main: `rgba(${this.blackBase}, 0.16)`,
+    shade: `rgba(${this.blackBase}, 0.20)`,
+    contrastText: `rgba(${this.blackBase},  1)`,
+    text: this.text.primary,
+    border: this.border.strong,
+  };
+
+  info = {
+    main: palette.blueLightMain,
+    text: palette.blueLightText,
+  };
+
+  error = {
+    main: palette.redLightMain,
+    text: palette.redLightText,
+    border: palette.redLightText,
+  };
+
+  success = {
+    main: palette.greenLightMain,
+    text: palette.greenLightText,
+  };
+
+  warning = {
+    main: palette.orangeLightMain,
+    text: palette.orangeLightText,
+  };
+
+  background = {
+    canvas: palette.fusebit.blue,
+    primary: palette.fusebit.white,
+    secondary: palette.fusebit.lightBlue,
+  };
+
+  action = {
+    hover: `rgba(${palette.fusebit.blue}, 0.5)`,
+    selected: `rgba(${this.blackBase}, 0.08)`,
+    hoverOpacity: 0.08,
+    focus: `rgba(${palette.fusebit.blue}, 0.12)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.04)`,
+    disabledText: this.text.disabled,
+    disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
+  };
+
+  logLevelUnknown = '#dde4ed';
+  contrastThreshold = 3;
+  hoverFactor = 0.03;
+  tonalOffset = 0.2;
+  transparency = 0.08;
+}
+
+const dark = new DarkColors();
+const light = new LightColors();
+const fusebit = new FusebitColors();
+
+export const themesConfig = {
+  dark: {
+    base: dark,
+    getShadeColor: (color: string) => lighten(color, dark.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, dark.transparency),
+    hues: getDarkHues(),
+  },
+  light: {
+    base: light,
+    getShadeColor: (color: string) => darken(color, light.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, light.transparency),
+    hues: getLightHues(),
+  },
+  fusebit: {
+    base: fusebit,
+    getShadeColor: (color: string) => darken(color, fusebit.tonalOffset),
+    getTransparentColor: (color: string) => alpha(color, fusebit.transparency),
+    hues: getLightHues(),
+  },
+};
+
 export function createColors(colors: ThemeColorsInput): ThemeColors {
-  const dark = new DarkColors();
-  const light = new LightColors();
-  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
+  const colorKey = colors.mode || 'dark';
+  const currentTheme = themesConfig[colorKey];
   const {
-    primary = base.primary,
-    secondary = base.secondary,
-    info = base.info,
-    warning = base.warning,
-    success = base.success,
-    error = base.error,
-    tonalOffset = base.tonalOffset,
-    hoverFactor = base.hoverFactor,
-    contrastThreshold = base.contrastThreshold,
+    primary = currentTheme.base.primary,
+    secondary = currentTheme.base.secondary,
+    info = currentTheme.base.info,
+    warning = currentTheme.base.warning,
+    success = currentTheme.base.success,
+    error = currentTheme.base.error,
+    tonalOffset = currentTheme.base.tonalOffset,
+    hoverFactor = currentTheme.base.hoverFactor,
+    contrastThreshold = currentTheme.base.contrastThreshold,
     ...other
   } = colors;
 
   function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(dark.text.maxContrast, background, base.background.primary) >= threshold
-        ? dark.text.maxContrast
-        : light.text.maxContrast;
+      getContrastRatio(themesConfig['dark'].base.text.maxContrast, background, currentTheme.base.background.primary) >=
+      threshold
+        ? themesConfig['dark'].base.text.maxContrast
+        : currentTheme.base.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }
@@ -276,10 +390,10 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.border = color.text;
     }
     if (!color.shade) {
-      color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+      color.shade = currentTheme.getShadeColor(color.main);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = currentTheme.getTransparentColor(color.main);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
@@ -289,7 +403,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
 
   return merge(
     {
-      ...base,
+      ...currentTheme.base,
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
       info: getRichColor({ color: info, name: 'info' }),

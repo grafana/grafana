@@ -16,8 +16,9 @@ import (
 
 const (
 	// Themes
-	lightName = "light"
-	darkName  = "dark"
+	lightName   = "light"
+	darkName    = "dark"
+	fusebitName = "fusebit"
 )
 
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
@@ -575,6 +576,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			LightTheme:                 prefs.Theme == lightName,
+			FusebitTheme:               prefs.Theme == fusebitName,
+			DarkTheme:                  prefs.Theme == darkName,
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  prefs.WeekStart,
 			Locale:                     locale,
@@ -622,11 +625,20 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	themeURLParam := c.Query("theme")
 	if themeURLParam == lightName {
+		data.User.FusebitTheme = false
+		data.User.DarkTheme = false
 		data.User.LightTheme = true
 		data.Theme = lightName
 	} else if themeURLParam == darkName {
 		data.User.LightTheme = false
+		data.User.FusebitTheme = false
+		data.User.DarkTheme = true
 		data.Theme = darkName
+	} else if themeURLParam == fusebitName {
+		data.User.LightTheme = false
+		data.User.DarkTheme = false
+		data.User.FusebitTheme = true
+		data.Theme = fusebitName
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)

@@ -89,6 +89,10 @@
         color: #52545c;
       }
 
+      .theme-fusebit .preloader__text {
+        color: #52545c;
+      }
+
       .theme-dark .preloader__text {
         color: #d8d9da;
       }
@@ -252,7 +256,8 @@
         navTree: [[.NavTree]],
         themePaths: {
           light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= compilation.hash %>.css',
-          dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css'
+          dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css',
+          fusebit: '[[.ContentDeliveryURL]]public/build/grafana.fusebit.<%= compilation.hash %>.css'
         }
       };
 

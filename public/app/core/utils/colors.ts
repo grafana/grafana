@@ -1,5 +1,7 @@
-import config from 'app/core/config';
+import { themesConfig } from '../../../../packages/grafana-data/src/themes/createColors';
+import { getUserThemeMode } from './theme';
 
-export function getThemeColor(dark: string, light: string): string {
-  return config.bootData.user.lightTheme ? light : dark;
+export function getLogLevelUnknownColor(dark: string, light: string): string {
+  const mode = getUserThemeMode();
+  return themesConfig[mode].base.logLevelUnknown;
 }

@@ -18,6 +18,7 @@ export interface GrafanaTheme2 {
   name: string;
   isDark: boolean;
   isLight: boolean;
+  isFusebit: boolean;
   colors: ThemeColors;
   breakpoints: ThemeBreakpoints;
   spacing: ThemeSpacing;

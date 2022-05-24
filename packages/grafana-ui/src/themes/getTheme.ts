@@ -3,7 +3,7 @@ import { createTheme, GrafanaTheme } from '@grafana/data';
 let themeMock: ((name?: string) => GrafanaTheme) | null;
 
 /** @public */
-export const getTheme = (mode: 'dark' | 'light' = 'dark') => {
+export const getTheme = (mode: 'dark' | 'light' | 'fusebit' = 'dark') => {
   if (themeMock) {
     return themeMock(mode);
   }
