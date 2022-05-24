@@ -130,7 +130,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   const renderResults = () => {
     if (!results.value?.length) {
       if (results.loading) {
-        return <Spinner />;
+        return <Spinner className={styles.spinner} />;
       }
 
       return (
@@ -254,6 +254,11 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     content: css`
       padding-top: 0px;
       padding-bottom: 0px;
+    `,
+    spinner: css`
+      display: grid;
+      place-content: center;
+      padding-bottom: 1rem;
     `,
   };
 });
