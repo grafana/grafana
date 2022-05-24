@@ -5,6 +5,15 @@ var (
 		Reason:     "Failed to generate unique dashboard id",
 		StatusCode: 500,
 	}
+	ErrPublicDashboardNotFound = DashboardErr{
+		Reason:                 "Public dashboard not found",
+		StatusCode: 404,
+		Status:                 "not-found",
+	}
+	ErrPublicDashboardIdentifierNotSet = DashboardErr{
+		Reason:                 "No Uid for public dashboard specified",
+		StatusCode: 400,
+	}
 )
 
 type PublicDashboardConfig struct {

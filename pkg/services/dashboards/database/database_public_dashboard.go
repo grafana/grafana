@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -10,6 +9,46 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// retrieves public dashboard configuration
+func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error) {
+	if uid == "" {
+		return nil, nil, models.ErrPublicDashboardIdentifierNotSet
+	}
+
+	// get public dashboard
+	pdRes := &models.PublicDashboard{Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		has, err := sess.Get(pdRes)
+		if !has {
+			return models.ErrPublicDashboardNotFound
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	// find dashboard
+	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
+	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		has, err := sess.Get(dashRes)
+		if !has {
+			return models.ErrPublicDashboardNotFound
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pdRes, dashRes, err
+}
+
+// generates a new unique uid to retrieve a public dashboard
 func generateNewPublicDashboardUid(sess *sqlstore.DBSession) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
@@ -70,11 +109,15 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	return pdc, err
 }
 
-// stores public dashboard configuration
+// persists public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
 
 	if len(cmd.PublicDashboardConfig.PublicDashboard.DashboardUid) == 0 {
 		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	if len(cmd.PublicDashboardConfig.PublicDashboard.Uid) == 0 {
+		return nil, models.ErrPublicDashboardIdentifierNotSet
 	}
 
 	// update isPublic on dashboard entry
@@ -120,8 +163,6 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 
 		return nil
 	})
-
-	fmt.Println(err)
 
 	if err != nil {
 		return nil, err

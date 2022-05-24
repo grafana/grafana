@@ -14,6 +14,73 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// GetPublicDashboard
+func TestGetPublicDashboard(t *testing.T) {
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore *DashboardStore
+	var savedDashboard *models.Dashboard
+
+	setup := func() {
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = ProvideDashboardStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	}
+
+	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
+		setup()
+		pdc, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboardConfig: models.PublicDashboardConfig{
+				IsPublic: true,
+				PublicDashboard: models.PublicDashboard{
+					Uid:          "abc1234",
+					DashboardUid: savedDashboard.Uid,
+					OrgId:        savedDashboard.OrgId,
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		pd, d, err := dashboardStore.GetPublicDashboard("abc1234")
+		require.NoError(t, err)
+		assert.Equal(t, pd, &pdc.PublicDashboard)
+		assert.Equal(t, d.Uid, pdc.PublicDashboard.DashboardUid)
+	})
+
+	t.Run("returns ErrPublicDashboardNotFound with empty uid", func(t *testing.T) {
+		setup()
+		_, _, err := dashboardStore.GetPublicDashboard("")
+		require.Error(t, models.ErrPublicDashboardIdentifierNotSet, err)
+	})
+
+	t.Run("returns ErrPublicDashboardNotFound when PublicDashboard not found", func(t *testing.T) {
+		setup()
+		_, _, err := dashboardStore.GetPublicDashboard("zzzzzz")
+		require.Error(t, models.ErrPublicDashboardNotFound, err)
+	})
+
+	t.Run("returns ErrDashboardNotFound when Dashboard not found", func(t *testing.T) {
+		setup()
+		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboardConfig: models.PublicDashboardConfig{
+				IsPublic: true,
+				PublicDashboard: models.PublicDashboard{
+					Uid:          "abc1234",
+					DashboardUid: "nevergonnafindme",
+					OrgId:        savedDashboard.OrgId,
+				},
+			},
+		})
+		require.NoError(t, err)
+		_, _, err = dashboardStore.GetPublicDashboard("abc1234")
+		require.Error(t, models.ErrDashboardNotFound, err)
+	})
+
+}
+
 // GetPublicDashboardConfig
 func TestGetPublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
@@ -22,7 +89,6 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		//sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
@@ -49,6 +115,7 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: true,
 				PublicDashboard: models.PublicDashboard{
+					Uid:           "pubdash-uid",
 					DashboardUid:  savedDashboard.Uid,
 					OrgId:         savedDashboard.OrgId,
 					TimeVariables: "{from: now, to: then}",
@@ -82,6 +149,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: true,
 				PublicDashboard: models.PublicDashboard{
+					Uid:          "pubdash-uid",
 					DashboardUid: savedDashboard.Uid,
 					OrgId:        savedDashboard.OrgId,
 				},
@@ -113,6 +181,22 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		})
 		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
+	})
+
+	t.Run("throws an error if PublicDashboardConfig.PublicDashboard.Uid is not set", func(t *testing.T) {
+		setup()
+		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboardConfig: models.PublicDashboardConfig{
+				IsPublic: true,
+				PublicDashboard: models.PublicDashboard{
+					DashboardUid: "",
+					OrgId:        savedDashboard.OrgId,
+				},
+			},
+		})
+		require.Error(t, models.ErrPublicDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("overwrites existing public dashboard", func(t *testing.T) {
