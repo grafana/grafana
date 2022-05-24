@@ -15,6 +15,7 @@ load(
     'build_frontend_package_step',
     'build_plugins_step',
     'test_backend_step',
+    'test_new_backend_integration_step',
     'test_backend_integration_step',
     'test_frontend_step',
     'package_step',
@@ -100,6 +101,7 @@ def pr_test_backend():
         shellcheck_step(),
         lint_backend_step(edition="oss"),
         test_backend_step(edition="oss"),
+        test_new_backend_integration_step(edition="oss"),
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(

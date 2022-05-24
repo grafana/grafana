@@ -137,6 +137,12 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
+- commands:
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
   name: test-backend-integration
 trigger:
   event:
@@ -796,6 +802,12 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
@@ -1877,6 +1889,12 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
+- commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - wire-install
@@ -2518,6 +2536,12 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
@@ -3657,6 +3681,12 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
+- commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - wire-install
@@ -4271,6 +4301,12 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
+  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test_new_backend_integration
+- commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - wire-install
@@ -4667,6 +4703,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 39c6fd27fc223b7bc99242101d28f508cdbbf01b561330bb52979f1d032af5d5
+hmac: f2cb1f503b0a2cfadb0123552788f1e655469082c6815bd37152082a5a50c691
 
 ...
