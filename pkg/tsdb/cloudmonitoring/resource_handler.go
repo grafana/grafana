@@ -41,7 +41,8 @@ func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		return
 	}
-	writeResponse(rw, http.StatusOK, project)
+	encoded, _ := json.Marshal(project)
+	writeResponseBytes(rw, http.StatusOK, encoded)
 }
 
 func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
