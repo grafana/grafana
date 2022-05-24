@@ -308,24 +308,6 @@ func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *mode
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	query.Result = false
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	query.Result = m.ExpectedUserStars
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 	return m.ExpectedError
 }
@@ -475,6 +457,7 @@ func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDa
 }
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	query.Result = m.ExpectedDashboards
 	return m.ExpectedError
 }
 
@@ -651,4 +634,8 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 
 func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	return nil, m.ExpectedError
 }

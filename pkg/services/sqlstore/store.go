@@ -65,10 +65,6 @@ type Store interface {
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
-	IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error
-	StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error
-	UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error
-	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
@@ -102,8 +98,6 @@ type Store interface {
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
-	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
-	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error
@@ -134,6 +128,7 @@ type Store interface {
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
+	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

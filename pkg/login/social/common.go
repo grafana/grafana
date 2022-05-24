@@ -37,7 +37,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 	valid := false
 	for _, domain := range allowedDomains {
 		emailSuffix := fmt.Sprintf("@%s", domain)
-		valid = valid || strings.HasSuffix(email, emailSuffix)
+		valid = valid || strings.HasSuffix(strings.ToLower(email), strings.ToLower(emailSuffix))
 	}
 
 	return valid

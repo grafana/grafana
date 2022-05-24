@@ -28,11 +28,13 @@ export const getSortOrderOptions = () =>
 
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
+  richHistoryTotal?: number;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (exploreId: ExploreId, filters: RichHistorySearchFilters) => void;
   loadRichHistory: (exploreId: ExploreId) => void;
+  loadMoreRichHistory: (exploreId: ExploreId) => void;
   clearRichHistoryResults: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
   activeDatasourceInstance: string;
@@ -59,6 +61,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     const filters = {
       ...this.props.richHistorySearchFilters!,
       ...filtersToUpdate,
+      page: 1, // always load fresh results when updating filters
     };
     this.props.updateHistorySearchFilters(this.props.exploreId, filters);
     this.loadRichHistory();
@@ -96,8 +99,16 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   }
 
   render() {
-    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, activeDatasourceInstance } =
-      this.props;
+    const {
+      richHistory,
+      richHistoryTotal,
+      height,
+      exploreId,
+      deleteRichHistory,
+      onClose,
+      firstTab,
+      activeDatasourceInstance,
+    } = this.props;
     const { loading } = this.state;
 
     const QueriesTab: TabConfig = {
@@ -106,9 +117,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryQueriesTab
           queries={richHistory}
+          totalQueries={richHistoryTotal || 0}
           loading={loading}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
+          loadMoreRichHistory={() => this.props.loadMoreRichHistory(this.props.exploreId)}
           activeDatasourceInstance={activeDatasourceInstance}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
@@ -125,10 +138,12 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryStarredTab
           queries={richHistory}
+          totalQueries={richHistoryTotal || 0}
           loading={loading}
           activeDatasourceInstance={activeDatasourceInstance}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
+          loadMoreRichHistory={() => this.props.loadMoreRichHistory(this.props.exploreId)}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
           exploreId={exploreId}
