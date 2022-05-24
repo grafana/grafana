@@ -58,14 +58,10 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If request has no login cookie - skip CSRF checks
-
 			if strings.Contains(r.URL.Path, "saml") {
 				fmt.Printf("path: %s\n", r.URL.Path)
 			}
-			fmt.Printf("cookie inside the middleware: %s\n", i.cfg.LoginCookieName)
-			fmt.Printf("cookie %v+\n", r.Cookies())
 			if _, err := r.Cookie(i.cfg.LoginCookieName); errors.Is(err, http.ErrNoCookie) {
-				fmt.Print("next HTTP because of cookie")
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -79,8 +75,6 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 			// Skip CSRF checks for "safe" endpoints
 			for endpoint, _ := range i.safeEndpoints {
 				if r.URL.Path == endpoint {
-					fmt.Printf("inside safeEndpoints w. endpoint: %s\n", endpoint)
-					fmt.Printf("inside safeEndpoints w. r.URL.Path: %s\n", r.URL.Path)
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -104,7 +98,6 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 
 			// No Origin header sent, skip CSRF check.
 			if len(origins) == 0 {
-				fmt.Printf("inside len(origins) == 0\n")
 				next.ServeHTTP(w, r)
 				return
 			}
