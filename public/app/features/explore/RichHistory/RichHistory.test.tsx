@@ -28,9 +28,11 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     height: 100,
     activeDatasourceInstance: 'Test datasource',
     richHistory: [],
+    richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     loadRichHistory: jest.fn(),
+    loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     onClose: jest.fn(),
     richHistorySearchFilters: {

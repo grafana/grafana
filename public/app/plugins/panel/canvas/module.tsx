@@ -1,5 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import { GroupState } from 'app/features/canvas/runtime/group';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
@@ -25,7 +25,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       const selection = state.selected;
       if (selection?.length === 1) {
         const element = selection[0];
-        if (!(element instanceof GroupState)) {
+        if (!(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
               category: [`Selected element (${element.options.name})`],

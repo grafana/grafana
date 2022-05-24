@@ -21,7 +21,11 @@ jest.mock('@grafana/runtime', () => ({
 const setup = (activeDatasourceOnly = false) => {
   const props: Props = {
     queries: [],
+    loading: false,
+    totalQueries: 0,
+    activeDatasourceInstance: {} as any,
     updateFilters: jest.fn(),
+    loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     exploreId: ExploreId.left,
     richHistorySettings: {

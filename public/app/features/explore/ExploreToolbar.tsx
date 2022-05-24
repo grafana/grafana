@@ -36,7 +36,7 @@ const AddToDashboard = lazy(() =>
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef: RefObject<HTMLDivElement>;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -114,14 +114,14 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       containerWidth,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      topOfExploreViewRef,
+      topOfViewRef,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
     return (
-      <div ref={topOfExploreViewRef}>
+      <div ref={topOfViewRef}>
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}

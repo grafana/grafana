@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -40,9 +43,14 @@ type dashboardAcl struct {
 	Updated time.Time
 }
 
+type folderHelper struct {
+	sess *xorm.Session
+	mg   *migrator.Migrator
+}
+
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
-func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
+func (m *folderHelper) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: GENERAL_FOLDER}
@@ -51,18 +59,17 @@ func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
 		return nil, err
 	} else if !has {
 		// create folder
-		result, err := m.createFolder(orgID, GENERAL_FOLDER)
-		if err != nil {
-			return nil, err
-		}
-
-		return result, nil
+		return m.createGeneralFolder(orgID)
 	}
 	return &dashboard, nil
 }
 
+func (m *folderHelper) createGeneralFolder(orgID int64) (*dashboard, error) {
+	return m.createFolder(orgID, GENERAL_FOLDER)
+}
+
 // returns the folder of the given dashboard (if exists)
-func (m *migration) getFolder(dash dashboard, da dashAlert) (dashboard, error) {
+func (m *folderHelper) getFolder(dash dashboard, da dashAlert) (dashboard, error) {
 	// get folder if exists
 	folder := dashboard{}
 	if dash.FolderId > 0 {
@@ -82,7 +89,7 @@ func (m *migration) getFolder(dash dashboard, da dashAlert) (dashboard, error) {
 
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
-func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) {
+func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, error) {
 	cmd := saveFolderCommand{
 		OrgId:    orgID,
 		FolderId: 0,
@@ -129,7 +136,7 @@ func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) 
 	return dash, nil
 }
 
-func (m *migration) generateNewDashboardUid(orgId int64) (string, error) {
+func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
@@ -148,7 +155,7 @@ func (m *migration) generateNewDashboardUid(orgId int64) (string, error) {
 
 // based on SQLStore.UpdateDashboardACL()
 // it should be called from inside a transaction
-func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl) error {
+func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboardAcl) error {
 	if dashboardID <= 0 {
 		return fmt.Errorf("folder id must be greater than zero for a folder permission")
 	}
@@ -247,7 +254,7 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 }
 
 // based on SQLStore.GetDashboardAclInfoList()
-func (m *migration) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error) {
+func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error) {
 	var err error
 
 	falseStr := m.mg.Dialect.BooleanStr(false)
@@ -278,4 +285,19 @@ func (m *migration) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error) {
 			`
 	err = m.sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
 	return result, err
+}
+
+// getOrgsThatHaveFolders returns a unique list of organization ID that have at least one folder
+func (m *folderHelper) getOrgsIDThatHaveFolders() (map[int64]struct{}, error) {
+	// get folder if exists
+	var rows []int64
+	err := m.sess.Table(&dashboard{}).Where("is_folder=?", true).Distinct("org_id").Find(&rows)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int64]struct{}, len(rows))
+	for _, s := range rows {
+		result[s] = struct{}{}
+	}
+	return result, nil
 }

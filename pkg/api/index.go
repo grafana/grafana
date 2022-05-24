@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +42,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPersistNotifications) {
 		children = append(children, &dtos.NavLink{
-			Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
+			Text: "Notification history", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
 		})
 	}
 
@@ -173,18 +174,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
-		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
+		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Saved Items",
-			Id:         "saved-items",
-			Icon:       "bookmark",
+			Text:       "Starred",
+			Id:         "starred",
+			Icon:       "star",
 			SortWeight: dtos.WeightSavedItems,
 			Section:    dtos.NavSectionCore,
-			Children:   savedItemsLinks,
+			Children:   starredItemsLinks,
 		})
 	}
 
@@ -411,24 +412,50 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 	return navTree
 }
 
-func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
-	savedItemsChildNavs := []*dtos.NavLink{}
+func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
+	starredItemsChildNavs := []*dtos.NavLink{}
 
-	// query preferences table for any saved items
-	savedItems := prefs.JSONData.Navbar.SavedItems
+	query := star.GetUserStarsQuery{
+		UserID: c.SignedInUser.UserId,
+	}
 
-	if len(savedItems) > 0 {
-		for _, savedItem := range savedItems {
-			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
-				Id:     savedItem.ID,
-				Text:   savedItem.Text,
-				Url:    savedItem.Url,
-				Target: savedItem.Target,
+	starredDashboardResult, err := hs.starService.GetByUser(c.Req.Context(), &query)
+	if err != nil {
+		return nil, err
+	}
+
+	starredDashboards := []*models.Dashboard{}
+	starredDashboardsCounter := 0
+	for dashboardId := range starredDashboardResult.UserStars {
+		// Set a loose limit to the first 50 starred dashboards found
+		if starredDashboardsCounter > 50 {
+			break
+		}
+		starredDashboardsCounter++
+		query := &models.GetDashboardQuery{
+			Id:    dashboardId,
+			OrgId: c.OrgId,
+		}
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
+		if err == nil {
+			starredDashboards = append(starredDashboards, query.Result)
+		}
+	}
+
+	if len(starredDashboards) > 0 {
+		sort.Slice(starredDashboards, func(i, j int) bool {
+			return starredDashboards[i].Title < starredDashboards[j].Title
+		})
+		for _, starredItem := range starredDashboards {
+			starredItemsChildNavs = append(starredItemsChildNavs, &dtos.NavLink{
+				Id:   starredItem.Uid,
+				Text: starredItem.Title,
+				Url:  starredItem.GetUrl(),
 			})
 		}
 	}
 
-	return savedItemsChildNavs, nil
+	return starredItemsChildNavs, nil
 }
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
@@ -513,7 +540,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var alertChildNavs []*dtos.NavLink
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 		})
@@ -527,7 +554,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
+	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
@@ -546,7 +573,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
+			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "plus", Url: hs.Cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true,
 		})
 	}
@@ -572,7 +599,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var children []*dtos.NavLink
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new", Id: "create-dashboard"})
 	}
 
@@ -583,7 +610,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 		})
 	}
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		children = append(children, &dtos.NavLink{
 			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
 			Url: hs.Cfg.AppSubURL + "/dashboard/import",
@@ -595,7 +622,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 
 	if uaVisibleForOrg && hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		children = append(children, &dtos.NavLink{
-			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
+			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
 		})
 	}
@@ -632,7 +659,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hs.Cfg.PluginAdminEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionPluginsManage)) {
+	if hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Plugins", Id: "admin-plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
 		})
@@ -651,7 +678,7 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {

@@ -12,6 +12,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  dateTimeFormat,
   FieldType,
   LoadingState,
   LogRowModel,
@@ -22,6 +23,7 @@ import {
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -288,11 +290,17 @@ export class CloudWatchDatasource
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
+    const timezoneUTCOffset = dateTimeFormat(Date.now(), {
+      timeZone: options.timezone,
+      format: 'Z',
+    }).replace(':', '');
+
     const validMetricsQueries = metricQueries.filter(this.filterQuery).map((q: CloudWatchMetricsQuery): MetricQuery => {
       const migratedQuery = migrateMetricQuery(q);
       const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options);
 
       return {
+        timezoneUTCOffset,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         ...migratedAndIterpolatedQuery,
@@ -669,6 +677,10 @@ export class CloudWatchDatasource
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err: FetchError) => {
+        if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
+          throw err;
+        }
+
         if (err.status === 400) {
           throw err;
         }

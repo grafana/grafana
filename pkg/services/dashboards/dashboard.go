@@ -6,13 +6,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+//go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
-	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
-	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
+	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
+	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
+	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
+	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
+	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
+	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
+	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error)
+	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
 
@@ -24,34 +32,42 @@ type PluginService interface {
 //go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
-	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
-	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
-	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
-	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
+	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
+	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 // Store is a dashboard store.
 type Store interface {
-	// ValidateDashboardBeforeSave validates a dashboard before save.
-	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)
-	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
-	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
-	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
-	// SaveAlerts saves dashboard alerts.
-	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
-	UnprovisionDashboard(ctx context.Context, id int64) error
+	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
+	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
-	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
+	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
+	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
+	GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
+	// SaveAlerts saves dashboard alerts.
+	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
+	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
+	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error)
+	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
+	UnprovisionDashboard(ctx context.Context, id int64) error
+	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+	// ValidateDashboardBeforeSave validates a dashboard before save.
+	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)
+
 	FolderStore
 }
 

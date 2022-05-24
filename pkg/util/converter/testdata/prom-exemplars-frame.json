@@ -2,20 +2,27 @@
   "frames": [
     {
       "schema": {
+        "meta": {
+          "custom": {
+            "resultType": "exemplar"
+          }
+        },
         "fields": [
           {
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "test_exemplar_metric_total",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "test_exemplar_metric_total",
               "instance": "localhost:8090",
               "job": "prometheus",
               "service": "bar"
@@ -56,20 +63,27 @@
     },
     {
       "schema": {
+        "meta": {
+          "custom": {
+            "resultType": "exemplar"
+          }
+        },
         "fields": [
           {
+            "name": "Time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
             }
           },
           {
-            "name": "test_exemplar_metric_total",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "test_exemplar_metric_total",
               "instance": "localhost:8090",
               "job": "prometheus",
               "service": "foo"

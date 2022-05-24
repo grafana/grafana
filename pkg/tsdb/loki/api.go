@@ -10,22 +10,30 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/loki/pkg/loghttp"
+	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
+	client     *http.Client
+	url        string
+	log        log.Logger
+	oauthToken string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log}
+func newLokiAPI(client *http.Client, url string, log log.Logger, oauthToken string) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, oauthToken: oauthToken}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func addOauthHeader(req *http.Request, oauthToken string) {
+	if oauthToken != "" {
+		req.Header.Set("Authorization", oauthToken)
+	}
+}
+
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, oauthToken string) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -78,12 +86,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, err
 	}
 
-	// NOTE:
-	// 1. we are missing "dynamic" http params, like OAuth data.
-	// this never worked before (and it is not needed for alerting scenarios),
-	// so it is not a regression.
-	// twe need to have that when we migrate to backend-queries.
-	//
+	addOauthHeader(req, oauthToken)
 
 	if query.VolumeQuery {
 		req.Header.Set("X-Query-Tags", "Source=logvolhist")
@@ -135,8 +138,8 @@ func makeLokiError(body io.ReadCloser) error {
 	return fmt.Errorf("%v", errorMessage)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
-	req, err := makeDataRequest(ctx, api.url, query)
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
+	req, err := makeDataRequest(ctx, api.url, query, api.oauthToken)
 	if err != nil {
 		return nil, err
 	}
@@ -156,16 +159,17 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (*loghttp.Qu
 		return nil, makeLokiError(resp.Body)
 	}
 
-	var response loghttp.QueryResponse
-	err = jsoniter.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return nil, err
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
+	res := converter.ReadPrometheusStyleResult(iter)
+
+	if res.Error != nil {
+		return nil, res.Error
 	}
 
-	return &response, nil
+	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, oauthToken string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
@@ -176,11 +180,19 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string) (
 		return nil, err
 	}
 
-	return http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	addOauthHeader(req, oauthToken)
+
+	return req, nil
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, error) {
-	req, err := makeRawRequest(ctx, api.url, resourceURL)
+	req, err := makeRawRequest(ctx, api.url, resourceURL, api.oauthToken)
 	if err != nil {
 		return nil, err
 	}

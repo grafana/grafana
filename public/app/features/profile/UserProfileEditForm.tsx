@@ -74,6 +74,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
                 variant="primary"
                 disabled={isSavingUser}
                 data-testid={selectors.components.UserProfile.profileSaveButton}
+                type="submit"
               >
                 <Trans id="common.save">Save</Trans>
               </Button>

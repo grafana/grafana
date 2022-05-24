@@ -62,20 +62,29 @@ const ServiceAccountsListPage = ({
   query,
   filters,
   serviceAccountToRemove,
-}: Props) => {
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    fetchServiceAccounts();
+    const fetchData = async () => {
+      await fetchServiceAccounts();
+      if (contextSrv.licensedAccessControlEnabled()) {
+        await fetchACOptions();
+      }
+    };
+    fetchData();
+  }, [fetchServiceAccounts, fetchACOptions]);
+
+  const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
+    const updatedServiceAccount = { ...serviceAccount, role: role };
+    await updateServiceAccount(updatedServiceAccount);
+    // need to refetch to display the new value in the list
+    await fetchServiceAccounts();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchServiceAccounts, fetchACOptions]);
-
-  const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
-    const updatedServiceAccount = { ...serviceAccount, role: role };
-    updateServiceAccount(updatedServiceAccount);
   };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>

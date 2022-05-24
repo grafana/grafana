@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func TestDashboardFolderDataAccess(t *testing.T) {
+func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var folder, dashInRoot, childDash *models.Dashboard
@@ -23,6 +23,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 		setup := func() {
 			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore.Cfg.RBACEnabled = false
 			dashboardStore = ProvideDashboardStore(sqlStore)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")

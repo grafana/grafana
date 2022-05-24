@@ -71,7 +71,6 @@ export const GroupBy: FC<Props> = (props) => {
         label: key,
         value: key,
       }))}
-      menuShouldPortal={true}
     />
   );
 };
