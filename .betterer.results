@@ -26,9 +26,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Typeahead/PartialHighlighter.test.tsx:1751923376": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Typeahead/Typeahead.test.tsx:972524250": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1440546721": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
