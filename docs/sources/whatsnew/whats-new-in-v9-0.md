@@ -9,11 +9,13 @@ weight = -33
   list = false
 +++
 
-# What’s new in Grafana v9.0 (beta)
+# What’s new in Grafana v9.0
 
-As tradition goes, GrafanaCON - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
+As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
 
-Grafana 9.0 introduces a new way to compose queries through a visual interface that lets you quickly write Prometheus and Loki queries without getting slowed down by the intricacies of PromQL and LogQL. The release also includes a brand new panel, a simplified navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
+A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 10 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
+
+The release also includes a brand new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
@@ -47,11 +49,11 @@ You can switch between the text edit mode (Code) and the UI builder mode while h
 
 Loki also has complex and powerful query language in LogQL. In many ways it’s more complex and has more syntax to remember than PromQL. Luckily the new query builder we are introducing in Grafana v 9.0 will help you write and understand Loki queries without knowing any of the syntax. Take a look at this example log query.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Prometheus query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
 
 In the query builder you can add and edit label filters, line filters, parsers and functions. The image above shows a log query but you can also do metric queries.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Prometheus query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
 
 The Loki query builder supports all the features listed for the prometheus query builder above, including support for nested binary operations, explain mode and switching between text editor and builder while preserving changes.
 
@@ -152,17 +154,14 @@ This is a partial list of notable breaking changes. For the complete list, see o
 
 Fine-grained access control is now called "Role-based access control". As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
 
-- Built-in roles are now called basic roles, and they now consist of permissions, not roles
-- The Terraform [builtin_role_assignment](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/builtin_role_assignment) resource is going away.
-- Grafana provisioning has a new schema, refer to the [documentation]({{< relref "../enterprise/access-control/rbac-provisioning.md" >}}). for more information.
-- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+Built-in roles are now called basic roles, and they now consist of permissions, not roles
+The Terraform builtin_role_assignment resource is going away.
+Grafana provisioning has a new schema, please refer to the documentation for more information.
+Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
 
 ### Loki: logs data format changed
 
-In the Loki data source, the data format used to represent Loki logs-data has been changed to a more efficient format.
-
-> **Note:** this change applies to logs data only, it does not apply to numeric data.
-
+In the Loki data source, the data format used to represent Loki logs-data has been changed to a more efficient format. (NOTE: this change applies to logs data only, it does not apply to numeric data)
 The logs are represented by a single dataframe with a "labels" field added, instead of separate dataframes for every label combination. Displaying logs data in explore, or in a dashboard using the logs panel will continue to work without changes. But, when displaying logs data in other dashboard panels, for example in a table visualization, changes will be visible, and configurations might need to be adjusted. For example, if the "Labels to fields" transformation was used, it has to be replaced with an “Extract fields” transformation, where the “labels” field is chosen as the source.
 
 ### Loki: NaN values representation changed in numeric data
@@ -186,6 +185,11 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
 
 ## ## A note on Grafana Enterprise licensing
+
+The Rename by regex transformation has been improved to allow global patterns of the form /<stringToReplace>/g. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), e.g. (._) would become /(._)/
+Github Issue #48179
+
+## Deprecation Notices
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
