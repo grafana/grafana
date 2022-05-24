@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
-import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
@@ -58,18 +58,13 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
 
   return (
     <>
-      <div style={{ marginBottom: '10px' }}>
-        <a href="org/serviceaccounts" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-          <Button variant="link" icon="backward" />
+      <div className={styles.headerContainer}>
+        <a href="org/serviceaccounts">
+          <IconButton size="xl" variant="primary" name="backward" className={styles.returnButton} />
         </a>
-        <h1
-          className="page-heading"
-          style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0!important', marginBottom: '0px' }}
-        >
-          {serviceAccount.name}
-        </h1>
+        <h3>{serviceAccount.name}</h3>
       </div>
-      <span style={{ marginBottom: '10px' }}>Information</span>
+      <h4>Information</h4>
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">
@@ -148,6 +143,13 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, b
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    headerContainer: css`
+      display: flex;
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    returnButton: css`
+      margin-right: ${theme.spacing(2)};
+    `,
     buttonRow: css`
       margin-top: ${theme.spacing(1.5)};
       > * {

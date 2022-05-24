@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
-import { getTimeZone, NavModel } from '@grafana/data';
-import { Button } from '@grafana/ui';
+import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -57,6 +58,7 @@ const ServiceAccountPageUnconnected = ({
   const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
+  const styles = useStyles2(getStyles);
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
@@ -95,10 +97,8 @@ const ServiceAccountPageUnconnected = ({
             />
           </>
         )}
-        <div className="page-action-bar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="page-heading" style={{ marginBottom: '0px' }}>
-            Tokens
-          </h3>
+        <div className={styles.tokensListHeader}>
+          <h4>Tokens</h4>
           <Button onClick={() => setIsModalOpen(true)} disabled={tokenActionsDisabled}>
             Add service account token
           </Button>
@@ -115,6 +115,16 @@ const ServiceAccountPageUnconnected = ({
       </Page.Contents>
     </Page>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    tokensListHeader: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `,
+  };
 };
 
 export const ServiceAccountPage = connector(ServiceAccountPageUnconnected);
