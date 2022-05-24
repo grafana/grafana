@@ -106,7 +106,7 @@ func (mt *MuteTimeInterval) Validate() error {
 	if err != nil {
 		return err
 	}
-	if err = yaml.Unmarshal(s, mt.MuteTimeInterval); err != nil {
+	if err = yaml.Unmarshal(s, &(mt.MuteTimeInterval)); err != nil {
 		return err
 	}
 	return nil
