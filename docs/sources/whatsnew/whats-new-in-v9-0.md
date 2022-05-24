@@ -23,7 +23,7 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 Prometheus queries are not the easiest to write or understand. The PromQL query language is very complex and advanced. Even relatively simple queries are hard to compose and read for new users. This is why we are introducing a new UI query builder that allows anyone to compose and learn how Prometheus queries work.
 
-{{< figure src="/static/img/docs/prometheus/prom_query_builder_light.png" max-width="1025px" caption="Prometheus query builder" >}}
+{{< figure src="/static/img/docs/prometheus/prom_query_builder_light.png" max-width="900px" caption="Prometheus query builder" >}}
 
 ### Metric and label filters
 
@@ -49,11 +49,11 @@ You can switch between the text edit mode (Code) and the UI builder mode while h
 
 Loki also has complex and powerful query language in LogQL. In many ways it’s more complex and has more syntax to remember than PromQL. Luckily the new query builder we are introducing in Grafana v 9.0 will help you write and understand Loki queries without knowing any of the syntax. Take a look at this example log query.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="900px" caption="Loki query builder" >}}
 
 In the query builder you can add and edit label filters, line filters, parsers and functions. The image above shows a log query but you can also do metric queries.
 
-{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="1025px" caption="Loki query builder" >}}
+{{< figure src="/static/img/docs/loki/loki_query_builder_log_query_light_theme.png" max-width="900px" caption="Loki query builder" >}}
 
 The Loki query builder supports all the features listed for the prometheus query builder above, including support for nested binary operations, explain mode and switching between text editor and builder while preserving changes.
 
@@ -61,7 +61,7 @@ The Loki query builder supports all the features listed for the prometheus query
 
 We are replacing the old heatmap panel with a new modern panel that is using the new panel option architecture.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_panel.png" max-width="1025px" caption="New heatmap panel" >}}
+{{< figure src="/static/img/docs/heatmap-panel/heatmap_panel.png" max-width="750px" caption="New heatmap panel" >}}
 
 New new heatmap panel has a number enhancements compared to the old version.
 
@@ -74,7 +74,7 @@ New new heatmap panel has a number enhancements compared to the old version.
 
 The new heatmap by default assumes that the data is pre-bucked. So if your query returns time series each series is seen as separate bucket (y axis tick). The panel is so much faster than the old one so it can render many time series with thousands of data points each without issue.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="750px" caption="Heatmap panel with time series" >}}
 
 ## Unified alerting is the default in Grafana 9
 
@@ -102,29 +102,29 @@ The dashboard previews initially came to life during our internal [Grafana Labs 
 
 Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/dashboards/previews/) for instructions on how to enable the feature and current limitations.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="900px" caption="Heatmap panel with time series" >}}
 
 ## Panel title search
 
 In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
 
-## Expanding the navigation bar
+### Expanding the navigation bar
 
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations. This is the first improvement to Grafana’s navigation, with more to come in future releases.
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
 
-## Starred dashboards in the navigation bar
+### Starred dashboards in the navigation bar
 
 As part of the upcoming improvements to Grafana’s navigation, you can now directly access your starred dashboards from the navigation bar. This is currently an opt-in feature that can be accessed by enabling the savedItems feature flag.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/static/img/docs/dashboards/starred-dashboards-nav-bar.png" max-width="750px" caption="Starred dashboards" >}}
 
-## List of errors with trace IDs
+### Query History migration
 
-In order to support debugging issues in Grafana, error alerts that appear in Grafana include a trace ID, and these alerts can be accessed under your profile.
+Query history is a panel that keeps track of all queries that are run in Explore. So far the history was saved in browser local storage causing some problems, for example running out of storage space or not being able to use the same query history in different browsers. Not anymore! We’re migrating all entries from browser local storage to the database. Migration will happen behind the senses when query history panel is opened. This feature can be disabled using config entry query_history in custom.ini.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/static/img/docs/panels/query-history-9-0.png" max-width="900px" caption="Query history" >}}
 
 ## Enterprise
 
@@ -134,7 +134,7 @@ In order to support debugging issues in Grafana, error alerts that appear in Gra
 
 Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud Advanced, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/static/img/docs/enterprise/rbac-ga.png" max-width="755px" caption="Heatmap panel with time series" >}}
 
 ## Reporting
 
@@ -195,11 +195,11 @@ Github Issue #48179
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
-{{< figure src="/static/img/docs/enterprise/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
+{{< figure src="/static/img/docs/enterprise/separate-licenses.png" max-width="750px" caption="Separate license" >}}
 
 You will see this:
 
-{{< figure src="/static/img/docs/enterprise/combined-licenses.png" max-width="1025px" caption="Combined license" >}}
+{{< figure src="/static/img/docs/enterprise/combined-licenses.png" max-width="750px" caption="Combined license" >}}
 
 It also means that Grafana will count all users the same, regardless of their role, including org roles (Viewer, Editor, Admin) and fine-grained roles (Dashboard Editor, Reports Editor, etc.). You won’t see a separate warning banner or see users locked out if you hit your limit of viewers or editor-admins, only your total combined limit of active users.
 
