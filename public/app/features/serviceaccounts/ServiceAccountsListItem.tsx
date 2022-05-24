@@ -44,7 +44,7 @@ const ServiceAccountListItem = memo(
     const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate) && canUpdateRole;
 
     return (
-      <tr key={serviceAccount.id}>
+      <tr key={serviceAccount.id} className={cx({ [styles.disabled]: serviceAccount.isDisabled })}>
         <td className="width-4 text-center link-td">
           <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}>
             <img
@@ -84,7 +84,7 @@ const ServiceAccountListItem = memo(
                 onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 builtInRoles={builtInRoles}
-                disabled={!enableRolePicker}
+                disabled={!enableRolePicker || serviceAccount.isDisabled}
               />
             )}
           </td>
@@ -93,7 +93,7 @@ const ServiceAccountListItem = memo(
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={!canUpdateRole}
+              disabled={!canUpdateRole || serviceAccount.isDisabled}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
           </td>
@@ -116,7 +116,9 @@ const ServiceAccountListItem = memo(
         <td>
           <HorizontalGroup justify="flex-end">
             {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
-              <Button onClick={() => onAddTokenClick(serviceAccount)}>Add token</Button>
+              <Button onClick={() => onAddTokenClick(serviceAccount)} disabled={serviceAccount.isDisabled}>
+                Add token
+              </Button>
             )}
             {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
               (serviceAccount.isDisabled ? (
@@ -167,6 +169,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     tokensInfoSecondary: css`
       color: ${theme.colors.text.secondary};
+    `,
+    disabled: css`
+      td a {
+        color: ${theme.colors.text.secondary};
+      }
     `,
   };
 };
