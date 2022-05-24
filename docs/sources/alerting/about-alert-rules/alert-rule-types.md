@@ -19,7 +19,7 @@ In additional to supporting any datasource you can also add additional [expressi
 
 To create Mimir, Loki or Cortex alerts you must have a compatible Prometheus data source. You can check if your data source is compatible by testing the data source and checking the details if the ruler API is supported.
 
-{{< figure src="/static/img/docs/alerting/unified/mimir-datasource-check.png" caption="Successfuly connected to a Mimir Prometheus datasource" max-width="40%" >}}
+{{< figure src="/static/img/docs/alerting/unified/mimir-datasource-check.png" caption="Successfully connected to a Mimir Prometheus datasource" max-width="40%" >}}
 
 ## Recording rules
 
