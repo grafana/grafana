@@ -58,6 +58,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] Allow anonymous access to alerts #49203 
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
 - [BUGFIX] Fix access to alerts for Viewer role with editor permissions in folder #49270
+- [FEATURE] Alert rules with associated panels will take screenshots. #49293 #49338 #49374 #49377 #49378 #49379 #49381 #49385 #49439 #49445
 
 ## 8.5.3
 

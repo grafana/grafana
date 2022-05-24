@@ -146,9 +146,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:1463123173": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.test.tsx:1969004590": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:2357087833": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
