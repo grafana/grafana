@@ -104,6 +104,8 @@ const getStateFilter = (value: ServiceAccountStateFilter) => {
   switch (value) {
     case ServiceAccountStateFilter.WithExpiredTokens:
       return '&expiredTokens=true';
+    case ServiceAccountStateFilter.Disabled:
+      return '&disabled=true';
     default:
       return '';
   }

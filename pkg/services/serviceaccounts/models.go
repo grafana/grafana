@@ -75,5 +75,6 @@ type ServiceAccountFilter string // used for filtering
 
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
 )
