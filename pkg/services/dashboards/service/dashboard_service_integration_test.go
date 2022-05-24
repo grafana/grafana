@@ -25,7 +25,7 @@ import (
 
 const testOrgID int64 = 1
 
-func TestIntegratedDashboardService(t *testing.T) {
+func TestIntegrationIntegratedDashboardService(t *testing.T) {
 	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
 		// Basic validation tests
 

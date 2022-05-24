@@ -1,5 +1,5 @@
 {
-  "name": "Dark",
+  "name": "Light",
   "isDark": false,
   "isLight": true,
   "colors": {
@@ -505,7 +505,7 @@
     "portal": 1061
   },
   "v1": {
-    "name": "Dark",
+    "name": "Light",
     "typography": {
       "fontFamily": {
         "sansSerif": "\"Roboto\", \"Helvetica\", \"Arial\", sans-serif",

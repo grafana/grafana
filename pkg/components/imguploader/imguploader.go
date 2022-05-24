@@ -16,6 +16,7 @@ const (
 	defaultGCSSignedURLExpiration = 7 * 24 * time.Hour // 7 days
 )
 
+//go:generate mockgen -destination=mock.go -package=imguploader github.com/grafana/grafana/pkg/components/imguploader ImageUploader
 type ImageUploader interface {
 	Upload(ctx context.Context, path string) (string, error)
 }
