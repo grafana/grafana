@@ -104,7 +104,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
     const nextDS = await getDataSourceSrv().get(newSettings.uid);
 
-    const queries = await updateQueries(nextDS, this.state.queries, currentDS);
+    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
+    const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
