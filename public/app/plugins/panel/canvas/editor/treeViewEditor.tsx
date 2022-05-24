@@ -32,12 +32,12 @@ export function getTreeViewEditor(opts: InstanceState): NestedPanelOptions<TreeV
   }
 
   return {
-    category: ['Tree Navigation'],
-    path: '--', // not used!
+    category: ['Tree View'],
+    path: '--',
     build: (builder, context) => {
       builder.addCustomEditor({
         category: [],
-        id: 'navigation',
+        id: 'treeView',
         path: '__', // not used
         name: '',
         editor: TreeNavigationEditor,
