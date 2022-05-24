@@ -94,7 +94,7 @@ Unified alerting now provides the ability to capture an image for Grafana manage
 
 Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external Key Management Service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [docs](https://grafana.com/docs/grafana/next/administration/database-encryption/#envelope-encryption).
 
-{{< figure src="/sstatic/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="750px" caption="Envelope encryption" >}}
+{{< figure src="/static/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="750px" caption="Envelope encryption" >}}
 
 ## Dashboard previews (opt-in beta)
 
@@ -169,7 +169,7 @@ Reporting is all about convenience - getting info to eyeballs as quickly as poss
 
 ## Breaking Changes
 
-This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES)
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES).
 
 ### Role-based access control: changes for general release
 
