@@ -98,7 +98,12 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
             />
             {isWithExpirationDate && (
               <Field label="Expiration date" className={styles.modalRow}>
-                <DatePickerWithInput onChange={onExpirationDateChange} value={newTokenExpirationDate} placeholder="" />
+                <DatePickerWithInput
+                  onChange={onExpirationDateChange}
+                  value={newTokenExpirationDate}
+                  placeholder=""
+                  minDate={new Date()}
+                />
               </Field>
             )}
           </FieldSet>
