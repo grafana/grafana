@@ -99,6 +99,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg)
+	addPlaylistUIDMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
