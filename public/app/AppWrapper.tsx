@@ -101,30 +101,36 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ErrorBoundaryAlert style="page">
             <ConfigContext.Provider value={config}>
               <ThemeProvider>
-                <ModalsProvider>
-                  <GlobalStyles />
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
-                      <main className="main-view">
-                        {pageBanners.map((Banner, index) => (
-                          <Banner key={index.toString()} />
-                        ))}
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
+                  <ModalsProvider>
+                    <GlobalStyles />
+                    {config.featureToggles.commandPalette && <CommandPalette />}
+                    <div className="grafana-app">
+                      <Router history={locationService.getHistory()}>
+                        {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
+                        <main className="main-view">
+                          {pageBanners.map((Banner, index) => (
+                            <Banner key={index.toString()} />
+                          ))}
 
-                        <AngularRoot />
-                        <AppNotificationList />
-                        <SearchWrapper />
-                        {ready && this.renderRoutes()}
-                        {bodyRenderHooks.map((Hook, index) => (
-                          <Hook key={index.toString()} />
-                        ))}
-                      </main>
-                    </Router>
-                  </div>
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                  <PortalContainer />
-                </ModalsProvider>
+                          <AngularRoot />
+                          <AppNotificationList />
+                          <SearchWrapper />
+                          {ready && this.renderRoutes()}
+                          {bodyRenderHooks.map((Hook, index) => (
+                            <Hook key={index.toString()} />
+                          ))}
+                        </main>
+                      </Router>
+                    </div>
+                    <LiveConnectionWarning />
+                    <ModalRoot />
+                    <PortalContainer />
+                  </ModalsProvider>
+                </KBarProvider>
               </ThemeProvider>
             </ConfigContext.Provider>
           </ErrorBoundaryAlert>
