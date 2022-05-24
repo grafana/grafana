@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -212,7 +213,7 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
 	resp.AccessControl = metadata[saIDString]
 
-	return response.JSON(http.StatusOK, resp)
+	return response.JSON(http.StatusOK, util.DynMap{"message": "Service account updated"})
 }
 
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
