@@ -14,11 +14,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "envelopeEncryption",
-			Description: "Enable envelope encryption",
-			State:       FeatureStateDeprecated,
-		},
-		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			State:       FeatureStateStable,
