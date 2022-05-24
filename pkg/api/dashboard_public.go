@@ -8,32 +8,31 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
+	//"github.com/grafana/grafana/pkg/util"
 )
+
 
 // Retrieves public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, &models.Dashboard{})
+	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
+	}
+	return response.JSON(http.StatusOK, dash)
 }
 
 // Sets sharing configuration for dashboard
 func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
-
-	if errors.Is(err, models.ErrDashboardNotFound) {
-		return response.Error(http.StatusNotFound, "dashboard not found", err)
-	}
-
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error retrieving public dashboard config", err)
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
 	}
-
 	return response.JSON(http.StatusOK, pdc)
 }
 
 // Sets sharing configuration for dashboard
 func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc := &models.PublicDashboardConfig{}
-
 	if err := web.Bind(c.Req, pdc); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -45,14 +44,20 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 	}
 
 	pdc, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
-
-	if errors.Is(err, models.ErrDashboardNotFound) {
-		return response.Error(http.StatusNotFound, "dashboard not found", err)
-	}
-
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error updating public dashboard config", err)
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}
 
 	return response.JSON(http.StatusOK, pdc)
+}
+
+// util to help us unpack a dashboard err or use default http code and message
+func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response{
+	var dashboardErr models.DashboardErr
+
+	if ok := errors.As(err, &dashboardErr); ok {
+		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
+	}
+
+	return response.Error(defaultCode, defaultMsg, err)
 }

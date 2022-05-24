@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	//"context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,7 +18,87 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestApiRetrieveConfig(t *testing.T) {
+func TestAPIGetPublicDashboard(t *testing.T) {
+	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
+		sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures())
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			Return(&models.Dashboard{}, nil).Maybe()
+		sc.hs.dashboardService = dashSvc
+
+		setInitCtxSignedInViewer(sc.initCtx)
+		response := callAPI(
+			sc.server,
+			http.MethodGet,
+			fmt.Sprintf("/api/public/dashboards"),
+			nil,
+			t,
+		)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+		response = callAPI(
+			sc.server,
+			http.MethodGet,
+			fmt.Sprintf("/api/public/dashboards/asdf"),
+			nil,
+			t,
+		)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	testCases := []struct {
+		name string
+		uid string
+		expectedHttpResponse int
+		publicDashboardResult *models.Dashboard
+		publicDashboardErr error
+	}{
+		{
+			name: "It gets a public dashboard",
+			uid: "pubdash-abcd1234",
+			expectedHttpResponse: http.StatusOK,
+			publicDashboardResult: &models.Dashboard{
+				Uid: "dashboard-abcd1234",
+			},
+			publicDashboardErr:nil,
+		},
+		//{
+			//name: "It should return 404 if isPublicDashboard is false",
+		//},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
+			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+				Return(test.publicDashboardResult, test.publicDashboardErr)
+			sc.hs.dashboardService = dashSvc
+
+			setInitCtxSignedInViewer(sc.initCtx)
+			response := callAPI(
+				sc.server,
+				http.MethodGet,
+				fmt.Sprintf("/api/public/dashboards/%v", test.uid),
+				nil,
+				t,
+			)
+
+			fmt.Println(response)
+
+			assert.Equal(t, test.expectedHttpResponse, response.Code)
+
+			//if response.Code == http.StatusOK {
+				//var dashResp models.Dashboard
+				//err := json.Unmarshal(response.Body.Bytes(), &dashResp)
+				//require.NoError(t, err)
+				//assert.Equal(t, test.publicDashboardResult, &dashResp)
+			//}
+		})
+	}
+}
+
+
+func TestAPIGetPublicDashboardConfig(t *testing.T) {
 	pdc := &models.PublicDashboardConfig{IsPublic: true}
 
 	testCases := []struct {
@@ -69,7 +150,7 @@ func TestApiRetrieveConfig(t *testing.T) {
 
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
-			if test.expectedHttpResponse == http.StatusOK {
+			if response.Code == http.StatusOK {
 				var pdcResp models.PublicDashboardConfig
 				err := json.Unmarshal(response.Body.Bytes(), &pdcResp)
 				require.NoError(t, err)
@@ -79,42 +160,42 @@ func TestApiRetrieveConfig(t *testing.T) {
 	}
 }
 
-func TestApiPersistsValue(t *testing.T) {
+func TestApiSavePublicDashboardConfig(t *testing.T) {
 	testCases := []struct {
-		Name                  string
-		DashboardUid          string
-		PublicDashboardConfig *models.PublicDashboardConfig
-		ExpectedHttpResponse  int
-		SaveDashboardError    error
+		name                  string
+		dashboardUid          string
+		publicDashboardConfig *models.PublicDashboardConfig
+		expectedHttpResponse  int
+		saveDashboardError    error
 	}{
 		{
-			Name:                  "returns 200 when update persists",
-			DashboardUid:          "1",
-			PublicDashboardConfig: &models.PublicDashboardConfig{IsPublic: true},
-			ExpectedHttpResponse:  http.StatusOK,
-			SaveDashboardError:    nil,
+			name:                  "returns 200 when update persists",
+			dashboardUid:          "1",
+			publicDashboardConfig: &models.PublicDashboardConfig{IsPublic: true},
+			expectedHttpResponse:  http.StatusOK,
+			saveDashboardError:    nil,
 		},
 		{
-			Name:                  "returns 500 when not persisted",
-			ExpectedHttpResponse:  http.StatusInternalServerError,
-			PublicDashboardConfig: &models.PublicDashboardConfig{},
-			SaveDashboardError:    errors.New("backend failed to save"),
+			name:                  "returns 500 when not persisted",
+			expectedHttpResponse:  http.StatusInternalServerError,
+			publicDashboardConfig: &models.PublicDashboardConfig{},
+			saveDashboardError:    errors.New("backend failed to save"),
 		},
 		{
-			Name:                  "returns 404 when dashboard not found",
-			ExpectedHttpResponse:  http.StatusNotFound,
-			PublicDashboardConfig: &models.PublicDashboardConfig{},
-			SaveDashboardError:    models.ErrDashboardNotFound,
+			name:                  "returns 404 when dashboard not found",
+			expectedHttpResponse:  http.StatusNotFound,
+			publicDashboardConfig: &models.PublicDashboardConfig{},
+			saveDashboardError:    models.ErrDashboardNotFound,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.Name, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*dashboards.SavePublicDashboardConfigDTO")).
-				Return(&models.PublicDashboardConfig{IsPublic: true}, test.SaveDashboardError)
+				Return(&models.PublicDashboardConfig{IsPublic: true}, test.saveDashboardError)
 			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -126,12 +207,12 @@ func TestApiPersistsValue(t *testing.T) {
 				t,
 			)
 
-			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
 			// check the result if it's a 200
 			if response.Code == http.StatusOK {
-				val, _ := json.Marshal(test.PublicDashboardConfig)
-				fmt.Println("MARSHAL:", string(val))
+				val, err := json.Marshal(test.publicDashboardConfig)
+				require.NoError(t, err)
 				assert.Equal(t, string(val), response.Body.String())
 			}
 		})

@@ -90,13 +90,41 @@ func (_m *FakeDashboardService) GetDashboard(ctx context.Context, query *models.
 	return r0
 }
 
-// GetDashboardByPublicUid provides a mock function with given fields: ctx, dashboardPublicUid
-func (_m *FakeDashboardService) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
-	ret := _m.Called(ctx, dashboardPublicUid)
+// GetDashboardUIDById provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardRefByIdQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetDashboards provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardsQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// GetPublicDashboard provides a mock function with given fields: ctx, publicDashboardUid
+func (_m *FakeDashboardService) GetPublicDashboard(ctx context.Context, publicDashboardUid string) (*models.Dashboard, error) {
+	ret := _m.Called(ctx, publicDashboardUid)
 
 	var r0 *models.Dashboard
 	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Dashboard); ok {
-		r0 = rf(ctx, dashboardPublicUid)
+		r0 = rf(ctx, publicDashboardUid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Dashboard)
@@ -105,44 +133,7 @@ func (_m *FakeDashboardService) GetDashboardByPublicUid(ctx context.Context, das
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardPublicUid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetDashboards provides a mock function with given fields: ctx, uid
-func (_m *FakeDashboardService) GetDashboards(ctx context.Context, uid string) error {
-	ret := _m.Called(ctx, uid)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, uid)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// GetPublicDashboard provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) GetPublicDashboard(ctx context.Context, query *models.GetDashboardRefByIdQuery) (*models.Dashboard, error) {
-	ret := _m.Called(ctx, query)
-
-	var r0 *models.Dashboard
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardRefByIdQuery) *models.Dashboard); ok {
-		r0 = rf(ctx, query)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Dashboard)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.GetDashboardRefByIdQuery) error); ok {
-		r1 = rf(ctx, query)
+		r1 = rf(ctx, publicDashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}

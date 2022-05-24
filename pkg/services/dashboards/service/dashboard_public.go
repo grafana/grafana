@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -9,12 +10,16 @@ import (
 
 // Gets public dashboard via generated Uid
 func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pd, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
+	pdc, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
+
+	fmt.Println(pdc)
+	fmt.Println(d)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return pd, nil
+	return d, nil
 }
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database

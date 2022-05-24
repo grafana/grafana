@@ -608,7 +608,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Public API
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Post("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
+		r.Get("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
 	}
 
 	// Frontend logs

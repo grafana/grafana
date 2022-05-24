@@ -6,12 +6,12 @@ var (
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = DashboardErr{
-		Reason:                 "Public dashboard not found",
+		Reason:     "Public dashboard not found",
 		StatusCode: 404,
-		Status:                 "not-found",
+		Status:     "not-found",
 	}
 	ErrPublicDashboardIdentifierNotSet = DashboardErr{
-		Reason:                 "No Uid for public dashboard specified",
+		Reason:     "No Uid for public dashboard specified",
 		StatusCode: 400,
 	}
 )
