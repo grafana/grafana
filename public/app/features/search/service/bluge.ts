@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -41,6 +41,31 @@ export class BlugeSearcher implements GrafanaSearcher {
       }
     }
     return [];
+  }
+
+  // Enterprise only sort field values for dashboards
+  sortFields = [
+    { name: 'views_total', display: 'Views total' },
+    { name: 'views_last_30_days', display: 'Views 30 days' },
+    { name: 'errors_total', display: 'Errors total' },
+    { name: 'errors_last_30_days', display: 'Errors 30 days' },
+  ];
+
+  // This should eventually be filled by an API call, but hardcoded is a good start
+  getSortOptions(): Promise<SelectableValue[]> {
+    const opts: SelectableValue[] = [
+      { value: 'name_sort', label: 'Alphabetically (A-Z)' },
+      { value: '-name_sort', label: 'Alphabetically (Z-A)' },
+    ];
+
+    if (config.licenseInfo.enabledFeatures.analytics) {
+      for (const sf of this.sortFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
+      }
+    }
+
+    return Promise.resolve(opts);
   }
 }
 

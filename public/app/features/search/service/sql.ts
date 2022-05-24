@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, DataFrameView, FieldType, getDisplayProcessor } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -48,6 +48,11 @@ export class SQLSearcher implements GrafanaSearcher {
       q.folderUIDs = [query.location];
     }
     return this.doAPIQuery(q);
+  }
+
+  // returns the appropriate sorting options
+  async getSortOptions(): Promise<SelectableValue[]> {
+    return backendSrv.get('/api/search/sorting');
   }
 
   // NOTE: the bluge query will find tags within the current results, the SQL based one does not

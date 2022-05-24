@@ -1,4 +1,4 @@
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 export interface FacetField {
@@ -62,4 +62,5 @@ export interface QueryResponse {
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
+  getSortOptions: () => Promise<SelectableValue[]>;
 }
