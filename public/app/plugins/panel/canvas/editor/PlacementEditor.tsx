@@ -80,6 +80,8 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     }, 100);
   };
 
+  const constraint = element.tempConstraint ?? layout ?? {};
+
   return (
     <div>
       <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
@@ -89,15 +91,11 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
           <ConstraintSelectionBox
             onVerticalConstraintChange={onVerticalConstraintChange}
             onHorizontalConstraintChange={onHorizontalConstraintChange}
-            currentConstraints={element.options.constraint ?? {}}
+            currentConstraints={constraint}
           />
           <VerticalGroup>
-            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
-            <Select
-              options={horizontalOptions}
-              onChange={onHorizontalConstraintSelect}
-              value={options.constraint?.horizontal}
-            />
+            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
+            <Select options={horizontalOptions} onChange={onHorizontalConstraintSelect} value={constraint.horizontal} />
           </VerticalGroup>
         </HorizontalGroup>
       </Field>

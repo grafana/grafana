@@ -187,7 +187,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && (
+            {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>
