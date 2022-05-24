@@ -23,6 +23,14 @@ export function AnnotationQueryEditor(props: Props) {
     <>
       <PromQueryEditorSelector
         {...props}
+        query={{ expr: annotation.expr, refId: annotation.name, interval: annotation.step }}
+        onChange={(query) =>
+          onAnnotationChange({
+            ...annotation,
+            expr: query.expr,
+            step: query.interval,
+          })
+        }
         uiOptions={{
           modes: {
             [QueryEditorMode.Explain]: false,

@@ -123,6 +123,8 @@ export class PrometheusDatasource
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
+    // We don't use the default processing for prometheus.
+    // See standardAnnotationSupport.ts/[shouldUseMappingUI|shouldUseLegacyRunner]
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
     };
