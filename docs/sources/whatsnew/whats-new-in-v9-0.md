@@ -193,7 +193,11 @@ Github Issue #48179
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
+{{< figure src="/static/static/img/docs/enterprise/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
+
 You will see this:
+
+{{< figure src="/static/static/img/docs/enterprise/combined-licenses.png" max-width="1025px" caption="Combined license" >}}
 
 It also means that Grafana will count all users the same, regardless of their role, including org roles (Viewer, Editor, Admin) and fine-grained roles (Dashboard Editor, Reports Editor, etc.). You won’t see a separate warning banner or see users locked out if you hit your limit of viewers or editor-admins, only your total combined limit of active users.
 
