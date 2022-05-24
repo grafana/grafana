@@ -1,8 +1,6 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { config } from '@grafana/runtime';
-
 import Page from '../../core/components/Page/Page';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from '../../core/selectors/navModel';

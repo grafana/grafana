@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { config } from '@grafana/runtime';
 import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
 const MAX_STORED_NOTIFICATIONS = 25;
