@@ -7,27 +7,7 @@ import {
   VizOrientation,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import {
-  SingleStatBaseOptions,
-  BigValueColorMode,
-  BigValueGraphMode,
-  BigValueJustifyMode,
-  BigValueTextMode,
-} from '@grafana/ui';
-
-import { PanelOptions } from './models.gen';
-
-// Structure copied from angular
-export type StatPanelOptions = PanelOptions;
-
-// extends SingleStatBaseOptions {
-//   graphMode: BigValueGraphMode;
-//   colorMode: BigValueColorMode;
-//   justifyMode: BigValueJustifyMode;
-//   textMode: BigValueTextMode;
-// }
-
-// export type
+import { SingleStatBaseOptions } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,

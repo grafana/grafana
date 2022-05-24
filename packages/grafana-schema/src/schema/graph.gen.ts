@@ -216,7 +216,7 @@ export enum BigValueTextMode {
   Name = 'name',
   None = 'none',
   Value = 'value',
-  Value_and_name = 'value_and_name',
+  ValueAndName = 'value_and_name',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';

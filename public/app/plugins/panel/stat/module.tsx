@@ -8,10 +8,11 @@ import {
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
+import { PanelOptions } from './models.gen';
 import { StatSuggestionsSupplier } from './suggestions';
-import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
+import { addOrientationOption, addStandardDataReduceOptions } from './types';
 
-export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
+export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
