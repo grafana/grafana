@@ -21,10 +21,6 @@ interface OwnProps extends GrafanaRouteComponentProps {}
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const NotificationsPage = ({ navModel }: Props) => {
-  if (!config.featureToggles.persistNotifications) {
-    return null;
-  }
-
   return (
     <Page navModel={navModel}>
       <Page.Contents>

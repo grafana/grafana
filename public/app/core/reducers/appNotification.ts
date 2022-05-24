@@ -88,10 +88,6 @@ function isStoredNotification(obj: any): obj is StoredNotification {
 // (De)serialization
 
 export function deserializeNotifications(): Record<string, StoredNotification> {
-  if (!config.featureToggles?.persistNotifications) {
-    return {};
-  }
-
   const storedNotifsRaw = window.localStorage.getItem(STORAGE_KEY);
   if (!storedNotifsRaw) {
     return {};
@@ -106,10 +102,6 @@ export function deserializeNotifications(): Record<string, StoredNotification> {
 }
 
 function serializeNotifications(notifs: Record<string, StoredNotification>) {
-  if (!config.featureToggles?.persistNotifications) {
-    return;
-  }
-
   const reducedNotifs = Object.values(notifs)
     .filter(isAtLeastWarning)
     .sort((a, b) => b.timestamp - a.timestamp)
