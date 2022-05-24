@@ -36,6 +36,47 @@
     "signatureOrg": ""
   },
   {
+    "name": "Alertmanager",
+    "type": "datasource",
+    "id": "alertmanager",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Prometheus alertmanager",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertmanager/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
