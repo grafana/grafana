@@ -16,24 +16,24 @@
                 "totalChunksRef": 2,
                 "chunksDownloadTime": 0.000390958,
                 "headChunkLines": 0,
-                "decompressedLines": 55,
-                "totalDuplicates": 0,
+                "decompressedBytes": 7772,
+                "compressedBytes": 31432,
                 "totalChunksDownloaded": 2,
                 "headChunkBytes": 0,
-                "decompressedBytes": 7772,
-                "compressedBytes": 31432
+                "decompressedLines": 55,
+                "totalDuplicates": 0
               },
               "ingester": {
+                "compressedBytes": 0,
+                "totalDuplicates": 0,
                 "totalReached": 0,
-                "totalChunksMatched": 0,
                 "totalLinesSent": 0,
                 "headChunkBytes": 0,
-                "decompressedLines": 0,
-                "totalBatches": 0,
                 "headChunkLines": 0,
+                "totalChunksMatched": 0,
+                "totalBatches": 0,
                 "decompressedBytes": 0,
-                "compressedBytes": 0,
-                "totalDuplicates": 0
+                "decompressedLines": 0
               }
             }
           }

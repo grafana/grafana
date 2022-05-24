@@ -41,6 +41,7 @@ type QueryData struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
+	enableWideSeries   bool
 }
 
 func New(
@@ -75,6 +76,7 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
+		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
 	}, nil
 }
 

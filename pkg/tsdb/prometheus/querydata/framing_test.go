@@ -34,39 +34,46 @@ func TestMatrixResponses(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		t.Run(test.name, func(t *testing.T) {
-			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
-			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
+		enableWideSeries := false
+		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
+		goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+		enableWideSeries = true
+		goldenFileName = filepath.Join("../testdata", test.filepath+".result.streaming-wide.golden")
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+	}
+}
 
-			query, err := loadStoredQuery(queryFileName)
+func goldenScenario(name, queryFileName, responseFileName, goldenFileName string, wide bool) func(t *testing.T) {
+	return func(t *testing.T) {
+		query, err := loadStoredQuery(queryFileName)
+		require.NoError(t, err)
+
+		responseBytes, err := os.ReadFile(responseFileName)
+		require.NoError(t, err)
+
+		result, err := runQuery(responseBytes, query, wide)
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		dr, found := result.Responses["A"]
+		require.True(t, found)
+
+		actual, err := json.MarshalIndent(&dr, "", "  ")
+		require.NoError(t, err)
+
+		// nolint:gosec
+		// We can ignore the gosec G304 because this is a test with static defined paths
+		expected, err := ioutil.ReadFile(goldenFileName + ".json")
+		if err != nil || update {
+			err = os.WriteFile(goldenFileName+".json", actual, 0600)
 			require.NoError(t, err)
+		}
 
-			responseBytes, err := os.ReadFile(responseFileName)
-			require.NoError(t, err)
+		require.JSONEq(t, string(expected), string(actual))
 
-			result, err := runQuery(responseBytes, query)
-			require.NoError(t, err)
-			require.Len(t, result.Responses, 1)
-
-			dr, found := result.Responses["A"]
-			require.True(t, found)
-
-			actual, err := json.MarshalIndent(&dr, "", "  ")
-			require.NoError(t, err)
-
-			// nolint:gosec
-			// We can ignore the gosec G304 because this is a test with static defined paths
-			expected, err := ioutil.ReadFile(goldenFileName + ".json")
-			if err != nil || update {
-				err = os.WriteFile(goldenFileName+".json", actual, 0600)
-				require.NoError(t, err)
-			}
-
-			require.JSONEq(t, string(expected), string(actual))
-
-			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
-		})
+		require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
 	}
 }
 
@@ -123,8 +130,8 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}, nil
 }
 
-func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	tCtx := setup()
+func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend.QueryDataResponse, error) {
+	tCtx := setup(wide)
 	res := &http.Response{
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(bytes.NewReader(response)),
