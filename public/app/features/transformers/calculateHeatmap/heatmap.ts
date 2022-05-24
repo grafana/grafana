@@ -97,7 +97,8 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
         config: xField.config,
       },
       {
-        name: 'yMax',
+        // this name determines whether cells are drawn above, below, or centered on the values
+        name: yField.labels?.le != null ? 'yMax' : 'y',
         type: FieldType.number,
         values: new ArrayVector(ys),
         config: yField.config,

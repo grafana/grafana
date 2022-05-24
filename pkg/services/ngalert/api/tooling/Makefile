@@ -11,22 +11,27 @@ PATH_UP = ../../../../..
 
 GENERATED_GO_MATCHERS = ./go/*.go
 
-spec.json: $(GO_PKG_FILES)
+spec.json spec-stable.json: $(GO_PKG_FILES)
 	# this is slow because this image does not use the cache
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
 	docker run --rm -it \
 		-w /src/$(PATH_DOWN) \
 		-v $$(pwd)/$(PATH_UP):/src \
+		--entrypoint sh \
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-		generate spec -m -o $@
+		-c \
+		"swagger generate spec -m -o $@; swagger generate spec -m --include-tag=stable -o spec-stable.json"
 
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o spec.json
+	swagger generate spec -m -w $(API_DIR) -o spec.json && swagger generate spec -m --include-tag=stable -o ngalert.json
 
 post.json: spec.json
+	go run cmd/clean-swagger/main.go -if $(<) -of $@
+
+api.json: spec-stable.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
 swagger-codegen-api:
@@ -55,4 +60,7 @@ clean:
 serve: post.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-all: post.json swagger-codegen-api fix copy-files clean	
+serve-stable: api.json
+	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
+
+all: post.json api.json swagger-codegen-api fix copy-files clean

@@ -169,7 +169,7 @@ roles:
         global: true
 ```
 
-- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
+- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
 
 | action         | scope                       |
 | -------------- | --------------------------- |
@@ -202,7 +202,7 @@ roles:
 
 > **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
 
-- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
 
 | Action                 | Scope                           |
 | ---------------------- | ------------------------------- |
@@ -243,4 +243,4 @@ roles:
         state: 'absent'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}).
+- Or use [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}).

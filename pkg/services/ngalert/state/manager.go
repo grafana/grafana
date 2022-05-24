@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -15,9 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -41,11 +44,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
+	imageService     image.ImageService
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
-	dashboardService dashboards.DashboardService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -56,6 +60,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
+		imageService:     imageService,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -115,6 +120,7 @@ func (st *Manager) Warm(ctx context.Context) {
 				CacheId:              cacheId,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
+				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
@@ -165,6 +171,37 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	return states
 }
 
+// Maybe take a screenshot. Do it if:
+// 1. The alert state is transitioning into the "Alerting" state from something else.
+// 2. The alert state has just transitioned to the resolved state.
+// 3. The state is alerting and there is no screenshot annotation on the alert state.
+func (st *Manager) maybeTakeScreenshot(
+	ctx context.Context,
+	alertRule *ngModels.AlertRule,
+	state *State,
+	oldState eval.State,
+) error {
+	shouldScreenshot := state.Resolved ||
+		state.State == eval.Alerting && oldState != eval.Alerting ||
+		state.State == eval.Alerting && state.Image == nil
+	if !shouldScreenshot {
+		return nil
+	}
+
+	img, err := st.imageService.NewImage(ctx, alertRule)
+	if err != nil &&
+		errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
+		errors.Is(err, image.ErrNoDashboard) ||
+		errors.Is(err, image.ErrNoPanel) {
+		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
+		return nil
+	} else if err != nil {
+		return err
+	}
+	state.Image = img
+	return nil
+}
+
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(ctx, alertRule, result)
@@ -180,6 +217,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
+	oldReason := currentState.StateReason
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
@@ -194,13 +232,32 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	case eval.Pending: // we do not emit results with this state
 	}
 
+	// Set reason iff: result is different than state, reason is not Alerting or Normal
+	currentState.StateReason = ""
+
+	if currentState.State != result.State &&
+		result.State != eval.Normal &&
+		result.State != eval.Alerting {
+		currentState.StateReason = result.State.String()
+	}
+
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
+	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
+	if err != nil {
+		st.log.Warn("Error generating a screenshot for an alert instance.",
+			"alert_rule", alertRule.UID,
+			"dashboard", alertRule.DashboardUID,
+			"panel", alertRule.PanelID)
+	}
+
 	st.set(currentState)
-	if oldState != currentState.State {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
+
+	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
+	if shouldUpdateAnnotation {
+		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
@@ -237,6 +294,7 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
+// TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	switch {
 	case state == ngModels.InstanceStateFiring:
@@ -248,17 +306,31 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state eval.State, previousState eval.State) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
+// This struct provides grouping of state with reason, and string formatting.
+type InstanceStateAndReason struct {
+	State  eval.State
+	Reason string
+}
+
+func (i InstanceStateAndReason) String() string {
+	s := fmt.Sprintf("%v", i.State)
+	if len(i.Reason) > 0 {
+		s += fmt.Sprintf(" (%v)", i.Reason)
+	}
+	return s
+}
+
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", currentData.String(), "oldState", previousData.String())
 
 	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state.String())
+	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), currentData.String())
 
 	item := &annotations.Item{
 		AlertId:   alertRule.ID,
 		OrgId:     alertRule.OrgID,
-		PrevState: previousState.String(),
-		NewState:  state.String(),
+		PrevState: previousData.String(),
+		NewState:  currentData.String(),
 		Text:      annotationText,
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
@@ -313,7 +385,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			}
 
 			if s.State == eval.Alerting {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(), eval.Normal, s.State)
+				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
+					InstanceStateAndReason{State: eval.Normal, Reason: ""},
+					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
 			}
 		}
 	}

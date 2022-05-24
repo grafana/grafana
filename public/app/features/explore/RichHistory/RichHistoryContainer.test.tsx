@@ -29,6 +29,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     deleteRichHistory: jest.fn(),
     initRichHistory: jest.fn(),
     loadRichHistory: jest.fn(),
+    loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     updateHistorySearchFilters: jest.fn(),
     updateHistorySettings: jest.fn(),
@@ -47,6 +48,7 @@ const setup = (propOverrides?: Partial<Props>) => {
       activeDatasourceOnly: true,
       lastUsedDatasourceFilters: [],
     },
+    richHistoryTotal: 0,
   };
 
   Object.assign(props, propOverrides);

@@ -457,6 +457,7 @@ func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDa
 }
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	query.Result = m.ExpectedDashboards
 	return m.ExpectedError
 }
 
@@ -633,4 +634,8 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 
 func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	return nil, m.ExpectedError
 }

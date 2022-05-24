@@ -86,11 +86,16 @@ type ClusterPeer interface {
 	WaitReady(context.Context) error
 }
 
+type AlertingStore interface {
+	store.AlertingStore
+	channels.ImageStore
+}
+
 type Alertmanager struct {
 	logger log.Logger
 
 	Settings            *setting.Cfg
-	Store               store.AlertingStore
+	Store               AlertingStore
 	fileStore           *FileStore
 	Metrics             *metrics.Alertmanager
 	NotificationService notifications.Service
@@ -128,7 +133,7 @@ type Alertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:            cfg,
@@ -499,7 +504,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			SecureSettings:        secureSettings,
 		}
 	)
-	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl)
+	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl, am.Store)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
