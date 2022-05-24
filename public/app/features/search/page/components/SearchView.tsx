@@ -41,25 +41,41 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   const isFolders = layout === SearchLayout.Folders;
 
   const results = useAsync(() => {
-    let qstr = queryText;
-    if (!qstr?.length) {
-      qstr = '*';
-    }
     const q: SearchQuery = {
-      query: qstr,
+      query: queryText,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
+      sort: query.sort?.value,
     };
+
+    // Only dashboards have additional properties
+    if (q.sort?.length && !q.sort.includes('name')) {
+      q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (!q.query?.length) {
+      q.query = '*';
+      if (!q.location) {
+        q.kind = ['dashboard', 'folder']; // skip panels
+      }
+    }
+
+    if (q.query === '*' && !q.sort?.length) {
+      q.sort = 'name_sort';
+    }
+
     return getGrafanaSearcher().search(q);
   }, [query, layout, queryText, folderDTO]);
+
+  const clearSelection = useCallback(() => {
+    searchSelection.items.clear();
+    setSearchSelection({ ...searchSelection });
+  }, [searchSelection]);
 
   const toggleSelection = useCallback(
     (kind: string, uid: string) => {
       const current = searchSelection.isSelected(kind, uid);
-      if (kind === 'folder') {
-        // ??? also select all children?
-      }
       setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
     },
     [searchSelection]
@@ -151,6 +167,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
               response: value!,
               selection,
               selectionToggle: toggleSelection,
+              clearSelection,
               width: width,
               height: height,
               onTagSelected: onTagAdd,
@@ -175,7 +192,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   return (
     <>
       {Boolean(searchSelection.items.size > 0) ? (
-        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
+        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} clearSelection={clearSelection} />
       ) : (
         <ActionRow
           onLayoutChange={(v) => {

@@ -63,6 +63,39 @@ func main() {
 		}
 	}
 
+	paths, ok := data["paths"].(map[string]interface{})
+	if !ok {
+		log.Fatal("no paths")
+	}
+
+	for _, path := range paths {
+		path, ok := path.(map[string]interface{})
+		if !ok {
+			log.Fatal("invalid path")
+		}
+
+		for _, op := range path {
+			op, ok := op.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			tags, ok := op["tags"].([]interface{})
+			if !ok {
+				log.Println("invalid op, skipping")
+				continue
+			}
+
+			// Remove "stable" tag. Multiple tags cause routes to render strangely in the final docs.
+			for i, tag := range tags {
+				if tag == "stable" {
+					log.Println("removing stable tag")
+					op["tags"] = append(tags[:i], tags[i+1:]...)
+				}
+			}
+		}
+	}
+
 	out, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
 		log.Fatal(err)
