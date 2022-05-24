@@ -108,19 +108,38 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
 
-### Expanding the navigation bar
+## Expanding the navigation bar
 
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations. This is the first improvement to Grafana’s navigation, with more to come in future releases.
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
 
-### Starred dashboards in the navigation bar
+## Starred dashboards in the navigation bar
 
 As part of the upcoming improvements to Grafana’s navigation, you can now directly access your starred dashboards from the navigation bar. This is currently an opt-in feature that can be accessed by enabling the savedItems feature flag.
 
 {{< figure src="/static/img/docs/dashboards/starred-dashboards-nav-bar.png" max-width="750px" caption="Starred dashboards" >}}
 
-### Query History migration
+## Explore to Dashboard
+
+It is now possible to create panels and/or dashboards directly from Explore. When clicking on the “Add to dashboard” button in the Explore toolbar users can now create a panel in a new dashboard or in an existing one. The generated panel contains all the pane’s queries and a default visualization automatically picked from the current results shown in Explore. Dashboards are not automatically saved so that users can go through the current save flow. Optionally, dashboards can be opened in a new tab to preserve Explore’s state.
+
+{{< figure src="/static/img/docs/dashboards/errors-with-trace-ids.png" max-width="500px" caption="Starred dashboards" >}}
+
+## Command palette
+
+Using cmd+k (macOS) or ctrl+k (Linux/Windows), users can pull up a palette of commands that allow easier navigation and other tasks. <!-- Currently available commands:-->
+
+## List of errors with trace IDs
+
+In order to support debugging issues in Grafana, error alerts that appear in Grafana include a trace ID, and these alerts can be accessed under your Profile. This is currently an opt-in feature that can be accessed by enabling two feature flags:
+
+- `tracing` - enables the tracing id in error messages
+- `persistNotifications` - enables the alerts page under Profile
+
+{{< figure src="/static/img/docs/dashboards/errors-with-trace-ids.png" max-width="500px" caption="Starred dashboards" >}}
+
+## Query History migration
 
 Query history is a panel that keeps track of all queries that are run in Explore. So far the history was saved in browser local storage causing some problems, for example running out of storage space or not being able to use the same query history in different browsers. Not anymore! We’re migrating all entries from browser local storage to the database. Migration will happen behind the senses when query history panel is opened. This feature can be disabled using config entry query_history in custom.ini.
 
@@ -146,7 +165,7 @@ If you have information spread across several dashboards that you’d like to se
 
 Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/#reporting).
 
-{{< figure src="/static/img/docs/dashboards/separate-licenses.png" max-width="1025px" caption="Separate license" >}}
+{{< figure src="/static/img/docs/dashboards/report-embedded-image.png" max-width="750px" caption="Embed report" >}}
 
 ## Breaking Changes
 
