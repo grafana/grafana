@@ -217,7 +217,11 @@ export function prepConfig(opts: PrepConfigOpts) {
     range: shouldUseLogScale
       ? undefined
       : (u, dataMin, dataMax) => {
-          const bucketSize = dataRef.current?.yBucketSize;
+          let bucketSize = dataRef.current?.yBucketSize;
+
+          if (bucketSize === 0) {
+            bucketSize = 1;
+          }
 
           if (bucketSize) {
             if (dataRef.current?.yLayout === BucketLayout.le) {
@@ -437,7 +441,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         // detect x and y bin qtys by detecting layout repetition in x & y data
         let yBinQty = dlen - ys.lastIndexOf(ys[0]);
         let xBinQty = dlen / yBinQty;
-        let yBinIncr = ys[1] - ys[0];
+        let yBinIncr = ys[1] - ys[0] || scaleY.max! - scaleY.min!;
         let xBinIncr = xs[yBinQty] - xs[0];
 
         // uniform tile sizes based on zoom level
