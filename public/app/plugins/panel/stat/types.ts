@@ -15,13 +15,19 @@ import {
   BigValueTextMode,
 } from '@grafana/ui';
 
+import { PanelOptions } from './models.gen';
+
 // Structure copied from angular
-export interface StatPanelOptions extends SingleStatBaseOptions {
-  graphMode: BigValueGraphMode;
-  colorMode: BigValueColorMode;
-  justifyMode: BigValueJustifyMode;
-  textMode: BigValueTextMode;
-}
+export type StatPanelOptions = PanelOptions;
+
+// extends SingleStatBaseOptions {
+//   graphMode: BigValueGraphMode;
+//   colorMode: BigValueColorMode;
+//   justifyMode: BigValueJustifyMode;
+//   textMode: BigValueTextMode;
+// }
+
+// export type
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
