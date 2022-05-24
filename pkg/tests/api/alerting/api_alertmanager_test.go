@@ -2454,8 +2454,8 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedStatusCode: http.StatusBadRequest,
+			expectedMessage:    "invalid condition: invalid query A: data source not found: unknown",
 		},
 	}
 
@@ -2620,8 +2620,8 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedStatusCode: http.StatusBadRequest,
+			expectedMessage:    "invalid queries or expressions: invalid query A: data source not found: unknown",
 		},
 	}
 
