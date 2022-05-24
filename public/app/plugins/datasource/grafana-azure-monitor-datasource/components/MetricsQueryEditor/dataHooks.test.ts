@@ -6,8 +6,10 @@ import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType
 
 import {
   DataHook,
+  MetricMetadata,
+  MetricsMetadataHook,
   updateSubscriptions,
-  useAsyncState,
+  useMetricMetadata,
   useMetricNames,
   useMetricNamespaces,
   useResourceGroups,
@@ -16,78 +18,15 @@ import {
   useSubscriptions,
 } from './dataHooks';
 
-interface WaitableMock extends jest.Mock<any, any> {
-  waitToBeCalled(): Promise<unknown>;
-}
-
 const WAIT_OPTIONS = {
   timeout: 1000,
 };
 
-function createWaitableMock() {
-  let resolve: Function;
-
-  const mock = jest.fn() as WaitableMock;
-  mock.mockImplementation(() => {
-    resolve && resolve();
-  });
-
-  mock.waitToBeCalled = () => {
-    return new Promise((_resolve) => (resolve = _resolve));
-  };
-
-  return mock;
-}
-
 const opt = (text: string, value: string) => ({ text, value });
-
-describe('AzureMonitor: useAsyncState', () => {
-  const MOCKED_RANDOM_VALUE = 0.42069;
-
-  beforeEach(() => {
-    jest.spyOn(global.Math, 'random').mockReturnValue(MOCKED_RANDOM_VALUE);
-  });
-
-  afterEach(() => {
-    jest.spyOn(global.Math, 'random').mockRestore();
-  });
-
-  it('should return data from an async function', async () => {
-    const apiCall = () => Promise.resolve(['a', 'b', 'c']);
-    const setError = jest.fn();
-
-    const { result, waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await waitForNextUpdate();
-
-    expect(result.current).toEqual(['a', 'b', 'c']);
-  });
-
-  it('should report errors through setError', async () => {
-    const error = new Error();
-    const apiCall = () => Promise.reject(error);
-    const setError = createWaitableMock();
-
-    const { result, waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await Promise.race([waitForNextUpdate(), setError.waitToBeCalled()]);
-
-    expect(result.current).toEqual([]);
-    expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, error);
-  });
-
-  it('should clear the error once the request is successful', async () => {
-    const apiCall = () => Promise.resolve(['a', 'b', 'c']);
-    const setError = createWaitableMock();
-
-    const { waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await Promise.race([waitForNextUpdate(), setError.waitToBeCalled()]);
-
-    expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, undefined);
-  });
-});
 
 interface TestScenario {
   name: string;
-  hook: DataHook;
+  hook: DataHook | MetricsMetadataHook;
 
   // For convenience, only need to define the azureMonitor part of the query for some tests
   emptyQueryPartial: AzureMetricQuery;
@@ -95,7 +34,7 @@ interface TestScenario {
   topLevelCustomProperties?: Partial<AzureMonitorQuery>;
 
   expectedCustomPropertyResults?: Array<AzureMonitorOption<string>>;
-  expectedOptions: AzureMonitorOption[];
+  expectedOptions: AzureMonitorOption[] | MetricMetadata;
 }
 
 describe('AzureMonitor: metrics dataHooks', () => {
@@ -319,7 +258,27 @@ describe('AzureMonitor: metrics dataHooks', () => {
     datasource.getMetricNamespaces = jest
       .fn()
       .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
+
+    const getMetricMetadata = jest.fn().mockResolvedValue({
+      primaryAggType: 'Average',
+      supportedAggTypes: ['Average'],
+      supportedTimeGrains: [
+        { label: 'Auto', value: 'auto' },
+        { label: '1 minute', value: 'PT1M' },
+        { label: '5 minutes', value: 'PT5M' },
+        { label: '15 minutes', value: 'PT15M' },
+        { label: '30 minutes', value: 'PT30M' },
+        { label: '1 hour', value: 'PT1H' },
+        { label: '6 hours', value: 'PT6H' },
+        { label: '12 hours', value: 'PT12H' },
+        { label: '1 day', value: 'P1D' },
+      ],
+      dimensions: [],
+    });
+
+    datasource.getMetricMetadata = jest.fn().mockImplementation(getMetricMetadata);
   });
+
   describe.each(testTable)('scenario %#: $name', (scenario) => {
     it('returns values', async () => {
       const query = {
@@ -342,6 +301,60 @@ describe('AzureMonitor: metrics dataHooks', () => {
       await waitForNextUpdate(WAIT_OPTIONS);
 
       expect(result.current).toEqual(scenario.expectedCustomPropertyResults);
+    });
+  });
+
+  describe('useMetricsMetadataHook', () => {
+    const metricsMetadataConfig = {
+      name: 'useMetricMetadata',
+      hook: useMetricMetadata,
+      emptyQueryPartial: {
+        resourceGroup: 'web-app-development',
+        metricDefinition: 'azure/vm',
+        resourceName: 'web-server',
+        metricNamespace: 'azure/vm',
+        subscription: 'test-sub',
+        metricName: 'Average CPU',
+      },
+      customProperties: {},
+      expectedOptions: {
+        aggOptions: [{ label: 'Average', value: 'Average' }],
+        timeGrains: [
+          { label: 'Auto', value: 'auto' },
+          { label: '1 minute', value: 'PT1M' },
+          { label: '5 minutes', value: 'PT5M' },
+          { label: '15 minutes', value: 'PT15M' },
+          { label: '30 minutes', value: 'PT30M' },
+          { label: '1 hour', value: 'PT1H' },
+          { label: '6 hours', value: 'PT6H' },
+          { label: '12 hours', value: 'PT12H' },
+          { label: '1 day', value: 'P1D' },
+        ],
+        dimensions: [],
+        isLoading: false,
+        supportedAggTypes: ['Average'],
+        primaryAggType: 'Average',
+      },
+    };
+
+    it('returns values', async () => {
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricsMetadataConfig.emptyQueryPartial,
+      };
+      const { result, waitForNextUpdate } = renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
+      await waitForNextUpdate(WAIT_OPTIONS);
+
+      expect(result.current).toEqual(metricsMetadataConfig.expectedOptions);
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          aggregation: result.current.primaryAggType,
+          timeGrain: 'auto',
+          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+        },
+      });
     });
   });
 });
