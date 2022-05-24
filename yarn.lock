@@ -21390,6 +21390,9 @@ __metadata:
     webpack-dev-server: 4.9.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+  dependenciesMeta:
+    eslint@8.15.0:
+      unplugged: true
   languageName: unknown
   linkType: soft
 

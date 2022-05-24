@@ -65,6 +65,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
+    panelContainer: css`
+      background-color: ${theme.components.panel.background};
+      border: ${theme.components.panel.borderColor};
+      position: relative;
+      border-radius: 3px;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0;
+    `,
   };
 };
 
@@ -368,7 +379,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div className={cx(styles.exploreContainer)}>
-            <div className={cx('panel-container', styles.queryContainer)}>
+            <div className={cx(styles.panelContainer, styles.queryContainer)}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
