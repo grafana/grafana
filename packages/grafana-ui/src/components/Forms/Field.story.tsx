@@ -51,7 +51,7 @@ export const HorizontalLayout: Story<FieldProps> = (args) => {
   return (
     <div>
       <Field {...args}>
-        <Switch checked={checked} onChange={onChange} />
+        <Switch value={checked} onChange={onChange} />
       </Field>
     </div>
   );

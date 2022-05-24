@@ -79,7 +79,6 @@ export const WithTabs: Story = (args) => {
   const modalHeader = (
     <ModalTabsHeader
       title={args.title}
-      icon={args.icon}
       tabs={tabs}
       activeTab={activeTab}
       onChangeTab={(t) => {
