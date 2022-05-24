@@ -69,17 +69,17 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		listItem := dtos.PluginListItem{
-			Id:            pluginDef.ID,
-			Name:          pluginDef.Name,
-			Type:          string(pluginDef.Type),
-			Category:      pluginDef.Category,
-			Info:          pluginDef.Info,
-			Dependencies:  pluginDef.Dependencies,
-			DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
-			State:         pluginDef.State,
-			Signature:     pluginDef.Signature,
-			SignatureType: pluginDef.SignatureType,
-			SignatureOrg:  pluginDef.SignatureOrg,
+			Id:              pluginDef.ID,
+			Name:            pluginDef.Name,
+			Type:            string(pluginDef.Type),
+			Category:        pluginDef.Category,
+			Info:            pluginDef.Info,
+			Dependencies:    pluginDef.Dependencies,
+			DefaultNavUrl:   path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
+			State:           pluginDef.State,
+			SignatureStatus: string(pluginDef.Signature),
+			SignatureType:   string(pluginDef.SignatureType),
+			SignatureOrg:    pluginDef.SignatureOrg,
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -123,19 +123,19 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	dto := &dtos.PluginSetting{
-		Type:          string(plugin.Type),
-		Id:            plugin.ID,
-		Name:          plugin.Name,
-		Info:          plugin.Info,
-		Dependencies:  plugin.Dependencies,
-		Includes:      plugin.Includes,
-		BaseUrl:       plugin.BaseURL,
-		Module:        plugin.Module,
-		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
-		State:         plugin.State,
-		Signature:     plugin.Signature,
-		SignatureType: plugin.SignatureType,
-		SignatureOrg:  plugin.SignatureOrg,
+		Type:            string(plugin.Type),
+		Id:              plugin.ID,
+		Name:            plugin.Name,
+		Info:            plugin.Info,
+		Dependencies:    plugin.Dependencies,
+		Includes:        plugin.Includes,
+		BaseUrl:         plugin.BaseURL,
+		Module:          plugin.Module,
+		DefaultNavUrl:   path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		State:           plugin.State,
+		SignatureStatus: string(plugin.Signature),
+		SignatureType:   string(plugin.SignatureType),
+		SignatureOrg:    plugin.SignatureOrg,
 	}
 
 	if plugin.IsApp() {
@@ -346,8 +346,8 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
+func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors(c.Req.Context()))
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {

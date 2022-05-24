@@ -19,9 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/signature"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -31,31 +32,31 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
-var _ plugins.ErrorResolver = (*Loader)(nil)
+var _ plugins.Loader = (*Loader)(nil)
 
 type Loader struct {
-	cfg                *plugins.Cfg
+	cfg                *config.Cfg
 	pluginFinder       finder.Finder
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	log                log.Logger
 
-	errs map[string]*plugins.SignatureError
+	errs map[string]*signature.Error
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer signature.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+	return New(config.FromGrafanaCfg(cfg), license, signature.NewValidator(authorizer), backendProvider), nil
 }
 
-func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *config.Cfg, license models.Licensing, signatureValidator signature.Validator,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
-		signatureValidator: signature.NewValidator(authorizer),
-		errs:               make(map[string]*plugins.SignatureError),
+		signatureValidator: signatureValidator,
+		errs:               make(map[string]*signature.Error),
 		log:                log.New("plugin.loader"),
 	}
 }
@@ -67,6 +68,18 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, 
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
+}
+
+func (l *Loader) Errors(_ context.Context) []plugins.Error {
+	errs := make([]plugins.Error, 0)
+	for _, err := range l.errs {
+		errs = append(errs, plugins.Error{
+			PluginID:  err.PluginID,
+			ErrorCode: err.AsErrorCode(),
+		})
+	}
+
+	return errs
 }
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
@@ -100,16 +113,11 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	for pluginDir, pluginJSON := range foundPlugins {
 		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
 
-		sig, err := signature.Calculate(l.log, plugin)
+		err := plugin.CalculateSignature()
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
 			continue
 		}
-		plugin.Signature = sig.Status
-		plugin.SignatureType = sig.Type
-		plugin.SignatureOrg = sig.SigningOrg
-		plugin.SignedFiles = sig.Files
-
 		loadedPlugins[plugin.PluginDir] = plugin
 	}
 
@@ -130,12 +138,33 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 				break
 			}
 		}
+
+		// If a plugin is nested within another, create links to each other to inherit signature details
+		if plugin.Parent != nil {
+			if plugin.IsCorePlugin() || plugin.Signature == signature.Internal {
+				plugin.Logger().Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
+					"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin())
+			} else {
+				plugin.Logger().Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.ID,
+					"root", plugin.Parent.ID, "signature", plugin.Signature, "rootSignature", plugin.Parent.Signature)
+				plugin.Signature = plugin.Parent.Signature
+				plugin.SignatureType = plugin.Parent.SignatureType
+				plugin.SignatureOrg = plugin.Parent.SignatureOrg
+				if plugin.Signature == signature.Valid {
+					plugin.Logger().Debug("Plugin has valid signature (inherited from root)", "id", plugin.ID)
+				}
+			}
+		}
 	}
 
 	// validate signatures
 	verifiedPlugins := make([]*plugins.Plugin, 0)
 	for _, plugin := range loadedPlugins {
-		signingError := l.signatureValidator.Validate(plugin)
+		signingError := l.signatureValidator.Validate(signature.Args{
+			PluginID:        plugin.ID,
+			SignatureStatus: plugin.Signature,
+			IsExternal:      plugin.IsExternalPlugin(),
+		})
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
@@ -327,7 +356,7 @@ func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type)
 	return path.Join(baseURL, pathStr)
 }
 
-func (l *Loader) PluginErrors() []*plugins.Error {
+func (l *Loader) PluginErrors(_ context.Context) []*plugins.Error {
 	errs := make([]*plugins.Error, 0)
 	for _, err := range l.errs {
 		errs = append(errs, &plugins.Error{

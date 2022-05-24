@@ -9,9 +9,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/signature"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,15 +27,19 @@ var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
+var _ plugins.ErrorResolver = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg             *plugins.Cfg
+	cfg             *config.Cfg
 	store           map[string]*plugins.Plugin
 	pluginInstaller plugins.Installer
 	pluginLoader    plugins.Loader
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
 	log             log.Logger
+
+	signatureValidator signature.Validator
+	errs               map[string]*signature.Error
 }
 
 type PluginSource struct {
@@ -39,26 +47,32 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), []PluginSource{
+func ProvideService(grafanaCfg *setting.Cfg, license models.Licensing, authorizer signature.PluginLoaderAuthorizer,
+	backendProvider plugins.BackendFactoryProvider) (*PluginManager, error) {
+	cfg := config.FromGrafanaCfg(grafanaCfg)
+	signatureValidator := signature.NewValidator(authorizer)
+	pm := New(cfg, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, loader.New(cfg, license, signatureValidator, backendProvider), signatureValidator)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader) *PluginManager {
+func New(cfg *config.Cfg, pluginSources []PluginSource, pluginLoader plugins.Loader,
+	signatureValidator signature.Validator) *PluginManager {
 	return &PluginManager{
-		cfg:             cfg,
-		pluginLoader:    pluginLoader,
-		pluginSources:   pluginSources,
-		store:           make(map[string]*plugins.Plugin),
-		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		cfg:                cfg,
+		pluginLoader:       pluginLoader,
+		pluginSources:      pluginSources,
+		signatureValidator: signatureValidator,
+		store:              make(map[string]*plugins.Plugin),
+		errs:               make(map[string]*signature.Error),
+		log:                log.New("plugin.manager"),
+		pluginInstaller:    installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
@@ -189,7 +203,7 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+	if err := m.startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
@@ -198,13 +212,13 @@ func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
+func (m *PluginManager) startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
 	}
 
 	go func(ctx context.Context, p *plugins.Plugin) {
-		if err := restartKilledProcess(ctx, p); err != nil {
+		if err := m.restartKilledProcess(ctx, p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
 	}(ctx, p)
@@ -212,7 +226,7 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin
 	return nil
 }
 
-func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
+func (m *PluginManager) restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 	ticker := time.NewTicker(time.Second * 1)
 
 	for {
@@ -232,6 +246,35 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 				continue
 			}
 
+			if err := p.CalculateSignature(); err != nil {
+				p.Logger().Error("Failed to re-calculate plugin signature", "error", err)
+				if err = p.Stop(ctx); err != nil {
+					p.Logger().Error("Failed to stop plugin", "error", err)
+					return m.unregisterAndStop(ctx, p)
+				}
+			}
+
+			signingError := m.signatureValidator.Validate(signature.Args{
+				PluginID:        p.ID,
+				SignatureStatus: p.Signature,
+				IsExternal:      p.IsExternalPlugin(),
+			})
+			if signingError != nil {
+				p.Logger().Warn("Skipping restarting plugin due to problem with signature",
+					"pluginID", p.ID, "status", signingError.SignatureStatus)
+				p.SignatureError = signingError
+				m.pluginsMu.Lock()
+				m.errs[p.ID] = signingError
+				m.pluginsMu.Unlock()
+				// skip plugin so it will not be restarted
+				return nil
+			}
+
+			// clear plugin error if a pre-existing error has since been resolved
+			m.pluginsMu.Lock()
+			delete(m.errs, p.ID)
+			m.pluginsMu.Unlock()
+
 			p.Logger().Debug("Restarting plugin")
 			if err := p.Start(ctx); err != nil {
 				p.Logger().Error("Failed to restart plugin", "error", err)
@@ -240,6 +283,30 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 			p.Logger().Debug("Plugin restarted")
 		}
 	}
+}
+
+func (m *PluginManager) PluginErrors(ctx context.Context) []plugins.Error {
+	errs := make([]plugins.Error, 0)
+	for _, err := range m.pluginLoader.Errors(ctx) {
+		// if collision, prefer manager tracked error
+		if _, exists := m.errs[err.PluginID]; exists {
+			continue
+		}
+
+		errs = append(errs, plugins.Error{
+			PluginID:  err.PluginID,
+			ErrorCode: err.ErrorCode,
+		})
+	}
+
+	for _, err := range m.errs {
+		errs = append(errs, plugins.Error{
+			PluginID:  err.PluginID,
+			ErrorCode: err.AsErrorCode(),
+		})
+	}
+
+	return errs
 }
 
 // shutdown stops all backend plugin processes

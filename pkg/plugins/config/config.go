@@ -1,4 +1,4 @@
-package plugins
+package config
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"

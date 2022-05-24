@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -145,10 +144,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.ErrorResolver), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
-	loader.ProvideService,
-	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
-	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
+	//loader.ProvideService,
+	//wire.Bind(new(plugins.Loader), new(*loader.Loader)),
 	cloudwatch.ProvideService,
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manifest"
+	"github.com/grafana/grafana/pkg/plugins/signature"
 )
 
 const (
@@ -39,41 +41,6 @@ func (e DuplicateError) Is(err error) bool {
 	// nolint:errorlint
 	_, ok := err.(DuplicateError)
 	return ok
-}
-
-type SignatureError struct {
-	PluginID        string          `json:"pluginId"`
-	SignatureStatus SignatureStatus `json:"status"`
-}
-
-func (e SignatureError) Error() string {
-	switch e.SignatureStatus {
-	case SignatureInvalid:
-		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case SignatureModified:
-		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case SignatureUnsigned:
-		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureInternal, SignatureValid:
-		return ""
-	}
-
-	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
-}
-
-func (e SignatureError) AsErrorCode() ErrorCode {
-	switch e.SignatureStatus {
-	case SignatureInvalid:
-		return signatureInvalid
-	case SignatureModified:
-		return signatureModified
-	case SignatureUnsigned:
-		return signatureMissing
-	case SignatureInternal, SignatureValid:
-		return ""
-	}
-
-	return ""
 }
 
 type Dependencies struct {
@@ -149,42 +116,17 @@ type StaticRoute struct {
 	Directory string
 }
 
-type SignatureStatus string
-
-func (ss SignatureStatus) IsValid() bool {
-	return ss == SignatureValid
-}
-
-func (ss SignatureStatus) IsInternal() bool {
-	return ss == SignatureInternal
-}
-
-const (
-	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
-	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
-	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
-	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
-	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
-)
-
 type ReleaseState string
 
 const (
 	AlphaRelease ReleaseState = "alpha"
 )
 
-type SignatureType string
-
-const (
-	GrafanaSignature SignatureType = "grafana"
-	PrivateSignature SignatureType = "private"
-)
-
 type PluginFiles map[string]struct{}
 
 type Signature struct {
-	Status     SignatureStatus
-	Type       SignatureType
+	Status     signature.Status
+	Type       manifest.Type
 	SigningOrg string
 	Files      PluginFiles
 }
@@ -192,7 +134,7 @@ type Signature struct {
 type PluginMetaDTO struct {
 	JSONData
 
-	Signature SignatureStatus `json:"signature"`
+	Signature signature.Status `json:"signature"`
 
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
@@ -238,17 +180,9 @@ type PanelDTO struct {
 	Module        string `json:"module"`
 }
 
-const (
-	signatureMissing  ErrorCode = "signatureMissing"
-	signatureModified ErrorCode = "signatureModified"
-	signatureInvalid  ErrorCode = "signatureInvalid"
-)
-
-type ErrorCode string
-
 type Error struct {
-	ErrorCode `json:"errorCode"`
-	PluginID  string `json:"pluginId,omitempty"`
+	ErrorCode signature.ErrorCode `json:"errorCode"`
+	PluginID  string              `json:"pluginId,omitempty"`
 }
 
 type PreloadPlugin struct {

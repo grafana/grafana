@@ -1,11 +1,10 @@
-package signature
+package manifest
 
 import (
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +42,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := readPluginManifest([]byte(txt))
+		manifest, err := ReadPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -59,7 +58,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		_, err := readPluginManifest([]byte(modified))
+		_, err := ReadPluginManifest([]byte(modified))
 		require.Error(t, err)
 	})
 }
@@ -96,7 +95,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		manifest, err := readPluginManifest([]byte(txt))
+		manifest, err := ReadPluginManifest([]byte(txt))
 
 		require.NoError(t, err)
 		require.NotNil(t, manifest)
@@ -105,7 +104,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, plugins.PrivateSignature, manifest.SignatureType)
+		assert.Equal(t, Private, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
@@ -113,7 +112,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 	})
 }
 
-func fileList(manifest *pluginManifest) []string {
+func fileList(manifest *PluginManifest) []string {
 	var keys []string
 	for k := range manifest.Files {
 		keys = append(keys, k)

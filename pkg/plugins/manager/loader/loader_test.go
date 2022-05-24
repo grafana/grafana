@@ -7,21 +7,22 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manifest"
+	"github.com/grafana/grafana/pkg/plugins/signature"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +42,7 @@ func TestLoader_Load(t *testing.T) {
 	tests := []struct {
 		name            string
 		class           plugins.Class
-		cfg             *plugins.Cfg
+		cfg             *config.Cfg
 		pluginPaths     []string
 		existingPlugins map[string]struct{}
 		want            []*plugins.Plugin
@@ -50,7 +51,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load a Core plugin",
 			class: plugins.Core,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath: corePluginDir,
 			},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
@@ -93,7 +94,7 @@ func TestLoader_Load(t *testing.T) {
 					Module:    "app/plugins/datasource/cloudwatch/module",
 					BaseURL:   "public/app/plugins/datasource/cloudwatch",
 					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
-					Signature: plugins.SignatureInternal,
+					Signature: signature.Internal,
 					Class:     plugins.Core,
 				},
 			},
@@ -101,7 +102,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load a Bundled plugin",
 			class: plugins.Bundled,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath: filepath.Join(parentDir, "testdata"),
 			},
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
@@ -135,7 +136,7 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:       "public/plugins/test",
 					PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
 					Signature:     "valid",
-					SignatureType: plugins.GrafanaSignature,
+					SignatureType: manifest.Grafana,
 					SignatureOrg:  "Grafana Labs",
 					Class:         plugins.Bundled,
 				},
@@ -143,7 +144,7 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:  "Load plugin with symbolic links",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath: filepath.Join(parentDir),
 			},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
@@ -214,14 +215,14 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:       "public/plugins/test-app",
 					PluginDir:     filepath.Join(parentDir, "testdata/includes-symlinks"),
 					Signature:     "valid",
-					SignatureType: plugins.GrafanaSignature,
+					SignatureType: manifest.Grafana,
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
 		}, {
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				DevMode:     true,
 				PluginsPath: filepath.Join(parentDir),
 			},
@@ -260,7 +261,7 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:  "Load an unsigned plugin (production)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath: filepath.Join(parentDir),
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
@@ -275,7 +276,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
 				PluginsAllowUnsigned: []string{"test"},
 			},
@@ -308,14 +309,14 @@ func TestLoader_Load(t *testing.T) {
 					Module:    "plugins/test/module",
 					BaseURL:   "public/plugins/test",
 					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
-					Signature: plugins.SignatureUnsigned,
+					Signature: signature.Unsigned,
 				},
 			},
 		},
 		{
 			name:  "Load an unsigned plugin with modified signature (production)",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath: filepath.Join(parentDir),
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
@@ -330,7 +331,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an unsigned plugin with modified signature using PluginsAllowUnsigned config (production) still includes a signing error",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
 				PluginsAllowUnsigned: []string{"test"},
 			},
@@ -346,7 +347,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:  "Load an app with includes",
 			class: plugins.External,
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
 				PluginsAllowUnsigned: []string{"test-app"},
 			},
@@ -387,7 +388,7 @@ func TestLoader_Load(t *testing.T) {
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
 					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-includes"),
 					Class:         plugins.External,
-					Signature:     plugins.SignatureUnsigned,
+					Signature:     signature.Unsigned,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
 				},
@@ -403,7 +404,7 @@ func TestLoader_Load(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
 			}
 
-			pluginErrs := l.PluginErrors()
+			pluginErrs := l.PluginErrors(context.Background())
 			assert.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
 				assert.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -477,7 +478,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 	t.Run("Load multiple", func(t *testing.T) {
 		tests := []struct {
 			name            string
-			cfg             *plugins.Cfg
+			cfg             *config.Cfg
 			pluginPaths     []string
 			appURL          string
 			existingPlugins map[string]struct{}
@@ -486,7 +487,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 		}{
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
-				cfg: &plugins.Cfg{
+				cfg: &config.Cfg{
 					PluginsPath: filepath.Join(parentDir),
 				},
 				appURL: "http://localhost:3000",
@@ -526,7 +527,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						BaseURL:       "public/plugins/test",
 						PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
 						Signature:     "valid",
-						SignatureType: plugins.PrivateSignature,
+						SignatureType: manifest.Private,
 						SignatureOrg:  "Will Browne",
 					},
 				},
@@ -603,15 +604,15 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 				},
 				PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
 				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.PrivateSignature,
+				Signature:     signature.Valid,
+				SignatureType: manifest.Private,
 				SignatureOrg:  "Will Browne",
 				Module:        "plugins/test/module",
 				BaseURL:       "public/plugins/test",
 			},
 		}
 
-		l := newLoader(&plugins.Cfg{PluginsPath: filepath.Join(parentDir)})
+		l := newLoader(&config.Cfg{PluginsPath: filepath.Join(parentDir)})
 		got, err := l.Load(context.Background(), plugins.External, paths, map[string]struct{}{})
 		assert.NoError(t, err)
 
@@ -672,15 +673,15 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				},
 				PluginDir:     pluginDir,
 				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.GrafanaSignature,
+				Signature:     signature.Valid,
+				SignatureType: manifest.Grafana,
 				SignatureOrg:  "Grafana Labs",
 				Module:        "plugins/test-app/module",
 				BaseURL:       "public/plugins/test-app",
 			},
 		}
 
-		l := newLoader(&plugins.Cfg{
+		l := newLoader(&config.Cfg{
 			PluginsPath: filepath.Dir(pluginDir),
 		})
 
@@ -726,8 +727,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		Module:        "plugins/test-ds/module",
 		BaseURL:       "public/plugins/test-ds",
 		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent"),
-		Signature:     plugins.SignatureValid,
-		SignatureType: plugins.GrafanaSignature,
+		Signature:     signature.Valid,
+		SignatureType: manifest.Grafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.External,
 	}
@@ -758,8 +759,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
 		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent/nested"),
-		Signature:     plugins.SignatureValid,
-		SignatureType: plugins.GrafanaSignature,
+		Signature:     signature.Valid,
+		SignatureType: manifest.Grafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.External,
 	}
@@ -769,7 +770,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		expected := []*plugins.Plugin{parent, child}
-		l := newLoader(&plugins.Cfg{
+		l := newLoader(&config.Cfg{
 			PluginsPath: rootDir,
 		})
 
@@ -791,7 +792,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		parent.Children = nil
 		expected := []*plugins.Plugin{parent}
 
-		l := newLoader(&plugins.Cfg{
+		l := newLoader(&config.Cfg{
 			PluginsPath: rootDir,
 		})
 
@@ -885,8 +886,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			BaseURL:       "public/plugins/myorgid-simple-app",
 			PluginDir:     filepath.Join(rootDir, "testdata/app-with-child/dist"),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
-			Signature:     plugins.SignatureValid,
-			SignatureType: plugins.GrafanaSignature,
+			Signature:     signature.Valid,
+			SignatureType: manifest.Grafana,
 			SignatureOrg:  "Grafana Labs",
 			Class:         plugins.External,
 		}
@@ -923,8 +924,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			BaseURL:         "public/plugins/myorgid-simple-app",
 			PluginDir:       filepath.Join(rootDir, "testdata/app-with-child/dist/child"),
 			IncludedInAppID: parent.ID,
-			Signature:       plugins.SignatureValid,
-			SignatureType:   plugins.GrafanaSignature,
+			Signature:       signature.Valid,
+			SignatureType:   manifest.Grafana,
 			SignatureOrg:    "Grafana Labs",
 			Class:           plugins.External,
 		}
@@ -933,7 +934,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		child.Parent = parent
 
 		expected := []*plugins.Plugin{parent, child}
-		l := newLoader(&plugins.Cfg{
+		l := newLoader(&config.Cfg{
 			PluginsPath: rootDir,
 		})
 
@@ -1132,13 +1133,13 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 	})
 }
 
-func newLoader(cfg *plugins.Cfg) *Loader {
+func newLoader(cfg *config.Cfg) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)),
-		errs:               make(map[string]*plugins.SignatureError),
+		signatureValidator: signature.NewValidator(signature.UnsignedAuthorizer(cfg)),
+		errs:               make(map[string]*signature.Error),
 		log:                &logtest.Fake{},
 	}
 }

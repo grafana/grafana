@@ -18,30 +18,30 @@ type PluginSetting struct {
 	JsonData      map[string]interface{} `json:"jsonData"`
 	DefaultNavUrl string                 `json:"defaultNavUrl"`
 
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	State         plugins.ReleaseState    `json:"state"`
-	Signature     plugins.SignatureStatus `json:"signature"`
-	SignatureType plugins.SignatureType   `json:"signatureType"`
-	SignatureOrg  string                  `json:"signatureOrg"`
+	LatestVersion   string               `json:"latestVersion"`
+	HasUpdate       bool                 `json:"hasUpdate"`
+	State           plugins.ReleaseState `json:"state"`
+	SignatureStatus string               `json:"signature"`
+	SignatureType   string               `json:"signatureType"`
+	SignatureOrg    string               `json:"signatureOrg"`
 }
 
 type PluginListItem struct {
-	Name          string                  `json:"name"`
-	Type          string                  `json:"type"`
-	Id            string                  `json:"id"`
-	Enabled       bool                    `json:"enabled"`
-	Pinned        bool                    `json:"pinned"`
-	Info          plugins.Info            `json:"info"`
-	Dependencies  plugins.Dependencies    `json:"dependencies"`
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	DefaultNavUrl string                  `json:"defaultNavUrl"`
-	Category      string                  `json:"category"`
-	State         plugins.ReleaseState    `json:"state"`
-	Signature     plugins.SignatureStatus `json:"signature"`
-	SignatureType plugins.SignatureType   `json:"signatureType"`
-	SignatureOrg  string                  `json:"signatureOrg"`
+	Name            string               `json:"name"`
+	Type            string               `json:"type"`
+	Id              string               `json:"id"`
+	Enabled         bool                 `json:"enabled"`
+	Pinned          bool                 `json:"pinned"`
+	Info            plugins.Info         `json:"info"`
+	Dependencies    plugins.Dependencies `json:"dependencies"`
+	LatestVersion   string               `json:"latestVersion"`
+	HasUpdate       bool                 `json:"hasUpdate"`
+	DefaultNavUrl   string               `json:"defaultNavUrl"`
+	Category        string               `json:"category"`
+	State           plugins.ReleaseState `json:"state"`
+	SignatureStatus string               `json:"signature"`
+	SignatureType   string               `json:"signatureType"`
+	SignatureOrg    string               `json:"signatureOrg"`
 }
 
 type PluginList []PluginListItem

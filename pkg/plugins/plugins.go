@@ -4,12 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/manifest"
+	"github.com/grafana/grafana/pkg/plugins/signature"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Plugin struct {
@@ -24,13 +34,13 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
+	Signature      signature.Status
+	SignatureType  manifest.Type
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
 	SignedFiles    PluginFiles
-	SignatureError *SignatureError
+	SignatureError *signature.Error
 
 	// SystemJS fields
 	Module  string
@@ -53,11 +63,11 @@ type PluginDTO struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
+	Signature      signature.Status
+	SignatureType  manifest.Type
 	SignatureOrg   string
 	SignedFiles    PluginFiles
-	SignatureError *SignatureError
+	SignatureError *signature.Error
 
 	// SystemJS fields
 	Module  string
@@ -189,6 +199,10 @@ func (p *Plugin) PluginID() string {
 }
 
 func (p *Plugin) Logger() log.Logger {
+	if p.log == nil {
+		return log.New()
+	}
+
 	return p.log
 }
 
@@ -304,6 +318,172 @@ func (p *Plugin) Client() (PluginClient, bool) {
 		return p.client, true
 	}
 	return nil, false
+}
+
+func (p *Plugin) CalculateSignature() error {
+	if p.IsCorePlugin() {
+		p.Signature = signature.Internal
+		return nil
+	}
+
+	manifestPath := filepath.Join(p.PluginDir, "MANIFEST.txt")
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
+	// on plugin the folder structure on disk and not user input.
+	byteValue, err := ioutil.ReadFile(manifestPath)
+	if err != nil || len(byteValue) < 10 {
+		p.Logger().Debug("Plugin is unsigned", "id", p.ID)
+		p.Signature = signature.Unsigned
+		return nil
+	}
+
+	m, err := manifest.ReadPluginManifest(byteValue)
+	if err != nil {
+		p.Logger().Debug("Plugin signature invalid", "id", p.ID)
+		p.Signature = signature.Invalid
+		return nil
+	}
+
+	// Make sure the versions all match
+	if m.Plugin != p.ID || m.Version != p.Info.Version {
+		p.Signature = signature.Modified
+		return nil
+	}
+
+	// Validate that private is running within defined root URLs
+	if m.SignatureType == manifest.Private {
+		appURL, err := url.Parse(setting.AppUrl)
+		if err != nil {
+			return err
+		}
+
+		foundMatch := false
+		for _, u := range m.RootURLs {
+			rootURL, err := url.Parse(u)
+			if err != nil {
+				p.Logger().Warn("Could not parse plugin root URL", "plugin", p.ID, "rootUrl", rootURL)
+				return err
+			}
+
+			if rootURL.Scheme == appURL.Scheme &&
+				rootURL.Host == appURL.Host &&
+				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
+				foundMatch = true
+				break
+			}
+		}
+
+		if !foundMatch {
+			p.Logger().Warn("Could not find root URL that matches running application URL", "plugin", p.ID,
+				"appUrl", appURL, "rootUrls", m.RootURLs)
+			p.Signature = signature.Invalid
+			return nil
+		}
+	}
+
+	// Verify the manifest contents
+	manifestFiles := make(map[string]struct{}, len(m.Files))
+	for fp, hash := range m.Files {
+		err = manifest.VerifyHash(p.Logger(), filepath.Join(p.PluginDir, fp), hash)
+		if err != nil {
+			p.Signature = signature.Modified
+			return nil
+		}
+
+		manifestFiles[fp] = struct{}{}
+	}
+
+	if m.IsV2() {
+		pluginFiles, err := p.filesRequiringVerification()
+		if err != nil {
+			p.Logger().Warn("Could not collect plugin file information in directory", "pluginID", p.ID, "dir", p.PluginDir)
+			p.Signature = signature.Invalid
+			return err
+		}
+
+		// Track files missing from the manifest
+		var unsignedFiles []string
+		for _, f := range pluginFiles {
+			if _, exists := manifestFiles[f]; !exists {
+				unsignedFiles = append(unsignedFiles, f)
+			}
+		}
+
+		if len(unsignedFiles) > 0 {
+			p.Logger().Warn("The following files were not included in the signature", "plugin", p.ID, "files", unsignedFiles)
+			p.Signature = signature.Modified
+			//p.SignedFiles = manifestFiles
+
+			return nil
+		}
+	}
+
+	p.Logger().Debug("Plugin signature valid", "id", p.ID)
+
+	p.Signature = signature.Valid
+	p.SignatureType = m.SignatureType
+	p.SignatureOrg = m.SignedByOrgName
+	//p.SignedFiles = manifestFiles
+
+	return nil
+}
+
+// pluginFilesRequiringVerification gets plugin filenames that require verification for plugin signing
+// returns filenames as a slice of posix style paths relative to plugin directory
+func (p *Plugin) filesRequiringVerification() ([]string, error) {
+	var files []string
+	err := filepath.Walk(p.PluginDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			symlinkPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			symlink, err := os.Stat(symlinkPath)
+			if err != nil {
+				return err
+			}
+
+			// skip symlink directories
+			if symlink.IsDir() {
+				return nil
+			}
+
+			// verify that symlinked file is within plugin directory
+			p, err := filepath.Rel(p.PluginDir, symlinkPath)
+			if err != nil {
+				return err
+			}
+			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+		}
+
+		// skip directories and MANIFEST.txt
+		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// verify that file is within plugin directory
+		file, err := filepath.Rel(p.PluginDir, path)
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("file '%s' not inside of plugin directory", file)
+		}
+
+		files = append(files, filepath.ToSlash(file))
+
+		return nil
+	})
+
+	return files, err
 }
 
 type PluginClient interface {

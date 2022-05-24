@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/signature"
 )
 
 const (
@@ -25,11 +27,11 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, []PluginSource{
+		pm := New(&config.Cfg{}, []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader)
+		}, loader, signature.NewValidator(&fakeAuthorizer{}))
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -302,7 +304,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 func TestPluginManager_registeredPlugins(t *testing.T) {
 	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
-		pm := New(&plugins.Cfg{}, []PluginSource{}, &fakeLoader{})
+		pm := New(&config.Cfg{}, []PluginSource{}, &fakeLoader{}, signature.NewValidator(&fakeAuthorizer{}))
 
 		decommissionedPlugin, _ := createPlugin(t, testPluginID, "", plugins.Core, false, true,
 			func(plugin *plugins.Plugin) {
@@ -521,7 +523,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, nil, &fakeLoader{})
+	pm := New(&config.Cfg{}, nil, &fakeLoader{}, signature.NewValidator(&fakeAuthorizer{}))
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -572,7 +574,7 @@ type managerScenarioCtx struct {
 
 func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
 	t.Helper()
-	cfg := &plugins.Cfg{}
+	cfg := &config.Cfg{}
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
 
@@ -583,7 +585,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	loader := &fakeLoader{}
-	manager := New(cfg, nil, loader)
+	manager := New(cfg, nil, loader, signature.NewValidator(&fakeAuthorizer{}))
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -622,12 +624,8 @@ func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (
 }
 
 type fakeLoader struct {
-	mockedLoadedPlugins       []*plugins.Plugin
-	mockedFactoryLoadedPlugin *plugins.Plugin
-
-	loadedPaths []string
-
-	plugins.Loader
+	mockedLoadedPlugins []*plugins.Plugin
+	loadedPaths         []string
 }
 
 func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
@@ -636,10 +634,8 @@ func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ 
 	return l.mockedLoadedPlugins, nil
 }
 
-func (l *fakeLoader) LoadWithFactory(_ context.Context, _ plugins.Class, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	l.loadedPaths = append(l.loadedPaths, path)
-
-	return l.mockedFactoryLoadedPlugin, nil
+func (l *fakeLoader) Errors(_ context.Context) []plugins.Error {
+	return []plugins.Error{}
 }
 
 type fakePluginClient struct {
@@ -766,4 +762,10 @@ func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 	s.resp = crr
 
 	return nil
+}
+
+type fakeAuthorizer struct{}
+
+func (_ *fakeAuthorizer) CanLoadPlugin(signature.Details) bool {
+	return true
 }

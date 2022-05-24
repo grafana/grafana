@@ -1,26 +1,26 @@
 package signature
 
 import (
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewUnsignedAuthorizer(cfg *plugins.Cfg) *UnsignedPluginAuthorizer {
+func UnsignedAuthorizer(cfg *config.Cfg) *UnsignedPluginAuthorizer {
 	return &UnsignedPluginAuthorizer{
 		cfg: cfg,
 	}
 }
 
 func ProvideOSSAuthorizer(cfg *setting.Cfg) *UnsignedPluginAuthorizer {
-	return NewUnsignedAuthorizer(plugins.FromGrafanaCfg(cfg))
+	return UnsignedAuthorizer(config.FromGrafanaCfg(cfg))
 }
 
 type UnsignedPluginAuthorizer struct {
-	cfg *plugins.Cfg
+	cfg *config.Cfg
 }
 
-func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
-	if p.Signature != plugins.SignatureUnsigned {
+func (u *UnsignedPluginAuthorizer) CanLoadPlugin(details Details) bool {
+	if details.SignatureStatus != Unsigned {
 		return true
 	}
 
@@ -29,7 +29,7 @@ func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
 	}
 
 	for _, pID := range u.cfg.PluginsAllowUnsigned {
-		if pID == p.ID {
+		if pID == details.PluginID {
 			return true
 		}
 	}
