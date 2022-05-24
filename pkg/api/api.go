@@ -387,8 +387,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboard))
-					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboard))
+					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboardConfig))
+					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboardConfig))
 				}
 
 				if hs.ThumbService != nil {
@@ -608,7 +608,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Public API
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Post("/api/public/dashboards/:publicUid/panels/", routing.Wrap(hs.GetPublicDashboard))
+		r.Post("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
 	}
 
 	// Frontend logs
