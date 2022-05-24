@@ -55,7 +55,6 @@ type GetTeamMembersQuery struct {
 	TeamId           int64
 	UserId           int64
 	External         bool
-	IsServiceAccount bool
 	SignedInUser     *SignedInUser
 	Result           []*TeamMemberDTO
 }
