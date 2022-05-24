@@ -190,32 +190,26 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
-		providerID := secrets.ProviderID("fakeProvider.v1")
-		settings := &setting.OSSImpl{
-			Cfg: &setting.Cfg{
-				Raw:                    raw,
-				IsFeatureToggleEnabled: features.IsEnabled,
-			},
-		}
-		encr := ossencryption.ProvideService()
-		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings, features))
+		encryptionService := ossencryption.ProvideService()
+		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+		features := featuremgmt.WithFeatures()
+		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 
-		svcEncrypt, err := ProvideSecretsService(
+		secretsService, err := ProvideSecretsService(
 			secretStore,
 			&kms,
-			encr,
+			encryptionService,
 			settings,
 			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
-		assert.Equal(t, providerID, svcEncrypt.currentProviderID)
-		assert.Equal(t, 2, len(svcEncrypt.GetProviders()))
+		assert.Equal(t, secrets.ProviderID("fakeProvider.v1"), secretsService.currentProviderID)
+		assert.Equal(t, 2, len(secretsService.GetProviders()))
 
-		encrypted, _ := svcEncrypt.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
+		encrypted, _ := secretsService.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
 		assert.True(t, kms.fake.encryptCalled)
 
 		// secret service tries to find a DEK in a cache first before calling provider's decrypt
@@ -223,7 +217,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		svcDecrypt, err := ProvideSecretsService(
 			secretStore,
 			&kms,
-			encr,
+			encryptionService,
 			settings,
 			features,
 			&usagestats.UsageStatsMock{T: t},
