@@ -94,7 +94,7 @@ Unified alerting now provides the ability to capture an image for Grafana manage
 
 Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external Key Management Service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [docs](https://grafana.com/docs/grafana/next/administration/database-encryption/#envelope-encryption).
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="/sstatic/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="1025px" caption="Envelope encryption" >}}
 
 ## Dashboard previews (opt-in beta)
 
@@ -112,7 +112,7 @@ In addition to searching dashboards by title, you can now search panels as well.
 
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations. This is the first improvement to Grafana’s navigation, with more to come in future releases.
 
-{{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="1025px" caption="Heatmap panel with time series" >}}
+{{< figure src="static/img/docs/expanding-nav-bar-9-0.png" max-width="750px" caption="Expanding nav bar" >}}
 
 ## Starred dashboards in the navigation bar
 
@@ -124,7 +124,7 @@ As part of the upcoming improvements to Grafana’s navigation, you can now dire
 
 It is now possible to create panels and/or dashboards directly from Explore. When clicking on the “Add to dashboard” button in the Explore toolbar users can now create a panel in a new dashboard or in an existing one. The generated panel contains all the pane’s queries and a default visualization automatically picked from the current results shown in Explore. Dashboards are not automatically saved so that users can go through the current save flow. Optionally, dashboards can be opened in a new tab to preserve Explore’s state.
 
-{{< figure src="/static/img/docs/dashboards/errors-with-trace-ids.png" max-width="500px" caption="Starred dashboards" >}}
+{{< figure src="/static/img/docs/dashboards/explore-to-dashboard-9-0.png" max-width="500px" caption="Explore to dashboard" >}}
 
 ## Command palette
 
@@ -137,7 +137,7 @@ In order to support debugging issues in Grafana, error alerts that appear in Gra
 - `tracing` - enables the tracing id in error messages
 - `persistNotifications` - enables the alerts page under Profile
 
-{{< figure src="/static/img/docs/dashboards/errors-with-trace-ids.png" max-width="500px" caption="Starred dashboards" >}}
+{{< figure src="/static/img/docs/dashboards/errors-with-trace-ids.png" max-width="500px" caption="Errors with trace IDs" >}}
 
 ## Query History migration
 
