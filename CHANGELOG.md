@@ -1,3 +1,12 @@
+<!-- 8.5.3 START -->
+
+# 8.5.3
+
+### Bug fixes
+
+- **Security:** fixes CVE-2022-29170. [#49240](https://github.com/grafana/grafana/pull/49240), [@xlson](https://github.com/xlson)
+
+<!-- 8.5.3 END -->
 <!-- 8.5.2 START -->
 
 # 8.5.2 (2022-05-03)
