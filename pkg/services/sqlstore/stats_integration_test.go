@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationIntegration_GetAdminStats(t *testing.T) {
+func TestIntegration_GetAdminStats(t *testing.T) {
 	sqlStore := InitTestDB(t)
 
 	query := models.GetAdminStatsQuery{}
