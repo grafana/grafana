@@ -9,8 +9,7 @@
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false,
     "incremental": true,
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
-    "types": ["cypress"]
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
