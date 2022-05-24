@@ -16,9 +16,18 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { changeAliasPattern, changeQuery } from './state';
 
-export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
+export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions> & {
+  showQueryOnly?: boolean;
+};
 
-export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
+export const QueryEditor = ({
+  query,
+  onChange,
+  onRunQuery,
+  datasource,
+  range,
+  showQueryOnly,
+}: ElasticQueryEditorProps) => {
   if (!isSupportedVersion(datasource.esVersion)) {
     return (
       <Alert
@@ -34,7 +43,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
       query={query}
       range={range || getDefaultTimeRange()}
     >
-      <QueryEditorForm value={query} />
+      <QueryEditorForm value={query} showQueryOnly={showQueryOnly || false} />
     </ElasticsearchProvider>
   );
 };
@@ -51,9 +60,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 interface Props {
   value: ElasticsearchQuery;
+  showQueryOnly: boolean;
 }
 
-const QueryEditorForm = ({ value }: Props) => {
+const QueryEditorForm = ({ value, showQueryOnly }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
   const styles = useStyles2(getStyles);
@@ -65,38 +75,49 @@ const QueryEditorForm = ({ value }: Props) => {
     (metric) => !metricAggregationConfig[metric.type].isSingleMetric
   );
 
+  const queryField = (
+    <div className={styles.queryFieldWrapper}>
+      <QueryField
+        query={value.query}
+        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+        // And slate will claim the focus, making it impossible to leave the field.
+        onBlur={() => {}}
+        onChange={(query) => dispatch(changeQuery(query))}
+        placeholder="Lucene Query"
+        portalOrigin="elasticsearch"
+      />
+    </div>
+  );
+
   return (
     <>
-      <div className={styles.root}>
-        <InlineLabel width={17}>Query</InlineLabel>
-        <div className={styles.queryFieldWrapper}>
-          <QueryField
-            query={value.query}
-            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-            // And slate will claim the focus, making it impossible to leave the field.
-            onBlur={() => {}}
-            onChange={(query) => dispatch(changeQuery(query))}
-            placeholder="Lucene Query"
-            portalOrigin="elasticsearch"
-          />
-        </div>
-        <InlineField
-          label="Alias"
-          labelWidth={15}
-          disabled={!isTimeSeriesQuery}
-          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
-        >
-          <Input
-            id={`ES-query-${value.refId}_alias`}
-            placeholder="Alias Pattern"
-            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
-            defaultValue={value.alias}
-          />
-        </InlineField>
-      </div>
+      {showQueryOnly && <>{queryField}</>}
 
-      <MetricAggregationsEditor nextId={nextId} />
-      {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
+      {!showQueryOnly && (
+        <>
+          <div className={styles.root}>
+            <InlineLabel width={17}>Query</InlineLabel>
+            {queryField}
+
+            <InlineField
+              label="Alias"
+              labelWidth={15}
+              disabled={!isTimeSeriesQuery}
+              tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+            >
+              <Input
+                id={`ES-query-${value.refId}_alias`}
+                placeholder="Alias Pattern"
+                onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+                defaultValue={value.alias}
+              />
+            </InlineField>
+          </div>
+
+          <MetricAggregationsEditor nextId={nextId} />
+          {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
+        </>
+      )}
     </>
   );
 };
