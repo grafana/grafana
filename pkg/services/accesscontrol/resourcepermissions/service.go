@@ -50,7 +50,6 @@ func New(
 	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
 	ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore,
 ) (*Service, error) {
-
 	var permissions []string
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
