@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, PanelContainer } from '@grafana/ui';
 
 export const NoData = () => {
   const css = useStyles2(getStyles);
   return (
     <>
-      <div data-testid="explore-no-data" className={cx([css.wrapper, 'panel-container'])}>
+      <PanelContainer data-testid="explore-no-data" className={cx([css.wrapper])}>
         <span className={cx([css.message])}>{'No data'}</span>
-      </div>
+      </PanelContainer>
     </>
   );
 };
