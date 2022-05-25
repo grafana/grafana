@@ -61,7 +61,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
-                {!getConfig().isPublicDashboardView && (
+                {!getConfig().isPublicDashboardView ? (
                   <div data-testid="panel-dropdown">
                     <Icon name="angle-down" className="panel-menu-toggle" />
                     <PanelHeaderMenuWrapper
@@ -76,6 +76,13 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                       </span>
                     )}
                   </div>
+                ) : (
+                  data.request &&
+                  data.request.timeInfo && (
+                    <span className="panel-time-info">
+                      <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+                    </span>
+                  )
                 )}
               </div>
             );
