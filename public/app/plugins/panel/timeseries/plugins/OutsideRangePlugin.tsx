@@ -1,16 +1,15 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import uPlot from 'uplot';
 
-import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange } from '@grafana/data';
 import { UPlotConfigBuilder, Button } from '@grafana/ui';
 
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
-  range: TimeRange;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ config, range, onChangeTimeRange }) => {
+export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ config, onChangeTimeRange }) => {
   const plotInstance = useRef<uPlot>();
 
   useLayoutEffect(() => {
@@ -24,11 +23,16 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
     return null;
   }
 
+  const scale = plotInstance.current.scales['x'];
+  if (!scale || !scale.time || !scale.min || !scale.max!) {
+    return null;
+  }
+
   // Time values are always sorted for uPlot to work
   const first = timevalues[0];
   const last = timevalues[timevalues.length - 1];
-  const fromX = range.from.valueOf();
-  const toX = range.to.valueOf();
+  const fromX = scale.min;
+  const toX = scale.max;
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= toX && last >= fromX) {
