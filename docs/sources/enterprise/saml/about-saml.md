@@ -20,7 +20,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}). If you experience any issues with our implementation, contact our [Technical Support team](https://grafana.com/contact?plcmt=top-nav&cta=contactus).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 ## Supported SAML
 

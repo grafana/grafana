@@ -46,7 +46,7 @@ With [enhanced LDAP integration]({{< relref "enhanced_ldap.md" >}}), you can set
 
 ## Enterprise features
 
-Grafana Enterprise adds the following features to on-premises installations:
+Grafana Enterprise adds the following features:
 
 - [Role-based access control]({{< relref "./access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
@@ -62,7 +62,7 @@ Grafana Enterprise adds the following features to on-premises installations:
 
 ## Enterprise data sources
 
-With a Grafana Enterprise license, you also get access to premium data sources in on-premises installations, including:
+With a Grafana Enterprise license, you also get access to premium data sources, including:
 
 - [AppDynamics](https://grafana.com/grafana/plugins/dlopes7-appdynamics-datasource)
 - [Azure Devops](https://grafana.com/grafana/plugins/grafana-azuredevops-datasource)
