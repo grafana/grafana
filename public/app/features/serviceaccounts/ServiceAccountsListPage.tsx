@@ -50,6 +50,7 @@ const ServiceAccountsListPageUnconnected = ({
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
 
@@ -91,8 +92,16 @@ const ServiceAccountsListPageUnconnected = ({
     onRemoveModalClose();
   };
 
-  const onDisable = (serviceAccount: ServiceAccountDTO) => {
-    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: true }));
+  const onDisableButtonClick = (serviceAccount: ServiceAccountDTO) => {
+    setCurrentServiceAccount(serviceAccount);
+    setIsDisableModalOpen(true);
+  };
+
+  const onDisable = () => {
+    if (currentServiceAccount) {
+      dispatch(updateServiceAccount({ ...currentServiceAccount, isDisabled: true }));
+    }
+    onDisableModalClose();
   };
 
   const onEnable = (serviceAccount: ServiceAccountDTO) => {
@@ -118,6 +127,11 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onRemoveModalClose = () => {
     setIsRemoveModalOpen(false);
+    setCurrentServiceAccount(null);
+  };
+
+  const onDisableModalClose = () => {
+    setIsDisableModalOpen(false);
     setCurrentServiceAccount(null);
   };
 
@@ -207,7 +221,7 @@ const ServiceAccountsListPageUnconnected = ({
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
                       onRemoveButtonClick={onRemoveButtonClick}
-                      onDisable={onDisable}
+                      onDisable={onDisableButtonClick}
                       onEnable={onEnable}
                       onAddTokenClick={onTokenAdd}
                     />
@@ -217,31 +231,38 @@ const ServiceAccountsListPageUnconnected = ({
           </div>
         </>
         {currentServiceAccount && (
-          <ConfirmModal
-            body={
-              <div>
-                Are you sure you want to delete &apos;{currentServiceAccount.name}&apos;
-                {Boolean(currentServiceAccount.tokens) &&
-                  ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
-                    'token',
-                    currentServiceAccount.tokens
-                  )}`}
-                ?
-              </div>
-            }
-            confirmText="Delete"
-            title="Delete service account"
-            onDismiss={onRemoveModalClose}
-            isOpen={isRemoveModalOpen}
-            onConfirm={onServiceAccountRemove}
-          />
+          <>
+            <ConfirmModal
+              isOpen={isRemoveModalOpen}
+              body={`Are you sure you want to delete '${currentServiceAccount.name}'${
+                !!currentServiceAccount.tokens
+                  ? ' and ' +
+                    currentServiceAccount.tokens +
+                    ' accompanying ' +
+                    pluralize('token', currentServiceAccount.tokens)
+                  : ''
+              }?`}
+              confirmText="Delete"
+              title="Delete service account"
+              onConfirm={onServiceAccountRemove}
+              onDismiss={onRemoveModalClose}
+            />
+            <ConfirmModal
+              isOpen={isDisableModalOpen}
+              title="Disable service account"
+              body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
+              confirmText="Disable service account"
+              onConfirm={onDisable}
+              onDismiss={onDisableModalClose}
+            />
+            <CreateTokenModal
+              isOpen={isAddModalOpen}
+              token={newToken}
+              onCreateToken={onTokenCreate}
+              onClose={onAddModalClose}
+            />
+          </>
         )}
-        <CreateTokenModal
-          isOpen={isAddModalOpen}
-          token={newToken}
-          onCreateToken={onTokenCreate}
-          onClose={onAddModalClose}
-        />
       </Page.Contents>
     </Page>
   );
