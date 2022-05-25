@@ -301,7 +301,7 @@ function makeTypeColumn(
                     txt = 'Row';
                     icon = `public/img/icons/unicons/bars.svg`;
                     break;
-                  case 'singlestat': // auto-migratino
+                  case 'singlestat': // auto-migration
                     txt = 'Singlestat';
                     icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
                     break;
