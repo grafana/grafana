@@ -513,13 +513,13 @@ def test_backend_step(edition):
 def test_new_backend_integration_step(edition):
     if edition == 'oss':
         return {
-            'name': 'test_new_backend_integration',
+            'name': 'test-new-backend-integration',
             'image': build_image,
             'depends_on': [
                 'wire-install',
             ],
             'commands': [
-                'go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...',
+                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
     else:

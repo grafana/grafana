@@ -1,16 +1,14 @@
-//go:build integration
-// +build integration
-
 package permissions
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 
