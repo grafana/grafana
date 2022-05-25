@@ -44,6 +44,9 @@ type NotificationPolicyService interface {
 
 type MuteTimingService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]apimodels.MuteTimeInterval, error)
+	CreateMuteTiming(ctx context.Context, mt apimodels.MuteTimeInterval, orgID int64) (*apimodels.MuteTimeInterval, error)
+	UpdateMuteTiming(ctx context.Context, mt apimodels.MuteTimeInterval, orgID int64) (*apimodels.MuteTimeInterval, error)
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -182,13 +185,37 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.R
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
-	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.OrgId)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusCreated, created)
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
-	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+	name := web.Params(c.Req)[":name"]
+	mt.Name = name
+	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgId)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	if updated == nil {
+		return response.Empty(http.StatusNotFound)
+	}
+	return response.JSON(http.StatusAccepted, updated)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response.Response {
-	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+	name := web.Params(c.Req)[":name"]
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusNoContent, nil)
 }
