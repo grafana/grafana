@@ -75,6 +75,7 @@ func New(
 		cfg:         cfg,
 		store:       store,
 		options:     options,
+		license:     license,
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
