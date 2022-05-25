@@ -25,15 +25,25 @@ func TestDashboardVersionService(t *testing.T) {
 	})
 }
 
-type FakeDashboardVersionStroe struct {
+type FakeDashboardVersionStore struct {
 	ExpectedDashboardVersion *dashver.DashboardVersion
+	ExptectedDeletedVersions int64
+	ExpectedVersions         []interface{}
 	ExpectedError            error
 }
 
-func newDashboardVersionStoreFake() *FakeDashboardVersionStroe {
-	return &FakeDashboardVersionStroe{}
+func newDashboardVersionStoreFake() *FakeDashboardVersionStore {
+	return &FakeDashboardVersionStore{}
 }
 
-func (f *FakeDashboardVersionStroe) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
+func (f *FakeDashboardVersionStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
 	return f.ExpectedDashboardVersion, f.ExpectedError
+}
+
+func (f *FakeDashboardVersionStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
+	return f.ExpectedVersions, f.ExpectedError
+}
+
+func (f *FakeDashboardVersionStore) Delete(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
+	return f.ExptectedDeletedVersions, f.ExpectedError
 }
