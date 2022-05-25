@@ -2,6 +2,8 @@ package promclient
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
@@ -9,6 +11,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
 var (
@@ -27,15 +30,21 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 
 	credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
 	if err != nil {
-		err = fmt.Errorf("invalid Azure credentials: %s", err)
+		err = fmt.Errorf("invalid Azure credentials: %w", err)
 		return err
 	}
 
 	if credentials != nil {
-		// If credentials configured then resolve the scopes which are relevant to the given credentials
-		scopes, err := getAzureScopes(p.cfg.Azure, credentials)
-		if err != nil {
+		var scopes []string
+
+		if scopes, err = GetOverriddenScopes(p.jsonData); err != nil {
 			return err
+		}
+
+		if scopes == nil {
+			if scopes, err = GetPrometheusScopes(p.cfg.Azure, credentials); err != nil {
+				return err
+			}
 		}
 
 		azhttpclient.AddAzureAuthentication(opts, p.cfg.Azure, credentials, scopes)
@@ -44,7 +53,27 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 	return nil
 }
 
-func getAzureScopes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) ([]string, error) {
+func GetOverriddenScopes(jsonData map[string]interface{}) ([]string, error) {
+	resourceIdStr, err := maputil.GetStringOptional(jsonData, "azureEndpointResourceId")
+	if err != nil {
+		err = fmt.Errorf("overridden resource ID (audience) invalid")
+		return nil, err
+	} else if resourceIdStr == "" {
+		return nil, nil
+	}
+
+	resourceId, err := url.Parse(resourceIdStr)
+	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+		err = fmt.Errorf("overridden endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+		return nil, err
+	}
+
+	resourceId.Path = path.Join(resourceId.Path, ".default")
+	scopes := []string{resourceId.String()}
+	return scopes, nil
+}
+
+func GetPrometheusScopes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) ([]string, error) {
 	// Extract cloud from credentials
 	azureCloud, err := getAzureCloudFromCredentials(settings, credentials)
 	if err != nil {
