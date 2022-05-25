@@ -44,13 +44,13 @@ var (
 // associated with the alert, then calls forEachFunc with the index of the
 // alert and the retrieved image struct. If there is no image token, or the
 // image does not exist, forEachFunc will be called with a nil value for the
-// image. If forEachFunc returns an error, forEachStoredImage will return
+// image. If forEachFunc returns an error, withStoredImages will return
 // immediately. If there is a runtime error retrieving images from the image
-// store, forEachStoredImage will attempt to continue executing, after logging
+// store, withStoredImages will attempt to continue executing, after logging
 // a warning.
-func forEachStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc func(index int, image *models.Image) error, alerts ...*types.Alert) error {
+func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc func(index int, image *models.Image) error, alerts ...*types.Alert) error {
 	for i := range alerts {
-		err := forOneStoredImage(ctx, l, imageStore, forEachFunc, i, alerts...)
+		err := withStoredImage(ctx, l, imageStore, forEachFunc, i, alerts...)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func forEachStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore
 	return nil
 }
 
-func forOneStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, imageFunc func(index int, image *models.Image) error, index int, alerts ...*types.Alert) error {
+func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, imageFunc func(index int, image *models.Image) error, index int, alerts ...*types.Alert) error {
 	imgToken := getTokenFromAnnotations(alerts[index].Annotations)
 	if len(imgToken) == 0 {
 		err := imageFunc(index, nil)
