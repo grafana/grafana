@@ -146,8 +146,8 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 	})
 }
 
-// UpdateAuthInfo updates the auth info for the user with the latest date. Avoids overlapping entries hiding
-// the last used one (ex: LDAP->SAML->LDAP)
+// UpdateAuthInfoDate updates the auth info for the user with the latest date.
+// Avoids overlapping entries hiding the last used one (ex: LDAP->SAML->LDAP).
 func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error {
 	authInfo.Created = GetTime()
 
