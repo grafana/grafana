@@ -33,8 +33,8 @@ export const ServiceAccountRoleRow = ({
       <td className={styles.label}>
         <label htmlFor={inputId}>{label}</label>
       </td>
-      <td className="width-25" colSpan={2}>
-        {contextSrv.licensedAccessControlEnabled() ? (
+      {contextSrv.licensedAccessControlEnabled() ? (
+        <td className="width-25" colSpan={3}>
           <UserRolePicker
             userId={serviceAccount.id}
             orgId={serviceAccount.orgId}
@@ -44,17 +44,21 @@ export const ServiceAccountRoleRow = ({
             builtInRoles={builtInRoles}
             disabled={rolePickerDisabled}
           />
-        ) : (
-          <OrgRolePicker
-            aria-label="Role"
-            value={serviceAccount.role}
-            disabled={rolePickerDisabled}
-            onChange={onRoleChange}
-            // TODO: check if we actually need it since <UserRolePicker /> cannot be activated with htmlFor
-            inputId={inputId}
-          />
-        )}
-      </td>
+        </td>
+      ) : (
+        <>
+          <td className="width-16">
+            <OrgRolePicker
+              inputId={inputId}
+              aria-label="Role"
+              value={serviceAccount.role}
+              disabled={rolePickerDisabled}
+              onChange={onRoleChange}
+            />
+          </td>
+          <td colSpan={2}></td>
+        </>
+      )}
     </tr>
   );
 };
