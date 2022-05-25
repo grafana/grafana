@@ -16,8 +16,8 @@ You can configure Grafana managed silences as well as silences for an [external 
 
 See also:
 
-- [About label matching for alert suppression]({{< relref "./label-matching-alert-suppression.md" >}})
-- [Create a silence]({{< relref "./create-silence.md" >}})
-- [Create a URL to link to a silence form]({{< relref "./linking-to-silence-form.md" >}})
-- [Edit silences]({{< relref "./edit-silence.md" >}})
-- [Remove a silences]({{< relref "./remove-silence.md" >}})
+- [About label matching for alert suppression]({{< relref "label-matching-alert-suppression.md" >}})
+- [Create a silence]({{< relref "create-silence.md" >}})
+- [Create a URL to link to a silence form]({{< relref "linking-to-silence-form.md" >}})
+- [Edit silences]({{< relref "edit-silence.md" >}})
+- [Remove a silences]({{< relref "remove-silence.md" >}})

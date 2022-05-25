@@ -30,7 +30,7 @@ Supported auth providers:
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "configure-saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -38,13 +38,13 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "./saml" >}}) enables your Grafana Enterprise users to authenticate with SAML.
+[SAML authentication]({{< relref "configure-saml/" >}}) enables your Grafana Enterprise users to authenticate with SAML.
 
 ## Enterprise features
 
 With Grafana Enterprise, you get access to the following features:
 
-- [Role-based access control]({{< relref "./access-control/_index.md" >}}) to control access with role-based permissions.
+- [Role-based access control]({{< relref "access-control/_index.md" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
