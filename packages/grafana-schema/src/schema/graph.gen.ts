@@ -221,17 +221,6 @@ export enum BigValueTextMode {
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
 
-export enum GaugeDisplayMode {
-  Basic = 'basic',
-  Gradient = 'gradient',
-  RetroLCD = 'lcd',
-}
-
-export enum BackgroundDisplayMode {
-  Basic = 'basic',
-  Gradient = 'gradient',
-}
-
 export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorBackground = 'color-background',
@@ -288,9 +277,15 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
 }
 
+export enum BackgroundDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
+}
+
 export interface TableCellOptions {
   displayMode: TableCellDisplayMode;
-  subDisplayMode?: GaugeDisplayMode | BackgroundDisplayMode;
+  barGaugeDisplayMode?: BarGaugeDisplayMode;
+  backgroundDisplayMode?: BackgroundDisplayMode;
 }
 
 export interface TableFieldOptions {

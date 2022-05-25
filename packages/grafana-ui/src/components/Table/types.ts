@@ -6,7 +6,13 @@ import { Field, KeyValue, SelectableValue } from '@grafana/data';
 
 import { TableStyles } from './styles';
 
-export { TableFieldOptions, TableCellDisplayMode, FieldTextAlignment, GaugeDisplayMode } from '@grafana/schema';
+export {
+  TableFieldOptions,
+  TableCellDisplayMode,
+  FieldTextAlignment,
+  BarGaugeDisplayMode,
+  BackgroundDisplayMode,
+} from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
