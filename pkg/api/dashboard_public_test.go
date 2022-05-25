@@ -61,9 +61,11 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			},
 			publicDashboardErr:nil,
 		},
-		//{
-			//name: "It should return 404 if isPublicDashboard is false",
-		//},
+		{
+			name: "It should return 404 if isPublicDashboard is false",
+			uid: "pubdash-abcd1234",
+			expectedHttpResponse:http.
+		},
 	}
 
 	for _, test := range testCases {

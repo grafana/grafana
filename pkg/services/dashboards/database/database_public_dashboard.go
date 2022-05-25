@@ -32,7 +32,7 @@ func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard
 	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
 	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		has, err := sess.Get(dashRes)
-		if !has {
+		if !has || !dashRes.IsPublic {
 			return models.ErrPublicDashboardNotFound
 		}
 		if err != nil {
