@@ -28,7 +28,7 @@ To disable Grafana alerts and roll back to legacy dashboard alerting:
 
 ## Enable Grafana alerting
 
-When you are ready to make the switch, tThe following procedure will help you migrate to Grafana alerting.
+When you are ready to make the switch, the following procedure will help you migrate to Grafana alerting.
 
 To enable Grafana alerts:
 
