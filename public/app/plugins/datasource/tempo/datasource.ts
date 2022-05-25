@@ -666,7 +666,8 @@ function buildExpr(metric: any, extraParams: any, request: any) {
 }
 
 function buildLinkExp(metric: any) {
-  return metric.expr.replace('{}', '{' + metric.params.concat('span_name="${__data.fields[0]}"}').join(','));
+  const expr = metric.expr.replace('__range', '__rate_interval').replace(' @ end()', '');
+  return expr.replace('{}', '{' + metric.params.concat('span_name="${__data.fields[0]}"}').join(','));
 }
 
 // query result frames can come back in any order
