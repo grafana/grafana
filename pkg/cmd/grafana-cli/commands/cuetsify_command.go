@@ -40,7 +40,6 @@ var importMap = map[string]string{
 var skipPaths = []string{
 	"public/app/plugins/panel/barchart/models.cue",
 	"public/app/plugins/panel/canvas/models.cue",
-	"public/app/plugins/panel/gauge/models.cue",
 	"public/app/plugins/panel/histogram/models.cue",
 	"public/app/plugins/panel/heatmap-new/models.cue",
 	"public/app/plugins/panel/stat/models.cue",
