@@ -278,7 +278,7 @@ func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []by
 	for _, a := range attachments {
 		if a.reader != nil { // We have an image to upload.
 			err = func() error {
-				defer a.reader.Close()
+				defer func() { _ = a.reader.Close() }()
 				part, err := w.CreateFormFile("", a.name)
 				if err != nil {
 					return err
