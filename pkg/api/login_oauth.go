@@ -138,8 +138,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 			opts = append(opts, oauth2.SetAuthURLParam("hd", provider.HostedDomain))
 		}
 
-		ctx.Redirect(connect.AuthCodeURL(state, opts...))
-		return nil
+		return response.Redirect(connect.AuthCodeURL(state, opts...))
 	}
 
 	cookieState := ctx.GetCookie(OauthStateCookieName)
@@ -254,14 +253,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	if redirectTo, err := url.QueryUnescape(ctx.GetCookie("redirect_to")); err == nil && len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			ctx.Redirect(redirectTo)
-			return nil
+
+			return response.Redirect(redirectTo)
 		}
 		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 	}
 
-	ctx.Redirect(setting.AppSubUrl + "/")
-	return nil
+	return response.Redirect(setting.AppSubUrl + "/")
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
