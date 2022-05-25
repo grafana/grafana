@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, Field, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -43,14 +43,6 @@ export class BlugeSearcher implements GrafanaSearcher {
     return [];
   }
 
-  // Enterprise only sort field values for dashboards
-  sortFields = [
-    { name: 'views_total', display: 'Views total' },
-    { name: 'views_last_30_days', display: 'Views 30 days' },
-    { name: 'errors_total', display: 'Errors total' },
-    { name: 'errors_last_30_days', display: 'Errors 30 days' },
-  ];
-
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
@@ -59,7 +51,7 @@ export class BlugeSearcher implements GrafanaSearcher {
     ];
 
     if (config.licenseInfo.enabledFeatures.analytics) {
-      for (const sf of this.sortFields) {
+      for (const sf of sortFields) {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
@@ -101,6 +93,13 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
         max_score: 1,
       },
     };
+  }
+
+  // Set the field name to a better display name
+  if (first.meta.custom!.sortBy?.length) {
+    const name = first.meta.custom!.sortBy;
+    const field = first.fields[name] as Field;
+    field.name = getSortFieldDisplayName(name);
   }
 
   const meta = first.meta.custom as SearchResultMeta;
@@ -166,4 +165,22 @@ function getTermCountsFrom(frame: DataFrame): TermCount[] {
     counts.push({ term: keys.get(i), count: vals.get(i) });
   }
   return counts;
+}
+
+// Enterprise only sort field values for dashboards
+const sortFields = [
+  { name: 'views_total', display: 'Views total' },
+  { name: 'views_last_30_days', display: 'Views 30 days' },
+  { name: 'errors_total', display: 'Errors total' },
+  { name: 'errors_last_30_days', display: 'Errors 30 days' },
+];
+
+/** Given the internal field name, this gives a reasonable display name for the table colum header */
+function getSortFieldDisplayName(name: string) {
+  for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  return name;
 }

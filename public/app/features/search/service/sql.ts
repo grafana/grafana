@@ -34,6 +34,7 @@ export class SQLSearcher implements GrafanaSearcher {
     const q: APIQuery = {
       limit: 1000, // 1k max values
       tag: query.tags,
+      sort: query.sort,
     };
 
     if (query.query === '*') {
@@ -52,7 +53,27 @@ export class SQLSearcher implements GrafanaSearcher {
 
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
-    return backendSrv.get('/api/search/sorting');
+    // {
+    //   "sortOptions": [
+    //     {
+    //       "description": "Sort results in an alphabetically ascending order",
+    //       "displayName": "Alphabetically (A–Z)",
+    //       "meta": "",
+    //       "name": "alpha-asc"
+    //     },
+    //     {
+    //       "description": "Sort results in an alphabetically descending order",
+    //       "displayName": "Alphabetically (Z–A)",
+    //       "meta": "",
+    //       "name": "alpha-desc"
+    //     }
+    //   ]
+    // }
+    const opts = await backendSrv.get('/api/search/sorting');
+    return opts.sortOptions.map((v: any) => ({
+      value: v.name,
+      label: v.displayName,
+    }));
   }
 
   // NOTE: the bluge query will find tags within the current results, the SQL based one does not
@@ -113,7 +134,7 @@ export class SQLSearcher implements GrafanaSearcher {
     if (sortMetaName?.length) {
       data.meta!.custom!.sortBy = sortMetaName;
       data.fields.push({
-        name: sortMetaName,
+        name: sortMetaName, // Used in display
         type: FieldType.number,
         config: {},
         values: new ArrayVector(sortBy),

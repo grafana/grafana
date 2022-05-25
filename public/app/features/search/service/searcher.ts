@@ -6,7 +6,7 @@ let searcher: GrafanaSearcher | undefined = undefined;
 
 export function getGrafanaSearcher(): GrafanaSearcher {
   if (!searcher) {
-    searcher = false ? new SQLSearcher() : new BlugeSearcher();
+    searcher = false ? new BlugeSearcher() : new SQLSearcher();
   }
   return searcher!;
 }
