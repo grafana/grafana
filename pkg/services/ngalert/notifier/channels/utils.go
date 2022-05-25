@@ -112,18 +112,6 @@ func getTokenFromAnnotations(annotations model.LabelSet) string {
 
 type UnavailableImageStore struct{}
 
-func (u *UnavailableImageStore) GetURL(ctx context.Context, token string) (string, error) {
-	return "", ErrImagesUnavailable
-}
-
-func (u *UnavailableImageStore) GetFilepath(ctx context.Context, token string) (string, error) {
-	return "", ErrImagesUnavailable
-}
-
-func (u *UnavailableImageStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
-	return nil, ErrImagesUnavailable
-}
-
 // Get returns the image with the corresponding token, or ErrImageNotFound.
 func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
 	return nil, ErrImagesUnavailable

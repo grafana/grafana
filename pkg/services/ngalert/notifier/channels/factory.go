@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"errors"
-	"io"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,9 +21,6 @@ type FactoryConfig struct {
 
 type ImageStore interface {
 	GetImage(ctx context.Context, token string) (*models.Image, error)
-	GetURL(ctx context.Context, token string) (string, error)
-	GetFilepath(ctx context.Context, token string) (string, error)
-	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,

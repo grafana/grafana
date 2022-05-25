@@ -3,8 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -19,14 +17,6 @@ type ImageStore interface {
 
 	// Saves the image or returns an error.
 	SaveImage(ctx context.Context, img *models.Image) error
-
-	GetURL(ctx context.Context, token string) (string, error)
-
-	GetFilepath(ctx context.Context, token string) (string, error)
-
-	// Returns an io.ReadCloser that reads out the image data for the provided
-	// token, if available. May return ErrImageNotFound.
-	GetData(ctx context.Context, token string) (io.ReadCloser, error)
 }
 
 func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, error) {
@@ -72,43 +62,6 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 		}
 		return nil
 	})
-}
-
-func (st *DBstore) GetURL(ctx context.Context, token string) (string, error) {
-	img, err := st.GetImage(ctx, token)
-	if err != nil {
-		return "", err
-	}
-	return img.URL, nil
-}
-
-func (st *DBstore) GetFilepath(ctx context.Context, token string) (string, error) {
-	img, err := st.GetImage(ctx, token)
-	if err != nil {
-		return "", err
-	}
-	return img.Path, nil
-}
-
-func (st *DBstore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
-	// TODO: Should we support getting data from image.URL? One could configure
-	// the system to upload to S3 while still reading data for notifiers like
-	// Slack that take multipart uploads.
-	img, err := st.GetImage(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(img.Path) == 0 {
-		return nil, models.ErrImageNotFound
-	}
-
-	f, err := os.Open(img.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 //nolint:unused

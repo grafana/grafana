@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 	"testing"
@@ -25,20 +24,6 @@ func (f *FakeConfigStore) SaveImage(ctx context.Context, img *models.Image) erro
 }
 
 func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
-	return nil, models.ErrImageNotFound
-}
-
-func (f *FakeConfigStore) GetURL(ctx context.Context, token string) (string, error) {
-	return "", models.ErrImageNotFound
-}
-
-func (f *FakeConfigStore) GetFilepath(ctx context.Context, token string) (string, error) {
-	return "", models.ErrImageNotFound
-}
-
-// Returns an io.ReadCloser that reads out the image data for the provided
-// token, if available. May return ErrImageNotFound.
-func (f *FakeConfigStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
 	return nil, models.ErrImageNotFound
 }
 
