@@ -157,7 +157,7 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models
 		AuthModule: authInfo.AuthModule,
 	}
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Update(authInfo, cond)
+		_, err := sess.Cols("created").Update(authInfo, cond)
 		return err
 	})
 }
