@@ -181,7 +181,7 @@ export const generateColumns = (
         } catch {}
         return (
           <div {...p.cellProps} className={styles.sortedItems}>
-            {value}
+            {`${value}`}
           </div>
         );
       },

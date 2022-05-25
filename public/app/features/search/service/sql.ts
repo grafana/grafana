@@ -7,10 +7,10 @@ import { DashboardSearchHit } from '../types';
 
 import { LocationInfo } from './types';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 interface APIQuery {
-  title?: string;
+  query?: string;
   tag?: string[];
   limit?: number;
   page?: number;
@@ -53,7 +53,7 @@ export class SQLSearcher implements GrafanaSearcher {
         q.type = 'dash-folder';
       }
     } else if (query.query?.length) {
-      q.title = query.query;
+      q.query = query.query;
     }
 
     if (query.uid) {
@@ -121,8 +121,13 @@ export class SQLSearcher implements GrafanaSearcher {
       uid.push(hit.uid!);
       url.push(hit.url);
       tags.push(hit.tags);
-      location.push(hit.folderUid!);
       sortBy.push(hit.sortMeta!);
+
+      let v = hit.folderUid;
+      if (!v && k === 'dashboard') {
+        v = 'general';
+      }
+      location.push(v!);
 
       if (hit.sortMetaName?.length) {
         sortMetaName = hit.sortMetaName;
@@ -155,10 +160,17 @@ export class SQLSearcher implements GrafanaSearcher {
         { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(location) },
       ],
       length: name.length,
+      meta: {
+        custom: {
+          count: name.length,
+          max_score: 1,
+          locationInfo: this.locationInfo,
+        },
+      },
     };
 
     // Add enterprise sort fields as a field in the frame
-    if (sortMetaName?.length) {
+    if (sortMetaName?.length && sortBy.length) {
       data.meta!.custom!.sortBy = sortMetaName;
       data.fields.push({
         name: sortMetaName, // Used in display
@@ -172,21 +184,6 @@ export class SQLSearcher implements GrafanaSearcher {
       field.display = getDisplayProcessor({ field, theme: config.theme2 });
     }
 
-    // Make sure the object exists
-    if (!data.meta?.custom) {
-      data.meta = {
-        ...data.meta,
-        custom: {
-          count: data.length,
-          max_score: 1,
-        },
-      };
-    }
-
-    const meta = data.meta.custom as SearchResultMeta;
-    if (!meta.locationInfo) {
-      meta.locationInfo = this.locationInfo;
-    }
     const view = new DataFrameView<DashboardQueryResult>(data);
     return {
       totalRows: data.length,

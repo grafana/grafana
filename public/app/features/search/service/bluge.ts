@@ -95,17 +95,22 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     };
   }
 
-  // Set the field name to a better display name
-  if (first.meta.custom!.sortBy?.length) {
-    const name = first.meta.custom!.sortBy;
-    const field = first.fields[name] as Field;
-    field.name = getSortFieldDisplayName(name);
-  }
-
   const meta = first.meta.custom as SearchResultMeta;
   if (!meta.locationInfo) {
-    meta.locationInfo = {};
+    meta.locationInfo = {}; // always set it so we can append
   }
+
+  // Set the field name to a better display name
+  if (meta.sortBy?.length) {
+    const field = first.fields.find((f) => f.name === meta.sortBy);
+    if (field) {
+      const name = getSortFieldDisplayName(field.name);
+      meta.sortBy = name;
+      field.name = name; // make it look nicer
+      console.log('SORT FIELD', name, field);
+    }
+  }
+
   const view = new DataFrameView<DashboardQueryResult>(first);
   return {
     totalRows: meta.count ?? first.length,

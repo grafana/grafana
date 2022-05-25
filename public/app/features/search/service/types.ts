@@ -44,6 +44,7 @@ export interface SearchResultMeta {
   count: number;
   max_score: number;
   locationInfo: Record<string, LocationInfo>;
+  sortBy?: string;
 }
 
 export interface QueryResponse {
