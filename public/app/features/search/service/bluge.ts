@@ -107,7 +107,6 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
       const name = getSortFieldDisplayName(field.name);
       meta.sortBy = name;
       field.name = name; // make it look nicer
-      console.log('SORT FIELD', name, field);
     }
   }
 
