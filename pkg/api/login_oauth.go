@@ -76,20 +76,22 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	loginInfo.AuthModule = name
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {
+		pMsg := "OAuth not enabled"
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusNotFound,
-			PublicMessage: "OAuth not enabled",
+			PublicMessage: pMsg,
 		})
-		return nil
+		return response.Error(http.StatusNotFound, pMsg, errors.New(pMsg))
 	}
 
 	connect, err := hs.SocialService.GetConnector(name)
 	if err != nil {
+		pMsg := fmt.Sprintf("No OAuth with name %s configured", name)
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusNotFound,
-			PublicMessage: fmt.Sprintf("No OAuth with name %s configured", name),
+			PublicMessage: pMsg,
 		})
-		return nil
+		return response.Error(http.StatusNotFound, pMsg, err)
 	}
 
 	errorParam := ctx.Query("error")
@@ -97,7 +99,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
-		return nil
+		return response.Error(http.StatusInternalServerError, login.ErrProviderDeniedRequest.Error(), err)
 	}
 
 	code := ctx.Query("code")
@@ -125,11 +127,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		state, err := GenStateString()
 		if err != nil {
 			ctx.Logger.Error("Generating state string failed", "err", err)
+			pMsg := "An internal error occurred"
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: "An internal error occurred",
+				PublicMessage: pMsg,
 			})
-			return nil
+			return response.Error(http.StatusInternalServerError, pMsg, err)
 		}
 
 		hashedState := hs.hashStatecode(state, provider.ClientSecret)
@@ -147,31 +150,34 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 	if cookieState == "" {
+		pMsg := "login.OAuthLogin(missing saved state)"
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
-			PublicMessage: "login.OAuthLogin(missing saved state)",
+			PublicMessage: pMsg,
 		})
-		return nil
+		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 
 	queryState := hs.hashStatecode(ctx.Query("state"), provider.ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
+		pMsg := "login.OAuthLogin(state mismatch)"
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
-			PublicMessage: "login.OAuthLogin(state mismatch)",
+			PublicMessage: pMsg,
 		})
-		return nil
+		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 
 	oauthClient, err := hs.SocialService.GetOAuthHttpClient(name)
 	if err != nil {
 		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
+		pMsg := "login.OAuthLogin(" + err.Error() + ")"
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
-			PublicMessage: "login.OAuthLogin(" + err.Error() + ")",
+			PublicMessage: pMsg,
 		})
-		return nil
+		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
@@ -188,12 +194,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code, opts...)
 	if err != nil {
+		pMsg := "login.OAuthLogin(NewTransportWithCode)"
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
-			PublicMessage: "login.OAuthLogin(NewTransportWithCode)",
+			PublicMessage: pMsg,
 			Err:           err,
 		})
-		return nil
+		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
@@ -207,16 +214,19 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		var sErr *social.Error
+		var pMsg string
 		if errors.As(err, &sErr) {
+			pMsg = err.Error()
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
+			pMsg = fmt.Sprintf("login.OAuthLogin(get info from %s)", name)
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+				PublicMessage: pMsg,
 				Err:           err,
 			})
 		}
-		return nil
+		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 
 	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
@@ -224,26 +234,26 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrNoEmail)
-		return nil
+		return response.Error(http.StatusInternalServerError, login.ErrNoEmail.Error(), err)
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrEmailNotAllowed)
-		return nil
+		return response.Error(http.StatusInternalServerError, login.ErrEmailNotAllowed.Error(), err)
 	}
 
 	loginInfo.ExternalUser = *hs.buildExternalUserInfo(token, userInfo, name)
 	loginInfo.User, err = hs.SyncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return nil
+		return response.Error(http.StatusInternalServerError, err.Error(), err)
 	}
 
 	// login
 	if err := hs.loginUserWithUser(loginInfo.User, ctx); err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return nil
+		return response.Error(http.StatusInternalServerError, err.Error(), err)
 	}
 
 	loginInfo.HTTPStatus = http.StatusOK
