@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo } from 'react';
+import React, { FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrameJSON, SelectableValue } from '@grafana/data';
@@ -26,6 +26,7 @@ interface SimInfo {
 export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? ({} as typeof simQuery.key);
+  const [cfgValue, setCfgValue] = useState<Record<string, any>>({});
 
   // This only changes once
   const info = useAsync(async () => {
@@ -52,7 +53,9 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    return (await ds.getResource('sim/' + path))?.config;
+    let config = (await ds.getResource('sim/' + path))?.config;
+    setCfgValue(config.value);
+    return config;
   }, [simKey.type, simKey.tick, simKey.uid]);
 
   const onUpdateKey = (key: typeof simQuery.key) => {
@@ -80,12 +83,15 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const onToggleLast = () => {
     onChange({ ...query, sim: { ...simQuery, last: !simQuery.last } });
   };
+
   const onSchemaFormChange = (config: Record<string, any>) => {
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, config);
+    ds.postResource('sim/' + path, config).then((res) => {
+      setCfgValue(res.config);
+    });
   };
   return (
     <>
@@ -100,7 +106,6 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
           />
         </InlineField>
       </InlineFieldRow>
-
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Stream" tooltip="connect to the live channel">
           <InlineSwitch value={Boolean(simQuery.stream)} onChange={onToggleStream} />
@@ -127,15 +132,13 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
           <Input type="text" placeholder="optional" value={simQuery.key.uid} onChange={onUIDChanged} />
         </InlineField>
       </InlineFieldRow>
-      <div>
-        <SimulationSchemaForm
-          onChange={onSchemaFormChange}
-          config={config}
-          schema={current.details?.config.schema ?? { fields: [] }}
-        />
-        SCHEMA:
-        <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
-      </div>
+      <SimulationSchemaForm
+        onChange={onSchemaFormChange}
+        config={cfgValue ?? config.value}
+        schema={current.details?.config.schema ?? { fields: [] }}
+      />
+      SCHEMA:
+      <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
     </>
   );
 };
