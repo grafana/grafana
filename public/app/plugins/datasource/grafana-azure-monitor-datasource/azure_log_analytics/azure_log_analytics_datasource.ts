@@ -134,6 +134,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
+      ...target,
       refId: target.refId,
       queryType: AzureQueryType.LogAnalytics,
 

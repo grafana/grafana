@@ -114,6 +114,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
 
     return {
+      ...target,
       refId: target.refId,
       subscription: subscriptionId,
       queryType: AzureQueryType.AzureMonitor,
