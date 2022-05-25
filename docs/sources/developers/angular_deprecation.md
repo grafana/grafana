@@ -15,7 +15,7 @@ AngularJS is an old frontend framework that stopped active development many year
 
 ## When will angular plugins stop working?
 
-In Grafana version 9 coming in June 2022, all angular plugins will stop working unless a new server configuration option is turned on. If you still depend on community or internally developed plugins that require AngularJS then you will have to turn this option on.
+We hope to migrate the last features of core Grafana later this year. Then the setting enable_angular_support can be disable by default. This will make all angular plugins stop working. If you still depend on community or internally developed plugins that require AngularJS then you will have to turn this option on.
 
 This is a good time to start working on migrating plugins to React.
 
