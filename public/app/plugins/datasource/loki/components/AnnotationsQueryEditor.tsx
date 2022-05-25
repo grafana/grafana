@@ -19,8 +19,12 @@ type Props = LokiQueryEditorProps & {
 };
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const annotation = props.annotation!;
-  const onAnnotationChange = props.onAnnotationChange!;
+  const { annotation, onAnnotationChange } = props;
+
+  // this should never happen, but we want to keep typescript happy
+  if (annotation === undefined || onAnnotationChange === undefined) {
+    return null;
+  }
 
   const onChangeQuery = (query: LokiQuery) => {
     // the current version of annotations only stores an optional boolean
