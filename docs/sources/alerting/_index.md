@@ -22,6 +22,7 @@ Existing installations that upgrade to v9.0 will have Grafana alerting enabled b
 
 Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
+- [About alert rules]({{< relref "./fundamentals/alert-rules/_index.md" >}})
 - [Migrating legacy alerts]({{< relref "./migrating-alerts/_index.md" >}})
 - [Disable Grafana alerting in OSS]({{< relref "./migrating-alerts/opt-out.md" >}})
 - [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
