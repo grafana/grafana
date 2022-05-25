@@ -43,7 +43,7 @@ In terms of initiation, Grafana supports:
 - SP-initiated requests
 - IdP-initiated requests
 
-By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see https://grafana.com/docs/grafana/latest/enterprise/saml/#idp-initiated-single-sign-on-sso.
+By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
 
 ### Edit SAML options in the Grafana config file
 
