@@ -12,7 +12,7 @@ var (
 
 // Playlist model
 type Playlist struct {
-	Id       int    `json:"id"`
+	Id       int64  `json:"id"`
 	Uid      string `json:"uid"`
 	Name     string `json:"name"`
 	Interval string `json:"interval"`
@@ -20,7 +20,7 @@ type Playlist struct {
 }
 
 type PlaylistDTO struct {
-	Id       int               `json:"id"`
+	Id       int64             `json:"id"`
 	Uid      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
@@ -29,17 +29,17 @@ type PlaylistDTO struct {
 }
 
 type PlaylistItemDTO struct {
-	Id          int64  `json:"id"`
-	PlaylistUid string `json:"playlistuid"`
-	Type        string `json:"type"`
-	Title       string `json:"title"`
-	Value       string `json:"value"`
-	Order       int    `json:"order"`
+	Id         int64  `json:"id"`
+	PlaylistId int64  `json:"playlistid"`
+	Type       string `json:"type"`
+	Title      string `json:"title"`
+	Value      string `json:"value"`
+	Order      int    `json:"order"`
 }
 
 type PlaylistItem struct {
 	Id         int64
-	PlaylistId int
+	PlaylistId int64
 	Type       string
 	Value      string
 	Order      int

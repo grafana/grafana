@@ -8,10 +8,6 @@ import (
 )
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
-	if cmd.OrgId == 0 {
-		return models.ErrCommandValidationFailed
-	}
-
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		uid, err := generateAndValidateNewPlaylistUid(sess, cmd.OrgId)
 		if err != nil {
@@ -57,19 +53,22 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 			Interval: cmd.Interval,
 		}
 
-		existingPlaylist := sess.Where("uid = ? AND org_id = ?", cmd.Uid, cmd.OrgId).Find(models.Playlist{})
-		if existingPlaylist == nil {
-			return models.ErrPlaylistNotFound
+		existingPlaylist := models.Playlist{Uid: cmd.Uid, OrgId: cmd.OrgId}
+		_, err := sess.Get(&existingPlaylist)
+		if err != nil {
+			return err
 		}
+		playlist.Id = existingPlaylist.Id
 
 		cmd.Result = &models.PlaylistDTO{
 			Id:       playlist.Id,
+			Uid:      playlist.Uid,
 			OrgId:    playlist.OrgId,
 			Name:     playlist.Name,
 			Interval: playlist.Interval,
 		}
 
-		_, err := sess.Where("uid=? and org_id=?", playlist.Uid, playlist.OrgId).Cols("name", "interval").Update(&playlist)
+		_, err = sess.Where("id=?", playlist.Id).Cols("name", "interval").Update(&playlist)
 		if err != nil {
 			return err
 		}
