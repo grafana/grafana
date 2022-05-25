@@ -24,7 +24,7 @@ describe('public dashboard utils', () => {
     window.location = {
       ...window.location,
       origin: 'https://example.com',
-      pathname: 'https://example.com/p/abc',
+      pathname: 'https://example.com/public-dashboards/abc',
     };
 
     expect(isPublicDashboardView()).toBeTruthy();
@@ -41,7 +41,7 @@ describe('public dashboard utils', () => {
     window.location = {
       ...window.location,
       origin: 'https://example.com',
-      pathname: 'https://example.com/subpath/p/abc',
+      pathname: 'https://example.com/subpath/public-dashboards/abc',
     };
 
     expect(isPublicDashboardView()).toBeTruthy();
