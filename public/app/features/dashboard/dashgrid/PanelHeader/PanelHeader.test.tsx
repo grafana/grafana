@@ -19,7 +19,7 @@ let dashboardModel = new DashboardModel({}, { isPublic: true });
 let panelData = createEmptyQueryResponse();
 
 describe('Panel Header', () => {
-  updateConfig({ featureToggles: { publicDashboards: true } });
+  updateConfig({ isPublicDashboardView: true });
 
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
     window.history.pushState({}, 'Test Title', '/public-dashboards/abc123');
@@ -33,7 +33,9 @@ describe('Panel Header', () => {
   });
 
   it('will render header title and dropdown icon when dashboard is not being viewed publicly', () => {
+    updateConfig({ isPublicDashboardView: false });
     window.history.pushState({}, 'Test Title', '/d/abc/123');
+
     render(
       <PanelHeader panel={panelModel} dashboard={dashboardModel} isViewing={false} isEditing={false} data={panelData} />
     );
