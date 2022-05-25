@@ -850,6 +850,7 @@ func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
 	return nil
 }
 
+// swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval
 	Provenance models.Provenance `json:"provenance,omitempty"`
