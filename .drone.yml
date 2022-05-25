@@ -4655,6 +4655,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 017fed907b0f2b02469d6464047846872830ac5ec688301d723b1443d08ce142
+hmac: f28dabd83cc8abbbcac499dba97ddaaa3023ce53a9a54812dd73a08e53086560
 
 ...
