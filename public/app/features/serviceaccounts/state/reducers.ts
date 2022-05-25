@@ -20,6 +20,12 @@ export const serviceAccountProfileSlice = createSlice({
   name: 'serviceaccount',
   initialState: initialStateProfile,
   reducers: {
+    serviceAccountFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    serviceAccountFetchEnd: (state) => {
+      return { ...state, isLoading: false };
+    },
     serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => {
       return { ...state, serviceAccount: action.payload, isLoading: false };
     },
@@ -30,7 +36,8 @@ export const serviceAccountProfileSlice = createSlice({
 });
 
 export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
-export const { serviceAccountLoaded, serviceAccountTokensLoaded } = serviceAccountProfileSlice.actions;
+export const { serviceAccountLoaded, serviceAccountTokensLoaded, serviceAccountFetchBegin, serviceAccountFetchEnd } =
+  serviceAccountProfileSlice.actions;
 
 // serviceAccountsListPage
 export const initialStateList: ServiceAccountsState = {

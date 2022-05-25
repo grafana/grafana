@@ -4,17 +4,25 @@ import { ServiceAccountDTO, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
 
-import { serviceAccountLoaded, serviceAccountTokensLoaded } from './reducers';
+import {
+  serviceAccountFetchBegin,
+  serviceAccountFetchEnd,
+  serviceAccountLoaded,
+  serviceAccountTokensLoaded,
+} from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
 
 export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(serviceAccountFetchBegin());
     try {
       const response = await getBackendSrv().get(`${BASE_URL}/${saID}`, accessControlQueryParam());
       dispatch(serviceAccountLoaded(response));
     } catch (error) {
       console.error(error);
+    } finally {
+      dispatch(serviceAccountFetchEnd());
     }
   };
 }
