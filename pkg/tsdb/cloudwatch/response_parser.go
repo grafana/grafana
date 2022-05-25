@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Time, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
@@ -31,7 +32,7 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 		}
 
 		var err error
-		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow)
+		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 		if err != nil {
 			return nil, err
 		}
@@ -61,9 +62,8 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 		}
 		for _, r := range gmdo.MetricDataResults {
 			id := *r.Id
-			label := *r.Label
 
-			response := newQueryRowResponse(id)
+			response := newQueryRowResponse()
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
@@ -74,11 +74,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				}
 			}
 
-			if _, exists := response.Metrics[label]; !exists {
-				response.addMetricDataResult(r)
-			} else {
-				response.appendTimeSeries(r)
-			}
+			response.addMetricDataResult(r)
 
 			for code := range errorCodes {
 				if _, exists := response.ErrorCodes[code]; exists {
@@ -117,12 +113,12 @@ func getLabels(cloudwatchLabel string, query *cloudWatchQuery) data.Labels {
 }
 
 func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse queryRowResponse,
-	query *cloudWatchQuery) (data.Frames, error) {
+	query *cloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
 	frames := data.Frames{}
-	for _, label := range aggregatedResponse.Labels {
-		metric := aggregatedResponse.Metrics[label]
+	for _, metric := range aggregatedResponse.Metrics {
+		label := *metric.Label
 
-		deepLink, err := query.buildDeepLink(startTime, endTime)
+		deepLink, err := query.buildDeepLink(startTime, endTime, dynamicLabelEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +146,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
-				frameName := formatAlias(query, query.Statistic, labels, label)
+				frameName := label
+				if !dynamicLabelEnabled {
+					frameName = formatAlias(query, query.Statistic, labels, label)
+				}
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
@@ -179,7 +178,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		frameName := formatAlias(query, query.Statistic, labels, label)
+		frameName := label
+		if !dynamicLabelEnabled {
+			frameName = formatAlias(query, query.Statistic, labels, label)
+		}
 		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{

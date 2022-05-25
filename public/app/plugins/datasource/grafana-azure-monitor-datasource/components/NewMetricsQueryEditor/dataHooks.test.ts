@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react-hooks';
 import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
-import { DataHook } from '../MetricsQueryEditor/dataHooks';
+import { DataHook, MetricMetadata, MetricsMetadataHook } from '../MetricsQueryEditor/dataHooks';
 
-import { useMetricNames, useMetricNamespaces } from './dataHooks';
+import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
 
 const WAIT_OPTIONS = {
   timeout: 1000,
@@ -15,7 +15,7 @@ const opt = (text: string, value: string) => ({ text, value });
 
 interface TestScenario {
   name: string;
-  hook: DataHook;
+  hook: DataHook | MetricsMetadataHook;
 
   // For convenience, only need to define the azureMonitor part of the query for some tests
   emptyQueryPartial: AzureMetricQuery;
@@ -23,7 +23,7 @@ interface TestScenario {
   topLevelCustomProperties?: Partial<AzureMonitorQuery>;
 
   expectedCustomPropertyResults?: Array<AzureMonitorOption<string>>;
-  expectedOptions: AzureMonitorOption[];
+  expectedOptions: AzureMonitorOption[] | MetricMetadata;
 }
 
 describe('AzureMonitor: metrics dataHooks', () => {
@@ -64,7 +64,6 @@ describe('AzureMonitor: metrics dataHooks', () => {
         { label: 'metric-$ENVIRONMENT', value: 'metric-$ENVIRONMENT' },
       ],
     },
-
     {
       name: 'useMetricNamespaces',
       hook: useMetricNamespaces,
@@ -138,7 +137,25 @@ describe('AzureMonitor: metrics dataHooks', () => {
     datasource.azureMonitorDatasource.getMetricNamespaces = jest
       .fn()
       .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
+
+    datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+      primaryAggType: 'Average',
+      supportedAggTypes: ['Average'],
+      supportedTimeGrains: [
+        { label: 'Auto', value: 'auto' },
+        { label: '1 minute', value: 'PT1M' },
+        { label: '5 minutes', value: 'PT5M' },
+        { label: '15 minutes', value: 'PT15M' },
+        { label: '30 minutes', value: 'PT30M' },
+        { label: '1 hour', value: 'PT1H' },
+        { label: '6 hours', value: 'PT6H' },
+        { label: '12 hours', value: 'PT12H' },
+        { label: '1 day', value: 'P1D' },
+      ],
+      dimensions: [],
+    });
   });
+
   describe.each(testTable)('scenario %#: $name', (scenario) => {
     it('returns values', async () => {
       const query = {
@@ -161,6 +178,58 @@ describe('AzureMonitor: metrics dataHooks', () => {
       await waitForNextUpdate(WAIT_OPTIONS);
 
       expect(result.current).toEqual(scenario.expectedCustomPropertyResults);
+    });
+  });
+
+  describe('useMetricsMetadataHook', () => {
+    const metricsMetadataConfig = {
+      name: 'useMetricMetadata',
+      hook: useMetricMetadata,
+      emptyQueryPartial: {
+        resourceUri:
+          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
+        metricNamespace: 'azure/vm',
+        metricName: 'Average CPU',
+      },
+      customProperties: {},
+      expectedOptions: {
+        aggOptions: [{ label: 'Average', value: 'Average' }],
+        timeGrains: [
+          { label: 'Auto', value: 'auto' },
+          { label: '1 minute', value: 'PT1M' },
+          { label: '5 minutes', value: 'PT5M' },
+          { label: '15 minutes', value: 'PT15M' },
+          { label: '30 minutes', value: 'PT30M' },
+          { label: '1 hour', value: 'PT1H' },
+          { label: '6 hours', value: 'PT6H' },
+          { label: '12 hours', value: 'PT12H' },
+          { label: '1 day', value: 'P1D' },
+        ],
+        dimensions: [],
+        isLoading: false,
+        supportedAggTypes: ['Average'],
+        primaryAggType: 'Average',
+      },
+    };
+
+    it('returns values', async () => {
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricsMetadataConfig.emptyQueryPartial,
+      };
+      const { result, waitForNextUpdate } = renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
+      await waitForNextUpdate(WAIT_OPTIONS);
+
+      expect(result.current).toEqual(metricsMetadataConfig.expectedOptions);
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          aggregation: result.current.primaryAggType,
+          timeGrain: 'auto',
+          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+        },
+      });
     });
   });
 });

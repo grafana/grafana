@@ -1,7 +1,7 @@
 +++
-title = "Time range controls"
+aliases = ["/docs/grafana/latest/dashboards/time-range-controls/", "/docs/grafana/latest/reference/timerange/"]
 keywords = ["grafana", "dashboard", "documentation", "time range"]
-aliases = ["/docs/grafana/latest/reference/timerange/"]
+title = "Time range controls"
 weight = 13
 +++
 

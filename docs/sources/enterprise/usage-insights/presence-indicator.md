@@ -1,8 +1,8 @@
 +++
-title = "Presence indicator"
+aliases = ["/docs/grafana/latest/enterprise/usage-insights/presence-indicator/"]
 description = "Know who is looking at the same dashboard as you are"
 keywords = ["grafana", "presence-indicator", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/presence-indicator.md"]
+title = "Presence indicator"
 weight = 300
 +++
 
@@ -16,7 +16,7 @@ When there are more active users on a dashboard than can fit within the presence
 
 {{< figure src="/static/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-To change _recent_ to something other than the past 10 minutes, edit the [configuration]({{< relref "../../administration/configuration.md">}}) file:
+To change _recent_ to something other than the past 10 minutes, edit the [configuration]({{< relref "../../administration/configuration.md" >}}) file:
 
 ```ini
 [analytics.views]

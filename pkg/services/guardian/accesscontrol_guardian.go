@@ -2,7 +2,6 @@ package guardian
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,29 +21,36 @@ var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, dashboardId int64, user *models.SignedInUser,
-	store sqlstore.Store, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store sqlstore.Store, ac accesscontrol.AccessControl,
+	folderPermissionsService accesscontrol.FolderPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardService dashboards.DashboardService,
 ) *AccessControlDashboardGuardian {
 	return &AccessControlDashboardGuardian{
-		ctx:                ctx,
-		log:                log.New("dashboard.permissions"),
-		dashboardID:        dashboardId,
-		user:               user,
-		store:              store,
-		ac:                 ac,
-		permissionServices: permissionsServices,
+		ctx:                         ctx,
+		log:                         log.New("dashboard.permissions"),
+		dashboardID:                 dashboardId,
+		user:                        user,
+		store:                       store,
+		ac:                          ac,
+		folderPermissionsService:    folderPermissionsService,
+		dashboardPermissionsService: dashboardPermissionsService,
+		dashboardService:            dashboardService,
 	}
 }
 
 type AccessControlDashboardGuardian struct {
-	ctx                context.Context
-	log                log.Logger
-	dashboardID        int64
-	dashboard          *models.Dashboard
-	parentFolderUID    string
-	user               *models.SignedInUser
-	store              sqlstore.Store
-	ac                 accesscontrol.AccessControl
-	permissionServices accesscontrol.PermissionsServices
+	ctx                         context.Context
+	log                         log.Logger
+	dashboardID                 int64
+	dashboard                   *models.Dashboard
+	parentFolderUID             string
+	user                        *models.SignedInUser
+	store                       sqlstore.Store
+	ac                          accesscontrol.AccessControl
+	folderPermissionsService    accesscontrol.FolderPermissionsService
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService
+	dashboardService            dashboards.DashboardService
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
@@ -169,12 +175,14 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		return nil, err
 	}
 
-	svc := a.permissionServices.GetDashboardService()
+	var svc accesscontrol.PermissionsService
 	if a.dashboard.IsFolder {
-		svc = a.permissionServices.GetFolderService()
+		svc = a.folderPermissionsService
+	} else {
+		svc = a.dashboardPermissionsService
 	}
 
-	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))
+	permissions, err := svc.GetPermissions(a.ctx, a.user, a.dashboard.Uid)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +266,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
 		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
-		if err := a.store.GetDashboard(a.ctx, query); err != nil {
+		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
 		if !query.Result.IsFolder {
@@ -278,7 +286,7 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*mode
 		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
 	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
-	if err := a.store.GetDashboard(a.ctx, folderQuery); err != nil {
+	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}
 	return folderQuery.Result, nil

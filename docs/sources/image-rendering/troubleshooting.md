@@ -1,7 +1,8 @@
 +++
-title = "Troubleshooting"
+aliases = ["/docs/grafana/latest/image-rendering/troubleshooting/"]
 description = "Image rendering troubleshooting"
 keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
+title = "Troubleshooting"
 weight = 115
 +++
 

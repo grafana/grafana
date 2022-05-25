@@ -1,7 +1,8 @@
 +++
-title = "Requirements"
+aliases = ["/docs/grafana/latest/installation/requirements/"]
 description = "Requirements for Grafana"
 keywords = ["grafana", "installation", "documentation"]
+title = "Requirements"
 weight = 100
 +++
 
@@ -35,7 +36,7 @@ Some features might require more memory or CPUs. Features require more resources
 
 - [Server side rendering of images](https://grafana.com/grafana/plugins/grafana-image-renderer#requirements)
 - [Alerting]({{< relref "../alerting" >}})
-- [Data source proxy]({{< relref "../http_api/data_source" >}})
+- [Data source proxy]({{< relref "../developers/http_api/data_source" >}})
 
 ## Supported databases
 

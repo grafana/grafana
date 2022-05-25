@@ -25,6 +25,7 @@ import TableModel from 'app/core/table_model';
 import { renderLegendFormat } from '../prometheus/legend';
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
 import {
   LokiRangeQueryRequest,
   LokiResponse,
@@ -91,9 +92,9 @@ function constructDataFrame(
     refId,
     fields: [
       { name: 'labels', type: FieldType.other, config: {}, values: labels },
-      { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
-      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'Time', type: FieldType.time, config: {}, values: times }, // Time
+      { name: 'Line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
+      { name: 'tsNs', type: FieldType.time, config: {}, values: timesNs }, // Time
       { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
@@ -333,6 +334,9 @@ export function lokiStreamsToDataFrames(
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
+    // TODO: when we get a real frame-type in @grafana/data
+    // move this to frame.meta.type
+    frameType: 'LabeledTimeValues',
   };
 
   const meta: QueryResultMeta = {
@@ -346,7 +350,7 @@ export function lokiStreamsToDataFrames(
   const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
-  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+  if (meta.custom && dataFrameHasLokiError(dataFrame)) {
     meta.custom.error = 'Error when parsing some of the logs';
   }
 
@@ -387,9 +391,9 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
   const view = new DataFrameView(dataFrame);
-  view.forEach((row: { line: string }) => {
+  view.forEach((row: { Line: string }) => {
     for (const field of newFields) {
-      const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+      const logMatch = row.Line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
       field.values.add(logMatch && logMatch[1]);
     }
   });

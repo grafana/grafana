@@ -1,4 +1,5 @@
 +++
+aliases = ["/docs/grafana/latest/sharing/"]
 title = "Sharing"
 weight = 85
 +++

@@ -1,11 +1,11 @@
 +++
-title = "Migrating legacy alerts"
-description = "Enable Grafana alerts"
+aliases = ["/docs/grafana/latest/alerting/migrating-legacy-alerts/", "/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
+description = "Migrate legacy dashboard alerts"
+title = "Migrating legacy dashboard alerts"
 weight = 114
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
 +++
 
-# Migrating legacy alerts to Grafana alerting
+# Migrating legacy dashboard alerts
 
 When Grafana alerting is enabled or Grafana is upgraded to the latest version, existing legacy dashboard alerts migrate in a format compatible with the Grafana alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside new alerts.
 
@@ -15,16 +15,12 @@ Read and write access to legacy dashboard alerts and Grafana alerts are governed
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder, and the rule inherits the default permissions.
 
-> **Note:** Since there is no `Keep Last State` option for [`No Data`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a [silence]({{< relref "./silences.md" >}}) for each alert rule with a duration of 1 year.
+> **Note:** Since there is no `Keep Last State` option for [`No Data`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "./alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a [silence]({{< relref "./silences/_index.md" >}}) for each alert rule with a duration of 1 year.
 
 Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
 Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 Silences (expiring after one year) are created for all paused dashboard alerts.
-
-### Limitation
-
-Grafana alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch alerting rules from all other supported data sources at this time.
 
 ## Disable Grafana alerts
 

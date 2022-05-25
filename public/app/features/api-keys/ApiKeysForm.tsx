@@ -99,7 +99,9 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded, disabled }) 
               </InlineField>
             </div>
             <div className="gf-form">
-              <Button disabled={disabled}>Add</Button>
+              <Button type="submit" disabled={disabled}>
+                Add
+              </Button>
             </div>
           </div>
         </form>

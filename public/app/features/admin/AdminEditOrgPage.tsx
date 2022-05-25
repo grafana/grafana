@@ -85,7 +85,9 @@ export default function AdminEditOrgPage({ match }: Props) {
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                     <Input {...register('orgName', { required: true })} id="org-name-input" />
                   </Field>
-                  <Button disabled={!canWriteOrg}>Update</Button>
+                  <Button type="submit" disabled={!canWriteOrg}>
+                    Update
+                  </Button>
                 </>
               )}
             </Form>
