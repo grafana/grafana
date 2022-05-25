@@ -16,12 +16,14 @@ const (
 func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
 	logger := log.New("secrets.kvstore")
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
+		logger.Info("secrets kvstore is using a remote plugin for secrets management")
 		return &secretsKVStorePlugin{
 			secretsPlugin:  remoteCheck.GetManager().SecretsManager().SecretsManager,
 			secretsService: secretsService,
 			log:            logger,
 		}
 	}
+	logger.Info("secrets kvstore is using the default (SQL) implementation for secrets management")
 	return &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
