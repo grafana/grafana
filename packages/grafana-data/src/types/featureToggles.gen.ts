@@ -17,7 +17,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
   trimDefaults?: boolean;
-  envelopeEncryption?: boolean;
+  disableEnvelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
   serviceAccounts?: boolean;
   database_metrics?: boolean;
@@ -60,4 +60,5 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
+  prometheusWideSeries?: boolean;
 }

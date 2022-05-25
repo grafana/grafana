@@ -56,6 +56,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
+      sort: 'name_sort',
     };
     if (section.title === 'Starred') {
       query = {
@@ -129,7 +130,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   const renderResults = () => {
     if (!results.value?.length) {
       if (results.loading) {
-        return <Spinner />;
+        return <Spinner className={styles.spinner} />;
       }
 
       return (
@@ -186,7 +187,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && (
+            {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>
@@ -253,6 +254,11 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     content: css`
       padding-top: 0px;
       padding-bottom: 0px;
+    `,
+    spinner: css`
+      display: grid;
+      place-content: center;
+      padding-bottom: 1rem;
     `,
   };
 });

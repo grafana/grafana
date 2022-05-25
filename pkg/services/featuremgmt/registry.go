@@ -14,9 +14,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "envelopeEncryption",
-			Description: "encrypt secrets",
-			State:       FeatureStateBeta,
+			Name:        "disableEnvelopeEncryption",
+			Description: "Disable envelope encryption (emergency only)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "httpclientprovider_azure_auth",
@@ -248,6 +248,11 @@ var (
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+		},
+		{
+			Name:        "prometheusWideSeries",
+			Description: "Enable wide series responses in the Prometheus datasource",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

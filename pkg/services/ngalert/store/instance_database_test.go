@@ -27,7 +27,7 @@ func mockTimeNow() {
 	}
 }
 
-func TestAlertInstanceOperations(t *testing.T) {
+func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 

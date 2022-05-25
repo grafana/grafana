@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -21,6 +21,7 @@ export type SearchResultsProps = {
   height: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
 };
@@ -32,9 +33,21 @@ export type TableColumn = Column & {
 const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = React.memo(
-  ({ response, width, height, selection, selectionToggle, onTagSelected, onDatasourceChange }: SearchResultsProps) => {
+  ({
+    response,
+    width,
+    height,
+    selection,
+    selectionToggle,
+    clearSelection,
+    onTagSelected,
+    onDatasourceChange,
+  }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
+
+    const infiniteLoaderRef = useRef<InfiniteLoader>(null);
+    const listRef = useRef<FixedSizeList>(null);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -46,10 +59,29 @@ export const SearchResultsTable = React.memo(
       return Array(response.totalRows).fill(0);
     }, [response]);
 
+    // Scroll to the top and clear loader cache when the query results change
+    useEffect(() => {
+      if (infiniteLoaderRef.current) {
+        infiniteLoaderRef.current.resetloadMoreItemsCache();
+      }
+      if (listRef.current) {
+        listRef.current.scrollTo(0);
+      }
+    }, [memoizedData]);
+
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
-      return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
-    }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+      return generateColumns(
+        response,
+        width,
+        selection,
+        selectionToggle,
+        clearSelection,
+        styles,
+        onTagSelected,
+        onDatasourceChange
+      );
+    }, [response, width, styles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({
@@ -114,13 +146,14 @@ export const SearchResultsTable = React.memo(
 
         <div {...getTableBodyProps()}>
           <InfiniteLoader
+            ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
-            {({ onItemsRendered, ref }) => (
+            {({ onItemsRendered }) => (
               <FixedSizeList
-                ref={ref}
+                ref={listRef}
                 onItemsRendered={onItemsRendered}
                 height={height - HEADER_HEIGHT}
                 itemCount={rows.length}
@@ -218,6 +251,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     locationItem: css`
       color: ${theme.colors.text.secondary};
       margin-right: 12px;
+    `,
+    sortedHeader: css`
+      text-align: right;
+    `,
+    sortedItems: css`
+      text-align: right;
+      padding: ${theme.spacing(1)};
     `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};

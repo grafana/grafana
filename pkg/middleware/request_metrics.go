@@ -56,7 +56,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 		now := time.Now()
 		httpRequestsInFlight.Inc()
 		defer httpRequestsInFlight.Dec()
-		c.Map(c.Req)
 		c.Next()
 
 		handler := "unknown"

@@ -77,7 +77,7 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 	require.NoError(t, err)
 }
 
-func TestGetDashboardVersions(t *testing.T) {
+func TestIntegrationGetDashboardVersions(t *testing.T) {
 	sqlStore := InitTestDB(t)
 	savedDash := insertTestDashboard(t, sqlStore, "test dash 43", 1, 0, false, "diff-all")
 
@@ -110,7 +110,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	})
 }
 
-func TestDeleteExpiredVersions(t *testing.T) {
+func TestIntegrationDeleteExpiredVersions(t *testing.T) {
 	versionsToKeep := 5
 	versionsToWrite := 10
 	setting.DashboardVersionsToKeep = versionsToKeep

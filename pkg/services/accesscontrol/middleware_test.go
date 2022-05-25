@@ -90,9 +90,6 @@ func contextProvider() web.Handler {
 			IsSignedIn:   true,
 			SkipCache:    true,
 		}
-		c.Map(reqCtx)
-
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
-		c.Map(c.Req)
 	}
 }

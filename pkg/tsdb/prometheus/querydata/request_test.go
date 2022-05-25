@@ -58,7 +58,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		tctx := setup()
+		tctx := setup(true)
 
 		qm := models.QueryModel{
 			LegendFormat:  "legend {{app}}",
@@ -119,19 +119,17 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
-		//require.Equal(t, "legend Application", res[0].Name)
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, "Time", res[0].Fields[0].Name)
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, "app=Application, tag2=tag2", res[0].Fields[1].Labels.String())
-		require.Equal(t, "Value", res[0].Fields[1].Name)
-		require.Equal(t, "legend Application", res[0].Fields[1].Config.DisplayNameFromDS)
+		require.Equal(t, "legend Application", res[0].Fields[1].Name)
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -167,7 +165,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -176,8 +174,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, time.Unix(1, 0).UTC(), res[0].Fields[0].At(0))
 		require.Equal(t, time.Unix(4, 0).UTC(), res[0].Fields[0].At(1))
 		require.Equal(t, res[0].Fields[1].Len(), 2)
-		require.Equal(t, float64(1), res[0].Fields[1].At(0).(float64))
-		require.Equal(t, float64(4), res[0].Fields[1].At(1).(float64))
+		require.Equal(t, float64(1), *res[0].Fields[1].At(0).(*float64))
+		require.Equal(t, float64(4), *res[0].Fields[1].At(1).(*float64))
 	})
 
 	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
@@ -209,19 +207,17 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "{app=\"Application\", tag2=\"tag2\"}")
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "{app=\"Application\", tag2=\"tag2\"}")
+		require.Equal(t, "{app=\"Application\", tag2=\"tag2\"}", res[0].Fields[1].Name)
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
@@ -252,12 +248,12 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			JSON: b,
 		}
 
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.True(t, math.IsNaN(res[0].Fields[1].At(0).(float64)))
+		require.Equal(t, "{app=\"Application\"}", res[0].Fields[1].Name)
+		require.True(t, math.IsNaN(*res[0].Fields[1].At(0).(*float64)))
 	})
 
 	t.Run("vector response should be parsed normally", func(t *testing.T) {
@@ -281,20 +277,18 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "legend Application")
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Equal(t, res[0].Fields[0].Name, "Time")
 		require.Len(t, res[0].Fields[1].Labels, 2)
 		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
+		require.Equal(t, "legend Application", res[0].Fields[1].Name)
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -321,17 +315,15 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup()
+		tctx := setup(true)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Name, "1")
 		require.Len(t, res[0].Fields, 2)
 		require.Len(t, res[0].Fields[0].Labels, 0)
 		require.Equal(t, res[0].Fields[0].Name, "Time")
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "1")
+		require.Equal(t, "1", res[0].Fields[1].Name)
 
 		// Ensure the timestamps are UTC zoned
 		testValue := res[0].Fields[0].At(0)
@@ -397,7 +389,7 @@ type testContext struct {
 	queryData    *querydata.QueryData
 }
 
-func setup() *testContext {
+func setup(wideFrames bool) *testContext {
 	tracer, err := tracing.InitializeTracerForTest()
 	if err != nil {
 		panic(err)
@@ -414,7 +406,7 @@ func setup() *testContext {
 	queryData, _ := querydata.New(
 		httpProvider,
 		setting.NewCfg(),
-		&fakeFeatureToggles{enabled: true},
+		&fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}},
 		tracer,
 		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
 		&fakeLogger{},
@@ -427,11 +419,11 @@ func setup() *testContext {
 }
 
 type fakeFeatureToggles struct {
-	enabled bool
+	flags map[string]bool
 }
 
 func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-	return f.enabled
+	return f.flags[feature]
 }
 
 type fakeHttpClientProvider struct {

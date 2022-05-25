@@ -27,6 +27,7 @@ export class BlugeSearcher implements GrafanaSearcher {
       refId: 'A',
       queryType: GrafanaQueryType.Search,
       query: query.query ?? '*',
+      sort: undefined, // no need to sort the initial query results (not used)
       facet: [{ field: 'tag' }],
       limit: 1, // 0 would be better, but is ignored by the backend
     };
