@@ -9,7 +9,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
       {
         path: '/public-dashboards/:uid',
         pageClass: 'page-dashboard',
-        routeName: DashboardRoutes.Normal,
+        routeName: DashboardRoutes.Public,
         component: SafeDynamicImport(
           () =>
             import(

@@ -22,7 +22,7 @@ describe('Panel Header', () => {
   updateConfig({ featureToggles: { publicDashboards: true } });
 
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
-    window.history.pushState({}, 'Test Title', '/p/abc/123');
+    window.history.pushState({}, 'Test Title', '/public-dashboards/abc123');
 
     render(
       <PanelHeader panel={panelModel} dashboard={dashboardModel} isViewing={false} isEditing={false} data={panelData} />
