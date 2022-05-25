@@ -31,7 +31,7 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 5. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 ## Example role configuration file using Grafana provisioning
 
