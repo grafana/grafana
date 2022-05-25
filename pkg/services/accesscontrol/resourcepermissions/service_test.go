@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/licensing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -223,9 +222,10 @@ func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission,
 	sql := sqlstore.InitTestDB(t)
 	store := database.ProvideService(sql)
 	cfg := setting.NewCfg()
-	cfg.IsEnterprise = true
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	service, err := New(
-		ops, cfg, routing.NewRouteRegister(), &licensing.OSSLicensingService{},
+		ops, cfg, routing.NewRouteRegister(), license,
 		accesscontrolmock.New().WithPermissions(permissions), store, sql,
 	)
 	require.NoError(t, err)
