@@ -12,7 +12,7 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
   ],
-  moduleDirectories: ['node_modules', 'public'],
+  moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -25,6 +25,9 @@ module.exports = {
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {
+    // https://github.com/microsoft/accessibility-insights-web/pull/5421#issuecomment-1109168149
+    uuid: require.resolve('uuid'),
+    'react-colorful': require.resolve('react-colorful'),
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
