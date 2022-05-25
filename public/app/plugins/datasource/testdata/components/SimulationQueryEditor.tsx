@@ -2,7 +2,7 @@ import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrameJSON, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Button, InlineSwitch, Input, Label, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
@@ -133,7 +133,6 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
           config={config}
           schema={current.details?.config.schema ?? { fields: [] }}
         />
-        <Button type="submit">Submit</Button>
         SCHEMA:
         <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
       </div>
