@@ -257,8 +257,8 @@ func (hs *HTTPServer) registerRoutes() {
 				return ac.EvalAny(
 					ac.EvalPermission(ac.ActionOrgUsersRead),
 					ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
-					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
 					ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite),
+					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
 				)
 			}
 			orgRoute.Get("/users/lookup", authorize(reqOrgAdminFolderAdminOrTeamAdmin, lookupEvaluator()), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
