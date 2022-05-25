@@ -41,7 +41,12 @@ func (s *Service) getGCEDefaultProject() func(rw http.ResponseWriter, req *http.
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
-		encoded, _ := json.Marshal(project)
+
+		encoded, err := json.Marshal(project)
+		if err != nil {
+			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("error retrieving default project %v", err))
+			return
+		}
 		writeResponseBytes(rw, http.StatusOK, encoded)
 	}
 }
