@@ -163,7 +163,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name == existing.Name {
 			intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
-			intervals = append(intervals[:i], intervals[i+1:]...)
+			revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(intervals[:i], intervals[i+1:]...)
 		}
 	}
 
