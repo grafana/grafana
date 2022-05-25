@@ -19,11 +19,8 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
       plotInstance.current = u;
     });
 
-    config.addHook('setData', (u) => {
+    config.addHook('draw', (u) => {
       setTimeValues(plotInstance.current?.data?.[0] ?? []);
-    });
-
-    config.addHook('setScale', (u) => {
       setTimeRange(plotInstance.current?.scales['x'] ?? undefined);
     });
   }, [config]);
