@@ -131,7 +131,12 @@ export enum LocalStorageMigrationStatus {
   NotNeeded = 'not-needed',
 }
 
-export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationStatus> {
+export interface LocalStorageMigrationResult {
+  status: LocalStorageMigrationStatus;
+  error?: Error;
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
   const richHistoryLocalStorage = new RichHistoryLocalStorage();
   const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
@@ -145,14 +150,14 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
       to: 14,
     });
     if (richHistory.length === 0) {
-      return LocalStorageMigrationStatus.NotNeeded;
+      return { status: LocalStorageMigrationStatus.NotNeeded };
     }
     await richHistoryRemoteStorage.migrate(richHistory);
     dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
-    return LocalStorageMigrationStatus.Successful;
+    return { status: LocalStorageMigrationStatus.Successful };
   } catch (error) {
     dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));
-    return LocalStorageMigrationStatus.Failed;
+    return { status: LocalStorageMigrationStatus.Failed, error };
   }
 }
 

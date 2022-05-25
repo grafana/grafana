@@ -1,27 +1,14 @@
+// These are used in some other plugins for some reason
+
 import {
-  ReducerID,
-  standardEditorsRegistry,
+  escapeStringForRegex,
   FieldOverrideContext,
   getFieldDisplayName,
-  escapeStringForRegex,
-  VizOrientation,
   PanelOptionsEditorBuilder,
+  ReducerID,
+  standardEditorsRegistry,
 } from '@grafana/data';
-import {
-  SingleStatBaseOptions,
-  BigValueColorMode,
-  BigValueGraphMode,
-  BigValueJustifyMode,
-  BigValueTextMode,
-} from '@grafana/ui';
-
-// Structure copied from angular
-export interface StatPanelOptions extends SingleStatBaseOptions {
-  graphMode: BigValueGraphMode;
-  colorMode: BigValueColorMode;
-  justifyMode: BigValueJustifyMode;
-  textMode: BigValueTextMode;
-}
+import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -64,6 +51,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     description: 'Choose a reducer function / calculation',
     category: valueOptionsCategory,
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
+    // TODO: Get ReducerID from generated schema one day?
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
     showIf: (currentConfig) => currentConfig.reduceOptions.values === false,

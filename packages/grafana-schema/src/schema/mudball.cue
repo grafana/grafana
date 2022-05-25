@@ -48,6 +48,6 @@ BigValueGraphMode: "none" | "line" | "area" @cuetsy(kind="enum")
 BigValueJustifyMode: "auto" | "center" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
 // TODO does cuetsy handle underscores the expected way?
-BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(kind="enum")
+BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(kind="enum",memberNames="Auto|Value|ValueAndName|Name|None")
 // TODO copy back to appropriate place
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")

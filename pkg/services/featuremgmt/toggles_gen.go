@@ -182,4 +182,8 @@ const (
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagPrometheusWideSeries
+	// Enable wide series responses in the Prometheus datasource
+	FlagPrometheusWideSeries = "prometheusWideSeries"
 )
