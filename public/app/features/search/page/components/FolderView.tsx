@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
@@ -22,7 +23,7 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
 
   const results = useAsync(async () => {
     const folders: DashboardSection[] = [];
-    if (!hidePseudoFolders) {
+    if (!hidePseudoFolders || !contextSrv.isSignedIn) {
       const stars = await getBackendSrv().get('api/user/stars');
       if (stars.length > 0) {
         folders.push({ title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred', itemsUIDs: stars });
