@@ -1,7 +1,7 @@
 +++
 aliases = ["/docs/grafana/latest/alerting/migrating-alerts/"]
-description = "Enable Grafana alerts"
-title = "Migrating to Grafana alerting"
+description = "Migrate Grafana alerts"
+title = "Migrate to Grafana alerting"
 weight = 113
 +++
 
