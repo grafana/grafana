@@ -113,7 +113,6 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   }, []);
 
   useEffect(() => {
-    console.log('INIT key listener!');
     document.addEventListener('keydown', keyListener);
     return () => {
       document.removeEventListener('keydown', keyListener);
