@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { DataFrameView, GrafanaTheme2, toDataFrame } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -11,7 +11,7 @@ import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { useSearchQuery } from '../../hooks/useSearchQuery';
-import { getGrafanaSearcher, QueryResponse, SearchQuery } from '../../service';
+import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
@@ -68,15 +68,8 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
   }, [query, queryText, folderDTO]);
 
   const results = useAsync(() => {
-    if (isFolders) {
-      // Folder view does not actually use the query results
-      return Promise.resolve({
-        totalRows: 10, // Not used, but does avoid the "no results" indicator
-        view: new DataFrameView(toDataFrame([])),
-      } as QueryResponse);
-    }
     return getGrafanaSearcher().search(searchQuery);
-  }, [isFolders, searchQuery]);
+  }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();

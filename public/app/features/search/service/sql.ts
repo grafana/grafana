@@ -16,16 +16,27 @@ interface APIQuery {
   page?: number;
   type?: string;
   // DashboardIds []int64
-  // FolderIds    []int64
+  folderIds?: number[];
   sort?: string;
 
   // NEW!!!! TODO TODO: needs backend support?
   dashboardUIDs?: string[];
-  folderUIDs?: string[];
+}
+
+// Internal object to hold folderId
+interface LocationInfoEXT extends LocationInfo {
+  folderId?: number;
 }
 
 export class SQLSearcher implements GrafanaSearcher {
-  locationInfo: Record<string, LocationInfo> = {}; // share location info with everyone
+  locationInfo: Record<string, LocationInfoEXT> = {
+    general: {
+      kind: 'folder',
+      name: 'General',
+      url: '/dashboards',
+      folderId: 0,
+    },
+  }; // share location info with everyone
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -48,7 +59,13 @@ export class SQLSearcher implements GrafanaSearcher {
     if (query.uid) {
       q.dashboardUIDs = query.uid;
     } else if (query.location?.length) {
-      q.folderUIDs = [query.location];
+      let info = this.locationInfo[query.location];
+      if (!info) {
+        // This will load all folder folders
+        await this.doAPIQuery({ type: 'dash-folder', limit: 999 });
+        info = this.locationInfo[query.location];
+      }
+      q.folderIds = [info.folderId ?? 0];
     }
     return this.doAPIQuery(q);
   }
@@ -116,6 +133,14 @@ export class SQLSearcher implements GrafanaSearcher {
           kind: 'folder',
           name: hit.folderTitle,
           url: hit.folderUrl!,
+          folderId: hit.folderId,
+        };
+      } else if (k === 'folder') {
+        this.locationInfo[hit.uid!] = {
+          kind: k,
+          name: hit.title!,
+          url: hit.url,
+          folderId: hit.id,
         };
       }
     }
