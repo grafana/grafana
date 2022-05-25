@@ -242,7 +242,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:3424320489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1597135392": [
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:3368730691": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ]
   }`
