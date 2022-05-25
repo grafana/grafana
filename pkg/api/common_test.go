@@ -31,8 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
@@ -154,18 +156,19 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 }
 
 type scenarioContext struct {
-	t                    *testing.T
-	cfg                  *setting.Cfg
-	m                    *web.Mux
-	context              *models.ReqContext
-	resp                 *httptest.ResponseRecorder
-	handlerFunc          handlerFunc
-	defaultHandler       web.Handler
-	req                  *http.Request
-	url                  string
-	userAuthTokenService *auth.FakeUserAuthTokenService
-	sqlStore             sqlstore.Store
-	authInfoService      *logintest.AuthInfoServiceFake
+	t                       *testing.T
+	cfg                     *setting.Cfg
+	m                       *web.Mux
+	context                 *models.ReqContext
+	resp                    *httptest.ResponseRecorder
+	handlerFunc             handlerFunc
+	defaultHandler          web.Handler
+	req                     *http.Request
+	url                     string
+	userAuthTokenService    *auth.FakeUserAuthTokenService
+	sqlStore                sqlstore.Store
+	authInfoService         *logintest.AuthInfoServiceFake
+	dashboardVersionService dashver.Service
 }
 
 func (sc *scenarioContext) exec() {
@@ -371,6 +374,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
+		License:            &licensing.OSSLicensingService{},
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,

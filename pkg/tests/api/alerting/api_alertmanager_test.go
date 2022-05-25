@@ -22,6 +22,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -2279,9 +2280,9 @@ func TestEval(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2307,8 +2308,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2342,7 +2345,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2368,8 +2372,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2403,7 +2409,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "condition not found in any query or expression",
@@ -2429,8 +2436,11 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedMessage:    "invalid condition: condition B not found in any query or expression: it should be one of: [A]",
+			expectedStatusCode: func() int { return http.StatusBadRequest },
+			expectedMessage: func() string {
+				return "invalid condition: condition B not found in any query or expression: it should be one of: [A]"
+			},
+			expectedResponse: func() string { return "" },
 		},
 		{
 			desc: "unknown query datasource",
@@ -2454,8 +2464,19 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid condition: invalid query A: data source not found: unknown"
+			},
+			expectedResponse: func() string { return "" },
 		},
 	}
 
@@ -2476,12 +2497,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-			if tc.expectedMessage != "" {
-				assert.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				assert.Equal(t, tc.expectedMessage(), res.Message)
 				assert.NotEmpty(t, res.TraceID)
 			}
 		})
@@ -2491,9 +2512,9 @@ func TestEval(t *testing.T) {
 	testCases = []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2516,8 +2537,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2546,7 +2569,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2569,8 +2593,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2599,7 +2625,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "unknown query datasource",
@@ -2620,8 +2647,19 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedResponse: func() string { return "" },
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid queries or expressions: invalid query A: data source not found: unknown"
+			},
 		},
 	}
 
@@ -2642,13 +2680,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-
-			if tc.expectedMessage != "" {
-				require.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				require.Equal(t, tc.expectedMessage(), res.Message)
 				require.NotEmpty(t, res.TraceID)
 			}
 		})
