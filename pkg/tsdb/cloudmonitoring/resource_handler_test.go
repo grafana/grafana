@@ -3,6 +3,7 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -304,6 +305,6 @@ func Test_getGCEDefaultProject(t *testing.T) {
 		},
 	}
 
-	assert.HTTPSuccess(t, s.getGCEDefaultProject(), "GET", "/gceDefaultProject", nil)
-	assert.HTTPBodyContains(t, s.getGCEDefaultProject(), "GET", "/gceDefaultProject", nil, project)
+	assert.HTTPSuccess(t, s.getGCEDefaultProject, "GET", "/gceDefaultProject", nil)
+	assert.HTTPBodyContains(t, s.getGCEDefaultProject, "GET", "/gceDefaultProject", nil, fmt.Sprintf("\"%v\"", project))
 }

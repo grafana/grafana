@@ -26,7 +26,7 @@ type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/gceDefaultProject", s.getGCEDefaultProject())
+	mux.HandleFunc("/gceDefaultProject", s.getGCEDefaultProject)
 	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors))
 	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices))
 	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs))
@@ -34,21 +34,19 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	return mux
 }
 
-func (s *Service) getGCEDefaultProject() func(rw http.ResponseWriter, req *http.Request) {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		project, err := s.gceDefaultProjectGetter(req.Context())
-		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
-			return
-		}
-
-		encoded, err := json.Marshal(project)
-		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("error retrieving default project %v", err))
-			return
-		}
-		writeResponseBytes(rw, http.StatusOK, encoded)
+func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
+	project, err := s.gceDefaultProjectGetter(req.Context())
+	if err != nil {
+		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+		return
 	}
+
+	encoded, err := json.Marshal(project)
+	if err != nil {
+		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("error retrieving default project %v", err))
+		return
+	}
+	writeResponseBytes(rw, http.StatusOK, encoded)
 }
 
 func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
