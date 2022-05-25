@@ -19,68 +19,73 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
 
   return (
     <>
-      <ElasticSearchQueryField
-        value={annotation.target?.query}
-        onChange={(query) => {
-          onAnnotationChange({
-            ...annotation,
-            query,
-          });
-        }}
-      />
+      <div className="gf-form-group">
+        <ElasticSearchQueryField
+          value={annotation.target?.query}
+          onChange={(query) => {
+            onAnnotationChange({
+              ...annotation,
+              query,
+            });
+          }}
+        />
+      </div>
 
-      <EditorRow>
-        <EditorField label="Time">
-          <Input
-            type="text"
-            placeholder="@timestamp"
-            value={annotation.timeField}
-            onChange={(e) => {
-              onAnnotationChange({
-                ...annotation,
-                timeField: e.currentTarget.value,
-              });
-            }}
-          />
-        </EditorField>
-        <EditorField label="Time End">
-          <Input
-            type="text"
-            value={annotation.timeEndField}
-            onChange={(e) => {
-              onAnnotationChange({
-                ...annotation,
-                timeEndField: e.currentTarget.value,
-              });
-            }}
-          />
-        </EditorField>
-        <EditorField label="Text">
-          <Input
-            type="text"
-            value={annotation.textField}
-            onChange={(e) => {
-              onAnnotationChange({
-                ...annotation,
-                textField: e.currentTarget.value,
-              });
-            }}
-          />
-        </EditorField>
-        <EditorField label="Tags">
-          <Input
-            type="text"
-            placeholder="tags"
-            value={annotation.tagsField}
-            onChange={(e) => {
-              onAnnotationChange({
-                ...annotation,
-                tagsField: e.currentTarget.value,
-              });
-            }}
-          />
-        </EditorField>
-      </EditorRow>
+      <div className="gf-form-group">
+        <h6>Field mappings</h6>
+        <EditorRow>
+          <EditorField label="Time">
+            <Input
+              type="text"
+              placeholder="@timestamp"
+              value={annotation.timeField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  timeField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Time End">
+            <Input
+              type="text"
+              value={annotation.timeEndField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  timeEndField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Text">
+            <Input
+              type="text"
+              value={annotation.textField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  textField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label="Tags">
+            <Input
+              type="text"
+              placeholder="tags"
+              value={annotation.tagsField}
+              onChange={(e) => {
+                onAnnotationChange({
+                  ...annotation,
+                  tagsField: e.currentTarget.value,
+                });
+              }}
+            />
+          </EditorField>
+        </EditorRow>
+      </div>
     </>
   );
 }

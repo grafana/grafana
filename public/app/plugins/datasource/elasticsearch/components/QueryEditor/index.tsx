@@ -79,7 +79,7 @@ const QueryEditorForm = ({ value }: Props) => {
   // To be considered a time series query, the last bucked aggregation must be a Date Histogram
   const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 
-  const showBucketAggregationsEditor = value?.metrics?.every(
+  const showBucketAggregationsEditor = value.metrics?.every(
     (metric) => !metricAggregationConfig[metric.type].isSingleMetric
   );
 
