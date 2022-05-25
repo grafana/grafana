@@ -63,6 +63,7 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
 
 	dto := &models.PlaylistDTO{
+		Id:       cmd.Result.Id,
 		Uid:      cmd.Result.Uid,
 		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
@@ -84,11 +85,12 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgI
 
 	for _, item := range playlistitems {
 		playlistDTOs = append(playlistDTOs, models.PlaylistItemDTO{
-			Id:    item.Id,
-			Type:  item.Type,
-			Value: item.Value,
-			Order: item.Order,
-			Title: item.Title,
+			Id:         item.Id,
+			PlaylistId: item.PlaylistId,
+			Type:       item.Type,
+			Value:      item.Value,
+			Order:      item.Order,
+			Title:      item.Title,
 		})
 	}
 
