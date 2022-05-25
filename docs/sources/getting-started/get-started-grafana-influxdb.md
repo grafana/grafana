@@ -1,12 +1,11 @@
 +++
 aliases = ["/docs/grafana/latest/getting-started/getting-started-influxdb/"]
-description = "Guide for getting started with Grafana and InfluxDB"
-keywords = ["grafana", "intro", "guide", "started"]
-title = "With Grafana and InfluxDB"
-weight = 250
+description = "Learn how to build your first InfluxDB dashboard in Grafana."
+title = "Get started with Grafana and InfluxDB"
+weight = 400
 +++
 
-# Getting started with Grafana and InfluxDB
+# Get started with Grafana and InfluxDB
 
 {{< docs/shared "influxdb/intro.md" >}}
 
@@ -14,27 +13,27 @@ weight = 250
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
-## Step 2. Get InfluxDB
+#### Get InfluxDB
 
 You can [download InfluxDB](https://portal.influxdata.com/downloads/) and install it locally or you can sign up for [InfluxDB Cloud](https://www.influxdata.com/products/influxdb-cloud/). Windows installers are not available for some versions of InfluxDB.
 
-## Step 3. Install other InfluxDB software
+#### Install other InfluxDB software
 
 [Install Telegraf](https://docs.influxdata.com/telegraf/v1.18/introduction/installation/). This tool is an agent that helps you get metrics into InfluxDB. For more information, refer to [Telegraf documentation](https://docs.influxdata.com/telegraf/v1.18/).
 
 If you chose to use InfluxDB Cloud, then you should [download and install the InfluxDB Cloud CLI](https://portal.influxdata.com/downloads/). This tool allows you to send command line instructions to your cloud account. For more information, refer to [Influx CLI documentation](https://docs.influxdata.com/influxdb/cloud/write-data/developer-tools/influx-cli/).
 
-## Step 4. Get data into InfluxDB
+#### Get data into InfluxDB
 
 If you downloaded and installed InfluxDB on your local machine, then use the [Quick Start](https://docs.influxdata.com/influxdb/v2.0/write-data/#quick-start-for-influxdb-oss) feature to visualize InfluxDB metrics.
 
 If you are using the cloud account, then the wizards will guide you through the initial process. For more information, refer to [Configure Telegraf](https://docs.influxdata.com/influxdb/cloud/write-data/no-code/use-telegraf/#configure-telegraf).
 
-### Note for Windows users:
+##### Note for Windows users:
 
 Windows users might need to make additional adjustments. Look for special instructions in the InfluxData documentation and [Using Telegraf on Windows](https://www.influxdata.com/blog/using-telegraf-on-windows/) blog post. The regular system monitoring template in InfluxDB Cloud is not compatible with Windows. Windows users who use InfluxDB Cloud to monitor their system will need to use the [Windows System Monitoring Template](https://github.com/influxdata/community-templates/tree/master/windows_system).
 
-## Step 5. Add your InfluxDB data source to Grafana
+#### Add your InfluxDB data source to Grafana
 
 You can have more than one InfluxDB data source defined in Grafana.
 
@@ -43,7 +42,7 @@ You can have more than one InfluxDB data source defined in Grafana.
    - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
    - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux.md" >}}) for information about specific data source fields.
 
-### InfluxDB guides
+##### InfluxDB guides
 
 InfluxDB publishes guidance for connecting different versions of their product to Grafana.
 
@@ -51,18 +50,18 @@ InfluxDB publishes guidance for connecting different versions of their product t
 - **InfluxDB OSS or Enterprise 2.x.** Refer to [Use Grafana with InfluxDB](https://docs.influxdata.com/influxdb/v2.0/tools/grafana/). Select your InfluxDB version in the upper right corner.
 - **InfluxDB Cloud.** Refer to [Use Grafana with InfluxDB Cloud](https://docs.influxdata.com/influxdb/cloud/tools/grafana/).
 
-### Important tips
+##### Important tips
 
 - Make sure your Grafana token has read access. If it doesn't, then you'll get an authentication error and be unable to connect Grafana to InfluxDB.
 - Avoid apostrophes and other non-standard characters in bucket and token names.
 - If the text name of the organization or bucket doesn't work, then try the ID number.
 - If you change your bucket name in InfluxDB, then you must also change it in Grafana and your Telegraf .conf file as well.
 
-## Step 6. Add a query
+#### Add a query
 
 This step varies depending on the query language that you selected when you set up your data source in Grafana.
 
-### InfluxQL query language
+##### InfluxQL query language
 
 In the query editor, click **select measurement**.
 
@@ -70,7 +69,7 @@ In the query editor, click **select measurement**.
 
 Grafana displays a list of possible series. Click one to select it, and Grafana graphs any available data. If there is no data to display, then try another selection or check your data source.
 
-### Flux query language
+##### Flux query language
 
 Create a simple Flux query.
 
@@ -98,11 +97,11 @@ You can also create Flux queries in the InfluxDB Explore view.
 1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
-## Step 7. Check InfluxDB metrics in Grafana Explore
+#### Check InfluxDB metrics in Grafana Explore
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
 
-## Step 8. Start building dashboards
+#### Start building dashboards
 
 There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
 
