@@ -6,6 +6,7 @@ import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -94,7 +95,7 @@ export const SearchResultsTable = React.memo(
           if (selected.current > 0 && urlsRef.current) {
             const url = urlsRef.current.values.get(selected.current - 1);
             if (url) {
-              window.location.href = url;
+              locationService.replace(url);
             }
           }
       }
@@ -255,7 +256,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     selectedRow: css`
-      background-color: #ff0;
+      background-color: ${rowHoverBg};
+      box-shadow: inset 3px 0px ${theme.colors.primary.border};
     `,
     rowContainer: css`
       label: row;
