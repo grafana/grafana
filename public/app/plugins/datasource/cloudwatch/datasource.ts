@@ -33,6 +33,7 @@ import { AppNotificationTimeout } from 'app/types';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { DEFAULT_QUERY } from './components/MetricsQueryEditor/usePreparedMetricsQuery';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLanguageProvider } from './language_provider';
@@ -131,6 +132,7 @@ export class CloudWatchDatasource
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
     this.variables = new CloudWatchVariableSupport(this);
     this.annotations = CloudWatchAnnotationSupport;
+    this.defaultQuery = DEFAULT_QUERY;
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
