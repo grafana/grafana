@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2022 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
-
 Panel: {
     lineages: [
         [
             {
                 PanelOptions: {
-                    ui.SingleStatBaseOptions
-                    graphMode: ui.BigValueGraphMode | *"area"
-                    colorMode: ui.BigValueColorMode | *"value"
-                    justifyMode: ui.BigValueJustifyMode | *"auto"
-                    textMode: ui.BigValueTextMode | *"auto"
+                    onlyFromThisDashboard: bool | *false
+                    onlyInTimeRange: bool | *false
+                    tags: [...string]
+                    limit: uint32 | *10
+                    showUser: bool | *true
+                    showTime: bool | *true
+                    showTags: bool | *true
+                    navigateToPanel: bool | *true
+                    navigateBefore: string | *"10m"
+                    navigateAfter: string | *"10m"
                 } @cuetsy(kind="interface")
             }
         ]
