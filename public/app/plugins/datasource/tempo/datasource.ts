@@ -629,8 +629,7 @@ function getApmTable(
       values: getRateAlignedValues(rate, durationObj),
       config: {
         links: [makePromLink('Duration', buildLinkExp(durationMetric), datasourceUid, false)],
-        unit: 'ms',
-        decimals: 3,
+        unit: 's',
       },
     });
   }
