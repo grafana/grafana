@@ -19,7 +19,7 @@ export const SearchResultsGrid = ({
   selection,
   selectionToggle,
   onTagSelected,
-  onDatasourceChange,
+  highlightIndex,
 }: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
 
@@ -100,10 +100,15 @@ export const SearchResultsGrid = ({
               }
             }
 
+            let className = styles.virtualizedGridItemWrapper;
+            if (index === highlightIndex) {
+              className += ' ' + styles.selectedItem;
+            }
+
             // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
             // And without this wrapper there is no room for that margin
             return item ? (
-              <li style={style} className={styles.virtualizedGridItemWrapper}>
+              <li style={style} className={className}>
                 <SearchCard key={item.uid} {...itemProps} item={facade} />
               </li>
             ) : null;
@@ -125,5 +130,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     > ul {
       list-style: none;
     }
+  `,
+  selectedItem: css`
+    box-shadow: inset 1px 1px 6px 6px ${theme.colors.primary.border};
   `,
 });

@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { useSearchQuery } from '../../hooks/useSearchQuery';
-import { getGrafanaSearcher, SearchQuery } from '../../service';
+import { getGrafanaSearcher, QueryResponse, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
@@ -36,9 +36,13 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
     useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
+
+  const responserRef = useRef<QueryResponse>();
+  const highlightIndexRef = useRef(0);
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
@@ -67,8 +71,11 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
     return q;
   }, [query, queryText, folderDTO]);
 
-  const results = useAsync(() => {
-    return getGrafanaSearcher().search(searchQuery);
+  const results = useAsync(async () => {
+    const res = await getGrafanaSearcher().search(searchQuery);
+    setHighlightIndex((highlightIndexRef.current = 0));
+    responserRef.current = res;
+    return res;
   }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
@@ -83,6 +90,35 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
     },
     [searchSelection]
   );
+
+  const keyListener = useCallback((evt: KeyboardEvent) => {
+    switch (evt.code) {
+      case 'ArrowDown': {
+        highlightIndexRef.current++;
+        setHighlightIndex(highlightIndexRef.current);
+        break;
+      }
+      case 'ArrowUp':
+        highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
+        setHighlightIndex(highlightIndexRef.current);
+        break;
+      case 'Enter':
+        if (highlightIndexRef.current > 0 && responserRef.current) {
+          const url = responserRef.current.view?.fields?.url?.values?.get(highlightIndexRef.current - 1);
+          if (url) {
+            locationService.replace(url);
+          }
+        }
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log('INIT key listener!');
+    document.addEventListener('keydown', keyListener);
+    return () => {
+      document.removeEventListener('keydown', keyListener);
+    };
+  }, [keyListener]);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
@@ -170,6 +206,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
               width: width,
               height: height,
               onTagSelected: onTagAdd,
+              highlightIndex: highlightIndex - 1,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
             };
 

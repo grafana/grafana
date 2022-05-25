@@ -6,7 +6,6 @@ import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -20,6 +19,7 @@ export type SearchResultsProps = {
   response: QueryResponse;
   width: number;
   height: number;
+  highlightIndex: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
   clearSelection: () => void;
@@ -43,20 +43,18 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
+    highlightIndex,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
 
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const urlsRef = useRef<Field>();
-    const selected = useRef<number>(0);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
-      urlsRef.current = response.view.fields.url;
 
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
@@ -72,42 +70,7 @@ export const SearchResultsTable = React.memo(
       if (listRef.current) {
         listRef.current.scrollTo(0);
       }
-      selected.current = 0;
     }, [memoizedData]);
-
-    const keyListener = useCallback((evt: KeyboardEvent) => {
-      if (!listRef.current) {
-        return;
-      }
-      switch (evt.code) {
-        case 'ArrowDown': {
-          selected.current++;
-          console.log('DOWN');
-          listRef.current.forceUpdate();
-          break;
-        }
-        case 'ArrowUp':
-          console.log('UP');
-          selected.current = Math.max(0, selected.current - 1);
-          listRef.current.forceUpdate();
-          break;
-        case 'Enter':
-          if (selected.current > 0 && urlsRef.current) {
-            const url = urlsRef.current.values.get(selected.current - 1);
-            if (url) {
-              locationService.replace(url);
-            }
-          }
-      }
-    }, []);
-
-    useEffect(() => {
-      console.log('INIT key listener!');
-      document.addEventListener('keydown', keyListener);
-      return () => {
-        document.removeEventListener('keydown', keyListener);
-      };
-    }, [keyListener]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -140,7 +103,7 @@ export const SearchResultsTable = React.memo(
 
         const url = response.view.fields.url?.values.get(rowIndex);
         let className = styles.rowContainer;
-        if (rowIndex === selected.current - 1) {
+        if (rowIndex === highlightIndex) {
           className += ' ' + styles.selectedRow;
         }
         return (
@@ -160,14 +123,12 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, styles, selected, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, styles, highlightIndex, tableStyles]
     );
 
     if (!rows.length) {
       return <div className={styles.noData}>No data</div>;
     }
-
-    console.log('SELECTED', selected.current);
 
     return (
       <div {...getTableProps()} aria-label="Search result table" role="table">
