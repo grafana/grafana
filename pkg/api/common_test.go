@@ -32,6 +32,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -370,6 +371,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
+		License:            &licensing.OSSLicensingService{},
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock()),
 	}
