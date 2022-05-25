@@ -276,9 +276,9 @@ You can use Grafana macros when constructing a query. Use the macros in the wher
 
 See the following topics to learn more about the Azure Monitor data source:
 
-- [Azure Monitor template variables]({{< relref "./template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
-- [Provisioning Azure Monitor]({{< relref "./provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
-- [Deprecating Application Insights]({{< relref "./provisioning.md" >}}) and migrating to Metrics and Logs queries
+- [Azure Monitor template variables]({{< relref "template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
+- [Provisioning Azure Monitor]({{< relref "provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
+- [Deprecating Application Insights]({{< relref "provisioning.md" >}}) and migrating to Metrics and Logs queries
 
 ### Configuring using Managed Identity
 

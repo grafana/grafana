@@ -22,7 +22,7 @@ For new installations or existing installs without alerting configured, Grafana 
 
 Existing installations that upgrade to v9.0 will have Grafana alerting enabled by default. For more information on migrating from legacy or the cloud alerting plugin, see [Migrating to Grafana alerting]({{< relref "./migrating-alerts/_index.md" >}}).
 
-Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
+Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
 - [About alert rules]({{< relref "./fundamentals/alert-rules/_index.md" >}})
 - [Migrating legacy alerts]({{< relref "./migrating-alerts/_index.md" >}})
@@ -30,8 +30,8 @@ Before you begin, we recommend that you familiarize yourself with some of the [f
 - [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
-- [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
-- [View alert groupings]({{< relref "./alert-groups/_index.md" >}})
-- [Add or edit an alert contact point]({{< relref "./contact-points/_index.md" >}})
-- [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
-- [Add or edit silences]({{< relref "./silences/_index.md" >}})
+- [View the state and health of alerting rules]({{< relref "fundamentals/state-and-health.md" >}})
+- [View alert groupings]({{< relref "alert-groups/_index.md" >}})
+- [Add or edit an alert contact point]({{< relref "contact-points/_index.md" >}})
+- [Add or edit notification policies]({{< relref "notifications/_index.md" >}})
+- [Add or edit silences]({{< relref "silences/_index.md" >}})

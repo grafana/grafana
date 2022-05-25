@@ -16,4 +16,4 @@ Reporting allows you to generate PDFs from any of your dashboards and have them 
 
 {{< figure src="/static/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-> Reporting is only available in Grafana Enterprise, v6.4 or later. For more information, refer to [Reporting]({{< relref "../enterprise/reporting.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Reporting is only available in Grafana Enterprise, v6.4 or later. For more information, refer to [Reporting]({{< relref "../enterprise/reporting.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).

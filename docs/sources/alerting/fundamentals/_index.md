@@ -11,8 +11,7 @@ weight: 110
 
 This section includes the following fundamental concepts of Grafana alerting:
 
-- [Alert rules]({{< relref "./alert-rules/_index.md" >}})
-- [Annotations and labels for alerting rules]({{< relref "./annotation-label/_index.md" >}})
-- [Alertmanager]({{< relref "./alertmanager.md" >}})
-- [State and health of alerting rules]({{< relref "./state-and-health.md" >}})
-- [Evaluating Grafana managed alerts]({{< relref "./evaluate-grafana-alerts.md" >}})
+- [Annotations and labels for alerting rules]({{< relref "annotation-label/_index.md" >}})
+- [Alertmanager]({{< relref "alertmanager.md" >}})
+- [State and health of alerting rules]({{< relref "state-and-health.md" >}})
+- [Evaluating Grafana managed alerts]({{< relref "evaluate-grafana-alerts.md" >}})
