@@ -233,7 +233,7 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 

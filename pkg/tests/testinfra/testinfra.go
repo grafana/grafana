@@ -17,6 +17,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/server"
@@ -35,6 +36,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	t.Helper()
 	ctx := context.Background()
 
+	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
