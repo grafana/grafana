@@ -57,6 +57,7 @@ export class SQLSearcher implements GrafanaSearcher {
     }
 
     if (query.uid) {
+      q.query = query.uid.join(', '); // TODO! this will return nothing
       q.dashboardUIDs = query.uid;
     } else if (query.location?.length) {
       let info = this.locationInfo[query.location];
