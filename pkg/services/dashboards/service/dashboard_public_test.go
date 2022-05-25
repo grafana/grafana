@@ -12,32 +12,70 @@ import (
 	m "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetPublicDashboard(t *testing.T) {
-	fakeStore := m.FakeDashboardStore{}
-	service := &DashboardServiceImpl{
-		log:            log.New("test.logger"),
-		dashboardStore: &fakeStore,
+	type storeResp struct {
+		pd  *models.PublicDashboard
+		d   *models.Dashboard
+		err error
 	}
 
-	t.Run("returns DashboardNotFound 404 when isPublic is false", func(t *testing.T) {
-		fakeStore.On("GetPublicDashboard", mock.Anything).Return(nil, nil, models.ErrPublicDashboardNotFound)
-		dashboard, err := service.GetPublicDashboard(context.Background(), "abc1234")
-		assert.Nil(t, dashboard)
-		assert.Error(t, models.ErrPublicDashboardNotFound, err)
-	})
+	testCases := []struct {
+		name      string
+		uid       string
+		storeResp *storeResp
+		errResp   error
+		dashResp  *models.Dashboard
+	}{
+		{
+			name:      "returns a dashboard",
+			uid:       "abc123",
+			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: true}, err: nil},
+			errResp:   nil,
+			dashResp:  &models.Dashboard{IsPublic: true},
+		},
+		{
+			name:      "returns ErrPublicDashboardNotFound when isPublic is false",
+			uid:       "abc123",
+			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: false}, err: nil},
+			errResp:   models.ErrPublicDashboardNotFound,
+			dashResp:  nil,
+		},
+		{
+			name:      "returns ErrPublicDashboardNotFound if PublicDashboard missing",
+			uid:       "abc123",
+			storeResp: &storeResp{pd: nil, d: nil, err: nil},
+			errResp:   models.ErrPublicDashboardNotFound,
+			dashResp:  nil,
+		},
+		{
+			name:      "returns ErrPublicDashboardNotFound if Dashboard missing",
+			uid:       "abc123",
+			storeResp: &storeResp{pd: nil, d: nil, err: nil},
+			errResp:   models.ErrPublicDashboardNotFound,
+			dashResp:  nil,
+		},
+	}
 
-	t.Run("returns DashboardNotFound 404 when malformed uid", func(t *testing.T) {
-		assert.NotNil(t, nil)
-	})
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			fakeStore := m.FakeDashboardStore{}
+			service := &DashboardServiceImpl{
+				log:            log.New("test.logger"),
+				dashboardStore: &fakeStore,
+			}
+			fakeStore.On("GetPublicDashboard", mock.Anything).
+				Return(test.storeResp.pd, test.storeResp.d, test.storeResp.err)
 
-	t.Run("returns DashboardNotFound 404 when missing public dashboard", func(t *testing.T) {
-		assert.NotNil(t, nil)
-	})
-
-	t.Run("returns DashboardNotFound 404 when missing dashboard", func(t *testing.T) {
-		assert.NotNil(t, nil)
-	})
-
+			dashboard, err := service.GetPublicDashboard(context.Background(), test.uid)
+			if test.errResp != nil {
+				assert.Error(t, test.errResp, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.dashResp, dashboard)
+		})
+	}
 }

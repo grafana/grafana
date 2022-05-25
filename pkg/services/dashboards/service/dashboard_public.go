@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -12,12 +11,19 @@ import (
 func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	pdc, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
 
-	fmt.Println(pdc)
-	fmt.Println(d)
-
 	if err != nil {
 		return nil, err
 	}
+
+	if pdc == nil || d == nil {
+		return nil, models.ErrPublicDashboardNotFound
+	}
+
+	if !d.IsPublic {
+		return nil, models.ErrPublicDashboardNotFound
+	}
+
+	// FIXME insert logic to substitute pdc.TimeVariables into d
 
 	return d, nil
 }
