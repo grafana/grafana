@@ -32,6 +32,6 @@
     "react-dom": "17.0.1",
     "react-hook-form": "7.5.3",
     "react-router-dom": "^5.2.0",
-    "tslib": "2.3.1"
+    "tslib": "2.4.0"
   }
 }

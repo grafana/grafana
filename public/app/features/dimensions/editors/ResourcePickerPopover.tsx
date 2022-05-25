@@ -5,10 +5,13 @@ import { useOverlay } from '@react-aria/overlays';
 import React, { createRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 
+import { FileUploader } from './FileUploader';
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
 
@@ -19,6 +22,9 @@ interface Props {
   folderName: ResourceFolderName;
 }
 
+interface ErrorResponse {
+  message: string;
+}
 export const ResourcePickerPopover = (props: Props) => {
   const { value, onChange, mediaType, folderName } = props;
   const styles = useStyles2(getStyles);
@@ -33,6 +39,9 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
+  const [formData, setFormData] = useState<FormData>(new FormData());
+  const [upload, setUpload] = useState<boolean>(false);
+  const [error, setError] = useState<ErrorResponse>({ message: '' });
 
   const getTabClassName = (tabName: PickerTabType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
@@ -49,13 +58,23 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-
+  const renderUploader = () => (
+    <FileUploader
+      mediaType={mediaType}
+      setFormData={setFormData}
+      setUpload={setUpload}
+      newValue={newValue}
+      error={error}
+    />
+  );
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
         return renderFolderPicker();
       case PickerTabType.URL:
         return renderURLPicker();
+      case PickerTabType.Upload:
+        return renderUploader();
       default:
         return renderFolderPicker();
     }
@@ -75,6 +94,16 @@ export const ResourcePickerPopover = (props: Props) => {
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
             </button>
+            {config.featureToggles['storageLocalUpload'] ? (
+              <button
+                className={getTabClassName(PickerTabType.Upload)}
+                onClick={() => setActivePicker(PickerTabType.Upload)}
+              >
+                Upload
+              </button>
+            ) : (
+              ''
+            )}
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
@@ -85,7 +114,31 @@ export const ResourcePickerPopover = (props: Props) => {
               <Button
                 className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
-                onClick={() => onChange(newValue)}
+                onClick={() => {
+                  if (upload) {
+                    fetch('/api/storage/upload', {
+                      method: 'POST',
+                      body: formData,
+                    })
+                      .then((res) => {
+                        if (res.status >= 400) {
+                          res.json().then((data) => setError(data));
+                          return;
+                        } else {
+                          return res.json();
+                        }
+                      })
+                      .then((data) => {
+                        getBackendSrv()
+                          .get(`api/storage/read/${data.path}`)
+                          .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
+                      })
+                      .catch((err) => console.error(err));
+                  } else {
+                    onChange(newValue);
+                  }
+                }}
               >
                 Select
               </Button>

@@ -14,8 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
-import { memo } from 'react';
+import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -72,16 +71,27 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 type TracePageSearchBarProps = {
-  prevResult: () => void;
-  nextResult: () => void;
   navigable: boolean;
   searchValue: string;
-  onSearchValueChange: (value: string) => void;
+  setSearch: (value: string) => void;
   searchBarSuffix: string;
+  spanFindMatches: Set<string> | undefined;
+  focusedSpanIdForSearch: string;
+  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const { navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
+  const {
+    navigable,
+    setSearch,
+    searchValue,
+    searchBarSuffix,
+    spanFindMatches,
+    focusedSpanIdForSearch,
+    setSearchBarSuffix,
+    setFocusedSpanIdForSearch,
+  } = props;
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
@@ -98,11 +108,60 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     suffix,
   };
 
+  const setTraceSearch = (value: string) => {
+    setFocusedSpanIdForSearch('');
+    setSearchBarSuffix('');
+    setSearch(value);
+  };
+
+  const nextResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at end, go to start
+    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
+      setFocusedSpanIdForSearch(spanMatches[0]);
+      setSearchBarSuffix(getSearchBarSuffix(1));
+      return;
+    }
+
+    // get next
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
+  };
+
+  const prevResult = () => {
+    const spanMatches = Array.from(spanFindMatches!);
+    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
+      ? spanMatches.indexOf(focusedSpanIdForSearch)
+      : 0;
+
+    // new query || at start, go to end
+    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
+      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
+      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
+      return;
+    }
+
+    // get prev
+    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
+    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
+  };
+
+  const getSearchBarSuffix = (index: number): string => {
+    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
+      return index + ' of ' + spanFindMatches?.size;
+    }
+    return '';
+  };
+
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput
-          onChange={onSearchValueChange}
+          onChange={setTraceSearch}
           value={searchValue}
           inputProps={uiFindInputInputProps}
           allowClear={true}

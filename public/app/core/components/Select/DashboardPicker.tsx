@@ -7,8 +7,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
-interface Props
-  extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | 'menuShouldPortal'> {
+interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
 }
@@ -78,7 +77,6 @@ export const DashboardPicker = ({
 
   return (
     <AsyncSelect
-      menuShouldPortal
       loadOptions={getDashboards}
       onChange={onPicked}
       placeholder={placeholder}

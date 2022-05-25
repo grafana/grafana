@@ -1,4 +1,4 @@
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../types';
 
 import migrateQuery from './migrateQuery';
 
@@ -52,7 +52,6 @@ const azureMonitorQueryV8 = {
 };
 
 const modernMetricsQuery: AzureMonitorQuery = {
-  appInsights: { dimension: [], metricName: 'select', timeGrain: 'auto' },
   azureLogAnalytics: {
     query:
       '//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc',
@@ -63,7 +62,7 @@ const modernMetricsQuery: AzureMonitorQuery = {
     aggregation: 'Average',
     alias: '{{ dimensionvalue }}',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-    dimensionFilters: [{ dimension: 'dependency/success', filter: '', operator: 'eq' }],
+    dimensionFilters: [{ dimension: 'dependency/success', filters: ['*'], operator: 'eq' }],
     metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
@@ -75,7 +74,6 @@ const modernMetricsQuery: AzureMonitorQuery = {
     top: '10',
   },
   azureResourceGraph: { resultFormat: 'table' },
-  insightsAnalytics: { query: '', resultFormat: 'time_series' },
   queryType: AzureQueryType.AzureMonitor,
   refId: 'A',
   subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
@@ -112,6 +110,86 @@ describe('AzureMonitor: migrateQuery', () => {
           azureMonitor: expect.objectContaining({
             resourceUri:
               '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestData',
+          }),
+        })
+      );
+    });
+  });
+
+  describe('migrating from a v9 query to the latest query version', () => {
+    it('will not change valid dimension filters', () => {
+      const dimensionFilters: AzureMetricDimension[] = [
+        { dimension: 'TestDimension', operator: 'eq', filters: ['testFilter'] },
+      ];
+      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters,
+          }),
+        })
+      );
+    });
+    it('correctly updates old filter containing wildcard', () => {
+      const dimensionFilters: AzureMetricDimension[] = [{ dimension: 'TestDimension', operator: 'eq', filter: '*' }];
+      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters: [
+              { dimension: dimensionFilters[0].dimension, operator: dimensionFilters[0].operator, filters: ['*'] },
+            ],
+          }),
+        })
+      );
+    });
+    it('correctly updates old filter containing value', () => {
+      const dimensionFilters: AzureMetricDimension[] = [{ dimension: 'TestDimension', operator: 'eq', filter: 'test' }];
+      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters: [
+              { dimension: dimensionFilters[0].dimension, operator: dimensionFilters[0].operator, filters: ['test'] },
+            ],
+          }),
+        })
+      );
+    });
+    it('correctly ignores wildcard if filters has a value', () => {
+      const dimensionFilters: AzureMetricDimension[] = [
+        { dimension: 'TestDimension', operator: 'eq', filter: '*', filters: ['testFilter'] },
+      ];
+      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters: [
+              {
+                dimension: dimensionFilters[0].dimension,
+                operator: dimensionFilters[0].operator,
+                filters: ['testFilter'],
+              },
+            ],
+          }),
+        })
+      );
+    });
+    it('correctly ignores duplicates', () => {
+      const dimensionFilters: AzureMetricDimension[] = [
+        { dimension: 'TestDimension', operator: 'eq', filter: 'testFilter', filters: ['testFilter'] },
+      ];
+      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters: [
+              {
+                dimension: dimensionFilters[0].dimension,
+                operator: dimensionFilters[0].operator,
+                filters: ['testFilter'],
+              },
+            ],
           }),
         })
       );

@@ -101,5 +101,14 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         margin: ${theme.spacing()} 0;
       }
     }
+
+    a {
+      color: ${theme.colors.text.link};
+
+      &:hover {
+        color: ${theme.colors.text.link};
+        text-decoration: underline;
+      }
+    }
   `,
 });

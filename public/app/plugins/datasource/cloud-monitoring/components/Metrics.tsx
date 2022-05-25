@@ -140,7 +140,6 @@ export function Metrics(props: Props) {
       <QueryEditorRow>
         <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onServiceChange}
             value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
@@ -157,7 +156,6 @@ export function Metrics(props: Props) {
         </QueryEditorField>
         <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
             value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}

@@ -8,6 +8,12 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, waitForExplore } from './helper/setup';
 
+const fetch = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,

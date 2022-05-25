@@ -12,6 +12,9 @@ import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
+  loadRichHistory,
+  loadMoreRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
@@ -28,11 +31,12 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;
   const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
-  const { richHistory } = item;
+  const { richHistory, richHistoryTotal } = item;
   return {
     richHistory,
+    richHistoryTotal,
     firstTab,
-    activeDatasourceInstance: datasourceInstance?.name,
+    activeDatasourceInstance: datasourceInstance!.name,
     richHistorySettings,
     richHistorySearchFilters,
   };
@@ -40,6 +44,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   initRichHistory,
+  loadRichHistory,
+  loadMoreRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -60,12 +67,16 @@ export function RichHistoryContainer(props: Props) {
 
   const {
     richHistory,
+    richHistoryTotal,
     width,
     firstTab,
     activeDatasourceInstance,
     exploreId,
     deleteRichHistory,
     initRichHistory,
+    loadRichHistory,
+    loadMoreRichHistory,
+    clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -74,10 +85,10 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    initRichHistory(exploreId);
-  }, [initRichHistory, exploreId]);
+    initRichHistory();
+  }, [initRichHistory]);
 
-  if (!richHistorySettings || !richHistorySearchFilters) {
+  if (!richHistorySettings) {
     return <span>Loading...</span>;
   }
 
@@ -90,6 +101,7 @@ export function RichHistoryContainer(props: Props) {
     >
       <RichHistory
         richHistory={richHistory}
+        richHistoryTotal={richHistoryTotal}
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
@@ -100,6 +112,9 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
+        loadRichHistory={loadRichHistory}
+        loadMoreRichHistory={loadMoreRichHistory}
+        clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>
   );

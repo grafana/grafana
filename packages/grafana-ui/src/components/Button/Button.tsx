@@ -23,12 +23,26 @@ type CommonProps = {
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
+  type?: string;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', fill = 'solid', icon, fullWidth, children, className, ...otherProps }, ref) => {
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      fill = 'solid',
+      icon,
+      fullWidth,
+      children,
+      className,
+      type = 'button',
+      ...otherProps
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
@@ -45,7 +59,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     return (
-      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
+      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>

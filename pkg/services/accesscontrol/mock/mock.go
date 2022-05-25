@@ -45,9 +45,9 @@ type Mock struct {
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user *models.SignedInUser) []string
 	RegisterFixedRolesFunc             func() error
-	RegisterAttributeScopeResolverFunc func(string, accesscontrol.AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 
-	scopeResolver accesscontrol.ScopeResolver
+	scopeResolvers accesscontrol.ScopeResolvers
 }
 
 // Ensure the mock stays in line with the interface
@@ -55,14 +55,18 @@ var _ fullAccessControl = New()
 
 func New() *Mock {
 	mock := &Mock{
-		Calls:         Calls{},
-		disabled:      false,
-		permissions:   []*accesscontrol.Permission{},
-		builtInRoles:  []string{},
-		scopeResolver: accesscontrol.NewScopeResolver(),
+		Calls:          Calls{},
+		disabled:       false,
+		permissions:    []*accesscontrol.Permission{},
+		builtInRoles:   []string{},
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
 	}
 
 	return mock
+}
+
+func (m Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return make(map[string]interface{})
 }
 
 func (m Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
@@ -94,12 +98,12 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 		return false, err
 	}
 
-	attributeMutator := m.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := m.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
+	return resolvedEvaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions)), nil
 }
 
 // GetUserPermissions returns user permissions.
@@ -174,13 +178,11 @@ func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 	return nil
 }
 
-// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
-// specific scope prefix (ex: datasources:name:)
-func (m *Mock) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
-	m.scopeResolver.AddAttributeResolver(scopePrefix, resolver)
+func (m *Mock) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
+	m.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 	m.Calls.RegisterAttributeScopeResolver = append(m.Calls.RegisterAttributeScopeResolver, []struct{}{})
 	// Use override if provided
-	if m.RegisterAttributeScopeResolverFunc != nil {
-		m.RegisterAttributeScopeResolverFunc(scopePrefix, resolver)
+	if m.RegisterScopeAttributeResolverFunc != nil {
+		m.RegisterScopeAttributeResolverFunc(scopePrefix, resolver)
 	}
 }

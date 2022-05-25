@@ -24,9 +24,7 @@ import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
-  const canRead = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysRead, true);
   const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
-  const canDelete = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysDelete, true);
 
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
@@ -37,9 +35,7 @@ function mapStateToProps(state: StoreState) {
     timeZone: getTimeZone(state.user),
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
-    canRead: canRead,
     canCreate: canCreate,
-    canDelete: canDelete,
   };
 }
 
@@ -130,9 +126,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       timeZone,
       includeExpired,
       includeExpiredDisabled,
-      canRead,
       canCreate,
-      canDelete,
     } = this.props;
 
     if (!hasFetched) {
@@ -181,13 +175,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
-                      <ApiKeysTable
-                        apiKeys={apiKeys}
-                        timeZone={timeZone}
-                        onDelete={this.onDeleteApiKey}
-                        canRead={canRead}
-                        canDelete={canDelete}
-                      />
+                      <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </VerticalGroup>
                   ) : null}
                 </>

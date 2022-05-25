@@ -8,6 +8,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -19,23 +20,25 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService shorturls.Service, store sqlstore.Store) *CleanUpService {
+	shortURLService shorturls.Service, store sqlstore.Store, queryHistoryService queryhistory.Service) *CleanUpService {
 	s := &CleanUpService{
-		Cfg:               cfg,
-		ServerLockService: serverLockService,
-		ShortURLService:   shortURLService,
-		store:             store,
-		log:               log.New("cleanup"),
+		Cfg:                 cfg,
+		ServerLockService:   serverLockService,
+		ShortURLService:     shortURLService,
+		QueryHistoryService: queryHistoryService,
+		store:               store,
+		log:                 log.New("cleanup"),
 	}
 	return s
 }
 
 type CleanUpService struct {
-	log               log.Logger
-	store             sqlstore.Store
-	Cfg               *setting.Cfg
-	ServerLockService *serverlock.ServerLockService
-	ShortURLService   shorturls.Service
+	log                 log.Logger
+	store               sqlstore.Store
+	Cfg                 *setting.Cfg
+	ServerLockService   *serverlock.ServerLockService
+	ShortURLService     shorturls.Service
+	QueryHistoryService queryhistory.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -54,6 +57,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 			srv.expireOldUserInvites(ctx)
 			srv.deleteStaleShortURLs(ctx)
+			srv.deleteStaleQueryHistory(ctx)
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func(context.Context) {
 					srv.deleteOldLoginAttempts(ctx)
@@ -181,5 +185,35 @@ func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 		srv.log.Error("Problem deleting stale short urls", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
+	}
+}
+
+func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
+	// Delete query history from 14+ days ago with exception of starred queries
+	maxQueryHistoryLifetime := time.Hour * 24 * 14
+	olderThan := time.Now().Add(-maxQueryHistoryLifetime).Unix()
+	rowsCount, err := srv.QueryHistoryService.DeleteStaleQueriesInQueryHistory(ctx, olderThan)
+	if err != nil {
+		srv.log.Error("Problem deleting stale query history", "error", err.Error())
+	} else {
+		srv.log.Debug("Deleted stale query history", "rows affected", rowsCount)
+	}
+
+	// Enforce 200k limit for query_history table
+	queryHistoryLimit := 200000
+	rowsCount, err = srv.QueryHistoryService.EnforceRowLimitInQueryHistory(ctx, queryHistoryLimit, false)
+	if err != nil {
+		srv.log.Error("Problem with enforcing row limit for query_history", "error", err.Error())
+	} else {
+		srv.log.Debug("Enforced row limit for query_history", "rows affected", rowsCount)
+	}
+
+	// Enforce 150k limit for query_history_star table
+	queryHistoryStarLimit := 150000
+	rowsCount, err = srv.QueryHistoryService.EnforceRowLimitInQueryHistory(ctx, queryHistoryStarLimit, true)
+	if err != nil {
+		srv.log.Error("Problem with enforcing row limit for query_history_star", "error", err.Error())
+	} else {
+		srv.log.Debug("Enforced row limit for query_history_star", "rows affected", rowsCount)
 	}
 }

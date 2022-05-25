@@ -364,7 +364,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    const url = '/loki/api/v1/labels';
+    const url = 'labels';
     const timeRange = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
@@ -393,7 +393,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
     const interpolatedMatch = this.datasource.interpolateString(match);
-    const url = '/loki/api/v1/series';
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
     const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
@@ -415,7 +415,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
-    const url = '/loki/api/v1/series';
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
     const params = { 'match[]': match, start, end };
     return await this.request(url, params);
@@ -440,7 +440,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchLabelValues(key: string): Promise<string[]> {
     const interpolatedKey = this.datasource.interpolateString(key);
-    const url = `/loki/api/v1/label/${interpolatedKey}/values`;
+    const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
 

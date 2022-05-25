@@ -16,8 +16,8 @@ export function loadApiKeys(): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(isFetching());
     const [keys, keysIncludingExpired] = await Promise.all([
-      getBackendSrv().get('/api/auth/keys?includeExpired=false'),
-      getBackendSrv().get('/api/auth/keys?includeExpired=true'),
+      getBackendSrv().get('/api/auth/keys?includeExpired=false&accesscontrol=true'),
+      getBackendSrv().get('/api/auth/keys?includeExpired=true&accesscontrol=true'),
     ]);
     dispatch(apiKeysLoaded({ keys, keysIncludingExpired }));
   };

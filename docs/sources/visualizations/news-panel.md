@@ -1,7 +1,7 @@
 +++
-title = "News"
+aliases = ["/docs/grafana/latest/panels/visualizations/news-graph/", "/docs/grafana/latest/visualizations/news-panel/"]
 keywords = ["grafana", "news", "documentation", "panels", "news panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/news-graph/"]
+title = "News"
 weight = 800
 +++
 

@@ -12,15 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import {
-  Button,
-  CustomScrollbar,
-  HorizontalGroup,
-  InlineFormLabel,
-  Modal,
-  ScrollbarPosition,
-  stylesFactory,
-} from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -52,10 +44,10 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
-  scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
+  scrollElement?: HTMLDivElement;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -69,7 +61,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     isPickerOpen: false,
     isAddingMixed: false,
     isHelpOpen: false,
-    scrollTop: 0,
     queries: [],
     data: {
       state: LoadingState.NotStarted,
@@ -113,7 +104,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
     const nextDS = await getDataSourceSrv().get(newSettings.uid);
 
-    const queries = await updateQueries(nextDS, this.state.queries, currentDS);
+    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
+    const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -162,7 +154,11 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onScrollBottom = () => {
-    this.setState({ scrollTop: 1000 });
+    setTimeout(() => {
+      if (this.state.scrollElement) {
+        this.state.scrollElement.scrollTo({ top: 10000 });
+      }
+    }, 20);
   };
 
   onUpdateAndRun = (options: QueryGroupOptions) => {
@@ -250,7 +246,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddMixedQuery = (datasource: any) => {
     this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
+    this.setState({ isAddingMixed: false });
   };
 
   onMixedPickerBlur = () => {
@@ -261,10 +257,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
-  };
-
-  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
-    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {
@@ -348,12 +340,16 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   }
 
+  setScrollRef = (scrollElement: HTMLDivElement): void => {
+    this.setState({ scrollElement });
+  };
+
   render() {
-    const { scrollTop, isHelpOpen, dsSettings } = this.state;
+    const { isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
 
     return (
-      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
+      <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (
@@ -380,7 +376,6 @@ const getStyles = stylesFactory(() => {
     innerWrapper: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
       padding: ${theme.spacing.md};
     `,
     dataSourceRow: css`

@@ -9,6 +9,7 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
+	"id":               {},
 	"org_user.user_id": {},
 	"role.id":          {},
 	"t.id":             {},

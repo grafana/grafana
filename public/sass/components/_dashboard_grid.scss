@@ -6,7 +6,8 @@
   visibility: hidden;
 }
 
-.react-grid-item {
+.react-grid-item,
+#grafana-portal-container {
   touch-action: initial !important;
 
   &:hover {

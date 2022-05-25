@@ -47,17 +47,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
   }
 
   callGrafanaTemplateVariableFn(query: GrafanaTemplateVariableQuery): Promise<MetricFindValue[]> | null {
-    // deprecated app insights template variables (will most likely remove in grafana 9)
-    if (this.datasource.insightsAnalyticsDatasource) {
-      if (query.kind === 'AppInsightsMetricNameQuery') {
-        return this.datasource.insightsAnalyticsDatasource.getMetricNames();
-      }
-
-      if (query.kind === 'AppInsightsGroupByQuery') {
-        return this.datasource.insightsAnalyticsDatasource.getGroupBys(getTemplateSrv().replace(query.metricName));
-      }
-    }
-
     if (query.kind === 'SubscriptionsQuery') {
       return this.datasource.getSubscriptions();
     }

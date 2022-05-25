@@ -1,7 +1,8 @@
 +++
-title = "Troubleshooting"
+aliases = ["/docs/grafana/latest/troubleshooting/"]
 description = "Guide to troubleshooting Grafana problems"
 keywords = ["grafana", "troubleshooting", "documentation", "guide"]
+title = "Troubleshooting"
 weight = 180
 +++
 

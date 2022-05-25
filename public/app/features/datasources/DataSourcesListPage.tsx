@@ -60,9 +60,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
     const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
       this.props;
 
-    const canCreateDataSource =
-      contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
-      contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+    const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
     const linkButton = {
       href: 'datasources/new',

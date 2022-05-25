@@ -99,6 +99,8 @@ To add a migration:
 - In the `AddMigrations` function, find the `addXxxMigration` function for the service you want to create a migration for.
 - At the end of the `addXxxMigration` function, register your migration:
 
+> **NOTE:** Putting migrations behind feature flags is no longer recommended as it may cause the migration skip integration testing.
+
 [Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)
 
 ### Implement `DatabaseMigrator`
