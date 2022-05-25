@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, Field, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
