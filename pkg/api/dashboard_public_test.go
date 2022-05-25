@@ -64,7 +64,9 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		{
 			name: "It should return 404 if isPublicDashboard is false",
 			uid: "pubdash-abcd1234",
-			expectedHttpResponse:http.
+			expectedHttpResponse: http.StatusNotFound,
+			publicDashboardResult: nil,
+			publicDashboardErr: models.ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -85,16 +87,19 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				t,
 			)
 
-			fmt.Println(response)
-
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
-			//if response.Code == http.StatusOK {
-				//var dashResp models.Dashboard
-				//err := json.Unmarshal(response.Body.Bytes(), &dashResp)
-				//require.NoError(t, err)
-				//assert.Equal(t, test.publicDashboardResult, &dashResp)
-			//}
+			if test.publicDashboardErr == nil {
+				var dashResp models.Dashboard
+				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
+				require.NoError(t, err)
+				assert.Equal(t, test.publicDashboardResult.Uid, dashResp.Uid)
+			}else{
+				var errResp struct { Error string `json:"error"` }
+				err := json.Unmarshal(response.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, test.publicDashboardErr.Error(), errResp.Error)
+			}
 		})
 	}
 }
