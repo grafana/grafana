@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/xorm"
 )
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
