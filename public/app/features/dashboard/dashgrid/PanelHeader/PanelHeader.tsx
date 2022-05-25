@@ -3,12 +3,11 @@ import React, { FC } from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-
-import { isPublicDashboardView } from '../../utils/publicDashboards';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
@@ -61,7 +60,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
-                {!isPublicDashboardView() && (
+                {!config.isPublicDashboardView && (
                   <div data-testid="panel-dropdown">
                     <Icon name="angle-down" className="panel-menu-toggle" />
                     <PanelHeaderMenuWrapper

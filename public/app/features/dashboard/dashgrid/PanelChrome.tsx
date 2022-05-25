@@ -20,10 +20,9 @@ import {
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
-import config from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -37,7 +36,6 @@ import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { isPublicDashboardView } from '../utils/publicDashboards';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -104,7 +102,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
 
   canAddAnnotation = () => {
-    if (isPublicDashboardView()) {
+    if (config.isPublicDashboardView) {
       return false;
     }
 

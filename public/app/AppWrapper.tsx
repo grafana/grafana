@@ -21,7 +21,6 @@ import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
-import { isPublicDashboardView } from './features/dashboard/utils/publicDashboards';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
@@ -108,10 +107,12 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {!isPublicDashboardView() && config.featureToggles.commandPalette && <CommandPalette />}
+                    {!config.isPublicDashboardView && config.featureToggles.commandPalette && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {!isPublicDashboardView() && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
+                        {!config.isPublicDashboardView && ready && (
+                          <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>
+                        )}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
@@ -119,7 +120,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                           <AngularRoot />
                           <AppNotificationList />
-                          {!isPublicDashboardView() && <SearchWrapper />}
+                          {!config.isPublicDashboardView && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
