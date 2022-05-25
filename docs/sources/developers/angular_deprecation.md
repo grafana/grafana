@@ -15,7 +15,7 @@ AngularJS is an old frontend framework that stopped active development many year
 
 ## When will angular plugins stop working?
 
-We hope to migrate the last features of core Grafana later this year. Then the setting enable_angular_support can be disable by default. This will make all angular plugins stop working. If you still depend on community or internally developed plugins that require AngularJS then you will have to turn this option on.
+We hope to migrate the last remaining angular code in core Grafana later this year. Then the setting enable_angular_support can be disable by default. This will make all angular plugins stop working. If you still depend on community or internally developed plugins that require AngularJS then you will have to enable this option.
 
 This is a good time to start working on migrating plugins to React.
 
