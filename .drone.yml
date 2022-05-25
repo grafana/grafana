@@ -133,11 +133,11 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test_new_backend_integration
+  name: test-new-backend-integration
 trigger:
   event:
   - pull_request
@@ -797,11 +797,11 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test_new_backend_integration
+  name: test-new-backend-integration
 trigger:
   branch: main
   event:
@@ -1877,11 +1877,11 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test_new_backend_integration
+  name: test-new-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -3651,11 +3651,11 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m -tags=integration ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test_new_backend_integration
+  name: test-new-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -4655,6 +4655,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 94957f9af403f3dc83622aae26f1632af294086491d58d5c88b6c9724cd2b65a
+hmac: 550ecd31e71e30550e0f21d4686597721db0db976357b1e38603d3f23f4bc3a1
 
 ...
