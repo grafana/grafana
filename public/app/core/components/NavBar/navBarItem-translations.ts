@@ -26,6 +26,7 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   explore: defineMessage({ id: 'nav.explore', message: 'Explore' }),
 
   alerting: defineMessage({ id: 'nav.alerting', message: 'Alerting' }),
+  'alerting-legacy': defineMessage({ id: 'nav.alerting-legacy', message: 'Alerting (legacy)' }),
   'alert-list': defineMessage({ id: 'nav.alerting-list', message: 'Alert rules' }),
   receivers: defineMessage({ id: 'nav.alerting-receivers', message: 'Contact points' }),
   'am-routes': defineMessage({ id: 'nav.alerting-am-routes', message: 'Notification policies' }),
