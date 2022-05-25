@@ -31,7 +31,11 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
       return false;
     }
 
-    if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+    const hasRuleReadPermission =
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
+
+    if (!hasRuleReadPermission) {
       return false;
     }
 
