@@ -8,7 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
+import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
@@ -64,17 +64,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
       padding: ${theme.spacing(2)};
       padding-top: 0;
-    `,
-    panelContainer: css`
-      background-color: ${theme.components.panel.background};
-      border: ${theme.components.panel.borderColor};
-      position: relative;
-      border-radius: 3px;
-      height: 100%;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 0;
     `,
   };
 };
@@ -379,7 +368,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div className={cx(styles.exploreContainer)}>
-            <div className={cx(styles.panelContainer, styles.queryContainer)}>
+            <PanelContainer className={cx(styles.queryContainer)}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
@@ -393,7 +382,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
               <ResponseErrorContainer exploreId={exploreId} />
-            </div>
+            </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
