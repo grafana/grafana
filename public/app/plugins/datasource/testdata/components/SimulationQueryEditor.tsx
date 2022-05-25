@@ -2,21 +2,12 @@ import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrameJSON, SelectableValue } from '@grafana/data';
-import {
-  InlineField,
-  InlineFieldRow,
-  Button,
-  FieldSet,
-  InlineSwitch,
-  Input,
-  Label,
-  Select,
-  Form,
-  TextArea,
-} from '@grafana/ui';
+import { InlineField, InlineFieldRow, Button, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
+
+import { SimulationSchemaForm } from './SimulationSchemaForm';
 
 // Type         string      `json:"type"`
 // Name         string      `json:"name"`
@@ -31,9 +22,7 @@ interface SimInfo {
   forward: boolean;
   config: DataFrameJSON;
 }
-interface FormDTO {
-  config: string;
-}
+
 export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? ({} as typeof simQuery.key);
@@ -91,14 +80,13 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const onToggleLast = () => {
     onChange({ ...query, sim: { ...simQuery, last: !simQuery.last } });
   };
-  const onSubmitChange = (data: FormDTO) => {
+  const onSchemaFormChange = (config: Record<string, any>) => {
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, JSON.parse(data.config));
+    ds.postResource('sim/' + path, config);
   };
-
   return (
     <>
       <InlineFieldRow>
@@ -140,14 +128,12 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
         </InlineField>
       </InlineFieldRow>
       <div>
-        <Form onSubmit={onSubmitChange}>
-          {({ register }) => (
-            <FieldSet>
-              <TextArea {...register('config')} defaultValue={JSON.stringify(config.value, null, 2)} rows={7} />
-              <Button type="submit">Submit</Button>
-            </FieldSet>
-          )}
-        </Form>
+        <SimulationSchemaForm
+          onChange={onSchemaFormChange}
+          config={config}
+          schema={current.details?.config.schema ?? { fields: [] }}
+        />
+        <Button type="submit">Submit</Button>
         SCHEMA:
         <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
       </div>
