@@ -2,6 +2,7 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
@@ -19,7 +20,7 @@ import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
@@ -29,6 +30,13 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
+      reportInteraction('user_grafana_loki_editor_mode_clicked', {
+        newEditor: newEditorMode,
+        previousEditor: query.editorMode ?? '',
+        newQuery: !query.expr,
+        app: app ?? '',
+      });
+
       if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
@@ -39,7 +47,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       }
       changeEditorMode(query, newEditorMode, onChange);
     },
-    [onChange, query]
+    [onChange, query, app]
   );
 
   useEffect(() => {

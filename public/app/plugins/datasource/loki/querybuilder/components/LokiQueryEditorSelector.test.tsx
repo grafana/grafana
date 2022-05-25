@@ -10,6 +10,13 @@ import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 const defaultQuery = {
   refId: 'A',
   expr: '{label1="foo", label2="bar"}',
