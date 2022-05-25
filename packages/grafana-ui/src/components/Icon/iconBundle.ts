@@ -94,6 +94,9 @@ import u1067 from '!!raw-loader!../../../../../public/img/icons/unicons/forward.
 import u1068 from '!!raw-loader!../../../../../public/img/icons/unicons/graph-bar.svg';
 import u1069 from '!!raw-loader!../../../../../public/img/icons/unicons/history.svg';
 import u1070 from '!!raw-loader!../../../../../public/img/icons/unicons/home-alt.svg';
+import u1158 from '!!raw-loader!../../../../../public/img/icons/unicons/horizontal-align-center.svg';
+import u1156 from '!!raw-loader!../../../../../public/img/icons/unicons/horizontal-align-left.svg';
+import u1157 from '!!raw-loader!../../../../../public/img/icons/unicons/horizontal-align-right.svg';
 import u1126 from '!!raw-loader!../../../../../public/img/icons/unicons/hourglass.svg';
 import u1071 from '!!raw-loader!../../../../../public/img/icons/unicons/import.svg';
 import u1073 from '!!raw-loader!../../../../../public/img/icons/unicons/info-circle.svg';
@@ -154,6 +157,9 @@ import u1117 from '!!raw-loader!../../../../../public/img/icons/unicons/unlock.s
 import u1118 from '!!raw-loader!../../../../../public/img/icons/unicons/upload.svg';
 import u1119 from '!!raw-loader!../../../../../public/img/icons/unicons/user.svg';
 import u1120 from '!!raw-loader!../../../../../public/img/icons/unicons/users-alt.svg';
+import u1160 from '!!raw-loader!../../../../../public/img/icons/unicons/vertical-align-bottom.svg';
+import u1161 from '!!raw-loader!../../../../../public/img/icons/unicons/vertical-align-center.svg';
+import u1159 from '!!raw-loader!../../../../../public/img/icons/unicons/vertical-align-top.svg';
 import u1121 from '!!raw-loader!../../../../../public/img/icons/unicons/wrap-text.svg';
 import u1135 from '!!raw-loader!../../../../../public/img/icons/unicons/x.svg';
 import { cacheStore } from 'react-inlinesvg';
@@ -329,4 +335,10 @@ export function initIconCache() {
   cacheItem(u1153, 'mono/panel-add.svg');
   cacheItem(u1154, 'mono/library-panel.svg');
   cacheItem(u1155, 'unicons/record-audio.svg');
+  cacheItem(u1156, 'unicons/horizontal-align-left.svg');
+  cacheItem(u1157, 'unicons/horizontal-align-right.svg');
+  cacheItem(u1158, 'unicons/horizontal-align-center.svg');
+  cacheItem(u1159, 'unicons/vertical-align-top.svg');
+  cacheItem(u1160, 'unicons/vertical-align-bottom.svg');
+  cacheItem(u1161, 'unicons/vertical-align-center.svg');
 }

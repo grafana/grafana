@@ -9,6 +9,8 @@ import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQuery, SearchLayout } from '../../types';
 
+import { getSortOptions } from './sorting';
+
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
   { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
@@ -75,7 +77,7 @@ export const ActionRow: FC<Props> = ({
               value={layout}
             />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">
@@ -102,11 +104,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.v1.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.v1.spacing.lg} 0;
+        padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
     `,

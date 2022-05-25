@@ -137,7 +137,7 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
-For more information, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch.md">}}).
+For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch.md" >}}).
 
 ### Azure Monitor updates
 
@@ -179,7 +179,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md">}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md" >}}).
 
 ## Grafana Enterprise features
 

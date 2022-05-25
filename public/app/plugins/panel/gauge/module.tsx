@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
+import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 import { GaugePanel } from './GaugePanel';

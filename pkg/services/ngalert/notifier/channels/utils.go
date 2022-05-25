@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -25,12 +27,37 @@ const (
 	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
+
+	// ImageStoreTimeout should be used by all callers for calles to `Images`
+	ImageStoreTimeout time.Duration = 500 * time.Millisecond
 )
 
 var (
 	// Provides current time. Can be overwritten in tests.
-	timeNow = time.Now
+	timeNow              = time.Now
+	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
+
+func getTokenFromAnnotations(annotations model.LabelSet) string {
+	if value, ok := annotations[models.ScreenshotTokenAnnotation]; ok {
+		return string(value)
+	}
+	return ""
+}
+
+type UnavailableImageStore struct{}
+
+func (n *UnavailableImageStore) GetURL(ctx context.Context, token string) (string, error) {
+	return "", ErrImagesUnavailable
+}
+
+func (n *UnavailableImageStore) GetFilepath(ctx context.Context, token string) (string, error) {
+	return "", ErrImagesUnavailable
+}
+
+func (n *UnavailableImageStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
+	return nil, ErrImagesUnavailable
+}
 
 type receiverInitError struct {
 	Reason string

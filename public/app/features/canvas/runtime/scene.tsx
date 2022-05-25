@@ -6,7 +6,8 @@ import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { locationService } from '@grafana/runtime/src';
+import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
@@ -24,9 +25,10 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement } from '../types';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
@@ -43,6 +45,7 @@ export class Scene {
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
+
   root: RootElement;
 
   revId = 0;
@@ -57,6 +60,8 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
+
+  isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -314,6 +319,7 @@ export class Scene {
         constraintViewable: allowChanges,
       },
       origin: false,
+      className: this.styles.selected,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
@@ -343,6 +349,18 @@ export class Scene {
 
         this.moved.next(Date.now());
       })
+      .on('resizeStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
+          targetedElement.setPlacementFromConstraint();
+        }
+      })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyResize(event);
@@ -359,7 +377,12 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          if (targetedElement.tempConstraint) {
+            targetedElement.options.constraint = targetedElement.tempConstraint;
+            targetedElement.tempConstraint = undefined;
+          }
+
+          targetedElement.setPlacementFromConstraint();
         }
       });
 
@@ -389,9 +412,16 @@ export class Scene {
   };
 
   render() {
+    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} />
+          </Portal>
+        )}
       </div>
     );
   }
@@ -401,5 +431,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrap: css`
     overflow: hidden;
     position: relative;
+  `,
+  selected: css`
+    z-index: 999 !important;
   `,
 }));

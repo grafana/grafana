@@ -39,8 +39,9 @@ interface RolePickerMenuProps {
   showBuiltInRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
-  onUpdate: (newRoles: string[], newBuiltInRole?: OrgRole) => void;
+  onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
   onClear?: () => void;
+  updateDisabled?: boolean;
   offset: number;
 }
 
@@ -55,6 +56,7 @@ export const RolePickerMenu = ({
   onBuiltInRoleSelect,
   onUpdate,
   onClear,
+  updateDisabled,
   offset,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
@@ -166,11 +168,12 @@ export const RolePickerMenu = ({
 
   const onUpdateInternal = () => {
     const selectedCustomRoles: string[] = [];
+    // TODO: needed?
     for (const key in selectedOptions) {
       const roleUID = selectedOptions[key]?.uid;
       selectedCustomRoles.push(roleUID);
     }
-    onUpdate(selectedCustomRoles, selectedBuiltInRole);
+    onUpdate(selectedOptions, selectedBuiltInRole);
   };
 
   return (
@@ -270,7 +273,7 @@ export const RolePickerMenu = ({
               Clear all
             </Button>
             <Button size="sm" onClick={onUpdateInternal}>
-              Update
+              {updateDisabled ? `Apply` : `Update`}
             </Button>
           </HorizontalGroup>
         </div>

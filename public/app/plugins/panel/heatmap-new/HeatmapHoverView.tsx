@@ -1,14 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-import {
-  DataFrameType,
-  DataFrameView,
-  Field,
-  FieldType,
-  formattedValueToString,
-  getFieldDisplayName,
-  LinkModel,
-} from '@grafana/data';
+import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -23,7 +15,15 @@ type Props = {
   showHistogram?: boolean;
 };
 
-export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
+export const HeatmapHoverView = (props: Props) => {
+  if (props.hover.seriesIdx === 2) {
+    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} />;
+  }
+  return <HeatmapHoverCell {...props} />;
+};
+
+const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
+  const index = hover.dataIdx;
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
@@ -60,7 +60,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     };
   }
 
-  const yValueIdx = hover.index % data.yBucketCount! ?? 0;
+  const yValueIdx = index % data.yBucketCount! ?? 0;
 
   const yMinIdx = data.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
   const yMaxIdx = data.yLayout === BucketLayout.le ? yValueIdx : yValueIdx + 1;
@@ -68,10 +68,10 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const yBucketMin = yDispSrc?.[yMinIdx];
   const yBucketMax = yDispSrc?.[yMaxIdx];
 
-  const xBucketMin = xVals?.[hover.index];
+  const xBucketMin = xVals?.[index];
   const xBucketMax = xBucketMin + data.xBucketSize;
 
-  const count = countVals?.[hover.index];
+  const count = countVals?.[index];
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -80,10 +80,10 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   for (const field of visibleFields ?? []) {
     // TODO: Currently always undefined? (getLinks)
     if (field.getLinks) {
-      const v = field.values.get(hover.index);
+      const v = field.values.get(index);
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
 
-      field.getLinks({ calculatedValue: disp, valueRowIndex: hover.index }).forEach((link) => {
+      field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
           links.push(link);
@@ -106,9 +106,9 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
         let histCtx = can.current?.getContext('2d');
 
         if (histCtx && xVals && yVals && countVals) {
-          let fromIdx = hover.index;
+          let fromIdx = index;
 
-          while (xVals[fromIdx--] === xVals[hover.index]) {}
+          while (xVals[fromIdx--] === xVals[index]) {}
 
           fromIdx++;
 
@@ -135,7 +135,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
               let pctY = c / maxCount;
               let pctX = j / (data.yBucketCount! + 1);
 
-              let p = i === hover.index ? pHov : pRest;
+              let p = i === index ? pHov : pRest;
 
               p.rect(
                 Math.round(histCanWidth * pctX),
@@ -160,37 +160,13 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hover.index]
+    [index]
   );
-
-  const renderExemplars = () => {
-    const exemplarIndex = data.exemplarsMappings?.lookup; //?.[hover.index];
-    if (!exemplarIndex || !data.exemplars) {
-      return null;
-    }
-
-    const ids = exemplarIndex[hover.index];
-    if (ids) {
-      const view = new DataFrameView(data.exemplars);
-      return (
-        <ul>
-          {ids.map((id) => (
-            <li key={id}>
-              <pre>{JSON.stringify(view.get(id), null, 2)}</pre>
-            </li>
-          ))}
-        </ul>
-      );
-    }
-
-    // should not show anything... but for debugging
-    return <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>;
-  };
 
   if (data.heatmap?.meta?.type === DataFrameType.HeatmapSparse) {
     return (
       <div>
-        <DataHoverView data={data.heatmap} rowIndex={hover.index} />
+        <DataHoverView data={data.heatmap} rowIndex={index} />
       </div>
     );
   }
@@ -210,14 +186,17 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
         />
       )}
       <div>
-        <div>
-          Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
-        </div>
+        {data.yLayout === BucketLayout.unknown ? (
+          <div>{yDisp(yBucketMin)}</div>
+        ) : (
+          <div>
+            Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
+          </div>
+        )}
         <div>
           {getFieldDisplayName(countField!, data.heatmap)}: {count}
         </div>
       </div>
-      {renderExemplars()}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (

@@ -34,6 +34,10 @@ type eventStore interface {
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
+// While we migrate away from internal IDs... this lets us lookup values in SQL
+// NOTE: folderId is unique across all orgs
+type folderUIDLookup = func(ctx context.Context, folderId int64) (string, error)
+
 type dashboard struct {
 	id       int64
 	uid      string
@@ -46,25 +50,27 @@ type dashboard struct {
 }
 
 type dashboardIndex struct {
-	mu           sync.RWMutex
-	loader       dashboardLoader
-	perOrgReader map[int64]*bluge.Reader // orgId -> bluge reader
-	perOrgWriter map[int64]*bluge.Writer // orgId -> bluge writer
-	eventStore   eventStore
-	logger       log.Logger
-	buildSignals chan int64
-	extender     DocumentExtender
+	mu             sync.RWMutex
+	loader         dashboardLoader
+	perOrgReader   map[int64]*bluge.Reader // orgId -> bluge reader
+	perOrgWriter   map[int64]*bluge.Writer // orgId -> bluge writer
+	eventStore     eventStore
+	logger         log.Logger
+	buildSignals   chan int64
+	extender       DocumentExtender
+	folderIdLookup folderUIDLookup
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender) *dashboardIndex {
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *dashboardIndex {
 	return &dashboardIndex{
-		loader:       dashLoader,
-		eventStore:   evStore,
-		perOrgReader: map[int64]*bluge.Reader{},
-		perOrgWriter: map[int64]*bluge.Writer{},
-		logger:       log.New("dashboardIndex"),
-		buildSignals: make(chan int64),
-		extender:     extender,
+		loader:         dashLoader,
+		eventStore:     evStore,
+		perOrgReader:   map[int64]*bluge.Reader{},
+		perOrgWriter:   map[int64]*bluge.Writer{},
+		logger:         log.New("dashboardIndex"),
+		buildSignals:   make(chan int64),
+		extender:       extender,
+		folderIdLookup: folderIDs,
 	}
 }
 
@@ -229,6 +235,12 @@ func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, e
 		"orgSearchDashboardCount", len(dashboards))
 
 	i.mu.Lock()
+	if oldReader, ok := i.perOrgReader[orgID]; ok {
+		_ = oldReader.Close()
+	}
+	if oldWriter, ok := i.perOrgWriter[orgID]; ok {
+		_ = oldWriter.Close()
+	}
 	i.perOrgReader[orgID] = reader
 	i.perOrgWriter[orgID] = writer
 	i.mu.Unlock()
@@ -341,6 +353,7 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		// Skip event for org not yet fully indexed.
 		return nil
 	}
+	// TODO: should we release index lock while performing removeDashboard/updateDashboard?
 	reader, ok := i.perOrgReader[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
@@ -351,18 +364,19 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 
 	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
-		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
+		newReader, err = i.removeDashboard(ctx, writer, reader, dashboardUID)
 	} else {
-		newReader, err = i.updateDashboard(orgID, writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(ctx, orgID, writer, reader, dbDashboards[0])
 	}
 	if err != nil {
 		return err
 	}
+	_ = reader.Close()
 	i.perOrgReader[orgID] = newReader
 	return nil
 }
 
-func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
+func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
 	// Find all panel docs to remove with dashboard.
 	panelIDs, err := getDashboardPanelIDs(reader, dashboardUID)
 	if err != nil {
@@ -392,7 +406,7 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
 
 	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
@@ -409,7 +423,7 @@ func (i *dashboardIndex) updateDashboard(orgID int64, writer *bluge.Writer, read
 			folderUID = "general"
 		} else {
 			var err error
-			folderUID, err = getDashboardFolderUID(reader, dash.folderID)
+			folderUID, err = i.folderIdLookup(ctx, dash.folderID)
 			if err != nil {
 				return nil, err
 			}
@@ -545,6 +559,27 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	return dashboards, err
+}
+
+func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
+	return func(ctx context.Context, folderID int64) (string, error) {
+		uid := ""
+		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			sess.Table("dashboard").
+				Where("id = ?", folderID).
+				Cols("uid")
+
+			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
+			if err != nil {
+				return err
+			}
+			if len(res) > 0 {
+				uid = string(res[0]["uid"])
+			}
+			return nil
+		})
+		return uid, err
+	}
 }
 
 type dashboardQueryResult struct {

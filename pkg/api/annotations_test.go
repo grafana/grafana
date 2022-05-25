@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -51,7 +52,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, store, func(sc *scenarioContext) {
+					cmd, store, nil, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					})
@@ -84,7 +85,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, store, func(sc *scenarioContext) {
+					cmd, store, nil, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
@@ -155,7 +156,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
@@ -188,7 +189,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
@@ -221,19 +222,28 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Admin", func(t *testing.T) {
 			role := models.ROLE_ADMIN
 
-			mock := mockstore.NewSQLStoreMock()
+			mockStore := mockstore.NewSQLStoreMock()
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, dashboardUIDCmd, mock, func(sc *scenarioContext) {
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil)
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, dashboardUIDCmd, mockStore, dashSvc, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
+					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
@@ -249,17 +259,26 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				})
 
 				deleteAnnotationsScenario(t, "When calling POST on", "/api/annotations/mass-delete",
-					"/api/annotations/mass-delete", role, deleteCmd, store, func(sc *scenarioContext) {
+					"/api/annotations/mass-delete", role, deleteCmd, store, nil, func(sc *scenarioContext) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
 
+				dashSvc = dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  1,
+						Uid: deleteWithDashboardUIDCmd.DashboardUID,
+					}
+				}).Return(nil)
 				deleteAnnotationsScenario(t, "When calling POST with dashboardUID on", "/api/annotations/mass-delete",
-					"/api/annotations/mass-delete", role, deleteWithDashboardUIDCmd, mock, func(sc *scenarioContext) {
+					"/api/annotations/mass-delete", role, deleteWithDashboardUIDCmd, mockStore, dashSvc, func(sc *scenarioContext) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
+						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
 					})
 			})
 		})
@@ -320,11 +339,11 @@ func (repo *fakeAnnotationsRepo) LoadItems() {
 var fakeAnnoRepo *fakeAnnotationsRepo
 
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
+	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
-		hs.dashboardService = &dashboards.FakeDashboardService{}
+		hs.dashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -405,11 +424,11 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
+	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
-		hs.dashboardService = &dashboards.FakeDashboardService{}
+		hs.dashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {

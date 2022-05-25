@@ -27,9 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -153,18 +155,19 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 }
 
 type scenarioContext struct {
-	t                    *testing.T
-	cfg                  *setting.Cfg
-	m                    *web.Mux
-	context              *models.ReqContext
-	resp                 *httptest.ResponseRecorder
-	handlerFunc          handlerFunc
-	defaultHandler       web.Handler
-	req                  *http.Request
-	url                  string
-	userAuthTokenService *auth.FakeUserAuthTokenService
-	sqlStore             sqlstore.Store
-	authInfoService      *logintest.AuthInfoServiceFake
+	t                       *testing.T
+	cfg                     *setting.Cfg
+	m                       *web.Mux
+	context                 *models.ReqContext
+	resp                    *httptest.ResponseRecorder
+	handlerFunc             handlerFunc
+	defaultHandler          web.Handler
+	req                     *http.Request
+	url                     string
+	userAuthTokenService    *auth.FakeUserAuthTokenService
+	sqlStore                sqlstore.Store
+	authInfoService         *logintest.AuthInfoServiceFake
+	dashboardVersionService dashver.Service
 }
 
 func (sc *scenarioContext) exec() {
@@ -410,7 +413,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		c.Map(initCtx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
