@@ -43,7 +43,7 @@ type NotificationPolicyService interface {
 }
 
 type MuteTimingService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]apimodels.MuteTiming, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]apimodels.MuteTimeInterval, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
