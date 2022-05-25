@@ -74,11 +74,11 @@ export enum AccessControlAction {
   DashboardsPermissionsWrite = 'dashboards.permissions:read',
 
   FoldersRead = 'folders:read',
-  FoldersWrite = 'folders:read',
+  FoldersWrite = 'folders:write',
   FoldersDelete = 'folders:delete',
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
-  FoldersPermissionsWrite = 'folders.permissions:read',
+  FoldersPermissionsWrite = 'folders.permissions:write',
 
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
