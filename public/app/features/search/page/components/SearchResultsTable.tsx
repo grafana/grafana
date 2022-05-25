@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -48,11 +48,15 @@ export const SearchResultsTable = React.memo(
 
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
+    const urlsRef = useRef<Field>();
+    const selected = useRef<number>(0);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
+      urlsRef.current = response.view.fields.url;
+
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
       // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
@@ -67,7 +71,42 @@ export const SearchResultsTable = React.memo(
       if (listRef.current) {
         listRef.current.scrollTo(0);
       }
+      selected.current = 0;
     }, [memoizedData]);
+
+    const keyListener = useCallback((evt: KeyboardEvent) => {
+      if (!listRef.current) {
+        return;
+      }
+      switch (evt.code) {
+        case 'ArrowDown': {
+          selected.current++;
+          console.log('DOWN');
+          listRef.current.forceUpdate();
+          break;
+        }
+        case 'ArrowUp':
+          console.log('UP');
+          selected.current = Math.max(0, selected.current - 1);
+          listRef.current.forceUpdate();
+          break;
+        case 'Enter':
+          if (selected.current > 0 && urlsRef.current) {
+            const url = urlsRef.current.values.get(selected.current - 1);
+            if (url) {
+              window.location.href = url;
+            }
+          }
+      }
+    }, []);
+
+    useEffect(() => {
+      console.log('INIT key listener!');
+      document.addEventListener('keydown', keyListener);
+      return () => {
+        document.removeEventListener('keydown', keyListener);
+      };
+    }, [keyListener]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -93,14 +132,18 @@ export const SearchResultsTable = React.memo(
 
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
-    const RenderRow = React.useCallback(
+    const RenderRow = useCallback(
       ({ index: rowIndex, style }) => {
         const row = rows[rowIndex];
         prepareRow(row);
 
         const url = response.view.fields.url?.values.get(rowIndex);
+        let className = styles.rowContainer;
+        if (rowIndex === selected.current - 1) {
+          className += ' ' + styles.selectedRow;
+        }
         return (
-          <div {...row.getRowProps({ style })} className={styles.rowContainer}>
+          <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell
@@ -116,12 +159,14 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, styles, selected, tableStyles]
     );
 
     if (!rows.length) {
       return <div className={styles.noData}>No data</div>;
     }
+
+    console.log('SELECTED', selected.current);
 
     return (
       <div {...getTableProps()} aria-label="Search result table" role="table">
@@ -208,6 +253,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.secondary};
       height: ${HEADER_HEIGHT}px;
       align-items: center;
+    `,
+    selectedRow: css`
+      background-color: #ff0;
     `,
     rowContainer: css`
       label: row;
