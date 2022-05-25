@@ -13,7 +13,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions } from './types';

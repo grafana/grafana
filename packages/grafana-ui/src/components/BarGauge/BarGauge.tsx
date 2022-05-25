@@ -20,6 +20,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -47,12 +48,6 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
-}
-
-export enum BarGaugeDisplayMode {
-  Basic = 'basic',
-  Lcd = 'lcd',
-  Gradient = 'gradient',
 }
 
 export class BarGauge extends PureComponent<Props> {

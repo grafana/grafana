@@ -2,6 +2,7 @@ import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
+import { BackgroundDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground, getCellLinks } from '../../utils';
 
@@ -51,16 +52,21 @@ function getCellStyle(
     return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
   }
 
+  console.log(field.config.custom?.cellOptions);
+
   if (
     field.config.custom?.cellOptions.displayMode === TableCellDisplayMode.ColorBackground &&
-    field.config.custom?.cellOptions.subDisplayMode === 'lcd'
+    field.config.custom?.cellOptions.backgroundDisplayMode === BackgroundDisplayMode.Basic
   ) {
     const bgColor = tinycolor(displayValue.color);
     const textColor = getTextColorForBackground(displayValue.color!);
     return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
+  if (
+    field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground &&
+    field.config.custom?.backgroundDisplayMode === BackgroundDisplayMode.Gradient
+  ) {
     const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
     const bgColor2 = tinycolor(displayValue.color)
       .darken(10 * themeFactor)

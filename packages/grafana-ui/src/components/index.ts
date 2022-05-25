@@ -97,7 +97,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
-export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
+export { BarGauge } from './BarGauge/BarGauge';
 export {
   VizTooltip,
   VizTooltipContainer,

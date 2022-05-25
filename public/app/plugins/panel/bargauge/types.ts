@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
-import { SingleStatBaseOptions, BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
+import { SingleStatBaseOptions } from '@grafana/ui';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   displayMode: BarGaugeDisplayMode;

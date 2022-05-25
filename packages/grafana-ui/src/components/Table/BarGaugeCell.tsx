@@ -2,11 +2,12 @@ import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
+import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
-import { TableCellProps, TableCellDisplayMode, GaugeDisplayMode } from './types';
+import { TableCellProps, TableCellDisplayMode } from './types';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -38,12 +39,12 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
 
   if (
     (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === GaugeDisplayMode.RetroLCD)
+    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === BarGaugeDisplayMode.Lcd)
   ) {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
   } else if (
     (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === GaugeDisplayMode.Basic)
+    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === BarGaugeDisplayMode.Basic)
   ) {
     barGaugeMode = BarGaugeDisplayMode.Basic;
   }
