@@ -652,7 +652,7 @@ function getApmTable(
 }
 
 function buildExpr(metric: any, extraParams: any, request: any) {
-  let serviceMapQuery = request.targets[0]?.serviceMapQuery.replace('{', '').replace('}', '') ?? '';
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')
