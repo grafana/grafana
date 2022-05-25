@@ -23,8 +23,9 @@ For new installations or existing installs without alerting configured, Grafana 
 
 Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
-- [Enable Grafana alerting in OSS]({{< relref "./opt-in.md" >}})
-- [Migrating legacy alerts]({{< relref "./migrating-legacy-alerts.md" >}})
+- [About alert rules]({{< relref "./fundamentals/alert-rules/_index.md" >}})
+- [Migrating legacy alerts]({{< relref "./migrating-alerts/_index.md" >}})
+- [Disable Grafana alerting in OSS]({{< relref "./migrating-alerts/opt-out.md" >}})
 - [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
