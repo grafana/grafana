@@ -21,7 +21,7 @@ export interface TraceToMetricsOptions {
 
 export interface TraceToMetricQuery {
   name?: string;
-  query: string;
+  query?: string;
 }
 
 export interface TraceToMetricsData extends DataSourceJsonData {

@@ -369,7 +369,7 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
   }
 
   let expr = query.query;
-  if (tags.length && query.query.indexOf('$__tags') !== -1) {
+  if (tags.length && expr.indexOf('$__tags') !== -1) {
     const spanTags = [...span.process.tags, ...span.tags];
     const labels = tags.reduce((acc, tag) => {
       const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
