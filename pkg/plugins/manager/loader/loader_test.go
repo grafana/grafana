@@ -7,12 +7,13 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -422,13 +423,14 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := &fakeLogger{loggedLines: []string{}}
+		logger := &logtest.Fake{}
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
 			setDefaultNavURL(pluginWithDashboard)
 			require.Equal(t, "", pluginWithDashboard.DefaultNavURL)
-			require.Equal(t, []string{"Included dashboard is missing a UID field"}, logger.loggedLines)
+			require.NotZero(t, logger.WarnLogs.Calls)
+			require.Equal(t, "Included dashboard is missing a UID field", logger.WarnLogs.Message)
 		})
 
 		t.Run("Default nav URL is set if dashboard UID field is set", func(t *testing.T) {
@@ -1137,7 +1139,7 @@ func newLoader(cfg *plugins.Cfg) *Loader {
 		pluginInitializer:  initializer.New(cfg, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), &fakeLicensingService{}),
 		signatureValidator: signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)),
 		errs:               make(map[string]*plugins.SignatureError),
-		log:                &fakeLogger{},
+		log:                &logtest.Fake{},
 	}
 }
 
@@ -1176,26 +1178,4 @@ func (*fakeLicensingService) EnabledFeatures() map[string]bool {
 
 func (*fakeLicensingService) FeatureEnabled(feature string) bool {
 	return false
-}
-
-type fakeLogger struct {
-	log.Logger
-
-	loggedLines []string
-}
-
-func (fl *fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
-	return &log.ConcreteLogger{}
-}
-
-func (fl *fakeLogger) Info(l string, _ ...interface{}) {
-	fl.loggedLines = append(fl.loggedLines, l)
-}
-
-func (fl *fakeLogger) Debug(l string, _ ...interface{}) {
-	fl.loggedLines = append(fl.loggedLines, l)
-}
-
-func (fl *fakeLogger) Warn(l string, _ ...interface{}) {
-	fl.loggedLines = append(fl.loggedLines, l)
 }

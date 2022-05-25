@@ -232,6 +232,15 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
+		t.Run("templates from GET config have no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Nil(t, body.TemplateFileProvenances)
+		})
 	})
 
 	t.Run("when objects are provisioned", func(t *testing.T) {
@@ -264,6 +273,18 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body = asGettableUserConfig(t, response)
 
 			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			setTemplateProvenance(t, 1, "a", sut.mam.ProvStore)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.NotNil(t, body.TemplateFileProvenances)
+			require.Len(t, body.TemplateFileProvenances, 1)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
 		})
 	})
 }
@@ -522,7 +543,29 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	return mam
 }
 
-var validConfig = setting.GetAlertmanagerDefaultConfiguration()
+var validConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 
 var brokenConfig = `
 	"alertmanager_config": {
@@ -602,6 +645,13 @@ func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningS
 func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+// setTemplateProvenance marks a template as provisioned.
+func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.MessageTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

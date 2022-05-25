@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import {
   KBarAnimator,
   KBarPortal,
@@ -78,8 +79,10 @@ export const CommandPalette = () => {
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <KBarSearch className={styles.search} />
-          <RenderResults />
+          <FocusScope contain>
+            <KBarSearch className={styles.search} />
+            <RenderResults />
+          </FocusScope>
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>

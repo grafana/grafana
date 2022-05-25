@@ -296,7 +296,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 
-  graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
+  graph.spanNulls = angular.nullPointMode === NullValueMode.Ignore;
 
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;

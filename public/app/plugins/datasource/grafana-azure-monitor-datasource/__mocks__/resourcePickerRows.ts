@@ -106,3 +106,14 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
     location: 'northeurope',
   },
 ];
+
+export const mockSearchResults = (): ResourceRowGroup => [
+  {
+    id: 'search-result',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/disks/search-result',
+    name: 'search-result',
+    typeLabel: 'Microsoft.Compute/disks',
+    type: ResourceRowType.Resource,
+    location: 'northeurope',
+  },
+];

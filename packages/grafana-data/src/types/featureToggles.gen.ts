@@ -17,7 +17,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
   trimDefaults?: boolean;
-  envelopeEncryption?: boolean;
+  disableEnvelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
   serviceAccounts?: boolean;
   database_metrics?: boolean;
@@ -32,14 +32,11 @@ export interface FeatureToggles {
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   lokiBackendMode?: boolean;
-  accesscontrol?: boolean;
-  ['accesscontrol-builtins']?: boolean;
   prometheus_azure_auth?: boolean;
   influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
-  validatedQueries?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;
@@ -47,7 +44,6 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
   export?: boolean;
@@ -59,4 +55,10 @@ export interface FeatureToggles {
   commandPalette?: boolean;
   savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
+  datasourceQueryMultiStatus?: boolean;
+  azureMonitorExperimentalUI?: boolean;
+  traceToMetrics?: boolean;
+  prometheusStreamingJSONParser?: boolean;
+  validateDashboardsOnSave?: boolean;
+  prometheusWideSeries?: boolean;
 }

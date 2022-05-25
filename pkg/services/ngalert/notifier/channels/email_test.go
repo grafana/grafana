@@ -52,7 +52,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		})
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, emailSender, tmpl)
+		emailNotifier := NewEmailNotifier(cfg, emailSender, &UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -289,7 +289,7 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 		Settings: settingsJSON,
 	})
 	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, ns, emailTmpl)
+	emailNotifier := NewEmailNotifier(cfg, ns, &UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }

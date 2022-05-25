@@ -7,13 +7,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -32,12 +34,13 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
-	sc.hs.SQLStore = sqlstore
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
+
+	sc.hs.dashboardService = dashSvc
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -67,13 +70,6 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
-
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
-	sc.hs.SQLStore = sqlstore
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -168,12 +164,12 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
-	sqlstore := mockstore.NewSQLStoreMock()
-	sqlstore.ExpectedDashboard = &models.Dashboard{
-		Uid: "home",
-		Id:  1,
-	}
-	sc.hs.SQLStore = sqlstore
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	}).Return(nil)
+	sc.hs.dashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)

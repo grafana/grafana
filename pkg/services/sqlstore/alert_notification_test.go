@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertNotificationSQLAccess(t *testing.T) {
+func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 	var sqlStore *SQLStore
 	setup := func() { sqlStore = InitTestDB(t) }
 

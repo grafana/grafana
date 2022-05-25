@@ -6,33 +6,38 @@ import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { locationService } from '@grafana/runtime/src';
+import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
+  DimensionContext,
   ResourceDimensionConfig,
+  ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-  DimensionContext,
-  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
-  getScaleDimensionFromData,
   getResourceDimensionFromData,
-  getTextDimensionFromData,
   getScalarDimensionFromData,
+  getScaleDimensionFromData,
+  getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+
+import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
-import { GroupState } from './group';
+import { FrameState } from './frame';
 import { RootElement } from './root';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
-  group?: GroupState;
+  frame?: FrameState;
 }
 
 export class Scene {
@@ -40,6 +45,7 @@ export class Scene {
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
+
   root: RootElement;
 
   revId = 0;
@@ -51,15 +57,18 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
-  currentLayer?: GroupState;
+  currentLayer?: FrameState;
   isEditingEnabled?: boolean;
+  skipNextSelectionBroadcast = false;
 
-  constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
+  isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
+
+  constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }
 
-  getNextElementName = (isGroup = false) => {
-    const label = isGroup ? 'Group' : 'Element';
+  getNextElementName = (isFrame = false) => {
+    const label = isFrame ? 'Frame' : 'Element';
     let idx = this.byName.size + 1;
 
     const max = idx + 100;
@@ -77,10 +86,10 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasGroupOptions, enableEditing: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean) {
     this.root = new RootElement(
       cfg ?? {
-        type: 'group',
+        type: 'frame',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
       this,
@@ -97,7 +106,7 @@ export class Scene {
         this.currentLayer = this.root;
         this.selection.next([]);
       }
-    }, 100);
+    });
     return this.root;
   }
 
@@ -124,13 +133,13 @@ export class Scene {
     }
   }
 
-  groupSelection() {
+  frameSelection() {
     this.selection.pipe(first()).subscribe((currentSelectedElements) => {
       const currentLayer = currentSelectedElements[0].parent!;
 
-      const newLayer = new GroupState(
+      const newLayer = new FrameState(
         {
-          type: 'group',
+          type: 'frame',
           name: this.getNextElementName(true),
           elements: [],
         },
@@ -138,10 +147,18 @@ export class Scene {
         currentSelectedElements[0].parent
       );
 
+      const framePlacement = this.generateFrameContainer(currentSelectedElements);
+
+      newLayer.options.placement = framePlacement;
+
       currentSelectedElements.forEach((element: ElementState) => {
+        const elementContainer = element.div?.getBoundingClientRect();
+        element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
         currentLayer.doAction(LayerActionID.Delete, element);
-        newLayer.doAction(LayerActionID.Duplicate, element, false);
+        newLayer.doAction(LayerActionID.Duplicate, element, false, false);
       });
+
+      newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
 
       currentLayer.elements.push(newLayer);
 
@@ -151,12 +168,51 @@ export class Scene {
     });
   }
 
-  clearCurrentSelection() {
+  private generateFrameContainer = (elements: ElementState[]): Placement => {
+    let minTop = Infinity;
+    let minLeft = Infinity;
+    let maxRight = 0;
+    let maxBottom = 0;
+
+    elements.forEach((element: ElementState) => {
+      const elementContainer = element.div?.getBoundingClientRect();
+
+      if (!elementContainer) {
+        return;
+      }
+
+      if (minTop > elementContainer.top) {
+        minTop = elementContainer.top;
+      }
+
+      if (minLeft > elementContainer.left) {
+        minLeft = elementContainer.left;
+      }
+
+      if (maxRight < elementContainer.right) {
+        maxRight = elementContainer.right;
+      }
+
+      if (maxBottom < elementContainer.bottom) {
+        maxBottom = elementContainer.bottom;
+      }
+    });
+
+    return {
+      top: minTop,
+      left: minLeft,
+      width: maxRight - minLeft,
+      height: maxBottom - minTop,
+    };
+  };
+
+  clearCurrentSelection(skipNextSelectionBroadcast = false) {
+    this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
     this.selecto?.clickTarget(event, this.div);
   }
 
-  updateCurrentLayer(newLayer: GroupState) {
+  updateCurrentLayer(newLayer: FrameState) {
     this.currentLayer = newLayer;
     this.clearCurrentSelection();
     this.save();
@@ -170,11 +226,11 @@ export class Scene {
         if (this.div) {
           this.initMoveable(true, this.isEditingEnabled);
         }
-      }, 100);
+      });
     }
   };
 
-  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+  findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
@@ -185,7 +241,7 @@ export class Scene {
         return currentElement;
       }
 
-      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
       for (const nestedElement of nestedElements) {
         stack.unshift(nestedElement);
       }
@@ -208,8 +264,13 @@ export class Scene {
   private updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
 
-    if (selection.group) {
-      this.selection.next([selection.group]);
+    if (this.skipNextSelectionBroadcast) {
+      this.skipNextSelectionBroadcast = false;
+      return;
+    }
+
+    if (selection.frame) {
+      this.selection.next([selection.frame]);
     } else {
       const s = selection.targets.map((t) => this.findElementByTarget(t)!);
       this.selection.next(s);
@@ -227,7 +288,7 @@ export class Scene {
         targetElements.push(currentElement.div);
       }
 
-      const nestedElements = currentElement instanceof GroupState ? currentElement.elements : [];
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
       for (const nestedElement of nestedElements) {
         stack.unshift(nestedElement);
       }
@@ -252,10 +313,22 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
+      ables: [dimensionViewable, constraintViewable(this)],
+      props: {
+        dimensionViewable: allowChanges,
+        constraintViewable: allowChanges,
+      },
       origin: false,
+      className: this.styles.selected,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
+      })
+      .on('dragStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        if (targetedElement) {
+          targetedElement.isMoving = true;
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -270,10 +343,23 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint();
+          targetedElement.isMoving = false;
         }
 
         this.moved.next(Date.now());
+      })
+      .on('resizeStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
+          targetedElement.setPlacementFromConstraint();
+        }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -291,7 +377,12 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          if (targetedElement.tempConstraint) {
+            targetedElement.options.constraint = targetedElement.tempConstraint;
+            targetedElement.tempConstraint = undefined;
+          }
+
+          targetedElement.setPlacementFromConstraint();
         }
       });
 
@@ -321,9 +412,16 @@ export class Scene {
   };
 
   render() {
+    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} />
+          </Portal>
+        )}
       </div>
     );
   }
@@ -334,10 +432,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     overflow: hidden;
     position: relative;
   `,
-
-  toolbar: css`
-    position: absolute;
-    bottom: 0;
-    margin: 10px;
+  selected: css`
+    z-index: 999 !important;
   `,
 }));

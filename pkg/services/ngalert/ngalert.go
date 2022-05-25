@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,7 +37,7 @@ import (
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
-	folderService dashboards.FolderService, ac accesscontrol.AccessControl) (*AlertNG, error) {
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -51,6 +53,8 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		NotificationService: notificationService,
 		folderService:       folderService,
 		accesscontrol:       ac,
+		dashboardService:    dashboardService,
+		renderService:       renderService,
 	}
 
 	if ng.IsDisabled() {
@@ -78,9 +82,12 @@ type AlertNG struct {
 	Metrics             *metrics.NGAlert
 	NotificationService notifications.Service
 	Log                 log.Logger
+	renderService       rendering.Service
+	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       dashboards.FolderService
+	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -92,12 +99,13 @@ func (ng *AlertNG) init() error {
 	var err error
 
 	store := &store.DBstore{
-		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
-		SQLStore:        ng.SQLStore,
-		Logger:          ng.Log,
-		FolderService:   ng.folderService,
-		AccessControl:   ng.accesscontrol,
+		BaseInterval:     ng.Cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval:  ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		SQLStore:         ng.SQLStore,
+		Logger:           ng.Log,
+		FolderService:    ng.folderService,
+		AccessControl:    ng.accesscontrol,
+		DashboardService: ng.dashboardService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
@@ -106,6 +114,12 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
+
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.Metrics.Registerer, store, ng.dashboardService, ng.renderService)
+	if err != nil {
+		return err
+	}
+	ng.imageService = imageService
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
@@ -143,7 +157,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:     alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.imageService)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
@@ -153,6 +167,7 @@ func (ng *AlertNG) init() error {
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -175,6 +190,7 @@ func (ng *AlertNG) init() error {
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
+		MuteTimings:          muteTimingService,
 		AlertsRouter:         alertsRouter,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())

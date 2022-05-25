@@ -19,6 +19,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -834,7 +835,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -844,7 +846,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }

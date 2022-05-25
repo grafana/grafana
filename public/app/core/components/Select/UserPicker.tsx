@@ -60,7 +60,6 @@ export class UserPicker extends Component<Props, State> {
     return (
       <div className="user-picker" data-testid="userPicker">
         <AsyncSelect
-          menuShouldPortal
           isClearable
           className={className}
           inputId={inputId}

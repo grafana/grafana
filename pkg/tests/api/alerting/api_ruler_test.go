@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -35,22 +34,24 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
+	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "folder1")
+	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
-	_, err = createFolder(t, store, 0, "folder2")
+	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, err)
+
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	// Create rule under folder1
 	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
@@ -180,7 +181,8 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
+		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -252,8 +254,9 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
-	// Remove permissions from ALL folders.
-	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
+	// Remove permissions from folder1.
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -343,18 +346,19 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "folder1")
-	require.NoError(t, err)
-	_, err = createFolder(t, store, 0, "folder2")
-	require.NoError(t, err)
-
 	// Create user
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder1", grafanaListedAddr, "admin", "admin")
+	require.NoError(t, err)
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder2", grafanaListedAddr, "admin", "admin")
+	require.NoError(t, err)
 
 	rules := newTestingRuleConfig(t)
 
@@ -479,16 +483,18 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	dashboardUID, err := createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	dashboardUID := "default"
+	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)

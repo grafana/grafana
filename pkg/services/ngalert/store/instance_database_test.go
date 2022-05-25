@@ -17,6 +17,7 @@ import (
 
 const baseIntervalSeconds = 10
 
+// Every time this is called, time advances by 1 second.
 func mockTimeNow() {
 	var timeSeed int64
 	store.TimeNow = func() time.Time {
@@ -26,7 +27,7 @@ func mockTimeNow() {
 	}
 }
 
-func TestAlertInstanceOperations(t *testing.T) {
+func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
@@ -46,10 +47,11 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			RuleOrgID: alertRule1.OrgID,
-			RuleUID:   alertRule1.UID,
-			State:     models.InstanceStateFiring,
-			Labels:    models.InstanceLabels{"test": "testValue"},
+			RuleOrgID:   alertRule1.OrgID,
+			RuleUID:     alertRule1.UID,
+			State:       models.InstanceStateFiring,
+			StateReason: string(models.InstanceStateError),
+			Labels:      models.InstanceLabels{"test": "testValue"},
 		}
 		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
@@ -66,6 +68,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
 		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
+		require.Equal(t, saveCmd.StateReason, getCmd.Result.CurrentReason)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {

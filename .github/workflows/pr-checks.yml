@@ -5,9 +5,10 @@ on:
       - opened
       - reopened
       - synchronize
-      - ready_for_review      
+      - ready_for_review
       - labeled
       - unlabeled
+      - edited
   issues:
     types:
       - milestoned

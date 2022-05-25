@@ -28,7 +28,9 @@ describe('Azure Monitor QueryEditor', () => {
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-resource-picker')).toBeInTheDocument()
+    );
   });
 
   it('renders the Logs query editor when the query type is Logs', async () => {
@@ -60,20 +62,20 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('displays error messages from frontend Azure calls', async () => {
     const mockDatasource = createMockDatasource();
-    mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
+    mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest.fn().mockRejectedValue(invalidNamespaceError());
     render(
       <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
-
-    expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-resource-picker')).toBeInTheDocument()
+    );
+    expect(screen.getByText('An error occurred while requesting metadata from Azure Monitor')).toBeInTheDocument();
   });
 
-  it('renders the new query editor for metrics when enabled with a feature toggle', async () => {
-    const originalConfigValue = config.featureToggles.azureMonitorResourcePickerForMetrics;
+  it('should render the experimental QueryHeader when feature toggle is enabled', async () => {
+    const originalConfigValue = config.featureToggles.azureMonitorExperimentalUI;
 
-    // To do this irl go to custom.ini file and add resourcePickerForMetrics = true under [feature_toggles]
-    config.featureToggles.azureMonitorResourcePickerForMetrics = true;
+    config.featureToggles.azureMonitorExperimentalUI = true;
 
     const mockDatasource = createMockDatasource();
     const mockQuery = {
@@ -83,11 +85,20 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-resource-picker')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-experimental-header')).toBeInTheDocument());
 
-    // reset config to not impact future tests
-    config.featureToggles.azureMonitorResourcePickerForMetrics = originalConfigValue;
+    config.featureToggles.azureMonitorExperimentalUI = originalConfigValue;
+  });
+
+  it('should not render the experimental QueryHeader when feature toggle is disabled', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+
+    await waitFor(() => expect(screen.queryByTestId('azure-monitor-experimental-header')).not.toBeInTheDocument());
   });
 });

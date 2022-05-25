@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/query-a-data-source/inspect-request-and-response-data/", "/docs/sources/panels/query-a-data-source/inspect-request-and-response-data/"]
 title = "Inspect query request and response data"
 weight = 90
-aliases = ["/docs/sources/panels/query-a-data-source/inspect-request-and-response-data/"]
 +++
 
 # Inspect query request and response data

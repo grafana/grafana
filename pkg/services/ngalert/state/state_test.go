@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNeedsSending(t *testing.T) {
