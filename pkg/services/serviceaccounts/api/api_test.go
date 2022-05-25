@@ -238,10 +238,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 			SignedInUser: signedUser,
 			Logger:       log.New("serviceaccounts-test"),
 		}
-		c.Map(ctx)
-
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
-		c.Map(c.Req)
 	})
 	a.RouterRegister.Register(m.Router)
 	return m, a

@@ -249,5 +249,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "prometheusWideSeries",
+			Description: "Enable wide series responses in the Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
