@@ -1,5 +1,5 @@
-import React, { useLayoutEffect, useRef } from 'react';
-import uPlot from 'uplot';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import uPlot, { TypedArray, Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { UPlotConfigBuilder, Button } from '@grafana/ui';
@@ -11,28 +11,36 @@ interface ThresholdControlsPluginProps {
 
 export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ config, onChangeTimeRange }) => {
   const plotInstance = useRef<uPlot>();
+  const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
+  const [timeRange, setTimeRange] = useState<Scale | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
       plotInstance.current = u;
     });
+
+    config.addHook('setData', (u) => {
+      setTimeValues(plotInstance.current?.data?.[0] ?? []);
+    });
+
+    config.addHook('setScale', (u) => {
+      setTimeRange(plotInstance.current?.scales['x'] ?? undefined);
+    });
   }, [config]);
 
-  const timevalues = plotInstance.current?.data?.[0];
-  if (!timevalues || !plotInstance.current || timevalues.length < 2 || !onChangeTimeRange) {
+  if (timevalues.length < 2 || !onChangeTimeRange) {
     return null;
   }
 
-  const scale = plotInstance.current.scales['x'];
-  if (!scale || !scale.time || !scale.min || !scale.max!) {
+  if (!timeRange || !timeRange.time || !timeRange.min || !timeRange.max!) {
     return null;
   }
 
   // Time values are always sorted for uPlot to work
   const first = timevalues[0];
   const last = timevalues[timevalues.length - 1];
-  const fromX = scale.min;
-  const toX = scale.max;
+  const fromX = timeRange.min;
+  const toX = timeRange.max;
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= toX && last >= fromX) {
