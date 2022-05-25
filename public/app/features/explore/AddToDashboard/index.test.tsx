@@ -31,6 +31,12 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
   return render(<Provider store={store}>{children}</Provider>);
 };
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
 const openModal = async () => {
   await userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
 
