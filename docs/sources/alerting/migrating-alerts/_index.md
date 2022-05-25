@@ -5,7 +5,7 @@ title = "Migrating to Grafana alerting"
 weight = 113
 +++
 
-# Migrating to Grafana alerting
+# Migrate to Grafana alerting
 
 Grafana alerting is the default for new Cloud, Enterprise, and OSS installations. The new installations will only show the Grafana alerting icon in the left navigation panel.
 
