@@ -61,8 +61,9 @@ export function fetchServiceAccounts(
       );
       dispatch(serviceAccountsFetched(result));
     } catch (error) {
-      serviceAccountsFetchEnd();
       console.error(error);
+    } finally {
+      serviceAccountsFetchEnd();
     }
   };
 }
