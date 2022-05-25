@@ -602,7 +602,7 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
 all plugins and core features that depend on angular support will stop working.
 
 Current core features that will stop working:

@@ -44,7 +44,7 @@ title = "Grafana documentation"
 ## Guides
 
 <div class="nav-cards">
-    <a href="{{< relref "getting-started/getting-started.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "getting-started/build-first-dashboard.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>
