@@ -97,7 +97,8 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
         config: xField.config,
       },
       {
-        name: 'yMax',
+        // this name determines whether cells are drawn above, below, or centered on the values
+        name: yField.labels?.le != null ? 'yMax' : 'y',
         type: FieldType.number,
         values: new ArrayVector(ys),
         config: yField.config,
@@ -188,6 +189,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   if (!xField || !yField) {
     throw 'no heatmap fields found';
+  }
+
+  if (!xs.length || !ys.length) {
+    throw 'no values found';
   }
 
   const heat2d = heatmap(xs, ys, {

@@ -1,8 +1,8 @@
 +++
-title = "Enterprise database encryption"
+aliases = ["/docs/grafana/latest/enterprise/enterprise-encryption/"]
 description = "Grafana Enterprise database encryption"
 keywords = ["grafana", "enterprise", "database", "encryption", "documentation"]
-aliases = [""]
+title = "Enterprise database encryption"
 weight = 130
 +++
 

@@ -56,7 +56,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
     useAlertsFolderViewParams();
 
   const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
-  const alertRules = matchingNamespace?.groups[0]?.rules ?? [];
+  const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
 
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
 
@@ -177,7 +177,7 @@ function filterAndSortRules(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
 
-  return orderBy(rules, (x) => x.name, [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
+  return orderBy(rules, (x) => x.name.toLowerCase(), [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

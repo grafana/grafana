@@ -14,8 +14,6 @@ import (
 func TestRequestParser(t *testing.T) {
 	t.Run("Query migration ", func(t *testing.T) {
 		t.Run("legacy statistics field is migrated", func(t *testing.T) {
-			startTime := time.Now()
-			endTime := startTime.Add(2 * time.Hour)
 			oldQuery := &backend.DataQuery{
 				MaxDataPoints: 0,
 				QueryType:     "timeSeriesQuery",
@@ -33,7 +31,7 @@ func TestRequestParser(t *testing.T) {
 				"period": "600",
 				"hide": false
 			  }`)
-			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false, startTime, endTime)
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false)
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(migratedQueries))
 
@@ -311,6 +309,18 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "$$", res.RefId)
 		assert.Regexp(t, validMetricDataID, res.Id)
 	})
+
+	t.Run("parseRequestQuery sets label when label is present in json query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("alias", "some alias")
+		query.Set("label", "some label")
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias) // alias is unmodified
+		assert.Equal(t, "some label", res.Label)
+	})
 }
 
 func getBaseJsonQuery() *simplejson.Json {
@@ -392,7 +402,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"period": "600",
 					"hide": false
 				  }`)},
-			}, true, time.Now(), time.Now())
+			}, true)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(migratedQueries))
 
@@ -449,7 +459,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"hide": false
 				  }`),
 				},
-			}, true, time.Now(), time.Now())
+			}, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(migratedQueries))
 
@@ -520,7 +530,7 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 					"period": "600",
 					"hide": false
 				  }`, tc.labelJson))},
-					}, tc.dynamicLabelsFeatureToggleEnabled, time.Now(), time.Now())
+					}, tc.dynamicLabelsFeatureToggleEnabled)
 				require.NoError(t, err)
 				require.Equal(t, 1, len(migratedQueries))
 

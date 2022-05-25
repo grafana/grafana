@@ -8,7 +8,6 @@ import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
-import { makeAMLink } from '../../../utils/misc';
 import {
   cloudReceiverToFormValues,
   formValuesToCloudReceiver,
@@ -53,7 +52,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         oldConfig: config,
         alertManagerSourceName,
         successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
-        redirectPath: makeAMLink('/alerting/notifications', alertManagerSourceName),
+        redirectPath: '/alerting/notifications',
       })
     );
   };

@@ -1,8 +1,8 @@
 +++
-title = "Auth Proxy"
+aliases = ["/docs/grafana/latest/auth/auth-proxy/", "/docs/grafana/latest/tutorials/authproxy/"]
 description = "Grafana Auth Proxy Guide "
 keywords = ["grafana", "configuration", "documentation", "proxy"]
-aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
+title = "Auth Proxy"
 weight = 200
 +++
 

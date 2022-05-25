@@ -30,7 +30,7 @@ const onOpenSearch = () => {
 const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
-  text: 'Search Dashboards',
+  text: 'Search dashboards',
   icon: 'search',
 };
 

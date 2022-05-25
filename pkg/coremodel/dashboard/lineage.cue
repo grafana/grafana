@@ -1,6 +1,10 @@
 package dashboard
 
-import "github.com/grafana/thema"
+import (
+	"strings"
+
+	"github.com/grafana/thema"
+)
 
 thema.#Lineage
 name: "dashboard"
@@ -22,21 +26,20 @@ seqs: [
 				// Tags associated with dashboard.
 				tags?: [...string]
 				// Theme of dashboard.
-				style: *"light" | "dark"
+				style: "light" | *"dark"
 				// Timezone of dashboard,
 				timezone?: *"browser" | "utc" | ""
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
-				// 0 for no shared crosshair or tooltip (default).
-				// 1 for shared crosshair.
-				// 2 for shared crosshair AND shared tooltip.
-				graphTooltip: uint8 & >=0 & <=2 | *0
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
 					to:   string | *"now"
 				}
-				// Timepicker metadata.
+
+				// TODO docs
+				// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
 				timepicker?: {
 					// Whether timepicker is collapsed or not.
 					collapse: bool | *false
@@ -47,38 +50,90 @@ seqs: [
 					// Selectable intervals for auto-refresh.
 					refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
 				}
-				// Templating.
-				templating?: list: [...{...}]
-				// Annotations.
-				annotations?: list: [...{
-					builtIn: uint8 | *0
+				// TODO docs
+				fiscalYearStartMonth?: uint8 & >0 & <13
+				// TODO docs
+				liveNow?: bool
+				// TODO docs
+				weekStart?: string
+
+				// TODO docs
+				refresh?: string | false
+				// Version of the JSON schema, incremented each time a Grafana update brings
+				// changes to said schema.
+				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
+				schemaVersion: uint16 | *36
+				// Version of the dashboard, incremented each time the dashboard is updated.
+				version?: uint32
+				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
+				// TODO docs
+				templating?: list: [...#VariableModel]
+				// TODO docs
+				annotations?: list: [...#AnnotationQuery]
+				// TODO docs
+				links?: [...#DashboardLink]
+
+				///////////////////////////////////////
+				// Definitions (referenced above) are declared below
+
+				// TODO docs
+				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+				#AnnotationQuery: {
 					// Datasource to use for annotation.
 					datasource: {
 						type?: string
 						uid?:  string
 					}
+
 					// Whether annotation is enabled.
 					enable: bool | *true
+					// Name of annotation.
+					name?: string
+					builtIn: uint8 | *0 // TODO should this be persisted at all?
 					// Whether to hide annotation.
 					hide?: bool | *false
 					// Annotation icon color.
 					iconColor?: string
-					// Name of annotation.
-					name?: string
 					type:  string | *"dashboard"
 					// Query for annotation data.
 					rawQuery?: string
 					showIn:    uint8 | *0
-				}]
-				// Auto-refresh interval.
-				refresh?: string | false
-				// Version of the JSON schema, incremented each time a Grafana update brings
-				// changes to said schema.
-				// FIXME this is the old schema numbering system, and will be replaced by Thema's themaVersion
-				schemaVersion: uint16 | *33
-				// Version of the dashboard, incremented each time the dashboard is updated.
-				version?: uint32
-				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
+					target?: #Target // TODO currently a generic in AnnotationQuery
+				} @cuetsy(kind="interface")
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO what about what's in public/app/features/types.ts?
+				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+				#VariableModel: {
+					type: #VariableType
+					name: string
+					label?: string
+					...
+				} @cuetsy(kind="interface")
+
+				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
+				// TODO docs
+				#DashboardLink: {
+					title: string
+					type: #DashboardLinkType
+					icon?: string
+					tooltip?: string
+					url?: string
+					tags: [...string]
+					asDropdown: bool | *false
+					targetBlank: bool | *false
+					includeVars: bool | *false
+					keepTime: bool | *false
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO this implies some wider pattern/discriminated union, probably?
+				#VariableType: "query" | "adhoc" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type")
 
 				// TODO docs
 				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
@@ -123,7 +178,12 @@ seqs: [
 				#Transformation: {
 					id: string
 					options: {...}
-				}
+				} @cuetsy(kind="interface")
+
+				// 0 for no shared crosshair or tooltip (default).
+				// 1 for shared crosshair.
+				// 2 for shared crosshair AND shared tooltip.
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip")
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go
@@ -138,8 +198,8 @@ seqs: [
 				// because they share a version timeline with the dashboard
 				// schema; they do not evolve independently.
 				#Panel: {
-					// The panel plugin type id.
-					type: !=""
+					// The panel plugin type id. May not be empty.
+					type: string & strings.MinRunes(1)
 
 					// TODO docs
 					id?: uint32
@@ -149,17 +209,6 @@ seqs: [
 
 					// TODO docs
 					tags?: [...string]
-
-					// Internal - the exact major and minor versions of the panel plugin
-					// schema. Hidden and therefore not a part of the data model, but
-					// expected to be filled with panel plugin schema versions so that it's
-					// possible to figure out which schema version matched on a successful
-					// unification.
-					// _pv: { maj: int, min: int }
-					// The major and minor versions of the panel plugin for this schema.
-					// TODO 2-tuple list instead of struct?
-					// panelSchema?: { maj: number, min: number }
-					panelSchema?: [number, number]
 
 					// TODO docs
 					targets?: [...#Target]
@@ -189,12 +238,8 @@ seqs: [
 						static?: bool
 					}
 					// Panel links.
-					// FIXME this is temporarily specified as a closed list so
-					// that validation will pass when no links are present, but
-					// to force a failure as soon as it's checked against there
-					// being anything in the list so it can be fixed in
-					// accordance with that object
-					links?: []
+					// TODO fill this out - seems there are a couple variants?
+					links?: [...#DashboardLink]
 
 					// Name of template variable to repeat for.
 					repeat?: string
@@ -304,7 +349,7 @@ seqs: [
 							}]
 						}]
 					}
-				}
+				} @cuetsy(kind="interface")
 
 				// Row panel
 				#RowPanel: {

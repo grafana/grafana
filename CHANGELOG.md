@@ -1,3 +1,63 @@
+<!-- 9.0.0-beta1 START -->
+
+# 9.0.0-beta1 (2022-05-24)
+
+### Features and enhancements
+
+- **AccessControl:** Add setting for permission cache. (Enterprise)
+- **AccessControl:** Check dashboard permissions for reports. (Enterprise)
+- **Auth:** Remove grafana ui dependency to the aws sdk. [#43559](https://github.com/grafana/grafana/pull/43559), [@sunker](https://github.com/sunker)
+- **BasicRoles:** Add API endpoint to reset basic roles permissions to factory. (Enterprise)
+- **LDAP Mapping:** Allow Grafana Admin mapping without org role. [#37189](https://github.com/grafana/grafana/pull/37189), [@krzysdabro](https://github.com/krzysdabro)
+- **Licensing:** Only enforce total number of users. (Enterprise)
+- **Loki:** do not convert NaN to null. [#45389](https://github.com/grafana/grafana/pull/45389), [@gabor](https://github.com/gabor)
+- **Report:** API support for multiple dashboards. (Enterprise)
+- **Report:** Support sending embedded image in the report email. (Enterprise)
+- **Report:** UI for multiple dashboards. (Enterprise)
+- **Reporting:** Remove redundant empty attachment when export to CSV is enabled. (Enterprise)
+- **SAML:** Implement Name Templates for assertion_attribute_name option. (Enterprise)
+- **SSE/Alerting:** Support prom instant vector responses. [#44865](https://github.com/grafana/grafana/pull/44865), [@kylebrandt](https://github.com/kylebrandt)
+- **Tracing:** Add trace to metrics config behind feature toggle. [#46298](https://github.com/grafana/grafana/pull/46298), [@connorlindsey](https://github.com/connorlindsey)
+
+### Bug fixes
+
+- **Fix:** Prevent automatic parsing of string data types to numbers. [#46035](https://github.com/grafana/grafana/pull/46035), [@joshhunt](https://github.com/joshhunt)
+- **Prometheus:** Fix inconsistent labels in exemplars resulting in marshal json error. [#46135](https://github.com/grafana/grafana/pull/46135), [@hanjm](https://github.com/hanjm)
+
+### Breaking changes
+
+In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
+
+The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 9.0.0-beta1 END -->
+<!-- 8.5.3 START -->
+
+# 8.5.3
+
+### Bug fixes
+
+- **Security:** fixes CVE-2022-29170. [#49240](https://github.com/grafana/grafana/pull/49240), [@xlson](https://github.com/xlson)
+
+<!-- 8.5.3 END -->
+<!-- 8.5.2 START -->
+
+# 8.5.2 (2022-05-03)
+
+### Features and enhancements
+
+- **Alerting:** Add safeguard for migrations that might cause dataloss. [#48526](https://github.com/grafana/grafana/pull/48526), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **AzureMonitor:** Add support for not equals and startsWith operators when creating Azure Metrics dimension filters. [#48077](https://github.com/grafana/grafana/pull/48077), [@aangelisc](https://github.com/aangelisc)
+- **Elasticsearch:** Add deprecation notice for < 7.10 versions. [#48506](https://github.com/grafana/grafana/pull/48506), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Traces:** Filter by service/span name and operation in Tempo and Jaeger. [#48209](https://github.com/grafana/grafana/pull/48209), [@joey-grafana](https://github.com/joey-grafana)
+
+### Bug fixes
+
+- **AzureAd Oauth:** Fix strictMode to reject users without an assigned role. [#48474](https://github.com/grafana/grafana/pull/48474), [@kyschouv](https://github.com/kyschouv)
+- **CloudWatch:** Fix variable query tag migration. [#48587](https://github.com/grafana/grafana/pull/48587), [@iwysiu](https://github.com/iwysiu)
+- **Plugins:** Ensure catching all appropriate 4xx api/ds/query scenarios. [#47565](https://github.com/grafana/grafana/pull/47565), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 8.5.2 END -->
 <!-- 8.5.1 START -->
 
 # 8.5.1 (2022-04-27)

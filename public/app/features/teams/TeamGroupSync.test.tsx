@@ -1,4 +1,5 @@
-import { shallow } from 'enzyme';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { TeamGroup } from '../../types';
@@ -17,50 +18,41 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<TeamGroupSync {...props} />);
-  const instance = wrapper.instance() as TeamGroupSync;
-
-  return {
-    wrapper,
-    instance,
-  };
+  return render(<TeamGroupSync {...props} />);
 };
 
-describe('Render', () => {
+describe('TeamGroupSync', () => {
   it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
+    setup();
+    expect(screen.getByRole('heading', { name: /External group sync/i })).toBeInTheDocument();
   });
 
   it('should render groups table', () => {
-    const { wrapper } = setup({
-      groups: getMockTeamGroups(3),
+    setup({ groups: getMockTeamGroups(3) });
+    expect(screen.getAllByRole('row')).toHaveLength(4); // 3 items plus table header
+  });
+
+  it('should call add group', async () => {
+    const mockAddGroup = jest.fn();
+    setup({ addTeamGroup: mockAddGroup });
+    // Empty List CTA "Add group" button is second in the DOM order
+    await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[1]);
+    expect(screen.getByRole('textbox', { name: /add external group/i })).toBeVisible();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /add external group/i }), 'test/group');
+    await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[0]);
+    await waitFor(() => {
+      expect(mockAddGroup).toHaveBeenCalledWith('test/group');
     });
-
-    expect(wrapper).toMatchSnapshot();
-  });
-});
-
-describe('Functions', () => {
-  it('should call add group', () => {
-    const { instance } = setup();
-
-    instance.setState({ newGroupId: 'some/group' });
-    const mockEvent = { preventDefault: jest.fn() };
-
-    instance.onAddGroup(mockEvent);
-
-    expect(instance.props.addTeamGroup).toHaveBeenCalledWith('some/group');
   });
 
-  it('should call remove group', () => {
-    const { instance } = setup();
-
+  it('should call remove group', async () => {
+    const mockRemoveGroup = jest.fn();
     const mockGroup: TeamGroup = { teamId: 1, groupId: 'some/group' };
-
-    instance.onRemoveGroup(mockGroup);
-
-    expect(instance.props.removeTeamGroup).toHaveBeenCalledWith('some/group');
+    setup({ removeTeamGroup: mockRemoveGroup, groups: [mockGroup] });
+    await userEvent.click(screen.getByRole('button', { name: 'Remove group some/group' }));
+    await waitFor(() => {
+      expect(mockRemoveGroup).toHaveBeenCalledWith('some/group');
+    });
   });
 });

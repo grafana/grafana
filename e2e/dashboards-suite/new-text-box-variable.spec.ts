@@ -20,7 +20,7 @@ describe('Variables - Text box', () => {
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
     e2e.components.BackButton.backArrow().click({ force: true });
-    e2e().get('#VariableUnderTest').clear().type('dog-cat').blur();
+    e2e().get('#var-VariableUnderTest').clear().type('dog-cat').blur();
 
     // Assert it was rendered
     e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: dog-cat');

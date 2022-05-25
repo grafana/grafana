@@ -55,6 +55,8 @@ export function Drawer({
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
+      isOpen,
+      onClose,
     },
     overlayRef
   );

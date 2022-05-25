@@ -105,7 +105,6 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
         <InlineField labelWidth={14} label="Simulation" tooltip="">
           <Select
             isLoading={info.loading}
-            menuShouldPortal
             options={info.value?.options ?? []}
             value={current.option}
             onChange={onTypeChange}

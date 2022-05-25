@@ -1,8 +1,8 @@
 +++
-title = "Template variables in CloudWatch query"
+aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/", "/docs/grafana/latest/datasources/cloudwatch/"]
 description = "Template variables in CloudWatch queryh"
+title = "Template variables in CloudWatch query"
 weight = 10
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 +++
 
 # Using template variables in CloudWatch queries

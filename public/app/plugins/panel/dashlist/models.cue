@@ -28,8 +28,8 @@ Panel: {
                     query: string | *""
                     folderId?: int
                     tags: [...string] | *[]
-                },
-            }
+                } @cuetsy(kind="interface")
+            },
         ]
     ]
     migrations: []
