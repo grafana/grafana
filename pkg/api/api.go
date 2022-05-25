@@ -250,7 +250,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			lookupEvaluator := func() ac.Evaluator {
-				if hs.Cfg.IsEnterprise {
+				if hs.License.FeatureEnabled("accesscontrol.enforcement") {
 					return ac.EvalPermission(ac.ActionOrgUsersRead)
 				}
 				// For oss we allow users with access to update permissions on either folders, teams or dashboards to perform the lookup
