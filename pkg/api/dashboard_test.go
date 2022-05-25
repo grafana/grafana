@@ -808,8 +808,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 
-				// restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
-				// 	"/api/dashboards/id/:dashboardId/restore", dashboardService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
