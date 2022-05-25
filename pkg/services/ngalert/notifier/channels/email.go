@@ -127,7 +127,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	// TODO: modify the email sender code to support multiple file or image URL
 	// fields. We cannot use images from every alert yet.
-	withStoredImage(ctx, en.log, en.images,
+	_ = withStoredImage(ctx, en.log, en.images,
 		func(index int, image *ngmodels.Image) error {
 			if image == nil {
 				return nil

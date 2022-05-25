@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -90,7 +91,8 @@ func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, i
 }
 
 func openImage(path string) (io.ReadCloser, error) {
-	_, err := os.Stat(path)
+	fp := filepath.Clean(path)
+	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
 		return nil, models.ErrImageNotFound
 	}

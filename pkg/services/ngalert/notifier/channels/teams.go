@@ -94,7 +94,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
 	images := []teamsImage{}
-	withStoredImages(ctx, tn.log, tn.images,
+	_ = withStoredImages(ctx, tn.log, tn.images,
 		func(index int, image *ngmodels.Image) error {
 			if image != nil && len(image.URL) != 0 {
 

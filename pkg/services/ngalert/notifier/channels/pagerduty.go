@@ -187,9 +187,9 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
-	withStoredImages(ctx, pn.log, pn.images,
+	_ = withStoredImages(ctx, pn.log, pn.images,
 		func(index int, image *ngmodels.Image) error {
-			if image == nil || len(image.URL) == 0 {
+			if image != nil && len(image.URL) != 0 {
 				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
 			}
 

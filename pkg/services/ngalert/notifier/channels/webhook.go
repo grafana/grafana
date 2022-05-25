@@ -114,18 +114,12 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	// Get screenshot reference tokens out of data before private annotations are cleared.
-	imgTokens := make([]string, 0, len(as))
-	for i := range as {
-		imgTokens = append(imgTokens, getTokenFromAnnotations(as[i].Annotations))
-	}
-
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
 	var tmplErr error
 	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
 
 	// Augment our Alert data with ImageURLs if available.
-	withStoredImages(ctx, wn.log, wn.images,
+	_ = withStoredImages(ctx, wn.log, wn.images,
 		func(index int, image *ngmodels.Image) error {
 			if image != nil && len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL

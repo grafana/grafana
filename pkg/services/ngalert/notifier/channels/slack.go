@@ -234,7 +234,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	// user to have an image host set up.
 	// TODO: We need a refactoring so we don't do two database reads for the same data.
 	if len(msg.Attachments[0].ImageURL) == 0 {
-		withStoredImage(ctx, sn.log, sn.images,
+		_ = withStoredImage(ctx, sn.log, sn.images,
 			func(index int, image *ngmodels.Image) error {
 				if image == nil || len(image.Path) == 0 {
 					return nil
@@ -353,7 +353,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 		},
 	}
 
-	withStoredImage(ctx, sn.log, sn.images,
+	_ = withStoredImage(ctx, sn.log, sn.images,
 		func(index int, image *ngmodels.Image) error {
 			if image != nil {
 				req.Attachments[0].ImageURL = image.URL

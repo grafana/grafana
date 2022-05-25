@@ -198,7 +198,7 @@ func (d DiscordNotifier) SendResolved() bool {
 func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.Alert, embedQuota int) []discordAttachment {
 	attachments := make([]discordAttachment, 0)
 
-	withStoredImages(ctx, d.log, d.images,
+	_ = withStoredImages(ctx, d.log, d.images,
 		func(index int, image *ngmodels.Image) error {
 			if embedQuota < 1 {
 				// TODO: Could be a sentinel error to stop execution.
