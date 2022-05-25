@@ -236,12 +236,15 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	if len(msg.Attachments[0].ImageURL) == 0 {
 		withStoredImage(ctx, sn.log, sn.images,
 			func(index int, image *ngmodels.Image) error {
-				if image != nil && len(image.Path) != 0 {
-					imgData, err = openImage(image.Path)
-					if err != nil {
-						imgData = nil
-					}
+				if image == nil || len(image.Path) == 0 {
+					return nil
 				}
+
+				imgData, err = openImage(image.Path)
+				if err != nil {
+					imgData = nil
+				}
+
 				return nil
 			},
 			0, alerts...)
