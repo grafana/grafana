@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
 import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -16,9 +16,11 @@ import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTabl
 import { fetchACOptions } from './state/actions';
 import {
   createServiceAccountToken,
+  deleteServiceAccount,
   deleteServiceAccountToken,
   loadServiceAccount,
   loadServiceAccountTokens,
+  updateServiceAccount,
 } from './state/actionsServiceAccountPage';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
@@ -56,12 +58,16 @@ const ServiceAccountPageUnconnected = ({
   builtInRoles,
 }: Props): JSX.Element => {
   const dispatch = useDispatch();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
+
+  const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   useEffect(() => {
     dispatch(loadServiceAccount(serviceAccountId));
@@ -71,6 +77,27 @@ const ServiceAccountPageUnconnected = ({
     }
   }, [match, dispatch, serviceAccountId]);
 
+  const showDeleteServiceAccountModal = (show: boolean) => () => {
+    setIsDeleteModalOpen(show);
+  };
+
+  const showDisableServiceAccountModal = (show: boolean) => () => {
+    setIsDisableModalOpen(show);
+  };
+
+  const handleServiceAccountDelete = () => {
+    dispatch(deleteServiceAccount(serviceAccount.id));
+  };
+
+  const handleServiceAccountDisable = () => {
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: true }));
+    setIsDisableModalOpen(false);
+  };
+
+  const handleServiceAccountEnable = () => {
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
+  };
+
   const onDeleteServiceAccountToken = (key: ApiKey) => {
     dispatch(deleteServiceAccountToken(serviceAccount?.id, key.id!));
   };
@@ -79,8 +106,8 @@ const ServiceAccountPageUnconnected = ({
     dispatch(createServiceAccountToken(serviceAccount?.id, token, setNewToken));
   };
 
-  const onModalClose = () => {
-    setIsModalOpen(false);
+  const onTokenModalClose = () => {
+    setIsTokenModalOpen(false);
     setNewToken('');
   };
 
@@ -88,30 +115,93 @@ const ServiceAccountPageUnconnected = ({
     <Page navModel={navModel}>
       <Page.Contents isLoading={isLoading}>
         {serviceAccount && (
-          <>
-            <ServiceAccountProfile
-              serviceAccount={serviceAccount}
+          <div className={styles.headerContainer}>
+            <a href="org/serviceaccounts">
+              <IconButton size="xxl" variant="secondary" name="arrow-left" className={styles.returnButton} />
+            </a>
+            <div className={styles.headerAvatar}>
+              <img src={serviceAccount.avatarUrl} alt={`Avatar for user ${serviceAccount.name}`} />
+            </div>
+            <h3>{serviceAccount.name}</h3>
+            <div className={styles.buttonRow}>
+              <Button
+                type={'button'}
+                variant="destructive"
+                onClick={showDeleteServiceAccountModal(true)}
+                disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete)}
+              >
+                Delete service account
+              </Button>
+              {serviceAccount.isDisabled ? (
+                <Button
+                  type={'button'}
+                  variant="secondary"
+                  onClick={handleServiceAccountEnable}
+                  disabled={!ableToWrite}
+                >
+                  Enable service account
+                </Button>
+              ) : (
+                <Button
+                  type={'button'}
+                  variant="secondary"
+                  onClick={showDisableServiceAccountModal(true)}
+                  disabled={!ableToWrite}
+                >
+                  Disable service account
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+        <div className={styles.pageBody}>
+          {serviceAccount && (
+            <>
+              <ServiceAccountProfile
+                serviceAccount={serviceAccount}
+                timeZone={timezone}
+                roleOptions={roleOptions}
+                builtInRoles={builtInRoles}
+              />
+            </>
+          )}
+          <div className={styles.tokensListHeader}>
+            <h4>Tokens</h4>
+            <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+              Add service account token
+            </Button>
+          </div>
+          {tokens && (
+            <ServiceAccountTokensTable
+              tokens={tokens}
               timeZone={timezone}
-              roleOptions={roleOptions}
-              builtInRoles={builtInRoles}
+              onDelete={onDeleteServiceAccountToken}
+              tokenActionsDisabled={tokenActionsDisabled}
             />
-          </>
-        )}
-        <div className={styles.tokensListHeader}>
-          <h4>Tokens</h4>
-          <Button onClick={() => setIsModalOpen(true)} disabled={tokenActionsDisabled}>
-            Add service account token
-          </Button>
+          )}
         </div>
-        {tokens && (
-          <ServiceAccountTokensTable
-            tokens={tokens}
-            timeZone={timezone}
-            onDelete={onDeleteServiceAccountToken}
-            tokenActionsDisabled={tokenActionsDisabled}
-          />
-        )}
-        <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          title="Delete service account"
+          body="Are you sure you want to delete this service account?"
+          confirmText="Delete service account"
+          onConfirm={handleServiceAccountDelete}
+          onDismiss={showDeleteServiceAccountModal(false)}
+        />
+        <ConfirmModal
+          isOpen={isDisableModalOpen}
+          title="Disable service account"
+          body="Are you sure you want to disable this service account?"
+          confirmText="Disable service account"
+          onConfirm={handleServiceAccountDisable}
+          onDismiss={showDisableServiceAccountModal(false)}
+        />
+        <CreateTokenModal
+          isOpen={isTokenModalOpen}
+          token={newToken}
+          onCreateToken={onCreateToken}
+          onClose={onTokenModalClose}
+        />
       </Page.Contents>
     </Page>
   );
@@ -119,6 +209,36 @@ const ServiceAccountPageUnconnected = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    headerContainer: css`
+      display: flex;
+      margin-bottom: ${theme.spacing(2)};
+      align-items: center;
+
+      h3 {
+        margin-bottom: ${theme.spacing(0.5)};
+        flex-grow: 1;
+      }
+    `,
+    headerAvatar: css`
+      margin-right: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(0.6)};
+      img {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+      }
+    `,
+    returnButton: css`
+      margin-right: ${theme.spacing(1)};
+    `,
+    buttonRow: css`
+      > * {
+        margin-right: ${theme.spacing(2)};
+      }
+    `,
+    pageBody: css`
+      padding-left: ${theme.spacing(5.5)};
+    `,
     tokensListHeader: css`
       display: flex;
       justify-content: space-between;
