@@ -48,28 +48,6 @@ func TestGetPublicDashboard(t *testing.T) {
 		assert.Equal(t, d.Uid, pdc.PublicDashboard.DashboardUid)
 	})
 
-	//t.Run("returns ErrPublicDashboardNotFound when IsPublic:false", func(t *testing.T) {
-	//setup()
-	//_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
-	//DashboardUid: savedDashboard.Uid,
-	//OrgId:        savedDashboard.OrgId,
-	//PublicDashboardConfig: models.PublicDashboardConfig{
-	//IsPublic: false,
-	//PublicDashboard: models.PublicDashboard{
-	//Uid:          "abc1234",
-	//DashboardUid: savedDashboard.Uid,
-	//OrgId:        savedDashboard.OrgId,
-	//},
-	//},
-	//})
-	//require.NoError(t, err)
-
-	//pd, d, err := dashboardStore.GetPublicDashboard("abc1234")
-	//assert.Nil(t, pd)
-	//assert.Nil(t, d)
-	//assert.Error(t, models.ErrPublicDashboardNotFound, err)
-	//})
-
 	t.Run("returns ErrPublicDashboardNotFound with empty uid", func(t *testing.T) {
 		setup()
 		_, _, err := dashboardStore.GetPublicDashboard("")
@@ -152,7 +130,8 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 	})
 }
 
-func TestSavePublicDashboard(t *testing.T) {
+// SavePublicDashboardConfig
+func TestSavePublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard

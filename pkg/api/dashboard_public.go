@@ -8,9 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
-	//"github.com/grafana/grafana/pkg/util"
 )
-
 
 // Retrieves public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
