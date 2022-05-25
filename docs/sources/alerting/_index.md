@@ -1,5 +1,5 @@
 +++
-aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
+aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/alerting/"]
 title = "Alerting"
 weight = 114
 +++
@@ -18,10 +18,10 @@ For new installations or existing installs without alerting configured, Grafana 
 | ----------- | ------------- | ------------- | ------------- |
 | Grafana 9.0 | On by default | On by default | On by default |
 
-- For existing OSS installations with legacy dashboard alerting, you can [opt-in]({{< relref "./migrating-alerts/opt-in.md" >}}) to Grafana alerting.
-- For Grafana Cloud instances using legacy cloud alerting, contact customer support to migrate to Grafana alerting.
+- When upgrading to v9.0, OSS instances with legacy dashboard alerting are migrated to Grafana alerting. If you wish to roll back to legacy alerting, see [disable Grafana alerting]({{< relref "./migrating-alerts/opt-out.md" >}}).
+- When upgrading to v9.0, Grafana Cloud instances using legacy cloud alerting are migrated to Grafana alerting. Contact customer support if you **do not wish** to migrate to Grafana alerting at this time.
 
-For more information on migrating from legacy or cloud alerting plugin, or for roling back, see [Migrating to Grafana alerting]({{< relref "./migrating-alerts/_index.md" >}}).
+For more information on migrating from legacy or the cloud alerting plugin, see [Migrating to Grafana alerting]({{< relref "./migrating-alerts/_index.md" >}}).
 
 Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
