@@ -27,10 +27,11 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 			OrgId: c.OrgId,
 		}
 		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
-		if err != nil {
-			return response.Error(500, "Failed to get dashboard", err)
+
+		// sometimes we don't find the dashboard because it belongs to a different OrgId that the user is in
+		if err == nil {
+			uids = append(uids, query.Result.Uid)
 		}
-		uids = append(uids, query.Result.Uid)
 	}
 	return response.JSON(200, uids)
 }
