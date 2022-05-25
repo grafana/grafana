@@ -3,9 +3,7 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
-import impressionSrv from 'app/core/services/impression_srv';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -58,23 +56,14 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       location: section.uid,
       sort: 'name_sort',
     };
-    if (section.title === 'Starred') {
+    if (section.itemsUIDs) {
       query = {
         uid: section.itemsUIDs, // array of UIDs
       };
       folderUid = undefined;
       folderTitle = undefined;
-    } else if (section.title === 'Recent') {
-      const ids = impressionSrv.getDashboardOpened();
-      const uids = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
-      if (uids?.length) {
-        query = {
-          uid: uids,
-        };
-      }
-      folderUid = undefined;
-      folderTitle = undefined;
     }
+
     const raw = await getGrafanaSearcher().search({ ...query, tags });
     const v = raw.view.map(
       (item) =>
