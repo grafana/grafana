@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 interface Props {
-  value?: ElasticsearchQuery;
+  value: ElasticsearchQuery;
 }
 
 export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; onChange: (v: string) => void }) => {
@@ -96,10 +96,10 @@ const QueryEditorForm = ({ value }: Props) => {
           tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
         >
           <Input
-            id={`ES-query-${value?.refId}_alias`}
+            id={`ES-query-${value.refId}_alias`}
             placeholder="Alias Pattern"
             onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
-            defaultValue={value?.alias}
+            defaultValue={value.alias}
           />
         </InlineField>
       </div>
