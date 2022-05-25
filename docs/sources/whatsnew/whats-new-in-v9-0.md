@@ -1,7 +1,7 @@
 +++
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v9-0/", "/docs/grafana/latest/whatsnew/whats-new-in-v9-0/"]
-description = "Feature and improvement highlights for Grafana v8.5"
-keywords = ["grafana", "new", "documentation", "8.5", "release notes"]
+description = "Feature and improvement highlights for Grafana v9.0"
+keywords = ["grafana", "new", "documentation", "9.0", "release notes"]
 title = "What's new in Grafana v9.0"
 weight = -33
 
@@ -13,7 +13,7 @@ weight = -33
 
 As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
 
-A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 10 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
+A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
 
 The release also includes a brand new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
