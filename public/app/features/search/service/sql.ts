@@ -41,6 +41,8 @@ export class SQLSearcher implements GrafanaSearcher {
       if (query.kind?.length === 1 && query.kind[0] === 'folder') {
         q.type = 'dash-folder';
       }
+    } else if (query.query?.length) {
+      q.title = query.query;
     }
 
     if (query.uid) {

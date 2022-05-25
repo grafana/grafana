@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { BlugeSearcher } from './bluge';
 import { SQLSearcher } from './sql';
 import { GrafanaSearcher } from './types';
@@ -6,7 +8,8 @@ let searcher: GrafanaSearcher | undefined = undefined;
 
 export function getGrafanaSearcher(): GrafanaSearcher {
   if (!searcher) {
-    searcher = false ? new BlugeSearcher() : new SQLSearcher();
+    const useBluge = config.featureToggles.panelTitleSearch && window.location.search.indexOf('index=sql') < 0;
+    searcher = useBluge ? new BlugeSearcher() : new SQLSearcher();
   }
   return searcher!;
 }
