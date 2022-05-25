@@ -46,7 +46,7 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Signature algorithm
 
-> Only available in Grafana v7.3+
+> **Note:** Available in Grafana version 7.3 and later.
 
 The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
@@ -83,7 +83,7 @@ The integration provides two key endpoints as part of Grafana:
 
 ### IdP-initiated Single Sign-On (SSO)
 
-> Only available in Grafana v7.3+
+> **Note:** Available in Grafana version 7.3 and later.
 
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
@@ -91,7 +91,7 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 ### Single logout
 
-> Only available in Grafana v7.3+
+> **Note:** Available in Grafana version 7.3 and later.
 
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
@@ -125,7 +125,7 @@ By default, new Grafana users using SAML authentication will have an account cre
 
 ### Configure team sync
 
-> Team sync support for SAML only available in Grafana v7.0+
+> **Note:** Team sync support for SAML is available in Grafana version 7.0 and later.
 
 To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref ".././enterprise-configuration.md#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
@@ -133,7 +133,7 @@ To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref ".././enter
 
 ### Configure role sync
 
-> Only available in Grafana v7.0+
+> **Note:** Available in Grafana version 7.0 and later.
 
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
@@ -160,7 +160,7 @@ role_values_grafana_admin = superadmin
 
 ### Configure organization mapping
 
-> Only available in Grafana v7.0+
+> **Note:** Available in Grafana version 7.0 and later.
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
@@ -186,7 +186,7 @@ You can use `*` as an Organization if you want all your users to be in some orga
 
 ### Configure allowed organizations
 
-> Only available in Grafana v7.0+
+> **Note:** Available in Grafana version 7.0 and later.
 
 With the [`allowed_organizations`]({{< relref ".././enterprise-configuration.md#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
