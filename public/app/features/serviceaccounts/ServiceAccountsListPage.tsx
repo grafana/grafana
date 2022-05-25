@@ -258,6 +258,7 @@ const ServiceAccountsListPageUnconnected = ({
             <CreateTokenModal
               isOpen={isAddModalOpen}
               token={newToken}
+              serviceAccountLogin={currentServiceAccount.login}
               onCreateToken={onTokenCreate}
               onClose={onAddModalClose}
             />

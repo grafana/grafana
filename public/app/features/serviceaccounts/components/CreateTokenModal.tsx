@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -24,25 +25,36 @@ const EXPIRATION_OPTIONS = [
 
 export type ServiceAccountToken = {
   name: string;
-  secondsToLive: number;
+  secondsToLive?: number;
 };
 
 interface Props {
   isOpen: boolean;
   token: string;
+  serviceAccountLogin: string;
   onCreateToken: (token: ServiceAccountToken) => void;
   onClose: () => void;
 }
 
-export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Props) => {
+export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateToken, onClose }: Props) => {
   let tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  const [defaultTokenName, setDefaultTokenName] = useState('');
   const [newTokenName, setNewTokenName] = useState('');
   const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
   const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>(tomorrow);
   const [isExpirationDateValid, setIsExpirationDateValid] = useState(newTokenExpirationDate !== '');
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    // Generate new token name every time we open modal
+    if (isOpen) {
+      setDefaultTokenName(`${serviceAccountLogin}-${uuidv4()}`);
+    }
+    // Cleanup on unmount
+    return () => setDefaultTokenName('');
+  }, [serviceAccountLogin, isOpen]);
 
   const onExpirationDateChange = (value: Date | string) => {
     const isValid = value !== '';
@@ -50,8 +62,16 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
     setNewTokenExpirationDate(value);
   };
 
+  const onGenerateToken = () => {
+    onCreateToken({
+      name: newTokenName || defaultTokenName,
+      secondsToLive: isWithExpirationDate ? getSecondsToLive(newTokenExpirationDate) : undefined,
+    });
+  };
+
   const onCloseInternal = () => {
     setNewTokenName('');
+    setDefaultTokenName('');
     setIsWithExpirationDate(false);
     setNewTokenExpirationDate(tomorrow);
     setIsExpirationDateValid(newTokenExpirationDate !== '');
@@ -78,7 +98,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
           <FieldSet>
             <Field
               label="Display name"
-              description="name to easily identify the token"
+              description="Name to easily identify the token"
               className={styles.modalRow}
               // for now this is required
               // need to make this optional in backend as well
@@ -87,6 +107,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
               <Input
                 name="tokenName"
                 value={newTokenName}
+                placeholder={defaultTokenName}
                 onChange={(e) => {
                   setNewTokenName(e.currentTarget.value);
                 }}
@@ -110,15 +131,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Prop
               </Field>
             )}
           </FieldSet>
-          <Button
-            onClick={() =>
-              onCreateToken({
-                name: newTokenName,
-                secondsToLive: getSecondsToLive(newTokenExpirationDate),
-              })
-            }
-            disabled={isWithExpirationDate && !isExpirationDateValid}
-          >
+          <Button onClick={onGenerateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
             Generate token
           </Button>
         </div>
