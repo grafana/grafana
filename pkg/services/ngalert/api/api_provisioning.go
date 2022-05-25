@@ -180,3 +180,15 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.R
 	}
 	return response.JSON(http.StatusOK, timings)
 }
+
+func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+}
+
+func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+}
+
+func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response.Response {
+	return ErrResp(http.StatusInternalServerError, nil, "not implemented")
+}
