@@ -28,8 +28,8 @@ func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact Tra
 }
 
 // GetMuteTimings returns a slice of all mute timings within the specified org.
-func (m *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
-	rev, err := getLastConfiguration(ctx, orgID, m.config)
+func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
+	rev, err := getLastConfiguration(ctx, orgID, svc.config)
 	if err != nil {
 		return nil, err
 	}
