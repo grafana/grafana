@@ -8,28 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
-func (ss *SQLStore) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		version := models.DashboardVersion{}
-		has, err := sess.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardId, query.Version, query.OrgId).
-			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
-			Get(&version)
-
-		if err != nil {
-			return err
-		}
-
-		if !has {
-			return models.ErrDashboardVersionNotFound
-		}
-
-		version.Data.Set("id", version.DashboardId)
-		query.Result = &version
-		return nil
-	})
-}
-
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
 func (ss *SQLStore) GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {

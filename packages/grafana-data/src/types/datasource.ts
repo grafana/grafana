@@ -8,7 +8,6 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { LogRowModel } from './logs';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
@@ -265,29 +264,6 @@ abstract class DataSourceApi<
    * Convert a query to a simple text string
    */
   getQueryDisplayText?(query: TQuery): string;
-
-  /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  getLogRowContext?: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
-
-  /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * Variable query action.

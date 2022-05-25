@@ -39,7 +39,7 @@ func (t *TestCase) Value() string {
 	return fmt.Sprintf("%d:%s:%s:%d", t.OrgId, t.Namespace, t.Key, t.Revision)
 }
 
-func TestKVStore(t *testing.T) {
+func TestIntegrationKVStore(t *testing.T) {
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()

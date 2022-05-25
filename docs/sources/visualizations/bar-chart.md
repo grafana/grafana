@@ -98,7 +98,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md" >}}) to show in the legend. You can have more than one.
 
 ## Text size
 

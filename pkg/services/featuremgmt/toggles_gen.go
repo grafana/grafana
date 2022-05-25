@@ -11,9 +11,9 @@ const (
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
 
-	// FlagEnvelopeEncryption
-	// encrypt secrets
-	FlagEnvelopeEncryption = "envelopeEncryption"
+	// FlagDisableEnvelopeEncryption
+	// Disable envelope encryption (emergency only)
+	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
 	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
@@ -70,10 +70,6 @@ const (
 	// FlagLokiBackendMode
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
-
-	// FlagAccesscontrolBuiltins
-	// Simplify access control builtin roles
-	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
 
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
@@ -182,4 +178,12 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagPrometheusWideSeries
+	// Enable wide series responses in the Prometheus datasource
+	FlagPrometheusWideSeries = "prometheusWideSeries"
 )

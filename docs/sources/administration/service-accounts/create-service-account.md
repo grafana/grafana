@@ -11,14 +11,14 @@ weight: 50
 
 # Create a service account in Grafana
 
-A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. For more information about how you can use service accounts, refer to [About service accounts]({{< relref "../service-accounts/about-service-accounts.md#">}}).
+A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. For more information about how you can use service accounts, refer to [About service accounts]({{< relref "../service-accounts/about-service-accounts.md#" >}}).
 
-For more information about creating service accounts via the API, refer to [Create a service account in the HTTP API]({{< relref "../../http_api/serviceaccount.md#create-service-account">}}).
+For more information about creating service accounts via the API, refer to [Create a service account in the HTTP API]({{< relref "../../developers/http_api/serviceaccount.md#create-service-account" >}}).
 
 ## Before you begin
 
-- Ensure you have added the feature toggle for service accounts `serviceAccounts`. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
-- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
+- Ensure you have added the feature toggle for service accounts `serviceAccounts`. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#" >}}).
+- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#" >}}).
 
 ## To create a service account
 

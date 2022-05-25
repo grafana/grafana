@@ -17,3 +17,14 @@ export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
     queries: dto.queries,
   };
 };
+
+export const toDTO = (richHistory: RichHistoryQuery): RichHistoryRemoteStorageDTO => {
+  return {
+    uid: richHistory.id,
+    createdAt: Math.floor(richHistory.createdAt / 1000),
+    datasourceUid: richHistory.datasourceUid,
+    starred: richHistory.starred,
+    comment: richHistory.comment,
+    queries: richHistory.queries,
+  };
+};

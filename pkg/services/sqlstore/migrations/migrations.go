@@ -80,6 +80,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		if mg.Cfg.RBACEnabled {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
+			accesscontrol.AddAlertingPermissionsMigrator(mg)
 		}
 	}
 	addQueryHistoryStarMigrations(mg)
@@ -96,6 +97,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addPublicDashboardMigration(mg)
 	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
+
+	accesscontrol.AddManagedPermissionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

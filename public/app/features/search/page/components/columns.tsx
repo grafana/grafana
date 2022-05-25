@@ -1,26 +1,28 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
+import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
+import { getSortFieldDisplayName } from './sorting';
 
 const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const LOCATION_COLUMN_WIDTH = 200;
-const TAGS_COLUMN_WIDTH = 300;
+const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
+  clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void
@@ -29,25 +31,47 @@ export const generateColumns = (
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  if (sortField) {
+    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+  }
 
   let width = 50;
-
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
       id: `column-checkbox`,
       width,
-      Header: () => (
-        <div className={styles.checkboxHeader}>
-          <Checkbox
-            onChange={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              alert('SELECT ALL!!!');
-            }}
-          />
-        </div>
-      ),
+      Header: () => {
+        if (selection('*', '*')) {
+          return (
+            <div className={styles.checkboxHeader}>
+              <IconButton name={'check-square' as any} onClick={clearSelection} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.checkboxHeader}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const { view } = response;
+                const count = Math.min(view.length, 50);
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  if (item.uid && item.kind) {
+                    if (!selection(item.kind, item.uid)) {
+                      selectionToggle(item.kind, item.uid);
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        );
+      },
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
@@ -76,9 +100,14 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
+      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let name = access.name.values.get(p.row.index);
+      if (!name?.length) {
+        name = 'Missing title'; // normal for panels
+        classNames += ' ' + styles.missingTitleText;
+      }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
           {name}
         </a>
       );
@@ -110,22 +139,17 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  width = Math.max(availableWidth - TAGS_COLUMN_WIDTH, LOCATION_COLUMN_WIDTH);
+  width = Math.max(availableWidth / 2.5, 200);
+  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
+  availableWidth -= width;
+
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-  if (meta?.locationInfo) {
+  if (meta?.locationInfo && availableWidth > 0) {
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div
-            {...p.cellProps}
-            className={cx(
-              p.cellStyle,
-              css`
-                padding-right: 10px;
-              `
-            )}
-          >
+          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
@@ -142,12 +166,31 @@ export const generateColumns = (
       id: `column-location`,
       field: access.location ?? access.url,
       Header: 'Location',
-      width,
+      width: availableWidth,
     });
-    availableWidth -= width;
   }
 
-  columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
+  if (sortField) {
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>{getSortFieldDisplayName(sortField.name)}</div>,
+      Cell: (p) => {
+        let value = sortField.values.get(p.row.index);
+        try {
+          if (isNumber(value)) {
+            value = Number(value).toLocaleString();
+          }
+        } catch {}
+        return (
+          <div {...p.cellProps} className={styles.sortedItems}>
+            {value}
+          </div>
+        );
+      },
+      id: `column-sort-field`,
+      field: sortField,
+      width: SORT_FIELD_WIDTH,
+    });
+  }
 
   return columns;
 };
@@ -253,7 +296,18 @@ function makeTypeColumn(
                 }
                 txt = info.name;
               } else {
-                icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                switch (type) {
+                  case 'row':
+                    txt = 'Row';
+                    icon = `public/img/icons/unicons/bars.svg`;
+                    break;
+                  case 'singlestat': // auto-migration
+                    txt = 'Singlestat';
+                    icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
+                    break;
+                  default:
+                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                }
               }
             }
             break;
