@@ -23,7 +23,7 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-var update = false
+var update = true
 
 func TestMatrixResponses(t *testing.T) {
 	tt := []struct {

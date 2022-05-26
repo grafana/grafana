@@ -296,7 +296,18 @@ function makeTypeColumn(
                 }
                 txt = info.name;
               } else {
-                icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                switch (type) {
+                  case 'row':
+                    txt = 'Row';
+                    icon = `public/img/icons/unicons/bars.svg`;
+                    break;
+                  case 'singlestat': // auto-migration
+                    txt = 'Singlestat';
+                    icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
+                    break;
+                  default:
+                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                }
               }
             }
             break;
