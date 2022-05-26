@@ -16,6 +16,7 @@ module.exports = (env = {}) =>
     entry: {
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
+      fusebit: './public/sass/grafana.fusebit.scss',
     },
 
     module: {
@@ -75,7 +76,7 @@ module.exports = (env = {}) =>
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
         inject: false,
-        excludeChunks: ['manifest', 'dark', 'light'],
+        excludeChunks: ['manifest', 'dark', 'light', 'fusebit'],
         chunksSortMode: 'none',
       }),
       function () {
