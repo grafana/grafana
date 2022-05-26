@@ -19,8 +19,8 @@ type UnsignedPluginAuthorizer struct {
 	cfg *config.Cfg
 }
 
-func (u *UnsignedPluginAuthorizer) CanLoadPlugin(details Details) bool {
-	if details.SignatureStatus != Unsigned {
+func (u *UnsignedPluginAuthorizer) CanLoadPlugin(pd PluginDetails) bool {
+	if pd.SignatureStatus != Unsigned {
 		return true
 	}
 
@@ -29,7 +29,7 @@ func (u *UnsignedPluginAuthorizer) CanLoadPlugin(details Details) bool {
 	}
 
 	for _, pID := range u.cfg.PluginsAllowUnsigned {
-		if pID == details.PluginID {
+		if pID == pd.PluginID {
 			return true
 		}
 	}

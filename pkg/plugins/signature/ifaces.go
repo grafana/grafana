@@ -2,10 +2,10 @@ package signature
 
 type PluginLoaderAuthorizer interface {
 	// CanLoadPlugin confirms if a plugin is authorized to load
-	CanLoadPlugin(Details) bool
+	CanLoadPlugin(PluginDetails) bool
 }
 
-type Details struct {
+type PluginDetails struct {
 	PluginID        string
 	SignatureStatus Status
 }
