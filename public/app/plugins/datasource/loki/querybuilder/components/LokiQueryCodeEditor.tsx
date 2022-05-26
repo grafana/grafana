@@ -21,7 +21,7 @@ export function LokiQueryCodeEditor({
 
   // the inner QueryField works like this when a blur event happens:
   // - if it has an onBlur prop, it calls it
-  // - else it calls unRunQuery (some extra conditions apply)
+  // - else it calls onRunQuery (some extra conditions apply)
   //
   // we want it to not do anything when a blur event happens in explore mode,
   // so we set an empty-function in such case. otherwise we set `undefined`,
