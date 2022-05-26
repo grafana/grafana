@@ -8,29 +8,29 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type DataSourceQueryResponse struct {
-	Results Results
+type metricsResponse struct {
+	Results results
 }
 
-type Results map[string]DataResponse
+type results map[string]queryResponse
 
-type DataResponse struct {
+type queryResponse struct {
 	Frames data.Frames
 	Error  error
 	Status int
 }
 
 // MarshalJSON writes the results as json
-func (r DataSourceQueryResponse) MarshalJSON() ([]byte, error) {
+func (m metricsResponse) MarshalJSON() ([]byte, error) {
 	cfg := jsoniter.ConfigCompatibleWithStandardLibrary
 	stream := cfg.BorrowStream(nil)
 	defer cfg.ReturnStream(stream)
 
-	writeQueryDataResponseJSON(&r, stream)
+	writeQueryDataResponseJSON(&m, stream)
 	return append([]byte(nil), stream.Buffer()...), stream.Error
 }
 
-func writeQueryDataResponseJSON(dsqr *DataSourceQueryResponse, stream *jsoniter.Stream) {
+func writeQueryDataResponseJSON(dsqr *metricsResponse, stream *jsoniter.Stream) {
 	stream.WriteObjectStart()
 	stream.WriteObjectField("results")
 	stream.WriteObjectStart()
@@ -59,7 +59,7 @@ func writeQueryDataResponseJSON(dsqr *DataSourceQueryResponse, stream *jsoniter.
 	stream.WriteObjectEnd()
 }
 
-func writeDataResponseJSON(dr *DataResponse, stream *jsoniter.Stream) {
+func writeDataResponseJSON(dr *queryResponse, stream *jsoniter.Stream) {
 	stream.WriteObjectStart()
 	started := false
 

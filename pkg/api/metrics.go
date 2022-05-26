@@ -107,25 +107,25 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 
 	statusCode := http.StatusOK
 
-	res := map[string]DataResponse{}
+	res := map[string]queryResponse{}
 	for refID, resp := range qdr.Responses {
-		dr := DataResponse{Frames: resp.Frames, Error: resp.Error, Status: http.StatusOK}
+		qr := queryResponse{Frames: resp.Frames, Error: resp.Error, Status: http.StatusOK}
 		if resp.Error != nil {
 			statusCode = statusWhenError
 
 			switch resp.ErrorStatus {
 			case backend.Undefined:
-				dr.Status = http.StatusInternalServerError
+				qr.Status = http.StatusInternalServerError
 			case backend.ConnectionError:
-				dr.Status = http.StatusBadGateway
+				qr.Status = http.StatusBadGateway
 			case backend.Timeout:
-				dr.Status = http.StatusGatewayTimeout
+				qr.Status = http.StatusGatewayTimeout
 			default:
-				dr.Status = http.StatusBadRequest
+				qr.Status = http.StatusBadRequest
 			}
 		}
-		res[refID] = dr
+		res[refID] = qr
 	}
 
-	return response.JSONStreaming(statusCode, &DataSourceQueryResponse{Results: res})
+	return response.JSONStreaming(statusCode, &metricsResponse{Results: res})
 }
