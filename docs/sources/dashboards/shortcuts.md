@@ -1,7 +1,7 @@
-+++
-title = "Keyboard shortcuts"
-weight = 7
-+++
+---
+title: Keyboard shortcuts
+weight: 7
+---
 
 # Keyboard shortcuts
 

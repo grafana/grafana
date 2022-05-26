@@ -1,8 +1,8 @@
-+++
-title = "Dashboard management maturity model"
-description = "Explanation of dashboard management maturity model"
-weight = 400
-+++
+---
+description: Explanation of dashboard management maturity model
+title: Dashboard management maturity model
+weight: 400
+---
 
 # Dashboard management maturity model
 

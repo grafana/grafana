@@ -1,9 +1,15 @@
-+++
-title = "Folder HTTP API "
-description = "Grafana Folder HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "folder"]
-aliases = ["/docs/grafana/latest/http_api/folder/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/http_api/folder/
+description: Grafana Folder HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - folder
+title: 'Folder HTTP API '
+---
 
 # Folder API
 

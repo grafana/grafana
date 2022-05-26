@@ -1,9 +1,13 @@
-+++
-title = "Deploy Grafana on Kubernetes"
-description = "Guide for deploying Grafana on Kubernetes"
-keywords = ["grafana", "configuration", "documentation", "kubernetes"]
-weight = 700
-+++
+---
+description: Guide for deploying Grafana on Kubernetes
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - kubernetes
+title: Deploy Grafana on Kubernetes
+weight: 700
+---
 
 ## Deploy Grafana on Kubernetes
 

@@ -1,9 +1,16 @@
-+++
-title = "Cortex or Loki rule groups and namespaces"
-description = "Edit Cortex or Loki rule groups and namespaces"
-keywords = ["grafana", "alerting", "guide", "group", "namespace", "cortex", "loki"]
-weight = 405
-+++
+---
+description: Edit Cortex or Loki rule groups and namespaces
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - group
+  - namespace
+  - cortex
+  - loki
+title: Cortex or Loki rule groups and namespaces
+weight: 405
+---
 
 # Cortex or Loki rule groups and namespaces
 

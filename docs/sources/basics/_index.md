@@ -1,7 +1,7 @@
-+++
-title = "Grafana basics"
-weight = 15
-+++
+---
+title: Grafana basics
+weight: 15
+---
 
 # Grafana basics
 

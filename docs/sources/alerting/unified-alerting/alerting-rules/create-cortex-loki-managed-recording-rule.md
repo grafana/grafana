@@ -1,9 +1,15 @@
-+++
-title = "Create Cortex or Loki managed recording rule"
-description = "Create Cortex or Loki managed recording rule"
-keywords = ["grafana", "alerting", "guide", "rules", "recording rules", "create"]
-weight = 400
-+++
+---
+description: Create Cortex or Loki managed recording rule
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - recording rules
+  - create
+title: Create Cortex or Loki managed recording rule
+weight: 400
+---
 
 # Create a Cortex or Loki managed recording rule
 

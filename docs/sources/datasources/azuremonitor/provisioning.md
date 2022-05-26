@@ -1,9 +1,18 @@
-+++
-title = "Provisioning Azure Monitor"
-description = "Template to provision the Azure Monitor data source"
-keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-weight = 2
-+++
+---
+description: Template to provision the Azure Monitor data source
+keywords:
+  - grafana
+  - microsoft
+  - azure
+  - monitor
+  - application
+  - insights
+  - log
+  - analytics
+  - guide
+title: Provisioning Azure Monitor
+weight: 2
+---
 
 # Configure the data source with provisioning
 

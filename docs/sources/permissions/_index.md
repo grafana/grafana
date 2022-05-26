@@ -1,10 +1,18 @@
-+++
-title = "Permissions"
-description = "Permissions"
-keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
-aliases = ["/docs/grafana/latest/permissions/overview/"]
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/permissions/overview/
+description: Permissions
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - admin
+  - users
+  - datasources
+  - permissions
+title: Permissions
+weight: 50
+---
 
 # Permissions
 

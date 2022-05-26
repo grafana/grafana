@@ -1,7 +1,7 @@
-+++
-title = "Manage organization"
-weight = 200
-+++
+---
+title: Manage organization
+weight: 200
+---
 
 # Manage organizations as a Server Admin
 

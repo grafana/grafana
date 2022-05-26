@@ -1,7 +1,7 @@
-+++
-title = "Rows to fields"
-weight = 300
-+++
+---
+title: Rows to fields
+weight: 300
+---
 
 # Rows to fields transform
 

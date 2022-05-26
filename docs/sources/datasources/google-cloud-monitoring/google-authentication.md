@@ -1,10 +1,14 @@
-+++
-title = "Authentication"
-description = "Google authentication"
-keywords = ["grafana", "google", "authentication"]
-aliases = ["/docs/grafana/next/datasources/cloudmonitoring/"]
-weight = 5
-+++
+---
+aliases:
+  - /docs/grafana/next/datasources/cloudmonitoring/
+description: Google authentication
+keywords:
+  - grafana
+  - google
+  - authentication
+title: Authentication
+weight: 5
+---
 
 # Google authentication
 

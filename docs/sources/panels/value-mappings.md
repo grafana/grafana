@@ -1,7 +1,7 @@
-+++
-title = "Value mappings"
-weight = 450
-+++
+---
+title: Value mappings
+weight: 450
+---
 
 # Value mappings
 

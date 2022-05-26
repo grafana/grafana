@@ -1,9 +1,12 @@
-+++
-title = "KMS integration"
-description = ""
-keywords = ["grafana", "kms", "key management system integration"]
-weight = 1200
-+++
+---
+description: ''
+keywords:
+  - grafana
+  - kms
+  - key management system integration
+title: KMS integration
+weight: 1200
+---
 
 # Key management systems (KMSs)
 

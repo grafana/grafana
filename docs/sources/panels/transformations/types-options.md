@@ -1,7 +1,7 @@
-+++
-title = "Types and options"
-weight = 2
-+++
+---
+title: Types and options
+weight: 2
+---
 
 # Transformation types and options
 

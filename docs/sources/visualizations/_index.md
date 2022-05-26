@@ -1,8 +1,9 @@
-+++
-title = "Visualizations"
-weight = 75
-aliases = ["/docs/grafana/latest/panels/visualizations/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/
+title: Visualizations
+weight: 75
+---
 
 # Visualization panels
 

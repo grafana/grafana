@@ -1,9 +1,14 @@
-+++
-title = " Configure high availability"
-description = "High Availability"
-keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
-weight = 450
-+++
+---
+description: High Availability
+keywords:
+  - grafana
+  - alerting
+  - tutorials
+  - ha
+  - high availability
+title: ' Configure high availability'
+weight: 450
+---
 
 # High availability
 

@@ -1,9 +1,12 @@
-+++
-title = "Restart Grafana"
-description = "Instructions for restarting Grafana"
-keywords = ["grafana", "restart", "documentation"]
-weight = 750
-+++
+---
+description: Instructions for restarting Grafana
+keywords:
+  - grafana
+  - restart
+  - documentation
+title: Restart Grafana
+weight: 750
+---
 
 # Restart Grafana
 

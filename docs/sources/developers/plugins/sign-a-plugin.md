@@ -1,6 +1,6 @@
-+++
-title = "Sign a plugin"
-+++
+---
+title: Sign a plugin
+---
 
 # Sign a plugin
 

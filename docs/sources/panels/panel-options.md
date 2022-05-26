@@ -1,7 +1,7 @@
-+++
-title = "Panel options"
-weight = 900
-+++
+---
+title: Panel options
+weight: 900
+---
 
 # Panel options
 

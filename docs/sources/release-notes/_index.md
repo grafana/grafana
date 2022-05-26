@@ -1,7 +1,7 @@
-+++
-title = "Release notes"
-weight = 10000
-+++
+---
+title: Release notes
+weight: 10000
+---
 
 # Release notes
 

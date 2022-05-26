@@ -1,8 +1,9 @@
-+++
-title = "Legend options"
-aliases = ["/docs/grafana/latest/panels/visualizations/panel-legend/"]
-weight = 950
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/panel-legend/
+title: Legend options
+weight: 950
+---
 
 # Legend options
 

@@ -1,9 +1,16 @@
-+++
-title = "Roles"
-description = "Understand roles in fine-grained access control"
-keywords = ["grafana", "fine-grained-access-control", "roles", "fixed-roles", "built-in-role-assignments", "permissions", "enterprise"]
-weight = 105
-+++
+---
+description: Understand roles in fine-grained access control
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - fixed-roles
+  - built-in-role-assignments
+  - permissions
+  - enterprise
+title: Roles
+weight: 105
+---
 
 # Roles
 

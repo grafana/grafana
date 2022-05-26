@@ -1,9 +1,13 @@
-+++
-title = "Alert groups"
-description = "Alert groups"
-keywords = ["grafana", "alerting", "alerts", "groups"]
-weight = 400
-+++
+---
+description: Alert groups
+keywords:
+  - grafana
+  - alerting
+  - alerts
+  - groups
+title: Alert groups
+weight: 400
+---
 
 # Alert groups
 

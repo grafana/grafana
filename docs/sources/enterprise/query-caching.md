@@ -1,9 +1,13 @@
-+++
-title = "Query caching"
-description = "Grafana Enterprise data source query caching"
-keywords = ["grafana", "plugins", "query", "caching"]
-weight = 300
-+++
+---
+description: Grafana Enterprise data source query caching
+keywords:
+  - grafana
+  - plugins
+  - query
+  - caching
+title: Query caching
+weight: 300
+---
 
 # Query caching
 

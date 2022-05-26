@@ -1,10 +1,14 @@
-+++
-title = "Envelope encryption"
-description = "Envelope encryption"
-keywords = ["grafana", "envelope encryption", "documentation"]
-aliases = [""]
-weight = 430
-+++
+---
+aliases:
+  - ''
+description: Envelope encryption
+keywords:
+  - grafana
+  - envelope encryption
+  - documentation
+title: Envelope encryption
+weight: 430
+---
 
 # Envelope encryption
 

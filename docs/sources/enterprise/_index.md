@@ -1,9 +1,18 @@
-+++
-title = "Grafana Enterprise"
-description = "Grafana Enterprise overview"
-keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
-weight = 150
-+++
+---
+description: Grafana Enterprise overview
+keywords:
+  - grafana
+  - documentation
+  - datasource
+  - permissions
+  - ldap
+  - licensing
+  - enterprise
+  - insights
+  - reporting
+title: Grafana Enterprise
+weight: 150
+---
 
 # Grafana Enterprise
 

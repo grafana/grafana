@@ -1,7 +1,7 @@
-+++
-title = "Apply a transformation"
-weight = 1
-+++
+---
+title: Apply a transformation
+weight: 1
+---
 
 # Apply transformations
 

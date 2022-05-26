@@ -1,7 +1,7 @@
-+++
-title = "Add a panel"
-weight = 100
-+++
+---
+title: Add a panel
+weight: 100
+---
 
 # Add a panel
 

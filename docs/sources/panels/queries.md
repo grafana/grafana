@@ -1,7 +1,7 @@
-+++
-title = "Queries"
-weight = 300
-+++
+---
+title: Queries
+weight: 300
+---
 
 # Queries
 

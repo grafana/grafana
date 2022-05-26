@@ -1,7 +1,12 @@
-+++
-title = "Template data"
-keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-+++
+---
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - templating
+title: Template data
+---
 
 # Template data
 

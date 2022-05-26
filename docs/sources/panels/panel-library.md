@@ -1,7 +1,7 @@
-+++
-title = "Library panels"
-weight = 410
-+++
+---
+title: Library panels
+weight: 410
+---
 
 # Library panels
 

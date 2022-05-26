@@ -1,10 +1,16 @@
-+++
-title = "Database encryption (Enterprise)"
-description = "Grafana Enterprise database encryption"
-keywords = ["grafana", "enterprise", "database", "encryption", "documentation"]
-aliases = [""]
-weight = 440
-+++
+---
+aliases:
+  - ''
+description: Grafana Enterprise database encryption
+keywords:
+  - grafana
+  - enterprise
+  - database
+  - encryption
+  - documentation
+title: Database encryption (Enterprise)
+weight: 440
+---
 
 # Grafana Enterprise database encryption
 

@@ -1,8 +1,8 @@
-+++
-title = "Administration"
-description = "Administration"
-weight = 40
-+++
+---
+description: Administration
+title: Administration
+weight: 40
+---
 
 # Administration
 

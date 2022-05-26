@@ -1,6 +1,6 @@
-+++
-title = "Add support for variables in plugins"
-+++
+---
+title: Add support for variables in plugins
+---
 
 # Add support for variables in plugins
 

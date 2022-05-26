@@ -1,7 +1,7 @@
-+++
-title = "Thresholds"
-weight = 440
-+++
+---
+title: Thresholds
+weight: 440
+---
 
 # Thresholds
 

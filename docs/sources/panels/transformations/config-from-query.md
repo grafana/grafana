@@ -1,7 +1,7 @@
-+++
-title = "Config from query results"
-weight = 300
-+++
+---
+title: Config from query results
+weight: 300
+---
 
 # Config from query results transform
 

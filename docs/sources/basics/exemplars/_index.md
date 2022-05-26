@@ -1,9 +1,13 @@
-+++
-title = "Exemplars"
-description = "Exemplars"
-keywords = ["grafana", "concepts", "exemplars", "prometheus"]
-weight = 400
-+++
+---
+description: Exemplars
+keywords:
+  - grafana
+  - concepts
+  - exemplars
+  - prometheus
+title: Exemplars
+weight: 400
+---
 
 # Introduction to exemplars
 
