@@ -11,7 +11,7 @@ import (
 
 func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
-	query := models.GetPlaylistByUidQuery{Uid: uid, OrgId: c.OrgId}
+	query := models.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
 	err := hs.SQLStore.GetPlaylist(c.Req.Context(), &query)
 
 	if err != nil {
@@ -54,7 +54,7 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	cmd := models.GetPlaylistByUidQuery{Uid: uid, OrgId: c.OrgId}
+	cmd := models.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
 
 	if err := hs.SQLStore.GetPlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Playlist not found", err)
@@ -64,7 +64,7 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 
 	dto := &models.PlaylistDTO{
 		Id:       cmd.Result.Id,
-		Uid:      cmd.Result.Uid,
+		UID:      cmd.Result.UID,
 		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
 		OrgId:    cmd.Result.OrgId,
@@ -98,7 +98,7 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgI
 }
 
 func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string, orgId int64) ([]models.PlaylistItem, error) {
-	itemQuery := models.GetPlaylistItemsByUidQuery{PlaylistUid: uid, OrgId: orgId}
+	itemQuery := models.GetPlaylistItemsByUidQuery{PlaylistUID: uid, OrgId: orgId}
 	if err := hs.SQLStore.GetPlaylistItem(ctx, &itemQuery); err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
-	cmd := models.DeletePlaylistCommand{Uid: uid, OrgId: c.OrgId}
+	cmd := models.DeletePlaylistCommand{UID: uid, OrgId: c.OrgId}
 	if err := hs.SQLStore.DeletePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
@@ -160,13 +160,13 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	cmd.Uid = web.Params(c.Req)[":uid"]
+	cmd.UID = web.Params(c.Req)[":uid"]
 
 	if err := hs.SQLStore.UpdatePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.Uid, c.OrgId)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.UID, c.OrgId)
 	if err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
