@@ -31,7 +31,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, &fakePluginInstaller{}, newFakePluginProcessManager())
+		}, loader, &fakePluginInstaller{}, newFakePluginProcessManager(), ProvideRunnerService())
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -461,7 +461,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, p
 	t.Helper()
 
 	fakeRegistry := newFakePluginRegistry()
-	pm := New(&plugins.Cfg{}, fakeRegistry, nil, &fakeLoader{}, &fakePluginInstaller{}, process.ProvideProcessManager(fakeRegistry))
+	pm := New(&plugins.Cfg{}, fakeRegistry, nil, &fakeLoader{}, &fakePluginInstaller{}, process.ProvideProcessManager(fakeRegistry), ProvideRunnerService())
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -524,7 +524,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 
 	pluginRegistry := registry.NewInMemory(cfg)
 	manager := New(cfg, pluginRegistry, nil, &fakeLoader{}, &fakePluginInstaller{},
-		process.ProvideProcessManager(pluginRegistry))
+		process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}
@@ -711,16 +711,6 @@ func (pc *fakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *fakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
-}
-
-type fakeSender struct {
-	resp *backend.CallResourceResponse
-}
-
-func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
-	s.resp = crr
-
-	return nil
 }
 
 type fakePluginRegistry struct {
