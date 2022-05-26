@@ -166,7 +166,7 @@ func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.P
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
 	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
-	err := m.processManager.Stop(ctx, p)
+	err := m.processManager.Stop(ctx, p.ID)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 		m.log.Info("Plugin registered", "pluginId", p.ID)
 	}
 
-	return m.processManager.Start(ctx, p)
+	return m.processManager.Start(ctx, p.ID)
 }
 
 func pluginSources(cfg *setting.Cfg) []plugins.PluginSource {

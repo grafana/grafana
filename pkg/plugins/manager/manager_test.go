@@ -552,13 +552,13 @@ func newFakePluginProcessManager() *fakePluginProcessManager {
 	}
 }
 
-func (f *fakePluginProcessManager) Start(_ context.Context, p *plugins.Plugin) error {
-	f.started[p.ID] += 1
+func (f *fakePluginProcessManager) Start(_ context.Context, pluginID string) error {
+	f.started[pluginID] += 1
 	return nil
 }
 
-func (f *fakePluginProcessManager) Stop(_ context.Context, p *plugins.Plugin) error {
-	f.stopped[p.ID] += 1
+func (f *fakePluginProcessManager) Stop(_ context.Context, pluginID string) error {
+	f.stopped[pluginID] += 1
 	return nil
 }
 

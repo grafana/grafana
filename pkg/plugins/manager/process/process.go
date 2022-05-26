@@ -28,7 +28,12 @@ func ProvideProcessManager(pluginRegistry registry.Service) *Manager {
 	}
 }
 
-func (m *Manager) Start(ctx context.Context, p *plugins.Plugin) error {
+func (m *Manager) Start(ctx context.Context, pluginID string) error {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return backendplugin.ErrPluginNotRegistered
+	}
+
 	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
 		return nil
 	}
@@ -48,7 +53,11 @@ func (m *Manager) Start(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (m *Manager) Stop(ctx context.Context, p *plugins.Plugin) error {
+func (m *Manager) Stop(ctx context.Context, pluginID string) error {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return backendplugin.ErrPluginNotRegistered
+	}
 	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
