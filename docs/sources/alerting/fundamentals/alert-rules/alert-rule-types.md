@@ -1,9 +1,14 @@
-+++
-title = "Alert rule types"
-description = "Learn about the different alert rule types"
-keywords = ["grafana", "alerting", "rule types"]
-weight = 102
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
+description: Learn about the different alert rule types
+keywords:
+  - grafana
+  - alerting
+  - rule types
+title: Alert rule types
+weight: 102
+---
 
 # Alert rule types
 

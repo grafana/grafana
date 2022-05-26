@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/image-rendering/monitoring/"]
-description = "Image rendering monitoring"
-keywords = ["grafana", "image", "rendering", "plugin", "monitoring"]
-title = "Monitoring the image renderer"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/image-rendering/monitoring/
+description: Image rendering monitoring
+keywords:
+  - grafana
+  - image
+  - rendering
+  - plugin
+  - monitoring
+title: Monitoring the image renderer
+weight: 100
+---
 
 # Monitoring the image renderer
 

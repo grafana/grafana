@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/auth/okta/"]
-description = "Grafana Okta OAuth Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-title = "Okta OAuth2 authentication"
-weight = 1000
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/okta/
+description: 'Grafana Okta OAuth Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: Okta OAuth2 authentication
+weight: 1000
+---
 
 # Okta OAuth2 authentication
 

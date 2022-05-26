@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/migrating-alerts/"]
-description = "Migrate Grafana alerts"
-title = "Migrate to Grafana alerting"
-weight = 113
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/migrating-alerts/
+description: Migrate Grafana alerts
+title: Migrate to Grafana alerting
+weight: 113
+---
 
 # Migrate to Grafana alerting
 

@@ -1,8 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/message-templating/template-functions/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/template-functions/"]
-keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-title = "Template functions"
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/contact-points/message-templating/template-functions/
+  - /docs/grafana/latest/alerting/message-templating/template-functions/
+  - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-functions/
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - templating
+title: Template functions
+---
 
 # Template Functions
 

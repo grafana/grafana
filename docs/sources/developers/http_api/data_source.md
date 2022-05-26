@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/data_source/", "/docs/grafana/latest/http_api/data_source/", "/docs/grafana/latest/http_api/datasource/"]
-description = "Grafana Data source HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "data source"]
-title = "Data source HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/data_source/
+  - /docs/grafana/latest/http_api/data_source/
+  - /docs/grafana/latest/http_api/datasource/
+description: Grafana Data source HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - data source
+title: 'Data source HTTP API '
+---
 
 # Data source API
 
