@@ -17,7 +17,7 @@ type Image struct {
 	ExpiresAt time.Time `xorm:"expires_at"`
 }
 
-// A XORM interface that lets us clean up our SQL session definition.
+// A XORM interface that defines the used table for this struct.
 func (i *Image) TableName() string {
 	return "alert_image"
 }
