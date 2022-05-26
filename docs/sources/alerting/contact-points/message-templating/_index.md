@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/message-templating/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/"]
-description = "Message templating"
-keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-title = "Message templating"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/contact-points/message-templating/
+  - /docs/grafana/latest/alerting/message-templating/
+  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+description: Message templating
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - templating
+title: Message templating
+weight: 400
+---
 
 # Message templating
 

@@ -1,9 +1,14 @@
-+++
-title = "About alert rules"
-description = "Learn about Grafana alert rules"
-keywords = ["grafana", "alerting", "rules"]
-weight = 101
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/alert-rules/
+description: About Grafana alert rules
+keywords:
+  - grafana
+  - alerting
+  - rules
+title: Alert rules
+weight: 101
+---
 
 # About alert rules
 
@@ -16,4 +21,4 @@ An interval specifies how frequently an alerting rule is evaluated. Duration, wh
 - [Alert rule types]({{< relref "./alert-rule-types.md" >}})
 - [Alert instances]({{< relref "./alert-instances.md" >}})
 - [Organising alert rules]({{< relref "./organising-alerts.md" >}})
-- [Annotation and labels]({{< relref "../fundamentals/annotation-label/_index.md" >}})
+- [Annotation and labels]({{< relref "../annotation-label/_index.md" >}})

@@ -1,9 +1,15 @@
-+++
-title = "Dashboard previews"
-keywords = ["grafana", "dashboard", "documentation", "previews"]
-aliases = ["/docs/grafana/latest/reference/previews/"]
-weight = 9
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/previews/
+  - /docs/grafana/latest/reference/previews/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - previews
+title: Dashboard previews
+weight: 9
+---
 
 # Dashboard previews
 

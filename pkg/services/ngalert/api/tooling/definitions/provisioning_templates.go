@@ -14,7 +14,7 @@ import (
 // Get all message templates.
 //
 //     Responses:
-//       200: []MessageTemplate
+//       200: MessageTemplate
 //       400: ValidationError
 
 // swagger:route GET /api/provisioning/templates/{name} provisioning RouteGetTemplate
@@ -33,7 +33,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
 
 // swagger:route DELETE /api/provisioning/templates/{name} provisioning RouteDeleteTemplate
@@ -41,13 +41,24 @@ import (
 // Delete a template.
 //
 //     Responses:
-//       204: Accepted
+//       204: Ack
 
+// swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
+type RouteGetTemplateParam struct {
+	// Template Name
+	// in:path
+	Name string `json:"name"`
+}
+
+// swagger:model
 type MessageTemplate struct {
 	Name       string
 	Template   string
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
+
+// swagger:model
+type MessageTemplates []MessageTemplate
 
 type MessageTemplateContent struct {
 	Template string

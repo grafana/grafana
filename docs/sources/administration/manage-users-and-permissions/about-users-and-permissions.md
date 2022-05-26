@@ -1,8 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/", "/docs/grafana/latest/manage-users/", "/docs/grafana/latest/permissions/", "/docs/grafana/latest/permissions/organization_roles/", "/docs/grafana/latest/permissions/overview/"]
-title = "About users and permissions"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/
+  - /docs/grafana/latest/manage-users/
+  - /docs/grafana/latest/permissions/
+  - /docs/grafana/latest/permissions/organization_roles/
+  - /docs/grafana/latest/permissions/overview/
+title: About users and permissions
+weight: 100
+---
 
 # About users and permissions
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -186,23 +187,15 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
-	for i := range as {
-		imgToken := getTokenFromAnnotations(as[i].Annotations)
-		if len(imgToken) == 0 {
-			continue
-		}
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := pn.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				pn.log.Warn("failed to retrieve image url from store", "error", err)
+	_ = withStoredImages(ctx, pn.log, pn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil && len(image.URL) != 0 {
+				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
 			}
-		} else {
-			msg.Images = append(msg.Images, pagerDutyImage{Src: imgURL})
-		}
-	}
+
+			return nil
+		},
+		as...)
 
 	if len(msg.Payload.Summary) > 1024 {
 		// This is the Pagerduty limit.

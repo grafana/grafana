@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/serviceaccount/", "/docs/grafana/latest/http_api/serviceaccount/"]
-description = "Grafana service account HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "serviceaccount"]
-title = "Service account HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/serviceaccount/
+  - /docs/grafana/latest/http_api/serviceaccount/
+description: Grafana service account HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - serviceaccount
+title: 'Service account HTTP API '
+---
 
 # Service account API
 

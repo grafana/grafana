@@ -1,9 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/getting-started/getting-started-prometheus/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Learn how to build your first Prometheus dashboard in Grafana."
-title = "Get started with Grafana and Prometheus"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/getting-started/get-started-grafana-prometheus/
+  - /docs/grafana/latest/getting-started/getting-started-prometheus/
+  - /docs/grafana/latest/guides/getting_started/
+  - /docs/grafana/latest/guides/gettingstarted/
+description: Learn how to build your first Prometheus dashboard in Grafana.
+title: Get started with Grafana and Prometheus
+weight: 300
+---
 
 # Get started with Grafana and Prometheus
 

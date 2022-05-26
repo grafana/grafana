@@ -51,7 +51,6 @@ export interface FeatureToggles {
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
   tracing?: boolean;
-  persistNotifications?: boolean;
   commandPalette?: boolean;
   savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
