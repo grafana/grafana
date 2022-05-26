@@ -1,17 +1,12 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/enterprise-configuration/
-description: Enterprise configuration documentation
-keywords:
-  - grafana
-  - configuration
-  - documentation
-  - enterprise
-title: Enterprise configuration
+description: Learn about Grafana Enterprise configuration options that you can specify.
+title: Configure Grafana Enterprise
 weight: 100
 ---
 
-# Grafana Enterprise configuration
+# Configure Grafana Enterprise
 
 This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "./" >}}) for more information about available configuration options.
 

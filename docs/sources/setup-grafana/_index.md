@@ -7,6 +7,6 @@ weight = 20
 
 # Setup
 
-xxxxx.
+This section includes information on how to set up Grafana and get it running, and includes the following topics:
 
 {{< section >}}
