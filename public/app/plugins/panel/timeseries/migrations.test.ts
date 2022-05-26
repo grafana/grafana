@@ -426,6 +426,29 @@ describe('Graph Migrations', () => {
       expect(panel.fieldConfig).toMatchSnapshot();
     });
   });
+
+  describe('null values', () => {
+    test('nullPointMode = null', () => {
+      const old: any = {
+        angular: {
+          nullPointMode: 'null',
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeFalsy();
+    });
+    test('nullPointMode = connected', () => {
+      const old: any = {
+        angular: {
+          nullPointMode: 'connected',
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeTruthy();
+    });
+  });
 });
 
 const customColor = {
