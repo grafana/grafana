@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,9 +16,10 @@ type Props = {
   node: ElementState | FrameState;
   selection: string[];
   settings: TreeViewEditorProps;
+  index: number;
 };
 
-export const TreeNode = ({ node, selection, settings }: Props) => {
+export const TreeNode = ({ node, selection, settings, index }: Props) => {
   const [isChildVisible, setIsChildVisible] = useState(false);
 
   const theme = useTheme2();
@@ -56,30 +58,49 @@ export const TreeNode = ({ node, selection, settings }: Props) => {
   };
 
   return (
-    <li key={node.UID} className={getRowStyle(isSelected)} style={{ paddingLeft: !hasChildren ? '24px' : '' }}>
-      <div onClick={() => setIsChildVisible((v) => !v)} className={styles.flex}>
-        {hasChildren && <div>{isChildVisible ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
-        <div onClick={(e) => onSelectNode(e, node)} className={styles.nodeIcon}>
-          <SVG
-            src={getSvgPath()}
-            className={styles.nodeIconSvg}
-            title={'Node Icon'}
-            style={{ fill: theme.colors.text.primary }}
-          />
-          {node.getName()}
-        </div>
-      </div>
+    <Draggable key={node.UID} draggableId={node.UID.toString()} index={index}>
+      {(provided, snapshot) => (
+        <li
+          key={node.UID}
+          className={getRowStyle(isSelected)}
+          style={{ paddingLeft: !hasChildren ? '24px' : '' }}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          <div onClick={() => setIsChildVisible((v) => !v)} className={styles.flex}>
+            {hasChildren && <div>{isChildVisible ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
+            <div onClick={(e) => onSelectNode(e, node)} className={styles.nodeIcon}>
+              <SVG
+                src={getSvgPath()}
+                className={styles.nodeIconSvg}
+                title={'Node Icon'}
+                style={{ fill: theme.colors.text.primary }}
+              />
+              {node.getName()}
+            </div>
+          </div>
 
-      {hasChildren && isChildVisible && (
-        <div>
-          <ul className={styles.treeContainer}>
-            {elements.map((element: ElementState | FrameState) => {
-              return <TreeNode key={element.UID} node={element} selection={selection} settings={settings} />;
-            })}
-          </ul>
-        </div>
+          {hasChildren && isChildVisible && (
+            <div>
+              <ul className={styles.treeContainer}>
+                {elements.map((element: ElementState | FrameState, mapIndex: number) => {
+                  return (
+                    <TreeNode
+                      key={element.UID}
+                      node={element}
+                      selection={selection}
+                      settings={settings}
+                      index={mapIndex}
+                    />
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </li>
       )}
-    </li>
+    </Draggable>
   );
 };
 
