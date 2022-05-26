@@ -138,8 +138,6 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
         config={cfgValue ?? config.value}
         schema={current.details?.config.schema ?? { fields: [] }}
       />
-      SCHEMA:
-      <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
     </>
   );
 };

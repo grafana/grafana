@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, ChangeEvent } from 'react';
 
 import { DataFrameSchema, FieldSchema, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';
@@ -33,25 +33,37 @@ const renderInput = (field: FieldSchema, onChange: SchemaFormProps['onChange'], 
         />
       );
     default:
-      return <></>;
+      return (
+        <Input
+          type="string"
+          value={config?.[field.name]}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            const newValue = e.target.value;
+            onChange({ ...config, [field.name]: newValue });
+          }}
+        />
+      );
   }
 };
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    jsonView: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+  };
+};
+
 export const SimulationSchemaForm = ({ config, schema, onChange }: SchemaFormProps) => {
   const [jsonView, setJsonView] = useState<boolean>(false);
 
-  const getStyles = (theme: GrafanaTheme2) => {
-    return {
-      jsonView: css`
-        margin-bottom: ${theme.spacing(1)};
-      `,
-    };
-  };
   const styles = useStyles2(getStyles);
 
   const onUpdateTextArea = (event: FormEvent<HTMLTextAreaElement>) => {
     const element = event.target as HTMLInputElement;
     onChange(JSON.parse(element.value));
   };
+
   return (
     <FieldSet label="Config">
       <InlineSwitch
