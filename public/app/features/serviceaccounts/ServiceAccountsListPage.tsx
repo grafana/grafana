@@ -26,7 +26,7 @@ import {
 
 interface OwnProps {}
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -47,7 +47,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const ServiceAccountsListPageUnconnected = ({
+export const ServiceAccountsListPageUnconnected = ({
   navModel,
   serviceAccounts,
   isLoading,
