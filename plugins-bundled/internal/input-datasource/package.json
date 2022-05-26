@@ -15,17 +15,14 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
+    "@grafana/toolkit": "9.0.0-pre",
     "@types/jest": "26.0.15",
     "@types/lodash": "4.14.149",
     "@types/react": "17.0.30",
-    "lodash": "4.17.21",
-    "pnp-webpack-plugin": "^1.7.0",
-    "ts-loader": "8.0.11",
-    "webpack": "5.58.1"
+    "lodash": "4.17.21"
   },
   "dependencies": {
     "@grafana/data": "9.0.0-pre",
-    "@grafana/toolkit": "9.0.0-pre",
     "@grafana/ui": "9.0.0-pre",
     "jquery": "3.5.1",
     "react": "17.0.1",
