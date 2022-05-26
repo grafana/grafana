@@ -28,6 +28,10 @@ func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard
 		return nil
 	})
 
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// find dashboard
 	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
 	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {

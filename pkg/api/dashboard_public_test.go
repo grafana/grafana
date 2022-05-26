@@ -29,7 +29,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodGet,
-			fmt.Sprintf("/api/public/dashboards"),
+			"/api/public/dashboards",
 			nil,
 			t,
 		)
@@ -37,7 +37,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		response = callAPI(
 			sc.server,
 			http.MethodGet,
-			fmt.Sprintf("/api/public/dashboards/asdf"),
+			"/api/public/dashboards/asdf",
 			nil,
 			t,
 		)
@@ -45,27 +45,27 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	})
 
 	testCases := []struct {
-		name string
-		uid string
-		expectedHttpResponse int
+		name                  string
+		uid                   string
+		expectedHttpResponse  int
 		publicDashboardResult *models.Dashboard
-		publicDashboardErr error
+		publicDashboardErr    error
 	}{
 		{
-			name: "It gets a public dashboard",
-			uid: "pubdash-abcd1234",
+			name:                 "It gets a public dashboard",
+			uid:                  "pubdash-abcd1234",
 			expectedHttpResponse: http.StatusOK,
 			publicDashboardResult: &models.Dashboard{
 				Uid: "dashboard-abcd1234",
 			},
-			publicDashboardErr:nil,
+			publicDashboardErr: nil,
 		},
 		{
-			name: "It should return 404 if isPublicDashboard is false",
-			uid: "pubdash-abcd1234",
-			expectedHttpResponse: http.StatusNotFound,
+			name:                  "It should return 404 if isPublicDashboard is false",
+			uid:                   "pubdash-abcd1234",
+			expectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
-			publicDashboardErr: models.ErrPublicDashboardNotFound,
+			publicDashboardErr:    models.ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -93,8 +93,10 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardResult.Uid, dashResp.Uid)
-			}else{
-				var errResp struct { Error string `json:"error"` }
+			} else {
+				var errResp struct {
+					Error string `json:"error"`
+				}
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardErr.Error(), errResp.Error)
@@ -102,7 +104,6 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		})
 	}
 }
-
 
 func TestAPIGetPublicDashboardConfig(t *testing.T) {
 	pdc := &models.PublicDashboardConfig{IsPublic: true}

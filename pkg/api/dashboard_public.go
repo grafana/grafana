@@ -50,7 +50,7 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 }
 
 // util to help us unpack a dashboard err or use default http code and message
-func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response{
+func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response {
 	var dashboardErr models.DashboardErr
 
 	if ok := errors.As(err, &dashboardErr); ok {
