@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -624,31 +625,32 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	}
 
 	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
-	query := models.GetDashboardVersionQuery{
-		OrgId:       c.OrgId,
-		DashboardId: dashID,
+	query := dashver.GetDashboardVersionQuery{
+		OrgID:       c.OrgId,
+		DashboardID: dashID,
 		Version:     int(version),
 	}
 
-	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &query); err != nil {
+	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
 	creator := anonString
-	if query.Result.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), query.Result.CreatedBy)
+	if res.CreatedBy > 0 {
+		creator = hs.getUserLogin(c.Req.Context(), res.CreatedBy)
 	}
 
 	dashVersionMeta := &models.DashboardVersionMeta{
-		Id:            query.Result.Id,
-		DashboardId:   query.Result.DashboardId,
+		Id:            res.ID,
+		DashboardId:   res.DashboardID,
 		DashboardUID:  dashUID,
-		Data:          query.Result.Data,
-		ParentVersion: query.Result.ParentVersion,
-		RestoredFrom:  query.Result.RestoredFrom,
-		Version:       query.Result.Version,
-		Created:       query.Result.Created,
-		Message:       query.Result.Message,
+		Data:          res.Data,
+		ParentVersion: res.ParentVersion,
+		RestoredFrom:  res.RestoredFrom,
+		Version:       res.Version,
+		Created:       res.Created,
+		Message:       res.Message,
 		CreatedBy:     creator,
 	}
 
@@ -688,34 +690,36 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 		},
 	}
 
-	baseVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.Base.DashboardId,
+	baseVersionQuery := dashver.GetDashboardVersionQuery{
+		DashboardID: options.Base.DashboardId,
 		Version:     options.Base.Version,
-		OrgId:       options.OrgId,
+		OrgID:       options.OrgId,
 	}
 
-	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &baseVersionQuery); err != nil {
+	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
+	if err != nil {
 		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
 	}
 
-	newVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.New.DashboardId,
+	newVersionQuery := dashver.GetDashboardVersionQuery{
+		DashboardID: options.New.DashboardId,
 		Version:     options.New.Version,
-		OrgId:       options.OrgId,
+		OrgID:       options.OrgId,
 	}
 
-	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &newVersionQuery); err != nil {
+	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
+	if err != nil {
 		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
 	}
 
-	baseData := baseVersionQuery.Result.Data
-	newData := newVersionQuery.Result.Data
+	baseData := baseVersionRes.Data
+	newData := newVersionRes.Data
 
 	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
 
@@ -765,12 +769,11 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 		return dashboardGuardianResponse(err)
 	}
 
-	versionQuery := models.GetDashboardVersionQuery{DashboardId: dashID, Version: apiCmd.Version, OrgId: c.OrgId}
-	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &versionQuery); err != nil {
+	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, Version: apiCmd.Version, OrgID: c.OrgId}
+	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
+	if err != nil {
 		return response.Error(404, "Dashboard version not found", nil)
 	}
-
-	version := versionQuery.Result
 
 	saveCmd := models.SaveDashboardCommand{}
 	saveCmd.RestoredFrom = version.Version

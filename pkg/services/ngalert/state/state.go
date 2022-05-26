@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type State struct {
@@ -33,7 +32,7 @@ type State struct {
 	Resolved             bool
 	Annotations          map[string]string
 	Labels               data.Labels
-	Image                *store.Image
+	Image                *models.Image
 	Error                error
 }
 

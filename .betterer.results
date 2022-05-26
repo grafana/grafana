@@ -26,9 +26,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Typeahead/PartialHighlighter.test.tsx:1751923376": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Typeahead/Typeahead.test.tsx:972524250": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1440546721": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -173,9 +170,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:523695501": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -186,9 +180,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamList.test.tsx:854193970": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamMemberRow.test.tsx:1649328210": [
@@ -203,7 +194,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamSettings.test.tsx:2043271249": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/UsersListPage.test.tsx:3908145117": [
+    "public/app/features/users/UsersListPage.test.tsx:2518052139": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersTable.test.tsx:263958312": [
@@ -248,7 +239,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:3424320489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1597135392": [
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:3368730691": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ]
   }`

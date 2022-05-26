@@ -10,7 +10,7 @@ weight = 500
 
 Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
-> Only available in Grafana Enterprise.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 ## Enable data source permissions
 
