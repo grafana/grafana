@@ -1,14 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/release-notes/"]
-title = "Release notes"
-weight = 10000
-+++
+---
+aliases:
+  - /docs/grafana/latest/release-notes/
+title: Release notes
+weight: 10000
+---
 
 # Release notes
 
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
+- [Release notes for 9.0.0-beta1]({{< relref "release-notes-9-0-0-beta1" >}})
 - [Release notes for 8.5.3]({{< relref "release-notes-8-5-3" >}})
 - [Release notes for 8.5.2]({{< relref "release-notes-8-5-2" >}})
 - [Release notes for 8.5.1]({{< relref "release-notes-8-5-1" >}})

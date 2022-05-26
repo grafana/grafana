@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/add-panel/", "/docs/sources/panels/working-with-panels/add-panel/"]
-title = "Add a panel to a dashboard"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/add-panel/
+  - /docs/sources/panels/working-with-panels/add-panel/
+title: Add a panel to a dashboard
+weight: 20
+---
 
 # Add a panel to a dashboard
 

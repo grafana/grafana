@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -126,38 +127,25 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	// TODO: modify the email sender code to support multiple file or image URL
 	// fields. We cannot use images from every alert yet.
-	imgToken := getTokenFromAnnotations(as[0].Annotations)
-	if len(imgToken) != 0 {
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := en.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				en.log.Warn("failed to retrieve image url from store", "error", err)
+	_ = withStoredImage(ctx, en.log, en.images,
+		func(index int, image *ngmodels.Image) error {
+			if image == nil {
+				return nil
 			}
-		} else if len(imgURL) > 0 {
-			cmd.Data["ImageLink"] = imgURL
-		} else { // Try to upload
-			timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-			imgPath, err := en.images.GetFilepath(timeoutCtx, imgToken)
-			cancel()
-			if err != nil {
-				if !errors.Is(err, ErrImagesUnavailable) {
-					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-					en.log.Warn("failed to retrieve image url from store", "error", err)
-				}
-			} else if len(imgPath) != 0 {
-				file, err := os.Stat(imgPath)
+
+			if len(image.URL) != 0 {
+				cmd.Data["ImageLink"] = image.URL
+			} else if len(image.Path) != 0 {
+				file, err := os.Stat(image.Path)
 				if err == nil {
-					cmd.EmbeddedFiles = []string{imgPath}
+					cmd.EmbeddedFiles = []string{image.Path}
 					cmd.Data["EmbeddedImage"] = file.Name()
 				} else {
 					en.log.Warn("failed to access email notification image attachment data", "error", err)
 				}
 			}
-		}
-	}
+			return nil
+		}, 0, as...)
 
 	if tmplErr != nil {
 		en.log.Warn("failed to template email message", "err", tmplErr.Error())

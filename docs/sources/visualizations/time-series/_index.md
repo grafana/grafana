@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/", "/docs/grafana/latest/visualizations/time-series/"]
-keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
-title = "Time series"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/
+  - /docs/grafana/latest/visualizations/time-series/
+keywords:
+  - grafana
+  - graph panel
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Time series
+weight: 1200
+---
 
 # Time series
 

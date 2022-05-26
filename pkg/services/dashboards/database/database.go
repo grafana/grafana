@@ -930,66 +930,6 @@ func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDas
 	})
 }
 
-func (d *DashboardStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
-	res, err := d.FindDashboards(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	makeQueryResult(query, res)
-
-	return nil
-}
-
-func getHitType(item dashboards.DashboardSearchProjection) models.HitType {
-	var hitType models.HitType
-	if item.IsFolder {
-		hitType = models.DashHitFolder
-	} else {
-		hitType = models.DashHitDB
-	}
-
-	return hitType
-}
-
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
-
-	for _, item := range res {
-		hit, exists := hits[item.ID]
-		if !exists {
-			hit = &models.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
-				Type:        getHitType(item),
-				FolderID:    item.FolderID,
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			query.Result = append(query.Result, hit)
-			hits[item.ID] = hit
-		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
-		}
-	}
-}
-
 func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{

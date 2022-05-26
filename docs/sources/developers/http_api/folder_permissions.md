@@ -1,9 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/folder_permissions/", "/docs/grafana/latest/http_api/dashboardpermissions/", "/docs/grafana/latest/http_api/folder_permissions/"]
-description = "Grafana Folder Permissions HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "folder", "permission", "permissions", "acl"]
-title = "Folder Permissions HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/folder_permissions/
+  - /docs/grafana/latest/http_api/dashboardpermissions/
+  - /docs/grafana/latest/http_api/folder_permissions/
+description: Grafana Folder Permissions HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - folder
+  - permission
+  - permissions
+  - acl
+title: 'Folder Permissions HTTP API '
+---
 
 # Folder Permissions API
 

@@ -96,12 +96,13 @@ func (ng *AlertNG) init() error {
 	var err error
 
 	store := &store.DBstore{
-		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
-		SQLStore:        ng.SQLStore,
-		Logger:          ng.Log,
-		FolderService:   ng.folderService,
-		AccessControl:   ng.accesscontrol,
+		BaseInterval:     ng.Cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval:  ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		SQLStore:         ng.SQLStore,
+		Logger:           ng.Log,
+		FolderService:    ng.folderService,
+		AccessControl:    ng.accesscontrol,
+		DashboardService: ng.dashboardService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
