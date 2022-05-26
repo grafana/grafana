@@ -309,9 +309,13 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 }
 
 func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
-	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, err
+	secureJsonData := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := s.SecretsService.Decrypt(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		secureJsonData[k] = string(decrypted)
 	}
 
 	jsonData, err := json.Marshal(secureJsonData)
