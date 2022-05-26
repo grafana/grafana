@@ -23,10 +23,10 @@ type UpdatePrefsCmd struct {
 	HomeDashboardID  int64   `json:"homeDashboardId"`
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// Enum: utc,browser
-	Timezone     string                         `json:"timezone"`
-	WeekStart    string                         `json:"weekStart"`
-	Navbar       *pref.NavbarPreference         `json:"navbar,omitempty"`
-	QueryHistory *pref.QueryHistoryPreference   `json:"queryHistory,omitempty"`
+	Timezone     string                       `json:"timezone"`
+	WeekStart    string                       `json:"weekStart"`
+	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 // swagger:model
