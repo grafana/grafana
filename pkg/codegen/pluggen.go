@@ -40,14 +40,6 @@ var skipPaths = []string{
 	"public/app/plugins/panel/status-history/models.cue",
 	"public/app/plugins/panel/table/models.cue",
 	"public/app/plugins/panel/timeseries/models.cue",
-	// All the cue files in this dir have to be individually excluded, even
-	// though the generator currently smooshes them all together
-	"packages/grafana-schema/src/schema/graph.cue",
-	"packages/grafana-schema/src/schema/legend.cue",
-	"packages/grafana-schema/src/schema/mudball.cue",
-	"packages/grafana-schema/src/schema/table.cue",
-	"packages/grafana-schema/src/schema/text.cue",
-	"packages/grafana-schema/src/schema/tooltip.cue",
 }
 
 const prefix = "/"
@@ -79,7 +71,6 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 		// FIXME these module paths won't work for things not under our cue.mod - AKA third-party plugins
 		ModuleRoot: prefix,
 		Module:     "github.com/grafana/grafana",
-		Package:    "grafanaschema",
 	}
 
 	// FIXME hardcoding paths to exclude is not the way to handle this
@@ -134,6 +125,11 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 				}
 				imports = append(imports, f.Imports...)
 				return f, nil
+			}
+			if strings.Contains(path, "public/app/plugins") {
+				clcfg.Package = "grafanaschema"
+			} else {
+				clcfg.Package = ""
 			}
 
 			// FIXME loading in this way causes all files in a dir to be loaded
