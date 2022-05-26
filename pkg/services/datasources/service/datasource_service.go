@@ -582,5 +582,11 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 		}
 	}
 
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
