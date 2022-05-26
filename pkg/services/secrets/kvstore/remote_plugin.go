@@ -26,9 +26,10 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 			Type:      typ,
 		},
 	}
-
 	res, err := kv.secretsPlugin.Get(ctx, req)
-	if err == nil && res.Error != "" {
+	if err != nil {
+		return "", false, err
+	} else if res.Error != "" {
 		err = fmt.Errorf(res.Error)
 	}
 
@@ -85,7 +86,9 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 	}
 
 	res, err := kv.secretsPlugin.Keys(ctx, req)
-	if err == nil && res.Error != "" {
+	if err != nil {
+		return nil, err
+	} else if res.Error != "" {
 		err = fmt.Errorf(res.Error)
 	}
 
