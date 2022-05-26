@@ -50,3 +50,33 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
+
+**Edit SAML options for Okta in Grafana config file:**
+
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref ".././enterprise-configuration.md#enabled" >}}) to `true`.
+1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
+1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
+1. Set the [`idp_metadata_url`]({{< relref ".././enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
+1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
+   - [`assertion_attribute_login`]({{< relref ".././enterprise-configuration.md#assertion-attribute-login" >}})
+   - [`assertion_attribute_email`]({{< relref ".././enterprise-configuration.md#assertion-attribute-email" >}})
+   - [`assertion_attribute_name`]({{< relref ".././enterprise-configuration.md#assertion-attribute-name" >}})
+   - [`assertion_attribute_groups`]({{< relref ".././enterprise-configuration.md#assertion-attribute-groups" >}})
+1. Save the configuration file and and then restart the Grafana server.
+
+When you are finished, the Grafana configuration might look like this example:
+
+```bash
+[server]
+root_url = https://grafana.example.com
+
+[auth.saml]
+enabled = true
+private_key_path = "/path/to/private_key.pem"
+certificate_path = "/path/to/certificate.cert"
+idp_metadata_url = "https://my-org.okta.com/app/my-application/sso/saml/metadata"
+assertion_attribute_name = DisplayName
+assertion_attribute_login = Login
+assertion_attribute_email = Email
+assertion_attribute_groups = Group
+```
