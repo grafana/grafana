@@ -99,7 +99,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
-		return response.Error(http.StatusInternalServerError, login.ErrProviderDeniedRequest.Error(), err)
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	code := ctx.Query("code")
@@ -214,19 +214,18 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		var sErr *social.Error
-		var pMsg string
 		if errors.As(err, &sErr) {
-			pMsg = err.Error()
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
+			return response.Redirect(hs.Cfg.AppSubURL + "/login")
 		} else {
-			pMsg = fmt.Sprintf("login.OAuthLogin(get info from %s)", name)
+			pMsg := fmt.Sprintf("login.OAuthLogin(get info from %s)", name)
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: pMsg,
 				Err:           err,
 			})
+			return response.Error(http.StatusInternalServerError, pMsg, err)
 		}
-		return response.Error(http.StatusInternalServerError, pMsg, err)
 	}
 
 	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
@@ -234,26 +233,26 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrNoEmail)
-		return response.Error(http.StatusInternalServerError, login.ErrNoEmail.Error(), err)
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrEmailNotAllowed)
-		return response.Error(http.StatusInternalServerError, login.ErrEmailNotAllowed.Error(), err)
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	loginInfo.ExternalUser = *hs.buildExternalUserInfo(token, userInfo, name)
 	loginInfo.User, err = hs.SyncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return response.Error(http.StatusInternalServerError, err.Error(), err)
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	// login
 	if err := hs.loginUserWithUser(loginInfo.User, ctx); err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return response.Error(http.StatusInternalServerError, err.Error(), err)
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	loginInfo.HTTPStatus = http.StatusOK
