@@ -40,9 +40,13 @@ import {
 const fetchMock = jest.fn();
 const postMock = jest.fn();
 const getMock = jest.fn();
+const reportInteractionMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
+  reportInteraction: (...args: object[]) => {
+    reportInteractionMock(...args);
+  },
 }));
 
 jest.mock('app/core/services/PreferencesService', () => ({
@@ -78,6 +82,7 @@ describe('Explore: Query History', () => {
     fetchMock.mockClear();
     postMock.mockClear();
     getMock.mockClear();
+    reportInteractionMock.mockClear();
     tearDown();
   });
 
@@ -103,6 +108,11 @@ describe('Explore: Query History', () => {
     // previously added query is in query history
     await openQueryHistory();
     await assertQueryHistoryExists(RAW_QUERY);
+
+    expect(reportInteractionMock).toBeCalledTimes(2);
+    expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
+      queryHistoryEnabled: false,
+    });
   });
 
   it('adds recently added query if the query history panel is already open', async () => {
@@ -153,10 +163,17 @@ describe('Explore: Query History', () => {
     starQueryHistory(1, ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.right);
+    expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
+      queryHistoryEnabled: false,
+      newValue: true,
+    });
 
     deleteQueryHistory(0, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
+    expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
+      queryHistoryEnabled: false,
+    });
   });
 
   it('updates query history settings', async () => {
@@ -192,6 +209,9 @@ describe('Explore: Query History', () => {
 
       await openQueryHistory();
       expect(postMock).not.toBeCalledWith('/api/query-history/migrate', { queries: [] });
+      expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
+        queryHistoryEnabled: false,
+      });
     });
 
     it('migrates query history from local storage', async () => {
@@ -219,6 +239,9 @@ describe('Explore: Query History', () => {
           url: expect.stringMatching('/api/query-history/migrate'),
         })
       );
+      expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
+        queryHistoryEnabled: true,
+      });
     });
   });
 
