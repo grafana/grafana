@@ -14,3 +14,6 @@ export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/joinDataFrames';
 export * from './transformers/histogram';
 export { ensureTimeField } from './transformers/convertFieldType';
+
+// Only exported so grafana/ui will not break (these are internal :grimmice:)
+export { applyNullInsertThreshold, nullInsertThreshold, applySpanNullsThresholds } from './transformers/nullValues';

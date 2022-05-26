@@ -1,4 +1,13 @@
-import { ArrayVector, DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldConfig,
+  FieldType,
+  outerJoinDataFrames,
+  TimeRange,
+  applyNullInsertThreshold,
+  applySpanNullsThresholds,
+} from '@grafana/data';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -8,38 +17,12 @@ import {
 } from '@grafana/schema';
 
 import { FIXED_UNIT } from './GraphNG';
-import { applyNullInsertThreshold } from './nullInsertThreshold';
-import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
   return (
     f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz
   );
-}
-
-// will mutate the DataFrame's fields' values
-function applySpanNullsThresholds(frame: DataFrame) {
-  let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
-  let refValues = refField?.values.toArray() as any[];
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    let field = frame.fields[i];
-
-    if (field === refField || isVisibleBarField(field)) {
-      continue;
-    }
-
-    let spanNulls = field.config.custom?.spanNulls;
-
-    if (typeof spanNulls === 'number') {
-      if (spanNulls !== -1) {
-        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
-      }
-    }
-  }
-
-  return frame;
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
@@ -91,7 +74,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   });
 
   if (alignedFrame) {
-    alignedFrame = applySpanNullsThresholds(alignedFrame);
+    alignedFrame = applySpanNullsThresholds(alignedFrame, isVisibleBarField);
 
     // append 2 null vals at minXDelta to bar series
     if (minXDelta !== Infinity) {

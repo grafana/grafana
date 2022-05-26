@@ -11,6 +11,9 @@ const INSERT_MODES = {
   plusone: (prev: number, next: number, threshold: number) => prev + 1,
 };
 
+/**
+ * @internal exposed while we migrate grafana UI
+ */
 export function applyNullInsertThreshold(
   frame: DataFrame,
   refFieldName?: string | null,
@@ -83,7 +86,10 @@ export function applyNullInsertThreshold(
   return frame;
 }
 
-function nullInsertThreshold(
+/**
+ * @internal exposed while we migrate grafana UI
+ */
+export function nullInsertThreshold(
   refValues: number[],
   frameValues: any[][],
   threshold: number,
@@ -146,7 +152,11 @@ function nullInsertThreshold(
   return filledFieldValues;
 }
 
-// will mutate the DataFrame's fields' values
+/**
+ * will mutate the DataFrame's fields' values
+ *
+ * @internal exposed while we migrate grafana UI
+ */
 export function applySpanNullsThresholds(frame: DataFrame, isFieldVisible: (f: Field) => boolean) {
   let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
   let refValues = refField?.values.toArray() as any[];
@@ -201,6 +211,9 @@ export function nullToUndefThreshold(refValues: number[], fieldValues: any[], ma
   return fieldValues;
 }
 
+/**
+ * Used by state timeline to
+ */
 export function processNullValues(frames: DataFrame[]): DataFrame[] {
   return frames;
 }

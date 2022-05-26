@@ -1,6 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
-
-import { applyNullInsertThreshold } from './nullValues';
+import { ArrayVector, FieldType, MutableDataFrame, applyNullInsertThreshold } from '@grafana/data';
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
