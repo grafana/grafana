@@ -592,15 +592,15 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 
 	var toAdd, toDelete []*ngmodels.AlertRule
 	var toUpdate []ruleUpdate
+	loadedRulesByUID := map[string]*ngmodels.AlertRule{} // auxiliary cache to avoid unnecessary queries if there are multiple moves from the same group
 	for _, r := range submittedRules {
 		var existing *ngmodels.AlertRule = nil
-
 		if r.UID != "" {
 			if existingGroupRule, ok := existingGroupRulesUIDs[r.UID]; ok {
 				existing = existingGroupRule
 				// remove the rule from existingGroupRulesUIDs
 				delete(existingGroupRulesUIDs, r.UID)
-			} else {
+			} else if existing, ok = loadedRulesByUID[r.UID]; !ok { // check the "cache" and if there is no hit, query the database
 				// Rule can be from other group or namespace
 				q := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
 				if err := ruleStore.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
@@ -610,6 +610,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 					if rule.UID == r.UID {
 						existing = rule
 					}
+					loadedRulesByUID[rule.UID] = rule
 				}
 				if existing == nil {
 					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
