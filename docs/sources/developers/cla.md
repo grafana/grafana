@@ -1,7 +1,8 @@
 +++
-title = "Contributor License Agreement (CLA)"
+aliases = ["/docs/contributing/cla.html/", "/docs/grafana/latest/developers/cla/", "/docs/grafana/latest/project/cla/"]
 description = "Contributor License Agreement (CLA)"
-aliases = ["/docs/grafana/latest/project/cla", "docs/contributing/cla.html"]
+title = "Contributor License Agreement (CLA)"
+weight = 400
 +++
 
 # Grafana Labs Software Grant and Contributor License Agreement ("Agreement")

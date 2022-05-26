@@ -16,7 +16,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Mode">
           <Select
-            menuShouldPortal
             options={usaQueryModes}
             onChange={(v) => {
               onChange({ ...query, mode: v.value });
@@ -38,7 +37,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Fields">
           <MultiSelect
-            menuShouldPortal
             options={fieldNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, fields: vals.map((v) => v.value) });
@@ -50,7 +48,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
         </InlineField>
         <InlineField label="States" grow>
           <MultiSelect
-            menuShouldPortal
             options={stateNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, states: vals.map((v) => v.value) });

@@ -11,6 +11,6 @@ export interface PanelOptions {
   showImage?: boolean;
 }
 
-export const defaultPanelOptions: PanelOptions = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   showImage: true,
 };

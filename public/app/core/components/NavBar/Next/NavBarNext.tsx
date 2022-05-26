@@ -30,7 +30,7 @@ const onOpenSearch = () => {
 const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
-  text: 'Search Dashboards',
+  text: 'Search dashboards',
   icon: 'search',
 };
 
@@ -70,7 +70,6 @@ export const NavBarNext = React.memo(() => {
   if (kiosk !== KioskMode.Off) {
     return null;
   }
-
   return (
     <div className={styles.navWrapper}>
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">

@@ -86,7 +86,6 @@ export const PromSettings = (props: Props) => {
           </InlineFormLabel>
           <Select
             aria-label="Select HTTP method"
-            menuShouldPortal
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}

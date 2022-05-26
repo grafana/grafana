@@ -1,6 +1,7 @@
 +++
-title = "Authentication"
+aliases = ["/docs/grafana/latest/auth/"]
 description = "Authentication"
+title = "Authentication"
 weight = 30
 +++
 

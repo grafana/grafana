@@ -9,14 +9,15 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -484,7 +485,7 @@ func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, m
 		},
 	}
 
-	logger := fakeLogger{}
+	logger := log.NewNopLogger()
 
 	p.SetLogger(logger)
 
@@ -712,16 +713,14 @@ func (pc *fakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamReq
 	return backendplugin.ErrMethodNotImplemented
 }
 
-type fakeLogger struct {
-	log.Logger
+type fakeSender struct {
+	resp *backend.CallResourceResponse
 }
 
-func (l fakeLogger) Info(_ string, _ ...interface{}) {
+func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
+	s.resp = crr
 
-}
-
-func (l fakeLogger) Debug(_ string, _ ...interface{}) {
-
+	return nil
 }
 
 type fakePluginRegistry struct {

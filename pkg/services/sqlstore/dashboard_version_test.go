@@ -5,15 +5,15 @@ package sqlstore
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
@@ -77,48 +77,7 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 	require.NoError(t, err)
 }
 
-func TestGetDashboardVersion(t *testing.T) {
-	sqlStore := InitTestDB(t)
-
-	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
-		savedDash := insertTestDashboard(t, sqlStore, "test dash 26", 1, 0, false, "diff")
-
-		query := models.GetDashboardVersionQuery{
-			DashboardId: savedDash.Id,
-			Version:     savedDash.Version,
-			OrgId:       1,
-		}
-
-		err := sqlStore.GetDashboardVersion(context.Background(), &query)
-		require.Nil(t, err)
-		require.Equal(t, query.DashboardId, savedDash.Id)
-		require.Equal(t, query.Version, savedDash.Version)
-
-		dashCmd := models.GetDashboardQuery{
-			OrgId: savedDash.OrgId,
-			Uid:   savedDash.Uid,
-		}
-
-		err = sqlStore.GetDashboard(context.Background(), &dashCmd)
-		require.Nil(t, err)
-		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
-		require.Equal(t, true, eq)
-	})
-
-	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
-		query := models.GetDashboardVersionQuery{
-			DashboardId: int64(999),
-			Version:     123,
-			OrgId:       1,
-		}
-
-		err := sqlStore.GetDashboardVersion(context.Background(), &query)
-		require.Error(t, err)
-		require.Equal(t, models.ErrDashboardVersionNotFound, err)
-	})
-}
-
-func TestGetDashboardVersions(t *testing.T) {
+func TestIntegrationGetDashboardVersions(t *testing.T) {
 	sqlStore := InitTestDB(t)
 	savedDash := insertTestDashboard(t, sqlStore, "test dash 43", 1, 0, false, "diff-all")
 
@@ -151,7 +110,7 @@ func TestGetDashboardVersions(t *testing.T) {
 	})
 }
 
-func TestDeleteExpiredVersions(t *testing.T) {
+func TestIntegrationDeleteExpiredVersions(t *testing.T) {
 	versionsToKeep := 5
 	versionsToWrite := 10
 	setting.DashboardVersionsToKeep = versionsToKeep
@@ -220,5 +179,22 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		require.GreaterOrEqual(t, len(query.Result), versionsToKeep)
 		// Ensure we haven't deleted more than perBatch * maxBatches rows
 		require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
+	})
+}
+
+func getDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard) error {
+	t.Helper()
+	return sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		has, err := sess.Get(dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardNotFound
+		}
+
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		return nil
 	})
 }

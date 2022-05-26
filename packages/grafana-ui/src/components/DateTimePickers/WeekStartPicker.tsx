@@ -47,7 +47,6 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onChange={onChangeWeekStart}
       onBlur={onBlur}
       disabled={disabled}
-      menuShouldPortal={true}
     />
   );
 };

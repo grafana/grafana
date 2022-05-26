@@ -1,7 +1,7 @@
 +++
-title = "Backend plugins"
+aliases = ["/docs/grafana/latest/developers/plugins/backend/", "/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
+title = "Backend plugins"
 +++
 
 # Backend plugins
@@ -12,13 +12,13 @@ However, one limitation with these plugins are that they execute on the client-s
 
 We use the term _backend plugin_ to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. This is for example true for backend data source plugins which normally need configuration and query editor components implemented for the frontend.
 
-Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/old-alerting/notifications.md" >}}) and custom authentication to name a few.
+Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana alerting]({{< relref "../../../alerting/notifications/_index.md" >}}) and custom authentication to name a few.
 
 ## Use cases for implementing a backend plugin
 
 The following examples gives you an idea of why you'd consider implementing a backend plugin:
 
-- Enable [Grafana Alerting]({{< relref "../../../alerting" >}}) for data sources.
+- Enable [Grafana alerting]({{< relref "../../../alerting" >}}) for data sources.
 - Connect to non-HTTP services that normally can't be connected to from a web browser, e.g. SQL database servers.
 - Keep state between users, e.g. query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
@@ -49,7 +49,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../../http_api/data_source.md#data-source-proxy-calls" >}}).
+- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source.md#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
 - Return static resources, such as images or files.
 - Send a command to a device, such as a micro controller or IOT device.

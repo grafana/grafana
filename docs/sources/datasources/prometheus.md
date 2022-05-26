@@ -1,8 +1,8 @@
 +++
-title = "Prometheus"
+aliases = ["/docs/grafana/latest/datasources/prometheus/", "/docs/grafana/latest/features/datasources/prometheus/"]
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
+title = "Prometheus"
 weight = 1300
 +++
 
@@ -240,7 +240,7 @@ The step option is useful to limit the number of events returned from your query
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md">}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
 
 ## Prometheus API
 

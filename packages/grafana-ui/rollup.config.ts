@@ -35,10 +35,13 @@ const buildCjsPackage = ({ env }) => {
       'moment',
       'jquery', // required to use jquery.plot, which is assigned externally
       'react-inlinesvg', // required to mock Icon svg loading in tests
+      '@emotion/react',
+      '@emotion/css',
     ],
     plugins: [
       commonjs({
         include: /node_modules/,
+        ignoreTryCatch: false,
       }),
       resolve(),
       svg({ stringify: true }),

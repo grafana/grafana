@@ -20,13 +20,13 @@ Panel: {
             {
                 TextMode: "html" | "markdown" @cuetsy(kind="enum",memberNames="HTML|Markdown")
                 PanelOptions: {
-                    mode: TextMode | *"markdown" 
+                    mode: TextMode | *"markdown"
                     content: string | *"""
                     # Title
 
                     For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
                     """
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

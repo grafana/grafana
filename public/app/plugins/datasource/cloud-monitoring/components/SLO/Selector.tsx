@@ -20,7 +20,6 @@ export const Selector: React.FC<Props> = ({ refId, query, templateVariableOption
   return (
     <QueryEditorRow label="Selector" htmlFor={`${refId}-slo-selector`}>
       <Select
-        menuShouldPortal
         inputId={`${refId}-slo-selector`}
         width={SELECT_WIDTH}
         allowCustomValue

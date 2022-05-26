@@ -137,7 +137,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
       <InlineFieldRow className={styles.row}>
         <InlineField label="Rule" labelWidth={LABEL_WIDTH} grow={true}>
           <Select
-            menuShouldPortal
             placeholder={'Feature property'}
             value={propv.current}
             options={propv.options}
@@ -149,7 +148,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
         </InlineField>
         <InlineField className={styles.inline}>
           <Select
-            menuShouldPortal
             value={comparators.find((v) => v.value === check.operation)}
             options={comparators}
             onChange={onChangeComparison}
@@ -161,7 +159,6 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
           <div className={styles.flexRow}>
             {(check.operation === ComparisonOperation.EQ || check.operation === ComparisonOperation.NEQ) && (
               <Select
-                menuShouldPortal
                 placeholder={'value'}
                 value={valuev.current}
                 options={valuev.options}

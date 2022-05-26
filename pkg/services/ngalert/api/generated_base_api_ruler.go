@@ -113,21 +113,21 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RouteDeleteNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
-			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteDeleteRuleGroupConfig,
 				m,
 			),
@@ -163,31 +163,31 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RouteGetNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
-			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteGetRulegGroupConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules"),
-			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{DatasourceID}/api/v1/rules",
+				"/api/ruler/{DatasourceUID}/api/v1/rules",
 				srv.RouteGetRulesConfig,
 				m,
 			),
@@ -203,11 +203,11 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodPost, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RoutePostNameRulesConfig,
 				m,
 			),
