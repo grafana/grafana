@@ -602,7 +602,7 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
 all plugins and core features that depend on angular support will stop working.
 
 Current core features that will stop working:
@@ -1381,7 +1381,7 @@ Configures Query history in Explore.
 
 ### enabled
 
-Enable or disable the Query history. Default is `disabled`.
+Enable or disable the Query history. Default is `enabled`.
 
 ## [metrics]
 
@@ -1945,3 +1945,7 @@ Maximum duration of a single crawl. Default is 1h.
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
 Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.
+
+## [rbac]
+
+Refer to [Role-based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for more information.

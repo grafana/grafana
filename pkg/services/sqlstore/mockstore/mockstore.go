@@ -344,16 +344,6 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-	query.Result = &models.DashboardVersion{}
-	for _, dashboardversion := range m.ExpectedDashboardVersions {
-		if dashboardversion.DashboardId == query.DashboardId && dashboardversion.Version == query.Version {
-			query.Result = dashboardversion
-		}
-	}
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
 	return m.ExpectedError
 }
@@ -457,6 +447,7 @@ func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDa
 }
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+	query.Result = m.ExpectedDashboards
 	return m.ExpectedError
 }
 
@@ -633,4 +624,8 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 
 func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	return nil, m.ExpectedError
 }

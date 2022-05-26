@@ -34,7 +34,7 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
               <div className={stateStyle.icon}>
                 <Icon
                   name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
-                  className={stateStyle[alertStateToState[rule.state]]}
+                  className={stateStyle[alertStateToState(rule.state)]}
                   size={'lg'}
                 />
               </div>
@@ -44,7 +44,7 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                     {rule.name}
                   </div>
                   <div className={styles.alertDuration}>
-                    <span className={stateStyle[alertStateToState[rule.state]]}>{rule.state.toUpperCase()}</span>{' '}
+                    <span className={stateStyle[alertStateToState(rule.state)]}>{rule.state.toUpperCase()}</span>{' '}
                     {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
                       <>
                         for{' '}

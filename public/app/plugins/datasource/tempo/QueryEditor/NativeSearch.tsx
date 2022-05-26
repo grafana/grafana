@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import Prism from 'prismjs';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
@@ -15,10 +14,10 @@ import {
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
-  AsyncSelect,
   Alert,
   useStyles2,
   fuzzyMatch,
+  Select,
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -52,12 +51,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [asyncServiceNameValue, setAsyncServiceNameValue] = useState<SelectableValue<any>>({
-    value: '',
-  });
-  const [asyncSpanNameValue, setAsyncSpanNameValue] = useState<SelectableValue<any>>({
-    value: '',
-  });
+  const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
+  const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
   const [error, setError] = useState(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
   const [isLoading, setIsLoading] = useState<{
@@ -68,60 +63,35 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     spanName: false,
   });
 
-  async function fetchOptionsCallback(name: string, lp: TempoLanguageProvider, query = '') {
-    try {
-      setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
-      const options = await lp.getOptions(name);
-      const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
-      return filteredOptions;
-    } catch (error) {
-      if (error?.status === 404) {
-        setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
-      } else {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+  const loadOptions = useCallback(
+    async (name: string, query = '') => {
+      const lpName = name === 'serviceName' ? 'service.name' : 'name';
+      setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
+
+      try {
+        const options = await languageProvider.getOptions(lpName);
+        const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        return filteredOptions;
+      } catch (error) {
+        if (error?.status === 404) {
+          setError(error);
+        } else {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+        return [];
+      } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       }
-      setError(error);
-      return [];
-    }
-  }
-
-  const loadOptionsOfType = useCallback(
-    (name: string) => {
-      setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
-      return fetchOptionsCallback(name, languageProvider);
     },
     [languageProvider]
   );
 
-  const fetchOptionsOfType = useCallback(
-    (name: string) => debounce(() => loadOptionsOfType(name), 500, { leading: true, trailing: true }),
-    [loadOptionsOfType]
-  );
-
-  const getNameOptions = (query: string, name: string) => {
-    setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
-    return fetchOptionsCallback(name, languageProvider, query);
-  };
-
-  const getServiceNameOptions = (query: string) => {
-    return getNameOptions(query, 'service.name');
-  };
-
-  const getSpanNameOptions = (query: string) => {
-    return getNameOptions(query, 'name');
-  };
-
-  const serviceNameSearch = debounce(getServiceNameOptions, 500, { leading: true, trailing: true });
-  const spanNameSearch = debounce(getSpanNameOptions, 500, { leading: true, trailing: true });
-
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        await languageProvider.start();
-        fetchOptionsCallback('service.name', languageProvider);
-        fetchOptionsCallback('name', languageProvider);
-        setHasSyntaxLoaded(true);
+        const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
+        setServiceOptions(services);
+        setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
         if (error?.status === 404) {
@@ -129,11 +99,22 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         } else {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
-        setHasSyntaxLoaded(true);
       }
     };
     fetchOptions();
-  }, [languageProvider, fetchOptionsOfType]);
+  }, [languageProvider, loadOptions]);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        await languageProvider.start();
+        setHasSyntaxLoaded(true);
+      } catch (error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
+      }
+    };
+    fetchTags();
+  }, [languageProvider]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -160,17 +141,15 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={14} grow>
-            <AsyncSelect
+            <Select
               inputId="service"
-              cacheOptions={false}
-              loadOptions={serviceNameSearch}
-              onOpenMenu={fetchOptionsOfType('service.name')}
+              options={serviceOptions}
+              onOpenMenu={() => {
+                loadOptions('serviceName');
+              }}
               isLoading={isLoading.serviceName}
-              value={asyncServiceNameValue.value}
+              value={serviceOptions?.find((v) => v?.value === query.serviceName) || undefined}
               onChange={(v) => {
-                setAsyncServiceNameValue({
-                  value: v,
-                });
                 onChange({
                   ...query,
                   serviceName: v?.value || undefined,
@@ -178,7 +157,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               }}
               placeholder="Select a service"
               isClearable
-              defaultOptions
               onKeyDown={onKeyDown}
               aria-label={'select-service-name'}
             />
@@ -186,15 +164,15 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Span Name" labelWidth={14} grow>
-            <AsyncSelect
+            <Select
               inputId="spanName"
-              cacheOptions={false}
-              loadOptions={spanNameSearch}
-              onOpenMenu={fetchOptionsOfType('name')}
+              options={spanOptions}
+              onOpenMenu={() => {
+                loadOptions('spanName');
+              }}
               isLoading={isLoading.spanName}
-              value={asyncSpanNameValue.value}
+              value={spanOptions?.find((v) => v?.value === query.spanName) || undefined}
               onChange={(v) => {
-                setAsyncSpanNameValue({ value: v });
                 onChange({
                   ...query,
                   spanName: v?.value || undefined,
@@ -202,7 +180,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               }}
               placeholder="Select a span"
               isClearable
-              defaultOptions
               onKeyDown={onKeyDown}
               aria-label={'select-span-name'}
             />

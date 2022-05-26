@@ -71,14 +71,14 @@ export enum AccessControlAction {
   DashboardsDelete = 'dashboards:delete',
   DashboardsCreate = 'dashboards:create',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
-  DashboardsPermissionsWrite = 'dashboards.permissions:read',
+  DashboardsPermissionsWrite = 'dashboards.permissions:write',
 
   FoldersRead = 'folders:read',
-  FoldersWrite = 'folders:read',
+  FoldersWrite = 'folders:write',
   FoldersDelete = 'folders:delete',
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
-  FoldersPermissionsWrite = 'folders.permissions:read',
+  FoldersPermissionsWrite = 'folders.permissions:write',
 
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
@@ -92,10 +92,8 @@ export enum AccessControlAction {
   AlertingInstanceRead = 'alert.instances:read',
 
   // Alerting Notification policies
-  AlertingNotificationsCreate = 'alert.notifications:create',
   AlertingNotificationsRead = 'alert.notifications:read',
-  AlertingNotificationsUpdate = 'alert.notifications:update',
-  AlertingNotificationsDelete = 'alert.notifications:delete',
+  AlertingNotificationsWrite = 'alert.notifications:write',
 
   // External alerting rule actions.
   AlertingRuleExternalWrite = 'alert.rules.external:write',

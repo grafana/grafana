@@ -14,9 +14,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "envelopeEncryption",
-			Description: "encrypt secrets",
-			State:       FeatureStateBeta,
+			Name:        "disableEnvelopeEncryption",
+			Description: "Disable envelope encryption (emergency only)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "httpclientprovider_azure_auth",
@@ -93,6 +93,7 @@ var (
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "prometheus_azure_auth",
@@ -240,6 +241,18 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateBeta,
+			Expression:  "true", // Enabled by default
+		},
+		{
+			Name:            "validateDashboardsOnSave",
+			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "prometheusWideSeries",
+			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
 	}

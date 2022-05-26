@@ -160,11 +160,6 @@ describe('VersionSettings', () => {
 
     expect(compareButton).toBeEnabled();
 
-    await user.click(within(tableBody).getAllByRole('checkbox')[1]);
-
-    expect(compareButton).toBeDisabled();
-
-    await user.click(within(tableBody).getAllByRole('checkbox')[1]);
     await user.click(compareButton);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: /versions comparing 2 11/i })).toBeInTheDocument());
