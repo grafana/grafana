@@ -200,11 +200,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      const dsid = this.serviceMap.datasourceUid;
-
+      const dsId = this.serviceMap.datasourceUid;
       subQueries.push(
         firstServiceMapQuery(options, this.serviceMap.datasourceUid).pipe(
-          concatMap((result) => secondServiceMapQuery(options, result, dsid, this.name))
+          concatMap((result) => secondServiceMapQuery(options, result, dsId, this.name))
         )
       );
     }
@@ -434,7 +433,7 @@ function firstServiceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceU
       };
 
       return {
-        data: [responses, nodes, edges],
+        data: [responses[0]?.data ?? [], nodes, edges],
         state: LoadingState.Done,
       };
     })
@@ -445,21 +444,24 @@ function firstServiceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceU
 // -> which determine the errorRate/duration span_name(s) we need to query
 function secondServiceMapQuery(
   request: DataQueryRequest<TempoQuery>,
-  firstResponses: DataQueryResponse,
+  firstResponse: DataQueryResponse,
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
-  var apmMetrics = [];
-  const spanNames = firstResponses.data[0][0]?.data[0]?.fields[1]?.values.toArray() ?? [];
-  const errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
-  apmMetrics.push(errorRateBySpanName);
+  let apmMetrics = [];
+  let errorRateBySpanName = '';
+  let durationsBySpanName: string[] = [];
+  const spanNames = firstResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
 
-  const durationBySpanName: any = [];
-  spanNames.map((name: string) => {
-    const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
-    durationBySpanName.push(metric);
-    apmMetrics.push(metric);
-  });
+  if (spanNames.length > 0) {
+    errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
+    apmMetrics.push(errorRateBySpanName);
+    spanNames.map((name: string) => {
+      const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
+      durationsBySpanName.push(metric);
+      apmMetrics.push(metric);
+    });
+  }
 
   const serviceMapRequest = makePromServiceMapRequest(request);
   serviceMapRequest.targets = makeApmRequest(apmMetrics);
@@ -475,16 +477,16 @@ function secondServiceMapQuery(
 
       const apmTable = getApmTable(
         request,
-        firstResponses,
+        firstResponse,
         secondResponses[0],
         errorRateBySpanName,
-        durationBySpanName,
+        durationsBySpanName,
         datasourceUid,
         tempoDatasourceUid
       );
 
       return {
-        data: [apmTable, firstResponses.data[1], firstResponses.data[2]],
+        data: [apmTable, firstResponse.data[1], firstResponse.data[2]],
         state: LoadingState.Done,
       };
     })
@@ -523,30 +525,26 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   };
 }
 
-// APM Table
-/////////////////////////
-
 function getApmTable(
   request: DataQueryRequest<TempoQuery>,
   firstResponse: DataQueryResponse,
   secondResponse: DataQueryResponse,
   errorRateBySpanName: string,
-  durationBySpanName: string[],
+  durationsBySpanName: string[],
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
-  var df: any = {};
-  const rate = firstResponse.data[0][0].data.filter((x: { refId: string }) => {
+  let df: any = { fields: [] };
+  const rate = firstResponse.data[0]?.filter((x: { refId: string }) => {
     return x.refId === buildExpr(rateMetric, '', request);
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateBySpanName;
   });
   const duration = secondResponse.data.filter((x) => {
-    return durationBySpanName.includes(x.refId);
+    return durationsBySpanName.includes(x.refId);
   });
 
-  df.fields = [];
   if (rate.length > 0 && rate[0].fields?.length > 2) {
     df.fields.push({
       ...rate[0].fields[1],
@@ -618,9 +616,9 @@ function getApmTable(
   if (duration.length > 0 && duration[0].fields?.length > 1) {
     let durationObj: any = {};
     duration.map((d) => {
-      const delimiter = d.refId.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
-      const name = d.refId.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { name: name, value: d.fields[1]?.values.toArray()[0] };
+      const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
+      const name = d.refId?.split(delimiter)[1].split('"}')[0];
+      durationObj[name] = { name: name, value: d.fields[1].values.toArray()[0] };
     });
 
     df.fields.push({
@@ -650,7 +648,11 @@ function getApmTable(
   return df;
 }
 
-function buildExpr(metric: any, extraParams: any, request: any) {
+function buildExpr(
+  metric: { expr: string; params: string[] },
+  extraParams: string,
+  request: DataQueryRequest<TempoQuery>
+) {
   let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
@@ -660,19 +662,18 @@ function buildExpr(metric: any, extraParams: any, request: any) {
         .concat(serviceMapQuery)
         .concat(extraParams)
         .filter((item: string) => item);
-  const expr = metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
-  return expr;
+  return metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
 }
 
-function buildLinkExp(metric: any) {
+function buildLinkExp(metric: { expr: string; params: string[] }) {
   const expr = metric.expr.replace('__range', '__rate_interval').replace(' @ end()', '');
   return expr.replace('{}', '{' + metric.params.concat('span_name="${__data.fields[0]}"}').join(','));
 }
 
 // query result frames can come back in any order
 // here we align the table col values to the same row name (rateName) across the table
-function getRateAlignedValues(rateResp: DataQueryResponseData[], objToAlign: any) {
-  const rateNames = rateResp[0].fields[1]?.values.toArray().sort() ?? [];
+function getRateAlignedValues(rateResp: DataQueryResponseData[], objToAlign: { [x: string]: { value: string } }) {
+  const rateNames = rateResp[0]?.fields[1]?.values.toArray().sort() ?? [];
   let tempRateNames = rateNames;
   let values: string[] = [];
 
@@ -683,7 +684,7 @@ function getRateAlignedValues(rateResp: DataQueryResponseData[], objToAlign: any
       return obj;
     }, {});
 
-  for (var i = 0; i < rateNames.length; i++) {
+  for (let i = 0; i < rateNames.length; i++) {
     if (tempRateNames[i]) {
       if (tempRateNames[i] === Object.keys(objToAlign)[i]) {
         values.push(objToAlign[Object.keys(objToAlign)[i]].value);

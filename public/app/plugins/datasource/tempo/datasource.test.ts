@@ -7,6 +7,7 @@ import {
   DataSourceInstanceSettings,
   FieldType,
   getDefaultTimeRange,
+  LoadingState,
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
@@ -165,14 +166,14 @@ describe('Tempo data source', () => {
     expect(response.data[1].name).toBe('Nodes');
     expect(response.data[1].fields[0].values.length).toBe(3);
 
-    // // Test Links
+    // Test Links
     expect(response.data[1].fields[0].config.links.length).toBeGreaterThan(0);
     expect(response.data[1].fields[0].config.links).toEqual(serviceGraphLinks);
 
-    // expect(response.data[2].name).toBe('Edges');
-    // expect(response.data[2].fields[0].values.length).toBe(2);
+    expect(response.data[2].name).toBe('Edges');
+    expect(response.data[2].fields[0].values.length).toBe(2);
 
-    // expect(response.state).toBe(LoadingState.Done);
+    expect(response.state).toBe(LoadingState.Done);
   });
 
   it('should handle json file upload', async () => {
