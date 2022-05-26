@@ -1793,944 +1793,6 @@
         }
       }
     },
-    "/alertmanager/grafana/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateGrafanaSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMStatus",
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestGrafanaReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMStatus",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAlertingConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteAlertingConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
     "/alerts": {
       "get": {
         "tags": ["legacy_alerts"],
@@ -6918,361 +5980,6 @@
         }
       }
     },
-    "/prometheus/grafana/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaAlertStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/grafana/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaRuleStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceUID}/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetAlertStatuses",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceUID}/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetRuleStatuses",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the contact points.",
-        "operationId": "RouteGetContactpoints",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a contact point.",
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points/{ID}": {
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoint",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Delete a contact point.",
-        "operationId": "RouteDeleteContactpoints",
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/mute-timings": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the mute timings.",
-        "operationId": "RouteGetMuteTimings",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MuteTiming"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/mute-timings/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a mute timing.",
-        "operationId": "RouteGetMuteTiming",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MuteTiming"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/policies": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePutPolicyTree",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/templates": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all message templates.",
-        "operationId": "RouteGetTemplates",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MessageTemplate"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/templates/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a message template.",
-        "operationId": "RouteGetTemplate",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MessageTemplate"
-          },
-          "404": {
-            "$ref": "#/responses/NotFound"
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Updates an existing template.",
-        "operationId": "RoutePutTemplate",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a template.",
-        "operationId": "RouteDeleteTemplate",
-        "responses": {
-          "204": {
-            "$ref": "#/responses/Accepted"
-          }
-        }
-      }
-    },
     "/recording-rules": {
       "get": {
         "tags": ["recording_rules", "enterprise"],
@@ -7881,368 +6588,6 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulegGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
           }
         }
       }
@@ -9863,184 +8208,6 @@
           }
         }
       }
-    },
-    "/v1/eval": {
-      "post": {
-        "description": "Test rule",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteEvalQueries",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesPayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "EvalQueriesResponse",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/admin_config": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
-        "operationId": "RouteGetNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "GettableNGalertConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableNGalertConfig"
-            }
-          },
-          "404": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
-        "operationId": "RoutePostNGalertConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableNGalertConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Deletes the NGalert configuration of the user's organization.",
-        "operationId": "RouteDeleteNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/alertmanagers": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
-        "operationId": "RouteGetAlertmanagers",
-        "responses": {
-          "200": {
-            "description": "GettableAlertmanagers",
-            "schema": {
-              "$ref": "#/definitions/GettableAlertmanagers"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/grafana": {
-      "post": {
-        "description": "Test a rule against Grafana ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleGrafanaConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/{DatasourceUID}": {
-      "post": {
-        "description": "Test a rule against external data source ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -11317,7 +9484,7 @@
           "$ref": "#/definitions/DashboardSnapshot"
         },
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "deleteKey": {
           "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
@@ -11732,7 +9899,7 @@
       "type": "object",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "meta": {
           "$ref": "#/definitions/DashboardMeta"
@@ -11896,7 +10063,7 @@
           "format": "date-time"
         },
         "Dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "DashboardEncrypted": {
           "type": "array",
@@ -12082,7 +10249,7 @@
           "x-go-name": "DashboardId"
         },
         "data": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "id": {
           "type": "integer",
@@ -13240,6 +11407,13 @@
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
         },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          },
+          "x-go-name": "TemplateFileProvenances"
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -13486,7 +11660,7 @@
       "title": "ImportDashboardRequest request object for importing a dashboard.",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "folderId": {
           "type": "integer",
@@ -15858,7 +14032,7 @@
           "format": "date-time"
         },
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "folderId": {
           "type": "integer",
@@ -16889,10 +15063,10 @@
       "type": "object",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "meta": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -16901,10 +15075,10 @@
       "type": "object",
       "properties": {
         "dashboard": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         },
         "meta": {
-          "$ref": "#/definitions/Json"
+          "$ref": "#/definitions/dashboard"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
@@ -17859,12 +16033,11 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
-      },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -17962,6 +16135,1094 @@
       },
       "x-go-name": "ClusterStatus",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    },
+    "dashboard": {
+      "type": "object",
+      "required": ["style", "editable", "graphTooltip", "schemaVersion"],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "required": ["list"],
+          "properties": {
+            "list": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dashboard.AnnotationQuery"
+              }
+            }
+          }
+        },
+        "description": {
+          "description": "Description of dashboard.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Whether a dashboard is editable or not.",
+          "type": "boolean",
+          "default": true
+        },
+        "fiscalYearStartMonth": {
+          "description": "TODO docs",
+          "type": "integer",
+          "maximum": 13,
+          "exclusiveMaximum": true,
+          "exclusiveMinimum": true
+        },
+        "gnetId": {
+          "type": "string"
+        },
+        "graphTooltip": {
+          "type": "integer",
+          "default": 0,
+          "enum": [0, 1, 2]
+        },
+        "id": {
+          "description": "Unique numeric identifier for the dashboard.\nTODO must isolate or remove identifiers local to a Grafana instance...?",
+          "type": "integer",
+          "format": "int64"
+        },
+        "links": {
+          "description": "TODO docs",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dashboard.DashboardLink"
+          }
+        },
+        "liveNow": {
+          "description": "TODO docs",
+          "type": "boolean"
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/definitions/dashboard.Panel"
+              },
+              {
+                "$ref": "#/definitions/dashboard.GraphPanel"
+              },
+              {
+                "$ref": "#/definitions/dashboard.HeatmapPanel"
+              },
+              {
+                "$ref": "#/definitions/dashboard.RowPanel"
+              }
+            ]
+          }
+        },
+        "refresh": {
+          "description": "TODO docs",
+          "oneOf": [
+            {
+              "enum": [false]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "schemaVersion": {
+          "description": "Version of the JSON schema, incremented each time a Grafana update brings\nchanges to said schema.\nTODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion",
+          "type": "integer",
+          "default": 36,
+          "maximum": 65535
+        },
+        "style": {
+          "description": "Theme of dashboard.",
+          "type": "string",
+          "default": "dark",
+          "enum": ["dark", "light"]
+        },
+        "tags": {
+          "description": "Tags associated with dashboard.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templating": {
+          "type": "object",
+          "required": ["list"],
+          "properties": {
+            "list": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dashboard.VariableModel"
+              }
+            }
+          }
+        },
+        "time": {
+          "description": "Time range for dashboard, e.g. last 6 hours, last 7 days, etc",
+          "type": "object",
+          "required": ["from", "to"],
+          "properties": {
+            "from": {
+              "type": "string",
+              "default": "now-6h"
+            },
+            "to": {
+              "type": "string",
+              "default": "now"
+            }
+          }
+        },
+        "timepicker": {
+          "description": "TODO docs\nTODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes",
+          "type": "object",
+          "required": ["collapse", "enable", "hidden", "refresh_intervals"],
+          "properties": {
+            "collapse": {
+              "description": "Whether timepicker is collapsed or not.",
+              "type": "boolean",
+              "default": false
+            },
+            "enable": {
+              "description": "Whether timepicker is enabled or not.",
+              "type": "boolean",
+              "default": true
+            },
+            "hidden": {
+              "description": "Whether timepicker is visible or not.",
+              "type": "boolean",
+              "default": false
+            },
+            "refresh_intervals": {
+              "description": "Selectable intervals for auto-refresh.",
+              "type": "array",
+              "default": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "timezone": {
+          "description": "Timezone of dashboard,",
+          "type": "string",
+          "default": "browser",
+          "enum": ["browser", "utc", ""]
+        },
+        "title": {
+          "description": "Title of dashboard.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Unique dashboard identifier that can be generated by anyone. string (8-40)",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version of the dashboard, incremented each time the dashboard is updated.",
+          "type": "integer",
+          "maximum": 4294967295
+        },
+        "weekStart": {
+          "description": "TODO docs",
+          "type": "string"
+        }
+      }
+    },
+    "dashboard.AnnotationQuery": {
+      "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+      "type": "object",
+      "required": ["datasource", "enable", "builtIn", "type", "showIn"],
+      "properties": {
+        "builtIn": {
+          "type": "integer",
+          "default": 0,
+          "maximum": 255
+        },
+        "datasource": {
+          "description": "Datasource to use for annotation.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "uid": {
+              "type": "string"
+            }
+          }
+        },
+        "enable": {
+          "description": "Whether annotation is enabled.",
+          "type": "boolean",
+          "default": true
+        },
+        "hide": {
+          "description": "Whether to hide annotation.",
+          "type": "boolean",
+          "default": false
+        },
+        "iconColor": {
+          "description": "Annotation icon color.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of annotation.",
+          "type": "string"
+        },
+        "rawQuery": {
+          "description": "Query for annotation data.",
+          "type": "string"
+        },
+        "showIn": {
+          "type": "integer",
+          "default": 0,
+          "maximum": 255
+        },
+        "target": {
+          "$ref": "#/definitions/dashboard.Target"
+        },
+        "type": {
+          "type": "string",
+          "default": "dashboard"
+        }
+      }
+    },
+    "dashboard.DashboardCursorSync": {
+      "description": "0 for no shared crosshair or tooltip (default).\n1 for shared crosshair.\n2 for shared crosshair AND shared tooltip.",
+      "type": "integer",
+      "default": 0,
+      "enum": [0, 1, 2]
+    },
+    "dashboard.DashboardLink": {
+      "description": "FROM public/app/features/dashboard/state/DashboardModels.ts - ish\nTODO docs",
+      "type": "object",
+      "required": ["title", "type", "tags", "asDropdown", "targetBlank", "includeVars", "keepTime"],
+      "properties": {
+        "asDropdown": {
+          "type": "boolean",
+          "default": false
+        },
+        "icon": {
+          "type": "string"
+        },
+        "includeVars": {
+          "type": "boolean",
+          "default": false
+        },
+        "keepTime": {
+          "type": "boolean",
+          "default": false
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targetBlank": {
+          "type": "boolean",
+          "default": false
+        },
+        "title": {
+          "type": "string"
+        },
+        "tooltip": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["link", "dashboards"]
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "dashboard.DashboardLinkType": {
+      "description": "TODO docs",
+      "type": "string",
+      "enum": ["link", "dashboards"]
+    },
+    "dashboard.FieldColor": {
+      "description": "TODO docs",
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "fixedColor": {
+          "description": "Stores the fixed color value if mode is fixed",
+          "type": "string"
+        },
+        "mode": {
+          "description": "The main color scheme mode",
+          "type": "string",
+          "oneOf": [
+            {
+              "enum": ["thresholds", "palette-classic", "palette-saturated", "continuous-GrYlRd", "fixed"]
+            },
+            {}
+          ]
+        },
+        "seriesBy": {
+          "$ref": "#/definitions/dashboard.FieldColorSeriesByMode"
+        }
+      }
+    },
+    "dashboard.FieldColorModeId": {
+      "description": "TODO docs",
+      "type": "string",
+      "enum": ["thresholds", "palette-classic", "palette-saturated", "continuous-GrYlRd", "fixed"]
+    },
+    "dashboard.FieldColorSeriesByMode": {
+      "description": "TODO docs",
+      "type": "string",
+      "enum": ["min", "max", "last"]
+    },
+    "dashboard.GraphPanel": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "description": "Support for legacy graph and heatmap panels.",
+          "type": "string",
+          "enum": ["graph"]
+        }
+      }
+    },
+    "dashboard.HeatmapPanel": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["heatmap"]
+        }
+      }
+    },
+    "dashboard.Panel": {
+      "description": "Dashboard panels. Panels are canonically defined inline\nbecause they share a version timeline with the dashboard\nschema; they do not evolve independently.",
+      "type": "object",
+      "required": ["type", "transparent", "repeatDirection", "transformations", "options", "fieldConfig"],
+      "properties": {
+        "datasource": {
+          "description": "The datasource used in all targets.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "uid": {
+              "type": "string"
+            }
+          }
+        },
+        "description": {
+          "description": "Description.",
+          "type": "string"
+        },
+        "fieldConfig": {
+          "type": "object",
+          "required": ["defaults", "overrides"],
+          "properties": {
+            "defaults": {
+              "type": "object",
+              "properties": {
+                "color": {
+                  "$ref": "#/definitions/dashboard.FieldColor"
+                },
+                "custom": {
+                  "description": "custom is specified by the PanelFieldConfig field\nin panel plugin schemas.",
+                  "type": "object"
+                },
+                "decimals": {
+                  "description": "Significant digits (for display)",
+                  "type": "number"
+                },
+                "description": {
+                  "description": "Human readable field metadata",
+                  "type": "string"
+                },
+                "displayName": {
+                  "description": "The display value for this field.  This supports template variables blank is auto",
+                  "type": "string"
+                },
+                "displayNameFromDS": {
+                  "description": "This can be used by data sources that return and explicit naming structure for values and labels\nWhen this property is configured, this value is used rather than the default naming strategy.",
+                  "type": "string"
+                },
+                "filterable": {
+                  "description": "True if data source field supports ad-hoc filters",
+                  "type": "boolean"
+                },
+                "links": {
+                  "description": "// The behavior when clicking on a result",
+                  "type": "array",
+                  "items": {}
+                },
+                "mappings": {
+                  "description": "Convert input values into a display string\n\nTODO this one corresponds to a complex type with\ngenerics on the typescript side. Ouch. Will\neither need special care, or we'll just need to\naccept a very loosely specified schema. It's very\nunlikely we'll be able to translate cue to\ntypescript generics in the general case, though\nthis particular one *may* be able to work.",
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "max": {
+                  "type": "number"
+                },
+                "min": {
+                  "type": "number"
+                },
+                "noValue": {
+                  "description": "Alternative to empty string",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "An explict path to the field in the datasource.  When the frame meta includes a path,\nThis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used to update the results",
+                  "type": "string"
+                },
+                "thresholds": {
+                  "$ref": "#/definitions/dashboard.ThresholdsConfig"
+                },
+                "unit": {
+                  "description": "Numeric Options",
+                  "type": "string"
+                },
+                "writeable": {
+                  "description": "True if data source can write a value to the path.  Auth/authz are supported separately",
+                  "type": "boolean"
+                }
+              }
+            },
+            "overrides": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["matcher", "properties"],
+                "properties": {
+                  "matcher": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "options": {}
+                    }
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id"],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "default": ""
+                        },
+                        "value": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridPos": {
+          "description": "Grid position.",
+          "type": "object",
+          "required": ["h", "w", "x", "y"],
+          "properties": {
+            "h": {
+              "description": "Panel",
+              "type": "integer",
+              "default": 9,
+              "maximum": 4294967295,
+              "exclusiveMinimum": true
+            },
+            "static": {
+              "description": "true if fixed",
+              "type": "boolean"
+            },
+            "w": {
+              "description": "Panel",
+              "type": "integer",
+              "default": 12,
+              "maximum": 24,
+              "exclusiveMinimum": true
+            },
+            "x": {
+              "description": "Panel x",
+              "type": "integer",
+              "default": 0,
+              "maximum": 24,
+              "exclusiveMaximum": true
+            },
+            "y": {
+              "description": "Panel y",
+              "type": "integer",
+              "default": 0,
+              "maximum": 4294967295
+            }
+          }
+        },
+        "id": {
+          "description": "TODO docs",
+          "type": "integer",
+          "maximum": 4294967295
+        },
+        "interval": {
+          "description": "TODO docs\nTODO tighter constraint",
+          "type": "string"
+        },
+        "links": {
+          "description": "Panel links.\nTODO fill this out - seems there are a couple variants?",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dashboard.DashboardLink"
+          }
+        },
+        "maxDataPoints": {
+          "description": "TODO docs",
+          "type": "number"
+        },
+        "options": {
+          "description": "options is specified by the PanelOptions field in panel\nplugin schemas.",
+          "type": "object"
+        },
+        "pluginVersion": {
+          "description": "FIXME this almost certainly has to be changed in favor of scuemata versions",
+          "type": "string"
+        },
+        "repeat": {
+          "description": "Name of template variable to repeat for.",
+          "type": "string"
+        },
+        "repeatDirection": {
+          "description": "Direction to repeat in if 'repeat' is set.\n\"h\" for horizontal, \"v\" for vertical.",
+          "type": "string",
+          "default": "h",
+          "enum": ["h", "v"]
+        },
+        "tags": {
+          "description": "TODO docs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targets": {
+          "description": "TODO docs",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dashboard.Target"
+          }
+        },
+        "thresholds": {
+          "description": "TODO docs",
+          "type": "array",
+          "items": {}
+        },
+        "timeFrom": {
+          "description": "TODO docs\nTODO tighter constraint",
+          "type": "string"
+        },
+        "timeRegions": {
+          "description": "TODO docs",
+          "type": "array",
+          "items": {}
+        },
+        "timeShift": {
+          "description": "TODO docs\nTODO tighter constraint",
+          "type": "string"
+        },
+        "title": {
+          "description": "Panel title.",
+          "type": "string"
+        },
+        "transformations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "options"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "options": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "transparent": {
+          "description": "Whether to display the panel without a background.",
+          "type": "boolean",
+          "default": false
+        },
+        "type": {
+          "description": "The panel plugin type id. May not be empty.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "dashboard.RowPanel": {
+      "description": "Row panel",
+      "type": "object",
+      "required": ["type", "collapsed", "id", "panels"],
+      "properties": {
+        "collapsed": {
+          "type": "boolean",
+          "default": false
+        },
+        "datasource": {
+          "description": "Name of default datasource.",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "uid": {
+              "type": "string"
+            }
+          }
+        },
+        "gridPos": {
+          "type": "object",
+          "required": ["h", "w", "x", "y"],
+          "properties": {
+            "h": {
+              "description": "Panel",
+              "type": "integer",
+              "default": 9,
+              "maximum": 4294967295,
+              "exclusiveMinimum": true
+            },
+            "static": {
+              "description": "true if fixed",
+              "type": "boolean"
+            },
+            "w": {
+              "description": "Panel",
+              "type": "integer",
+              "default": 12,
+              "maximum": 24,
+              "exclusiveMinimum": true
+            },
+            "x": {
+              "description": "Panel x",
+              "type": "integer",
+              "default": 0,
+              "maximum": 24,
+              "exclusiveMaximum": true
+            },
+            "y": {
+              "description": "Panel y",
+              "type": "integer",
+              "default": 0,
+              "maximum": 4294967295
+            }
+          }
+        },
+        "id": {
+          "type": "integer",
+          "maximum": 4294967295
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "oneOf": [
+              {
+                "required": ["type", "transparent", "repeatDirection", "transformations", "options", "fieldConfig"],
+                "properties": {
+                  "datasource": {
+                    "description": "The datasource used in all targets.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "uid": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "description": {
+                    "description": "Description.",
+                    "type": "string"
+                  },
+                  "fieldConfig": {
+                    "type": "object",
+                    "required": ["defaults", "overrides"],
+                    "properties": {
+                      "defaults": {
+                        "type": "object",
+                        "properties": {
+                          "color": {
+                            "$ref": "#/definitions/dashboard.FieldColor"
+                          },
+                          "custom": {
+                            "description": "custom is specified by the PanelFieldConfig field\nin panel plugin schemas.",
+                            "type": "object"
+                          },
+                          "decimals": {
+                            "description": "Significant digits (for display)",
+                            "type": "number"
+                          },
+                          "description": {
+                            "description": "Human readable field metadata",
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "description": "The display value for this field.  This supports template variables blank is auto",
+                            "type": "string"
+                          },
+                          "displayNameFromDS": {
+                            "description": "This can be used by data sources that return and explicit naming structure for values and labels\nWhen this property is configured, this value is used rather than the default naming strategy.",
+                            "type": "string"
+                          },
+                          "filterable": {
+                            "description": "True if data source field supports ad-hoc filters",
+                            "type": "boolean"
+                          },
+                          "links": {
+                            "description": "// The behavior when clicking on a result",
+                            "type": "array",
+                            "items": {}
+                          },
+                          "mappings": {
+                            "description": "Convert input values into a display string\n\nTODO this one corresponds to a complex type with\ngenerics on the typescript side. Ouch. Will\neither need special care, or we'll just need to\naccept a very loosely specified schema. It's very\nunlikely we'll be able to translate cue to\ntypescript generics in the general case, though\nthis particular one *may* be able to work.",
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          },
+                          "max": {
+                            "type": "number"
+                          },
+                          "min": {
+                            "type": "number"
+                          },
+                          "noValue": {
+                            "description": "Alternative to empty string",
+                            "type": "string"
+                          },
+                          "path": {
+                            "description": "An explict path to the field in the datasource.  When the frame meta includes a path,\nThis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used to update the results",
+                            "type": "string"
+                          },
+                          "thresholds": {
+                            "$ref": "#/definitions/dashboard.ThresholdsConfig"
+                          },
+                          "unit": {
+                            "description": "Numeric Options",
+                            "type": "string"
+                          },
+                          "writeable": {
+                            "description": "True if data source can write a value to the path.  Auth/authz are supported separately",
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "overrides": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["matcher", "properties"],
+                          "properties": {
+                            "matcher": {
+                              "type": "object",
+                              "required": ["id"],
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "default": ""
+                                },
+                                "options": {}
+                              }
+                            },
+                            "properties": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": ["id"],
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "default": ""
+                                  },
+                                  "value": {}
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "gridPos": {
+                    "description": "Grid position.",
+                    "type": "object",
+                    "required": ["h", "w", "x", "y"],
+                    "properties": {
+                      "h": {
+                        "description": "Panel",
+                        "type": "integer",
+                        "default": 9,
+                        "maximum": 4294967295,
+                        "exclusiveMinimum": true
+                      },
+                      "static": {
+                        "description": "true if fixed",
+                        "type": "boolean"
+                      },
+                      "w": {
+                        "description": "Panel",
+                        "type": "integer",
+                        "default": 12,
+                        "maximum": 24,
+                        "exclusiveMinimum": true
+                      },
+                      "x": {
+                        "description": "Panel x",
+                        "type": "integer",
+                        "default": 0,
+                        "maximum": 24,
+                        "exclusiveMaximum": true
+                      },
+                      "y": {
+                        "description": "Panel y",
+                        "type": "integer",
+                        "default": 0,
+                        "maximum": 4294967295
+                      }
+                    }
+                  },
+                  "id": {
+                    "description": "TODO docs",
+                    "type": "integer",
+                    "maximum": 4294967295
+                  },
+                  "interval": {
+                    "description": "TODO docs\nTODO tighter constraint",
+                    "type": "string"
+                  },
+                  "links": {
+                    "description": "Panel links.\nTODO fill this out - seems there are a couple variants?",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/dashboard.DashboardLink"
+                    }
+                  },
+                  "maxDataPoints": {
+                    "description": "TODO docs",
+                    "type": "number"
+                  },
+                  "options": {
+                    "description": "options is specified by the PanelOptions field in panel\nplugin schemas.",
+                    "type": "object"
+                  },
+                  "pluginVersion": {
+                    "description": "FIXME this almost certainly has to be changed in favor of scuemata versions",
+                    "type": "string"
+                  },
+                  "repeat": {
+                    "description": "Name of template variable to repeat for.",
+                    "type": "string"
+                  },
+                  "repeatDirection": {
+                    "description": "Direction to repeat in if 'repeat' is set.\n\"h\" for horizontal, \"v\" for vertical.",
+                    "type": "string",
+                    "default": "h",
+                    "enum": ["h", "v"]
+                  },
+                  "tags": {
+                    "description": "TODO docs",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "targets": {
+                    "description": "TODO docs",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/dashboard.Target"
+                    }
+                  },
+                  "thresholds": {
+                    "description": "TODO docs",
+                    "type": "array",
+                    "items": {}
+                  },
+                  "timeFrom": {
+                    "description": "TODO docs\nTODO tighter constraint",
+                    "type": "string"
+                  },
+                  "timeRegions": {
+                    "description": "TODO docs",
+                    "type": "array",
+                    "items": {}
+                  },
+                  "timeShift": {
+                    "description": "TODO docs\nTODO tighter constraint",
+                    "type": "string"
+                  },
+                  "title": {
+                    "description": "Panel title.",
+                    "type": "string"
+                  },
+                  "transformations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id", "options"],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "options": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  },
+                  "transparent": {
+                    "description": "Whether to display the panel without a background.",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "type": {
+                    "description": "The panel plugin type id. May not be empty.",
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              {
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["graph"]
+                  }
+                }
+              },
+              {
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["heatmap"]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "repeat": {
+          "description": "Name of template variable to repeat for.",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["row"]
+        }
+      }
+    },
+    "dashboard.Target": {
+      "description": "Schema for panel targets is specified by datasource\nplugins. We use a placeholder definition, which the Go\nschema loader either left open/as-is with the Base\nvariant of the Dashboard and Panel families, or filled\nwith types derived from plugins in the Instance variant.\nWhen working directly from CUE, importers can extend this\ntype directly to achieve the same effect.",
+      "type": "object"
+    },
+    "dashboard.Threshold": {
+      "description": "TODO docs",
+      "type": "object",
+      "required": ["color"],
+      "properties": {
+        "color": {
+          "description": "TODO docs",
+          "type": "string"
+        },
+        "state": {
+          "description": "TODO docs\nTODO are the values here enumerable into a disjunction?\nSome seem to be listed in typescript comment",
+          "type": "string"
+        },
+        "value": {
+          "description": "TODO docs\nFIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON",
+          "type": "number"
+        }
+      }
+    },
+    "dashboard.ThresholdsConfig": {
+      "type": "object",
+      "required": ["mode", "steps"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["absolute", "percentage"]
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["color"],
+            "properties": {
+              "color": {
+                "description": "TODO docs",
+                "type": "string"
+              },
+              "state": {
+                "description": "TODO docs\nTODO are the values here enumerable into a disjunction?\nSome seem to be listed in typescript comment",
+                "type": "string"
+              },
+              "value": {
+                "description": "TODO docs\nFIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON",
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dashboard.ThresholdsMode": {
+      "type": "string",
+      "enum": ["absolute", "percentage"]
+    },
+    "dashboard.Transformation": {
+      "description": "TODO docs\nFIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it",
+      "type": "object",
+      "required": ["id", "options"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object"
+        }
+      }
+    },
+    "dashboard.VariableModel": {
+      "description": "FROM: packages/grafana-data/src/types/templateVars.ts\nTODO docs\nTODO what about what's in public/app/features/types.ts?\nTODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction",
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["query", "adhoc", "constant", "datasource", "interval", "textbox", "custom", "system"]
+        }
+      }
+    },
+    "dashboard.VariableType": {
+      "description": "FROM: packages/grafana-data/src/types/templateVars.ts\nTODO docs\nTODO this implies some wider pattern/discriminated union, probably?",
+      "type": "string",
+      "enum": ["query", "adhoc", "constant", "datasource", "interval", "textbox", "custom", "system"]
     },
     "duration": {
       "$ref": "#/definitions/Duration"
@@ -18075,12 +17336,11 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -18237,7 +17497,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -18246,7 +17505,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",

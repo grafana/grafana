@@ -7,11 +7,19 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
+	"cuelang.org/go/cue/cuecontext"
+	"github.com/getkin/kin-openapi/openapi2conv"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/thema"
+	"github.com/grafana/thema/encoding/openapi"
 )
 
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
@@ -72,6 +80,35 @@ func mergeSpecs(output string, sources ...string) error {
 		specOSS.SwaggerProps.Tags = append(specOSS.SwaggerProps.Tags, additionalSpec.OrigSpec().SwaggerProps.Tags...)
 	}
 
+	// add dashboard definition from the generated OpenAPI
+	dashboardDefs, err := getDashboardDefinitions()
+	if err != nil {
+		log.Printf("failed to get the structured dashboard definition%v", err)
+	}
+	for k, def := range dashboardDefs {
+		specOSS.SwaggerProps.Definitions[k] = def
+	}
+
+	//TODO: check for conflicts
+	for k, d := range specOSS.SwaggerProps.Definitions {
+		for kk, props := range d.Properties {
+			// replace dashboard unstructured references to structured ones
+			if props.Ref.String() == "#/definitions/Json" {
+				if strings.Contains(k, "Dashboard") {
+					newRef, err := jsonreference.New("#/definitions/dashboard")
+					if err != nil {
+						log.Printf("failed to update dashboard reference for definition: %s, property: %s, err: %v", k, kk, err)
+						continue
+					}
+					props.Ref.Ref = newRef
+					d.Properties[kk] = props
+					specOSS.SwaggerProps.Definitions[k] = d
+					log.Printf("updated dashboard reference for definition: %s, property: %s", k, kk)
+				}
+			}
+		}
+	}
+
 	// write result to file
 	newSpec, err := specOSS.MarshalJSON()
 	if err != nil {
@@ -96,6 +133,61 @@ func mergeSpecs(output string, sources ...string) error {
 
 	// validate result
 	return nil
+}
+
+// getDashboardDefinitions converts the dashboard OpenAPI v3 to OpenAPI v2
+// and it returns it as spec.Schema
+func getDashboardDefinitions() (spec.Definitions, error) {
+	lib := thema.NewLibrary(cuecontext.New())
+	lin, _ := dashboard.Lineage(lib)
+	// Grab the 0.0 version. Or whichever one you want
+	sch := thema.SchemaP(lin, thema.SV(0, 0))
+
+	f, _ := openapi.GenerateSchema(sch, nil)
+
+	v3, err := json.Marshal(lib.Context().BuildFile(f))
+
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(v3)
+	if err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to load the OpenAPI v3 dashboard definition, %w", err)
+	}
+
+	if err = doc.Validate(loader.Context); err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to validate OpenAPI v3 dashboard definition, %w", err)
+	}
+
+	v2, err := openapi2conv.FromV3(doc)
+	if err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to convert to OpenAPI v2 dashboard definition, %w", err)
+	}
+
+	blob, err := v2.MarshalJSON()
+	if err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to marshal the OpenAPI v2 dashboard definition, %w", err)
+	}
+
+	// it seems there is a bug in the conversion and there are some unresolved references to #/components/schemas/
+	s := string(blob)
+	s = strings.ReplaceAll(s, "#/components/schemas/", "#/definitions/")
+
+	loadedDoc, err := loads.Analyzed(json.RawMessage([]byte(s)), "2.0")
+	if err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to create a spec document from the OpenAPI v2 dashboard definition, %w", err)
+	}
+
+	dashboardDefFound := false
+	for k := range loadedDoc.OrigSpec().Definitions {
+		if k == "dashboard" {
+			dashboardDefFound = true
+		}
+	}
+
+	if !dashboardDefFound {
+		return spec.Definitions{}, fmt.Errorf("no dashboard definition found")
+	}
+
+	return loadedDoc.OrigSpec().Definitions, nil
 }
 
 func main() {
