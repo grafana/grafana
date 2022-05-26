@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css } from '@emotion/css';
+import cx from 'classnames';
 import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { css } from '@emotion/css';
-import cx from 'classnames';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
+import { TNil } from '../../types';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
+import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
-import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor } from '../../Theme';
-import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

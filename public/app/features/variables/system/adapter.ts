@@ -1,10 +1,11 @@
 import { ComponentType } from 'react';
+
 import { LoadingState } from '@grafana/data';
 
-import { initialVariableModelState, SystemVariable, VariableHide } from '../types';
 import { VariableAdapter } from '../adapters';
-import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
+import { VariablePickerProps } from '../pickers/types';
+import { initialVariableModelState, SystemVariable, VariableHide } from '../types';
 
 export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
   return {

@@ -15,16 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestNewNameScopeResolver(t *testing.T) {
+func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewNameScopeResolver(&FakeDashboardStore{})
+		prefix, _ := NewFolderNameScopeResolver(&FakeDashboardStore{})
 		require.Equal(t, "folders:name:", prefix)
 	})
 
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
@@ -36,53 +36,54 @@ func TestNewNameScopeResolver(t *testing.T) {
 
 		scope := "folders:name:" + title
 
-		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
+		require.Len(t, resolvedScopes, 1)
 
-		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScope)
+		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScopes[0])
 
 		dashboardStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
-		_, err := resolver(context.Background(), rand.Int63(), "folders:id:123")
+		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
-		_, err := resolver(context.Background(), rand.Int63(), "folders:name:")
+		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:name:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
 
 		scope := "folders:name:" + util.GenerateShortUID()
 
-		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.ErrorIs(t, err, models.ErrDashboardNotFound)
-		require.Empty(t, resolvedScope)
+		require.Nil(t, resolvedScopes)
 	})
 }
 
-func TestNewIDScopeResolver(t *testing.T) {
+func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewIDScopeResolver(&FakeDashboardStore{})
+		prefix, _ := NewFolderIDScopeResolver(&FakeDashboardStore{})
 		require.Equal(t, "folders:id:", prefix)
 	})
 
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
@@ -92,18 +93,18 @@ func TestNewIDScopeResolver(t *testing.T) {
 
 		scope := "folders:id:" + strconv.FormatInt(db.Id, 10)
 
-		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
-
-		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScope)
+		require.Len(t, resolvedScopes, 1)
+		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScopes[0])
 
 		dashboardStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.Id)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
-		_, err := resolver(context.Background(), rand.Int63(), "folders:uid:123")
+		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 
@@ -112,33 +113,34 @@ func TestNewIDScopeResolver(t *testing.T) {
 			dashboardStore = &FakeDashboardStore{}
 			orgId          = rand.Int63()
 			scope          = "folders:id:0"
-			_, resolver    = NewIDScopeResolver(dashboardStore)
+			_, resolver    = NewFolderIDScopeResolver(dashboardStore)
 		)
 
-		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		resolved, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
 
-		require.Equal(t, "folders:uid:general", resolvedScope)
+		require.Len(t, resolved, 1)
+		require.Equal(t, "folders:uid:general", resolved[0])
 	})
 
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
-		_, err := resolver(context.Background(), rand.Int63(), "folders:id:")
+		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		dashboardStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
 
 		scope := "folders:id:10"
-		resolvedScope, err := resolver(context.Background(), orgId, scope)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.ErrorIs(t, err, models.ErrDashboardNotFound)
-		require.Empty(t, resolvedScope)
+		require.Nil(t, resolvedScopes)
 	})
 }

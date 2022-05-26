@@ -1,5 +1,7 @@
-import { Alert } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
+
+import { Alert } from 'app/types/unified-alerting';
+
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { DetailsField } from '../DetailsField';
 

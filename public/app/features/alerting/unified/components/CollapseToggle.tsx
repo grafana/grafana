@@ -1,5 +1,6 @@
-import React, { FC, HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconSize, useStyles2, Button } from '@grafana/ui';
 

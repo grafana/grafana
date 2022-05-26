@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
-import { Cascader, CascaderOption } from '../Cascader/Cascader';
+
 import { getValueFormats, SelectableValue } from '@grafana/data';
+
+import { Cascader, CascaderOption } from '../Cascader/Cascader';
 
 interface Props {
   onChange: (item?: string) => void;

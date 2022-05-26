@@ -1,7 +1,10 @@
+import React, { ComponentType } from 'react';
+
 import { SelectableValue, toOption } from '@grafana/data';
 import { Checkbox, Select } from '@grafana/ui';
-import React, { ComponentType } from 'react';
+
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
+
 import { AutoSizeInput } from './AutoSizeInput';
 import { getOperationParamId } from './operationUtils';
 
@@ -72,7 +75,6 @@ function SelectInputParamEditor({
   return (
     <Select
       id={getOperationParamId(operationIndex, index)}
-      menuShouldPortal
       value={valueOption}
       options={selectOptions}
       placeholder={paramDef.placeholder}

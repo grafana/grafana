@@ -2,8 +2,8 @@ package queryhistory
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -47,8 +47,8 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 	var dtos []QueryHistoryDTO
 	var allQueries []interface{}
 
-	if len(query.DatasourceUIDs) == 0 {
-		return QueryHistorySearchResult{}, errors.New("no selected data source for query history search")
+	if query.To <= 0 {
+		query.To = time.Now().Unix()
 	}
 
 	if query.Page <= 0 {
@@ -323,4 +323,109 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.Si
 	}
 
 	return len(queryHistories), len(starredQueries), nil
+}
+
+func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan int64) (int, error) {
+	var rowsCount int64
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		sql := `DELETE 
+			FROM query_history 
+			WHERE uid IN (
+				SELECT uid FROM (
+					SELECT uid FROM query_history
+					LEFT JOIN query_history_star
+					ON query_history_star.query_uid = query_history.uid
+					WHERE query_history_star.query_uid IS NULL
+					AND query_history.created_at <= ?
+					ORDER BY query_history.id ASC
+					LIMIT 10000
+				) AS q
+			)`
+
+		res, err := session.Exec(sql, strconv.FormatInt(olderThan, 10))
+		if err != nil {
+			return err
+		}
+
+		rowsCount, err = res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsCount), nil
+}
+
+func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, limit int, starredQueries bool) (int, error) {
+	var deletedRowsCount int64
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var rowsCount int64
+		var err error
+		if starredQueries {
+			rowsCount, err = session.Table("query_history_star").Count(QueryHistoryStar{})
+		} else {
+			rowsCount, err = session.Table("query_history").Count(QueryHistory{})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		countRowsToDelete := rowsCount - int64(limit)
+		if countRowsToDelete > 0 {
+			var sql string
+			if starredQueries {
+				sql = `DELETE FROM query_history_star 
+					WHERE id IN (
+						SELECT id FROM (
+							SELECT id FROM query_history_star
+							ORDER BY id ASC 
+							LIMIT ?
+						) AS q
+					)`
+			} else {
+				sql = `DELETE 
+					FROM query_history 
+					WHERE uid IN (
+						SELECT uid FROM (
+							SELECT uid FROM query_history
+							LEFT JOIN query_history_star
+							ON query_history_star.query_uid = query_history.uid
+							WHERE query_history_star.query_uid IS NULL
+							ORDER BY query_history.id ASC
+							LIMIT ?
+						) AS q
+					)`
+			}
+
+			sqlLimit := countRowsToDelete
+			if sqlLimit > 10000 {
+				sqlLimit = 10000
+			}
+
+			res, err := session.Exec(sql, strconv.FormatInt(sqlLimit, 10))
+			if err != nil {
+				return err
+			}
+
+			deletedRowsCount, err = res.RowsAffected()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(deletedRowsCount), nil
 }

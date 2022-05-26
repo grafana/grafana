@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
+
 import { Invitee } from 'app/types';
+
 import InviteeRow from './InviteeRow';
 
 export interface Props {

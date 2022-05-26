@@ -1,5 +1,6 @@
-import { parseLabels, formatLabels, findCommonLabels, findUniqueLabels, matchAllLabels } from './labels';
 import { Labels } from '../types/data';
+
+import { parseLabels, formatLabels, findCommonLabels, findUniqueLabels, matchAllLabels } from './labels';
 
 describe('parseLabels()', () => {
   it('returns no labels on empty labels string', () => {

@@ -1,9 +1,12 @@
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2, useTheme2 } from '../../themes';
-import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 import { getFocusStyles } from '../../themes/mixins';
+
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public

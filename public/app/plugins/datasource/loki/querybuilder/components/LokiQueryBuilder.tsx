@@ -1,13 +1,17 @@
 import React, { useMemo } from 'react';
-import { LokiOperationId, LokiVisualQuery } from '../types';
-import { LokiDatasource } from '../../datasource';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
-import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
-import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import { lokiQueryModeller } from '../LokiQueryModeller';
+
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
+import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
+import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { escapeLabelValueInSelector } from '../../language_utils';
+import { lokiQueryModeller } from '../LokiQueryModeller';
+import { LokiOperationId, LokiVisualQuery } from '../types';
+
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -46,15 +50,17 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
       return [];
     }
 
+    let values;
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     if (labelsToConsider.length === 0) {
-      return await datasource.languageProvider.fetchLabelValues(forLabel.label);
+      values = await datasource.languageProvider.fetchLabelValues(forLabel.label);
+    } else {
+      const expr = lokiQueryModeller.renderLabels(labelsToConsider);
+      const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+      values = result[datasource.interpolateString(forLabel.label)];
     }
 
-    const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated] ?? [];
+    return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
 
   const labelFilterError: string | undefined = useMemo(() => {

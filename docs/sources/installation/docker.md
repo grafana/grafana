@@ -1,9 +1,9 @@
 +++
-title = "Run Grafana Docker image"
+aliases = ["/docs/grafana/latest/installation/docker/"]
 description = "Guide for running Grafana using Docker"
 keywords = ["grafana", "configuration", "documentation", "docker"]
+title = "Run Grafana Docker image"
 weight = 600
-
 +++
 
 # Run Grafana Docker image
@@ -250,7 +250,7 @@ chown -R grafana:grafana /usr/share/grafana
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Docker image
 

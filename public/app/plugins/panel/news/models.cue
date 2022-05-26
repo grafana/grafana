@@ -22,7 +22,7 @@ Panel: {
                     // empty/missing will default to grafana blog
                     feedUrl?: string
                     showImage?: bool | *true
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

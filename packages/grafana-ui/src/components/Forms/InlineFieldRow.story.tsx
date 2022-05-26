@@ -1,8 +1,10 @@
 import React from 'react';
+
+import { Input } from '../Input/Input';
+
+import { InlineField } from './InlineField';
 import { InlineFieldRow } from './InlineFieldRow';
 import mdx from './InlineFieldRow.mdx';
-import { InlineField } from './InlineField';
-import { Input } from '../Input/Input';
 
 export default {
   title: 'Forms/InlineFieldRow',

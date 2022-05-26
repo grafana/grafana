@@ -1,9 +1,10 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { LabelsToFieldsMode, LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
-import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
+import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { LabelsToFieldsMode, LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
 
 describe('Labels as Columns', () => {
   beforeAll(() => {

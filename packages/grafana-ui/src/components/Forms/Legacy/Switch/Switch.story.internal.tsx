@@ -1,7 +1,7 @@
+import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { Props, Switch } from './Switch';
-import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/Legacy/Switch',

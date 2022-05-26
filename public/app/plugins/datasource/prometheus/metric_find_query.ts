@@ -1,11 +1,12 @@
 import { chain, map as _map, uniq } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import { MetricFindValue, TimeRange } from '@grafana/data';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export default class PrometheusMetricFindQuery {
   range: TimeRange;

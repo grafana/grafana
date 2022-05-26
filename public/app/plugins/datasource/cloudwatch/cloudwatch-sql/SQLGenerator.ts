@@ -1,5 +1,5 @@
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { SQLExpression } from '../types';
+
 import {
   QueryEditorArrayExpression,
   QueryEditorExpression,
@@ -8,6 +8,7 @@ import {
   QueryEditorOperatorExpression,
   QueryEditorPropertyExpression,
 } from '../expressions';
+import { SQLExpression } from '../types';
 
 export default class SQLGenerator {
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}

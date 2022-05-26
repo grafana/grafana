@@ -1,21 +1,24 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { useEffectOnce } from 'react-use';
-import { render, screen } from '@testing-library/react';
-import { Props, UnthemedDashboardPage } from './DashboardPage';
-import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { Router } from 'react-router-dom';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from '../state';
-import { configureStore } from '../../../store/configureStore';
-import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
-import { notifyApp } from 'app/core/actions';
-import { selectors } from '@grafana/e2e-selectors';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { createTheme } from '@grafana/data';
+import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+
+import { configureStore } from '../../../store/configureStore';
+import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardModel } from '../state';
+
+import { Props, UnthemedDashboardPage } from './DashboardPage';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {

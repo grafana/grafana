@@ -1,12 +1,14 @@
-import React from 'react';
 import { Story } from '@storybook/react';
+import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Card, Props } from './Card';
-import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
-import { TagList } from '../Tags/TagList';
 import { VerticalGroup } from '../Layout/Layout';
+import { TagList } from '../Tags/TagList';
+
+import { Card, Props } from './Card';
+import mdx from './Card.mdx';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 

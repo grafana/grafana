@@ -1,6 +1,6 @@
 +++
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/", "/docs/grafana/latest/manage-users/", "/docs/grafana/latest/permissions/", "/docs/grafana/latest/permissions/organization_roles/", "/docs/grafana/latest/permissions/overview/"]
 title = "About users and permissions"
-aliases = ["docs/sources/manage-users/_index.md", "docs/sources/administration/manage-users-and-permissions/about-users-and-permissions.md", "/docs/grafana/latest/permissions/overview/", "docs/sources/permissions/_index.md", "docs/sources/permissions/organization_roles.md"]
 weight = 100
 +++
 
@@ -14,11 +14,13 @@ You can assign a user one of three types of permissions:
 - Organization permissions: Manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
 - Dashboard and folder permission: Manage access to dashboards and folders
 
-> **Note**: If you are running Grafana Enterprise, you can also control access to data sources and use fine-grained access control to grant read and write permissions for specific resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
+> **Note**: If you are running Grafana Enterprise, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
 
 ## Grafana server administrators
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
+
+> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< ref "#organization-roles" >}}).
 
 A server administrator can perform the following tasks:
 
@@ -50,7 +52,7 @@ Permissions assigned to a user within an organization control the extent to whic
 
 ### Organization roles
 
-Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "manage-dashboard-permissions/_index.md">}}).
+Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "manage-dashboard-permissions/_index.md" >}}).
 
 Grafana uses the following roles to control user access:
 
@@ -133,7 +135,7 @@ While Grafana OSS includes a robust set of permissions and settings that you can
 Grafana Enterprise provides the following permissions-related features:
 
 - Data source permissions
-- Fine-grained access control
+- Role-based access control (RBAC)
 
 ### Data source permissions
 
@@ -141,11 +143,11 @@ By default, a user can query any data source in an organization, even if the dat
 
 Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../../enterprise/datasource_permissions.md" >}}).
 
-### Fine-grained access control
+### Role-based access control
 
-Fine-grained access control provides you a way of granting, changing, and revoking user read and write access to Grafana resources, such as users, reports, and authentication.
+RBAC provides you a way of granting, changing, and revoking user read and write access to Grafana resources, such as users, reports, and authentication.
 
-For more information about fine-grained access control, refer to [Fine-grained access control]({{< relref "../../enterprise/access-control" >}}).
+For more information about RBAC, refer to [Role-based access control]({{< relref "../../enterprise/access-control" >}}).
 
 ### Learn more
 

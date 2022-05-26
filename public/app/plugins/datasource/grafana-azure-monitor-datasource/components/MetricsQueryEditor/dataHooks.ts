@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 
+import { rangeUtil } from '@grafana/data';
+
 import Datasource from '../../datasource';
+import TimegrainConverter from '../../time_grain_converter';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
+
 import { setMetricNamespace, setSubscriptionID } from './setQueryValue';
 
 export interface MetricMetadata {
@@ -26,6 +30,12 @@ export type DataHook = (
   onChange: OnChangeFn,
   setError: SetErrorFn
 ) => AzureMonitorOption[];
+
+export type MetricsMetadataHook = (
+  query: AzureMonitorQuery,
+  datasource: Datasource,
+  onChange: OnChangeFn
+) => MetricMetadata;
 
 export const updateSubscriptions = (
   query: AzureMonitorQuery,
@@ -230,7 +240,6 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           label: v,
           value: v,
         }));
-
         setMetricMetadata({
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
@@ -254,6 +263,11 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           ...query.azureMonitor,
           aggregation: newAggregation,
           timeGrain: newTimeGrain,
+          allowedTimeGrainsMs: metricMetadata.timeGrains
+            .filter((timeGrain) => timeGrain.value !== 'auto')
+            .map((timeGrain) =>
+              rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
+            ),
         },
       });
     }

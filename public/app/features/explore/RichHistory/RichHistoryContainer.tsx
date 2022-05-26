@@ -2,21 +2,26 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 // Components, enums
-import { RichHistory, Tabs } from './RichHistory';
-
-//Actions
+import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
+  loadRichHistory,
+  loadMoreRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
-import { ExploreDrawer } from '../ExploreDrawer';
+
+import { RichHistory, Tabs } from './RichHistory';
+
+//Actions
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
@@ -26,11 +31,12 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;
   const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
-  const { richHistory } = item;
+  const { richHistory, richHistoryTotal } = item;
   return {
     richHistory,
+    richHistoryTotal,
     firstTab,
-    activeDatasourceInstance: datasourceInstance?.name,
+    activeDatasourceInstance: datasourceInstance!.name,
     richHistorySettings,
     richHistorySearchFilters,
   };
@@ -38,6 +44,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   initRichHistory,
+  loadRichHistory,
+  loadMoreRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -53,16 +62,21 @@ interface OwnProps {
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
-  const [height, setHeight] = useState(400);
+  const theme = useTheme2();
+  const [height, setHeight] = useState(theme.components.horizontalDrawer.defaultHeight);
 
   const {
     richHistory,
+    richHistoryTotal,
     width,
     firstTab,
     activeDatasourceInstance,
     exploreId,
     deleteRichHistory,
     initRichHistory,
+    loadRichHistory,
+    loadMoreRichHistory,
+    clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -71,10 +85,10 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    initRichHistory(exploreId);
-  }, [initRichHistory, exploreId]);
+    initRichHistory();
+  }, [initRichHistory]);
 
-  if (!richHistorySettings || !richHistorySearchFilters) {
+  if (!richHistorySettings) {
     return <span>Loading...</span>;
   }
 
@@ -87,6 +101,7 @@ export function RichHistoryContainer(props: Props) {
     >
       <RichHistory
         richHistory={richHistory}
+        richHistoryTotal={richHistoryTotal}
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}
@@ -97,6 +112,9 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
+        loadRichHistory={loadRichHistory}
+        loadMoreRichHistory={loadMoreRichHistory}
+        clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>
   );

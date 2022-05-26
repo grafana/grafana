@@ -1,5 +1,6 @@
-import { buildParams } from './utils';
 import { TimeRange } from '@grafana/data';
+
+import { buildParams } from './utils';
 
 describe('buildParams', () => {
   it.each`

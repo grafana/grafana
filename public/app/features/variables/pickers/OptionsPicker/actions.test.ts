@@ -1,6 +1,23 @@
+import { locationService } from '@grafana/runtime';
+
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
+import { variableAdapters } from '../../adapters';
+import { createQueryVariableAdapter } from '../../query/adapter';
+import { queryBuilder } from '../../shared/testing/builders';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../../state/helpers';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { initialVariableModelState, QueryVariableModel, VariableRefresh, VariableSort } from '../../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../../utils';
+import { NavigationKey } from '../types';
+
+import {
+  commitChangesToVariable,
+  filterOrSearchOptions,
+  navigateOptions,
+  openOptions,
+  toggleOptionByHighlight,
+} from './actions';
 import {
   hideOptions,
   initialOptionPickerState,
@@ -10,21 +27,6 @@ import {
   updateOptionsAndFilter,
   updateSearchQuery,
 } from './reducer';
-import {
-  commitChangesToVariable,
-  filterOrSearchOptions,
-  navigateOptions,
-  openOptions,
-  toggleOptionByHighlight,
-} from './actions';
-import { NavigationKey } from '../types';
-import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { variableAdapters } from '../../adapters';
-import { createQueryVariableAdapter } from '../../query/adapter';
-import { locationService } from '@grafana/runtime';
-import { queryBuilder } from '../../shared/testing/builders';
-import { toKeyedAction } from '../../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../../utils';
 
 const datasource = {
   metricFindQuery: jest.fn(() => Promise.resolve([])),

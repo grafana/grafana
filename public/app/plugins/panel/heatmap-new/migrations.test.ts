@@ -1,4 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
+
 import { heatmapChangedHandler } from './migrations';
 
 describe('Heatmap Migrations', () => {
@@ -24,17 +25,7 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
-          "cellGap": 2,
-          "cellSize": 10,
-          "color": Object {
-            "exponent": 0.5,
-            "fill": "dark-orange",
-            "mode": "scheme",
-            "scale": "exponential",
-            "scheme": "Oranges",
-            "steps": 256,
-          },
-          "heatmap": Object {
+          "calculate": Object {
             "xAxis": Object {
               "mode": "count",
               "value": "100",
@@ -44,13 +35,24 @@ describe('Heatmap Migrations', () => {
               "value": "20",
             },
           },
-          "legend": Object {
-            "calcs": Array [],
-            "displayMode": "list",
-            "placement": "bottom",
+          "cellGap": 2,
+          "cellSize": 10,
+          "color": Object {
+            "exponent": 0.5,
+            "fill": "dark-orange",
+            "mode": "scheme",
+            "scale": "exponential",
+            "scheme": "BuGn",
+            "steps": 256,
           },
+          "exemplars": Object {
+            "color": "rgba(255,0,255,0.7)",
+          },
+          "legend": Object {
+            "show": true,
+          },
+          "mode": "calculate",
           "showValue": "never",
-          "source": "calculate",
           "tooltip": Object {
             "show": true,
             "yHistogram": true,

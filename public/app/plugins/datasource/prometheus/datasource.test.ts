@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
+
 import {
   CoreApp,
   DataQueryRequest,
@@ -11,6 +12,10 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { QueryOptions } from 'app/types';
+
+import { describe } from '../../../../test/lib/common';
+import { VariableHide } from '../../../features/variables/types';
 
 import {
   alignRange,
@@ -20,9 +25,6 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
-import { VariableHide } from '../../../features/variables/types';
-import { describe } from '../../../../test/lib/common';
-import { QueryOptions } from 'app/types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 

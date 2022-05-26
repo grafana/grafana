@@ -1,10 +1,13 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
 import { ConfirmModal } from '@grafana/ui';
-import mdx from './ConfirmModal.mdx';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { ConfirmModalProps } from './ConfirmModal';
+import mdx from './ConfirmModal.mdx';
 
 const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];
 

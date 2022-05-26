@@ -562,6 +562,21 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 				},
+				{
+					Label:        "Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated title of the Teams message.",
+					PropertyName: "title",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
+				{
+					Label:        "Section Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Section title for the Teams message. Leave blank for none.",
+					PropertyName: "sectiontitle",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      alerting.ElementTypeTextArea,

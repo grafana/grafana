@@ -1,8 +1,10 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
+
 import { stylesFactory, useTheme2 } from '../../themes';
+import { Icon } from '../Icon/Icon';
 
 export interface FieldValidationMessageProps {
   /** Override component style */
@@ -20,6 +22,15 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
+
+      a {
+        color: ${theme.colors.error.contrastText};
+        text-decoration: underline;
+      }
+
+      a:hover {
+        text-decoration: none;
+      }
     `;
 
   return {

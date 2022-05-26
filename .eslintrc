@@ -1,12 +1,24 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest"],
+  "plugins": ["@emotion", "lodash", "jest", "import"],
+  "settings": {
+    "import/internal-regex": "^(app/)|(@grafana)",
+    "import/external-module-folders": ["node_modules", ".yarn"]
+  },
   "rules": {
     "react/prop-types": "off",
     "@emotion/jsx-import": "error",
     "lodash/import-scope": [2, "member"],
-    "jest/no-focused-tests": "error"
+    "jest/no-focused-tests": "error",
+    "import/order": [
+      "error",
+      {
+        "groups": [["builtin", "external"], "internal", "parent", "sibling", "index"],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc" }
+      }
+    ]
   },
   "overrides": [
     {

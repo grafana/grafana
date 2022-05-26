@@ -1,6 +1,6 @@
 import { capitalize, groupBy, isEmpty } from 'lodash';
-import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   FieldType,
@@ -19,10 +19,13 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
+
+import { renderLegendFormat } from '../prometheus/legend';
+
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
 import {
   LokiRangeQueryRequest,
   LokiResponse,
@@ -38,7 +41,6 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
-import { renderLegendFormat } from '../prometheus/legend';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
@@ -90,9 +92,9 @@ function constructDataFrame(
     refId,
     fields: [
       { name: 'labels', type: FieldType.other, config: {}, values: labels },
-      { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
-      { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'Time', type: FieldType.time, config: {}, values: times }, // Time
+      { name: 'Line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
+      { name: 'tsNs', type: FieldType.time, config: {}, values: timesNs }, // Time
       { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
@@ -332,6 +334,9 @@ export function lokiStreamsToDataFrames(
   // Use custom mechanism to identify which stat we want to promote to label
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
+    // TODO: when we get a real frame-type in @grafana/data
+    // move this to frame.meta.type
+    frameType: 'LabeledTimeValues',
   };
 
   const meta: QueryResultMeta = {
@@ -345,7 +350,7 @@ export function lokiStreamsToDataFrames(
   const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
-  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+  if (meta.custom && dataFrameHasLokiError(dataFrame)) {
     meta.custom.error = 'Error when parsing some of the logs';
   }
 
@@ -386,9 +391,9 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
   const view = new DataFrameView(dataFrame);
-  view.forEach((row: { line: string }) => {
+  view.forEach((row: { Line: string }) => {
     for (const field of newFields) {
-      const logMatch = row.line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
+      const logMatch = row.Line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
       field.values.add(logMatch && logMatch[1]);
     }
   });

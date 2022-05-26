@@ -1,13 +1,15 @@
+import { lastValueFrom } from 'rxjs';
+
 import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { DashboardQueryRunnerOptions } from './types';
-import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
-import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { lastValueFrom } from 'rxjs';
+
+import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
+import { DashboardQueryRunnerOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),

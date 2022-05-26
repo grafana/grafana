@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Props, SoloPanelPage } from './SoloPanelPage';
+import React from 'react';
+
+import { DashboardRoutes } from 'app/types';
+
+import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
-import { DashboardRoutes } from 'app/types';
-import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
+
+import { Props, SoloPanelPage } from './SoloPanelPage';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {

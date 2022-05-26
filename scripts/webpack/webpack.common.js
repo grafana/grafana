@@ -1,8 +1,9 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const fs = require('fs-extra');
 const path = require('path');
 const webpack = require('webpack');
+
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 class CopyUniconsPlugin {
   apply(compiler) {

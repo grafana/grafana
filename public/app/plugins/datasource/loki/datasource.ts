@@ -1,8 +1,8 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
+import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import Prism from 'prismjs';
 
 // Types
 import {
@@ -36,14 +36,26 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from './add_label_to_query';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
-import { transformBackendResult } from './backendResultTransformer';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { serializeParams } from '../../../core/utils/fetch';
+import { renderLegendFormat } from '../prometheus/legend';
+
+import { addLabelToQuery } from './add_label_to_query';
+import { transformBackendResult } from './backendResultTransformer';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import LanguageProvider from './language_provider';
+import { escapeLabelValueInSelector } from './language_utils';
+import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
+import { sortDataFrameByTime } from './sortDataFrame';
+import { doLokiChannelStream } from './streaming';
+import syntax from './syntax';
 import {
   LokiOptions,
   LokiQuery,
@@ -53,16 +65,6 @@ import {
   LokiResultType,
   LokiStreamResponse,
 } from './types';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider from './language_provider';
-import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import syntax from './syntax';
-import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from 'app/core/logs_model';
-import { doLokiChannelStream } from './streaming';
-import { renderLegendFormat } from '../prometheus/legend';
-import { sortDataFrameByTime } from './sortDataFrame';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -103,6 +105,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  useBackendMode: boolean;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -114,6 +117,9 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    const keepCookiesUsed = (settingsData.keepCookies ?? []).length > 0;
+    // only use backend-mode when keep-cookies is not used
+    this.useBackendMode = !keepCookiesUsed && (config.featureToggles.lokiBackendMode ?? false);
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -166,19 +172,37 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    if (config.featureToggles.lokiBackendMode) {
-      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+    if (this.useBackendMode) {
+      const queries = request.targets
+        .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
+        .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
+
       const fixedRequest = {
         ...request,
-        targets: request.targets.map(getNormalizedLokiQuery),
+        targets: queries,
       };
+
+      const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
+      if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+        // this is still an in-development feature,
+        // we do not support mixing stream-queries with normal-queries for now.
+        const streamRequest = {
+          ...fixedRequest,
+          targets: streamQueries,
+        };
+        return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      }
 
       if (fixedRequest.liveStreaming) {
         return this.runLiveQueryThroughBackend(fixedRequest);
       } else {
         return super
           .query(fixedRequest)
-          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+          .pipe(
+            map((response) =>
+              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+            )
+          );
       }
     }
 
@@ -438,8 +462,20 @@ export class LokiDatasource
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
-    return res.data.data || res.data.values || [];
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+
+    if (this.useBackendMode) {
+      const res = await this.getResource(url, params);
+      return res.data || [];
+    } else {
+      const lokiURL = `${LOKI_ENDPOINT}/${url}`;
+      const res = await lastValueFrom(this._request(lokiURL, params, { hideFromInspector: true }));
+      return res.data.data || [];
+    }
   }
 
   async metricFindQuery(query: string) {
@@ -473,7 +509,7 @@ export class LokiDatasource
   }
 
   async labelNamesQuery() {
-    const url = `${LOKI_ENDPOINT}/label`;
+    const url = 'labels';
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
@@ -481,7 +517,7 @@ export class LokiDatasource
 
   async labelValuesQuery(label: string) {
     const params = this.getTimeRangeParams();
-    const url = `${LOKI_ENDPOINT}/label/${label}/values`;
+    const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
@@ -492,7 +528,7 @@ export class LokiDatasource
       ...timeParams,
       'match[]': expr,
     };
-    const url = `${LOKI_ENDPOINT}/series`;
+    const url = 'series';
     const streams = new Set();
     const result = await this.metadataRequest(url, params);
     result.forEach((stream: { [key: string]: string }) => {
@@ -557,17 +593,46 @@ export class LokiDatasource
     const limit = (options && options.limit) || 10;
     const { query, range } = this.prepareLogRowContextQueryTarget(row, limit, direction);
 
-    const sortResults = (result: DataQueryResponse): DataQueryResponse => {
+    const processDataFrame = (frame: DataFrame): DataFrame => {
+      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
+      const cache = new FieldCache(frame);
+      const timestampField = cache.getFirstFieldOfType(FieldType.time);
+      const lineField = cache.getFirstFieldOfType(FieldType.string);
+      const idField = cache.getFieldByName('id');
+
+      if (timestampField === undefined || lineField === undefined || idField === undefined) {
+        // this should never really happen, but i want to keep typescript happy
+        return { ...frame, fields: [] };
+      }
+
+      return {
+        ...frame,
+        fields: [
+          {
+            ...timestampField,
+            name: 'ts',
+          },
+          {
+            ...lineField,
+            name: 'line',
+          },
+          {
+            ...idField,
+            name: 'id',
+          },
+        ],
+      };
+    };
+
+    const processResults = (result: DataQueryResponse): DataQueryResponse => {
+      const frames: DataFrame[] = result.data;
+      const processedFrames = frames
+        .map((frame) => sortDataFrameByTime(frame, 'DESCENDING'))
+        .map((frame) => processDataFrame(frame)); // rename fields if needed
+
       return {
         ...result,
-        data: result.data.map((frame: DataFrame) => {
-          const timestampFieldIndex = frame.fields.findIndex((field) => field.type === FieldType.time);
-          if (timestampFieldIndex === -1) {
-            return frame;
-          }
-
-          return sortDataFrameByTime(frame, 'DESCENDING');
-        }),
+        data: processedFrames,
       };
     };
 
@@ -584,7 +649,7 @@ export class LokiDatasource
           };
           throw error;
         }),
-        switchMap((res) => of(sortResults(res)))
+        switchMap((res) => of(processResults(res)))
       )
     );
   };
@@ -653,44 +718,35 @@ export class LokiDatasource
     };
   };
 
-  testDatasource() {
+  testDatasource(): Promise<{ status: string; message: string }> {
     // Consider only last 10 minutes otherwise request takes too long
-    const startMs = Date.now() - 10 * 60 * 1000;
-    const start = `${startMs}000000`; // API expects nanoseconds
-    return lastValueFrom(
-      this._request(`${LOKI_ENDPOINT}/label`, { start }).pipe(
-        map((res) => {
-          const values: any[] = res?.data?.data || res?.data?.values || [];
-          const testResult =
-            values.length > 0
-              ? { status: 'success', message: 'Data source connected and labels found.' }
-              : {
-                  status: 'error',
-                  message:
-                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-                };
-          return testResult;
-        }),
-        catchError((err: any) => {
-          let message = 'Loki: ';
-          if (err.statusText) {
-            message += err.statusText;
-          } else {
-            message += 'Cannot connect to Loki';
-          }
+    const nowMs = Date.now();
+    const params = {
+      start: (nowMs - 10 * 60 * 1000) * NS_IN_MS,
+      end: nowMs * NS_IN_MS,
+    };
 
-          if (err.status) {
-            message += `. ${err.status}`;
-          }
-
-          if (err.data && err.data.message) {
-            message += `. ${err.data.message}`;
-          } else if (err.data) {
-            message += `. ${err.data}`;
-          }
-          return of({ status: 'error', message: message });
-        })
-      )
+    return this.metadataRequest('labels', params).then(
+      (values) => {
+        return values.length > 0
+          ? { status: 'success', message: 'Data source connected and labels found.' }
+          : {
+              status: 'error',
+              message:
+                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+            };
+      },
+      (err) => {
+        // we did a resource-call that failed.
+        // the only info we have, if exists, is err.data.message
+        // (when in development-mode, err.data.error exists too, but not in production-mode)
+        // things like err.status & err.statusText does not help,
+        // because those will only describe how the request between browser<>server failed
+        const info: string = err?.data?.message ?? '';
+        const infoInParentheses = info !== '' ? ` (${info})` : '';
+        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        return { status: 'error', message: message };
+      }
     );
   }
 
@@ -719,7 +775,7 @@ export class LokiDatasource
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const view = new DataFrameView<{ ts: string; line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
 
       view.forEach((row) => {
         const { labels } = row;
@@ -745,9 +801,9 @@ export class LokiDatasource
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
         annotations.push({
-          time: new Date(row.ts).valueOf(),
+          time: new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.line,
+          text: renderLegendFormat(textFormat, labels) || row.Line,
           tags,
         });
       });
@@ -790,10 +846,6 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = lokiRegularEscape(value);
-      }
-
       return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
@@ -808,11 +860,13 @@ export class LokiDatasource
     // Override to make sure that we use label as actual label and not parsed label
     notParsedLabelOverride?: boolean
   ) {
+    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
+
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, value, operator);
+      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
     } else {
-      return addLabelToQuery(queryExpr, key, value, operator, true);
+      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
     }
   }
 

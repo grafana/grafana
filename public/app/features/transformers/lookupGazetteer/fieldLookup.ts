@@ -1,3 +1,5 @@
+import { mergeMap, from } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -9,7 +11,6 @@ import {
   DataTransformerInfo,
 } from '@grafana/data';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
-import { mergeMap, from } from 'rxjs';
 
 export interface FieldLookupOptions {
   lookupField?: string;

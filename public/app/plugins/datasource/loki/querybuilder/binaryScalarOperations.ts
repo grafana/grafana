@@ -4,6 +4,7 @@ import {
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
 } from '../../prometheus/querybuilder/shared/types';
+
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [

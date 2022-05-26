@@ -1,5 +1,6 @@
 import { ScopedVars, UrlQueryMap } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+
 import { variableAdapters } from './adapters';
 
 export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {

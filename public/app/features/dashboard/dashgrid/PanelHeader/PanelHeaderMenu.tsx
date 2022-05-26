@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
-import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
+
 import { PanelMenuItem } from '@grafana/data';
+
+import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 
 export interface Props {
   items: PanelMenuItem[];

@@ -18,8 +18,9 @@ Panel: {
     lineages: [
         [
             {
+                PanelLayout: "list" | "previews" @cuetsy(kind="enum")
                 PanelOptions: {
-                    layout?: *"list" | "previews"
+                    layout?: PanelLayout | *"list"
                     showStarred: bool | *true
                     showRecentlyViewed: bool | *false
                     showSearch: bool | *false
@@ -28,8 +29,8 @@ Panel: {
                     query: string | *""
                     folderId?: int
                     tags: [...string] | *[]
-                },
-            }
+                } @cuetsy(kind="interface")
+            },
         ]
     ]
     migrations: []

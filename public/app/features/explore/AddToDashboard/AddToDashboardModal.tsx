@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
-import { locationUtil, SelectableValue } from '@grafana/data';
-import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
-import { useSelector } from 'react-redux';
-import { ExploreId } from 'app/types';
-import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { getExploreItemSelector } from '../state/selectors';
 import { partial } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+
+import { locationUtil, SelectableValue } from '@grafana/data';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
+import { ExploreId } from 'app/types';
+
+import { getExploreItemSelector } from '../state/selectors';
+
+import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
 
 enum SaveTarget {
   NewDashboard = 'new-dashboard',

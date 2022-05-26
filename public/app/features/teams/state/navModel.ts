@@ -1,10 +1,10 @@
-import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
-import { featureEnabled } from '@grafana/runtime';
 import { NavModelItem, NavModel } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import { highlightTrial } from 'app/features/admin/utils';
+import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
 
 const loadingTeam = {
   avatarUrl: 'public/img/user_profile.png',
@@ -24,7 +24,7 @@ export function buildNavModel(team: Team): NavModelItem {
     text: team.name,
     breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
     children: [
-      // With FGAC this tab will always be available (but not always editable)
+      // With RBAC this tab will always be available (but not always editable)
       // With Legacy it will be hidden by hideTabsFromNonTeamAdmin should the user not be allowed to see it
       {
         active: false,
@@ -37,7 +37,7 @@ export function buildNavModel(team: Team): NavModelItem {
   };
 
   // While team is loading we leave the members tab
-  // With FGAC the Members tab is available when user has ActionTeamsPermissionsRead for this team
+  // With RBAC the Members tab is available when user has ActionTeamsPermissionsRead for this team
   // With Legacy it will always be present
   if (
     team === loadingTeam ||
@@ -67,9 +67,9 @@ export function buildNavModel(team: Team): NavModelItem {
       ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge', eventVariant: 'trial' });
   }
 
-  // With both Legacy and FGAC the tab is protected being featureEnabled
+  // With both Legacy and RBAC the tab is protected being featureEnabled
   // While team is loading we leave the teamsync tab
-  // With FGAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
+  // With RBAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
   if (featureEnabled('teamsync')) {
     if (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
       navModel.children!.push(teamGroupSync);

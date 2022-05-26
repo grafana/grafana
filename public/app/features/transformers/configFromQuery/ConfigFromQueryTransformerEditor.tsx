@@ -1,4 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import {
   FieldMatcherID,
   GrafanaTheme2,
@@ -7,10 +9,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { css } from '@emotion/css';
+
+import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
@@ -51,12 +54,12 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     <>
       <InlineFieldRow>
         <InlineField label="Config query" labelWidth={20}>
-          <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
+          <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Apply to" labelWidth={20}>
-          <Select menuShouldPortal onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
+          <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -93,7 +96,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   help: `
 ### Use cases
 
-This transformation allows you select one query and from it extract standard options such as 
+This transformation allows you select one query and from it extract standard options such as
 **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
 This enables dynamic query driven visualization configuration.
 

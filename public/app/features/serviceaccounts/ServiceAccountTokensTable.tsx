@@ -1,11 +1,12 @@
-import React, { FC } from 'react';
-import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-
-import { AccessControlAction } from 'app/types';
-import { ApiKey } from '../../types';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
+import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+
+import { ApiKey } from '../../types';
 
 interface Props {
   tokens: ApiKey[];

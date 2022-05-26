@@ -26,6 +26,7 @@ exports[`Render should render List page 1`] = `
       <UsersTable
         onRemoveUser={[Function]}
         onRoleChange={[Function]}
+        orgId={1}
         users={Array []}
       />
       <HorizontalGroup

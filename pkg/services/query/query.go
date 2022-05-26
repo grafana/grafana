@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -33,7 +32,7 @@ func ProvideService(
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginRequestValidator models.PluginRequestValidator,
-	SecretsService secrets.Service,
+	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
@@ -42,7 +41,7 @@ func ProvideService(
 		dataSourceCache:        dataSourceCache,
 		expressionService:      expressionService,
 		pluginRequestValidator: pluginRequestValidator,
-		secretsService:         SecretsService,
+		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
 		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
@@ -56,7 +55,7 @@ type Service struct {
 	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
 	pluginRequestValidator models.PluginRequestValidator
-	secretsService         secrets.Service
+	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
 	oAuthTokenService      oauthtoken.OAuthTokenService
 	log                    log.Logger
@@ -291,9 +290,9 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {
-	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := s.secretsService.DecryptJsonData(ctx, m)
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
+	return func(ds *models.DataSource) map[string]string {
+		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			s.log.Error("Failed to decrypt secure json data", "error", err)
 		}

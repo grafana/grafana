@@ -1,7 +1,8 @@
 import { DashboardSection, DashboardSectionItem, SearchAction } from '../types';
+import { mergeReducers } from '../utils';
+
 import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, MOVE_ITEMS, DELETE_ITEMS } from './actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from './dashboardSearch';
-import { mergeReducers } from '../utils';
 
 export interface ManageDashboardsState extends DashboardsSearchState {
   allChecked: boolean;

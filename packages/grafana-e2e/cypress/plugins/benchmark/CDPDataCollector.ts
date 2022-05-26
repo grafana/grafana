@@ -1,8 +1,8 @@
 import CDP from 'chrome-remote-interface';
+import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
+import { countBy, mean } from 'lodash';
 import Tracelib, { TraceEvent } from 'tracelib';
 
-import { countBy, mean } from 'lodash';
-import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
 import { CollectedData, DataCollector, DataCollectorName } from './DataCollector';
 
 type CDPDataCollectorDeps = {

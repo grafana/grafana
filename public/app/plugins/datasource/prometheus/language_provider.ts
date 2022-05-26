@@ -1,7 +1,7 @@
 import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
-import { Value } from 'slate';
 import Prism from 'prismjs';
+import { Value } from 'slate';
 
 import {
   AbstractLabelMatcher,
@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -24,8 +25,6 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-
-import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];

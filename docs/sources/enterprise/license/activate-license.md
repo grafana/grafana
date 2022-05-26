@@ -1,8 +1,8 @@
 +++
-title = "Activate an Enterprise license"
+aliases = ["/docs/grafana/latest/enterprise/activate-license/", "/docs/grafana/latest/enterprise/license/activate-license/"]
 description = "Activate an Enterprise license"
 keywords = ["grafana", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/activate-license"]
+title = "Activate an Enterprise license"
 weight = 100
 +++
 

@@ -37,7 +37,6 @@ var (
 	NewPageAccess = accesscontrol.EvalAll(
 		accesscontrol.EvalPermission(ActionRead),
 		accesscontrol.EvalPermission(ActionCreate),
-		accesscontrol.EvalPermission(ActionWrite),
 	)
 
 	// EditPageAccess is used to protect the "Configure > Data sources > Edit" page access

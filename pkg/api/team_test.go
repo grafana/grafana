@@ -8,27 +8,20 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-type testLogger struct {
-	log.Logger
-	warnCalled  bool
-	warnMessage string
-}
-
-func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
-	stub.warnCalled = true
-	stub.warnMessage = testMessage
-}
 
 func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
@@ -111,7 +104,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.PermissionsService, userID, orgID, teamID int64,
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.TeamPermissionsService, userID, orgID, teamID int64,
 			permission string) error {
 			addTeamMemberCalled++
 			return nil
@@ -121,11 +114,11 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("with no real signed in user", func(t *testing.T) {
-			stub := &testLogger{}
+			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{},
-				Logger:       stub,
+				Logger:       logger,
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
@@ -133,23 +126,23 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			r := hs.CreateTeam(c)
 
 			assert.Equal(t, 200, r.Status())
-			assert.True(t, stub.warnCalled)
-			assert.Equal(t, stub.warnMessage, "Could not add creator to team because is not a real user")
+			assert.NotZero(t, logger.WarnLogs.Calls)
+			assert.Equal(t, "Could not add creator to team because is not a real user", logger.WarnLogs.Message)
 		})
 
 		t.Run("with real signed in user", func(t *testing.T) {
-			stub := &testLogger{}
+			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &models.SignedInUser{UserId: 42},
-				Logger:       stub,
+				Logger:       logger,
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
-			assert.False(t, stub.warnCalled)
+			assert.Zero(t, logger.WarnLogs.Calls)
 		})
 	})
 }
@@ -196,7 +189,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testi
 	})
 }
 
-func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -215,7 +208,7 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 	})
 }
 
-func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
@@ -259,7 +252,7 @@ func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
 	})
 }
 
-func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 
@@ -289,7 +282,7 @@ func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
@@ -338,7 +331,7 @@ func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
@@ -370,10 +363,17 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
+
+	sqlstore := mockstore.NewSQLStoreMock()
+	sc.hs.SQLStore = sqlstore
+
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{}
+	sc.hs.preferenceService = prefService
 
 	require.NoError(t, err)
 
@@ -396,9 +396,15 @@ func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
+	sqlStore := sqlstore.InitTestDB(t)
+	sc.db = sqlStore
+
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{Theme: "dark"}
+	sc.hs.preferenceService = prefService
+
 	_, err := sc.db.CreateTeam("team1", "", 1)
 
 	require.NoError(t, err)
@@ -411,10 +417,10 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
-		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
-		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		prefQuery := &pref.GetPreferenceQuery{OrgID: 1, TeamID: 1}
+		preference, err := prefService.Get(context.Background(), prefQuery)
 		require.NoError(t, err)
-		assert.Equal(t, "dark", prefQuery.Result.Theme)
+		assert.Equal(t, "dark", preference.Theme)
 	})
 
 	input = strings.NewReader(teamPreferenceCmdLight)
@@ -423,9 +429,9 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
-		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
-		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		prefQuery := &pref.GetPreferenceQuery{OrgID: 1, TeamID: 1}
+		preference, err := prefService.Get(context.Background(), prefQuery)
 		assert.NoError(t, err)
-		assert.Equal(t, "dark", prefQuery.Result.Theme)
+		assert.Equal(t, "dark", preference.Theme)
 	})
 }

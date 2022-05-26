@@ -1,11 +1,12 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+
 import { highlightTrial } from '../../admin/utils';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const loadingDSType = 'Loading';
 

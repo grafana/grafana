@@ -1,11 +1,14 @@
 package ualert
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"testing"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -13,9 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/alertmanager/pkg/labels"
-
-	"github.com/stretchr/testify/require"
 )
 
 var MigTitle = migTitle
@@ -206,6 +206,18 @@ func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *Po
 			},
 		},
 	}
+}
+
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
+			}
+		}
+	}
+	return nil
 }
 
 const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"

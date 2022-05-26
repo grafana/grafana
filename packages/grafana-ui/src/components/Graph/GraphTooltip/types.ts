@@ -1,5 +1,6 @@
-import { ActiveDimensions } from '../../VizTooltip';
 import { Dimension, Dimensions, TimeZone } from '@grafana/data';
+
+import { ActiveDimensions } from '../../VizTooltip';
 
 export interface GraphDimensions extends Dimensions {
   xAxis: Dimension<number>;

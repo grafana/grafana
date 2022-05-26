@@ -1,6 +1,7 @@
+import React, { useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useEffect, useState } from 'react';
 
 import { QueryEditorRow } from '..';
 import { SELECT_WIDTH } from '../../constants';
@@ -38,7 +39,6 @@ export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions
   return (
     <QueryEditorRow label="Service" htmlFor={`${refId}-slo-service`}>
       <Select
-        menuShouldPortal
         inputId={`${refId}-slo-service`}
         width={SELECT_WIDTH}
         allowCustomValue

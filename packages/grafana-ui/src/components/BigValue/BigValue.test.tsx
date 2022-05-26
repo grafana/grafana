@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValue';
+import React from 'react';
+
 import { createTheme } from '@grafana/data';
+
+import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValue';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {

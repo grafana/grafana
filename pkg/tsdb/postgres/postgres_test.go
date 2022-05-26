@@ -25,7 +25,7 @@ import (
 )
 
 // Test generateConnectionString.
-func TestGenerateConnectionString(t *testing.T) {
+func TestIntegrationGenerateConnectionString(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
@@ -172,7 +172,7 @@ func TestGenerateConnectionString(t *testing.T) {
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestPostgres(t *testing.T) {
+func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 

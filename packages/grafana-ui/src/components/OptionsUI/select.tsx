@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { FieldConfigEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
+
 import { Select } from '../Select/Select';
 
 interface State<T> {
@@ -62,7 +64,6 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     }
     return (
       <Select<T>
-        menuShouldPortal
         isLoading={isLoading}
         value={current}
         defaultValue={value}

@@ -1,4 +1,5 @@
 import { PreloadPlugin } from '@grafana/data';
+
 import { importPluginModule } from './plugin_loader';
 
 export async function preloadPlugins(pluginsToPreload: PreloadPlugin[] = []): Promise<void> {

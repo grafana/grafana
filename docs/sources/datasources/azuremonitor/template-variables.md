@@ -1,7 +1,8 @@
 +++
-title = "Azure Monitor template variables"
+aliases = ["/docs/grafana/latest/datasources/azuremonitor/template-variables/"]
 description = "Using template variables with Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
+title = "Azure Monitor template variables"
 weight = 2
 +++
 
