@@ -1,10 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/enterprise-encryption/using-aws-kms-to-encrypt-database-secrets/"]
-description = "Using AWS KMS to encrypt database secrets"
-keywords = ["grafana", "AWS KMS integration"]
-title = "AMS KMS"
-weight = 3
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/enterprise-encryption/using-aws-kms-to-encrypt-database-secrets/
+description: Using AWS KMS to encrypt database secrets
+keywords:
+  - grafana
+  - AWS KMS integration
+title: AMS KMS
+weight: 3
+---
 
 # Using AWS KMS to encrypt database secrets
 

@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/transfer-ge-license/", "/docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/transfer-ge-license/"]
-description = "Transfer your AWS Marketplace Grafana Enterprise license"
-keywords = ["grafana", "enterprise", "aws", "marketplace", "transfer", "move"]
-title = "Transfer your AWS Marketplace Grafana Enterprise license"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/transfer-ge-license/
+  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/transfer-ge-license/
+description: Transfer your AWS Marketplace Grafana Enterprise license
+keywords:
+  - grafana
+  - enterprise
+  - aws
+  - marketplace
+  - transfer
+  - move
+title: Transfer your AWS Marketplace Grafana Enterprise license
+weight: 400
+---
 
 # Transfer your AWS Marketplace Grafana Enterprise license
 

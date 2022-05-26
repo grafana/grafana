@@ -54,7 +54,7 @@ export function Drawer({
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
-      isDismissable: true,
+      isDismissable: false,
       isOpen,
       onClose,
     },

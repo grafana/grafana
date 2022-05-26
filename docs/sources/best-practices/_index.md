@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/best-practices/"]
-description = "Best practices for working with Grafana"
-title = "Best practices"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/best-practices/
+description: Best practices for working with Grafana
+title: Best practices
+weight: 20
+---
 
 # Best practices
 

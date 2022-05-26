@@ -200,12 +200,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "persistNotifications",
-			Description:  "PoC Notifications page",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
@@ -241,7 +235,8 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
+			Expression:  "true", // Enabled by default
 		},
 		{
 			Name:            "validateDashboardsOnSave",

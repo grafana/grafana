@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/auth/overview/"]
-description = "Overview for auth"
-title = "Overview"
-weight = 1
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/overview/
+description: Overview for auth
+title: Overview
+weight: 1
+---
 
 # User Authentication Overview
 
