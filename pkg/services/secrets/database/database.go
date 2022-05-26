@@ -26,14 +26,14 @@ func ProvideSecretsStore(sqlStore *sqlstore.SQLStore) *SecretsStoreImpl {
 	}
 }
 
-func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets.DataKey, error) {
+func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		exists, err = sess.Table(dataKeysTable).
-			Where("id = ?", id).
+			Where("name = ?", name).
 			Get(dataKey)
 		return err
 	})
@@ -49,14 +49,14 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 	return dataKey, nil
 }
 
-func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
+func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, prefix string) (*secrets.DataKey, error) {
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		exists, err = sess.Table(dataKeysTable).
-			Where("name = ? AND active = ?", name, ss.sqlStore.Dialect.BooleanStr(true)).
+			Where("name LIKE ? AND active = ?", prefix, ss.sqlStore.Quote("%"+prefix), ss.sqlStore.Dialect.BooleanStr(true)).
 			Get(dataKey)
 		return err
 	})
@@ -66,7 +66,7 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) 
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed getting data key: %w", err)
+		return nil, fmt.Errorf("failed getting current data key: %w", err)
 	}
 
 	return dataKey, nil
@@ -108,13 +108,13 @@ func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
 	})
 }
 
-func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, id string) error {
-	if len(id) == 0 {
-		return fmt.Errorf("data key id is missing")
+func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("data key name is missing")
 	}
 
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Id: id})
+		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Name: name})
 
 		return err
 	})
@@ -136,7 +136,6 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if !ok {
 				ss.log.Warn(
 					"Could not find provider to re-encrypt data encryption key",
-					"id", k.Id,
 					"name", k.Name,
 					"provider", k.Provider,
 				)
@@ -147,7 +146,6 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if err != nil {
 				ss.log.Warn(
 					"Error while decrypting data encryption key to re-encrypt it",
-					"id", k.Id,
 					"name", k.Name,
 					"provider", k.Provider,
 					"err", err,
@@ -164,7 +162,6 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
-					"id", k.Id,
 					"name", k.Name,
 					"provider", k.Provider,
 					"err", err,
@@ -172,10 +169,9 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 				return nil
 			}
 
-			if _, err := sess.Table(dataKeysTable).Where("id = ?", k.Id).Update(k); err != nil {
+			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Name).Update(k); err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
-					"id", k.Id,
 					"name", k.Name,
 					"provider", k.Provider,
 					"err", err,

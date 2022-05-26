@@ -9,7 +9,6 @@ var ErrDataKeyNotFound = errors.New("data key not found")
 
 type DataKey struct {
 	Active        bool
-	Id            string
 	Name          string
 	Scope         string
 	Provider      ProviderID

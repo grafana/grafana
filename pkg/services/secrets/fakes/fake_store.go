@@ -43,12 +43,12 @@ func (f FakeSecretsStore) GetAllDataKeys(_ context.Context) ([]*secrets.DataKey,
 }
 
 func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey *secrets.DataKey) error {
-	f.store[dataKey.Id] = dataKey
+	f.store[dataKey.Name] = dataKey
 	return nil
 }
 
 func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, _ *xorm.Session) error {
-	f.store[dataKey.Id] = dataKey
+	f.store[dataKey.Name] = dataKey
 	return nil
 }
 

@@ -146,11 +146,11 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
-	name := secrets.KeyName(scope, s.currentProviderID)
+	namePrefix := secrets.KeyName(scope, s.currentProviderID)
 
-	id, dataKey, err := s.currentDataKey(ctx, name, scope, sess)
+	name, dataKey, err := s.currentDataKey(ctx, namePrefix, scope, sess)
 	if err != nil {
-		s.log.Error("Failed to get current data key", "error", err, "name", name)
+		s.log.Error("Failed to get current data key", "error", err, "name_prefix", namePrefix)
 		return nil, err
 	}
 
@@ -161,8 +161,8 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 		return nil, err
 	}
 
-	prefix := make([]byte, b64.EncodedLen(len(id))+2)
-	b64.Encode(prefix[1:], []byte(id))
+	prefix := make([]byte, b64.EncodedLen(len(name))+2)
+	b64.Encode(prefix[1:], []byte(name))
 	prefix[0] = '#'
 	prefix[len(prefix)-1] = '#'
 
@@ -176,39 +176,39 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *SecretsService) currentDataKey(ctx context.Context, name string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) currentDataKey(ctx context.Context, prefix string, scope string, sess *xorm.Session) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	// We try to fetch the data key, either from cache or database
-	id, dataKey, err := s.dataKeyByName(ctx, name)
+	name, dataKey, err := s.dataKeyByPrefix(ctx, prefix)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, name, scope, sess)
+		name, dataKey, err = s.newDataKey(ctx, prefix, scope, sess)
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
-	return id, dataKey, nil
+	return name, dataKey, nil
 }
 
-// dataKeyByName looks up for data key in cache.
+// dataKeyByPrefix looks up for data key in cache.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
-func (s *SecretsService) dataKeyByName(ctx context.Context, name string) (string, []byte, error) {
+func (s *SecretsService) dataKeyByPrefix(ctx context.Context, prefix string) (string, []byte, error) {
 	// 0. Get data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getByName(name); exists {
-		return entry.id, entry.dataKey, nil
-	}
+	//if entry, exists := s.dataKeyCache.getByPrefix(prefix); exists {
+	//	return entry.name, entry.dataKey, nil
+	//}
 
 	// 1. Get data key from database.
-	dataKey, err := s.store.GetCurrentDataKey(ctx, name)
+	dataKey, err := s.store.GetCurrentDataKey(ctx, prefix)
 	if err != nil {
 		if errors.Is(err, secrets.ErrDataKeyNotFound) {
 			return "", nil, nil
@@ -229,13 +229,13 @@ func (s *SecretsService) dataKeyByName(ctx context.Context, name string) (string
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{id: dataKey.Id, name: dataKey.Name, dataKey: decrypted})
+	//s.dataKeyCache.add(&dataKeyCacheEntry{id: dataKey.Id, name: dataKey.Name, dataKey: decrypted})
 
-	return dataKey.Id, decrypted, nil
+	return dataKey.Name, decrypted, nil
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, prefix string, scope string, sess *xorm.Session) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -255,9 +255,8 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value into the DB.
-	id := util.GenerateShortUID()
+	name := prefix + util.GenerateShortUID()
 	dbDataKey := secrets.DataKey{
-		Id:            id,
 		Active:        true,
 		Name:          name,
 		Provider:      s.currentProviderID,
@@ -276,9 +275,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 4. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{id: id, name: name, dataKey: dataKey})
+	//s.dataKeyCache.add(dataKeyCacheEntry{prefix: prefix, name: name, dataKey: dataKey, active: true})
 
-	return id, dataKey, nil
+	return name, dataKey, nil
 }
 
 func newRandomDataKey() ([]byte, error) {
@@ -334,7 +333,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 			return nil, err
 		}
 
-		dataKey, err = s.dataKeyById(ctx, string(keyId))
+		dataKey, err = s.dataKeyByName(ctx, string(keyId))
 		if err != nil {
 			s.log.Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
 			return nil, err
@@ -390,16 +389,16 @@ func (s *SecretsService) GetDecryptedValue(ctx context.Context, sjd map[string][
 	return fallback
 }
 
-// dataKeyById looks up for data key in cache.
+// dataKeyByName looks up for data key in cache.
 // Otherwise, it fetches it from database and returns it decrypted.
-func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, error) {
+func (s *SecretsService) dataKeyByName(ctx context.Context, name string) ([]byte, error) {
 	// 0. Get decrypted data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getById(id); exists {
-		return entry.dataKey, nil
-	}
+	//if entry, exists := s.dataKeyCache.getById(id); exists {
+	//	return entry.dataKey, nil
+	//}
 
 	// 1. Get encrypted data key from database.
-	dataKey, err := s.store.GetDataKey(ctx, id)
+	dataKey, err := s.store.GetDataKey(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +416,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{id: id, name: dataKey.Name, dataKey: decrypted})
+	//s.dataKeyCache.add(&dataKeyCacheEntry{id: id, name: dataKey.Name, dataKey: decrypted})
 
 	return decrypted, nil
 }
