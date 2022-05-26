@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	pref "github.com/grafana/grafana/pkg/services/preference"
 )
+
 
 var ErrPrefNotFound = errors.New("preference not found")
 
@@ -47,8 +50,8 @@ type SavePreferenceCommand struct {
 	Timezone         string                  `json:"timezone,omitempty"`
 	WeekStart        string                  `json:"weekStart,omitempty"`
 	Theme            string                  `json:"theme,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -61,8 +64,8 @@ type PatchPreferenceCommand struct {
 	Timezone         *string                 `json:"timezone,omitempty"`
 	WeekStart        *string                 `json:"weekStart,omitempty"`
 	Theme            *string                 `json:"theme,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type NavLink struct {
@@ -72,18 +75,11 @@ type NavLink struct {
 	Target string `json:"target,omitempty"`
 }
 
-type NavbarPreference struct {
-	SavedItems []NavLink `json:"savedItems"`
-}
-
 type PreferenceJSONData struct {
-	Navbar       NavbarPreference       `json:"navbar"`
-	QueryHistory QueryHistoryPreference `json:"queryHistory"`
+	Navbar       pref.NavbarPreference       `json:"navbar"`
+	QueryHistory pref.QueryHistoryPreference `json:"queryHistory"`
 }
 
-type QueryHistoryPreference struct {
-	HomeTab string `json:"homeTab"`
-}
 
 func (j *PreferenceJSONData) FromDB(data []byte) error {
 	dec := json.NewDecoder(bytes.NewBuffer(data))
