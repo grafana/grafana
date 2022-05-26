@@ -233,19 +233,14 @@ func authorizeAccessToRuleGroup(rules []*ngmodels.AlertRule, evaluator func(eval
 func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator) bool) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
-	affectedGroupsPermissions := make(map[ngmodels.AlertRuleGroupKey]bool, len(change.AffectedGroups))
-	for key, rules := range change.AffectedGroups {
-		hasAccess := true
-		for _, rule := range rules {
-			if !authorizeDatasourceAccessForRule(rule, evaluator) {
-				hasAccess = false
-				break
-			}
+	rules, ok := change.AffectedGroups[change.GroupKey]
+	if ok { // not ok can be when user creates a new rule group or moves existing alerts to a new group
+		if !authorizeAccessToRuleGroup(rules, evaluator) { // if user is not authorized to do operation in the group that is being changed
+			return fmt.Errorf("%w to change group %s because it does not have access to one or many rules in this group", ErrAuthorization, change.GroupKey.RuleGroup)
 		}
-		if change.GroupKey == key && !hasAccess {
-			return fmt.Errorf("%w to change group %s because it does not have access to one or many rules in this group", ErrAuthorization, key.RuleGroup)
-		}
-		affectedGroupsPermissions[key] = hasAccess
+	} else if len(change.Delete) > 0 {
+		// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
+		return fmt.Errorf("failed to authorize changes in rule group %s. Detected %d deletes but group was not provided", change.GroupKey.RuleGroup, len(change.Delete))
 	}
 
 	if len(change.Delete) > 0 {
@@ -303,11 +298,12 @@ func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator
 
 		if rule.Existing.NamespaceUID != rule.New.NamespaceUID || rule.Existing.RuleGroup != rule.New.RuleGroup {
 			key := rule.Existing.GetGroupKey()
-			hasAccess, ok := affectedGroupsPermissions[key]
+			rules, ok = change.AffectedGroups[key]
 			if !ok {
-				return fmt.Errorf("%w to update rule %s because unable to check access to group %s from which the rule is moved", ErrAuthorization, rule.Existing.UID, rule.Existing.RuleGroup)
+				// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
+				return fmt.Errorf("failed to authorize moving an alert rule %s between groups because unable to check access to group %s from which the rule is moved", rule.Existing.UID, rule.Existing.RuleGroup)
 			}
-			if !hasAccess {
+			if !authorizeAccessToRuleGroup(rules, evaluator) {
 				return fmt.Errorf("%w to move rule %s between two different groups because user does not have access to the source group %s", ErrAuthorization, rule.Existing.UID, rule.Existing.RuleGroup)
 			}
 		}
