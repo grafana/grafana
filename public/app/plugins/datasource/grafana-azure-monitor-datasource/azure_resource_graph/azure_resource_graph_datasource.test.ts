@@ -71,6 +71,7 @@ describe('AzureResourceGraphDatasource', () => {
         ...azureResourceGraph,
       };
       const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
       for (const [path, templateVariable] of templateVariables.entries()) {
         expect(get(templatedQuery[0].azureResourceGraph, path)).toEqual(
           templateVariable.templateVariable.current.value

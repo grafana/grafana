@@ -260,7 +260,7 @@ describe('AzureMonitorDatasource', () => {
     });
   });
 
-  describe('When performing interpolateVariablesInQueries for azure_monitor_graph', () => {
+  describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
     beforeEach(() => {
       templateSrv.init([]);
     });
@@ -297,6 +297,7 @@ describe('AzureMonitorDatasource', () => {
         ...azureMonitorQuery,
       };
       const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
       for (const [path, templateVariable] of templateVariables.entries()) {
         expect(get(templatedQuery[0].azureMonitor, path)).toEqual(templateVariable.templateVariable.current.value);
       }

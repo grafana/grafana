@@ -400,6 +400,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         ...azureLogAnalytics,
       };
       const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
       for (const [path, templateVariable] of templateVariables.entries()) {
         expect(get(templatedQuery[0].azureLogAnalytics, path)).toEqual(templateVariable.templateVariable.current.value);
       }
