@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/high-availability/", "/docs/grafana/latest/alerting/unified-alerting/high-availability/"]
-description = "High availability"
-keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
-title = " Alerting high availability"
-weight = 450
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/high-availability/
+  - /docs/grafana/latest/alerting/unified-alerting/high-availability/
+description: High availability
+keywords:
+  - grafana
+  - alerting
+  - tutorials
+  - ha
+  - high availability
+title: ' Alerting high availability'
+weight: 450
+---
 
 # About alerting high availability
 

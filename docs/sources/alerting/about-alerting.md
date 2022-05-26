@@ -1,9 +1,16 @@
-+++
-title = "About Grafana alerting"
-description = "A quick overview of Grafana alerting"
-keywords = ["grafana", "alerting", "overview", "concepts", "basics"]
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/about-alerting/
+description: A quick overview of Grafana alerting
+keywords:
+  - grafana
+  - alerting
+  - overview
+  - concepts
+  - basics
+title: About Grafana alerting
+weight: 100
+---
 
 # About Grafana alerting
 

@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/auth/saml/"]
-description = "Grafana SAML Authentication"
-keywords = ["grafana", "saml", "documentation", "saml-auth"]
-title = "SAML Authentication"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/saml/
+description: Grafana SAML Authentication
+keywords:
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+title: SAML Authentication
+weight: 1100
+---
 
 # SAML authentication
 

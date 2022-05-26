@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/auth/", "/docs/grafana/latest/http_api/auth/", "/docs/grafana/latest/http_api/authentication/"]
-description = "Grafana Authentication HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "authentication"]
-title = "Authentication HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/auth/
+  - /docs/grafana/latest/http_api/auth/
+  - /docs/grafana/latest/http_api/authentication/
+description: Grafana Authentication HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - authentication
+title: 'Authentication HTTP API '
+---
 
 # Authentication API
 
