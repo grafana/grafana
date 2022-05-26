@@ -299,7 +299,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 	for {
 		query := searchQuery
 		query.Page = page
-		proj, err := st.SQLStore.FindDashboards(ctx, &query)
+		proj, err := st.DashboardService.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}

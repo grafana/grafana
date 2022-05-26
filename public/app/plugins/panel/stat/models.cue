@@ -22,10 +22,10 @@ Panel: {
             {
                 PanelOptions: {
                     ui.SingleStatBaseOptions
-                    graphMode: ui.BigValueGraphMode
-                    colorMode: ui.BigValueColorMode
-                    justifyMode: ui.BigValueJustifyMode
-                    textMode: ui.BigValueTextMode
+                    graphMode: ui.BigValueGraphMode | *"area"
+                    colorMode: ui.BigValueColorMode | *"value"
+                    justifyMode: ui.BigValueJustifyMode | *"auto"
+                    textMode: ui.BigValueTextMode | *"auto"
                 } @cuetsy(kind="interface")
             }
         ]

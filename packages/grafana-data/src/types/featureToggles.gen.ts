@@ -60,4 +60,5 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
+  prometheusWideSeries?: boolean;
 }

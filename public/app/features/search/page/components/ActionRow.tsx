@@ -104,11 +104,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.v1.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.v1.spacing.lg} 0;
+        padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
     `,

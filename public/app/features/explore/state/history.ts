@@ -1,7 +1,7 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataQuery, HistoryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, logError } from '@grafana/runtime';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 import store from 'app/core/store';
 import {
@@ -178,9 +178,10 @@ export const initRichHistory = (): ThunkResult<void> => {
     // the migration attempt happens only once per session, and the user is informed about the failure
     // in a way that can help with potential investigation.
     if (config.queryHistoryEnabled && !queriesMigrated && !migrationFailedDuringThisSession) {
-      const migrationStatus = await migrateQueryHistoryFromLocalStorage();
-      if (migrationStatus === LocalStorageMigrationStatus.Failed) {
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      if (migrationResult.status === LocalStorageMigrationStatus.Failed) {
         dispatch(richHistoryMigrationFailedAction());
+        logError(migrationResult.error!, { explore: { event: 'QueryHistoryMigrationFailed' } });
       } else {
         store.set(RICH_HISTORY_SETTING_KEYS.migrated, true);
       }
