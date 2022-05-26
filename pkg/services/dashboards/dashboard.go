@@ -13,7 +13,6 @@ type DashboardService interface {
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
-	//GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error)
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetPublicDashboard(ctx context.Context, publicDashboardUid string) (*models.Dashboard, error)
