@@ -1,32 +1,35 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
 
 import { dateTimeFormat, OrgRole, TimeZone } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
-import { ServiceAccountProfileRow } from './components/ServiceAccountProfileRow';
-import { ServiceAccountRoleRow } from './components/ServiceAccountRoleRow';
-import { updateServiceAccount } from './state/actionsServiceAccountPage';
+import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
+import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 
 interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
-
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
+  onChange: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, builtInRoles }: Props): JSX.Element {
-  const dispatch = useDispatch();
+export function ServiceAccountProfile({
+  serviceAccount,
+  timeZone,
+  roleOptions,
+  builtInRoles,
+  onChange,
+}: Props): JSX.Element {
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   const handleServiceAccountRoleChange = (role: OrgRole) => {
-    dispatch(updateServiceAccount({ ...serviceAccount, role: role }));
+    onChange({ ...serviceAccount, role: role });
   };
 
   const onServiceAccountNameChange = (newValue: string) => {
-    dispatch(updateServiceAccount({ ...serviceAccount, name: newValue }));
+    onChange({ ...serviceAccount, name: newValue });
   };
 
   return (

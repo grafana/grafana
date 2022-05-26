@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
-import { connect, ConnectedProps, useDispatch } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
@@ -35,7 +35,17 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-const connector = connect(mapStateToProps);
+const mapDispatchToProps = {
+  changeQuery,
+  fetchACOptions,
+  fetchServiceAccounts,
+  deleteServiceAccount,
+  updateServiceAccount,
+  changeStateFilter,
+  createServiceAccountToken,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const ServiceAccountsListPageUnconnected = ({
   navModel,
@@ -45,8 +55,14 @@ const ServiceAccountsListPageUnconnected = ({
   builtInRoles,
   query,
   serviceAccountStateFilter,
+  changeQuery,
+  fetchACOptions,
+  fetchServiceAccounts,
+  deleteServiceAccount,
+  updateServiceAccount,
+  changeStateFilter,
+  createServiceAccountToken,
 }: Props): JSX.Element => {
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
@@ -55,29 +71,29 @@ const ServiceAccountsListPageUnconnected = ({
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
 
   useEffect(() => {
-    dispatch(fetchServiceAccounts({ withLoadingIndicator: true }));
+    fetchServiceAccounts({ withLoadingIndicator: true });
     if (contextSrv.licensedAccessControlEnabled()) {
-      dispatch(fetchACOptions());
+      fetchACOptions();
     }
-  }, [dispatch]);
+  }, [fetchACOptions, fetchServiceAccounts]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
 
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-    dispatch(updateServiceAccount(updatedServiceAccount));
+    updateServiceAccount(updatedServiceAccount);
     if (contextSrv.licensedAccessControlEnabled()) {
-      dispatch(fetchACOptions());
+      fetchACOptions();
     }
   };
 
   const onQueryChange = (value: string) => {
-    dispatch(changeQuery(value));
+    changeQuery(value);
   };
 
   const onStateFilterChange = (value: ServiceAccountStateFilter) => {
-    dispatch(changeStateFilter(value));
+    changeStateFilter(value);
   };
 
   const onRemoveButtonClick = (serviceAccount: ServiceAccountDTO) => {
@@ -87,7 +103,7 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onServiceAccountRemove = async () => {
     if (currentServiceAccount) {
-      dispatch(deleteServiceAccount(currentServiceAccount.id));
+      deleteServiceAccount(currentServiceAccount.id);
     }
     onRemoveModalClose();
   };
@@ -99,13 +115,13 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onDisable = () => {
     if (currentServiceAccount) {
-      dispatch(updateServiceAccount({ ...currentServiceAccount, isDisabled: true }));
+      updateServiceAccount({ ...currentServiceAccount, isDisabled: true });
     }
     onDisableModalClose();
   };
 
   const onEnable = (serviceAccount: ServiceAccountDTO) => {
-    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
+    updateServiceAccount({ ...serviceAccount, isDisabled: false });
   };
 
   const onTokenAdd = (serviceAccount: ServiceAccountDTO) => {
@@ -115,7 +131,7 @@ const ServiceAccountsListPageUnconnected = ({
 
   const onTokenCreate = async (token: ServiceAccountToken) => {
     if (currentServiceAccount) {
-      dispatch(createServiceAccountToken(currentServiceAccount.id, token, setNewToken));
+      createServiceAccountToken(currentServiceAccount.id, token, setNewToken);
     }
   };
 

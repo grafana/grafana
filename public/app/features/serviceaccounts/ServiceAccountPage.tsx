@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { connect, ConnectedProps, useDispatch } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
@@ -10,8 +10,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
-import { ServiceAccountProfile } from './ServiceAccountProfile';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
+import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
 import { fetchACOptions } from './state/actions';
 import {
@@ -44,7 +44,17 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-const connector = connect(mapStateToProps);
+const mapDispatchToProps = {
+  createServiceAccountToken,
+  deleteServiceAccount,
+  deleteServiceAccountToken,
+  loadServiceAccount,
+  loadServiceAccountTokens,
+  updateServiceAccount,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const ServiceAccountPageUnconnected = ({
@@ -56,8 +66,13 @@ const ServiceAccountPageUnconnected = ({
   isLoading,
   roleOptions,
   builtInRoles,
+  createServiceAccountToken,
+  deleteServiceAccount,
+  deleteServiceAccountToken,
+  loadServiceAccount,
+  loadServiceAccountTokens,
+  updateServiceAccount,
 }: Props): JSX.Element => {
-  const dispatch = useDispatch();
   const [newToken, setNewToken] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -70,12 +85,16 @@ const ServiceAccountPageUnconnected = ({
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   useEffect(() => {
-    dispatch(loadServiceAccount(serviceAccountId));
-    dispatch(loadServiceAccountTokens(serviceAccountId));
+    loadServiceAccount(serviceAccountId);
+    loadServiceAccountTokens(serviceAccountId);
     if (contextSrv.licensedAccessControlEnabled()) {
-      dispatch(fetchACOptions());
+      fetchACOptions();
     }
-  }, [match, dispatch, serviceAccountId]);
+  }, [loadServiceAccount, loadServiceAccountTokens, serviceAccountId]);
+
+  const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
+    updateServiceAccount(serviceAccount);
+  };
 
   const showDeleteServiceAccountModal = (show: boolean) => () => {
     setIsDeleteModalOpen(show);
@@ -86,24 +105,24 @@ const ServiceAccountPageUnconnected = ({
   };
 
   const handleServiceAccountDelete = () => {
-    dispatch(deleteServiceAccount(serviceAccount.id));
+    deleteServiceAccount(serviceAccount.id);
   };
 
   const handleServiceAccountDisable = () => {
-    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: true }));
+    updateServiceAccount({ ...serviceAccount, isDisabled: true });
     setIsDisableModalOpen(false);
   };
 
   const handleServiceAccountEnable = () => {
-    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
+    updateServiceAccount({ ...serviceAccount, isDisabled: false });
   };
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
-    dispatch(deleteServiceAccountToken(serviceAccount?.id, key.id!));
+    deleteServiceAccountToken(serviceAccount?.id, key.id!);
   };
 
   const onCreateToken = (token: ServiceAccountToken) => {
-    dispatch(createServiceAccountToken(serviceAccount?.id, token, setNewToken));
+    createServiceAccountToken(serviceAccount?.id, token, setNewToken);
   };
 
   const onTokenModalClose = () => {
@@ -167,6 +186,7 @@ const ServiceAccountPageUnconnected = ({
               timeZone={timezone}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
+              onChange={onProfileChange}
             />
           )}
           <div className={styles.tokensListHeader}>
