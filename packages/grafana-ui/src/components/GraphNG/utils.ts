@@ -27,7 +27,7 @@ function isVisibleBarField(f: Field) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
-  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
+  frames = frames.map((frame) => applyNullInsertThreshold({ frame, refFieldPseudoMax: timeRange?.to.valueOf() }));
 
   let numBarSeries = 0;
 

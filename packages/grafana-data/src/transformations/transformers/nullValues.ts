@@ -1,5 +1,6 @@
 // import { ArrayVector, DataFrame, FieldType, Field } from '@grafana/data';
 import { ArrayVector, DataFrame, FieldType, Field } from '../..';
+import { TimeRange } from '../../types';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -16,18 +17,25 @@ function getRefField(frame: DataFrame, refFieldName?: string | null) {
   });
 }
 
+interface NullInsertOptions {
+  frame: DataFrame;
+  refFieldName?: string;
+  refFieldPseudoMax?: number;
+  refFieldPseudoMin?: number;
+  insertMode?: InsertMode;
+}
+
 /**
  * @internal exposed while we migrate grafana UI
  */
-export function applyNullInsertThreshold(
-  frame: DataFrame,
-  refFieldName?: string | null,
-  refFieldPseudoMax: number | null = null,
-  insertMode: InsertMode = INSERT_MODES.threshold,
-  thorough = true
-): DataFrame {
-  if (frame.length === 0) {
-    return frame;
+export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
+  if (opts.frame.length === 0) {
+    return opts.frame;
+  }
+
+  let { frame, refFieldName, refFieldPseudoMax, insertMode } = opts;
+  if (!insertMode) {
+    insertMode = INSERT_MODES.threshold;
   }
 
   const refField = getRefField(frame, refFieldName);
@@ -64,7 +72,7 @@ export function applyNullInsertThreshold(
       threshold,
       refFieldPseudoMax,
       insertMode,
-      thorough
+      true
     );
 
     if (filledFieldValues === frameValues) {
@@ -236,10 +244,14 @@ export function nullToUndefThreshold(refValues: number[], fieldValues: any[], ma
 /**
  * Used by state timeline to process null values.
  */
-export function processNullValues(frames: DataFrame[], isFieldVisible: any): DataFrame[] {
+export function processNullValues(frames: DataFrame[], timeRange: TimeRange): DataFrame[] {
   return frames.map((frame) => {
-    let f = applyNullInsertThreshold(frame);
+    let f = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMax: timeRange.to.valueOf(),
+      refFieldPseudoMin: timeRange.from.valueOf(),
+    });
     f = nullToValue(frame);
-    return applySpanNullsThresholds(f, isFieldVisible);
+    return applySpanNullsThresholds(f, () => true);
   });
 }

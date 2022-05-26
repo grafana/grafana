@@ -21,6 +21,7 @@ import {
   Threshold,
   getFieldConfigWithMinMax,
   ThresholdsMode,
+  TimeRange,
 } from '@grafana/data';
 import { processNullValues } from '@grafana/data/src/transformations/transformers/nullValues';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
@@ -380,6 +381,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
+  timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -387,7 +389,7 @@ export function prepareTimelineFields(
   }
 
   // Process null values
-  series = processNullValues(series, () => true);
+  series = processNullValues(series, timeRange);
 
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
