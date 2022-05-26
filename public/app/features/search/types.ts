@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
 import { AccessControlAction, FolderInfo } from '../../types';
 
@@ -48,9 +48,7 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {
-  accessControl?: Record<AccessControlAction, boolean>;
-}
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
 export interface DashboardTag {
   term: string;

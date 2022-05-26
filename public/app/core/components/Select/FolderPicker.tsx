@@ -1,4 +1,4 @@
-import { debounce, difference, intersection } from 'lodash';
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
@@ -6,9 +6,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 import { AccessControlAction, PermissionLevelString } from '../../../types';
 import appEvents from '../../app_events';
+
+export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -19,9 +22,10 @@ export interface Props {
   initialTitle?: string;
   initialFolderId?: number;
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
-  permissionFilter?: AccessControlAction[];
+  filter?: FolderPickerFilter;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  accessControlMetadata?: boolean;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -83,19 +87,14 @@ export class FolderPicker extends PureComponent<Props, State> {
       enableReset,
       initialTitle,
       permissionLevel,
-      permissionFilter = [],
+      filter,
+      accessControlMetadata,
       initialFolderId,
       showRoot,
     } = this.props;
 
-    let searchHits = await searchFolders(query, permissionLevel, true);
-    if (permissionFilter.length > 0) {
-      searchHits = searchHits.filter((hit) =>
-        permissionFilter.every((permission) => hit.accessControl && hit.accessControl[permission])
-      );
-    }
-
-    const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
+    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptinos(searchHits, filter);
 
     const hasAccess =
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -210,6 +209,11 @@ export class FolderPicker extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function mapSearchHitsToOptinos(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
+  const filteredHits = filter ? filter(hits) : hits;
+  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
 }
 
 interface Args {
