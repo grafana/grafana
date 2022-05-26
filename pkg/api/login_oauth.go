@@ -260,7 +260,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
-	return
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
