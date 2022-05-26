@@ -183,7 +183,7 @@ export function RichHistoryCard(props: Props) {
     } else {
       setQueries(exploreId, queriesToRun);
     }
-    reportInteraction('explore_query_history_run', {
+    reportInteraction('grafana_explore_query_history_run', {
       queryHistoryEnabled: config.queryHistoryEnabled,
       differentDataSource,
     });
@@ -204,7 +204,7 @@ export function RichHistoryCard(props: Props) {
     const performDelete = (queryId: string) => {
       deleteHistoryItem(queryId);
       dispatch(notifyApp(createSuccessNotification('Query deleted')));
-      reportInteraction('explore_query_history_deleted', {
+      reportInteraction('grafana_explore_query_history_deleted', {
         queryHistoryEnabled: config.queryHistoryEnabled,
       });
     };
@@ -227,7 +227,7 @@ export function RichHistoryCard(props: Props) {
 
   const onStarrQuery = () => {
     starHistoryItem(query.id, !query.starred);
-    reportInteraction('explore_query_history_starred', {
+    reportInteraction('grafana_explore_query_history_starred', {
       queryHistoryEnabled: config.queryHistoryEnabled,
       newValue: !query.starred,
     });
@@ -238,7 +238,7 @@ export function RichHistoryCard(props: Props) {
   const onUpdateComment = () => {
     commentHistoryItem(query.id, comment);
     setActiveUpdateComment(false);
-    reportInteraction('explore_query_history_commented', {
+    reportInteraction('grafana_explore_query_history_commented', {
       queryHistoryEnabled: config.queryHistoryEnabled,
     });
   };

@@ -87,7 +87,7 @@ export function RichHistoryContainer(props: Props) {
 
   useEffect(() => {
     initRichHistory();
-    reportInteraction('explore_query_history_opened', {
+    reportInteraction('grafana_explore_query_history_opened', {
       queryHistoryEnabled: config.queryHistoryEnabled,
     });
   }, [initRichHistory]);
