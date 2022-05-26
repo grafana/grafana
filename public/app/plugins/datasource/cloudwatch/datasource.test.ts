@@ -399,6 +399,50 @@ describe('datasource', () => {
     });
   });
 
+  describe('timezoneUTCOffset', () => {
+    const testQuery = {
+      id: '',
+      refId: 'a',
+      region: 'us-east-2',
+      namespace: '',
+      period: '',
+      label: '${MAX_TIME_RELATIVE}',
+      metricName: '',
+      dimensions: {},
+      matchExact: true,
+      statistic: '',
+      expression: '',
+      metricQueryType: MetricQueryType.Query,
+      metricEditorMode: MetricEditorMode.Code,
+      sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
+    };
+    const testTable = [
+      ['Europe/Stockholm', '+0200'],
+      ['America/New_York', '-0400'],
+      ['Asia/Tokyo', '+0900'],
+      ['UTC', '+0000'],
+    ];
+    describe.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      datasource.handleMetricQueries([testQuery], {
+        range: { from: dateTime(), to: dateTime() },
+        timezone: ianaTimezone,
+      } as any);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                timezoneUTCOffset: expectedOffset,
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+  });
+
   describe('convertMultiFiltersFormat', () => {
     const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable], mockGetVariableName: false });
     it('converts keys and values correctly', () => {

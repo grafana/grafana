@@ -15,14 +15,6 @@
   border-left: 1px dotted $table-border;
 }
 
-.explore-container {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  padding: $dashboard-padding;
-  padding-top: 0;
-}
-
 .explore-wrapper {
   display: flex;
   height: 100%;
