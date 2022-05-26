@@ -266,7 +266,7 @@ type GetAlertRuleByUIDQuery struct {
 	Result *AlertRule
 }
 
-// GetAlertRulesGroupByRuleUIDQuery is the query for retrieving/deleting a group of alerts by UID of a rule that belongs to that group
+// GetAlertRulesGroupByRuleUIDQuery is the query for retrieving a group of alerts by UID of a rule that belongs to that group
 type GetAlertRulesGroupByRuleUIDQuery struct {
 	UID   string
 	OrgID int64
