@@ -34,7 +34,16 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
   const logsTimeoutError = useTimoutValidation(logsTimeout);
   useEffect(() => {
     setSaved(false);
-  }, [options.jsonData.authType, options.secureJsonData, defaultRegion]);
+  }, [
+    props.options.jsonData.assumeRoleArn,
+    props.options.jsonData.authType,
+    props.options.jsonData.defaultRegion,
+    props.options.jsonData.endpoint,
+    props.options.jsonData.externalId,
+    props.options.jsonData.profile,
+    props.options.secureJsonData?.accessKey,
+    props.options.secureJsonData?.secretKey,
+  ]);
 
   const saveOptions = async (): Promise<void> => {
     if (saved) {
