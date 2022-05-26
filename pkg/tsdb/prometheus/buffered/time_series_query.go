@@ -3,17 +3,12 @@ package buffered
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
-	"net"
-	"net/url"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -123,7 +118,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				b.log.Error("Range query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err, ErrorStatus: calculateErrorStatus(err)}
+				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
 			response[RangeQueryType] = rangeResponse
@@ -612,38 +607,4 @@ func isVariableInterval(interval string) bool {
 		return true
 	}
 	return false
-}
-
-func calculateErrorStatus(err error) backend.ErrorStatus {
-	for {
-		result := errorStatus(err)
-		if result != backend.Undefined {
-			return result
-		}
-
-		if err = errors.Unwrap(err); err == nil {
-			return backend.Undefined
-		}
-	}
-}
-
-func errorStatus(err error) backend.ErrorStatus {
-	if os.IsTimeout(err) {
-		return backend.Timeout
-	}
-	if os.IsPermission(err) {
-		return backend.Unauthorized
-	}
-
-	switch t := err.(type) {
-	case *url.Error:
-		return backend.ConnectionError
-	case *net.OpError:
-		return backend.ConnectionError
-	case syscall.Errno:
-		if t == syscall.ECONNREFUSED {
-			return backend.ConnectionError
-		}
-	}
-	return backend.Undefined
 }
