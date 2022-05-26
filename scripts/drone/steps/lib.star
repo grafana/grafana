@@ -1174,7 +1174,7 @@ def verify_gen_cue_step():
         'commands': [
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
-            'CODEGEN_VALIDATE=1 make gen-cue',
+            'CODEGEN_VERIFY=1 make gen-cue',
         ],
     }
 

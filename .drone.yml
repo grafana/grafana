@@ -259,7 +259,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -954,7 +954,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -1602,7 +1602,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -2207,7 +2207,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -3428,7 +3428,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -3978,7 +3978,7 @@ steps:
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
-  - CODEGEN_VALIDATE=1 make gen-cue
+  - CODEGEN_VERIFY=1 make gen-cue
   image: grafana/build-container:1.5.4
   name: verify-gen-cue
 - commands:
@@ -4715,6 +4715,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: bc1b7592fffc5237375118263e7c695fee0b22e870cdb08a9d534d03ef27c333
+hmac: fb64e50c271012ad1cc9b7ad7e7bd037736d6e3471d24f73774e8fd61472600c
 
 ...
