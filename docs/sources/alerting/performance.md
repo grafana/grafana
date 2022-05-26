@@ -13,8 +13,8 @@ Evaluating alerting rules consumes RAM and CPU to compute the output of an alert
 
 Considerations include:
 
-- The frequency of rule evaluation consideration. The "Evaluate Every" propery of an alert rule controls the frequency of rule evalution. We recommend using the lowest acceptable evaluation frequency to support more concurrent rules.
-- The cardinality of the rule's result set. For example, suppouse you are monitoring API response errors for every API path, on every VM in your fleet. This set has a cardinality of _n_ number of paths multipled by _v_ number of VMs. You can reduce the cardinality of a result set - perhaps by monitoring errors-per-VM instead of for each path per VM.
+- The frequency of rule evaluation consideration. The "Evaluate Every" property of an alert rule controls the frequency of rule evaluation. We recommend using the lowest acceptable evaluation frequency to support more concurrent rules.
+- The cardinality of the rule's result set. For example, suppouse you are monitoring API response errors for every API path, on every VM in your fleet. This set has a cardinality of _n_ number of paths multiplied by _v_ number of VMs. You can reduce the cardinality of a result set - perhaps by monitoring errors-per-VM instead of for each path per VM.
 - The complexity of the alerting query consideration. Queries that data sources can process and respond to quickly consume fewer resources. Although this consideration is less important than the other considerations listed above, if you have reduced those as much as possible, looking at individual query performance could make a difference.
 
 Each evaluation of an alert rule generates a set of alert instances, one for each member of the result set. The state of all the instances is written to the `alert_instance` table in Grafana's SQL database.
