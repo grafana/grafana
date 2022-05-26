@@ -9,7 +9,11 @@ import { CustomVariableModel } from 'app/features/variables/types';
 import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
 import { CloudWatchDatasource } from '../datasource';
 
-export function setupMockedDataSource({ data = [], variables }: { data?: any; variables?: any } = {}) {
+export function setupMockedDataSource({
+  data = [],
+  variables,
+  mockGetVariableName = true,
+}: { data?: any; variables?: any; mockGetVariableName?: boolean } = {}) {
   let templateService = new TemplateSrvMock({
     region: 'templatedRegion',
     fields: 'templatedField',
@@ -19,7 +23,9 @@ export function setupMockedDataSource({ data = [], variables }: { data?: any; va
     templateService = new TemplateSrv();
     templateService.init(variables);
     templateService.getVariables = jest.fn().mockReturnValue(variables);
-    templateService.getVariableName = (name: string) => name;
+    if (mockGetVariableName) {
+      templateService.getVariableName = (name: string) => name;
+    }
   }
 
   const datasource = new CloudWatchDatasource(
