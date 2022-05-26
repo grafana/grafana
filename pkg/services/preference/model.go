@@ -9,7 +9,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
-
 var ErrPrefNotFound = errors.New("preference not found")
 
 type Preference struct {
