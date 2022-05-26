@@ -182,18 +182,9 @@ export function applySpanNullsThresholds(frame: DataFrame, isFieldVisible: (f: F
 }
 
 /**
- * Replace null values
- * @param frame
- * @param value
+ * Replace null values with configured replacement.
  */
-function nullToValue(frame: DataFrame, value: any) {
-  const refField = getRefField(frame);
-  console.log(refField);
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    console.log(frame.fields[i]);
-  }
-
+function nullToValue(frame: DataFrame) {
   frame.fields.forEach((f, fi) => {
     const noValue = +f.config?.noValue!;
     if (!Number.isNaN(noValue)) {
@@ -243,14 +234,12 @@ export function nullToUndefThreshold(refValues: number[], fieldValues: any[], ma
 }
 
 /**
- * Used by state timeline to
+ * Used by state timeline to process null values.
  */
 export function processNullValues(frames: DataFrame[], isFieldVisible: any): DataFrame[] {
   return frames.map((frame) => {
     let f = applyNullInsertThreshold(frame);
-
-    f = nullToValue(frame, 0);
-
+    f = nullToValue(frame);
     return applySpanNullsThresholds(f, isFieldVisible);
   });
 }
