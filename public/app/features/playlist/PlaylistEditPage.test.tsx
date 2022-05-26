@@ -36,7 +36,7 @@ async function getTestContext({ name, interval, items }: Partial<Playlist> = {})
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1', uid: 'foo' }],
   });
   const { rerender } = render(
     <PlaylistEditPage
@@ -76,10 +76,10 @@ describe('PlaylistEditPage', () => {
       await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
-      expect(putMock).toHaveBeenCalledWith('/api/playlists/1', {
+      expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1', uid: 'foo' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
