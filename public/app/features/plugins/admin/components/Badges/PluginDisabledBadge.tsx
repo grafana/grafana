@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { PluginErrorCode } from '@grafana/data';
 import { Badge } from '@grafana/ui';
 

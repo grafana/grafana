@@ -1,7 +1,8 @@
 +++
-title = "Query caching"
+aliases = ["/docs/grafana/latest/enterprise/query-caching/"]
 description = "Grafana Enterprise data source query caching"
 keywords = ["grafana", "plugins", "query", "caching"]
+title = "Query caching"
 weight = 300
 +++
 
@@ -11,15 +12,17 @@ When query caching is enabled, Grafana temporarily stores the results of data so
 
 Query caching works for all backend data sources, and queries sent through the data source proxy. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
 
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+
 The following cache backends are available: in-memory, Redis, and Memcached.
 
 > **Note:** Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 
 When a panel queries a cached data source, the time until this query fetches fresh data is determined by the panel's **interval.** This means that wider panels and dashboards with shorter time ranges fetch new data more frequently than narrower panels and dashboards with longer time ranges.
 
-Interval is visible in a panel's [query options]({{< relref "../panels/reference-query-options.md" >}}). It is calculated like this: `(max data points) / time range`. Max data points are calculated based on the width of the panel. For example, a full-width panel on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes. In this example, cached data for this panel will be served for up to 10 minutes before Grafana queries the data source again and returns new data.
+Interval is visible in a panel's [query options]({{< relref "../panels/query-options.md" >}}). It is calculated like this: `(max data points) / time range`. Max data points are calculated based on the width of the panel. For example, a full-width panel on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes. In this example, cached data for this panel will be served for up to 10 minutes before Grafana queries the data source again and returns new data.
 
-You can make a panel retrieve fresh data more frequently by increasing the **Max data points** setting in the panel's [query options]({{< relref "../panels/reference-query-options.md" >}}).
+You can make a panel retrieve fresh data more frequently by increasing the **Max data points** setting in the panel's [query options]({{< relref "../panels/query-options.md" >}}).
 
 ## Query caching benefits
 
@@ -29,7 +32,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ## Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
+Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
 
 - CloudWatch Metrics
 - Google Cloud Monitoring

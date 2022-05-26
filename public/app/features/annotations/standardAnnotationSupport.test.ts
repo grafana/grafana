@@ -1,4 +1,5 @@
 import { FieldType, toDataFrame } from '@grafana/data';
+
 import { getAnnotationsFromData } from './standardAnnotationSupport';
 
 describe('DataFrame to annotations', () => {

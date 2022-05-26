@@ -1,9 +1,12 @@
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
-import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { ApiKey } from '../../types';
-import { css } from '@emotion/css';
 
 interface Props {
   apiKeys: ApiKey[];
@@ -44,7 +47,12 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
                   )}
                 </td>
                 <td>
-                  <DeleteButton aria-label="Delete API key" size="sm" onConfirm={() => onDelete(key)} />
+                  <DeleteButton
+                    aria-label="Delete API key"
+                    size="sm"
+                    onConfirm={() => onDelete(key)}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}
+                  />
                 </td>
               </tr>
             );

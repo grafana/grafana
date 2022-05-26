@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type UidSolver func(ctx context.Context, orgID int64, uid string) (int64, error)
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
 type InheritedScopesSolver func(ctx context.Context, orgID int64, resourceID string) ([]string, error)
 
@@ -38,8 +37,6 @@ type Options struct {
 	OnSetTeam func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role
 	OnSetBuiltInRole func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error
-	// UidSolver if configured will be used in a middleware to translate an uid to id for each request
-	UidSolver UidSolver
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
 	// InheritedScopePrefixes if configured are used to create evaluators with the scopes returned by InheritedScopesSolver

@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { FieldConfigEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
+
 import { MultiSelect } from '../Select/Select';
 
 interface State<T> {
@@ -59,7 +61,6 @@ export class MultiSelectValueEditor<T> extends React.PureComponent<Props<T>, Sta
     const { settings } = item;
     return (
       <MultiSelect<T>
-        menuShouldPortal
         isLoading={isLoading}
         value={value}
         defaultValue={value}

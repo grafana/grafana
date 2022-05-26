@@ -1,7 +1,9 @@
-import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
 import $ from 'jquery';
-import coreModule from './core_module';
+import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
+
+import coreModule from './core_module';
 
 /** @ngInject */
 export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv) {

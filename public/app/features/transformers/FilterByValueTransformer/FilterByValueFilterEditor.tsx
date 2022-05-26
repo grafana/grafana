@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
-import { Button, Select } from '@grafana/ui';
+
 import { Field, SelectableValue, valueMatchers } from '@grafana/data';
 import { FilterByValueFilter } from '@grafana/data/src/transformations/transformers/filterByValue';
+import { Button, Select } from '@grafana/ui';
+
 import { valueMatchersUI } from './ValueMatchers/valueMatchersUI';
 
 interface Props {
@@ -77,7 +79,6 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
       <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-7">Field</div>
         <Select
-          menuShouldPortal
           className="min-width-15 max-width-24"
           placeholder="Field Name"
           options={fieldsAsOptions}
@@ -88,7 +89,6 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
       <div className="gf-form gf-form-spacing">
         <div className="gf-form-label">Match</div>
         <Select
-          menuShouldPortal
           className="width-12"
           placeholder="Select test"
           options={matcherOptions}

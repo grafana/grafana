@@ -1,13 +1,15 @@
-import React from 'react';
-import { Icon } from '../Icon/Icon';
-import RCCascader from 'rc-cascader';
-
-import { Select } from '../Select/Select';
-import { Input } from '../Input/Input';
-import { SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
-import { onChangeCascader } from './optionMappings';
 import memoizeOne from 'memoize-one';
+import RCCascader from 'rc-cascader';
+import React from 'react';
+
+import { SelectableValue } from '@grafana/data';
+
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
+import { Select } from '../Select/Select';
+
+import { onChangeCascader } from './optionMappings';
 
 export interface CascaderProps {
   /** The separator between levels in the search */
@@ -210,7 +212,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       <div>
         {isSearching ? (
           <Select
-            menuShouldPortal
             allowCustomValue={allowCustomValue}
             placeholder={placeholder}
             autoFocus={!focusCascade}

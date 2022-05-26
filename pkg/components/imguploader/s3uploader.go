@@ -114,6 +114,8 @@ func webIdentityProvider(sess client.ConfigProvider) credentials.Provider {
 	roleARN := os.Getenv("AWS_ROLE_ARN")
 	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
 	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+
+	// nolint:staticcheck
 	return stscreds.NewWebIdentityRoleProvider(svc, roleARN, roleSessionName, tokenFilepath)
 }
 

@@ -28,7 +28,7 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Respon
 		invite.Url = setting.ToAbsUrl("invite/" + invite.Code)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
@@ -131,7 +131,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *models
 		}
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName),
 		"userId":  user.Id,
 	})
@@ -162,7 +162,7 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Respons
 		return response.Error(404, "Invite not found", nil)
 	}
 
-	return response.JSON(200, dtos.InviteInfo{
+	return response.JSON(http.StatusOK, dtos.InviteInfo{
 		Email:     invite.Email,
 		Name:      invite.Name,
 		Username:  invite.Email,
@@ -225,7 +225,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 	metrics.MApiUserSignUpCompleted.Inc()
 	metrics.MApiUserSignUpInvite.Inc()
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User created and logged in",
 		"id":      user.Id,
 	})

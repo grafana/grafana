@@ -1,13 +1,16 @@
-import React from 'react';
-import { NamedColorsPalette } from './NamedColorsPalette';
-import { PopoverContentProps } from '../Tooltip';
-import SpectrumPalette from './SpectrumPalette';
-import { Themeable2 } from '../../types/theme';
-import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { stylesFactory, withTheme2 } from '../../themes';
 import { FocusScope } from '@react-aria/focus';
+import React from 'react';
+
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+
+import { stylesFactory, withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types/theme';
+import { PopoverContentProps } from '../Tooltip';
+
+import { NamedColorsPalette } from './NamedColorsPalette';
+import SpectrumPalette from './SpectrumPalette';
+import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 

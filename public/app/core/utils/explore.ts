@@ -1,7 +1,7 @@
-// Libraries
 import { flatten, omit, uniq } from 'lodash';
 import { Unsubscribable } from 'rxjs';
-// Services & Utils
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CoreApp,
   DataQuery,
@@ -24,16 +24,16 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import store from 'app/core/store';
-import { v4 as uuidv4 } from 'uuid';
-import { getNextRefIdChar } from './query';
-// Types
-import { RefreshPicker } from '@grafana/ui';
-import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
-import { config } from '../config';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+
+import { config } from '../config';
+
+import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -165,16 +165,6 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
-const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
-  props.some((prop) => segment.hasOwnProperty(prop));
-
-enum ParseUrlStateIndex {
-  RangeFrom = 0,
-  RangeTo = 1,
-  Datasource = 2,
-  SegmentsStart = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
@@ -229,25 +219,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     return errorResult;
   }
 
-  if (!Array.isArray(parsed)) {
-    return parsed;
-  }
-
-  if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
-    console.error('Error parsing compact URL state for Explore.');
-    return errorResult;
-  }
-
-  const range = {
-    from: parsed[ParseUrlStateIndex.RangeFrom],
-    to: parsed[ParseUrlStateIndex.RangeTo],
-  };
-  const datasource = parsed[ParseUrlStateIndex.Datasource];
-  const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
-
-  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState };
+  return parsed;
 }
 
 export function generateKey(index = 0): string {

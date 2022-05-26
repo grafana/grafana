@@ -1,10 +1,11 @@
+import { css } from '@emotion/css';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
 import { Checkbox, FilterInput, Label, VerticalGroup } from '..';
+import { stylesFactory, useTheme2 } from '../../themes';
 
 interface Props {
   values: SelectableValue[];

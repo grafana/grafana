@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
 import { IconButton, Select, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+
+import { LokiDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
 import { LokiVisualQueryBinary } from '../types';
-import { LokiDatasource } from '../../datasource';
+
 import { LokiQueryBuilder } from './LokiQueryBuilder';
-import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
 
 export interface Props {
   nestedQuery: LokiVisualQueryBinary;

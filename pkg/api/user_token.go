@@ -43,7 +43,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 		return response.Error(500, "Failed to logout user", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User logged out",
 	})
 }
@@ -112,7 +112,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 		})
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
@@ -144,7 +144,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 		return response.Error(500, "Failed to revoke user auth token", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User auth token revoked",
 	})
 }

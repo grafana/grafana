@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+
 import { Props, Table } from './Table';
 
 function getDefaultDataFrame(): DataFrame {
@@ -159,11 +161,11 @@ describe('Table', () => {
   });
 
   describe('when sorting with column header', () => {
-    it('then correct rows should be rendered', () => {
+    it('then correct rows should be rendered', async () => {
       getTestContext();
 
-      userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
-      userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
 
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
@@ -173,6 +175,37 @@ describe('Table', () => {
         { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
         { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
       ]);
+    });
+  });
+
+  describe('on filtering', () => {
+    it('the rows should be filtered', async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
+      await userEvent.click(screen.getByLabelText('1'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      // 3 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
     });
   });
 });

@@ -141,12 +141,13 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	OrgId      int64
-	Query      string
-	Page       int
-	Limit      int
-	AuthModule string
-	Filters    []Filter
+	SignedInUser *SignedInUser
+	OrgId        int64
+	Query        string
+	Page         int
+	Limit        int
+	AuthModule   string
+	Filters      []Filter
 
 	IsDisabled *bool
 
@@ -182,6 +183,7 @@ type SignedInUser struct {
 	OrgCount           int
 	IsGrafanaAdmin     bool
 	IsAnonymous        bool
+	IsDisabled         bool
 	HelpFlags1         HelpFlags1
 	LastSeenAt         time.Time
 	Teams              []int64

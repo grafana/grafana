@@ -1,6 +1,8 @@
-import React, { ComponentProps } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React, { ComponentProps } from 'react';
+
 import { LogsSortOrder } from '@grafana/data';
+
 import LogsNavigation from './LogsNavigation';
 
 type LogsNavigationProps = ComponentProps<typeof LogsNavigation>;

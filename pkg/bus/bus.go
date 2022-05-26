@@ -54,11 +54,6 @@ func New() *InProcBus {
 	return bus
 }
 
-// Want to get rid of global bus
-func GetBus() Bus {
-	return globalBus
-}
-
 // PublishCtx function publish a message to the bus listener.
 func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()

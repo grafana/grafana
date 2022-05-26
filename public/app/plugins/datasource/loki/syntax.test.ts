@@ -1,5 +1,6 @@
-import syntax from './syntax';
 import Prism from 'prismjs';
+
+import syntax from './syntax';
 
 describe('Loki syntax', () => {
   it('should highlight Loki query correctly', () => {

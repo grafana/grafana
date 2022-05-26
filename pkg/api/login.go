@@ -85,7 +85,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	urlParams := c.Req.URL.Query()
 	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
 		hs.log.Debug("Auto login manually disabled")
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(200, getViewIndex(), viewData)
+	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
 func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -167,7 +167,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(200, "Logged in")
+		return response.JSON(http.StatusOK, "Logged in")
 	}
 
 	return response.Error(401, "Unauthorized", nil)

@@ -24,7 +24,7 @@ func ProvideService(enc encryption.Internal, settings setting.Provider, features
 }
 
 func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
-	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		return nil, nil
 	}
 

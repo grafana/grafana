@@ -12,6 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+type annotationEvent struct {
+	Title string
+	Time  time.Time
+	Tags  string
+	Text  string
+}
+
 func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -79,7 +86,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		}
 	}
 
-	annotations := make([]map[string]string, 0)
+	annotations := make([]*annotationEvent, 0)
 	for _, alarmName := range alarmNames {
 		params := &cloudwatch.DescribeAlarmHistoryInput{
 			AlarmName:  alarmName,
@@ -92,12 +99,12 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
 		}
 		for _, history := range resp.AlarmHistoryItems {
-			annotation := make(map[string]string)
-			annotation["time"] = history.Timestamp.UTC().Format(time.RFC3339)
-			annotation["title"] = *history.AlarmName
-			annotation["tags"] = *history.HistoryItemType
-			annotation["text"] = *history.HistorySummary
-			annotations = append(annotations, annotation)
+			annotations = append(annotations, &annotationEvent{
+				Time:  *history.Timestamp,
+				Title: *history.AlarmName,
+				Tags:  *history.HistoryItemType,
+				Text:  *history.HistorySummary,
+			})
 		}
 	}
 
@@ -108,16 +115,16 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 	return result, err
 }
 
-func transformAnnotationToTable(annotations []map[string]string, query backend.DataQuery) *data.Frame {
+func transformAnnotationToTable(annotations []*annotationEvent, query backend.DataQuery) *data.Frame {
 	frame := data.NewFrame(query.RefID,
-		data.NewField("time", nil, []string{}),
+		data.NewField("time", nil, []time.Time{}),
 		data.NewField("title", nil, []string{}),
 		data.NewField("tags", nil, []string{}),
 		data.NewField("text", nil, []string{}),
 	)
 
 	for _, a := range annotations {
-		frame.AppendRow(a["time"], a["title"], a["tags"], a["text"])
+		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
 	}
 
 	frame.Meta = &data.FrameMeta{

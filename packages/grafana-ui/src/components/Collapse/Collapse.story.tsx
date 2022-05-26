@@ -1,7 +1,9 @@
 import React from 'react';
-import { Collapse, ControlledCollapse } from './Collapse';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { Collapse, ControlledCollapse } from './Collapse';
 import mdx from './Collapse.mdx';
 
 export default {

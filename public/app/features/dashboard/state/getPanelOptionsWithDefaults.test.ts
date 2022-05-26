@@ -1,3 +1,5 @@
+import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
+
 import {
   ConfigOverrideRule,
   FieldColorModeId,
@@ -11,7 +13,7 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
+
 import { getPanelOptionsWithDefaults, restoreCustomOverrideRules } from './getPanelOptionsWithDefaults';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());

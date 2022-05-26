@@ -23,7 +23,7 @@ func (hs *HTTPServer) commentsGet(c *models.ReqContext) response.Response {
 		}
 		return response.Error(http.StatusInternalServerError, "internal error", err)
 	}
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"comments": items,
 	})
 }
@@ -43,7 +43,7 @@ func (hs *HTTPServer) commentsCreate(c *models.ReqContext) response.Response {
 		}
 		return response.Error(http.StatusInternalServerError, "internal error", err)
 	}
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"comment": comment,
 	})
 }

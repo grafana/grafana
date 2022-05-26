@@ -25,7 +25,7 @@ func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 
-	return response.JSON(200, statsQuery.Result)
+	return response.JSON(http.StatusOK, statsQuery.Result)
 }
 
 func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {

@@ -26,8 +26,7 @@ const (
 )
 
 func SetTimeFormatGokitLog() {
-	timeFormat = "2006-01-02T15:04:05.000-0700"
-	termTimeFormat = "01-02|15:04:05.000"
+	timeFormat = time.RFC3339Nano
 }
 
 type terminalLogger struct {
@@ -104,10 +103,16 @@ func getRecord(keyvals ...interface{}) *record {
 		if k == "t" {
 			t, ok := v.(fmt.Stringer)
 			if ok {
-				time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
+				parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
 				if err == nil {
-					r.time = time
+					r.time = parsedTime
 					continue
+				} else {
+					parsedTime, err := time.Parse(time.RFC3339Nano, t.String())
+					if err == nil {
+						r.time = parsedTime
+						continue
+					}
 				}
 			}
 

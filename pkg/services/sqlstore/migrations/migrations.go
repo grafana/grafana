@@ -13,6 +13,9 @@ import (
 // 1. Never change a migration that is committed and pushed to main
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migrations are not yet written (rename column, table, drop table, index etc)
+// 4. Putting migrations behind feature flags is no longer recommended as broken
+//    migrations may not be caught by integration tests unless feature flags are
+//    specifically added
 
 type OSSMigrations struct {
 }
@@ -73,12 +76,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			accesscontrol.AddTeamMembershipMigrations(mg)
-			accesscontrol.AddDashboardPermissionsMigrator(mg)
-		}
-	}
+	accesscontrol.AddTeamMembershipMigrations(mg)
+	accesscontrol.AddDashboardPermissionsMigrator(mg)
+	accesscontrol.AddAlertingPermissionsMigrator(mg)
+
 	addQueryHistoryStarMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
@@ -87,6 +88,14 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
+
+	addEntityEventsTableMigration(mg)
+
+	addPublicDashboardMigration(mg)
+	ualert.CreateDefaultFoldersForAlertingMigration(mg)
+	addDbFileStorageMigration(mg)
+
+	accesscontrol.AddManagedPermissionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

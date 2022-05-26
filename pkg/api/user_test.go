@@ -13,7 +13,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -48,7 +47,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, bus.New(), secretsService)
+		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService)
 		srv := authinfoservice.ProvideAuthInfoService(&authinfoservice.OSSUserProtectionImpl{}, authInfoStore)
 		hs.authInfoService = srv
 

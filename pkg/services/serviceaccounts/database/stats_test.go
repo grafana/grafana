@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,9 +21,8 @@ func TestStore_UsageStats(t *testing.T) {
 	key, err := apikeygen.New(sa.OrgId, keyName)
 	require.NoError(t, err)
 
-	cmd := models.AddApiKeyCommand{
+	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
-		Role:          "Viewer",
 		OrgId:         sa.OrgId,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,

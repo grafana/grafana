@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "types": ["cypress"]
+  },
+  "extends": "@grafana/tsconfig/base.json",
+  "include": ["**/*.ts"]
+}

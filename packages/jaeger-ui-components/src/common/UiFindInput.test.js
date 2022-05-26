@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { shallow } from 'enzyme';
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
+import * as React from 'react';
+
 import { Input } from '@grafana/ui';
 
 import UiFindInput from './UiFindInput';

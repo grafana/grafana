@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/format-data/edit-value-mapping/", "/docs/sources/panels/format-data/edit-value-mapping/"]
 title = "Edit a value mapping"
 weight = 60
-aliases = ["/docs/sources/panels/format-data/edit-value-mapping/"]
 +++
 
 # Edit a value mapping

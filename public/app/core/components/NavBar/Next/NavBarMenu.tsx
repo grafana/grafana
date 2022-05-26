@@ -1,16 +1,22 @@
+import { css, cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
+import { useLocalStorage } from 'react-use';
+
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { css, cx } from '@emotion/css';
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+
+import { Branding } from '../../Branding/Branding';
 import { isMatchOrChildMatch } from '../utils';
+
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
-import { useLocalStorage } from 'react-use';
+
+const MENU_WIDTH = '350px';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -125,7 +131,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    minWidth: '300px',
+    minWidth: MENU_WIDTH,
   }),
   menuCollapseIcon: css({
     position: 'absolute',
@@ -147,6 +153,10 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayTransition = {
     ...commonTransition,
     transitionProperty: 'background-color, box-shadow, width',
+    // this is needed to prevent a horizontal scrollbar during the animation on firefox
+    '.scrollbar-view': {
+      overflow: 'hidden !important',
+    },
   };
 
   const backdropTransition = {
@@ -159,7 +169,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     boxShadow: theme.shadows.z3,
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      width: '300px',
+      width: MENU_WIDTH,
     },
   };
 
@@ -220,6 +230,7 @@ function NavItem({
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
+                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
@@ -233,17 +244,6 @@ function NavItem({
               )
           )}
         </ul>
-      </CollapsibleNavItem>
-    );
-  } else if (link.id === 'saved-items') {
-    return (
-      <CollapsibleNavItem
-        onClose={onClose}
-        link={link}
-        isActive={isMatchOrChildMatch(link, activeItem)}
-        className={styles.savedItems}
-      >
-        <em className={styles.savedItemsText}>No saved items</em>
       </CollapsibleNavItem>
     );
   } else {
@@ -261,13 +261,8 @@ function NavItem({
           }}
           isActive={link === activeItem}
         >
-          <div className={styles.savedItemsMenuItemWrapper}>
-            <div className={styles.iconContainer}>
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && (
-                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-              )}
-            </div>
+          <div className={styles.itemWithoutMenuContent}>
+            <div className={styles.iconContainer}>{getLinkIcon(link)}</div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -283,17 +278,10 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    width: `calc(100% - ${theme.spacing(3)})`,
     '&::before': {
       display: 'none',
     },
-  }),
-  savedItems: css({
-    background: theme.colors.background.secondary,
-  }),
-  savedItemsText: css({
-    display: 'block',
-    paddingBottom: theme.spacing(2),
-    color: theme.colors.text.secondary,
   }),
   flex: css({
     display: 'flex',
@@ -314,7 +302,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     placeContent: 'center',
   }),
-  savedItemsMenuItemWrapper: css({
+  itemWithoutMenuContent: css({
     display: 'grid',
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
@@ -356,11 +344,9 @@ function CollapsibleNavItem({
           onClose();
         }}
         className={styles.collapsibleMenuItem}
+        elClassName={styles.collapsibleIcon}
       >
-        {link.img && (
-          <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-        )}
-        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+        {getLinkIcon(link)}
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
@@ -386,11 +372,14 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'grid',
     gridAutoFlow: 'column',
-    gridTemplateColumns: '56px auto',
+    gridTemplateColumns: `${theme.spacing(7)} minmax(calc(${MENU_WIDTH} - ${theme.spacing(7)}), auto)`,
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),
     width: theme.spacing(7),
+    display: 'grid',
+  }),
+  collapsibleIcon: css({
     display: 'grid',
     placeContent: 'center',
   }),
@@ -435,4 +424,16 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
+}
+
+function getLinkIcon(link: NavModelItem) {
+  if (link.id === 'home') {
+    return <Branding.MenuLogo />;
+  } else if (link.icon) {
+    return <Icon name={link.icon as IconName} size="xl" />;
+  } else if (link.img) {
+    return <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />;
+  } else {
+    return null;
+  }
 }

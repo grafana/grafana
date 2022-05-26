@@ -1,7 +1,8 @@
 import { PanelModel } from '@grafana/data';
 import { sharedSingleStatMigrationHandler } from '@grafana/ui';
-import { BarGaugeOptions } from './types';
 
-export const barGaugePanelMigrationHandler = (panel: PanelModel<BarGaugeOptions>): Partial<BarGaugeOptions> => {
+import { PanelOptions } from './models.gen';
+
+export const barGaugePanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
   return sharedSingleStatMigrationHandler(panel);
 };

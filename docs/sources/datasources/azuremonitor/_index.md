@@ -1,8 +1,8 @@
 +++
-title = "Azure Monitor"
+aliases = ["/docs/grafana/latest/datasources/azuremonitor/", "/docs/grafana/latest/features/datasources/azuremonitor/"]
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
+title = "Azure Monitor"
 weight = 300
 +++
 
@@ -81,6 +81,14 @@ The legend label for Metrics can be changed using aliases. In the Legend Format 
 | _`{{ arbitaryDimensionID }}`_ | Replaced with the value of the specified dimension. (e.g. {{ blobtype }} becomes BlockBlob) |
 | `{{ dimensionname }}`         | _(Legacy for backwards compatibility)_ Replaced with the name of the first dimension        |
 | `{{ dimensionvalue }}`        | _(Legacy for backwards compatibility)_ Replaced with the value of the first dimension       |
+
+#### Dimensions
+
+Some metrics have additional metadata associated - dimensions. Dimensions are represented as key-value pairs assigned to each value of a metric. Grafana allows for the display and filtering of metrics based on dimension values.
+
+Multiple operators are supported (as detailed [here](https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list)) - the `equals`, `not equals`, and `starts with` operators.
+
+Further documentation on multi-dimensional metrics is available [here](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics), and documentation on filtering [here](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
 
 #### Supported Azure Monitor metrics
 

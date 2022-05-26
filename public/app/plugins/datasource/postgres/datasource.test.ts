@@ -1,6 +1,8 @@
-import { backendSrv } from 'app/core/services/backend_srv';
 import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
+import { backendSrv } from 'app/core/services/backend_srv';
+
 import { PostgresDatasource } from './datasource';
 
 jest.mock('@grafana/runtime', () => ({

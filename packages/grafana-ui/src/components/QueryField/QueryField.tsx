@@ -1,20 +1,13 @@
+import { css, cx } from '@emotion/css';
+import classnames from 'classnames';
 import { debounce } from 'lodash';
 import React, { Context } from 'react';
-
 import { Value, Editor as CoreEditor } from 'slate';
-import { Editor, Plugin } from '@grafana/slate-react';
 import Plain from 'slate-plain-serializer';
-import classnames from 'classnames';
 
-import {
-  ClearPlugin,
-  NewlinePlugin,
-  SelectionShortcutsPlugin,
-  IndentationPlugin,
-  ClipboardPlugin,
-  RunnerPlugin,
-  SuggestionsPlugin,
-} from '../../slate-plugins';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Editor, Plugin } from '@grafana/slate-react';
 
 import {
   makeValue,
@@ -25,9 +18,15 @@ import {
   SuggestionsState,
   Themeable2,
 } from '../..';
-import { selectors } from '@grafana/e2e-selectors';
-import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import {
+  ClearPlugin,
+  NewlinePlugin,
+  SelectionShortcutsPlugin,
+  IndentationPlugin,
+  ClipboardPlugin,
+  RunnerPlugin,
+  SuggestionsPlugin,
+} from '../../slate-plugins';
 import { withTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 

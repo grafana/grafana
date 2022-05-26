@@ -1,7 +1,8 @@
 +++
-title = "Enterprise configuration"
+aliases = ["/docs/grafana/latest/enterprise/enterprise-configuration/"]
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
+title = "Enterprise configuration"
 weight = 700
 +++
 
@@ -18,7 +19,7 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
@@ -26,7 +27,7 @@ the instance.
 
 ### auto_refresh_license
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
@@ -36,7 +37,7 @@ automatically. Defaults to `true`.
 
 ### license_validation_type
 
-> **Note:** Available in Grafana Enterprise v8.3+.
+> **Note:** Available in Grafana Enterprise version 8.3 and later.
 
 When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../enterprise/license/activate-aws-marketplace-license/" >}}).
 
@@ -205,6 +206,10 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 If true, the feature is enabled. Defaults to false.
 
+### allow_sign_up
+
+If true, allow new Grafana users to be created through SAML logins. Defaults to true.
+
 ### certificate
 
 Base64-encoded public X.509 certificate. Used to sign requests to the IdP.
@@ -243,7 +248,7 @@ How long the SPs metadata is valid. Defaults to 48 hours.
 
 ### assertion_attribute_name
 
-Friendly name or name of the attribute within the SAML assertion to use as the user name.
+Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion.
 
 ### assertion_attribute_login
 
@@ -317,7 +322,7 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-> **Note:** Available in Grafana Enterprise v7.4 and later versions.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 Security egress makes it possible to control outgoing traffic from the Grafana server.
 
@@ -345,7 +350,7 @@ Encryption algorithm used to encrypt secrets stored in the database and cookies.
 
 ## [caching]
 
-> **Note:** Available in Grafana Enterprise v7.5 and later versions.
+> **Note:** Available in Grafana Enterprise version 7.5 and later.
 
 When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 

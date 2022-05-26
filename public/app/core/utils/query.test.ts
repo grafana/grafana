@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/data';
+
 import { getNextRefIdChar } from './query';
 
 function dataQueryHelper(ids: string[]): DataQuery[] {

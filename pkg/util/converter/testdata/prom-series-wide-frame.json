@@ -1,0 +1,44 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "__name__",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "job",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "instance",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "up","up","process_start_time_seconds"
+          ],
+          [
+            "prometheus","node","prometheus"
+          ],
+          [
+            "localhost:9090","localhost:9091","localhost:9090"
+          ]
+        ]
+      }
+    }
+  ]
+}

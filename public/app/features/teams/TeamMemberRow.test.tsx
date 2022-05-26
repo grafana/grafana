@@ -1,9 +1,12 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { TeamMember, TeamPermissionLevel } from '../../types';
-import { getMockTeamMember } from './__mocks__/teamMocks';
-import { TeamMemberRow, Props } from './TeamMemberRow';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
+import { TeamMember, TeamPermissionLevel } from '../../types';
+
+import { TeamMemberRow, Props } from './TeamMemberRow';
+import { getMockTeamMember } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

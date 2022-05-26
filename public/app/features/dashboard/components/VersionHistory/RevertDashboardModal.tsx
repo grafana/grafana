@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
+
 import { ConfirmModal } from '@grafana/ui';
+
 import { useDashboardRestore } from './useDashboardRestore';
 export interface RevertDashboardModalProps {
   hideModal: () => void;
