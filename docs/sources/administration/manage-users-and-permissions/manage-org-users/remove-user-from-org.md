@@ -1,8 +1,9 @@
-+++
-title = "Remove a user from an organization"
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/"]
-weight = 40
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/
+title: Remove a user from an organization
+weight: 40
+---
 
 # Remove a user from an organization
 

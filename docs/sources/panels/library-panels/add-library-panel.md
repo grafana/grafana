@@ -1,8 +1,9 @@
-+++
-title = "Add a Grafana library panel to a dashboard"
-weight = 30
-aliases = ["/docs/sources/panels/library-panels/add-library-panel/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/library-panels/add-library-panel/
+title: Add a Grafana library panel to a dashboard
+weight: 30
+---
 
 # Add a Grafana library panel to a dashboard
 

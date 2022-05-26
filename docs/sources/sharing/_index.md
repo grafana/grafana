@@ -1,7 +1,7 @@
-+++
-title = "Sharing"
-weight = 85
-+++
+---
+title: Sharing
+weight: 85
+---
 
 # Sharing dashboards and panels
 

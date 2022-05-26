@@ -1,8 +1,9 @@
-+++
-title = "Apply color to series and fields"
-aliases = ["/docs/sources/panels/working-with-panels/apply-color-to-series/"]
-weight = 50
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/apply-color-to-series/
+title: Apply color to series and fields
+weight: 50
+---
 
 # Apply color to series and fields
 

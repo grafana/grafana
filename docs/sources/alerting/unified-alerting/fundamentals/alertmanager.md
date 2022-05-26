@@ -1,8 +1,9 @@
-+++
-title = "Alertmanager"
-aliases = ["/docs/grafana/latest/alerting/metrics/"]
-weight = 116
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/metrics/
+title: Alertmanager
+weight: 116
+---
 
 # Alertmanager
 

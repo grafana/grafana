@@ -1,8 +1,9 @@
-+++
-title = "Add a threshold to a legacy graph panel"
-weight = 40
-aliases = ["/docs/sources/panels/specify-thresholds/add-threshold-to-graph/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/specify-thresholds/add-threshold-to-graph/
+title: Add a threshold to a legacy graph panel
+weight: 40
+---
 
 # Add a threshold to a legacy graph panel
 

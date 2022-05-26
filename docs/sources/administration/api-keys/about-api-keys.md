@@ -1,7 +1,7 @@
 ---
-title: About API keys in Grafana
+description: Learn about using API keys in Grafana
 menuTitle: About API keys
-description: 'Learn about using API keys in Grafana'
+title: About API keys in Grafana
 weight: 30
 ---
 

@@ -1,9 +1,15 @@
-+++
-title = "HTTP Preferences API "
-description = "Grafana HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "preferences"]
-aliases = ["/docs/grafana/latest/http_api/preferences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/http_api/preferences/
+description: Grafana HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - preferences
+title: 'HTTP Preferences API '
+---
 
 # User and Org Preferences API
 

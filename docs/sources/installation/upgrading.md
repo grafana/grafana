@@ -1,9 +1,13 @@
-+++
-title = "Upgrade Grafana"
-description = "Guide for upgrading Grafana"
-keywords = ["grafana", "configuration", "documentation", "upgrade"]
-weight = 700
-+++
+---
+description: Guide for upgrading Grafana
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - upgrade
+title: Upgrade Grafana
+weight: 700
+---
 
 # Upgrade Grafana
 

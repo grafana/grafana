@@ -1,8 +1,9 @@
-+++
-title = "View a list of organization users"
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/view-list-org-users/"]
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/view-list-org-users/
+title: View a list of organization users
+weight: 50
+---
 
 # View a list of organization users
 

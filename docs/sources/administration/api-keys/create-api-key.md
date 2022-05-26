@@ -1,11 +1,11 @@
 ---
-title: Create an API key in Grafana
-menuTitle: Create an API key
-description: 'How to create an API key in Grafana'
-weight: 50
+description: How to create an API key in Grafana
 keywords:
   - API keys
   - Service accounts
+menuTitle: Create an API key
+title: Create an API key in Grafana
+weight: 50
 ---
 
 # Create an API key in Grafana

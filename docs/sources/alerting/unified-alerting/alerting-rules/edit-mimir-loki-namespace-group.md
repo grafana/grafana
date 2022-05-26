@@ -1,9 +1,16 @@
-+++
-title = "Grafana Mimir or Loki rule groups and namespaces"
-description = "Edit Grafana Mimir or Loki rule groups and namespaces"
-keywords = ["grafana", "alerting", "guide", "group", "namespace", "grafana mimir", "loki"]
-weight = 405
-+++
+---
+description: Edit Grafana Mimir or Loki rule groups and namespaces
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - group
+  - namespace
+  - grafana mimir
+  - loki
+title: Grafana Mimir or Loki rule groups and namespaces
+weight: 405
+---
 
 # Grafana Mimir or Loki rule groups and namespaces
 

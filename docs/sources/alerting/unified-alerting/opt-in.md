@@ -1,8 +1,8 @@
-+++
-title = "Opt-in to Grafana alerting"
-description = "Enable Grafana alerts"
-weight = 115
-+++
+---
+description: Enable Grafana alerts
+title: Opt-in to Grafana alerting
+weight: 115
+---
 
 # Opt-in to Grafana alerting
 

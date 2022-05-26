@@ -1,8 +1,10 @@
-+++
-title = "Query options"
-aliases = ["/docs/sources/panels/reference-query-options/", "/docs/grafana/latest/panels/reference-query-options"]
-weight = 900
-+++
+---
+aliases:
+  - /docs/sources/panels/reference-query-options/
+  - /docs/grafana/latest/panels/reference-query-options
+title: Query options
+weight: 900
+---
 
 # Reference: Query options
 

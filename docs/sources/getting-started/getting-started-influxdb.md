@@ -1,9 +1,13 @@
-+++
-title = "With Grafana and InfluxDB"
-description = "Guide for getting started with Grafana and InfluxDB"
-keywords = ["grafana", "intro", "guide", "started"]
-weight = 250
-+++
+---
+description: Guide for getting started with Grafana and InfluxDB
+keywords:
+  - grafana
+  - intro
+  - guide
+  - started
+title: With Grafana and InfluxDB
+weight: 250
+---
 
 # Getting started with Grafana and InfluxDB
 

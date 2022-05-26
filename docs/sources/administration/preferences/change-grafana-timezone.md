@@ -1,9 +1,13 @@
-+++
-title = "Change default timezone"
-description = "How to change your Grafana timezone"
-keywords = ["grafana", "configuration", "documentation", "home"]
-weight = 400
-+++
+---
+description: How to change your Grafana timezone
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change default timezone
+weight: 400
+---
 
 # Change the Grafana default timezone
 

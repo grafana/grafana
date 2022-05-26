@@ -1,8 +1,9 @@
-+++
-title = "Change a user's organization permissions"
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions/"]
-weight = 30
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions/
+title: Change a user's organization permissions
+weight: 30
+---
 
 # Change a user's organization permissions
 

@@ -1,9 +1,16 @@
-+++
-title = "Alerting Notification Channels HTTP API "
-description = "Grafana Alerting Notification Channel HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts", "notifications"]
-aliases = []
-+++
+---
+aliases: []
+description: Grafana Alerting Notification Channel HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - alerting
+  - alerts
+  - notifications
+title: 'Alerting Notification Channels HTTP API '
+---
 
 # Alerting Notification Channels API
 

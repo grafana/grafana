@@ -1,8 +1,9 @@
-+++
-title = "View and edit a user account"
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/"]
-weight = 110
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
+title: View and edit a user account
+weight: 110
+---
 
 # View user details
 

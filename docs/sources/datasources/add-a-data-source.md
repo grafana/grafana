@@ -1,8 +1,9 @@
-+++
-title = "Add data source"
-aliases = ["/docs/grafana/latest/features/datasources/add-a-data-source/"]
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/datasources/add-a-data-source/
+title: Add data source
+weight: 100
+---
 
 # Add a data source
 

@@ -1,8 +1,9 @@
-+++
-title = "Map a range"
-weight = 30
-aliases = ["/docs/sources/panels/format-data/map-a-range/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/format-data/map-a-range/
+title: Map a range
+weight: 30
+---
 
 # Map a range
 

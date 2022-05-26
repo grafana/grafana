@@ -1,8 +1,9 @@
-+++
-title = "Delete a threshold"
-weight = 30
-aliases = ["/docs/sources/panels/specify-thresholds/delete-a-threshold/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/specify-thresholds/delete-a-threshold/
+title: Delete a threshold
+weight: 30
+---
 
 # Delete a threshold
 
