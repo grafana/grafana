@@ -147,6 +147,12 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
+	}
+
 	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 		return err
 	}
