@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime/src';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
@@ -21,7 +22,9 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     });
 
     if (state) {
-      builder.addNestedOptions(getTreeViewEditor(state));
+      if (config.featureToggles.canvasPanelNesting) {
+        builder.addNestedOptions(getTreeViewEditor(state));
+      }
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;
