@@ -1,4 +1,6 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+// import { ArrayVector, DataFrame, FieldType, Field } from '@grafana/data';
+
+import { ArrayVector, DataFrame, FieldType, Field } from '../..';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -29,7 +31,9 @@ export function applyNullInsertThreshold(
     return frame;
   }
 
-  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
+  const thresholds = frame.fields.map((field) => {
+    return field.config.custom?.insertNulls ?? refField.config.interval ?? null;
+  });
 
   const uniqueThresholds = new Set<number>(thresholds);
 
@@ -140,4 +144,63 @@ function nullInsertThreshold(
   }
 
   return filledFieldValues;
+}
+
+// will mutate the DataFrame's fields' values
+export function applySpanNullsThresholds(frame: DataFrame, isFieldVisible: (f: Field) => boolean) {
+  let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
+  let refValues = refField?.values.toArray() as any[];
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    let field = frame.fields[i];
+
+    if (field === refField || isFieldVisible(field)) {
+      continue;
+    }
+
+    let spanNulls = field.config.custom?.spanNulls;
+
+    if (typeof spanNulls === 'number') {
+      if (spanNulls !== -1) {
+        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+      }
+    }
+  }
+
+  return frame;
+}
+
+// mutates all nulls -> undefineds in the fieldValues array for value-less refValues ranges below maxThreshold
+// refValues is typically a time array and maxThreshold is the allowable distance between in time
+export function nullToUndefThreshold(refValues: number[], fieldValues: any[], maxThreshold: number): any[] {
+  let prevRef;
+  let nullIdx;
+
+  for (let i = 0; i < fieldValues.length; i++) {
+    let fieldVal = fieldValues[i];
+
+    if (fieldVal == null) {
+      if (nullIdx == null && prevRef != null) {
+        nullIdx = i;
+      }
+    } else {
+      if (nullIdx != null) {
+        if (refValues[i] - (prevRef as number) < maxThreshold) {
+          while (nullIdx < i) {
+            fieldValues[nullIdx++] = undefined;
+          }
+        }
+
+        nullIdx = null;
+      }
+
+      prevRef = refValues[i];
+    }
+  }
+
+  return fieldValues;
+}
+
+export function processNullValues(frames: DataFrame[]): DataFrame[] {
+  return frames;
 }

@@ -22,6 +22,7 @@ import {
   getFieldConfigWithMinMax,
   ThresholdsMode,
 } from '@grafana/data';
+import { processNullValues } from '@grafana/data/src/transformations/transformers/nullValues';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
@@ -334,6 +335,8 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     textToColor.set(items[i].label, items[i].color!);
   }
 
+  console.log(thresholdToText);
+
   let input = field.values.toArray();
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
@@ -347,6 +350,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     });
   }
 
+  console.log(vals);
   for (let i = 0; i < vals.length; i++) {
     const v = input[i];
     if (v == null) {
@@ -355,6 +359,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
       vals[i] = thresholdToText.get(getActiveThreshold(v, thresholds.steps));
     }
   }
+  console.log(vals);
 
   return {
     ...field,
@@ -384,6 +389,10 @@ export function prepareTimelineFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  // Process null values
+  series = processNullValues(series);
+
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
   for (let frame of series) {
