@@ -3,8 +3,9 @@ package api
 import (
 	"sort"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type DataSourceQueryResponse struct {
@@ -15,9 +16,7 @@ type Results map[string]DataResponse
 
 type DataResponse struct {
 	Frames data.Frames
-
-	Error error
-
+	Error  error
 	Status int
 }
 
