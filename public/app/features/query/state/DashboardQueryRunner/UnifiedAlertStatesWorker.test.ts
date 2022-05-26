@@ -221,7 +221,7 @@ describe('UnifiedAlertStateWorker with RBAC', () => {
   });
 
   it('should do work with correct permissions', () => {
-    grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
     const workerWithPermissions = new UnifiedAlertStatesWorker();
 
     const options = getDefaultOptions();
