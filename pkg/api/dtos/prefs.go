@@ -25,8 +25,8 @@ type UpdatePrefsCmd struct {
 	// Enum: utc,browser
 	Timezone     string                         `json:"timezone"`
 	WeekStart    string                         `json:"weekStart"`
-	Navbar       *pref.NavbarPreference        `json:"navbar,omitempty"`
-	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Navbar       *pref.NavbarPreference         `json:"navbar,omitempty"`
+	QueryHistory *pref.QueryHistoryPreference   `json:"queryHistory,omitempty"`
 }
 
 // swagger:model
