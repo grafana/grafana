@@ -43,14 +43,14 @@ package definitions
 // Delete a mute timing.
 //
 //     Responses:
-//       204: Accepted
+//       204: Ack
 
 // swagger:route
 
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming RouteDeleteMuteTiming
 type RouteGetMuteTimingParam struct {
 	// Template Name
 	// in:path
