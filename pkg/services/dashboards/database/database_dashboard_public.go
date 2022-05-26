@@ -72,7 +72,6 @@ func generateNewPublicDashboardUid(sess *sqlstore.DBSession) (string, error) {
 
 // retrieves public dashboard configuration
 func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-
 	if dashboardUid == "" {
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
@@ -115,7 +114,6 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 
 // persists public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-
 	if len(cmd.PublicDashboardConfig.PublicDashboard.DashboardUid) == 0 {
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
