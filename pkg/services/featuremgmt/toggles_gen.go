@@ -147,10 +147,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagPersistNotifications
-	// PoC Notifications page
-	FlagPersistNotifications = "persistNotifications"
-
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
