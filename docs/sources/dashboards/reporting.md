@@ -1,10 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/administration/reports/", "/docs/grafana/latest/dashboards/reporting/"]
-description = ""
-keywords = ["grafana", "reporting"]
-title = "Reporting"
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/reports/
+  - /docs/grafana/latest/dashboards/reporting/
+description: ''
+keywords:
+  - grafana
+  - reporting
+title: Reporting
+weight: 10
+---
 
 # Reporting
 

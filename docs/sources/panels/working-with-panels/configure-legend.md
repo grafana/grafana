@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/configure-legend/", "/docs/sources/panels/working-with-panels/configure-legend/"]
-title = "Configure a legend"
-weight = 70
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/configure-legend/
+  - /docs/sources/panels/working-with-panels/configure-legend/
+title: Configure a legend
+weight: 70
+---
 
 # Configure a legend
 

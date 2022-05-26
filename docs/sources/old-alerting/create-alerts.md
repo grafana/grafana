@@ -1,11 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/create-alerts/", "/docs/grafana/latest/old-alerting/create-alerts/"]
-description = "Configure alert rules"
-draft = true
-keywords = ["grafana", "alerting", "guide", "rules"]
-title = "Create alerts"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/create-alerts/
+  - /docs/grafana/latest/old-alerting/create-alerts/
+description: Configure alert rules
+draft: true
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+title: Create alerts
+weight: 200
+---
 
 # Create alerts
 

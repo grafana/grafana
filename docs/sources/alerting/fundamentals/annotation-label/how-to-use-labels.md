@@ -1,9 +1,13 @@
-+++
-title = "Labels in Grafana alerting"
-description = "Learn about labels and label matchers in alerting"
-keywords = ["grafana", "alerting", "guide", "fundamentals"]
-weight = 117
-+++
+---
+description: Learn about labels and label matchers in alerting
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - fundamentals
+title: Labels in Grafana alerting
+weight: 117
+---
 
 # Labels in Grafana alerting
 

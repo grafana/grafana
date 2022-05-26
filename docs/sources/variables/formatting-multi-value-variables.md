@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/variables/formatting-multi-value-variables/"]
-title = "Multi-value variables"
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/formatting-multi-value-variables/
+title: Multi-value variables
+weight: 600
+---
 
 # Multi-value variables
 

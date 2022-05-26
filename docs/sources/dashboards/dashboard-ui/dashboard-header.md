@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/", "/docs/grafana/latest/features/dashboard/dashboards/"]
-title = "Dashboard header"
-weight = 80
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/
+  - /docs/grafana/latest/features/dashboard/dashboards/
+title: Dashboard header
+weight: 80
+---
 
 ## Dashboard header
 

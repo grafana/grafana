@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/"]
-title = "Grant editors administrator permissions"
-weight = 60
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/
+title: Grant editors administrator permissions
+weight: 60
+---
 
 # Grant editors administrator permissions
 

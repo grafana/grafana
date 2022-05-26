@@ -1,9 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/administration/set-up-for-high-availability/", "/docs/grafana/latest/tutorials/ha_setup/"]
-keywords = ["grafana", "tutorials", "HA", "high availability"]
-title = "Set up Grafana for high availability"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/set-up-for-high-availability/
+  - /docs/grafana/latest/tutorials/ha_setup/
+keywords:
+  - grafana
+  - tutorials
+  - HA
+  - high availability
+title: Set up Grafana for high availability
+weight: 1200
+---
 
 # Set up Grafana for high availability
 
