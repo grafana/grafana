@@ -10,9 +10,10 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
+  userProps?: object;
 }
 
-export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, columnIndex, columnCount }) => {
+export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, columnIndex, columnCount, userProps }) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as any as GrafanaTableColumn).field;
 
@@ -38,5 +39,6 @@ export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, col
     onCellFilterAdded,
     cellProps,
     innerWidth,
+    userProps,
   }) as React.ReactElement;
 };

@@ -1,6 +1,7 @@
 +++
-title = "Overview"
+aliases = ["/docs/grafana/latest/auth/overview/"]
 description = "Overview for auth"
+title = "Overview"
 weight = 1
 +++
 

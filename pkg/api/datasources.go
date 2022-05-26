@@ -275,7 +275,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 }
 
 // PUT /api/datasources/:id
-func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateDataSourceByID(c *models.ReqContext) response.Response {
 	cmd := models.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -297,12 +297,38 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
 
+// PUT /api/datasources/:uid
+func (hs *HTTPServer) UpdateDataSourceByUID(c *models.ReqContext) response.Response {
+	cmd := models.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
+	cmd.OrgId = c.OrgId
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
+		return resp
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+	}
+	cmd.Id = ds.Id
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+func (hs *HTTPServer) updateDataSourceByID(c *models.ReqContext, ds *models.DataSource, cmd models.UpdateDataSourceCommand) response.Response {
 	if ds.ReadOnly {
 		return response.Error(403, "Cannot update read-only data source", nil)
 	}
 
-	err = hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
+	err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
@@ -422,7 +448,34 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	hs.callPluginResource(c, plugin.ID, ds.Uid)
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
+}
+
+// /api/datasources/uid/:uid/resources/*
+func (hs *HTTPServer) CallDatasourceResourceWithUID(c *models.ReqContext) {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+		return
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
+			return
+		}
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+		return
+	}
+
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		return
+	}
+
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
 }
 
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSource) dtos.DataSource {
@@ -462,6 +515,24 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSou
 	return dto
 }
 
+// CheckDatasourceHealthWithUID sends a health check request to the plugin datasource
+// /api/datasource/uid/:uid/health
+func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *models.ReqContext) response.Response {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		return response.Error(http.StatusBadRequest, "UID is invalid", nil)
+	}
+
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
+	}
+	return hs.checkDatasourceHealth(c, ds)
+}
+
 // CheckDatasourceHealth sends a health check request to the plugin datasource
 // /api/datasource/:id/health
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
@@ -477,10 +548,13 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		}
 		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
 	}
+	return hs.checkDatasourceHealth(c, ds)
+}
 
+func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.DataSource) response.Response {
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
-		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", nil)
 	}
 
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))

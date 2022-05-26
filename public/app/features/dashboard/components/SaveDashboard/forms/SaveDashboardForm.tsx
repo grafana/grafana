@@ -74,7 +74,7 @@ export const SaveDashboardForm = ({
           )}
           {hasVariableChanged && (
             <Checkbox
-              checked={options.saveVariables}
+              checked={!!options.saveVariables}
               onChange={() =>
                 onOptionsChange({
                   ...options,

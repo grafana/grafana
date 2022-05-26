@@ -203,7 +203,7 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
 			for iter.ReadArray() {
 				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 					if sub == "id" {
-						panel.Transformations = append(panel.Transformations, iter.ReadString())
+						panel.Transformer = append(panel.Transformer, iter.ReadString())
 					} else {
 						iter.Skip()
 					}
