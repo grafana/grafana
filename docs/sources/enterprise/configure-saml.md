@@ -121,13 +121,6 @@ The keys you provide should look like:
 -----END PRIVATE KEY-----
 ```
 
-
-
-
-
-
-
-
 ## Set up SAML with Okta
 
 Grafana supports user authentication through Okta, which is useful when you want your users to access Grafana using single sign on. This guide will follow you through the steps of configuring SAML authentication in Grafana with [Okta](https://okta.com/). You need to be an admin in your Okta organization to access Admin Console and create SAML integration. You also need permissions to edit Grafana config file and restart Grafana server.
@@ -165,12 +158,6 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
-
-
-
-
-
-
 
 ## Configure SAML authentication in Grafana
 
