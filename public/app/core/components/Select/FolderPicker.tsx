@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, difference, intersection } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
@@ -19,6 +19,7 @@ export interface Props {
   initialTitle?: string;
   initialFolderId?: number;
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
+  permissionFilter?: AccessControlAction[];
   allowEmpty?: boolean;
   showRoot?: boolean;
   /**
@@ -77,9 +78,22 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle, permissionLevel, initialFolderId, showRoot } = this.props;
+    const {
+      rootName,
+      enableReset,
+      initialTitle,
+      permissionLevel,
+      permissionFilter = [],
+      initialFolderId,
+      showRoot,
+    } = this.props;
 
-    const searchHits = await searchFolders(query, permissionLevel);
+    let searchHits = await searchFolders(query, permissionLevel, true);
+    if (permissionFilter.length > 0) {
+      searchHits = searchHits.filter((hit) =>
+        permissionFilter.every((permission) => hit.accessControl && hit.accessControl[permission])
+      );
+    }
 
     const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
 

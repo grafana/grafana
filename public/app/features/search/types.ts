@@ -3,7 +3,7 @@ import { Action } from 'redux';
 
 import { SelectableValue } from '@grafana/data';
 
-import { FolderInfo } from '../../types';
+import { AccessControlAction, FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -48,7 +48,9 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {
+  accessControl?: Record<AccessControlAction, boolean>;
+}
 
 export interface DashboardTag {
   term: string;

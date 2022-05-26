@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
 import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
-import { PermissionLevelString } from 'app/types';
+import { AccessControlAction, PermissionLevelString } from 'app/types';
 
 export interface Folder {
   title: string;
@@ -19,6 +19,7 @@ export const RuleFolderPicker: FC<Props> = ({ value, ...props }) => (
     initialTitle={value?.title}
     initialFolderId={value?.id}
     {...props}
+    permissionFilter={[AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersWrite]}
     permissionLevel={PermissionLevelString.View}
   />
 );
