@@ -10,9 +10,13 @@ weight = 150
 
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
 
-Building on everything you already know and love about Grafana open source, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-plugins">}}) and [additional features]({{< relref "#enterprise-features">}}). On top of that you get 24x7x365 support and training from the core Grafana team.
+Building on everything you already know and love about Grafana open source, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-plugins">}}) and [additional features]({{< relref "#enterprise-features">}}). You also get 24x7x365 support and training from the core Grafana team.
 
-To learn more about Grafana Enterprise, refer to [our product page.](https://grafana.com/enterprise)
+To learn more about Grafana Enterprise, refer to [our product page](https://grafana.com/enterprise).
+
+## Enterprise features in Grafana Cloud
+
+Many Grafana Enterprise features are also available in [Grafana Cloud]({{< relref "/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< relref "/grafana-cloud/reference/enterprise-features" >}}).
 
 ## Authentication
 
@@ -34,23 +38,23 @@ Supported auth providers:
 
 ### Enhanced LDAP integration
 
-With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you can set up active LDAP synchronization.
+With [enhanced LDAP integration]({{< relref "enhanced_ldap.md" >}}), you can set up active LDAP synchronization.
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "./saml" >}}) enables your Grafana Enterprise users to authenticate with SAML.
+[SAML authentication]({{< relref "./saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ## Enterprise features
 
-With Grafana Enterprise, you get access to the following features:
+Grafana Enterprise adds the following features:
 
-- [Role-based access control]({{< relref "./access-control/_index.md" >}}) to control access with role-based permissions.
+- [Role-based access control]({{< relref "./access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
-- [Usage insights]({{< relref "usage-insights/_index.md" >}}) to understand how your Grafana instance is used.
+- [Usage insights]({{< relref "./usage-insights/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
@@ -58,7 +62,7 @@ With Grafana Enterprise, you get access to the following features:
 
 ## Enterprise data sources
 
-With a Grafana Enterprise license, you get access to premium data sources, including:
+With a Grafana Enterprise license, you also get access to premium data sources, including:
 
 - [AppDynamics](https://grafana.com/grafana/plugins/dlopes7-appdynamics-datasource)
 - [Azure Devops](https://grafana.com/grafana/plugins/grafana-azuredevops-datasource)
@@ -80,4 +84,4 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 
 ## Try Grafana Enterprise
 
-To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
+To purchase or obtain a trial license, contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
