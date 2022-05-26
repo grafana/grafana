@@ -1,7 +1,7 @@
-+++
-title = "Multi-value variables"
-weight = 600
-+++
+---
+title: Multi-value variables
+weight: 600
+---
 
 # Multi-value variables
 

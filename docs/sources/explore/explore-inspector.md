@@ -1,7 +1,7 @@
-+++
-title = "Inspector in Explore"
-weight = 400
-+++
+---
+title: Inspector in Explore
+weight: 400
+---
 
 # Inspector in Explore
 

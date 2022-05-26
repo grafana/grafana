@@ -1,9 +1,14 @@
-+++
-title = "Manage alerting rules"
-description = "Manage alerting rules"
-keywords = ["grafana", "alerting", "guide", "rules", "view"]
-weight = 402
-+++
+---
+description: Manage alerting rules
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - view
+title: Manage alerting rules
+weight: 402
+---
 
 # Manage alerting rules
 

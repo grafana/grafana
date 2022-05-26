@@ -1,8 +1,9 @@
-+++
-title = "Apply a transformation to data"
-weight = 20
-aliases = ["/docs/sources/panels/transform-data/apply-transformation-to-data/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/transform-data/apply-transformation-to-data/
+title: Apply a transformation to data
+weight: 20
+---
 
 # Apply a transformation function to data
 

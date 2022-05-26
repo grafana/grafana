@@ -1,9 +1,13 @@
-+++
-title = "Recorded queries"
-description = "Grafana Enterprise recorded queries"
-keywords = ["grafana", "query", "queries", "recorded"]
-weight = 300
-+++
+---
+description: Grafana Enterprise recorded queries
+keywords:
+  - grafana
+  - query
+  - queries
+  - recorded
+title: Recorded queries
+weight: 300
+---
 
 # Recorded queries
 

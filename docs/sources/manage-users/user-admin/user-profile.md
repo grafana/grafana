@@ -1,8 +1,8 @@
-+++
-title = "User account profile"
-description = "View and edit your Grafana user profile"
-weight = 100
-+++
+---
+description: View and edit your Grafana user profile
+title: User account profile
+weight: 100
+---
 
 # Grafana user account profile
 

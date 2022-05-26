@@ -1,8 +1,9 @@
-+++
-title = "Delete a transformation"
-weight = 40
-aliases = ["/docs/sources/panels/transform-data/delete-transformation/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/transform-data/delete-transformation/
+title: Delete a transformation
+weight: 40
+---
 
 # Delete a transformation
 

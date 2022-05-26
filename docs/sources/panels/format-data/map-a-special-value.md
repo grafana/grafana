@@ -1,8 +1,9 @@
-+++
-title = "Map a special value"
-weight = 50
-aliases = ["/docs/sources/panels/format-data/map-a-special-value/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/format-data/map-a-special-value/
+title: Map a special value
+weight: 50
+---
 
 # Map a special value
 

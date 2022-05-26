@@ -1,9 +1,11 @@
-+++
-title = "Google Cloud KMS"
-description = "Using Google Cloud KMS to encrypt database secrets"
-keywords = ["grafana", "Google Cloud KMS integration"]
-weight = 3
-+++
+---
+description: Using Google Cloud KMS to encrypt database secrets
+keywords:
+  - grafana
+  - Google Cloud KMS integration
+title: Google Cloud KMS
+weight: 3
+---
 
 # Using Google Cloud KMS to encrypt database secrets
 

@@ -1,8 +1,9 @@
-+++
-title = "Inspect query request and response data"
-weight = 90
-aliases = ["/docs/sources/panels/query-a-data-source/inspect-request-and-response-data/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/query-a-data-source/inspect-request-and-response-data/
+title: Inspect query request and response data
+weight: 90
+---
 
 # Inspect query request and response data
 

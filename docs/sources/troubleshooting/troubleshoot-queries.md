@@ -1,9 +1,14 @@
-+++
-title = "Troubleshoot queries"
-description = "Guide to troubleshooting Grafana queries"
-keywords = ["grafana", "troubleshooting", "documentation", "guide", "queries"]
-weight = 400
-+++
+---
+description: Guide to troubleshooting Grafana queries
+keywords:
+  - grafana
+  - troubleshooting
+  - documentation
+  - guide
+  - queries
+title: Troubleshoot queries
+weight: 400
+---
 
 # Troubleshoot queries
 

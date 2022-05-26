@@ -1,8 +1,9 @@
-+++
-title = "Delete a Grafana library panel"
-weight = 60
-aliases = ["/docs/sources/panels/library-panels/delete-library-panel/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/library-panels/delete-library-panel/
+title: Delete a Grafana library panel
+weight: 60
+---
 
 # Delete a Grafana library panel
 

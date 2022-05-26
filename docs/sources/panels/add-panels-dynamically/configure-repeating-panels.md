@@ -1,8 +1,9 @@
-+++
-title = "Configure repeating panels"
-weight = 20
-aliases = ["/docs/sources/panels/add-panels-dynamically/configure-repeating-panels/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/add-panels-dynamically/configure-repeating-panels/
+title: Configure repeating panels
+weight: 20
+---
 
 # Configure repeating panels
 

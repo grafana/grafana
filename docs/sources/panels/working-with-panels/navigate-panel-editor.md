@@ -1,8 +1,9 @@
-+++
-title = "Navigate the Grafana panel editor"
-weight = 10
-aliases = ["/docs/sources/panels/working-with-panels/navigate-panel-editor/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/working-with-panels/navigate-panel-editor/
+title: Navigate the Grafana panel editor
+weight: 10
+---
 
 # Navigate the Grafana panel editor
 

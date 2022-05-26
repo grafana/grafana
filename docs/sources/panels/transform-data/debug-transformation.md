@@ -1,8 +1,9 @@
-+++
-title = "Debug a transformation"
-weight = 30
-aliases = ["/docs/sources/panels/transform-data/debug-transformation/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/transform-data/debug-transformation/
+title: Debug a transformation
+weight: 30
+---
 
 # Debug a transformation
 

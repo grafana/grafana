@@ -1,7 +1,7 @@
-+++
-title = "Plugins"
-weight = 160
-+++
+---
+title: Plugins
+weight: 160
+---
 
 # Plugins
 

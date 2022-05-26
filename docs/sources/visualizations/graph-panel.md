@@ -1,9 +1,17 @@
-+++
-title = "Graph (old)"
-keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/", "/docs/grafana/latest/panels/visualizations/graph-panel/"]
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/reference/graph/
+  - /docs/grafana/latest/features/panels/graph/
+  - /docs/grafana/latest/panels/visualizations/graph-panel/
+keywords:
+  - grafana
+  - graph panel
+  - documentation
+  - guide
+  - graph
+title: Graph (old)
+weight: 500
+---
 
 # Graph panel (old)
 

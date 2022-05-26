@@ -1,8 +1,9 @@
-+++
-title = "About repeating panels or rows"
-weight = 10
-aliases = ["/docs/sources/panels/add-panels-dynamically/about-repeating-panels-rows/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/add-panels-dynamically/about-repeating-panels-rows/
+title: About repeating panels or rows
+weight: 10
+---
 
 # About repeating panels and rows
 

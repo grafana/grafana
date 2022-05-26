@@ -1,9 +1,17 @@
-+++
-title = "Provisioning roles and assignments"
-description = "Understand how to provision roles and assignments in fine-grained access control"
-keywords = ["grafana", "fine-grained-access-control", "roles", "provisioning", "assignments", "permissions", "enterprise"]
-weight = 120
-+++
+---
+description: Understand how to provision roles and assignments in fine-grained access
+  control
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - provisioning
+  - assignments
+  - permissions
+  - enterprise
+title: Provisioning roles and assignments
+weight: 120
+---
 
 # Provisioning
 

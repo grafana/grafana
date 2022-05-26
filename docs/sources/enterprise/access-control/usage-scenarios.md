@@ -1,9 +1,15 @@
-+++
-title = "Fine-grained access control usage scenarios"
-description = "Fine-grained access control usage scenarios"
-keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "fine-grained-access-control-usage", "enterprise"]
-weight = 125
-+++
+---
+description: Fine-grained access control usage scenarios
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - permissions
+  - fine-grained-access-control-usage
+  - enterprise
+title: Fine-grained access control usage scenarios
+weight: 125
+---
 
 # Fine-grained access control usage scenarios
 

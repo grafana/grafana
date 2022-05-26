@@ -1,9 +1,15 @@
-+++
-title = "Mute timings"
-description = "Mute timings"
-keywords = ["grafana", "alerting", "guide", "mute", "mute timings", "mute time interval"]
-weight = 450
-+++
+---
+description: Mute timings
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - mute
+  - mute timings
+  - mute time interval
+title: Mute timings
+weight: 450
+---
 
 # Mute timings
 
