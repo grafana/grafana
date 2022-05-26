@@ -123,6 +123,18 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation: 'The maximum of all values in the specified interval. Only available in Loki 2.0+.',
   },
   {
+    insertText: 'first_over_time',
+    label: 'first_over_time',
+    detail: 'first_over_time(range-vector)',
+    documentation: 'The first of all values in the specified interval. Only available in Loki 2.3+.',
+  },
+  {
+    insertText: 'last_over_time',
+    label: 'last_over_time',
+    detail: 'last_over_time(range-vector)',
+    documentation: 'The last of all values in the specified interval. Only available in Loki 2.3+.',
+  },
+  {
     insertText: 'sum_over_time',
     label: 'sum_over_time',
     detail: 'sum_over_time(range-vector)',
