@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmButton, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
+import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 
 interface Props {
   label: string;
@@ -17,14 +17,6 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
   const [inputValue, setInputValue] = useState(value);
   const [isEditing, setIsEditing] = useState(false);
   const styles = useStyles2(getStyles);
-
-  const labelClass = cx(
-    'width-16',
-    css`
-      font-weight: 500;
-    `
-  );
-
   const inputId = `${label}-input`;
 
   useEffect(() => {
@@ -69,8 +61,8 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
 
   return (
     <tr>
-      <td className={labelClass}>
-        <label htmlFor={inputId}>{label}</label>
+      <td>
+        <Label htmlFor={inputId}>{label}</Label>
       </td>
       <td className="width-25" colSpan={2}>
         {!disabled && isEditing ? (

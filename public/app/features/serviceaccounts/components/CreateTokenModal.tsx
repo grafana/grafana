@@ -52,8 +52,6 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
     if (isOpen) {
       setDefaultTokenName(`${serviceAccountLogin}-${uuidv4()}`);
     }
-    // Cleanup on unmount
-    return () => setDefaultTokenName('');
   }, [serviceAccountLogin, isOpen]);
 
   const onExpirationDateChange = (value: Date | string) => {

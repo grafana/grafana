@@ -236,10 +236,10 @@ const ServiceAccountsListPageUnconnected = ({
               isOpen={isRemoveModalOpen}
               body={`Are you sure you want to delete '${currentServiceAccount.name}'${
                 !!currentServiceAccount.tokens
-                  ? ' and ' +
-                    currentServiceAccount.tokens +
-                    ' accompanying ' +
-                    pluralize('token', currentServiceAccount.tokens)
+                  ? ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
+                      'token',
+                      currentServiceAccount.tokens
+                    )}`
                   : ''
               }?`}
               confirmText="Delete"

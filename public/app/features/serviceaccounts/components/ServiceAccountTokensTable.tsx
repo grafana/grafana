@@ -40,7 +40,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
                 {contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
                   <td>
                     <DeleteButton
-                      aria-label="Delete service account token"
+                      aria-label={`Delete service account token ${key.name}`}
                       size="sm"
                       onConfirm={() => onDelete(key)}
                       disabled={tokenActionsDisabled}

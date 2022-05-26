@@ -117,7 +117,13 @@ const ServiceAccountPageUnconnected = ({
         {serviceAccount && (
           <div className={styles.headerContainer}>
             <a href="org/serviceaccounts">
-              <IconButton size="xxl" variant="secondary" name="arrow-left" className={styles.returnButton} />
+              <IconButton
+                size="xxl"
+                variant="secondary"
+                name="arrow-left"
+                className={styles.returnButton}
+                aria-label="Return"
+              />
             </a>
             <div className={styles.headerAvatar}>
               <img src={serviceAccount.avatarUrl} alt={`Avatar for user ${serviceAccount.name}`} />
@@ -156,14 +162,12 @@ const ServiceAccountPageUnconnected = ({
         )}
         <div className={styles.pageBody}>
           {serviceAccount && (
-            <>
-              <ServiceAccountProfile
-                serviceAccount={serviceAccount}
-                timeZone={timezone}
-                roleOptions={roleOptions}
-                builtInRoles={builtInRoles}
-              />
-            </>
+            <ServiceAccountProfile
+              serviceAccount={serviceAccount}
+              timeZone={timezone}
+              roleOptions={roleOptions}
+              builtInRoles={builtInRoles}
+            />
           )}
           <div className={styles.tokensListHeader}>
             <h4>Tokens</h4>
