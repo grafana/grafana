@@ -45,6 +45,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
 }));
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
 jest.mock('app/core/services/PreferencesService', () => ({
   PreferencesService: function () {
     return {
