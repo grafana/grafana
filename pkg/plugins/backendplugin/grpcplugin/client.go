@@ -52,7 +52,7 @@ type PluginDescriptor struct {
 	managed               bool
 	versionedPlugins      map[int]goplugin.PluginSet
 	startRendererFn       StartRendererFunc
-	startSecretsmanagerFn StartSecretsManagerFunc
+	startSecretsManagerFn StartSecretsManagerFunc
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
@@ -101,6 +101,6 @@ func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecre
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
-		startSecretsmanagerFn: startFn,
+		startSecretsManagerFn: startFn,
 	})
 }

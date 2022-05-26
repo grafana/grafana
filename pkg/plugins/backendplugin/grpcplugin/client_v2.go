@@ -102,8 +102,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if descriptor.startSecretsmanagerFn != nil {
-		if err := descriptor.startSecretsmanagerFn(descriptor.pluginID, c.SecretsManagerPlugin, logger); err != nil {
+	if descriptor.startSecretsManagerFn != nil {
+		if err := descriptor.startSecretsManagerFn(descriptor.pluginID, c.SecretsManagerPlugin, logger); err != nil {
 			return nil, err
 		}
 	}
