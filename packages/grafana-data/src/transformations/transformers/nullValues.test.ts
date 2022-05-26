@@ -1,4 +1,13 @@
-import { ArrayVector, FieldType, MutableDataFrame, applyNullInsertThreshold } from '@grafana/data';
+import {
+  ArrayVector,
+  FieldType,
+  MutableDataFrame,
+  applyNullInsertThreshold,
+  dataFrameToJSON,
+  dateTime,
+} from '@grafana/data';
+
+import { processNullValues } from './nullValues';
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -55,7 +64,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
@@ -72,7 +81,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
@@ -89,7 +98,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
@@ -106,7 +115,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df, null, 13);
+    const result = applyNullInsertThreshold({ frame: df, refFieldPseudoMax: 13 });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8, null]);
@@ -134,7 +143,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result2 = applyNullInsertThreshold(df2, null, 13);
+    const result2 = applyNullInsertThreshold({ frame: df2, refFieldPseudoMax: 13 });
 
     expect(result2.fields[0].values.toArray()).toStrictEqual([1, 2]);
     expect(result2.fields[1].values.toArray()).toStrictEqual([1, null]);
@@ -152,7 +161,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 6, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
@@ -168,7 +177,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -182,7 +191,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -196,7 +205,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -210,7 +219,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -224,7 +233,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df, 'Time2');
+    const result = applyNullInsertThreshold({ frame: df, refFieldName: 'Time2' });
 
     expect(result).toBe(df);
   });
@@ -236,8 +245,40 @@ describe('nullInsertThreshold Transformer', () => {
 
     // eslint-disable-next-line no-console
     console.time('insertValues-10x3k');
-    applyNullInsertThreshold(bigFrameA);
+    applyNullInsertThreshold({ frame: bigFrameA });
     // eslint-disable-next-line no-console
     console.timeEnd('insertValues-10x3k');
+  });
+
+  test('proccess null values input', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [2, 4, 6] },
+        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+      ],
+    });
+
+    const result = processNullValues([df], {
+      from: dateTime(0),
+      to: dateTime(8),
+      raw: {} as any,
+    });
+    expect(dataFrameToJSON(result[0]).data).toMatchInlineSnapshot(`
+      Object {
+        "values": Array [
+          Array [
+            2,
+            4,
+            6,
+          ],
+          Array [
+            1,
+            1,
+            1,
+          ],
+        ],
+      }
+    `);
   });
 });

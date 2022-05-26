@@ -33,7 +33,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     return opts.frame;
   }
 
-  let { frame, refFieldName, refFieldPseudoMax, insertMode } = opts;
+  let { frame, refFieldName, refFieldPseudoMax, refFieldPseudoMin, insertMode } = opts;
   if (!insertMode) {
     insertMode = INSERT_MODES.threshold;
   }
@@ -71,6 +71,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
       frameValues,
       threshold,
       refFieldPseudoMax,
+      refFieldPseudoMin,
       insertMode,
       true
     );
@@ -98,12 +99,14 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
 /**
  * @internal exposed while we migrate grafana UI
  */
-export function nullInsertThreshold(
+function nullInsertThreshold(
   refValues: number[],
   frameValues: any[][],
   threshold: number,
   // will insert a trailing null when refFieldPseudoMax > last datapoint + threshold
   refFieldPseudoMax: number | null = null,
+  // will insert a leading null when refFieldPseudoMin < first datapoint
+  refFieldPseudoMin: number | null = null,
   getInsertValue: InsertMode,
   // will insert the value at every missing interval
   thorough: boolean
@@ -111,6 +114,10 @@ export function nullInsertThreshold(
   const len = refValues.length;
   let prevValue: number = refValues[0];
   const refValuesNew: number[] = [prevValue];
+
+  if (refFieldPseudoMin != null && prevValue >= refFieldPseudoMin + threshold) {
+    refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMin, threshold));
+  }
 
   for (let i = 1; i < len; i++) {
     const curValue = refValues[i];
@@ -249,7 +256,7 @@ export function processNullValues(frames: DataFrame[], timeRange: TimeRange): Da
     let f = applyNullInsertThreshold({
       frame,
       refFieldPseudoMax: timeRange.to.valueOf(),
-      refFieldPseudoMin: timeRange.from.valueOf(),
+      //  refFieldPseudoMin: timeRange.from.valueOf(),
     });
     f = nullToValue(frame);
     return applySpanNullsThresholds(f, () => true);

@@ -16,4 +16,4 @@ export * from './transformers/histogram';
 export { ensureTimeField } from './transformers/convertFieldType';
 
 // Only exported so grafana/ui will not break (these are internal :grimmice:)
-export { applyNullInsertThreshold, nullInsertThreshold, applySpanNullsThresholds } from './transformers/nullValues';
+export { applyNullInsertThreshold, applySpanNullsThresholds } from './transformers/nullValues';
