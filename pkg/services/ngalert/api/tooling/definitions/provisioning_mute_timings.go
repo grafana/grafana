@@ -7,7 +7,7 @@ import prometheus "github.com/prometheus/alertmanager/config"
 // Get all the mute timings.
 //
 //     Responses:
-//       200: []MuteTiming
+//       200: MuteTimings
 //       400: ValidationError
 
 // swagger:route GET /api/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
@@ -18,6 +18,17 @@ import prometheus "github.com/prometheus/alertmanager/config"
 //       200: MuteTiming
 //       400: ValidationError
 
+// swagger:model
 type MuteTiming struct {
 	prometheus.MuteTimeInterval
+}
+
+// swagger:model
+type MuteTimings []MuteTiming
+
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming
+type RouteGetMuteTimingParam struct {
+	// Template Name
+	// in:path
+	Name string `json:"name"`
 }
