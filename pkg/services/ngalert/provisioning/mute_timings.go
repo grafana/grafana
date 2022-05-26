@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// MuteTimingService is a golang API for handling mute timings.
 type MuteTimingService struct {
 	config AMConfigStore
 	prov   ProvisioningStore
