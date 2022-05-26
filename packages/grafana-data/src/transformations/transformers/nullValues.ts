@@ -1,5 +1,4 @@
 // import { ArrayVector, DataFrame, FieldType, Field } from '@grafana/data';
-
 import { ArrayVector, DataFrame, FieldType, Field } from '../..';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
@@ -10,6 +9,12 @@ const INSERT_MODES = {
   // previous time + 1ms to prevent StateTimeline from forward-interpolating prior state
   plusone: (prev: number, next: number, threshold: number) => prev + 1,
 };
+
+function getRefField(frame: DataFrame, refFieldName?: string | null) {
+  return frame.fields.find((field) => {
+    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
+  });
+}
 
 /**
  * @internal exposed while we migrate grafana UI
@@ -25,11 +30,7 @@ export function applyNullInsertThreshold(
     return frame;
   }
 
-  const refField = frame.fields.find((field) => {
-    // note: getFieldDisplayName() would require full DF[]
-    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
-  });
-
+  const refField = getRefField(frame, refFieldName);
   if (refField == null) {
     return frame;
   }
@@ -180,6 +181,36 @@ export function applySpanNullsThresholds(frame: DataFrame, isFieldVisible: (f: F
   return frame;
 }
 
+/**
+ * Replace null values
+ * @param frame
+ * @param value
+ */
+function nullToValue(frame: DataFrame, value: any) {
+  const refField = getRefField(frame);
+  console.log(refField);
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    console.log(frame.fields[i]);
+  }
+
+  frame.fields.forEach((f, fi) => {
+    const noValue = +f.config?.noValue!;
+    if (!Number.isNaN(noValue)) {
+      const values = f.values.toArray();
+      for (let i = 0; i < values.length; i++) {
+        if (values[i] === null) {
+          values[i] = noValue;
+        }
+      }
+
+      // delete f.state?.calcs; // force recalculation of stats;
+    }
+  });
+
+  return frame;
+}
+
 // mutates all nulls -> undefineds in the fieldValues array for value-less refValues ranges below maxThreshold
 // refValues is typically a time array and maxThreshold is the allowable distance between in time
 export function nullToUndefThreshold(refValues: number[], fieldValues: any[], maxThreshold: number): any[] {
@@ -214,6 +245,12 @@ export function nullToUndefThreshold(refValues: number[], fieldValues: any[], ma
 /**
  * Used by state timeline to
  */
-export function processNullValues(frames: DataFrame[]): DataFrame[] {
-  return frames;
+export function processNullValues(frames: DataFrame[], isFieldVisible: any): DataFrame[] {
+  return frames.map((frame) => {
+    let f = applyNullInsertThreshold(frame);
+
+    f = nullToValue(frame, 0);
+
+    return applySpanNullsThresholds(f, isFieldVisible);
+  });
 }
