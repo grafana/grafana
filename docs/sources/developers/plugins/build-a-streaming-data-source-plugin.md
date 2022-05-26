@@ -1,6 +1,6 @@
-+++
-title = "Build a streaming data source plugin"
-+++
+---
+title: Build a streaming data source plugin
+---
 
 # Build a streaming data source plugin
 

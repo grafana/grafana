@@ -1,9 +1,16 @@
-+++
-title = "Licensing HTTP API "
-description = "Enterprise Licensing HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/licensing/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/http_api/licensing/
+description: Enterprise Licensing HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - licensing
+  - enterprise
+title: 'Licensing HTTP API '
+---
 
 # Enterprise License API
 

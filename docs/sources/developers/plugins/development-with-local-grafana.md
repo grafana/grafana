@@ -1,6 +1,6 @@
-+++
-title = "Development with local Grafana"
-+++
+---
+title: Development with local Grafana
+---
 
 # Development with local Grafana
 

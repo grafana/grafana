@@ -1,6 +1,6 @@
-+++
-title = "Build a logs data source plugin"
-+++
+---
+title: Build a logs data source plugin
+---
 
 # Build a logs data source plugin
 

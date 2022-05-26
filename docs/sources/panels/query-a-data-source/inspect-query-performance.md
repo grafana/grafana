@@ -1,8 +1,9 @@
-+++
-title = "Inspect query performance"
-weight = 80
-aliases = ["/docs/sources/panels/query-a-data-source/inspect-query-performance/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/query-a-data-source/inspect-query-performance/
+title: Inspect query performance
+weight: 80
+---
 
 # Inspect query performance
 

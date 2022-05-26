@@ -1,10 +1,16 @@
-+++
-title = "Create Grafana Mimir or Loki managed alert rule"
-description = "Create Grafana Mimir or Loki managed alerting rule"
-keywords = ["grafana", "alerting", "guide", "rules", "create"]
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+description: Create Grafana Mimir or Loki managed alerting rule
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - create
+title: Create Grafana Mimir or Loki managed alert rule
+weight: 400
+---
 
 # Create a Grafana Mimir or Loki managed alerting rule
 

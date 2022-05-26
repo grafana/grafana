@@ -1,7 +1,11 @@
-+++
-title = "Angular support deprecation"
-keywords = ["grafana", "documentation", "developers", "resources"]
-+++
+---
+keywords:
+  - grafana
+  - documentation
+  - developers
+  - resources
+title: Angular support deprecation
+---
 
 # Angular support deprecation
 

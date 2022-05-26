@@ -1,9 +1,13 @@
-+++
-title = "Auditing"
-description = "Auditing"
-keywords = ["grafana", "auditing", "audit", "logs"]
-weight = 1100
-+++
+---
+description: Auditing
+keywords:
+  - grafana
+  - auditing
+  - audit
+  - logs
+title: Auditing
+weight: 1100
+---
 
 # Auditing
 

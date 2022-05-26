@@ -1,9 +1,15 @@
-+++
-title = "Manage team role assignments"
-description = "Manage team role assignments"
-keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "fine-grained-access-control-usage", "enterprise"]
-weight = 200
-+++
+---
+description: Manage team role assignments
+keywords:
+  - grafana
+  - fine-grained-access-control
+  - roles
+  - permissions
+  - fine-grained-access-control-usage
+  - enterprise
+title: Manage team role assignments
+weight: 200
+---
 
 # Manage team role assignments
 

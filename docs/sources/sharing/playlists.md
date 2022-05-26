@@ -1,9 +1,13 @@
-+++
-title = "Playlists"
-keywords = ["grafana", "dashboard", "documentation", "playlist"]
-weight = 4
-draft = "true"
-+++
+---
+draft: 'true'
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - playlist
+title: Playlists
+weight: 4
+---
 
 # Playlists
 

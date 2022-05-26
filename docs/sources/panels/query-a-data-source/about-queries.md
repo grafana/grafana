@@ -1,8 +1,9 @@
-+++
-title = "About queries"
-weight = 10
-aliases = ["/docs/sources/panels/query-a-data-source/about-queries/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/query-a-data-source/about-queries/
+title: About queries
+weight: 10
+---
 
 # About queries
 

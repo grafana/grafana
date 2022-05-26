@@ -1,7 +1,7 @@
 ---
-title: 'Add a token to a service account in Grafana'
-menuTitle: 'Add a token to a service account'
-description: 'This topic shows you how to add a token to a service account'
+description: This topic shows you how to add a token to a service account
+menuTitle: Add a token to a service account
+title: Add a token to a service account in Grafana
 weight: 60
 ---
 

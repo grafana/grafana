@@ -1,8 +1,10 @@
-+++
-title = "Manage users in an organization"
-aliases = ["/docs/grafana/latest/manage-users/org-admin/", "/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/manage-users/org-admin/
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/
+title: Manage users in an organization
+weight: 400
+---
 
 # Manage users in an organization
 

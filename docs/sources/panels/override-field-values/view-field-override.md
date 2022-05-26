@@ -1,8 +1,9 @@
-+++
-title = "View field overrides"
-weight = 20
-aliases = ["/docs/sources/panels/override-field-values/view-field-override/"]
-+++
+---
+aliases:
+  - /docs/sources/panels/override-field-values/view-field-override/
+title: View field overrides
+weight: 20
+---
 
 # View field overrides
 
