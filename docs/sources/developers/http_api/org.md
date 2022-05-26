@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/org/", "/docs/grafana/latest/http_api/org/", "/docs/grafana/latest/http_api/organization/"]
-description = "Grafana Organization HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "organization"]
-title = "Organization HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/org/
+  - /docs/grafana/latest/http_api/org/
+  - /docs/grafana/latest/http_api/organization/
+description: Grafana Organization HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - organization
+title: 'Organization HTTP API '
+---
 
 # Organization API
 
