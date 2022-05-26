@@ -3,11 +3,7 @@ aliases:
   - /docs/grafana/latest/administration/configuration/
   - /docs/grafana/latest/installation/configuration/
 description: Configuration documentation
-keywords:
-  - grafana
-  - configuration
-  - documentation
-title: Configure Grafana OSS
+title: Configure Grafana
 weight: 200
 ---
 
