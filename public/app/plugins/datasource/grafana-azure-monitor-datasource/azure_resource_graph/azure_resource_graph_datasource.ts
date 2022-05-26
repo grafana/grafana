@@ -36,7 +36,6 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
 
     return {
       ...target,
-      refId: target.refId,
       queryType: AzureQueryType.AzureResourceGraph,
       subscriptions,
       azureResourceGraph: {

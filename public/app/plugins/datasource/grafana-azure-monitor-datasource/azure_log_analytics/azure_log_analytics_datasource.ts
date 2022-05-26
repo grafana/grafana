@@ -135,7 +135,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return {
       ...target,
-      refId: target.refId,
       queryType: AzureQueryType.LogAnalytics,
 
       azureLogAnalytics: {
