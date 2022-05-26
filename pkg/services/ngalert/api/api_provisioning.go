@@ -16,6 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const namePathParam = ":name"
+const idPathParam = ":ID"
+
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
@@ -94,7 +97,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimo
 }
 
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	id := web.Params(c.Req)[":ID"]
+	id := pathParam(c, idPathParam)
 	cp.UID = id
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
@@ -104,7 +107,7 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimod
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) response.Response {
-	cpID := web.Params(c.Req)[":ID"]
+	cpID := pathParam(c, idPathParam)
 	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -125,19 +128,19 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Res
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Response {
-	id := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	if tmpl, ok := templates[id]; ok {
-		return response.JSON(http.StatusOK, apimodels.MessageTemplate{Name: id, Template: tmpl})
+	if tmpl, ok := templates[name]; ok {
+		return response.JSON(http.StatusOK, apimodels.MessageTemplate{Name: name, Template: tmpl})
 	}
 	return response.Empty(http.StatusNotFound)
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
-	name := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	tmpl := apimodels.MessageTemplate{
 		Name:       name,
 		Template:   body.Template,
@@ -154,7 +157,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodel
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.Response {
-	name := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	err := srv.templates.DeleteTemplate(c.Req.Context(), c.OrgId, name)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -163,7 +166,7 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.R
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTiming(c *models.ReqContext) response.Response {
-	name := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -196,7 +199,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt apimode
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
-	name := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	mt.Name = name
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgId)
 	if err != nil {
@@ -212,10 +215,14 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt apimodel
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response.Response {
-	name := web.Params(c.Req)[":name"]
+	name := pathParam(c, namePathParam)
 	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+func pathParam(c *models.ReqContext, param string) string {
+	return web.Params(c.Req)[param]
 }
