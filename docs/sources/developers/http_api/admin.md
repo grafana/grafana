@@ -373,9 +373,9 @@ Change password for a specific user.
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                | Scope           |
-| --------------------- | --------------- |
-| users.password:update | global.users:\* |
+| Action               | Scope           |
+| -------------------- | --------------- |
+| users.password:write | global.users:\* |
 
 **Example Request**:
 
@@ -406,9 +406,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                   | Scope           |
-| ------------------------ | --------------- |
-| users.permissions:update | global.users:\* |
+| Action                  | Scope           |
+| ----------------------- | --------------- |
+| users.permissions:write | global.users:\* |
 
 **Example Request**:
 
@@ -566,9 +566,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                 | Scope           |
-| ---------------------- | --------------- |
-| users.authtoken:update | global.users:\* |
+| Action                | Scope           |
+| --------------------- | --------------- |
+| users.authtoken:write | global.users:\* |
 
 **Example Request**:
 

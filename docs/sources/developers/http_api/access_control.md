@@ -170,13 +170,13 @@ Content-Type: application/json; charset=UTF-8
             "created": "2021-11-19T10:48:00+01:00"
         },
         {
-            "action": "reports.admin:create",
+            "action": "reports:create",
             "scope": "",
             "updated": "2021-11-19T10:48:00+01:00",
             "created": "2021-11-19T10:48:00+01:00"
         },
         {
-            "action": "reports.admin:write",
+            "action": "reports:write",
             "scope": "reports:*",
             "updated": "2021-11-19T10:48:00+01:00",
             "created": "2021-11-19T10:48:00+01:00"

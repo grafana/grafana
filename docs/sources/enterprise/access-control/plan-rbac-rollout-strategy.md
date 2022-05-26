@@ -204,12 +204,12 @@ roles:
 
 - Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
 
-| Action                 | Scope                           |
-| ---------------------- | ------------------------------- |
-| `reports.admin:create` | n/a                             |
-| `reports.admin:write`  | `reports:*` <br> `reports:id:*` |
-| `reports:read`         | `reports:*`                     |
-| `reports:send`         | `reports:*`                     |
+| Action           | Scope                           |
+| ---------------- | ------------------------------- |
+| `reports:create` | n/a                             |
+| `reports:write`  | `reports:*` <br> `reports:id:*` |
+| `reports:read`   | `reports:*`                     |
+| `reports:send`   | `reports:*`                     |
 
 ### Prevent a Grafana Admin from creating and inviting users
 

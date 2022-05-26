@@ -141,9 +141,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
-| Action                | Scope    |
-| --------------------- | -------- |
-| org.users.role:update | users:\* |
+| Action          | Scope    |
+| --------------- | -------- |
+| org.users:write | users:\* |
 
 **Example Request**:
 
@@ -597,9 +597,9 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
-| Action                | Scope    |
-| --------------------- | -------- |
-| org.users.role:update | users:\* |
+| Action          | Scope    |
+| --------------- | -------- |
+| org.users:write | users:\* |
 
 **Example Request**:
 

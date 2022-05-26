@@ -65,7 +65,7 @@ curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk'
             "created": "2021-05-17T20:49:18+02:00"
         },
         {
-            "action": "org.users.role:update",
+            "action": "org.users:write",
             "scope": "users:*",
             "updated": "2021-05-17T20:49:18+02:00",
             "created": "2021-05-17T20:49:18+02:00"
@@ -178,7 +178,7 @@ roles:
       - name: 'fixed:org.users:writer'
         global: true
     permissions:
-      - action: 'org.users.role:update'
+      - action: 'org.users:write'
         scope: 'users:*'
         state: 'absent'
       - action: 'org.users:add'

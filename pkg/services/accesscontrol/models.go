@@ -285,32 +285,31 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead     = "users:read"
-	ActionUsersWrite    = "users:write"
-	ActionUsersTeamRead = "users.teams:read"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:list"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenUpdate = "users.authtoken:update"
+	ActionUsersAuthTokenUpdate = "users.authtoken:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersPasswordUpdate    = "users.password:update"
+	ActionUsersPasswordUpdate    = "users.password:write"
 	ActionUsersDelete            = "users:delete"
 	ActionUsersCreate            = "users:create"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
-	ActionUsersPermissionsUpdate = "users.permissions:update"
+	ActionUsersPermissionsUpdate = "users.permissions:write"
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:list"
-	ActionUsersQuotasUpdate      = "users.quotas:update"
+	ActionUsersQuotasUpdate      = "users.quotas:write"
 
 	// Org actions
-	ActionOrgUsersRead       = "org.users:read"
-	ActionOrgUsersAdd        = "org.users:add"
-	ActionOrgUsersRemove     = "org.users:remove"
-	ActionOrgUsersRoleUpdate = "org.users.role:update"
+	ActionOrgUsersRead   = "org.users:read"
+	ActionOrgUsersAdd    = "org.users:add"
+	ActionOrgUsersRemove = "org.users:remove"
+	ActionOrgUsersWrite  = "org.users:write"
 
 	// LDAP actions
 	ActionLDAPUsersRead    = "ldap.user:read"
