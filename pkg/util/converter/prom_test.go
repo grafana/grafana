@@ -28,7 +28,8 @@ func TestReadPromFrames(t *testing.T) {
 		"prom-series",
 		"prom-warnings",
 		"prom-error",
-		"prom-exemplars",
+		"prom-exemplars-a",
+		"prom-exemplars-b",
 		"loki-streams-a",
 		"loki-streams-b",
 	}

@@ -5,35 +5,35 @@
         "meta": {
           "custom": {
             "stats": {
+              "store": {
+                "totalChunksDownloaded": 2,
+                "decompressedBytes": 7772,
+                "totalDuplicates": 0,
+                "headChunkLines": 0,
+                "decompressedLines": 55,
+                "compressedBytes": 31432,
+                "totalChunksRef": 2,
+                "chunksDownloadTime": 0.000390958,
+                "headChunkBytes": 0
+              },
+              "ingester": {
+                "totalReached": 0,
+                "totalChunksMatched": 0,
+                "totalLinesSent": 0,
+                "headChunkLines": 0,
+                "decompressedLines": 0,
+                "compressedBytes": 0,
+                "totalBatches": 0,
+                "headChunkBytes": 0,
+                "decompressedBytes": 0,
+                "totalDuplicates": 0
+              },
               "summary": {
+                "execTime": 0.002216125,
                 "bytesProcessedPerSecond": 3507022,
                 "linesProcessedPerSecond": 24818,
                 "totalBytesProcessed": 7772,
-                "totalLinesProcessed": 55,
-                "execTime": 0.002216125
-              },
-              "store": {
-                "totalChunksRef": 2,
-                "headChunkBytes": 0,
-                "headChunkLines": 0,
-                "totalDuplicates": 0,
-                "totalChunksDownloaded": 2,
-                "chunksDownloadTime": 0.000390958,
-                "decompressedBytes": 7772,
-                "decompressedLines": 55,
-                "compressedBytes": 31432
-              },
-              "ingester": {
-                "totalLinesSent": 0,
-                "headChunkBytes": 0,
-                "headChunkLines": 0,
-                "compressedBytes": 0,
-                "totalDuplicates": 0,
-                "totalReached": 0,
-                "totalBatches": 0,
-                "decompressedBytes": 0,
-                "decompressedLines": 0,
-                "totalChunksMatched": 0
+                "totalLinesProcessed": 55
               }
             }
           }
