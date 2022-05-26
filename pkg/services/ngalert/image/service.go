@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -20,7 +20,7 @@ import (
 //go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
-	NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error)
+	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
 }
 
 var (
@@ -83,7 +83,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 // NewImage returns a screenshot of the panel for the alert rule. It returns
 // ErrNoDashboard if the alert rule does not have a dashboard and ErrNoPanel
 // when the alert rule does not have a panel in a dashboard.
-func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
+func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
 	if r.DashboardUID == nil {
 		return nil, ErrNoDashboard
 	}
@@ -102,7 +102,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}
 
-	v := store.Image{
+	v := models.Image{
 		Path: screenshot.Path,
 		URL:  screenshot.URL,
 	}
@@ -115,12 +115,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 
 type NotAvailableImageService struct{}
 
-func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
+func (s *NotAvailableImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
 	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*store.Image, error) {
-	return &store.Image{}, nil
+func (s *NoopImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
+	return &models.Image{}, nil
 }
