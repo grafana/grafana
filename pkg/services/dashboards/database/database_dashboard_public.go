@@ -74,9 +74,9 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	}
 
 	// get global dashboard config
-	dashboard := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
+	dashRes := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		has, err := sess.Get(dashboard)
+		has, err := sess.Get(dashRes)
 		if err != nil {
 			return err
 		}
@@ -91,9 +91,9 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	}
 
 	// get public dashboards
-	pubDash := &models.PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
+	pdRes := &models.PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Get(pubDash)
+		_, err := sess.Get(pdRes)
 		if err != nil {
 			return err
 		}
@@ -102,8 +102,8 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 	})
 
 	pdc := &models.PublicDashboardConfig{
-		IsPublic:        dashboard.IsPublic,
-		PublicDashboard: *pubDash,
+		IsPublic:        dashRes.IsPublic,
+		PublicDashboard: *pdRes,
 	}
 
 	return pdc, err
