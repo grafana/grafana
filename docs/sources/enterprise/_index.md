@@ -1,10 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/"]
-description = "Grafana Enterprise overview"
-keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
-title = "Grafana Enterprise"
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/
+description: Grafana Enterprise overview
+keywords:
+  - grafana
+  - documentation
+  - datasource
+  - permissions
+  - ldap
+  - licensing
+  - enterprise
+  - insights
+  - reporting
+title: Grafana Enterprise
+weight: 150
+---
 
 # Grafana Enterprise
 

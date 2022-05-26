@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/getting-started/getting-started/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Guide for getting started with Grafana"
-keywords = ["grafana", "intro", "guide", "started"]
-title = "With Grafana"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/getting-started/getting-started/
+  - /docs/grafana/latest/guides/getting_started/
+  - /docs/grafana/latest/guides/gettingstarted/
+description: Guide for getting started with Grafana
+keywords:
+  - grafana
+  - intro
+  - guide
+  - started
+title: With Grafana
+weight: 200
+---
 
 # Getting started with Grafana
 

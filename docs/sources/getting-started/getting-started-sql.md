@@ -1,10 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/getting-started/getting-started-sql/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Guide for getting started with Grafana and MS SQL Server"
-draft = true
-keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/getting-started/getting-started-sql/
+  - /docs/grafana/latest/guides/getting_started/
+  - /docs/grafana/latest/guides/gettingstarted/
+description: Guide for getting started with Grafana and MS SQL Server
+draft: true
+keywords:
+  - grafana
+  - intro
+  - guide
+  - started
+  - SQL
+  - MSSQL
+weight: 400
+---
 
 # Getting started with Grafana and MS SQL Server
 

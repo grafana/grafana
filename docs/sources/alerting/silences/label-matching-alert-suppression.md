@@ -1,10 +1,15 @@
-+++
-title = "Label matching and alert suppression"
-description = "Silences alert notifications"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 452
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Silences alert notifications
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Label matching and alert suppression
+weight: 452
+---
 
 # About label matching for alert suppression
 

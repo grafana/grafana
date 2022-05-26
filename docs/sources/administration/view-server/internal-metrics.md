@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/admin/metrics/", "/docs/grafana/latest/administration/view-server/internal-metrics/"]
-description = "Internal metrics exposed by Grafana"
-keywords = ["grafana", "metrics", "internal metrics"]
-title = "Internal Grafana metrics"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/admin/metrics/
+  - /docs/grafana/latest/administration/view-server/internal-metrics/
+description: Internal metrics exposed by Grafana
+keywords:
+  - grafana
+  - metrics
+  - internal metrics
+title: Internal Grafana metrics
+weight: 200
+---
 
 # Internal Grafana metrics
 

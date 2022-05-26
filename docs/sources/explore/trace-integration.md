@@ -1,10 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/explore/trace-integration/"]
-description = "Tracing in Explore"
-keywords = ["explore", "trace"]
-title = "Tracing in Explore"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/trace-integration/
+description: Tracing in Explore
+keywords:
+  - explore
+  - trace
+title: Tracing in Explore
+weight: 20
+---
 
 # Tracing in Explore
 

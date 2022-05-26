@@ -1,9 +1,12 @@
-+++
-title = "Organising alert rules"
-description = "Learn how to organize alert rules"
-keywords = ["grafana", "alerting", "organization"]
-weight = 104
-+++
+---
+description: Learn how to organize alert rules
+keywords:
+  - grafana
+  - alerting
+  - organization
+title: Organising alert rules
+weight: 104
+---
 
 ## Namespaces and groups
 

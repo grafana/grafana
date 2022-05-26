@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/administration/image_rendering/", "/docs/grafana/latest/image-rendering/"]
-description = "Image rendering"
-keywords = ["grafana", "image", "rendering", "plugin"]
-title = "Image rendering"
-weight = 55
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/image_rendering/
+  - /docs/grafana/latest/image-rendering/
+description: Image rendering
+keywords:
+  - grafana
+  - image
+  - rendering
+  - plugin
+title: Image rendering
+weight: 55
+---
 
 # Image rendering
 
