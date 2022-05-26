@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
@@ -24,7 +24,7 @@ export const ServiceAccountRoleRow = ({
   onRoleChange,
 }: Props): JSX.Element => {
   const inputId = `${label}-input`;
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
   const rolePickerDisabled = !canUpdateRole || serviceAccount.isDisabled;
 
@@ -63,7 +63,7 @@ export const ServiceAccountRoleRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   label: cx(
     'width-16',
     css`
