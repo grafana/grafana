@@ -9,15 +9,15 @@ weight = -33
   list = false
 +++
 
-# What’s new in Grafana v9.0
+# What’s new in Grafana v9.0 ((beta))
 
 As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
 
 A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
 
-The release also includes a brand new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
+The release also includes a brand-new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+We’ve summarized what’s new in the beta release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Prometheus query builder
 
@@ -72,7 +72,7 @@ New new heatmap panel has a number enhancements compared to the old version.
 - For unbucketed data, it performs smarter auto bucket sizing
 - Supports filtering out bucket values close to but not exactly zero
 
-The new heatmap by default assumes that the data is pre-bucked. So if your query returns time series each series is seen as separate bucket (y axis tick). The panel is so much faster than the old one so it can render many time series with thousands of data points each without issue.
+The new heatmap by default assumes that the data is pre-bucketed. So if your query returns time series each series is seen as separate bucket (y axis tick). The panel is so much faster than the old one so it can render many time series with thousands of data points each without issue.
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="500px" caption="Heatmap panel with time series" >}}
 
@@ -80,7 +80,7 @@ The new heatmap by default assumes that the data is pre-bucked. So if your query
 
 Unified alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the unified alerting interface.
 
-Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/opt-in.md#disable-grafana-alertsd#" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out.md" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
