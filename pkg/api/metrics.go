@@ -103,7 +103,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	return response.JSON(statusCode, &legacyResp)
 }
 
-func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
 	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus

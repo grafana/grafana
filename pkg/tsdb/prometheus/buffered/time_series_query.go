@@ -122,7 +122,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		if query.RangeQuery {
 			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				plog.Error("Range query failed", "query", query.Expr, "err", err)
+				b.log.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err, ErrorStatus: calculateErrorStatus(err)}
 				continue
 			}
