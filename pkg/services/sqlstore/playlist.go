@@ -18,7 +18,7 @@ func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlayli
 			Name:     cmd.Name,
 			Interval: cmd.Interval,
 			OrgId:    cmd.OrgId,
-			Uid:      uid,
+			UID:      uid,
 		}
 
 		_, err = sess.Insert(&playlist)
@@ -47,13 +47,13 @@ func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlayli
 func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{
-			Uid:      cmd.Uid,
+			UID:      cmd.UID,
 			OrgId:    cmd.OrgId,
 			Name:     cmd.Name,
 			Interval: cmd.Interval,
 		}
 
-		existingPlaylist := models.Playlist{Uid: cmd.Uid, OrgId: cmd.OrgId}
+		existingPlaylist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&existingPlaylist)
 		if err != nil {
 			return err
@@ -62,7 +62,7 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 
 		cmd.Result = &models.PlaylistDTO{
 			Id:       playlist.Id,
-			Uid:      playlist.Uid,
+			UID:      playlist.UID,
 			OrgId:    playlist.OrgId,
 			Name:     playlist.Name,
 			Interval: playlist.Interval,
@@ -98,12 +98,12 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 }
 
 func (ss *SQLStore) GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error {
-	if query.Uid == "" || query.OrgId == 0 {
+	if query.UID == "" || query.OrgId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		playlist := models.Playlist{Uid: query.Uid, OrgId: query.OrgId}
+		playlist := models.Playlist{UID: query.UID, OrgId: query.OrgId}
 		_, err := sess.Get(&playlist)
 		query.Result = &playlist
 
@@ -112,19 +112,19 @@ func (ss *SQLStore) GetPlaylist(ctx context.Context, query *models.GetPlaylistBy
 }
 
 func (ss *SQLStore) DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error {
-	if cmd.Uid == "" || cmd.OrgId == 0 {
+	if cmd.UID == "" || cmd.OrgId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		playlist := models.Playlist{Uid: cmd.Uid, OrgId: cmd.OrgId}
+		playlist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&playlist)
 		if err != nil {
 			return err
 		}
 
 		var rawPlaylistSQL = "DELETE FROM playlist WHERE uid = ? and org_id = ?"
-		_, err = sess.Exec(rawPlaylistSQL, cmd.Uid, cmd.OrgId)
+		_, err = sess.Exec(rawPlaylistSQL, cmd.UID, cmd.OrgId)
 		if err != nil {
 			return err
 		}
@@ -160,12 +160,12 @@ func (ss *SQLStore) SearchPlaylists(ctx context.Context, query *models.GetPlayli
 
 func (ss *SQLStore) GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.PlaylistUid == "" || query.OrgId == 0 {
+		if query.PlaylistUID == "" || query.OrgId == 0 {
 			return models.ErrCommandValidationFailed
 		}
 
 		// get the playlist Id
-		get := &models.GetPlaylistByUidQuery{Uid: query.PlaylistUid, OrgId: query.OrgId}
+		get := &models.GetPlaylistByUidQuery{UID: query.PlaylistUID, OrgId: query.OrgId}
 		err := ss.GetPlaylist(ctx, get)
 		if err != nil {
 			return err
@@ -186,7 +186,7 @@ func generateAndValidateNewPlaylistUid(sess *DBSession, orgId int64) (string, er
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
 
-		playlist := models.Playlist{OrgId: orgId, Uid: uid}
+		playlist := models.Playlist{OrgId: orgId, UID: uid}
 		exists, err := sess.Get(&playlist)
 		if err != nil {
 			return "", err

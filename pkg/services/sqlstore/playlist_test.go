@@ -23,10 +23,10 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 		cmd := models.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
 		err := ss.CreatePlaylist(context.Background(), &cmd)
 		require.NoError(t, err)
-		uid := cmd.Result.Uid
+		uid := cmd.Result.UID
 
 		t.Run("Can get playlist items", func(t *testing.T) {
-			get := &models.GetPlaylistItemsByUidQuery{PlaylistUid: uid, OrgId: 1}
+			get := &models.GetPlaylistItemsByUidQuery{PlaylistUID: uid, OrgId: 1}
 			err = ss.GetPlaylistItem(context.Background(), get)
 			require.NoError(t, err)
 			require.Equal(t, len(*get.Result), len(items))
@@ -37,25 +37,25 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
 				{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
 			}
-			query := models.UpdatePlaylistCommand{Name: "NYC office ", OrgId: 1, Uid: uid, Interval: "10s", Items: items}
+			query := models.UpdatePlaylistCommand{Name: "NYC office ", OrgId: 1, UID: uid, Interval: "10s", Items: items}
 			err = ss.UpdatePlaylist(context.Background(), &query)
 			require.NoError(t, err)
 		})
 
 		t.Run("Can remove playlist", func(t *testing.T) {
-			deleteQuery := models.DeletePlaylistCommand{Uid: uid, OrgId: 1}
+			deleteQuery := models.DeletePlaylistCommand{UID: uid, OrgId: 1}
 			err = ss.DeletePlaylist(context.Background(), &deleteQuery)
 			require.NoError(t, err)
 
-			getQuery := models.GetPlaylistByUidQuery{Uid: uid, OrgId: 1}
+			getQuery := models.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
 			err = ss.GetPlaylist(context.Background(), &getQuery)
 			require.NoError(t, err)
-			require.Equal(t, uid, getQuery.Result.Uid, "playlist should've been removed")
+			require.Equal(t, uid, getQuery.Result.UID, "playlist should've been removed")
 		})
 	})
 
 	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {
-		deleteQuery := models.DeletePlaylistCommand{Uid: "654312", OrgId: 1}
+		deleteQuery := models.DeletePlaylistCommand{UID: "654312", OrgId: 1}
 		err := ss.DeletePlaylist(context.Background(), &deleteQuery)
 		require.NoError(t, err)
 	})
@@ -66,7 +66,7 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 			cmd  models.DeletePlaylistCommand
 		}{
 			{desc: "none", cmd: models.DeletePlaylistCommand{}},
-			{desc: "no OrgId", cmd: models.DeletePlaylistCommand{Uid: "1"}},
+			{desc: "no OrgId", cmd: models.DeletePlaylistCommand{UID: "1"}},
 			{desc: "no Uid", cmd: models.DeletePlaylistCommand{OrgId: 1}},
 		}
 
