@@ -242,10 +242,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			SignedInUser: &models.SignedInUser{},
 		}
 
-		err = dashboardStore.SearchDashboards(context.Background(), &query)
+		res, err := dashboardStore.FindDashboards(context.Background(), &query)
 		require.NoError(t, err)
-
-		require.Equal(t, len(query.Result), 0)
+		require.Equal(t, len(res), 0)
 
 		sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var existingRuleID int64
@@ -301,7 +300,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(query.Result), 2)
 	})
 
-	t.Run("Should be able to search for dashboard folder", func(t *testing.T) {
+	t.Run("Should be able to find dashboard folder", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			Title: "1 test dash folder",
@@ -315,7 +314,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -325,7 +324,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderTitle, "")
 	})
 
-	t.Run("Should be able to limit search", func(t *testing.T) {
+	t.Run("Should be able to limit find results", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			OrgId: 1,
@@ -339,14 +338,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
 		require.EqualValues(t, query.Result[0].Title, "1 test dash folder")
 	})
 
-	t.Run("Should be able to search beyond limit using paging", func(t *testing.T) {
+	t.Run("Should be able to find results beyond limit using paging", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			OrgId: 1,
@@ -364,7 +363,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 1)
@@ -386,14 +385,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 3)
 		require.Equal(t, query.Result[0].Title, "test dash 23")
 	})
 
-	t.Run("Should be able to search for a dashboard folder's children", func(t *testing.T) {
+	t.Run("Should be able to find a dashboard folder's children", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			OrgId:     1,
@@ -407,7 +406,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -420,7 +419,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 	})
 
-	t.Run("Should be able to search for dashboard by dashboard ids", func(t *testing.T) {
+	t.Run("Should be able to find dashboards by ids", func(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
@@ -433,7 +432,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 		}
 
-		err := dashboardStore.SearchDashboards(context.Background(), &query)
+		err := testSearchDashboards(dashboardStore, &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -445,7 +444,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(hit2.Tags), 1)
 	})
 
-	t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
+	t.Run("Should be able to find starred dashboards", func(t *testing.T) {
 		setup()
 		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
 		err := starService.Add(context.Background(), &star.StarDashboardCommand{
@@ -471,11 +470,11 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			},
 			IsStarred: true,
 		}
-		err = dashboardStore.SearchDashboards(context.Background(), &query)
+		res, err := dashboardStore.FindDashboards(context.Background(), &query)
 
 		require.NoError(t, err)
-		require.Equal(t, len(query.Result), 1)
-		require.Equal(t, query.Result[0].Title, "starred dash")
+		require.Equal(t, len(res), 1)
+		require.Equal(t, res[0].Title, "starred dash")
 	})
 }
 
@@ -516,7 +515,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 			},
 		},
 	}
-	results, err := sqlStore.FindDashboards(context.Background(), qNoSort)
+	results, err := dashboardStore.FindDashboards(context.Background(), qNoSort)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, dashA.Id, results[0].ID)
@@ -537,7 +536,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 			},
 		},
 	}
-	results, err = sqlStore.FindDashboards(context.Background(), qSort)
+	results, err = dashboardStore.FindDashboards(context.Background(), qSort)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, dashB.Id, results[0].ID)
@@ -560,7 +559,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 			},
 		},
 	}
-	results, err := sqlStore.FindDashboards(context.Background(), qNoFilter)
+	results, err := dashboardStore.FindDashboards(context.Background(), qNoFilter)
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
@@ -580,7 +579,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 			},
 		},
 	}
-	results, err = sqlStore.FindDashboards(context.Background(), qFilter)
+	results, err = dashboardStore.FindDashboards(context.Background(), qFilter)
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, dashB.Id, results[0].ID)
@@ -728,4 +727,58 @@ func updateDashboardAcl(t *testing.T, dashboardStore *DashboardStore, dashboardI
 	}
 
 	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
+}
+
+// testSearchDashboards is a (near) copy of the dashboard service
+// SearchDashboards, which is a wrapper around FindDashboards.
+func testSearchDashboards(d *DashboardStore, query *models.FindPersistedDashboardsQuery) error {
+	res, err := d.FindDashboards(context.Background(), query)
+	if err != nil {
+		return err
+	}
+	makeQueryResult(query, res)
+	return nil
+}
+
+func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
+	query.Result = make([]*models.Hit, 0)
+	hits := make(map[int64]*models.Hit)
+
+	for _, item := range res {
+		hit, exists := hits[item.ID]
+		if !exists {
+			hitType := models.DashHitDB
+			if item.IsFolder {
+				hitType = models.DashHitFolder
+			}
+
+			hit = &models.Hit{
+				ID:          item.ID,
+				UID:         item.UID,
+				Title:       item.Title,
+				URI:         "db/" + item.Slug,
+				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
+				Type:        hitType,
+				FolderID:    item.FolderID,
+				FolderUID:   item.FolderUID,
+				FolderTitle: item.FolderTitle,
+				Tags:        []string{},
+			}
+
+			if item.FolderID > 0 {
+				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
+			}
+
+			if query.Sort.MetaName != "" {
+				hit.SortMeta = item.SortMeta
+				hit.SortMetaName = query.Sort.MetaName
+			}
+
+			query.Result = append(query.Result, hit)
+			hits[item.ID] = hit
+		}
+		if len(item.Term) > 0 {
+			hit.Tags = append(hit.Tags, item.Term)
+		}
+	}
 }

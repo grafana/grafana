@@ -20,7 +20,7 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';
-import { AnnoOptions } from './types';
+import { PanelOptions } from './models.gen';
 
 interface UserInfo {
   id?: number;
@@ -28,7 +28,7 @@ interface UserInfo {
   email?: string;
 }
 
-export interface Props extends PanelProps<AnnoOptions> {}
+export interface Props extends PanelProps<PanelOptions> {}
 interface State {
   annotations: AnnotationEvent[];
   timeInfo: string;

@@ -11,7 +11,9 @@ import {
   ToolbarButton,
   ToolbarButtonRow,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { AccessControlAction } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
@@ -120,6 +122,10 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showExploreToDashboard =
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
     return (
       <div ref={topOfViewRef}>
         <PageToolbar
@@ -158,7 +164,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
-            {config.featureToggles.explore2Dashboard && (
+            {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
               <Suspense fallback={null}>
                 <AddToDashboard exploreId={exploreId} />
               </Suspense>
