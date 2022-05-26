@@ -221,7 +221,6 @@
     "postcss-scss": "4.0.4",
     "prettier": "2.6.2",
     "raw-loader": "4.0.2",
-    "react-colorful": "5.5.1",
     "react-refresh": "0.11.0",
     "react-select-event": "5.5.0",
     "react-test-renderer": "17.0.2",
