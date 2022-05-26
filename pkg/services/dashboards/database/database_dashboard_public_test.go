@@ -135,11 +135,13 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
+	var savedDashboard2 *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true)
 	}
 
 	t.Run("saves new public dashboard", func(t *testing.T) {
@@ -166,6 +168,10 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 
 		// verify we have a valid uid
 		assert.True(t, util.IsValidShortUID(pdc.PublicDashboard.Uid))
+
+		// verify we didn't update all dashboards
+		pdc2, err := dashboardStore.GetPublicDashboardConfig(savedDashboard2.OrgId, savedDashboard2.Uid)
+		assert.False(t, pdc2.IsPublic)
 	})
 
 	t.Run("returns ErrDashboardIdentifierNotSet", func(t *testing.T) {
