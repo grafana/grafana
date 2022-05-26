@@ -30,21 +30,21 @@ func (m metricsResponse) MarshalJSON() ([]byte, error) {
 	return append([]byte(nil), stream.Buffer()...), stream.Error
 }
 
-func writeQueryDataResponseJSON(dsqr *metricsResponse, stream *jsoniter.Stream) {
+func writeQueryDataResponseJSON(mr *metricsResponse, stream *jsoniter.Stream) {
 	stream.WriteObjectStart()
 	stream.WriteObjectField("results")
 	stream.WriteObjectStart()
 	started := false
 
 	refIDs := []string{}
-	for refID := range dsqr.Results {
+	for refID := range mr.Results {
 		refIDs = append(refIDs, refID)
 	}
 	sort.Strings(refIDs)
 
 	// Make sure all keys in the result are written
 	for _, refID := range refIDs {
-		res := dsqr.Results[refID]
+		res := mr.Results[refID]
 
 		if started {
 			stream.WriteMore()
