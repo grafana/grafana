@@ -27,12 +27,15 @@ type PluginManager struct {
 	pluginInstaller installer.Service
 	pluginLoader    loader.Service
 	pluginSources   []plugins.PluginSource
+	runner          plugins.ManagerRunner
 	log             log.Logger
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginInstaller installer.Service, processManager process.Service) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader, pluginInstaller, processManager)
+	pluginInstaller installer.Service, processManager process.Service, runner plugins.ManagerRunner,
+) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
+		pluginInstaller, processManager, runner)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -40,7 +43,8 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
-	pluginLoader loader.Service, pluginInstaller installer.Service, processManager process.Service) *PluginManager {
+	pluginLoader loader.Service, pluginInstaller installer.Service, processManager process.Service,
+	runner plugins.ManagerRunner) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		processManager:  processManager,
@@ -48,6 +52,7 @@ func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plug
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
 		pluginInstaller: pluginInstaller,
+		runner:          runner,
 		log:             log.New("plugin.manager"),
 	}
 }
@@ -57,6 +62,10 @@ func (m *PluginManager) Init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
+	err := m.runner.Run(ctx, m)
+	if err != nil {
+		return err
+	}
 	<-ctx.Done()
 	m.processManager.Shutdown(ctx)
 	return ctx.Err()

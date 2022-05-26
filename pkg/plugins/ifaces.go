@@ -24,6 +24,10 @@ type Manager interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
+type ManagerRunner interface {
+	Run(ctx context.Context, pluginManager Manager) error
+}
+
 type UpdateInfo struct {
 	PluginZipURL string
 }

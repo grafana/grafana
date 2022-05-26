@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
@@ -90,6 +91,8 @@ var wireExtsBasicSet = wire.NewSet(
 	// plugins
 	pluginRegistry.ProvideService,
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
+	manager.ProvideRunnerService,
+	wire.Bind(new(plugins.ManagerRunner), new(*manager.Runner)),
 )
 
 var wireExtsSet = wire.NewSet(
