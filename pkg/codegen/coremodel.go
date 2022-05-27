@@ -229,9 +229,11 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 
 	var strb strings.Builder
 	var str string
+	fpath := ls.Lineage.Name() + ".gen.ts"
 	strb.WriteString(fmt.Sprintf(genHeader, ls.RelativePath))
 
 	if !ls.IsCanonical {
+		fpath = fmt.Sprintf("%s_experimental.gen.ts", ls.Lineage.Name())
 		strb.WriteString(`
 // This model is a WIP and not yet canonical. Consequently, its members are
 // not exported to exclude it from grafana-schema's public API surface.
@@ -247,7 +249,7 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	}
 
 	wd := NewWriteDiffer()
-	wd[filepath.Join(path, ls.Lineage.Name()+".gen.ts")] = []byte(str)
+	wd[filepath.Join(path, fpath)] = []byte(str)
 	return wd, nil
 }
 
