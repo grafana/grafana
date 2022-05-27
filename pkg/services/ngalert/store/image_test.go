@@ -5,7 +5,6 @@ package store_test
 
 import (
 	"context"
-	"sort"
 	"testing"
 	"time"
 
@@ -94,12 +93,6 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	}
 }
 
-type imagesByID []models.Image
-
-func (s imagesByID) Len() int           { return len(s) }
-func (s imagesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
-func (s imagesByID) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
 func TestIntegrationGetImages(t *testing.T) {
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -122,9 +115,7 @@ func TestIntegrationGetImages(t *testing.T) {
 	// GetImages should return both images
 	imgs, err = dbstore.GetImages(ctx, []string{img1.Token, img2.Token})
 	require.NoError(t, err)
-	v := imagesByID(imgs)
-	sort.Sort(v)
-	assert.Equal(t, imagesByID{img1, img2}, v)
+	assert.ElementsMatch(t, []models.Image{img1, img2}, imgs)
 
 	// GetImages should return the first image
 	imgs, err = dbstore.GetImages(ctx, []string{img1.Token})
