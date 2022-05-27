@@ -21,7 +21,9 @@ describe('Azure Monitor Datasource', () => {
 
     it('should include a datasource ref when interpolating queries', () => {
       const ds = new Datasource(createMockInstanceSetttings());
-      const queries = [createMockQuery()];
+      const query = createMockQuery();
+      delete query.datasource;
+      const queries = [query];
 
       const interpolatedQueries = ds.interpolateVariablesInQueries(queries, {});
 
