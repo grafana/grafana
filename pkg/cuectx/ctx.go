@@ -60,7 +60,7 @@ func LoadGrafanaInstancesWithThema(
 	opts ...thema.BindOption,
 ) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
-	fs, err := PrefixWithGrafanaCUE(prefix, cueFS)
+	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
 		return nil, err
 	}
