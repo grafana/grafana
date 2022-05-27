@@ -20,7 +20,7 @@ export interface Props {
 }
 
 export default function DashboardSearch({ onCloseSearch }: Props) {
-  if (config.featureToggles.panelTitleSearch && !window.location.search?.includes('index=sql')) {
+  if (config.featureToggles.panelTitleSearch) {
     // TODO: "folder:current" ????
     return <DashbaordSearchNEW onCloseSearch={onCloseSearch} />;
   }
