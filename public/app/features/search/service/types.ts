@@ -1,4 +1,4 @@
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 export interface FacetField {
@@ -32,7 +32,6 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
-  score?: number;
 }
 
 export interface LocationInfo {
@@ -45,6 +44,7 @@ export interface SearchResultMeta {
   count: number;
   max_score: number;
   locationInfo: Record<string, LocationInfo>;
+  sortBy?: string;
 }
 
 export interface QueryResponse {
@@ -62,6 +62,6 @@ export interface QueryResponse {
 
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
-  list: (location: string) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
+  getSortOptions: () => Promise<SelectableValue[]>;
 }
