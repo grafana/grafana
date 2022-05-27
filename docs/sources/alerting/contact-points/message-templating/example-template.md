@@ -10,6 +10,7 @@ keywords:
   - contact point
   - templating
 title: Example message template
+weight: 115
 ---
 
 # Example of a custom template
