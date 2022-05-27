@@ -8,6 +8,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   state: TState;
   parent?: SceneItemBase<any>;
   subs = new Subscription();
+  isMounted?: boolean;
 
   constructor(state: TState) {
     this.state = state;
@@ -45,29 +46,40 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
 
   abstract Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
 
-  onInView() {
+  onMount() {
+    this.isMounted = true;
+
     const { $data } = this.state as SceneItemStateWithScope;
-    if ($data) {
-      $data.onInView();
+    if ($data && !$data.isMounted) {
+      $data.onMount();
     }
   }
 
-  onOutOfView() {
+  onUnmount() {
+    this.isMounted = false;
+
     const { $data } = this.state as SceneItemStateWithScope;
-    if ($data) {
-      $data.onOutOfView();
+    if ($data && $data.isMounted) {
+      $data.onUnmount();
     }
   }
 
-  registerOnMountEffect() {
+  private registerOnMountEffect() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-      this.onInView();
-      return () => this.onOutOfView();
+      if (!this.isMounted) {
+        this.onMount();
+      }
+      return () => {
+        if (this.isMounted) {
+          this.onUnmount();
+        }
+      };
     }, []);
   }
 
   useState() {
+    this.registerOnMountEffect();
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.subject, this.state);
   }
@@ -104,19 +116,21 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
     return null;
   }
 
-  destroy() {
+  onCloseScene() {
     this.subs.unsubscribe();
   }
 }
 
 export interface SceneItem<TState> extends Subscribable<TState> {
   state: TState;
+  isMounted?: boolean;
+
   Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
   useState(): TState;
   setState(state: TState): void;
 
-  onInView(): void;
-  onOutOfView(): void;
+  onMount(): void;
+  onUnmount(): void;
 }
 
 export interface SceneItemStateWithScope {
