@@ -1,9 +1,17 @@
-+++
-title = "Time series"
-keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/"]
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/
+  - /docs/grafana/latest/visualizations/time-series/
+keywords:
+  - grafana
+  - graph panel
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Time series
+weight: 1200
+---
 
 # Time series
 
@@ -23,7 +31,7 @@ These options are available whether you are graphing your time series as lines, 
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../../panels/calculation-types.md" >}}) to show in the legend. You can have more than one.
 
 ## Graph styles
 

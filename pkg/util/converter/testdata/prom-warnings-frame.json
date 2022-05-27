@@ -4,6 +4,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -24,12 +27,13 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "up",
               "instance": "localhost:9090",
               "job": "prometheus"
             }
@@ -51,6 +55,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -71,12 +78,13 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "up",
               "instance": "localhost:9100",
               "job": "node"
             }
@@ -98,6 +106,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -153,6 +164,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",
@@ -208,6 +222,9 @@
       "schema": {
         "meta": {
           "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          },
           "notices": [
             {
               "severity": "warning",

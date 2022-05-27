@@ -1,10 +1,17 @@
-+++
-title = "LDAP Authentication"
-description = "Grafana LDAP Authentication Guide "
-keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
-aliases = ["/docs/grafana/latest/installation/ldap/"]
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/ldap/
+  - /docs/grafana/latest/installation/ldap/
+description: 'Grafana LDAP Authentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - ldap
+  - active directory
+title: LDAP Authentication
+weight: 300
+---
 
 # LDAP Authentication
 

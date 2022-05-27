@@ -1,9 +1,16 @@
-+++
-title = "Troubleshooting"
-description = "Image rendering troubleshooting"
-keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
-weight = 115
-+++
+---
+aliases:
+  - /docs/grafana/latest/image-rendering/troubleshooting/
+description: Image rendering troubleshooting
+keywords:
+  - grafana
+  - image
+  - rendering
+  - plugin
+  - troubleshooting
+title: Troubleshooting
+weight: 115
+---
 
 # Troubleshoot image rendering
 

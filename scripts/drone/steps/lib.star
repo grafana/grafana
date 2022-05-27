@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.41'
+grabpl_version = 'v2.9.49'
 build_image = 'grafana/build-container:1.5.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -181,26 +181,37 @@ def lint_drone_step():
         ],
     }
 
-
-def enterprise_downstream_step(edition):
+def enterprise_downstream_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    return {
+    repo = 'grafana/grafana-enterprise@'
+    if ver_mode == 'pr':
+        repo += '${DRONE_SOURCE_BRANCH}'
+    else:
+        repo += 'main'
+
+    step = {
         'name': 'trigger-enterprise-downstream',
         'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
             'token': from_secret(drone_token),
             'repositories': [
-                'grafana/grafana-enterprise@main',
+                repo,
             ],
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
+                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
     }
+
+    if ver_mode == 'pr':
+        step.update({ 'failure': 'ignore' })
+
+    return step
 
 
 def lint_backend_step(edition):
@@ -1156,6 +1167,16 @@ def ensure_cuetsified_step():
         ],
     }
 
+def verify_gen_cue_step():
+    return {
+        'name': 'verify-gen-cue',
+        'image': build_image,
+        'commands': [
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
 
 def end_to_end_tests_deps(edition):
     if disable_tests:

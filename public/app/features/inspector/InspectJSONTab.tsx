@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { AppEvents, dataFrameToJSON, PanelData, SelectableValue } from '@grafana/data';
+import { AppEvents, DataFrameJSON, dataFrameToJSON, DataTopic, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -76,11 +76,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (show === ShowContent.DataFrames) {
-      const series = data?.series;
-      if (!series) {
-        return { note: 'Missing Response Data' };
-      }
-      return data.series.map((frame) => dataFrameToJSON(frame));
+      return getPanelDataFrames(data);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -157,6 +153,26 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+  const frames: DataFrameJSON[] = [];
+  if (data?.series) {
+    for (const f of data.series) {
+      frames.push(dataFrameToJSON(f));
+    }
+  }
+  if (data?.annotations) {
+    for (const f of data.annotations) {
+      const json = dataFrameToJSON(f);
+      if (!json.schema?.meta) {
+        json.schema!.meta = {};
+      }
+      json.schema!.meta.dataTopic = DataTopic.Annotations;
+      frames.push(json);
+    }
+  }
+  return frames;
 }
 
 function getPrettyJSON(obj: any): string {

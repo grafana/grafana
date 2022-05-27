@@ -1,10 +1,19 @@
-+++
-title = "Preconfigured dashboards"
-description = "Guide for using Google Cloud Monitoring in Grafana"
-keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/next/features/datasources/cloudmonitoring/"]
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/google-cloud-monitoring/preconfig-cloud-monitoring-dashboards/
+  - /docs/grafana/latest/features/datasources/stackdriver/
+  - /docs/grafana/next/features/datasources/cloudmonitoring/
+description: Guide for using Google Cloud Monitoring in Grafana
+keywords:
+  - grafana
+  - stackdriver
+  - google
+  - guide
+  - cloud
+  - monitoring
+title: Preconfigured dashboards
+weight: 10
+---
 
 # Preconfigured Cloud Monitoring dashboards
 

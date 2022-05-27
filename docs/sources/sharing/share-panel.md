@@ -1,9 +1,17 @@
-+++
-title = "Share a panel"
-keywords = ["grafana", "dashboard", "documentation", "sharing", "library panel"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_panel/"]
-weight = 6
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/share-dashboard/
+  - /docs/grafana/latest/reference/share_panel/
+  - /docs/grafana/latest/sharing/share-panel/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - sharing
+  - library panel
+title: Share a panel
+weight: 6
+---
 
 # Share a panel
 

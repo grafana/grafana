@@ -1,9 +1,18 @@
-+++
-title = "Table"
-keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
-aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/next/panels/visualizations/table/table-field-options/"]
-weight = 1000
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/table_panel/
+  - /docs/grafana/latest/reference/table/
+  - /docs/grafana/latest/visualizations/table/
+  - /docs/grafana/next/panels/visualizations/table/table-field-options/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - panels
+  - table panel
+title: Table
+weight: 1000
+---
 
 # Table
 

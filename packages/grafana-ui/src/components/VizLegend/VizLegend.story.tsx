@@ -1,7 +1,7 @@
 import { Story, Meta } from '@storybook/react';
 import React, { FC, useEffect, useState } from 'react';
 
-import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { DisplayValue, GrafanaTheme } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { useTheme, VizLegend } from '@grafana/ui';
 
@@ -154,7 +154,7 @@ function generateLegendItems(
 ): VizLegendItem[] {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
   const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map((c) =>
-    getColorForTheme(c, theme)
+    theme.visualization.getColorByName(c)
   );
 
   return [...new Array(numberOfSeries)].map((item, i) => {

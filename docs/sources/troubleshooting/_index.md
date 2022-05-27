@@ -1,9 +1,15 @@
-+++
-title = "Troubleshooting"
-description = "Guide to troubleshooting Grafana problems"
-keywords = ["grafana", "troubleshooting", "documentation", "guide"]
-weight = 180
-+++
+---
+aliases:
+  - /docs/grafana/latest/troubleshooting/
+description: Guide to troubleshooting Grafana problems
+keywords:
+  - grafana
+  - troubleshooting
+  - documentation
+  - guide
+title: Troubleshooting
+weight: 180
+---
 
 # Troubleshooting
 

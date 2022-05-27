@@ -3,7 +3,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "matrix"
+          }
         },
         "fields": [
           {
@@ -20,9 +23,9 @@
               "frame": "float64"
             },
             "labels": {
-              "job": "prometheus",
+              "__name__": "up",
               "instance": "localhost:9090",
-              "__name__": "up"
+              "job": "prometheus"
             }
           }
         ]
@@ -41,7 +44,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "matrix"
+          }
         },
         "fields": [
           {
@@ -59,8 +65,8 @@
             },
             "labels": {
               "__name__": "up",
-              "job": "node",
-              "instance": "localhost:9091"
+              "instance": "localhost:9091",
+              "job": "node"
             }
           }
         ]

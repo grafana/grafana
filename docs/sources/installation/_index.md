@@ -1,10 +1,17 @@
-+++
-title = "Installation"
-description = "Installation guide for Grafana"
-keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/latest/install"]
-weight = 30
-+++
+---
+aliases:
+  - /docs/grafana/latest/install/
+  - /docs/grafana/latest/installation/
+  - /docs/grafana/latest/installation/installation/
+  - /docs/grafana/v2.1/installation/install/
+description: Installation guide for Grafana
+keywords:
+  - grafana
+  - installation
+  - documentation
+title: Installation
+weight: 30
+---
 
 # Install Grafana
 

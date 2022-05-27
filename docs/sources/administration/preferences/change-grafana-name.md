@@ -1,8 +1,14 @@
-+++
-title = "Change name and email"
-keywords = ["grafana", "configuration", "documentation", "home"]
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/preferences/change-grafana-name/
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change name and email
+weight: 100
+---
 
 # Change Grafana name and email
 

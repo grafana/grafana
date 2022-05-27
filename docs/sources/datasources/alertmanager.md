@@ -1,10 +1,15 @@
-+++
-title = "Alertmanager"
-description = "Guide for using Alertmanager in Grafana"
-keywords = ["grafana", "prometheus", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/alertmanager"]
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/alertmanager/
+  - /docs/grafana/latest/features/datasources/alertmanager/
+description: Guide for using Alertmanager in Grafana
+keywords:
+  - grafana
+  - prometheus
+  - guide
+title: Alertmanager
+weight: 150
+---
 
 # Alertmanager data source
 
