@@ -52,7 +52,7 @@ With [enhanced LDAP integration]({{< relref "enhanced_ldap.md" >}}), you can set
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "./saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+[SAML authentication]({{< relref "./configure-saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ## Enterprise features
 
