@@ -58,13 +58,13 @@ func TestSlackNotifier(t *testing.T) {
 	tmpl.ExternalURL = externalURL
 
 	cases := []struct {
-		name         string
-		settings     string
-		alerts       []*types.Alert
-		expMsg       *slackMessage
-		expInitError string
-		expMsgError  error
-		webhookSent  bool
+		name          string
+		settings      string
+		alerts        []*types.Alert
+		expMsg        *slackMessage
+		expInitError  string
+		expMsgError   error
+		expWebhookURL string
 	}{
 		{
 			name: "Correct config with one alert",
@@ -241,8 +241,8 @@ func TestSlackNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsgError: nil,
-			webhookSent: true,
+			expMsgError:   nil,
+			expWebhookURL: SlackImageAPIEndpoint,
 		},
 		{
 			name: "Correct config with multiple alerts and template",
@@ -334,6 +334,43 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		},
+		{
+			name: "Custom image upload URL",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:",
+				"imageUploadUrl": "https://custom-domain.upload"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-path-found"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expMsgError:   nil,
+			expWebhookURL: "https://custom-domain.upload",
+		},
 	}
 
 	for _, c := range cases {
@@ -413,11 +450,9 @@ func TestSlackNotifier(t *testing.T) {
 
 			require.JSONEq(t, string(expBody), body)
 
-			if c.webhookSent {
-				require.True(t, len(notificationService.Webhook.Url) > 0)
-			} else {
-				require.Equal(t, "", notificationService.Webhook.Url)
-			}
+			// If we should have sent to the webhook, the mock notification service
+			// will have a record of it.
+			require.Equal(t, c.expWebhookURL, notificationService.Webhook.Url)
 		})
 	}
 }
