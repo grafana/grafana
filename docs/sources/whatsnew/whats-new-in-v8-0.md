@@ -45,7 +45,7 @@ In addition to data source integration, events can be sent to dashboards by post
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
 
-For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/set-up-grafana-live" >}}).
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/set-up-grafana-live/" >}}).
 
 ### Prometheus metrics browser
 

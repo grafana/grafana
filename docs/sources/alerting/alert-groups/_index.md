@@ -17,5 +17,5 @@ Alert groups show grouped alerts from an Alertmanager instance. By default, the 
 
 For more information, see:
 
-- [View alert groupings]({{< relref "./view-alert-grouping.md" >}})
-- [Filter alerts by group]({{< relref "./filter-alerts.md" >}})
+- [View alert groupings]({{< relref "view-alert-grouping.md" >}})
+- [Filter alerts by group]({{< relref "filter-alerts.md" >}})

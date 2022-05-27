@@ -40,7 +40,7 @@ Supported auth providers:
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "configure-saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 

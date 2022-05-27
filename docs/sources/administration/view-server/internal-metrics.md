@@ -15,7 +15,7 @@ weight: 200
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "../../administration/configuration/#metrics" >}}) and [metrics.graphite]({{< relref "../../administration/configuration/#metrics-graphite" >}}) in [Configuration]({{< relref "../../administration/configuration.md" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "../../administration/configuration/#metrics" >}}) and [metrics.graphite]({{< relref "../../administration/configuration/#metrics-graphite" >}}) in [Configuration]({{< relref "../configuration.md" >}}).
 
 ## Available metrics
 

@@ -14,7 +14,7 @@ weight: 800
 
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud Pro and Advanced and in Grafana Enterprise.
 
-> If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
+> If you have [Role-based access control]({{< relref "access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
 {{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
@@ -28,11 +28,11 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Access control
 
-When [RBAC]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/rbac-fixed-basic-role-definitions" >}}) to create and manage reports.
+When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/rbac-fixed-basic-role-definitions/" >}}) to create and manage reports.
 
 ## Create or update a report
 
-Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}).
+Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
@@ -84,7 +84,7 @@ By default, reports use the saved time range of the dashboard. Changing the time
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "../dashboards/time-range-controls.md/#dashboard-time-settings" >}}).
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "../dashboards/time-range-controls.md#dashboard-time-settings" >}}).
 
 ### Layout and orientation
 
@@ -152,7 +152,7 @@ You can pause sending of reports from the report list view by clicking the pause
 
 ## Send report via the API
 
-You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api" >}}).
+You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api/" >}}).
 
 ## Rendering configuration
 

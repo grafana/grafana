@@ -127,7 +127,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 <hr />
 
@@ -673,7 +673,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 
@@ -815,7 +815,7 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 
