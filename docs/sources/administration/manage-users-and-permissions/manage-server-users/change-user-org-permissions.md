@@ -11,7 +11,7 @@ Update organization permissions when you want to enhance or restrict a user's ac
 
 ## Before you begin
 
-- [Add a user to an organization]({{< relref "./add-remove-user-to-org.md" >}})
+- [Add a user to an organization]({{< relref "add-remove-user-to-org.md" >}})
 - Ensure you have Grafana server administrator privileges
 
 **To change a user's organization permissions**:

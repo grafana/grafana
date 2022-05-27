@@ -12,7 +12,7 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 
 ## Before you begin
 
-- [Create a library panel]({{< relref "../library-panels/create-library-panel.md" >}}).
+- [Create a library panel]({{< relref "create-library-panel.md" >}}).
 
 **To add a library panel to a dashboard**:
 

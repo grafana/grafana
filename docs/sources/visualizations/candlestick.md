@@ -20,7 +20,7 @@ The Candlestick panel allows you to visualize data that includes a number of con
 
 {{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
 
-The Candlestick panel builds upon the foundation of the [time series]({{< relref "./time-series/_index.md" >}}) panel and includes many common configuration settings.
+The Candlestick panel builds upon the foundation of the [time series]({{< relref "time-series/_index.md" >}}) panel and includes many common configuration settings.
 
 ## Mode
 
@@ -56,4 +56,4 @@ The candlestick panel will attempt to map fields to the appropriate dimension. T
 
 ## Additional fields
 
-The candlestick panel is based on the time series panel. It can visualization additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow the panel to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series]({{< relref "./time-series/_index.md" >}}) panel.
+The candlestick panel is based on the time series panel. It can visualization additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow the panel to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series]({{< relref "time-series/_index.md" >}}) panel.
