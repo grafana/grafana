@@ -31,6 +31,8 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
   const styles = useStyles2(panelStyles);
+  const urlParams = new URLSearchParams(window.location.search);
+  const disablePanelTitle = urlParams.get('disablePanelTitle');
 
   return (
     <>
@@ -44,31 +46,38 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         error={error}
       />
       <div className={className}>
-        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
-          {({ closeMenu, panelMenuOpen }) => {
-            return (
-              <div className="panel-title">
-                <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-                {alertState ? (
-                  <Icon
-                    name={alertState === 'alerting' ? 'heart-break' : 'heart'}
-                    className="icon-gf panel-alert-icon"
-                    style={{ marginRight: '4px' }}
-                    size="sm"
+        {!disablePanelTitle && (
+          <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
+            {({ closeMenu, panelMenuOpen }) => {
+              return (
+                <div className="panel-title">
+                  <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+                  {alertState ? (
+                    <Icon
+                      name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                      className="icon-gf panel-alert-icon"
+                      style={{ marginRight: '4px' }}
+                      size="sm"
+                    />
+                  ) : null}
+                  <h2 className={styles.titleText}>{title}</h2>
+                  <Icon name="angle-down" className="panel-menu-toggle" />
+                  <PanelHeaderMenuWrapper
+                    panel={panel}
+                    dashboard={dashboard}
+                    show={panelMenuOpen}
+                    onClose={closeMenu}
                   />
-                ) : null}
-                <h2 className={styles.titleText}>{title}</h2>
-                <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
-                {data.request && data.request.timeInfo && (
-                  <span className="panel-time-info">
-                    <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
-                  </span>
-                )}
-              </div>
-            );
-          }}
-        </PanelHeaderMenuTrigger>
+                  {data.request && data.request.timeInfo && (
+                    <span className="panel-time-info">
+                      <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+          </PanelHeaderMenuTrigger>
+        )}
       </div>
     </>
   );
