@@ -1,6 +1,6 @@
+import { Scene } from './Scene';
 import { SceneFlexLayout } from './SceneFlexLayout';
 import { VizPanel } from './VizPanel';
-import { Scene } from './scene';
 
 describe('Scene', () => {
   it('SceneItem should have parent when added to container', () => {

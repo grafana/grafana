@@ -130,12 +130,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       component:
         config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
           ? SafeDynamicImport(
-            () =>
-              import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
-          )
+              () =>
+                import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
+            )
           : SafeDynamicImport(
-            () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
-          ),
+              () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+            ),
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
@@ -327,8 +327,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: !config.verifyEmailEnabled
         ? () => <Redirect to="/signup" />
         : SafeDynamicImport(
-          () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
-        ),
+            () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
+          ),
       pageClass: 'login-page sidemenu-hidden',
     },
     {
@@ -426,9 +426,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dyndash',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/dyndash/DynDashPage')
-      ),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashList')),
+    },
+    {
+      path: '/dyndash/:name',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashPage')),
     },
 
     ...getPluginCatalogRoutes(),

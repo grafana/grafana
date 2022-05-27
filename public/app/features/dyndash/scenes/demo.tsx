@@ -1,11 +1,11 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { Scene, ScenePanel } from '../models/Scene';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
 import { SceneTimeRange } from '../models/SceneTimeRange';
 import { SceneToolbarButton } from '../models/SceneToolbarButton';
 import { VizPanel } from '../models/VizPanel';
-import { Scene, ScenePanel } from '../models/scene';
 
 export function getDemoScene(): Scene {
   const scene = new Scene({

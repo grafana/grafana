@@ -1,19 +1,17 @@
 // Libraries
 import React, { FC } from 'react';
 
-// Types
-// import { useObservable } from '@grafana/data';
-import { getDemoScene } from './scenes/demo';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export interface Props {
-  name: string;
-}
+import { getScenes } from './scenes';
 
-export const DynDashPage: FC<Props> = ({ name }) => {
-  const scene = getDemoScene();
+export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
+
+export const DynDashPage: FC<Props> = (props) => {
+  const scene = getScenes().find((x) => x.state.title === props.match.params.name);
 
   if (!scene) {
-    return <h2>Loading...</h2>;
+    return <h2>Scene not found</h2>;
   }
 
   return (

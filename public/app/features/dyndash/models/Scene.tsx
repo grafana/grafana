@@ -10,7 +10,7 @@ import {
   SceneItemStateWithScope,
 } from './SceneItem';
 
-interface SceneState extends SceneItemStateWithScope {
+interface SceneState extends SceneItemStateWithScope, SceneLayoutItemChildState {
   title: string;
   layout: SceneItem<any>;
   actions?: Array<SceneItem<any>>;

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AbsoluteTimeRange, TimeRange, toUtc } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
