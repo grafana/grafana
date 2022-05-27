@@ -43,6 +43,7 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
                   data={data}
                   options={options}
                   onOptionsChange={() => {}}
+                  onChangeTimeRange={model.onSetTimeRange}
                 />
               </>
             )}

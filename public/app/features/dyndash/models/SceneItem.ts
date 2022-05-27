@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Observer, ReplaySubject, Subscribable, Subscription } from 'rxjs';
 
-import { PanelData, TimeRange, useObservable } from '@grafana/data';
+import { AbsoluteTimeRange, PanelData, TimeRange, toUtc, useObservable } from '@grafana/data';
 
 export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   subject = new ReplaySubject<TState>();
@@ -103,7 +103,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   /**
    * Will walk up the scene object graph to the closest context.timeRange scene object
    */
-  getTimeRange(): SceneItem<SceneTimeRangeState> | null {
+  getTimeRange(): SceneItem<SceneTimeRangeState> {
     const $timeRange = (this.state as SceneItemStateWithScope).$timeRange;
     if ($timeRange) {
       return $timeRange;
@@ -113,8 +113,22 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
       return this.parent.getTimeRange();
     }
 
-    return null;
+    throw new Error('No time range found for scene object');
   }
+
+  onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
+    const sceneTimeRange = this.getTimeRange();
+    sceneTimeRange.setState({
+      timeRange: {
+        raw: {
+          from: toUtc(timeRange.from),
+          to: toUtc(timeRange.to),
+        },
+        from: toUtc(timeRange.from),
+        to: toUtc(timeRange.to),
+      },
+    });
+  };
 
   onCloseScene() {
     this.subs.unsubscribe();
