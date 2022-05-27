@@ -232,7 +232,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 				},
 			},
 			subjectTmpl: `This notification is {{ .Status }}!`,
-			expSubject: "This notification is firing!",
+			expSubject:  "This notification is firing!",
 			expSnippets: []string{},
 		},
 	}
