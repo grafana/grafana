@@ -1,9 +1,18 @@
-+++
-title = "Dashboard Folders"
-keywords = ["grafana", "dashboard", "dashboard folders", "folder", "folders", "documentation", "guide"]
-aliases = ["/docs/grafana/latest/reference/dashboard_folders/"]
-weight = 6
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/dashboard-folders/
+  - /docs/grafana/latest/reference/dashboard_folders/
+keywords:
+  - grafana
+  - dashboard
+  - dashboard folders
+  - folder
+  - folders
+  - documentation
+  - guide
+title: Dashboard Folders
+weight: 6
+---
 
 # Dashboard Folders
 

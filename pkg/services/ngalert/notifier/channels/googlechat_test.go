@@ -20,12 +20,6 @@ func TestGoogleChatNotifier(t *testing.T) {
 	constNow := time.Now()
 	defer mockTimeNow(constNow)()
 
-	tmpl := templateForTests(t)
-
-	externalURL, err := url.Parse("http://localhost")
-	require.NoError(t, err)
-	tmpl.ExternalURL = externalURL
-
 	cases := []struct {
 		name         string
 		settings     string
@@ -33,10 +27,12 @@ func TestGoogleChatNotifier(t *testing.T) {
 		expMsg       *outerStruct
 		expInitError string
 		expMsgError  error
+		externalURL  string
 	}{
 		{
-			name:     "One alert",
-			settings: `{"url": "http://localhost"}`,
+			name:        "One alert",
+			settings:    `{"url": "http://localhost"}`,
+			externalURL: "http://localhost",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -89,8 +85,9 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Multiple alerts",
-			settings: `{"url": "http://localhost"}`,
+			name:        "Multiple alerts",
+			settings:    `{"url": "http://localhost"}`,
+			externalURL: "http://localhost",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -149,10 +146,12 @@ func TestGoogleChatNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
+			externalURL:  "http://localhost",
 			expInitError: `could not find url property in settings`,
 		}, {
-			name:     "Customized message",
-			settings: `{"url": "http://localhost", "message": "I'm a custom template and you have {{ len .Alerts.Firing }} firing alert."}`,
+			name:        "Customized message",
+			settings:    `{"url": "http://localhost", "message": "I'm a custom template and you have {{ len .Alerts.Firing }} firing alert."}`,
+			externalURL: "http://localhost",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -205,8 +204,9 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Missing field in template",
-			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
+			name:        "Missing field in template",
+			settings:    `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
+			externalURL: "http://localhost",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -259,8 +259,9 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Invalid template",
-			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ {.NotAField }} bad template"}`,
+			name:        "Invalid template",
+			settings:    `{"url": "http://localhost", "message": "I'm a custom template {{ {.NotAField }} bad template"}`,
+			externalURL: "http://localhost",
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -308,10 +309,104 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		},
+		{
+			name:        "Empty external URL",
+			settings:    `{ "url": "http://localhost" }`, // URL in settings = googlechat url
+			externalURL: "",                              // external URL = URL of grafana from configuration
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\n",
+										},
+									},
+
+									// No button widget here since the external URL is not absolute
+
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:        "Relative external URL",
+			settings:    `{ "url": "http://localhost" }`, // URL in settings = googlechat url
+			externalURL: "/grafana",                      // external URL = URL of grafana from configuration
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: /grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: /grafana/d/abcd\nPanel: /grafana/d/abcd?viewPanel=efgh\n",
+										},
+									},
+
+									// No button widget here since the external URL is not absolute
+
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			tmpl := templateForTests(t)
+
+			externalURL, err := url.Parse(c.externalURL)
+			require.NoError(t, err)
+			tmpl.ExternalURL = externalURL
+
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
@@ -329,10 +424,11 @@ func TestGoogleChatNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			imageStore := &UnavailableImageStore{}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewGoogleChatNotifier(cfg, webhookSender, tmpl)
+			pn := NewGoogleChatNotifier(cfg, imageStore, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

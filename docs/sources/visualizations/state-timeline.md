@@ -1,10 +1,16 @@
-+++
-title = "State timeline"
-description = "State timeline visualization"
-keywords = ["grafana", "docs", "state timeline", "panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/state-timeline/"]
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/state-timeline/
+  - /docs/grafana/latest/visualizations/state-timeline/
+description: State timeline visualization
+keywords:
+  - grafana
+  - docs
+  - state timeline
+  - panel
+title: State timeline
+weight: 900
+---
 
 # State timeline
 

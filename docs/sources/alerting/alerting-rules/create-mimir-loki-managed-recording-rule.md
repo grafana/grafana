@@ -1,11 +1,19 @@
-+++
-title = "Create Grafana Mimir or Loki managed recording rule"
-description = "Create Grafana Mimir or Loki managed recording rule"
-keywords = ["grafana", "alerting", "guide", "rules", "recording rules", "create"]
-weight = 400
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/"]
-
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+description: Create Grafana Mimir or Loki managed recording rule
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - recording rules
+  - create
+title: Create Grafana Mimir or Loki managed recording rule
+weight: 400
+---
 
 # Create a Grafana Mimir or Loki managed recording rule
 
@@ -36,7 +44,7 @@ For Grafana Mimir and Loki data sources to work with Grafana 8.0 alerting, enabl
    - Enter a PromQL or LogQL expression. The rule fires if the evaluation result has at least one series with a value that is greater than 0. An alert is created for each series.
      {{< figure src="/static/img/docs/alerting/unified/rule-edit-mimir-query-8-0.png" max-width="550px" caption="Alert details" >}}
 1. In Step 3, add additional metadata associated with the rule.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "./alert-annotation-label.md" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/_index.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.

@@ -594,6 +594,53 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].At(1), 0.003535405)
 	})
 
+	t.Run("exemplars response with inconsistent labels should marshal json ok", func(t *testing.T) {
+		value := make(map[TimeSeriesQueryType]interface{})
+		exemplars := []apiv1.ExemplarQueryResult{
+			{
+				SeriesLabels: p.LabelSet{
+					"__name__": "tns_request_duration_seconds_bucket",
+					"instance": "app:80",
+					"job":      "tns/app",
+					"service":  "example",
+				},
+				Exemplars: []apiv1.Exemplar{
+					{
+						Labels:    p.LabelSet{"traceID": "test1"},
+						Value:     0.003535405,
+						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
+					},
+				},
+			},
+			{
+				SeriesLabels: p.LabelSet{
+					"__name__": "tns_request_duration_seconds_bucket",
+					"instance": "app:80",
+					"job":      "tns/app",
+					"service":  "example",
+				},
+				Exemplars: []apiv1.Exemplar{
+					{
+						Labels:    p.LabelSet{"traceID": "test2", "userID": "test3"},
+						Value:     0.003535405,
+						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
+					},
+				},
+			},
+		}
+
+		value[ExemplarQueryType] = exemplars
+		query := &PrometheusQuery{
+			LegendFormat: "legend {{app}}",
+		}
+		res, err := parseTimeSeriesResponse(value, query)
+		require.NoError(t, err)
+
+		// Test frame marshal json no error.
+		_, err = res[0].MarshalJSON()
+		require.NoError(t, err)
+	})
+
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
 		values := []p.SamplePair{
 			{Value: 1, Timestamp: 1000},

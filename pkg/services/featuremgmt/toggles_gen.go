@@ -11,9 +11,9 @@ const (
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
 
-	// FlagEnvelopeEncryption
-	// encrypt secrets
-	FlagEnvelopeEncryption = "envelopeEncryption"
+	// FlagDisableEnvelopeEncryption
+	// Disable envelope encryption (emergency only)
+	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
 	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
@@ -71,14 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrol
-	// Support robust access control
-	FlagAccesscontrol = "accesscontrol"
-
-	// FlagAccesscontrolBuiltins
-	// Simplify access control builtin roles
-	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
-
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -98,10 +90,6 @@ const (
 	// FlagDisableHttpRequestHistogram
 	// Do not create histograms for http requests
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
-
-	// FlagValidatedQueries
-	// only execute the query saved in a panel
-	FlagValidatedQueries = "validatedQueries"
 
 	// FlagPublicDashboards
 	// enables public access to dashboards
@@ -159,10 +147,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagPersistNotifications
-	// PoC Notifications page
-	FlagPersistNotifications = "persistNotifications"
-
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
@@ -186,4 +170,16 @@ const (
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
+
+	// FlagPrometheusStreamingJSONParser
+	// Enable streaming JSON parser for Prometheus datasource
+	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagPrometheusWideSeries
+	// Enable wide series responses in the Prometheus datasource
+	FlagPrometheusWideSeries = "prometheusWideSeries"
 )

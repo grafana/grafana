@@ -1,8 +1,10 @@
-+++
-title = "Navigate the Grafana panel editor"
-weight = 10
-aliases = ["/docs/sources/panels/working-with-panels/navigate-panel-editor/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/navigate-panel-editor/
+  - /docs/sources/panels/working-with-panels/navigate-panel-editor/
+title: Navigate the Grafana panel editor
+weight: 10
+---
 
 # Navigate the Grafana panel editor
 
@@ -31,9 +33,9 @@ This page describes the parts of the Grafana panel editor.
 
 4. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization, including:
 
-   - [Apply color to series and fields]({{< relref "./apply-color-to-series.md" >}})
-   - [Format a standard field]({{< relref "./format-standard-fields.md" >}})
-   - [Add a title and description to a panel]({{< relref "./add-title-and-description.md" >}})
+   - [Apply color to series and fields]({{< relref "apply-color-to-series.md" >}})
+   - [Format a standard field]({{< relref "format-standard-fields.md" >}})
+   - [Add a title and description to a panel]({{< relref "add-title-and-description.md" >}})
 
 > Not all options are available for each visualization.
 

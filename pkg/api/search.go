@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
@@ -66,8 +67,48 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		return response.Error(500, "Search failed", err)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSearch)
-	return response.JSON(http.StatusOK, searchQuery.Result)
+	defer c.TimeRequest(metrics.MApiDashboardSearch)
+
+	if !c.QueryBool("accesscontrol") {
+		return response.JSON(http.StatusOK, searchQuery.Result)
+	}
+
+	return hs.searchHitsWithMetadata(c, searchQuery.Result)
+}
+
+func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
+	folderUIDs := make(map[string]bool)
+	dashboardUIDs := make(map[string]bool)
+
+	for _, hit := range hits {
+		if hit.Type == models.DashHitFolder {
+			folderUIDs[hit.UID] = true
+		} else {
+			dashboardUIDs[hit.UID] = true
+			folderUIDs[hit.FolderUID] = true
+		}
+	}
+
+	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folderUIDs)
+	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
+
+	// search hit with access control metadata attached
+	type hitWithMeta struct {
+		*models.Hit
+		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
+	}
+	hitsWithMeta := make([]hitWithMeta, 0, len(hits))
+	for _, hit := range hits {
+		var meta accesscontrol.Metadata
+		if hit.Type == models.DashHitFolder {
+			meta = folderMeta[hit.UID]
+		} else {
+			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], folderMeta[hit.FolderUID])
+		}
+		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
+	}
+
+	return response.JSON(http.StatusOK, hitsWithMeta)
 }
 
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {

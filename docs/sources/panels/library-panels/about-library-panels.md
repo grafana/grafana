@@ -1,8 +1,10 @@
-+++
-title = "About Grafana library panels"
-weight = 10
-aliases = ["/docs/sources/panels/library-panels/about-library-panels/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/library-panels/about-library-panels/
+  - /docs/sources/panels/library-panels/about-library-panels/
+title: About Grafana library panels
+weight: 10
+---
 
 # About Grafana panel libraries
 

@@ -1,8 +1,10 @@
-+++
-title = "Dashboards"
-aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
-weight = 80
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/
+  - /docs/grafana/latest/features/dashboard/dashboards/
+title: Dashboards
+weight: 80
+---
 
 # About Grafana dashboards
 
@@ -12,17 +14,17 @@ Dashboard snapshots are static . Queries and expressions cannot be re-executed f
 
 Before you begin, ensure that you have configured a data source. See also:
 
-- [Working with Grafana dashboard UI]({{< relref "./dashboard-ui/_index.md" >}})
-- [Dashboard folders]({{< relref "./dashboard-folders.md" >}})
-- [Create dashboard]({{< relref "./dashboard-create" >}})
-- [Manage dashboards]({{< relref "./dashboard-manage.md" >}})
-- [Annotations]({{< relref "./annotations.md" >}})
-- [Playlist]({{< relref "./playlist.md" >}})
-- [Search]({{< relref "./search.md" >}})
-- [Keyboard shortcuts]({{< relref "./shortcuts.md" >}})
-- [Reporting]({{< relref "./reporting.md" >}})
-- [Time range controls]({{< relref "./time-range-controls.md" >}})
-- [Dashboard version history]({{< relref "./dashboard-history.md" >}})
-- [Dashboard export and import]({{< relref "./export-import.md" >}})
-- [Dashboard JSON model]({{< relref "./json-model.md" >}})
-- [Scripted dashboards]({{< relref "./scripted-dashboards.md" >}})
+- [Working with Grafana dashboard UI]({{< relref "dashboard-ui/_index.md" >}})
+- [Dashboard folders]({{< relref "dashboard-folders.md" >}})
+- [Create dashboard]({{< relref "dashboard-create/" >}})
+- [Manage dashboards]({{< relref "dashboard-manage.md" >}})
+- [Annotations]({{< relref "annotations.md" >}})
+- [Playlist]({{< relref "playlist.md" >}})
+- [Search]({{< relref "search.md" >}})
+- [Keyboard shortcuts]({{< relref "shortcuts.md" >}})
+- [Reporting]({{< relref "reporting.md" >}})
+- [Time range controls]({{< relref "time-range-controls.md" >}})
+- [Dashboard version history]({{< relref "dashboard-history.md" >}})
+- [Dashboard export and import]({{< relref "export-import.md" >}})
+- [Dashboard JSON model]({{< relref "json-model.md" >}})
+- [Scripted dashboards]({{< relref "scripted-dashboards.md" >}})

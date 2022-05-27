@@ -1,8 +1,10 @@
-+++
-title = "Configure a legend"
-aliases = ["/docs/sources/panels/working-with-panels/configure-legend/"]
-weight = 70
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/configure-legend/
+  - /docs/sources/panels/working-with-panels/configure-legend/
+title: Configure a legend
+weight: 70
+---
 
 # Configure a legend
 
@@ -16,7 +18,7 @@ When you apply your changes, the visualization changes appear to all users of th
 
 ### Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
 
 **To isolate series data in a visualization**:
 

@@ -1,27 +1,27 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
+import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field } from '@grafana/data';
+import { Field, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
+import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
 
-const TYPE_COLUMN_WIDTH = 130;
+const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const LOCATION_COLUMN_WIDTH = 200;
-const TAGS_COLUMN_WIDTH = 200;
+const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
+  clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void
@@ -30,25 +30,47 @@ export const generateColumns = (
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  if (sortField) {
+    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+  }
 
   let width = 50;
-
   if (selection && selectionToggle) {
     width = 30;
     columns.push({
       id: `column-checkbox`,
       width,
-      Header: () => (
-        <div className={styles.checkboxHeader}>
-          <Checkbox
-            onChange={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              alert('SELECT ALL!!!');
-            }}
-          />
-        </div>
-      ),
+      Header: () => {
+        if (selection('*', '*')) {
+          return (
+            <div className={styles.checkboxHeader}>
+              <IconButton name={'check-square' as any} onClick={clearSelection} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.checkboxHeader}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const { view } = response;
+                const count = Math.min(view.length, 50);
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  if (item.uid && item.kind) {
+                    if (!selection(item.kind, item.uid)) {
+                      selectionToggle(item.kind, item.uid);
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        );
+      },
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
@@ -77,9 +99,14 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
+      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let name = access.name.values.get(p.row.index);
+      if (!name?.length) {
+        name = 'Missing title'; // normal for panels
+        classNames += ' ' + styles.missingTitleText;
+      }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
           {name}
         </a>
       );
@@ -111,29 +138,17 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  // Show tags if we have any
-  if (access.tags) {
-    width = TAGS_COLUMN_WIDTH;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
-    availableWidth -= width;
-  }
+  width = Math.max(availableWidth / 2.5, 200);
+  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
+  availableWidth -= width;
 
-  width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-  if (meta?.locationInfo) {
+  if (meta?.locationInfo && availableWidth > 0) {
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div
-            {...p.cellProps}
-            className={cx(
-              p.cellStyle,
-              css`
-                padding-right: 10px;
-              `
-            )}
-          >
+          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
@@ -150,7 +165,29 @@ export const generateColumns = (
       id: `column-location`,
       field: access.location ?? access.url,
       Header: 'Location',
-      width,
+      width: availableWidth,
+    });
+  }
+
+  if (sortField) {
+    columns.push({
+      Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
+      Cell: (p) => {
+        let value = sortField.values.get(p.row.index);
+        try {
+          if (isNumber(value)) {
+            value = Number(value).toLocaleString();
+          }
+        } catch {}
+        return (
+          <div {...p.cellProps} className={styles.sortedItems}>
+            {`${value}`}
+          </div>
+        );
+      },
+      id: `column-sort-field`,
+      field: sortField,
+      width: SORT_FIELD_WIDTH,
     });
   }
 
@@ -225,11 +262,11 @@ function makeTypeColumn(
   styles: Record<string, string>
 ): TableColumn {
   return {
-    Cell: DefaultCell,
     id: `column-type`,
     field: kindField ?? typeField,
     Header: 'Type',
-    accessor: (row: any, i: number) => {
+    Cell: (p) => {
+      const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
@@ -257,13 +294,26 @@ function makeTypeColumn(
                   icon = v;
                 }
                 txt = info.name;
+              } else {
+                switch (type) {
+                  case 'row':
+                    txt = 'Row';
+                    icon = `public/img/icons/unicons/bars.svg`;
+                    break;
+                  case 'singlestat': // auto-migration
+                    txt = 'Singlestat';
+                    icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
+                    break;
+                  default:
+                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                }
               }
             }
             break;
         }
       }
       return (
-        <div className={styles.typeText}>
+        <div {...p.cellProps} className={styles.typeText}>
           <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
           {txt}
         </div>
@@ -282,14 +332,11 @@ function makeTagsColumn(
   return {
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
-      if (tags) {
-        return (
-          <div {...p.cellProps} className={p.cellStyle}>
-            <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
-          </div>
-        );
-      }
-      return null;
+      return tags ? (
+        <div {...p.cellProps} className={p.cellStyle}>
+          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+        </div>
+      ) : null;
     },
     id: `column-tags`,
     field: field,

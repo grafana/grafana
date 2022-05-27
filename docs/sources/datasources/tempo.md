@@ -1,10 +1,17 @@
-+++
-title = "Tempo"
-description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
-keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
-weight = 1400
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/tempo/
+  - /docs/grafana/latest/features/datasources/tempo/
+description: High volume, minimal dependency trace storage. OSS tracing solution from
+  Grafana Labs.
+keywords:
+  - grafana
+  - tempo
+  - guide
+  - tracing
+title: Tempo
+weight: 1400
+---
 
 # Tempo data source
 
@@ -27,7 +34,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -43,10 +50,15 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
 
-To configure trace to metrics, select the target Prometheus data source and enter the desired query.
+To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
 -- **Data source -** Target data source.
--- **Query -** Query that runs when navigating from a trace to the metrics data source.
+-- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
+
+Each linked query consists of:
+
+-- **Link Label -** (Optional) Descriptive label for the linked query.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
 ### Service Graph
 
@@ -212,6 +224,12 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: 'prom'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
       serviceMap:
         datasourceUid: 'prometheus'
       search:

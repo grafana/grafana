@@ -4,6 +4,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -58,6 +59,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -96,13 +98,11 @@
       "data": {
         "values": [
           [
-            1641889530123,
-            1641889531123,
+            1641889529123,
             1641889532123
           ],
           [
             54,
-            65,
             76
           ]
         ]

@@ -1,10 +1,15 @@
-+++
-title = "AWS CloudWatch"
-description = "Guide for using CloudWatch in Grafana"
-keywords = ["grafana", "cloudwatch", "guide"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Guide for using CloudWatch in Grafana
+keywords:
+  - grafana
+  - cloudwatch
+  - guide
+title: AWS CloudWatch
+weight: 200
+---
 
 # AWS CloudWatch data source
 

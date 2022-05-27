@@ -76,12 +76,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			accesscontrol.AddTeamMembershipMigrations(mg)
-			accesscontrol.AddDashboardPermissionsMigrator(mg)
-		}
-	}
+	accesscontrol.AddTeamMembershipMigrations(mg)
+	accesscontrol.AddDashboardPermissionsMigrator(mg)
+	accesscontrol.AddAlertingPermissionsMigrator(mg)
+
 	addQueryHistoryStarMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
@@ -95,6 +93,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	addPublicDashboardMigration(mg)
 	ualert.CreateDefaultFoldersForAlertingMigration(mg)
+	addDbFileStorageMigration(mg)
+
+	accesscontrol.AddManagedPermissionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

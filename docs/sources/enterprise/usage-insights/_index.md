@@ -1,14 +1,20 @@
-+++
-title = "Usage insights"
-description = "Understand how your Grafana instance is used"
-keywords = ["grafana", "usage-insights", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/usage-insights/
+description: Understand how your Grafana instance is used
+keywords:
+  - grafana
+  - usage-insights
+  - enterprise
+title: Usage insights
+weight: 200
+---
 
 # Usage insights
 
 Usage insights allow you to have a better understanding of how your Grafana instance is used.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 

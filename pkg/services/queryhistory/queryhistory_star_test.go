@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStarQueryInQueryHistory(t *testing.T) {
+func TestIntegrationStarQueryInQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "When users tries to star query in query history that does not exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.starHandler(sc.reqContext)

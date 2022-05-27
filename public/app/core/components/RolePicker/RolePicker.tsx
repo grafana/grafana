@@ -16,8 +16,9 @@ export interface Props {
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
   showBuiltInRole?: boolean;
-  onRolesChange: (newRoles: string[]) => void;
+  onRolesChange: (newRoles: Role[]) => void;
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
+  updateDisabled?: boolean;
 }
 
 export const RolePicker = ({
@@ -30,6 +31,7 @@ export const RolePicker = ({
   showBuiltInRole,
   onRolesChange,
   onBuiltinRoleChange,
+  updateDisabled,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -39,8 +41,9 @@ export const RolePicker = ({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setSelectedBuiltInRole(builtInRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles]);
+  }, [appliedRoles, builtInRole]);
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
@@ -55,7 +58,7 @@ export const RolePicker = ({
     } else {
       setOffset(-offset);
     }
-  }, [isOpen]);
+  }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -94,7 +97,7 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newRoles: string[], newBuiltInRole?: OrgRole) => {
+  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (onBuiltinRoleChange && newBuiltInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
@@ -144,6 +147,7 @@ export const RolePicker = ({
             showGroups={query.length === 0 || query.trim() === ''}
             builtinRolesDisabled={builtinRolesDisabled}
             showBuiltInRole={showBuiltInRole}
+            updateDisabled={updateDisabled || false}
             offset={offset}
           />
         )}

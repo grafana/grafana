@@ -1,8 +1,10 @@
-+++
-title = "Format a standard field"
-aliases = ["/docs/sources/panels/working-with-panels/format-standard-fields/"]
-weight = 40
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/format-standard-fields/
+  - /docs/sources/panels/working-with-panels/format-standard-fields/
+title: Format a standard field
+weight: 40
+---
 
 # Format a standard field
 
@@ -16,7 +18,7 @@ For a complete list of field formatting options, refer to [Standard field defini
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
 
 **To format a standard field**:
 

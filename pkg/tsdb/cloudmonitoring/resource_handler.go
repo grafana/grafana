@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/andybalholm/brotli"
-	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
@@ -27,7 +26,7 @@ type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/gceDefaultProject", getGCEDefaultProject)
+	mux.HandleFunc("/gceDefaultProject", s.getGCEDefaultProject)
 	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors))
 	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices))
 	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs))
@@ -35,13 +34,19 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	return mux
 }
 
-func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
-	project, err := utils.GCEDefaultProject(req.Context())
+func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
+	project, err := s.gceDefaultProjectGetter(req.Context())
 	if err != nil {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		return
 	}
-	writeResponse(rw, http.StatusOK, project)
+
+	encoded, err := json.Marshal(project)
+	if err != nil {
+		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("error retrieving default project %v", err))
+		return
+	}
+	writeResponseBytes(rw, http.StatusOK, encoded)
 }
 
 func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
