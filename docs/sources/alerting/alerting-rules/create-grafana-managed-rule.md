@@ -15,12 +15,12 @@ weight: 400
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting.md" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/_index.md" >}}) of Grafana alerting.
 
 ## Add Grafana managed rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **New alert rule**. The new rule page opens where the Grafana managed alerts option is selected by default.
+1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add queries and expressions to evaluate, and then select the alert condition.
    - For queries, select a data source from the drop-down.
    - Add one or more [queries]({{< relref "../../panels/query-a-data-source/add-a-query.md" >}}) or [expressions]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}).
@@ -37,12 +37,12 @@ Grafana allows you to create alerting rules that query one or more data sources,
 1. In Step 3, add the rule name, storage location, rule group, as well as additional metadata associated with the rule.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
    - From the **Folder** drop-down, select the folder where you want to store the rule.
-   - Add a rule group. Rules that are in the same group are evaluated at the same time.
+   - For **Group**, s[ecify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/_index.md" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification policy]({{< relref "../notifications/_index.md" >}}) for the rule. For more information, see [About Grafana alerting]({{< relref "../about-alerting.md" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/_index.md" >}}) of Grafana alerting.
+1. Next, create a [notification]({{< relref "../notifications/_index.md" >}}) for the rule.
 
 ### Single and multi dimensional rule
 
