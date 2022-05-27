@@ -33,6 +33,7 @@ export function getDemoScene(): Scene {
             new VizPanel({
               key: '3',
               size: {},
+              pluginId: 'timeseries',
               title: 'Panel 3',
             }),
           ],

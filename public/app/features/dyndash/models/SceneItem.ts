@@ -45,27 +45,29 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
 
   abstract Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
 
-  onMount() {
+  onInView() {
     const { $data } = this.state as SceneItemStateWithScope;
     if ($data) {
-      $data.onMount();
+      $data.onInView();
     }
   }
 
-  onUnmount() {
+  onOutOfView() {
     const { $data } = this.state as SceneItemStateWithScope;
     if ($data) {
-      $data.onUnmount();
+      $data.onOutOfView();
     }
+  }
+
+  registerOnMountEffect() {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      this.onInView();
+      return () => this.onOutOfView();
+    }, []);
   }
 
   useState() {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      this.onMount();
-      return () => this.onUnmount();
-    }, []);
-
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.subject, this.state);
   }
@@ -73,7 +75,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   /**
    * Will walk up the scene object graph to the closest context.data scene object
    */
-  useData(): SceneDataState | null {
+  useData(): SceneDataState {
     const $data = (this.state as SceneItemStateWithScope).$data;
     if ($data) {
       return $data.useState();
@@ -83,7 +85,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
       return this.parent.useData();
     }
 
-    return null;
+    return {};
   }
 
   /**
@@ -113,8 +115,8 @@ export interface SceneItem<TState> extends Subscribable<TState> {
   useState(): TState;
   setState(state: TState): void;
 
-  onMount(): void;
-  onUnmount(): void;
+  onInView(): void;
+  onOutOfView(): void;
 }
 
 export interface SceneItemStateWithScope {

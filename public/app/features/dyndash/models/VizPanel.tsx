@@ -1,11 +1,16 @@
 import React, { CSSProperties } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Stack } from '@grafana/experimental';
+import { PanelRenderer } from '@grafana/runtime';
+import { PanelChrome } from '@grafana/ui';
 
 import { SceneComponentProps, SceneItemBase, SceneLayoutItemChildState } from './SceneItem';
 
 export interface VizPanelState extends SceneLayoutItemChildState {
   title?: string;
+  pluginId: string;
+  options?: any;
 }
 
 export class VizPanel extends SceneItemBase<VizPanelState> {
@@ -17,8 +22,8 @@ export class VizPanel extends SceneItemBase<VizPanelState> {
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {
-  const state = model.useState();
-  const { timeRange } = model.getTimeRange()!.useState();
+  const { title, pluginId, options } = model.useState();
+  const { data } = model.useData();
 
   // useEffect(() => {
   //   model.mounted();
@@ -28,9 +33,31 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
   return (
     <div style={getItemStyles()}>
       <Stack direction="column">
-        {state.title && <h2>{state.title}</h2>}
-        <div>timeRange from: {timeRange.from.toLocaleString()}</div>
-        <div>timeRange to: {timeRange.to.toLocaleString()}</div>
+        <AutoSizer>
+          {({ width, height }) => {
+            if (width < 3 || height < 3 || !data) {
+              return null;
+            }
+
+            return (
+              <PanelChrome title={title} width={width} height={height}>
+                {(innerWidth, innerHeight) => (
+                  <>
+                    <PanelRenderer
+                      title="Raw data"
+                      pluginId={pluginId}
+                      width={innerWidth}
+                      height={innerHeight}
+                      data={data}
+                      options={options}
+                      onOptionsChange={() => {}}
+                    />
+                  </>
+                )}
+              </PanelChrome>
+            );
+          }}
+        </AutoSizer>
       </Stack>
     </div>
   );

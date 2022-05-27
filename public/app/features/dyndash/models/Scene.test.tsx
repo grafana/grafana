@@ -4,7 +4,7 @@ import { Scene } from './scene';
 
 describe('Scene', () => {
   it('SceneItem should have parent when added to container', () => {
-    const vizPanel = new VizPanel({});
+    const vizPanel = new VizPanel({ pluginId: 'table' });
     const scene = new Scene({
       title: 'Hello',
       layout: new SceneFlexLayout({
