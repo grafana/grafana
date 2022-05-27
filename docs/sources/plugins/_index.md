@@ -1,7 +1,9 @@
-+++
-title = "Plugins"
-weight = 160
-+++
+---
+aliases:
+  - /docs/grafana/latest/plugins/
+title: Plugins
+weight: 160
+---
 
 # Plugins
 

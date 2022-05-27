@@ -1,10 +1,15 @@
-+++
-title = "License restrictions"
-description = "Grafana Enterprise license restrictions"
-keywords = ["grafana", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/license-restrictions"]
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/license-restrictions/
+  - /docs/grafana/latest/enterprise/license/license-restrictions/
+description: Grafana Enterprise license restrictions
+keywords:
+  - grafana
+  - licensing
+  - enterprise
+title: License restrictions
+weight: 300
+---
 
 # Understanding Grafana Enterprise licensing
 

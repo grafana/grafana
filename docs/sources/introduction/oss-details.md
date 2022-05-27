@@ -1,14 +1,16 @@
-+++
-title = "What is Grafana OSS"
-weight = 5
-aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/guides/what-is-grafana/
+  - /docs/grafana/latest/introduction/oss-details/
+title: What is Grafana OSS
+weight: 5
+---
 
 # What is Grafana OSS
 
 [Grafana open source software](https://grafana.com/oss/) allows you to query, visualize, alert on, and understand your data no matter where it’s stored. With Grafana you can create, explore and share all of your data through elegant, flexible dashboards.
 
-After you have [installed Grafana]({{< relref "../installation/_index.md" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/getting-started.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../auth/_index.md" >}}).
+After you have [installed Grafana]({{< relref "../installation/_index.md" >}}) and set up your first dashboard using instructions in [Build your first dashboard]({{< relref "../getting-started/build-first-dashboard" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../auth/_index.md" >}}).
 
 In the following sections, you can get an overview of the capabilities of Grafana features as well as links to the product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -18,7 +20,7 @@ Explore your data through ad-hoc queries and dynamic drilldown. Split view and c
 
 ## Alerts
 
-If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/contact-points.md#list-of-notifiers-supported-by-grafana" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
+If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/contact-points/_index.md#list-of-notifiers-supported-by-grafana" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
 
 Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/alerting-rules/_index.md" >}}) for your most important metrics.
 

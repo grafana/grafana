@@ -1,8 +1,9 @@
-+++
-title = "Preferences"
-aliases =["/docs/grafana/latest/administration/preferences/"]
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/preferences/
+title: Preferences
+weight: 50
+---
 
 # Grafana preferences
 

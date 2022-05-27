@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame, PanelData } from '@grafana/data';
-import { Button, Select, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { Button, Select, HorizontalGroup, VerticalGroup, MultiSelect } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
@@ -44,7 +44,11 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
     }
     setDimensionLabels((prevLabels) => {
       const newLabels: DimensionLabels = {};
-      for (const label of Object.keys(labelsObj)) {
+      const currentLabels = Object.keys(labelsObj);
+      if (currentLabels.length === 0) {
+        return prevLabels;
+      }
+      for (const label of currentLabels) {
         if (prevLabels[label] && labelsObj[label].size < prevLabels[label].size) {
           newLabels[label] = prevLabels[label];
         } else {
@@ -100,7 +104,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
   };
 
   const onFilterInputChange = (index: number, v: SelectableValue<string> | null) => {
-    onFieldChange(index, 'filter', v?.value ?? '');
+    onFieldChange(index, 'filters', [v?.value ?? '']);
   };
 
   const getValidDimensionOptions = (selectedDimension: string) => {
@@ -118,11 +122,31 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     }));
   };
 
+  const getValidMultiSelectOptions = (selectedFilters: string[] | undefined, dimension: string) => {
+    const labelOptions = getValidFilterOptions(undefined, dimension);
+    if (selectedFilters) {
+      for (const filter of selectedFilters) {
+        if (!labelOptions.find((label) => label.value === filter)) {
+          labelOptions.push({ value: filter, label: filter });
+        }
+      }
+    }
+    return labelOptions;
+  };
+
   const getValidOperators = (selectedOperator: string) => {
     if (dimensionOperators.find((operator: SelectableValue) => operator.value === selectedOperator)) {
       return dimensionOperators;
     }
     return [...dimensionOperators, ...(selectedOperator ? [{ label: selectedOperator, value: selectedOperator }] : [])];
+  };
+
+  const onMultiSelectFilterChange = (index: number, v: Array<SelectableValue<string>>) => {
+    onFieldChange(
+      index,
+      'filters',
+      v.map((item) => item.value || '')
+    );
   };
 
   return (
@@ -145,16 +169,28 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
               allowCustomValue
             />
-            <Select
-              menuShouldPortal
-              placeholder="Select value"
-              value={filter.filter ? filter.filter : ''}
-              allowCustomValue
-              options={getValidFilterOptions(filter.filter, filter.dimension)}
-              onChange={(v) => onFilterInputChange(index, v)}
-              isClearable
-            />
-
+            {filter.operator === 'eq' || filter.operator === 'ne' ? (
+              <MultiSelect
+                menuShouldPortal
+                placeholder="Select value(s)"
+                value={filter.filters}
+                options={getValidMultiSelectOptions(filter.filters, filter.dimension)}
+                onChange={(v) => onMultiSelectFilterChange(index, v)}
+                aria-label={'dimension-labels-select'}
+                allowCustomValue
+              />
+            ) : (
+              // The API does not currently allow for multiple "starts with" clauses to be used.
+              <Select
+                menuShouldPortal
+                placeholder="Select value"
+                value={filter.filters ? filter.filters[0] : ''}
+                allowCustomValue
+                options={getValidFilterOptions(filter.filters ? filter.filters[0] : '', filter.dimension)}
+                onChange={(v) => onFilterInputChange(index, v)}
+                isClearable
+              />
+            )}
             <Button
               variant="secondary"
               size="md"

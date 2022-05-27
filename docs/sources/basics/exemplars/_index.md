@@ -1,9 +1,15 @@
-+++
-title = "Exemplars"
-description = "Exemplars"
-keywords = ["grafana", "concepts", "exemplars", "prometheus"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/exemplars/
+description: Exemplars
+keywords:
+  - grafana
+  - concepts
+  - exemplars
+  - prometheus
+title: Exemplars
+weight: 400
+---
 
 # Introduction to exemplars
 

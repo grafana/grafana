@@ -228,7 +228,7 @@ export function SelectBase<T>({
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal ? document.body : undefined,
+    menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,

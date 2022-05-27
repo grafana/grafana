@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/prometheus/alertmanager/template"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -24,6 +26,7 @@ type EmailNotifier struct {
 	Message     string
 	log         log.Logger
 	ns          notifications.EmailSender
+	images      ImageStore
 	tmpl        *template.Template
 }
 
@@ -42,7 +45,7 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
@@ -62,7 +65,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *template.Template) *EmailNotifier {
+func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -76,6 +79,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *temp
 		Message:     config.Message,
 		log:         log.New("alerting.notifier.email"),
 		ns:          ns,
+		images:      images,
 		tmpl:        t,
 	}
 }
@@ -120,6 +124,28 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			Template:    "ng_alert_notification",
 		},
 	}
+
+	// TODO: modify the email sender code to support multiple file or image URL
+	// fields. We cannot use images from every alert yet.
+	_ = withStoredImage(ctx, en.log, en.images,
+		func(index int, image *ngmodels.Image) error {
+			if image == nil {
+				return nil
+			}
+
+			if len(image.URL) != 0 {
+				cmd.Data["ImageLink"] = image.URL
+			} else if len(image.Path) != 0 {
+				file, err := os.Stat(image.Path)
+				if err == nil {
+					cmd.EmbeddedFiles = []string{image.Path}
+					cmd.Data["EmbeddedImage"] = file.Name()
+				} else {
+					en.log.Warn("failed to access email notification image attachment data", "error", err)
+				}
+			}
+			return nil
+		}, 0, as...)
 
 	if tmplErr != nil {
 		en.log.Warn("failed to template email message", "err", tmplErr.Error())

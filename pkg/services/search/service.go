@@ -4,20 +4,24 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		sortOptions: map[string]models.SortOption{
 			SortAlphaAsc.Name:  SortAlphaAsc,
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
-		sqlstore: sqlstore,
+		sqlstore:         sqlstore,
+		starService:      starService,
+		dashboardService: dashboardService,
 	}
 	return s
 }
@@ -45,9 +49,11 @@ type Service interface {
 }
 
 type SearchService struct {
-	Cfg         *setting.Cfg
-	sortOptions map[string]models.SortOption
-	sqlstore    sqlstore.Store
+	Cfg              *setting.Cfg
+	sortOptions      map[string]models.SortOption
+	sqlstore         sqlstore.Store
+	starService      star.Service
+	dashboardService dashboards.DashboardService
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
@@ -68,7 +74,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := s.sqlstore.SearchDashboards(ctx, &dashboardQuery); err != nil {
+	if err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -100,15 +106,15 @@ func sortedHits(unsorted models.HitList) models.HitList {
 }
 
 func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*models.Hit) error {
-	query := models.GetUserStarsQuery{
-		UserId: userID,
+	query := star.GetUserStarsQuery{
+		UserID: userID,
 	}
 
-	err := s.sqlstore.GetUserStars(ctx, &query)
+	res, err := s.starService.GetByUser(ctx, &query)
 	if err != nil {
 		return err
 	}
-	iuserstars := query.Result
+	iuserstars := res.UserStars
 	for _, dashboard := range hits {
 		if _, ok := iuserstars[dashboard.ID]; ok {
 			dashboard.IsStarred = true

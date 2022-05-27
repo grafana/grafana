@@ -1,8 +1,16 @@
-+++
-title = "Variable examples"
-keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/variable-examples/
+keywords:
+  - grafana
+  - templating
+  - documentation
+  - guide
+  - template
+  - variable
+title: Variable examples
+weight: 200
+---
 
 # Variable examples
 

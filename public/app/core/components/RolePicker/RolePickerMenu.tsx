@@ -17,7 +17,7 @@ import {
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
-type BuiltInRoles = Record<string, Role[]>;
+import { MENU_MAX_HEIGHT } from './constants';
 
 const BuiltinRoles = Object.values(OrgRole);
 const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r) => ({
@@ -32,7 +32,6 @@ const fixedRoleGroupNames: Record<string, string> = {
 
 interface RolePickerMenuProps {
   builtInRole?: OrgRole;
-  builtInRoles?: BuiltInRoles;
   options: Role[];
   appliedRoles: Role[];
   showGroups?: boolean;
@@ -40,13 +39,14 @@ interface RolePickerMenuProps {
   showBuiltInRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
-  onUpdate: (newRoles: string[], newBuiltInRole?: OrgRole) => void;
+  onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
   onClear?: () => void;
+  updateDisabled?: boolean;
+  offset: number;
 }
 
 export const RolePickerMenu = ({
   builtInRole,
-  builtInRoles,
   options,
   appliedRoles,
   showGroups,
@@ -56,6 +56,8 @@ export const RolePickerMenu = ({
   onBuiltInRoleSelect,
   onUpdate,
   onClear,
+  updateDisabled,
+  offset,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
@@ -63,7 +65,6 @@ export const RolePickerMenu = ({
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
   const subMenuNode = useRef<HTMLDivElement | null>(null);
-
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
@@ -167,20 +168,30 @@ export const RolePickerMenu = ({
 
   const onUpdateInternal = () => {
     const selectedCustomRoles: string[] = [];
+    // TODO: needed?
     for (const key in selectedOptions) {
       const roleUID = selectedOptions[key]?.uid;
       selectedCustomRoles.push(roleUID);
     }
-    onUpdate(selectedCustomRoles, selectedBuiltInRole);
+    onUpdate(selectedOptions, selectedBuiltInRole);
   };
 
   return (
-    <div className={cx(styles.menu, customStyles.menuWrapper)}>
+    <div
+      className={cx(
+        styles.menu,
+        customStyles.menuWrapper,
+        css`
+          bottom: ${offset > 0 ? `${offset}px` : 'unset'};
+          top: ${offset < 0 ? `${Math.abs(offset)}px` : 'unset'};
+        `
+      )}
+    >
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack hideVerticalTrack>
+        <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
           {showBuiltInRole && (
             <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Built-in roles</div>
+              <div className={customStyles.groupHeader}>Basic roles</div>
               <RadioButtonGroup
                 className={customStyles.builtInRoleSelector}
                 options={BuiltinRoleOption}
@@ -262,7 +273,7 @@ export const RolePickerMenu = ({
               Clear all
             </Button>
             <Button size="sm" onClick={onUpdateInternal}>
-              Update
+              {updateDisabled ? `Apply` : `Update`}
             </Button>
           </HorizontalGroup>
         </div>
@@ -327,7 +338,7 @@ export const RolePickerSubMenu = ({
 
   return (
     <div className={customStyles.subMenu} aria-label="Role picker submenu">
-      <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack>
+      <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
             <RoleMenuOption

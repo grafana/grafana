@@ -148,6 +148,7 @@ type queryParameters struct {
 	Dimensions       queryDimensions  `json:"dimensions"`
 	Expression       string           `json:"expression"`
 	Alias            string           `json:"alias"`
+	Label            *string          `json:"label"`
 	Statistic        string           `json:"statistic"`
 	Period           string           `json:"period"`
 	MatchExact       bool             `json:"matchExact"`
@@ -168,14 +169,15 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 		Dimensions       struct {
 			InstanceID []string `json:"InstanceId,omitempty"`
 		} `json:"dimensions"`
-		Expression string `json:"expression"`
-		Region     string `json:"region"`
-		ID         string `json:"id"`
-		Alias      string `json:"alias"`
-		Statistic  string `json:"statistic"`
-		Period     string `json:"period"`
-		MatchExact bool   `json:"matchExact"`
-		RefID      string `json:"refId"`
+		Expression string  `json:"expression"`
+		Region     string  `json:"region"`
+		ID         string  `json:"id"`
+		Alias      string  `json:"alias"`
+		Label      *string `json:"label"`
+		Statistic  string  `json:"statistic"`
+		Period     string  `json:"period"`
+		MatchExact bool    `json:"matchExact"`
+		RefID      string  `json:"refId"`
 	}{
 		Type:   "timeSeriesQuery",
 		Region: "us-east-2",
@@ -188,6 +190,7 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 		Dimensions:       p.Dimensions,
 		Expression:       p.Expression,
 		Alias:            p.Alias,
+		Label:            p.Label,
 		Statistic:        p.Statistic,
 		Period:           p.Period,
 		MetricName:       p.MetricName,
@@ -197,6 +200,94 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	require.NoError(t, err)
 
 	return marshalled
+}
+
+func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+	var cwClient fakeCWClient
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return &cwClient
+	}
+
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	t.Run("passes query label as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
+		cwClient = fakeCWClient{}
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
+		query := newTestQuery(t, queryParameters{
+			Label: aws.String("${PROP('Period')} some words ${PROP('Dim.InstanceId')}"),
+		})
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(time.Hour * -2),
+						To:   time.Now().Add(time.Hour * -1),
+					},
+					JSON: query,
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
+		require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
+		require.NotNil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+
+		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+	})
+
+	testCases := map[string]struct {
+		feature    *featuremgmt.FeatureManager
+		parameters queryParameters
+	}{
+		"should not pass GetMetricData label when query label is empty, dynamic labels is enabled": {
+			feature: featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
+		},
+		"should not pass GetMetricData label when query label is empty string, dynamic labels is enabled": {
+			feature:    featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
+			parameters: queryParameters{Label: aws.String("")},
+		},
+		"should not pass GetMetricData label when dynamic labels is disabled": {
+			feature:    featuremgmt.WithFeatures(),
+			parameters: queryParameters{Label: aws.String("${PROP('Period')} some words ${PROP('Dim.InstanceId')}")},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			cwClient = fakeCWClient{}
+			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, tc.feature)
+
+			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now().Add(time.Hour * -2),
+							To:   time.Now().Add(time.Hour * -1),
+						},
+						JSON: newTestQuery(t, tc.parameters),
+					},
+				},
+			})
+
+			assert.NoError(t, err)
+			require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
+			require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
+
+			assert.Nil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
+		})
+	}
 }
 
 func Test_QueryData_response_data_frame_names(t *testing.T) {

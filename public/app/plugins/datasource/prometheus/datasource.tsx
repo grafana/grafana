@@ -34,12 +34,13 @@ import {
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
+import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
+import { PromApplication, PromApiFeatures } from 'app/types/unified-alerting-dto';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
@@ -119,6 +120,14 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+
+    // This needs to be here and cannot be static because of how annotations typing affects casting of data source
+    // objects to DataSourceApi types.
+    // We don't use the default processing for prometheus.
+    // See standardAnnotationSupport.ts/[shouldUseMappingUI|shouldUseLegacyRunner]
+    this.annotations = {
+      QueryEditor: AnnotationQueryEditor,
+    };
   }
 
   init = async () => {
@@ -827,7 +836,7 @@ export class PrometheusDatasource
 
   async getBuildInfo() {
     try {
-      const buildInfo = await fetchDataSourceBuildInfo(this);
+      const buildInfo = await discoverDataSourceFeatures({ url: this.url, name: this.name, type: 'prometheus' });
       return buildInfo;
     } catch (error) {
       // We don't want to break the rest of functionality if build info does not work correctly
@@ -835,7 +844,7 @@ export class PrometheusDatasource
     }
   }
 
-  getBuildInfoMessage(buildInfo: PromBuildInfo) {
+  getBuildInfoMessage(buildInfo: PromApiFeatures) {
     const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
     const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
     const unsupported = (
@@ -850,15 +859,21 @@ export class PrometheusDatasource
     );
 
     const LOGOS = {
-      [PromApplication.Cortex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
+      [PromApplication.Lotex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
-      [PromApplication.Cortex]: 'blue',
+      [PromApplication.Lotex]: 'blue',
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
+    };
+
+    const AppDisplayNames: Record<PromApplication, string> = {
+      [PromApplication.Lotex]: 'Cortex',
+      [PromApplication.Mimir]: 'Mimir',
+      [PromApplication.Prometheus]: 'Prometheus',
     };
 
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
@@ -870,7 +885,7 @@ export class PrometheusDatasource
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
             />{' '}
-            {buildInfo.application}
+            {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
           </span>
         }
         color={COLORS[buildInfo.application ?? PromApplication.Prometheus]}
