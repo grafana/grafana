@@ -31,7 +31,7 @@ func TestSlackNotifier(t *testing.T) {
 	if err != nil {
 		panic("Temp file error!")
 	}
-	defer os.Remove(f.Name())
+	defer func() { _ = os.Remove(f.Name()) }()
 
 	fakeImageStore := &fakeImageStore{
 		Images: []*models.Image{
