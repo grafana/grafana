@@ -6,26 +6,28 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
-	"testing/fstest"
 	"text/template"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/errors"
-	cload "cuelang.org/go/cue/load"
+	"cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/parser"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/grafana/pkg/schema/load"
+	"github.com/grafana/grafana"
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/thema"
+	tload "github.com/grafana/thema/load"
 )
 
 // The only import statement we currently allow in any models.cue file
-const allowedImport = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+const schemasPath = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 
 var importMap = map[string]string{
-	allowedImport: "@grafana/schema",
+	"github.com/grafana/thema": "",
+	schemasPath:                "@grafana/schema",
 }
 
 // Hard-coded list of paths to skip. Remove a particular file as we're ready
@@ -44,55 +46,21 @@ var skipPaths = []string{
 
 const prefix = "/"
 
-var paths = load.GetDefaultLoadPaths()
-
 // CuetsifyPlugins runs cuetsy against plugins' models.cue files.
 func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 	// TODO this whole func has a lot of old, crufty behavior from the scuemata era; needs TLC
-	var fspaths load.BaseLoadPaths
-	var err error
-
-	fspaths.BaseCueFS, err = populateMapFSFromRoot(paths.BaseCueFS, root, "")
-	if err != nil {
-		return nil, err
-	}
-	fspaths.DistPluginCueFS, err = populateMapFSFromRoot(paths.DistPluginCueFS, root, "")
-	if err != nil {
-		return nil, err
-	}
-	overlay, err := defaultOverlay(fspaths)
+	overlay := make(map[string]load.Source)
+	err := toOverlay(prefix, grafana.CueSchemaFS, overlay)
 	if err != nil {
 		return nil, err
 	}
 
 	// Prep the cue load config
-	clcfg := &cload.Config{
+	clcfg := &load.Config{
 		Overlay: overlay,
 		// FIXME these module paths won't work for things not under our cue.mod - AKA third-party plugins
 		ModuleRoot: prefix,
 		Module:     "github.com/grafana/grafana",
-	}
-
-	// FIXME hardcoding paths to exclude is not the way to handle this
-	excl := map[string]bool{
-		"cue.mod":      true,
-		"cue/scuemata": true,
-		"packages/grafana-schema/src/scuemata/dashboard":      true,
-		"packages/grafana-schema/src/scuemata/dashboard/dist": true,
-	}
-
-	exclude := func(path string) bool {
-		dir := filepath.Dir(path)
-		if excl[dir] {
-			return true
-		}
-		for _, p := range skipPaths {
-			if path == p {
-				return true
-			}
-		}
-
-		return false
 	}
 
 	outfiles := NewWriteDiffer()
@@ -103,9 +71,12 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 			if err != nil {
 				return err
 			}
+			if path == "cue.mod" {
+				return fs.SkipDir
+			}
 			dir := filepath.Dir(path)
 
-			if d.IsDir() || filepath.Ext(d.Name()) != ".cue" || seen[dir] || exclude(path) {
+			if d.IsDir() || filepath.Ext(d.Name()) != ".cue" || seen[dir] {
 				return nil
 			}
 			seen[dir] = true
@@ -132,38 +103,25 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 				clcfg.Package = ""
 			}
 
-			// FIXME loading in this way causes all files in a dir to be loaded
-			// as a single cue.Instance or cue.Value, which makes it quite
-			// difficult to map them _back_ onto the original file and generate
-			// discrete .gen.ts files for each .cue input.  However, going one
-			// .cue file at a time and passing it as the first arg to
-			// load.Instances() means that the other files are ignored
-			// completely, causing references between these files to be
-			// unresolved, and thus encounter a different kind of error.
-			insts := cload.Instances(nil, clcfg)
-			if len(insts) > 1 {
-				panic("extra instances")
+			// insts := load.Instances(nil, clcfg)
+			inst, err := tload.InstancesWithThema(in, dir)
+			if err != nil {
+				return fmt.Errorf("could not load CUE instance for %s: %w", dir, err)
 			}
-			bi := insts[0]
 
-			v := ctx.BuildInstance(bi)
-			if v.Err() != nil {
-				return v.Err()
-			}
+			v := ctx.BuildInstance(inst)
 
 			var b []byte
 			f := &tsFile{}
 			seen := make(map[string]bool)
-			// FIXME explicitly mapping path patterns to conversion patterns
-			// is exactly what we want to avoid
 			switch {
 			// panel plugin models.cue files
 			case strings.Contains(path, "public/app/plugins"):
 				for _, im := range imports {
 					ip := strings.Trim(im.Path.Value, "\"")
-					if ip != allowedImport {
+					if ip != schemasPath {
 						// TODO make a specific error type for this
-						return errors.Newf(im.Pos(), "import %q not allowed, panel plugins may only import from %q", ip, allowedImport)
+						return errors.Newf(im.Pos(), "import %q not allowed, panel plugins may only import from %q", ip, schemasPath)
 					}
 					// TODO this approach will silently swallow the unfixable
 					// error case where multiple files in the same dir import
@@ -174,17 +132,13 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 					}
 				}
 
-				// Extract the latest schema and its version number. (All of this goes away with Thema, whew)
-				f.V = &tsModver{}
-				lins := v.LookupPath(cue.ParsePath("Panel.lineages"))
-				f.V.Lin, _ = lins.Len().Int64()
-				f.V.Lin = f.V.Lin - 1
-				schs := lins.LookupPath(cue.MakePath(cue.Index(int(f.V.Lin))))
-				f.V.Sch, _ = schs.Len().Int64()
-				f.V.Sch = f.V.Sch - 1
-				latest := schs.LookupPath(cue.MakePath(cue.Index(int(f.V.Sch))))
+				lin, err := thema.BindLineage(v.LookupPath(cue.ParsePath("Panel")), cuectx.ProvideThemaLibrary())
+				if err != nil {
+					return err
+				}
+				f.V = thema.LatestVersion(lin)
 
-				b, err = cuetsy.Generate(latest, cuetsy.Config{})
+				b, err = cuetsy.Generate(thema.SchemaP(lin, f.V).UnwrapCUE(), cuetsy.Config{})
 			default:
 				b, err = cuetsy.Generate(v, cuetsy.Config{})
 			}
@@ -201,11 +155,7 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 		})
 	}
 
-	err = cuetsify(fspaths.BaseCueFS)
-	if err != nil {
-		return nil, gerrors.New(errors.Details(err, nil))
-	}
-	err = cuetsify(fspaths.DistPluginCueFS)
+	err = cuetsify(grafana.CueSchemaFS)
 	if err != nil {
 		return nil, gerrors.New(errors.Details(err, nil))
 	}
@@ -215,7 +165,7 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 
 func convertImport(im *ast.ImportSpec) *tsImport {
 	tsim := &tsImport{
-		Pkg: importMap[allowedImport],
+		Pkg: importMap[schemasPath],
 	}
 	if im.Name != nil && im.Name.String() != "" {
 		tsim.Ident = im.Name.String()
@@ -231,21 +181,7 @@ func convertImport(im *ast.ImportSpec) *tsImport {
 	return tsim
 }
 
-func defaultOverlay(p load.BaseLoadPaths) (map[string]cload.Source, error) {
-	overlay := make(map[string]cload.Source)
-
-	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
-		return nil, err
-	}
-
-	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
-		return nil, err
-	}
-
-	return overlay, nil
-}
-
-func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error {
+func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 	if !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
@@ -274,7 +210,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 			return err
 		}
 
-		overlay[filepath.Join(prefix, path)] = cload.FromBytes(b)
+		overlay[filepath.Join(prefix, path)] = load.FromBytes(b)
 		return nil
 	})
 
@@ -285,44 +221,10 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 	return nil
 }
 
-// Helper function that populates an fs.FS by walking over a virtual filesystem,
-// and reading files from disk corresponding to each file encountered.
-func populateMapFSFromRoot(in fs.FS, root, join string) (fs.FS, error) {
-	out := make(fstest.MapFS)
-	err := fs.WalkDir(in, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-		// Ignore gosec warning G304. The input set here is necessarily
-		// constrained to files specified in embed.go
-		// nolint:gosec
-		b, err := os.Open(filepath.Join(root, join, path))
-		if err != nil {
-			return err
-		}
-		byt, err := io.ReadAll(b)
-		if err != nil {
-			return err
-		}
-
-		out[path] = &fstest.MapFile{Data: byt}
-		return nil
-	})
-	return out, err
-}
-
 type tsFile struct {
-	V       *tsModver
+	V       thema.SyntacticVersion
 	Imports []*tsImport
 	Body    string
-}
-
-type tsModver struct {
-	Lin, Sch int64
 }
 
 type tsImport struct {
@@ -338,6 +240,6 @@ var tsTemplate = template.Must(template.New("cuetsygen").Parse(`//~~~~~~~~~~~~~~
 {{range .Imports}}
 import * as {{.Ident}} from '{{.Pkg}}';{{end}}
 {{if .V}}
-export const modelVersion = Object.freeze([{{ .V.Lin }}, {{ .V.Sch }}]);
+export const modelVersion = Object.freeze([{{index .V 0}}, {{index .V 1}}]);
 {{end}}
 {{.Body}}`))
