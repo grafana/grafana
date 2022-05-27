@@ -6,6 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import impressionSrv from 'app/core/services/impression_srv';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
@@ -23,11 +25,20 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
   const results = useAsync(async () => {
     const folders: DashboardSection[] = [];
     if (!hidePseudoFolders) {
-      const stars = await getBackendSrv().get('api/user/stars');
-      if (stars.length > 0) {
-        folders.push({ title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred', itemsUIDs: stars });
+      if (contextSrv.isSignedIn) {
+        const stars = await getBackendSrv().get('api/user/stars');
+        if (stars.length > 0) {
+          folders.push({ title: 'Starred', icon: 'star', kind: 'query-star', uid: '__starred', itemsUIDs: stars });
+        }
       }
-      folders.push({ title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent' });
+
+      const ids = impressionSrv.getDashboardOpened();
+      if (ids.length) {
+        const itemsUIDs = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
+        if (itemsUIDs.length) {
+          folders.push({ title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent', itemsUIDs });
+        }
+      }
     }
     folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
