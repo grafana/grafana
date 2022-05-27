@@ -22,7 +22,7 @@ export class VizPanel extends SceneItemBase<VizPanelState> {
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {
   const { title, pluginId, options } = model.useState();
-  const { data } = model.useData();
+  const { data } = model.getData().useState();
 
   return (
     <AutoSizer>

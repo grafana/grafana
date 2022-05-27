@@ -67,11 +67,59 @@ export function getDemoScene(): Scene {
     ],
   });
 
-  setTimeout(() => {
-    scene.setState({
-      title: 'New title',
-    });
-  }, 10000);
+  return scene;
+}
+
+export function timePickerGraph(): Scene {
+  const scene = new Scene({
+    title: 'Hello',
+    layout: new SceneFlexLayout({
+      direction: 'column',
+      size: {},
+      children: [
+        new VizPanel({
+          key: '1',
+          size: {},
+          pluginId: 'timeseries',
+          title: 'Select time range',
+        }),
+      ],
+    }),
+    $timeRange: new SceneTimeRange({
+      timeRange: getDefaultTimeRange(),
+    }),
+    $data: new SceneQueryRunner({
+      queries: [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'gdev-testdata',
+            type: 'testdata',
+          },
+          scenarioId: 'random_walk',
+        },
+      ],
+    }),
+    actions: [
+      new SceneToolbarButton({
+        icon: 'columns',
+        onClick: () => {
+          scene.state.layout.setState({
+            direction: scene.state.layout.state.direction === 'row' ? 'column' : 'row',
+          });
+        },
+      }),
+    ],
+  });
 
   return scene;
 }
+
+// {
+//           refId: 'A',
+//           datasource: {
+//             uid: 'gdev-prometheus',
+//             type: 'prometheus',
+//           },
+//           expr: 'sum(rate(grafana_http_request_duration_seconds_count{job="grafana"}[$__rate_interval]))'
+//         },

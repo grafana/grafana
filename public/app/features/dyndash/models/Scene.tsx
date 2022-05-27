@@ -8,6 +8,7 @@ import {
   SceneItem,
   SceneLayoutItemChildState,
   SceneItemStateWithScope,
+  SceneLayoutState,
 } from './SceneItem';
 
 interface SceneState extends SceneItemStateWithScope, SceneLayoutItemChildState {

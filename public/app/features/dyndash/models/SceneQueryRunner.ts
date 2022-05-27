@@ -45,6 +45,7 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
   }
 
   onUnmount() {
+    super.onUnmount();
     this.cleanUp();
   }
 

@@ -62,6 +62,8 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
     if ($data && $data.isMounted) {
       $data.onUnmount();
     }
+
+    this.subs.unsubscribe();
   }
 
   private registerOnMountEffect() {
@@ -85,26 +87,10 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   }
 
   /**
-   * Will walk up the scene object graph to the closest context.data scene object
-   */
-  useData(): SceneDataState {
-    const $data = (this.state as SceneItemStateWithScope).$data;
-    if ($data) {
-      return $data.useState();
-    }
-
-    if (this.parent) {
-      return this.parent.useData();
-    }
-
-    return {};
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest context.timeRange scene object
+   * Will walk up the scene object graph to the closest $timeRange scene object
    */
   getTimeRange(): SceneItem<SceneTimeRangeState> {
-    const $timeRange = (this.state as SceneItemStateWithScope).$timeRange;
+    const { $timeRange } = this.state as SceneItemStateWithScope;
     if ($timeRange) {
       return $timeRange;
     }
@@ -113,7 +99,23 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
       return this.parent.getTimeRange();
     }
 
-    throw new Error('No time range found for scene object');
+    throw new Error('No time range found in scene tree');
+  }
+
+  /**
+   * Will walk up the scene object graph to the closest $data scene object
+   */
+  getData(): SceneItem<SceneDataState> {
+    const { $data } = this.state as SceneItemStateWithScope;
+    if ($data) {
+      return $data;
+    }
+
+    if (this.parent) {
+      return this.parent.getData();
+    }
+
+    throw new Error('No data found in scene tree');
   }
 
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
@@ -129,10 +131,6 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
       },
     });
   };
-
-  onCloseScene() {
-    this.subs.unsubscribe();
-  }
 }
 
 export interface SceneItem<TState> extends Subscribable<TState> {
@@ -145,6 +143,10 @@ export interface SceneItem<TState> extends Subscribable<TState> {
 
   onMount(): void;
   onUnmount(): void;
+}
+
+export interface SceneLayoutState {
+  children: Array<SceneItem<SceneLayoutItemChildState>>;
 }
 
 export interface SceneItemStateWithScope {
