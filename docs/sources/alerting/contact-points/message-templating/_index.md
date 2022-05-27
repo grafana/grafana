@@ -24,41 +24,11 @@ Since most of the contact point fields can be templated, you can create reusable
 
 The following example shows how to use default templates to render an alert message in Slack. The message title contains a count of alerts that are firing or were resolved. The message body lists the alerts and their status.
 
-<img  src="/static/img/docs/alerting/unified/contact-points-template-fields-8-0.png" width="450px">
+{{< figure src="/static/img/docs/alerting/unified/contact-points-template-fields-8-0.png" class="docs-image--no-shadow" max-width= "550px" caption="Default template" >}}
 
 The following example shows the use of a custom template within one of the contact point fields.
 
-<img  src="/static/img/docs/alerting/unified/contact-points-use-template-8-0.png" width="400px">
-
-### Create a message template
-
-> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
-
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. From Alertmanager drop-down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
-   {{< figure max-width="250px" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
-1. Click **Add template**.
-1. In **Name**, add a descriptive name.
-1. In **Content**, add the content of the template.
-1. Click **Save template** button at the bottom of the page.
-   <img  src="/static/img/docs/alerting/unified/templates-create-8-0.png" width="600px">
-
-The `define` tag in the Content section assigns the template name. This tag is optional, and when omitted, the template name is derived from the **Name** field. When both are specified, it is a best practice to ensure that they are the same.
-
-### Edit a message template
-
-1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. In the Template table, find the template you want to edit, then click the **Edit** (pen icon).
-1. Make your changes, then click **Save template**.
-
-### Delete a message template
-
-1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. In the Template table, find the template you want to delete, then click the **Delete** (trash icon).
-1. In the confirmation dialog, click **Yes, delete** to delete the template.
-
-Use caution when deleting a template since Grafana does not prevent you from deleting templates that are in use.
+{{< figure src="/static/img/docs/alerting/unified/contact-points-use-template-8-0.png" class="docs-image--no-shadow" max-width= "550px" caption="Default template" >}}
 
 ### Nested templates
 
@@ -86,59 +56,6 @@ You can use any of the following built-in template options to embed custom templ
 | `default.title`         | Displays high-level status information.                       |
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
 | `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
-
-### Example of a custom template
-
-Here's an example of how to use a custom template. You can also use the default template included in the setup.
-
-Step 1: Configure a template to render a single alert.
-
-```
-{{ define "myalert" }}
-  [{{.Status}}] {{ .Labels.alertname }}
-
-  Labels:
-  {{ range .Labels.SortedPairs }}
-    {{ .Name }}: {{ .Value }}
-  {{ end }}
-
-  {{ if gt (len .Annotations) 0 }}
-  Annotations:
-  {{ range .Annotations.SortedPairs }}
-    {{ .Name }}: {{ .Value }}
-  {{ end }}
-  {{ end }}
-
-  {{ if gt (len .SilenceURL ) 0 }}
-    Silence alert: {{ .SilenceURL }}
-  {{ end }}
-  {{ if gt (len .DashboardURL ) 0 }}
-    Go to dashboard: {{ .DashboardURL }}
-  {{ end }}
-{{ end }}
-```
-
-Step 2: Configure a template to render entire notification message.
-
-```
-{{ define "mymessage" }}
-  {{ if gt (len .Alerts.Firing) 0 }}
-    {{ len .Alerts.Firing }} firing:
-    {{ range .Alerts.Firing }} {{ template "myalert" .}} {{ end }}
-  {{ end }}
-  {{ if gt (len .Alerts.Resolved) 0 }}
-    {{ len .Alerts.Resolved }} resolved:
-    {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
-  {{ end }}
-{{ end }}
-```
-
-Step 3: Add `mymessage` in the notification message field.
-
-```
-Alert summary:
-{{ template "mymessage" . }}
-```
 
 ### HTML in message templates
 
