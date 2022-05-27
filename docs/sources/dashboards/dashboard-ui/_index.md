@@ -18,4 +18,4 @@ The dashboard UI has the following sections to allow you to customize the presen
 - **Dashboard panel** (4) Click the panel title to edit panels.
 - **Graph legend** (5) Change series colors, y-axis and series visibility directly from the legend.
 
-For more details, see [Dashboard header]({{< relref "./dashboard-header.md" >}}) and [Dashboard rows]({{< relref "./dashboard-row.md" >}}).
+For more details, see [Dashboard header]({{< relref "dashboard-header.md" >}}) and [Dashboard rows]({{< relref "dashboard-row.md" >}}).

@@ -13,7 +13,7 @@ Inspect query request and response data when you want to troubleshoot a query th
 ## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
+- [Add a query]({{< relref "add-a-query.md" >}}).
 
 **To inspect query request and response data**:
 
