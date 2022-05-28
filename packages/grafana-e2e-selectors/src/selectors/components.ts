@@ -266,6 +266,12 @@ export const Components = {
   },
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
+    tracePageHeader: 'data-testid-trace-page-header',
+    tracePageSearchBar: 'data-testid-trace-page-search-bar',
+    tracePageSearchBarNextResultButton: 'data-testid-trace-page-search-bar-next-result-button',
+    tracePageSearchBarPrevResultButton: 'data-testid-trace-page-search-bar-prev-result-button',
+    tracePageSearchBarSuffix: 'data-testid-trace-page-search-bar-suffix',
+    uiFindInput: 'data-testid-ui-find-input',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {

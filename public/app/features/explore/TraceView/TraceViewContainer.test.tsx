@@ -4,6 +4,7 @@ import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
@@ -79,9 +80,9 @@ describe('TraceViewContainer', () => {
   it('can select next/prev results', async () => {
     renderTraceViewContainer();
     await userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
-    const nextResultButton = screen.getByTestId('trace-page-search-bar-next-result-button');
-    const prevResultButton = screen.getByTestId('trace-page-search-bar-prev-result-button');
-    const suffix = screen.getByTestId('trace-page-search-bar-suffix');
+    const nextResultButton = screen.getByTestId(selectors.components.TraceViewer.tracePageSearchBarNextResultButton);
+    const prevResultButton = screen.getByTestId(selectors.components.TraceViewer.tracePageSearchBarPrevResultButton);
+    const suffix = screen.getByTestId(selectors.components.TraceViewer.tracePageSearchBarSuffix);
 
     await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');

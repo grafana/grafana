@@ -19,6 +19,7 @@ import * as React from 'react';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
@@ -232,7 +233,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   );
 
   return (
-    <header className={styles.TracePageHeader}>
+    <header className={styles.TracePageHeader} data-testid={selectors.components.TraceViewer.tracePageHeader}>
       <div className={styles.TracePageHeaderTitleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {canCollapse ? (
