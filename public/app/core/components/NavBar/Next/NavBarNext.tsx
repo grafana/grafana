@@ -70,7 +70,6 @@ export const NavBarNext = React.memo(() => {
   if (kiosk !== KioskMode.Off) {
     return null;
   }
-
   return (
     <div className={styles.navWrapper}>
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">

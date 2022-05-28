@@ -124,10 +124,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  /**
-   * TODO: #47635 check why this test times out
-   */
-  it.skip('updates the state in both Explore panes', async () => {
+  it('updates the state in both Explore panes', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',

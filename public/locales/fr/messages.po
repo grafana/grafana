@@ -39,6 +39,10 @@ msgid "nav.alerting-groups"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-legacy"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting-list"
 msgstr ""
 

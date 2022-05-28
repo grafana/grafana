@@ -47,11 +47,12 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
 -- **Data source -** Target data source.
+-- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
 
 Each linked query consists of:
 
 -- **Link Label -** (Optional) Descriptive label for the linked query.
--- **Query -** Query that runs when navigating from a trace to the metrics data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
 ### Node Graph
 

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -196,65 +197,52 @@ func (d DiscordNotifier) SendResolved() bool {
 
 func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.Alert, embedQuota int) []discordAttachment {
 	attachments := make([]discordAttachment, 0)
-	for i := range as {
-		if embedQuota == 0 {
-			break
-		}
-		imgToken := getTokenFromAnnotations(as[i].Annotations)
-		if len(imgToken) == 0 {
-			continue
-		}
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := d.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				d.log.Warn("failed to retrieve image url from store", "error", err)
-			}
-		}
-
-		if len(imgURL) > 0 {
-			attachments = append(attachments, discordAttachment{
-				url:       imgURL,
-				state:     as[i].Status(),
-				alertName: as[i].Name(),
-			})
-		} else {
-			// Need to upload the file. Tell Discord that we're embedding an attachment.
-			timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-			fp, err := d.images.GetFilepath(timeoutCtx, imgToken)
-			cancel()
-			if err != nil {
-				if !errors.Is(err, ErrImagesUnavailable) {
-					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-					d.log.Warn("failed to retrieve image filepath from store", "error", err)
-				}
+	_ = withStoredImages(ctx, d.log, d.images,
+		func(index int, image *ngmodels.Image) error {
+			if embedQuota < 1 {
+				// TODO: Could be a sentinel error to stop execution.
+				return nil
 			}
 
-			base := filepath.Base(fp)
-			url := fmt.Sprintf("attachment://%s", base)
-			timeoutCtx, cancel = context.WithTimeout(ctx, ImageStoreTimeout)
-			reader, err := d.images.GetData(timeoutCtx, imgToken)
-			cancel()
-			if err != nil {
-				if !errors.Is(err, ErrImagesUnavailable) {
-					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+			if image == nil {
+				return nil
+			}
+
+			if len(image.URL) > 0 {
+				attachments = append(attachments, discordAttachment{
+					url:       image.URL,
+					state:     as[index].Status(),
+					alertName: as[index].Name(),
+				})
+				embedQuota--
+				return nil
+			}
+
+			// If we have a local file, but no public URL, upload the image as an attachment.
+			if len(image.Path) > 0 {
+				base := filepath.Base(image.Path)
+				url := fmt.Sprintf("attachment://%s", base)
+				reader, err := openImage(image.Path)
+				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
 					d.log.Warn("failed to retrieve image data from store", "error", err)
+					return nil
 				}
-			}
 
-			attachments = append(attachments, discordAttachment{
-				url:       url,
-				name:      base,
-				reader:    reader,
-				state:     as[i].Status(),
-				alertName: as[i].Name(),
-			})
-		}
-		embedQuota++
-	}
+				attachments = append(attachments, discordAttachment{
+					url:       url,
+					name:      base,
+					reader:    reader,
+					state:     as[index].Status(),
+					alertName: as[index].Name(),
+				})
+				embedQuota--
+			}
+			return nil
+		},
+		as...,
+	)
+
 	return attachments
 }
 
@@ -282,21 +270,32 @@ func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []by
 	if err != nil {
 		return nil, err
 	}
+
 	if _, err := payload.Write(body); err != nil {
 		return nil, err
 	}
+
 	for _, a := range attachments {
-		part, err := w.CreateFormFile("", a.name)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := io.Copy(part, a.reader); err != nil {
-			return nil, err
+		if a.reader != nil { // We have an image to upload.
+			err = func() error {
+				defer func() { _ = a.reader.Close() }()
+				part, err := w.CreateFormFile("", a.name)
+				if err != nil {
+					return err
+				}
+				_, err = io.Copy(part, a.reader)
+				return err
+			}()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
+
 	if err := w.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
 	}
+
 	cmd.ContentType = w.FormDataContentType()
 	cmd.Body = b.String()
 	return cmd, nil
