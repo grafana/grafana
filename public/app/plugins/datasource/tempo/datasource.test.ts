@@ -163,17 +163,80 @@ describe('Tempo data source', () => {
     );
 
     expect(response.data).toHaveLength(3);
+    expect(response.state).toBe(LoadingState.Done);
+
+    // APM table
+    expect(response.data[0].fields[0].name).toBe('Name');
+    expect(response.data[0].fields[0].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
+    expect(response.data[0].fields[0].values.toArray()[1]).toBe('HTTP GET - root');
+
+    expect(response.data[0].fields[1].name).toBe('Rate');
+    expect(response.data[0].fields[1].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[1].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[1].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[1].config.decimals).toBe(2);
+    expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
+    expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
+    expect(response.data[0].fields[1].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[1].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[2].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
+    expect(response.data[0].fields[2].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[2].config.decimals).toBe(3);
+
+    expect(response.data[0].fields[3].name).toBe('Error Rate');
+    expect(response.data[0].fields[3].values.length).toBe(2);
+    expect(response.data[0].fields[3].values[0]).toBe(3.75164671814457);
+    expect(response.data[0].fields[3].values[1]).toBe(3.121331111401608);
+    expect(response.data[0].fields[3].config.decimals).toBe(2);
+    expect(response.data[0].fields[3].config.links[0].title).toBe('Error Rate');
+    expect(response.data[0].fields[3].config.links[0].internal.query.expr).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
+    expect(response.data[0].fields[3].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[3].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[3].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[4].values.length).toBe(2);
+    expect(response.data[0].fields[4].values[0]).toBe(3.75164671814457);
+    expect(response.data[0].fields[4].values[1]).toBe(3.121331111401608);
+    expect(response.data[0].fields[4].config.color.mode).toBe('continuous-RdYlGr');
+    expect(response.data[0].fields[4].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[4].config.decimals).toBe(3);
+
+    expect(response.data[0].fields[5].name).toBe('Duration (p90)');
+    expect(response.data[0].fields[5].values.length).toBe(2);
+    expect(response.data[0].fields[5].values[0]).toBe('0');
+    expect(response.data[0].fields[5].values[1]).toBe(0.12003505696757232);
+    expect(response.data[0].fields[5].config.unit).toBe('s');
+    expect(response.data[0].fields[5].config.links[0].title).toBe('Duration');
+    expect(response.data[0].fields[5].config.links[0].internal.query.expr).toBe(
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
+    );
+    expect(response.data[0].fields[5].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[5].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[5].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[6].config.links[0].url).toBe('');
+    expect(response.data[0].fields[6].config.links[0].title).toBe('Tempo');
+    expect(response.data[0].fields[6].config.links[0].internal.query.queryType).toBe('nativeSearch');
+    expect(response.data[0].fields[6].config.links[0].internal.query.spanName).toBe('${__data.fields[0]}');
+
+    // Service graph
     expect(response.data[1].name).toBe('Nodes');
     expect(response.data[1].fields[0].values.length).toBe(3);
-
-    // Test Links
     expect(response.data[1].fields[0].config.links.length).toBeGreaterThan(0);
     expect(response.data[1].fields[0].config.links).toEqual(serviceGraphLinks);
 
     expect(response.data[2].name).toBe('Edges');
     expect(response.data[2].fields[0].values.length).toBe(2);
-
-    expect(response.state).toBe(LoadingState.Done);
   });
 
   it('should handle json file upload', async () => {
@@ -335,7 +398,9 @@ const backendSrvWithPrometheus = {
     if (uid === 'prom') {
       return {
         query() {
-          return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
+          return of({
+            data: [rateMetric, errorRateMetric, durationMetric, totalsPromMetric, secondsPromMetric, failedPromMetric],
+          });
         },
       };
     }
@@ -379,6 +444,43 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     },
   },
 };
+
+const rateMetric = new MutableDataFrame({
+  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+  fields: [
+    { name: 'Time', values: [1653725618609, 1653725618609] },
+    { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
+    {
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+      values: [12.75164671814457, 12.121331111401608],
+    },
+  ],
+});
+
+const errorRateMetric = new MutableDataFrame({
+  refId:
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range] @ end())) by (span_name))',
+  fields: [
+    { name: 'Time', values: [1653725618609, 1653725618609] },
+    { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
+    {
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR"}[$__range] @ end())) by (span_name))',
+      values: [3.75164671814457, 3.121331111401608],
+    },
+  ],
+});
+
+const durationMetric = new MutableDataFrame({
+  refId:
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range] @ end())) by (le))',
+  fields: [
+    { name: 'Time', values: [1653725618609] },
+    {
+      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range] @ end())) by (le))',
+      values: [0.12003505696757232],
+    },
+  ],
+});
 
 const totalsPromMetric = new MutableDataFrame({
   refId: 'traces_service_graph_request_total',
