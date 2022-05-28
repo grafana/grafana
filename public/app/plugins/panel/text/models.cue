@@ -14,21 +14,25 @@
 
 package grafanaschema
 
-Panel: {
-    lineages: [
-        [
-            {
-                TextMode: "html" | "markdown" @cuetsy(kind="enum",memberNames="HTML|Markdown")
-                PanelOptions: {
-                    mode: TextMode | *"markdown"
-                    content: string | *"""
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "text"
+	seqs: [
+		{
+			schemas: [
+				{
+					TextMode: "html" | "markdown" @cuetsy(kind="enum",memberNames="HTML|Markdown")
+					PanelOptions: {
+						mode:    TextMode | *"markdown"
+						content: string | *"""
                     # Title
 
                     For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
                     """
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }
