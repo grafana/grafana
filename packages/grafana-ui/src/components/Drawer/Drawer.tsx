@@ -96,7 +96,6 @@ export function Drawer({
                     name="angle-left"
                     size="xl"
                     onClick={() => setIsExpanded(true)}
-                    surface="header"
                     aria-label={selectors.components.Drawer.General.expand}
                   />
                 )}
@@ -105,7 +104,6 @@ export function Drawer({
                     name="angle-right"
                     size="xl"
                     onClick={() => setIsExpanded(false)}
-                    surface="header"
                     aria-label={selectors.components.Drawer.General.contract}
                   />
                 )}
@@ -113,7 +111,6 @@ export function Drawer({
                   name="times"
                   size="xl"
                   onClick={onClose}
-                  surface="header"
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>

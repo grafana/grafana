@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/query-a-data-source/about-queries/", "/docs/sources/panels/query-a-data-source/about-queries/"]
-title = "About queries"
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/about-queries/
+  - /docs/sources/panels/query-a-data-source/about-queries/
+title: About queries
+weight: 10
+---
 
 # About queries
 

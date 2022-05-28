@@ -1,10 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/"]
-description = "Grafana Enterprise overview"
-keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
-title = "Grafana Enterprise"
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/
+description: Grafana Enterprise overview
+keywords:
+  - grafana
+  - documentation
+  - datasource
+  - permissions
+  - ldap
+  - licensing
+  - enterprise
+  - insights
+  - reporting
+title: Grafana Enterprise
+weight: 150
+---
 
 # Grafana Enterprise
 
@@ -34,7 +44,7 @@ Supported auth providers:
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "configure-saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -42,7 +52,7 @@ With [enhanced LDAP integration]({{< relref "enhanced_ldap.md" >}}), you can set
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "./saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+[SAML authentication]({{< relref "./configure-saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ## Enterprise features
 

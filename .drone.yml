@@ -255,6 +255,14 @@ steps:
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
+- commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
   depends_on:
@@ -942,6 +950,14 @@ steps:
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
   - build-plugins
@@ -1582,6 +1598,14 @@ steps:
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss  --sign ${DRONE_TAG}
   depends_on:
   - build-plugins
@@ -2178,6 +2202,14 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
@@ -3392,6 +3424,14 @@ steps:
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
+- commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
   - build-plugins
@@ -3933,6 +3973,14 @@ steps:
   - validate-scuemata
   image: grafana/build-container:1.5.4
   name: ensure-cuetsified
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.4
+  name: verify-gen-cue
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
@@ -4667,6 +4715,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a697f4b02af2da0fc6c0d751e40e59db542541d6024e5f0c2b062c7060d635ab
+hmac: fb64e50c271012ad1cc9b7ad7e7bd037736d6e3471d24f73774e8fd61472600c
 
 ...

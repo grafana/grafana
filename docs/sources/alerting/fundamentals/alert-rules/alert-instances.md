@@ -1,9 +1,14 @@
-+++
-title = "Alert instances"
-description = "Learn about Grafana alert instances"
-keywords = ["grafana", "alerting", "instances"]
-weight = 103
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
+description: Learn about Grafana alert instances
+keywords:
+  - grafana
+  - alerting
+  - instances
+title: Alert instances
+weight: 103
+---
 
 # Alert instances
 
