@@ -50,28 +50,28 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneItemSizing =
   };
 
   if (direction === 'column') {
-    if (hSizing === 'fill') {
+    if (vSizing === 'fill') {
       style.flexGrow = 1;
     } else {
       style.height = sizing.height;
     }
 
-    if (vSizing === 'fill') {
+    if (hSizing === 'fill') {
       style.alignSelf = 'stretch';
     } else {
       style.width = sizing.width;
     }
   } else {
     if (vSizing === 'fill') {
-      style.flexGrow = 1;
-    } else {
-      style.width = sizing.width;
-    }
-
-    if (hSizing === 'fill') {
       style.alignSelf = 'stretch';
     } else {
       style.height = sizing.height;
+    }
+
+    if (hSizing === 'fill') {
+      style.flexGrow = 1;
+    } else {
+      style.width = sizing.width;
     }
   }
 

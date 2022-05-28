@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getFrameDisplayName, LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneItemBase } from './SceneItem';
@@ -32,8 +32,6 @@ export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
 
     for (const series of data.series) {
       const clone = firstChild.clone({
-        //@ts-ignore
-        title: getFrameDisplayName(series),
         $data: new SceneDataNode({
           data: {
             ...data,

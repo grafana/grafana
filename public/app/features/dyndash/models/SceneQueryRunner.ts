@@ -70,7 +70,7 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
       interval: '1s',
       intervalMs: 1000,
       targets: cloneDeep(this.state.queries),
-      maxDataPoints: 1000,
+      maxDataPoints: 500,
       scopedVars: {},
       startTime: Date.now(),
     };

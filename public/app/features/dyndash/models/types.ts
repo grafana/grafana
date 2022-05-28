@@ -30,7 +30,7 @@ export interface SceneTimeRangeState extends SceneItemState {
   timeRange: TimeRange;
 }
 
-export interface SceneItem<TState extends SceneItemState> extends Subscribable<TState> {
+export interface SceneItem<TState extends SceneItemState = SceneItemState> extends Subscribable<TState> {
   state: TState;
   isMounted?: boolean;
 
@@ -48,3 +48,5 @@ export type SceneItemList<T = SceneItemState> = Array<SceneItem<T>>;
 export interface SceneLayoutState extends SceneItemState {
   children: SceneItemList;
 }
+
+export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneItem<T>;

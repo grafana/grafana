@@ -1,6 +1,6 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { Scene, ScenePanel } from '../models/Scene';
+import { Scene } from '../models/Scene';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
@@ -14,25 +14,27 @@ export function getFlexLayoutTest(): Scene {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new ScenePanel({
-          key: 'A',
-          // size: { vSizing: 'fixed', width: 200 },
-          title: 'Panel 1',
+        new VizPanel({
+          pluginId: 'timeseries',
+          title: 'Dynamic height and width',
         }),
         new SceneFlexLayout({
           key: 'B',
-          size: {},
+          size: { hSizing: 'fixed', width: 450 },
           direction: 'column',
           children: [
-            new ScenePanel({
-              key: '2',
-              size: { hSizing: 'fixed', height: 200 },
-              title: 'Panel 2',
+            new VizPanel({
+              pluginId: 'timeseries',
+              size: { vSizing: 'fixed', height: 300 },
+              title: 'Fixed height',
             }),
             new VizPanel({
-              key: '3',
               pluginId: 'timeseries',
-              title: 'Panel 3',
+              title: 'Dynamic height',
+            }),
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Dynamic height',
             }),
           ],
         }),
@@ -75,13 +77,24 @@ export function getScenePanelRepeaterTest(): Scene {
       layout: new SceneFlexLayout({
         direction: 'column',
         children: [
-          new VizPanel({
-            key: '1',
-            pluginId: 'timeseries',
-            title: 'Title',
-            options: {
-              legend: { displayMode: 'hidden' },
-            },
+          new SceneFlexLayout({
+            children: [
+              new VizPanel({
+                key: '1',
+                pluginId: 'timeseries',
+                title: 'Title',
+                options: {
+                  legend: { displayMode: 'hidden' },
+                },
+              }),
+              new VizPanel({
+                key: '1',
+                size: { hSizing: 'fixed', width: 300 },
+                pluginId: 'gauge',
+                title: 'Title',
+                options: {},
+              }),
+            ],
           }),
         ],
       }),
