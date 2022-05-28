@@ -32,6 +32,7 @@ export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
 
     for (const series of data.series) {
       const clone = firstChild.clone({
+        key: `${newChildren.length}`,
         $data: new SceneDataNode({
           data: {
             ...data,
@@ -47,7 +48,7 @@ export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
   }
 
   Component = ({ model }: SceneComponentProps<ScenePanelRepeater>) => {
-    const { layout } = model.useState();
+    const { layout } = model.useMount().useState();
     return <layout.Component model={layout} />;
   };
 }

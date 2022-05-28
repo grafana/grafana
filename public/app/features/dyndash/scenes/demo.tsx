@@ -93,10 +93,9 @@ export function getScenePanelRepeaterTest(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
-            size: { minHeight: 150 },
+            size: { minHeight: 200 },
             children: [
               new VizPanel({
-                key: '1',
                 pluginId: 'timeseries',
                 title: 'Title',
                 options: {
@@ -104,9 +103,9 @@ export function getScenePanelRepeaterTest(): Scene {
                 },
               }),
               new VizPanel({
-                key: '1',
                 size: { hSizing: 'fixed', width: 300 },
                 pluginId: 'stat',
+                fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
                 options: {
                   graphMode: 'none',
                 },

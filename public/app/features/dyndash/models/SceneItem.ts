@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Observer, ReplaySubject, Subscription } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { AbsoluteTimeRange, toUtc, useObservable } from '@grafana/data';
 
@@ -20,6 +21,10 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
   isMounted?: boolean;
 
   constructor(state: TState) {
+    if (!state.key) {
+      state.key = uuidv4();
+    }
+
     this.state = state;
     this.subject.next(state);
     this.setParent();
@@ -77,7 +82,10 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
     this.subs.unsubscribe();
   }
 
-  private registerOnMountEffect() {
+  /**
+   * The scene object needs to know when the react component is mounted to trigger query and other workflows
+   */
+  useMount() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       if (!this.isMounted) {
@@ -89,10 +97,11 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
         }
       };
     }, []);
+
+    return this;
   }
 
   useState() {
-    this.registerOnMountEffect();
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.subject, this.state);
   }

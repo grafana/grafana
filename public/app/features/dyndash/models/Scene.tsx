@@ -16,7 +16,7 @@ export class Scene extends SceneItemBase<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, $timeRange, actions = [] } = model.useState();
+  const { title, layout, $timeRange, actions = [] } = model.useMount().useState();
 
   console.log('render scene');
 

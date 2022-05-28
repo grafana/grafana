@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { TimeRange } from '@grafana/data';
 import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
@@ -29,6 +29,11 @@ export class SceneTimeRange extends SceneItemBase<TimeRangeState> {
 
 function SceneTimeRangeRenderer({ model }: { model: SceneTimeRange }) {
   const { hidePicker, timeRange } = model.useState();
+
+  useEffect(() => {
+    console.log('Time range mount');
+    return () => console.log('Time range unmount');
+  }, []);
 
   if (hidePicker) {
     return null;

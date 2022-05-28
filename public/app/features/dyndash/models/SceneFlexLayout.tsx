@@ -32,7 +32,7 @@ function FlexLayoutChildComponent({
   item: SceneItem<SceneItemState>;
   direction: FlexLayoutDirection;
 }) {
-  const { size } = item.useState();
+  const { size } = item.useMount().useState();
 
   return (
     <div style={getItemStyles(direction, size)}>

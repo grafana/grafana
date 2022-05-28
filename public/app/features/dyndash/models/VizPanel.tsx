@@ -1,6 +1,7 @@
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { FieldConfigSource } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
@@ -11,6 +12,7 @@ export interface VizPanelState extends SceneItemState {
   title?: string;
   pluginId: string;
   options?: any;
+  fieldConfig?: FieldConfigSource;
 }
 
 export class VizPanel extends SceneItemBase<VizPanelState> {
@@ -18,7 +20,7 @@ export class VizPanel extends SceneItemBase<VizPanelState> {
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {
-  const { title, pluginId, options } = model.useState();
+  const { title, pluginId, options, fieldConfig } = model.useMount().useState();
   const { data } = model.getData().useState();
 
   return (
@@ -39,6 +41,7 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
                   height={innerHeight}
                   data={data}
                   options={options}
+                  fieldConfig={fieldConfig}
                   onOptionsChange={() => {}}
                   onChangeTimeRange={model.onSetTimeRange}
                 />

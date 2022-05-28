@@ -39,6 +39,7 @@ export interface SceneItem<TState extends SceneItemState = SceneItemState> exten
   Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
   useState(): TState;
   setState(state: TState): void;
+  useMount(): this;
 
   onMount(): void;
   onUnmount(): void;
