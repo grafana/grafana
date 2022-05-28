@@ -1,11 +1,11 @@
 import React, { CSSProperties } from 'react';
 
 import { SceneItemBase } from './SceneItem';
-import { SceneItem, SceneItemSizing, SceneLayoutItemChildState, SceneLayoutState } from './types';
+import { SceneItem, SceneItemSizing, SceneItemState, SceneLayoutState } from './types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
-interface SceneFlexLayoutState extends SceneLayoutItemChildState, SceneLayoutState {
+interface SceneFlexLayoutState extends SceneItemState, SceneLayoutState {
   direction?: FlexLayoutDirection;
 }
 
@@ -29,7 +29,7 @@ function FlexLayoutChildComponent({
   item,
   direction,
 }: {
-  item: SceneItem<SceneLayoutItemChildState>;
+  item: SceneItem<SceneItemState>;
   direction: FlexLayoutDirection;
 }) {
   const { size } = item.useState();

@@ -17,8 +17,9 @@ import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneItemBase } from './SceneItem';
+import { SceneItemState } from './types';
 
-export interface QueryRunnerState {
+export interface QueryRunnerState extends SceneItemState {
   data?: PanelData;
   queries: DataQueryExtended[];
 }
@@ -110,8 +111,6 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
       console.error('PanelQueryRunner Error', err);
     }
   }
-
-  Component = () => null;
 }
 
 async function getDataSource(

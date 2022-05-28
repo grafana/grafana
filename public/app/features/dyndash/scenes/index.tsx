@@ -1,8 +1,8 @@
 import { Scene } from '../models/Scene';
 
-import { getDemoScene } from './demo';
+import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getNestedScene } from './nested';
 
 export function getScenes(): Scene[] {
-  return [getDemoScene(), getNestedScene()];
+  return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene()];
 }

@@ -5,9 +5,9 @@ import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
 import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneLayoutItemChildState } from './types';
+import { SceneComponentProps, SceneItemState } from './types';
 
-export interface VizPanelState extends SceneLayoutItemChildState {
+export interface VizPanelState extends SceneItemState {
   title?: string;
   pluginId: string;
   options?: any;

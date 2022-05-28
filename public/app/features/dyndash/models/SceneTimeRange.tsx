@@ -5,8 +5,9 @@ import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 import { SceneItemBase } from './SceneItem';
+import { SceneItemState } from './types';
 
-interface TimeRangeState {
+interface TimeRangeState extends SceneItemState {
   timeRange: TimeRange;
   hidePicker?: boolean;
 }

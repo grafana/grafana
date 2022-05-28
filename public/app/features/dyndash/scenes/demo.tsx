@@ -2,21 +2,20 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene, ScenePanel } from '../models/Scene';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
+import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
 import { SceneTimeRange } from '../models/SceneTimeRange';
 import { SceneToolbarButton } from '../models/SceneToolbarButton';
 import { VizPanel } from '../models/VizPanel';
 
-export function getDemoScene(): Scene {
+export function getFlexLayoutTest(): Scene {
   const scene = new Scene({
-    title: 'Hello',
+    title: 'Flex layout test',
     layout: new SceneFlexLayout({
       direction: 'row',
-      size: {},
       children: [
         new ScenePanel({
           key: 'A',
-          size: {},
           // size: { vSizing: 'fixed', width: 200 },
           title: 'Panel 1',
         }),
@@ -32,7 +31,6 @@ export function getDemoScene(): Scene {
             }),
             new VizPanel({
               key: '3',
-              size: {},
               pluginId: 'timeseries',
               title: 'Panel 3',
             }),
@@ -70,20 +68,23 @@ export function getDemoScene(): Scene {
   return scene;
 }
 
-export function timePickerGraph(): Scene {
+export function getScenePanelRepeaterTest(): Scene {
   const scene = new Scene({
-    title: 'Hello',
-    layout: new SceneFlexLayout({
-      direction: 'column',
-      size: {},
-      children: [
-        new VizPanel({
-          key: '1',
-          size: {},
-          pluginId: 'timeseries',
-          title: 'Select time range',
-        }),
-      ],
+    title: 'Panel repeater test',
+    layout: new ScenePanelRepeater({
+      layout: new SceneFlexLayout({
+        direction: 'column',
+        children: [
+          new VizPanel({
+            key: '1',
+            pluginId: 'timeseries',
+            title: 'Title',
+            options: {
+              legend: { displayMode: 'hidden' },
+            },
+          }),
+        ],
+      }),
     }),
     $timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
@@ -96,6 +97,8 @@ export function timePickerGraph(): Scene {
             uid: 'gdev-testdata',
             type: 'testdata',
           },
+          seriesCount: 5,
+          alias: '__server_names',
           scenarioId: 'random_walk',
         },
       ],

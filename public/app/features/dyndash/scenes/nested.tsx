@@ -11,11 +11,9 @@ export function getNestedScene(): Scene {
     title: 'Nested Scene demo',
     layout: new SceneFlexLayout({
       direction: 'column',
-      size: {},
       children: [
         new VizPanel({
           key: '3',
-          size: {},
           pluginId: 'timeseries',
           title: 'Panel 3',
         }),
@@ -47,11 +45,9 @@ export function getInnerScene(title: string): Scene {
     title: title,
     layout: new SceneFlexLayout({
       direction: 'row',
-      size: {},
       children: [
         new VizPanel({
           key: '3',
-          size: {},
           pluginId: 'timeseries',
           title: 'Data',
         }),

@@ -3,9 +3,9 @@ import React from 'react';
 import { IconName, ToolbarButton } from '@grafana/ui';
 
 import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps } from './types';
+import { SceneComponentProps, SceneItemState } from './types';
 
-export interface ToolbarButtonState {
+export interface ToolbarButtonState extends SceneItemState {
   icon: IconName;
   onClick: () => void;
 }

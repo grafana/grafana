@@ -1,12 +1,18 @@
-import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
 import { Observer, ReplaySubject, Subscription } from 'rxjs';
 
 import { AbsoluteTimeRange, toUtc, useObservable } from '@grafana/data';
 
-import { SceneComponentProps, SceneItemStateWithScope, SceneTimeRangeState, SceneDataState, SceneItem } from './types';
+import {
+  SceneComponentProps,
+  SceneTimeRangeState,
+  SceneDataState,
+  SceneItem,
+  SceneLayoutState,
+  SceneItemState,
+} from './types';
 
-export abstract class SceneItemBase<TState> implements SceneItem<TState> {
+export abstract class SceneItemBase<TState extends SceneItemState> implements SceneItem<TState> {
   subject = new ReplaySubject<TState>();
   state: TState;
   parent?: SceneItemBase<any>;
@@ -47,12 +53,14 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
     this.subject.next(this.state);
   }
 
-  abstract Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
+  Component(_: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null {
+    return null;
+  }
 
   onMount() {
     this.isMounted = true;
 
-    const { $data } = this.state as SceneItemStateWithScope;
+    const { $data } = this.state;
     if ($data && !$data.isMounted) {
       $data.onMount();
     }
@@ -61,7 +69,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   onUnmount() {
     this.isMounted = false;
 
-    const { $data } = this.state as SceneItemStateWithScope;
+    const { $data } = this.state;
     if ($data && $data.isMounted) {
       $data.onUnmount();
     }
@@ -93,7 +101,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
   getTimeRange(): SceneItem<SceneTimeRangeState> {
-    const { $timeRange } = this.state as SceneItemStateWithScope;
+    const { $timeRange } = this.state;
     if ($timeRange) {
       return $timeRange;
     }
@@ -109,7 +117,7 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
    * Will walk up the scene object graph to the closest $data scene object
    */
   getData(): SceneItem<SceneDataState> {
-    const { $data } = this.state as SceneItemStateWithScope;
+    const { $data } = this.state;
     if ($data) {
       return $data;
     }
@@ -136,26 +144,31 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   };
 
   /**
-   * Will create new SceneItem with shalled cloned state, but all child items of type
+   * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned
    */
-  clone(): this {
-    // const clonedState = { ...this.state };
+  clone(withState?: Partial<TState>): this {
+    const clonedState = { ...this.state };
 
-    // for (const key in clonedState) {
-    //   const propValue = clonedState[key];
-    //   if (propValue instanceof SceneItemBase) {
-    //     clonedState[key] = propValue.clone();
-    //  }
-    // }
+    // Clone any SceneItems in state
+    for (const key in clonedState) {
+      const propValue = clonedState[key];
+      if (propValue instanceof SceneItemBase) {
+        clonedState[key] = propValue.clone();
+      }
+    }
 
-    // const children = (this.state as any).children as Array<SceneItemBase<any>>;
-    // if (children) {
-    //   for (const child of children) {
-    //     child.parent = this;
-    //   }
-    // }
+    // Clone layout children
+    const layout = this.state as any as SceneLayoutState;
+    if (layout.children) {
+      const newChildren: SceneLayoutState['children'] = [];
+      for (const child of layout.children) {
+        newChildren.push(child.clone());
+      }
+      (clonedState as any).children = newChildren;
+    }
 
-    const clonedState = cloneDeep(this.state);
+    Object.assign(clonedState, withState);
+
     return new (this.constructor as any)(clonedState);
   }
 }

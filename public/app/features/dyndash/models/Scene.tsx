@@ -3,9 +3,9 @@ import React, { CSSProperties } from 'react';
 import { PageToolbar } from '@grafana/ui';
 
 import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneLayoutItemChildState, SceneItem, SceneItemStateWithScope } from './types';
+import { SceneComponentProps, SceneItemState, SceneItem } from './types';
 
-interface SceneState extends SceneItemStateWithScope, SceneLayoutItemChildState {
+interface SceneState extends SceneItemState {
   title: string;
   layout: SceneItem<any>;
   actions?: Array<SceneItem<any>>;
@@ -37,7 +37,7 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
 
 SceneRenderer.displayName = 'SceneRenderer';
 
-export interface PanelState extends SceneLayoutItemChildState {
+export interface PanelState extends SceneItemState {
   title?: string;
 }
 
