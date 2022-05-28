@@ -485,6 +485,13 @@ function secondServiceMapQuery(
         tempoDatasourceUid
       );
 
+      if (apmTable.fields.length === 0) {
+        return {
+          data: [firstResponse.data[1], firstResponse.data[2]],
+          state: LoadingState.Done,
+        };
+      }
+
       return {
         data: [apmTable, firstResponse.data[1], firstResponse.data[2]],
         state: LoadingState.Done,
