@@ -5,7 +5,7 @@ import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
 import { SceneTimeRange } from '../models/SceneTimeRange';
-import { SceneToolbarButton } from '../models/SceneToolbarButton';
+import { SceneToolbarButton, SceneToolbarInput } from '../models/SceneToolbarButton';
 import { VizPanel } from '../models/VizPanel';
 
 export function getFlexLayoutTest(): Scene {
@@ -71,6 +71,21 @@ export function getFlexLayoutTest(): Scene {
 }
 
 export function getScenePanelRepeaterTest(): Scene {
+  const queryRunner = new SceneQueryRunner({
+    queries: [
+      {
+        refId: 'A',
+        datasource: {
+          uid: 'gdev-testdata',
+          type: 'testdata',
+        },
+        seriesCount: 5,
+        alias: '__server_names',
+        scenarioId: 'random_walk',
+      },
+    ],
+  });
+
   const scene = new Scene({
     title: 'Panel repeater test',
     layout: new ScenePanelRepeater({
@@ -78,6 +93,7 @@ export function getScenePanelRepeaterTest(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
+            size: { minHeight: 150 },
             children: [
               new VizPanel({
                 key: '1',
@@ -90,9 +106,10 @@ export function getScenePanelRepeaterTest(): Scene {
               new VizPanel({
                 key: '1',
                 size: { hSizing: 'fixed', width: 300 },
-                pluginId: 'gauge',
-                title: 'Title',
-                options: {},
+                pluginId: 'stat',
+                options: {
+                  graphMode: 'none',
+                },
               }),
             ],
           }),
@@ -102,27 +119,20 @@ export function getScenePanelRepeaterTest(): Scene {
     $timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          seriesCount: 5,
-          alias: '__server_names',
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $data: queryRunner,
     actions: [
-      new SceneToolbarButton({
-        icon: 'columns',
-        onClick: () => {
-          scene.state.layout.setState({
-            direction: scene.state.layout.state.direction === 'row' ? 'column' : 'row',
+      new SceneToolbarInput({
+        value: '5',
+        onChange: (newValue) => {
+          queryRunner.setState({
+            queries: [
+              {
+                ...queryRunner.state.queries[0],
+                seriesCount: newValue,
+              },
+            ],
           });
+          queryRunner.runQueries();
         },
       }),
     ],

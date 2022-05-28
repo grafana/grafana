@@ -39,7 +39,7 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
     this.subs.add(
       timeRange.subscribe({
         next: (state) => {
-          this.run(state.timeRange);
+          this.runWithTimeRange(state.timeRange);
         },
       })
     );
@@ -57,7 +57,12 @@ export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
     }
   }
 
-  async run(timeRange: TimeRange) {
+  runQueries() {
+    const timeRange = this.getTimeRange();
+    this.runWithTimeRange(timeRange.state.timeRange);
+  }
+
+  private async runWithTimeRange(timeRange: TimeRange) {
     const queries = cloneDeep(this.state.queries);
 
     const request: DataQueryRequest = {

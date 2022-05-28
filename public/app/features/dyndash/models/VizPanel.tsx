@@ -15,10 +15,6 @@ export interface VizPanelState extends SceneItemState {
 
 export class VizPanel extends SceneItemBase<VizPanelState> {
   Component = ScenePanelRenderer;
-
-  constructor(state: VizPanelState) {
-    super(state);
-  }
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {

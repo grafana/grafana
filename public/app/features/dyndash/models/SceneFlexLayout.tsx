@@ -47,6 +47,8 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneItemSizing =
   const style: CSSProperties = {
     display: 'flex',
     flexDirection: direction,
+    minWidth: sizing.minWidth,
+    minHeight: sizing.minHeight,
   };
 
   if (direction === 'column') {

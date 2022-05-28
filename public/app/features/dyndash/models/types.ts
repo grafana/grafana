@@ -16,6 +16,8 @@ export interface SceneItemSizing {
   y?: number;
   hSizing?: 'fill' | 'fixed';
   vSizing?: 'fill' | 'fixed';
+  minWidth?: number | string;
+  minHeight?: number | string;
 }
 
 export interface SceneComponentProps<T> {
