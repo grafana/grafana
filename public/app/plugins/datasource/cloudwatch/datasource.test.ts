@@ -443,6 +443,30 @@ describe('datasource', () => {
     });
   });
 
+  describe('interpolateMetricsQueryVariables', () => {
+    it('interpolates dimensions correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        dimensions: { InstanceId: '$dimension' },
+      };
+      const ds = setupMockedDataSource({ variables: [dimensionVariable], mockGetVariableName: false });
+      const result = ds.datasource.interpolateMetricsQueryVariables(testQuery, {
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toStrictEqual({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: '',
+        dimensions: { InstanceId: ['foo'] },
+      });
+    });
+  });
+
   describe('convertMultiFiltersFormat', () => {
     const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable], mockGetVariableName: false });
     it('converts keys and values correctly', () => {

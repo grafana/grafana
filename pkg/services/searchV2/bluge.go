@@ -295,27 +295,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	response := &backend.DataResponse{}
 	header := &customMeta{}
 
-	// Folder listing structure.
-	idx := strings.Index(q.Query, ":")
-	if idx > 0 {
-		key := q.Query[0:idx]
-		val := q.Query[idx+1:]
-		if key == "list" {
-			q.Limit = 1000
-			q.Query = ""
-			q.Location = ""
-			q.Explain = false
-			q.SkipLocation = true
-			q.Facet = nil
-			if val == "root" || val == "" {
-				q.Kind = []string{string(entityKindFolder)}
-			} else {
-				q.Location = val
-				q.Kind = []string{string(entityKindDashboard)}
-			}
-		}
-	}
-
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(newPermissionFilter(filter, logger))

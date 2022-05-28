@@ -20,27 +20,16 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
-type ContextInvoker func(ctx *Context)
-
-// Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
-func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(*Context))
-	return nil, nil
-}
-
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	Injector
-	handlers []Handler
+	handlers []http.Handler
 	index    int
 
 	*Router
@@ -50,12 +39,12 @@ type Context struct {
 	logger   log.Logger
 }
 
-func (ctx *Context) handler() Handler {
+func (ctx *Context) handler() http.Handler {
 	if ctx.index < len(ctx.handlers) {
 		return ctx.handlers[ctx.index]
 	}
 	if ctx.index == len(ctx.handlers) {
-		return func() {}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	}
 	panic("invalid index for context handler")
 }
@@ -68,9 +57,8 @@ func (ctx *Context) Next() {
 
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		if _, err := ctx.Invoke(ctx.handler()); err != nil {
-			panic(err)
-		}
+		ctx.handler().ServeHTTP(ctx.Resp, ctx.Req)
+
 		ctx.index++
 		if ctx.Resp.Written() {
 			return

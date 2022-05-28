@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/", "/docs/grafana/latest/visualizations/time-series/graph-time-series-as-bars/"]
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-title = "Graph time series as bars"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/
+  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-bars/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Graph time series as bars
+weight: 200
+---
 
 # Graph time series as bars
 
@@ -102,7 +109,7 @@ Gradient color is generated based on the hue of the line color.
 
 #### Scheme
 
-In this mode the whole bar will use a color gradient defined by your Color scheme. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}). There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
+In this mode the whole bar will use a color gradient defined by your Color scheme. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme.md" >}}).
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
 
