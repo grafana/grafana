@@ -34,7 +34,7 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
-1. In Step 1, select **Mimir ot Loki alert** option.
+1. In Step 1, select **Mimir or Loki alert** option.
    - Next, select your Loki or Prometheus data source and add the query to evaluate.
    - Enter a PromQL or LogQL expression to query. The rule fires if the evaluation result has at least one series with a value that is greater than 0. An alert is created for each series.
 1. In Step 2, specify the alert evaluation interval.

@@ -37,7 +37,7 @@ To create a Grafana Mimir or Loki managed recording rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **New alert rule**. The new alerting rule page opens where the **Grafana managed alert** option is selected by default.
-1. In Step 1, select **Mimir ot Loki recording rule** option.
+1. In Step 1, select **Mimir or Loki recording rule** option.
    - Select your Loki or Prometheus data source, add the query to evaluate, and then select the alert condition.
    - Enter a PromQL or LogQL expression. The rule fires if the evaluation result has at least one series with a value that is greater than 0. An alert is created for each series.
 1. In Step 2, add the rule name, namespace, rule group, as well as additional metadata associated with the rule.
