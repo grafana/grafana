@@ -35,7 +35,7 @@ api.json: spec-stable.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
 swagger-codegen-api:
-	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) swaggerapi/swagger-codegen-cli generate \
+	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) parsertongue/swagger-codegen-cli:3.0.32 generate \
 	-i /local/post.json \
 	-l go-server \
 	-Dapis \
