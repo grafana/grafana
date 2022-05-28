@@ -2,14 +2,8 @@ import React, { CSSProperties } from 'react';
 
 import { PageToolbar } from '@grafana/ui';
 
-import {
-  SceneComponentProps,
-  SceneItemBase,
-  SceneItem,
-  SceneLayoutItemChildState,
-  SceneItemStateWithScope,
-  SceneLayoutState,
-} from './SceneItem';
+import { SceneItemBase } from './SceneItem';
+import { SceneComponentProps, SceneLayoutItemChildState, SceneItem, SceneItemStateWithScope } from './types';
 
 interface SceneState extends SceneItemStateWithScope, SceneLayoutItemChildState {
   title: string;

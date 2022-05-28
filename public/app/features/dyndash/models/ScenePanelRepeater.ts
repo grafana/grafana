@@ -1,6 +1,7 @@
 import { LoadingState, PanelData } from '@grafana/data';
 
-import { SceneItem, SceneItemBase, SceneLayoutItemChildState, SceneLayoutState } from './SceneItem';
+import { SceneItemBase } from './SceneItem';
+import { SceneItem } from './types';
 
 interface RepeatOptions {
   item: SceneItem<any>;
@@ -22,7 +23,7 @@ export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
   }
 
   performRepeat(data: PanelData) {
-    // // assume parent is a layout
+    // assume parent is a layout
     // const parent = this.parent as SceneItem<SceneLayoutState>;
     // const children: Array<SceneItem<SceneLayoutItemChildState>> = [this];
     //

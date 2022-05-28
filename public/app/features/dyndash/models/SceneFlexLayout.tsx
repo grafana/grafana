@@ -1,6 +1,7 @@
 import React, { CSSProperties } from 'react';
 
-import { SceneItem, SceneItemBase, SceneItemSizing, SceneLayoutItemChildState, SceneLayoutState } from './SceneItem';
+import { SceneItemBase } from './SceneItem';
+import { SceneItem, SceneItemSizing, SceneLayoutItemChildState, SceneLayoutState } from './types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 

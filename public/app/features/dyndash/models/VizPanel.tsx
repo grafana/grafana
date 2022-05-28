@@ -4,7 +4,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
-import { SceneComponentProps, SceneItemBase, SceneLayoutItemChildState } from './SceneItem';
+import { SceneItemBase } from './SceneItem';
+import { SceneComponentProps, SceneLayoutItemChildState } from './types';
 
 export interface VizPanelState extends SceneLayoutItemChildState {
   title?: string;

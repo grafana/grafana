@@ -1,7 +1,10 @@
+import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
-import { Observer, ReplaySubject, Subscribable, Subscription } from 'rxjs';
+import { Observer, ReplaySubject, Subscription } from 'rxjs';
 
-import { AbsoluteTimeRange, PanelData, TimeRange, toUtc, useObservable } from '@grafana/data';
+import { AbsoluteTimeRange, toUtc, useObservable } from '@grafana/data';
+
+import { SceneComponentProps, SceneItemStateWithScope, SceneTimeRangeState, SceneDataState, SceneItem } from './types';
 
 export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   subject = new ReplaySubject<TState>();
@@ -131,51 +134,28 @@ export abstract class SceneItemBase<TState> implements SceneItem<TState> {
       },
     });
   };
-}
 
-export interface SceneItem<TState> extends Subscribable<TState> {
-  state: TState;
-  isMounted?: boolean;
+  /**
+   * Will create new SceneItem with shalled cloned state, but all child items of type
+   */
+  clone(): this {
+    // const clonedState = { ...this.state };
 
-  Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
-  useState(): TState;
-  setState(state: TState): void;
+    // for (const key in clonedState) {
+    //   const propValue = clonedState[key];
+    //   if (propValue instanceof SceneItemBase) {
+    //     clonedState[key] = propValue.clone();
+    //  }
+    // }
 
-  onMount(): void;
-  onUnmount(): void;
-}
+    // const children = (this.state as any).children as Array<SceneItemBase<any>>;
+    // if (children) {
+    //   for (const child of children) {
+    //     child.parent = this;
+    //   }
+    // }
 
-export interface SceneLayoutState {
-  children: Array<SceneItem<SceneLayoutItemChildState>>;
-}
-
-export interface SceneItemStateWithScope {
-  $timeRange?: SceneItem<SceneTimeRangeState>;
-  $data?: SceneItem<SceneDataState>;
-}
-
-export interface SceneLayoutItemChildState {
-  key?: string;
-  size?: SceneItemSizing;
-}
-
-export interface SceneItemSizing {
-  width?: number | string;
-  height?: number | string;
-  x?: number;
-  y?: number;
-  hSizing?: 'fill' | 'fixed';
-  vSizing?: 'fill' | 'fixed';
-}
-
-export interface SceneComponentProps<T> {
-  model: T;
-}
-
-export interface SceneDataState {
-  data?: PanelData;
-}
-
-export interface SceneTimeRangeState {
-  timeRange: TimeRange;
+    const clonedState = cloneDeep(this.state);
+    return new (this.constructor as any)(clonedState);
+  }
 }
