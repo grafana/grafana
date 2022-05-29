@@ -167,7 +167,7 @@ describe('Tempo data source', () => {
     expect(response.data[0].fields[0].values.length).toBe(3);
 
     // Test Links
-    expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[0].fields[0].config.links.length).toBe(4);
     expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
 
     expect(response.data[1].name).toBe('Edges');
@@ -484,6 +484,18 @@ const serviceGraphLinks = [
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Tempo search',
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: '${__data.fields[0]}',
+      } as TempoQuery,
+      datasourceUid: 'tempo',
+      datasourceName: 'Tempo',
     },
   },
 ];
