@@ -1,8 +1,10 @@
-+++
-title = "Dashboard management maturity model"
-description = "Explanation of dashboard management maturity model"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/best-practices/dashboard-management-maturity-levels/
+description: Explanation of dashboard management maturity model
+title: Dashboard management maturity model
+weight: 400
+---
 
 # Dashboard management maturity model
 
@@ -46,7 +48,7 @@ How can you tell you are here?
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can.
-  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/configure-thresholds" >}}) can help with that.
+  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/configure-thresholds/" >}}) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.

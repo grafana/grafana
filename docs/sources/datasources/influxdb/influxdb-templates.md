@@ -1,8 +1,10 @@
-+++
-title = "InfluxDB templates"
-description = "Guide for templates in InfluxDB"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/influxdb/influxdb-templates/
+description: Guide for templates in InfluxDB
+title: InfluxDB templates
+weight: 300
+---
 
 ## InfluxDB templates
 

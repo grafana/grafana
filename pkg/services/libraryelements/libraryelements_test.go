@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -202,9 +202,14 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+	features := featuremgmt.WithFeatures()
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
 	service := dashboardservice.ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, dashAlertExtractor,
-		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		cfg, dashboardStore, dashAlertExtractor,
+		features, folderPermissions, dashboardPermissions,
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -218,17 +223,19 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 
 	d := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
-		features, permissionsServices,
+		features, folderPermissions, dashboardPermissions,
 	)
 	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
 		cfg, d, dashboardStore, nil,
-		features, permissionsServices, ac, nil,
+		features, folderPermissions, ac,
 	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -317,17 +324,23 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore := sqlstore.InitTestDB(t)
 		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		features := featuremgmt.WithFeatures()
+		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
+
 		dashboardService := dashboardservice.ProvideDashboardService(
-			setting.NewCfg(), dashboardStore, nil,
-			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+			cfg, dashboardStore, nil,
+			features, folderPermissions, dashboardPermissions,
 		)
 		ac := acmock.New()
 		service := LibraryElementService{
-			Cfg:      setting.NewCfg(),
+			Cfg:      cfg,
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
-				setting.NewCfg(), dashboardService, dashboardStore, nil,
-				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac, nil,
+				cfg, dashboardService, dashboardStore, nil,
+				features, folderPermissions, ac,
 			),
 		}
 

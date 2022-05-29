@@ -9,13 +9,13 @@ type DataSourceRef struct {
 }
 
 type PanelInfo struct {
-	ID              int64           `json:"id"`
-	Title           string          `json:"title"`
-	Description     string          `json:"description,omitempty"`
-	Type            string          `json:"type,omitempty"` // PluginID
-	PluginVersion   string          `json:"pluginVersion,omitempty"`
-	Datasource      []DataSourceRef `json:"datasource,omitempty"`      // UIDs
-	Transformations []string        `json:"transformations,omitempty"` // ids of the transformation steps
+	ID            int64           `json:"id"`
+	Title         string          `json:"title"`
+	Description   string          `json:"description,omitempty"`
+	Type          string          `json:"type,omitempty"` // PluginID
+	PluginVersion string          `json:"pluginVersion,omitempty"`
+	Datasource    []DataSourceRef `json:"datasource,omitempty"`  // UIDs
+	Transformer   []string        `json:"transformer,omitempty"` // ids of the transformation steps
 
 	// Rows define panels as sub objects
 	Collapsed []PanelInfo `json:"collapsed,omitempty"`
@@ -23,7 +23,6 @@ type PanelInfo struct {
 
 type DashboardInfo struct {
 	ID            int64           `json:"id,omitempty"` // internal ID
-	UID           string          `json:"uid,omitempty"`
 	Title         string          `json:"title"`
 	Description   string          `json:"description,omitempty"`
 	Tags          []string        `json:"tags"`

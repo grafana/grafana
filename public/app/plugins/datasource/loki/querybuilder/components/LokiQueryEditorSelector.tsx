@@ -11,7 +11,7 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { getQueryWithDefaults } from '../state';
+import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -24,11 +24,12 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query);
+  // This should be filled in from the defaults by now.
+  const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
-    (newMetricEditorMode: QueryEditorMode) => {
-      const change = { ...query, editorMode: newMetricEditorMode };
-      if (newMetricEditorMode === QueryEditorMode.Builder) {
+    (newEditorMode: QueryEditorMode) => {
+      if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
         if (result.errors.length) {
@@ -36,7 +37,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           return;
         }
       }
-      onChange(change);
+      changeEditorMode(query, newEditorMode, onChange);
     },
     [onChange, query]
   );
@@ -55,8 +56,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     onChange({ ...query, rawQuery: isEnabled });
   };
 
-  // If no expr (ie new query) then default to builder
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   return (
     <>
       <ConfirmModal
@@ -100,11 +99,19 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
+        <QueryEditorModeToggle
+          mode={editorMode!}
+          onChange={onEditorModeChange}
+          uiOptions={{
+            [QueryEditorMode.Explain]: true,
+            [QueryEditorMode.Code]: true,
+            [QueryEditorMode.Builder]: true,
+          }}
+        />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} onChange={onChangeInternal} />}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
             datasource={props.datasource}

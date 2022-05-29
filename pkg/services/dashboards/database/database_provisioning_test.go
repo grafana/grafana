@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardProvisioningTest(t *testing.T) {
+func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
@@ -78,7 +78,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 
 			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
@@ -86,7 +86,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(query.Result))

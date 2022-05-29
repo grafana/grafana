@@ -20,7 +20,6 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
       <div className="gf-form">
         <Select
           className="width-20"
-          menuShouldPortal
           disabled={!canSet || !item.isManaged}
           onChange={(p) => onChange(item, p.value!)}
           value={permissionLevels.find((p) => p === item.permission)}

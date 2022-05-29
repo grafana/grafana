@@ -2,6 +2,8 @@
 
 Grafana uses a _bus_ to pass messages between different parts of the application. All communication over the bus happens synchronously.
 
+> **Deprecated:** The bus has officially been deprecated, however, we're still using the command/query objects paradigms.
+
 There are three types of messages: _events_, _commands_, and _queries_.
 
 ## Events

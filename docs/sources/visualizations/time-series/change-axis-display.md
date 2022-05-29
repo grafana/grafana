@@ -1,9 +1,16 @@
-+++
-title = "Change axis display"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/change-axis-display/"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/change-axis-display/
+  - /docs/grafana/latest/visualizations/time-series/change-axis-display/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Change axis display
+weight: 400
+---
 
 # Change axis display
 
@@ -37,7 +44,9 @@ Display all Y-axes on the right side.
 
 ### Hidden
 
-Hide the Y-axes.
+Hide all axes.
+
+To selectively hide axes, [add an override]({{< relref "../../panels/override-field-values/add-a-field-override.md" >}}) targeting specific fields.
 
 ![Hidden Y-axis example](/static/img/docs/time-series-panel/axis-placement-hidden-7-4.png)
 

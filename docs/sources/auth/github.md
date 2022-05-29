@@ -1,9 +1,15 @@
-+++
-title = "GitHub OAuth2 Authentication"
-description = "Grafana OAuthentication Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/github/
+description: 'Grafana OAuthentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: GitHub OAuth2 Authentication
+weight: 800
+---
 
 # GitHub OAuth2 Authentication
 

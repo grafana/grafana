@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,12 +59,12 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	datasourceID, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "DatasourceID is invalid", err)
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return response.Error(http.StatusBadRequest, "DatasourceUID is invalid", nil)
 	}
 
-	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")

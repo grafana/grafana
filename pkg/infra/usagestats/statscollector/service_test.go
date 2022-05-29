@@ -9,16 +9,16 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -76,6 +76,34 @@ func TestTotalStatsUpdate(t *testing.T) {
 			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
 		})
 	}
+}
+
+var _ registry.ProvidesUsageStats = (*dummyUsageStatProvider)(nil)
+
+type dummyUsageStatProvider struct {
+	stats map[string]interface{}
+}
+
+func (d dummyUsageStatProvider) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return d.stats
+}
+
+func TestUsageStatsProviders(t *testing.T) {
+	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
+	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
+
+	store := mockstore.NewSQLStoreMock()
+	mockSystemStats(store)
+	s := createService(t, setting.NewCfg(), store)
+	s.RegisterProviders([]registry.ProvidesUsageStats{provider1, provider2})
+
+	m, err := s.collect(context.Background())
+	require.NoError(t, err, "Expected no error")
+
+	assert.Equal(t, "val1", m["my_stat_1"])
+	assert.Equal(t, "val2", m["my_stat_2"])
+	assert.Equal(t, "valx", m["my_stat_x"])
+	assert.Equal(t, "valz", m["my_stat_z"])
 }
 
 func TestFeatureUsageStats(t *testing.T) {
@@ -252,6 +280,9 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
 	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
 
+	assert.EqualValues(t, 11, metrics["stats.data_keys.count"])
+	assert.EqualValues(t, 3, metrics["stats.active_data_keys.count"])
+
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
@@ -294,6 +325,8 @@ func mockSystemStats(sqlStore *mockstore.SQLStoreMock) {
 		FoldersViewersCanAdmin:    1,
 		FoldersViewersCanEdit:     5,
 		APIKeys:                   2,
+		DataKeys:                  11,
+		ActiveDataKeys:            3,
 	}
 }
 

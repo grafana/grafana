@@ -37,7 +37,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-order`}
-          menuShouldPortal
           onChange={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'order', newValue: e.value }))
           }
@@ -49,7 +48,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Size" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-size`}
-          menuShouldPortal
           // TODO: isValidNewOption should only allow numbers & template variables
           {...useCreatableSelectPersistedBehaviour({
             options: sizeOptions,
@@ -78,7 +76,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order By" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-order_by`}
-          menuShouldPortal
           onChange={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'orderBy', newValue: e.value }))
           }

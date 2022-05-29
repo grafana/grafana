@@ -1,9 +1,16 @@
-+++
-title = "Grafana documentation"
-description = "Guides, Installation and Feature Documentation"
-keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", "/docs/grafana/v3.1"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/
+  - /docs/grafana/latest/guides/reference/admin/
+  - /docs/grafana/v1.1/
+  - /docs/grafana/v3.1/
+description: Guides, Installation and Feature Documentation
+keywords:
+  - grafana
+  - installation
+  - documentation
+title: Grafana documentation
+---
 
 # Grafana documentation
 
@@ -44,7 +51,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 ## Guides
 
 <div class="nav-cards">
-    <a href="{{< relref "getting-started/getting-started.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "getting-started/build-first-dashboard.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>
     </a>

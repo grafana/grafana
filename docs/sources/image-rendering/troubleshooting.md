@@ -1,9 +1,16 @@
-+++
-title = "Troubleshooting"
-description = "Image rendering troubleshooting"
-keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
-weight = 115
-+++
+---
+aliases:
+  - /docs/grafana/latest/image-rendering/troubleshooting/
+description: Image rendering troubleshooting
+keywords:
+  - grafana
+  - image
+  - rendering
+  - plugin
+  - troubleshooting
+title: Troubleshooting
+weight: 115
+---
 
 # Troubleshoot image rendering
 
@@ -22,9 +29,9 @@ filters = rendering:debug
 
 You can also enable more logs in image renderer service itself by:
 
-- Increasing the [log level]({{< relref "./#log-level" >}}).
-- Enabling [verbose logging]({{< relref "./#verbose-logging" >}}).
-- [Capturing headless browser output]({{< relref "./#capture-browser-output" >}}).
+- Increasing the [log level]({{< relref "/#log-level" >}}).
+- Enabling [verbose logging]({{< relref "/#verbose-logging" >}}).
+- [Capturing headless browser output]({{< relref "/#capture-browser-output" >}}).
 
 ## Missing libraries
 

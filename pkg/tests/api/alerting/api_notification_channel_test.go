@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -61,7 +62,10 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"traceID":"00000000000000000000000000000000"}`, string(b))
+		res := Response{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.NotEmpty(t, res.TraceID)
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
@@ -771,8 +775,9 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		_, err := createFolder(t, env.SQLStore, 0, "default")
+		err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -922,13 +927,13 @@ type mockNotificationChannel struct {
 }
 
 func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNotificationChannel {
-	lastDigit := grafanaListedAddr[len(grafanaListedAddr)-1] - 48
-	lastDigit = (lastDigit + 1) % 10
-	newAddr := fmt.Sprintf("%s%01d", grafanaListedAddr[:len(grafanaListedAddr)-1], lastDigit)
+	// Spin up a separate webserver to receive notifications emitted by Grafana.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
 		server: &http.Server{
-			Addr: newAddr,
+			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
 		t:                     t,
@@ -936,7 +941,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 
 	nc.server.Handler = nc
 	go func() {
-		require.Equal(t, http.ErrServerClosed, nc.server.ListenAndServe())
+		require.EqualError(t, nc.server.Serve(listener), http.ErrServerClosed.Error())
 	}()
 
 	return nc

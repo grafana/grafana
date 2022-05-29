@@ -13,6 +13,15 @@ import { ApiKeysPageUnconnected, Props } from './ApiKeysPage';
 import { getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { setSearchQuery } from './state/reducers';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+      hasPermissionInMetadata: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides: Partial<Props>) => {
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
@@ -40,9 +49,7 @@ const setup = (propOverrides: Partial<Props>) => {
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
-    canRead: true,
     canCreate: true,
-    canDelete: true,
   };
 
   Object.assign(props, propOverrides);

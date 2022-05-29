@@ -17,62 +17,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 describe('VariableSupport', () => {
   describe('querying for grafana template variable fns', () => {
-    it('can fetch deprecated log analytics metric names', (done) => {
-      const expectedResults = ['test'];
-      const variableSupport = new VariableSupport(
-        createMockDatasource({
-          insightsAnalyticsDatasource: {
-            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
-          },
-        })
-      );
-      const mockRequest = {
-        targets: [
-          {
-            refId: 'A',
-            queryType: AzureQueryType.GrafanaTemplateVariableFn,
-            grafanaTemplateVariableFn: {
-              kind: 'AppInsightsMetricNameQuery',
-              rawQuery: 'AppInsightsMetricNames()',
-            },
-          } as AzureMonitorQuery,
-        ],
-      } as DataQueryRequest<AzureMonitorQuery>;
-      const observables = variableSupport.query(mockRequest);
-      observables.subscribe((result: DataQueryResponseData) => {
-        expect(result.data[0].source).toEqual(expectedResults);
-        done();
-      });
-    });
-
-    it('can fetch deprecated log analytics groupBys', (done) => {
-      const expectedResults = ['test'];
-      const variableSupport = new VariableSupport(
-        createMockDatasource({
-          insightsAnalyticsDatasource: {
-            getGroupBys: jest.fn().mockResolvedValueOnce(expectedResults),
-          },
-        })
-      );
-      const mockRequest = {
-        targets: [
-          {
-            refId: 'A',
-            queryType: AzureQueryType.GrafanaTemplateVariableFn,
-            grafanaTemplateVariableFn: {
-              kind: 'AppInsightsGroupByQuery',
-              rawQuery: 'AppInsightsGroupBys(metricname)',
-            },
-          } as AzureMonitorQuery,
-        ],
-      } as DataQueryRequest<AzureMonitorQuery>;
-      const observables = variableSupport.query(mockRequest);
-      observables.subscribe((result: DataQueryResponseData) => {
-        expect(result.data[0].source).toEqual(expectedResults);
-        done();
-      });
-    });
-
     it('can fetch subscriptions', (done) => {
       const fakeSubscriptions = ['subscriptionId'];
       const variableSupport = new VariableSupport(

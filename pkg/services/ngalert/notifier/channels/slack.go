@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,6 +18,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
@@ -23,15 +27,19 @@ import (
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
+var SlackImageAPIEndpoint = "https://slack.com/api/files.upload"
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
 type SlackNotifier struct {
 	*Base
-	log  log.Logger
-	tmpl *template.Template
+	log           log.Logger
+	tmpl          *template.Template
+	images        ImageStore
+	webhookSender notifications.WebhookSender
 
 	URL            *url.URL
+	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -47,6 +55,7 @@ type SlackNotifier struct {
 type SlackConfig struct {
 	*NotificationChannelConfig
 	URL            *url.URL
+	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -60,19 +69,22 @@ type SlackConfig struct {
 }
 
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewSlackConfig(fc.Config, fc.DecryptFunc)
+	cfg, err := NewSlackConfig(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewSlackNotifier(cfg, fc.Template), nil
+	return NewSlackNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
-func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*SlackConfig, error) {
-	endpointURL := config.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
-	slackURL := decryptFunc(context.Background(), config.SecureSettings, "url", config.Settings.Get("url").MustString())
+func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
+	channelConfig := factoryConfig.Config
+	decryptFunc := factoryConfig.DecryptFunc
+	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
+	imageUploadURL := channelConfig.Settings.Get("imageUploadUrl").MustString(SlackImageAPIEndpoint)
+	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", channelConfig.Settings.Get("url").MustString())
 	if slackURL == "" {
 		slackURL = endpointURL
 	}
@@ -80,19 +92,19 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %q", slackURL)
 	}
-	recipient := strings.TrimSpace(config.Settings.Get("recipient").MustString())
+	recipient := strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString())
 	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("recipient must be specified when using the Slack chat API")
 	}
-	mentionChannel := config.Settings.Get("mentionChannel").MustString()
+	mentionChannel := channelConfig.Settings.Get("mentionChannel").MustString()
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
 		return nil, fmt.Errorf("invalid value for mentionChannel: %q", mentionChannel)
 	}
-	token := decryptFunc(context.Background(), config.SecureSettings, "token", config.Settings.Get("token").MustString())
+	token := decryptFunc(context.Background(), channelConfig.SecureSettings, "token", channelConfig.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
 	}
-	mentionUsersStr := config.Settings.Get("mentionUsers").MustString()
+	mentionUsersStr := channelConfig.Settings.Get("mentionUsers").MustString()
 	mentionUsers := []string{}
 	for _, u := range strings.Split(mentionUsersStr, ",") {
 		u = strings.TrimSpace(u)
@@ -100,7 +112,7 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 			mentionUsers = append(mentionUsers, u)
 		}
 	}
-	mentionGroupsStr := config.Settings.Get("mentionGroups").MustString()
+	mentionGroupsStr := channelConfig.Settings.Get("mentionGroups").MustString()
 	mentionGroups := []string{}
 	for _, g := range strings.Split(mentionGroupsStr, ",") {
 		g = strings.TrimSpace(g)
@@ -109,23 +121,28 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 		}
 	}
 	return &SlackConfig{
-		NotificationChannelConfig: config,
-		Recipient:                 strings.TrimSpace(config.Settings.Get("recipient").MustString()),
-		MentionChannel:            config.Settings.Get("mentionChannel").MustString(),
+		NotificationChannelConfig: channelConfig,
+		Recipient:                 strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString()),
+		MentionChannel:            channelConfig.Settings.Get("mentionChannel").MustString(),
 		MentionUsers:              mentionUsers,
 		MentionGroups:             mentionGroups,
 		URL:                       apiURL,
-		Username:                  config.Settings.Get("username").MustString("Grafana"),
-		IconEmoji:                 config.Settings.Get("icon_emoji").MustString(),
-		IconURL:                   config.Settings.Get("icon_url").MustString(),
+		ImageUploadURL:            imageUploadURL,
+		Username:                  channelConfig.Settings.Get("username").MustString("Grafana"),
+		IconEmoji:                 channelConfig.Settings.Get("icon_emoji").MustString(),
+		IconURL:                   channelConfig.Settings.Get("icon_url").MustString(),
 		Token:                     token,
-		Text:                      config.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
-		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Text:                      channelConfig.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:                     channelConfig.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 	}, nil
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier {
+func NewSlackNotifier(config *SlackConfig,
+	images ImageStore,
+	webhookSender notifications.WebhookSender,
+	t *template.Template,
+) *SlackNotifier {
 	return &SlackNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -135,6 +152,7 @@ func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier 
 			Settings:              config.Settings,
 		}),
 		URL:            config.URL,
+		ImageUploadURL: config.ImageUploadURL,
 		Recipient:      config.Recipient,
 		MentionUsers:   config.MentionUsers,
 		MentionGroups:  config.MentionGroups,
@@ -145,6 +163,8 @@ func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier 
 		Token:          config.Token,
 		Text:           config.Text,
 		Title:          config.Title,
+		images:         images,
+		webhookSender:  webhookSender,
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}
@@ -165,6 +185,7 @@ type attachment struct {
 	Title      string              `json:"title,omitempty"`
 	TitleLink  string              `json:"title_link,omitempty"`
 	Text       string              `json:"text"`
+	ImageURL   string              `json:"image_url,omitempty"`
 	Fallback   string              `json:"fallback"`
 	Fields     []config.SlackField `json:"fields,omitempty"`
 	Footer     string              `json:"footer"`
@@ -174,8 +195,8 @@ type attachment struct {
 }
 
 // Notify sends an alert notification to Slack.
-func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	msg, err := sn.buildSlackMessage(ctx, as)
+func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
+	msg, err := sn.buildSlackMessage(ctx, alerts)
 	if err != nil {
 		return false, fmt.Errorf("build slack message: %w", err)
 	}
@@ -205,6 +226,41 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	if err := sendSlackRequest(request, sn.log); err != nil {
 		return false, err
 	}
+
+	var imgData io.ReadCloser
+
+	// Try to upload if we have an image path but no image URL. This uploads the file
+	// immediately after the message. A bit of a hack, but it doesn't require the
+	// user to have an image host set up.
+	// TODO: We need a refactoring so we don't do two database reads for the same data.
+	if len(msg.Attachments[0].ImageURL) == 0 {
+		_ = withStoredImage(ctx, sn.log, sn.images,
+			func(index int, image *ngmodels.Image) error {
+				if image == nil || len(image.Path) == 0 {
+					return nil
+				}
+
+				imgData, err = openImage(image.Path)
+				if err != nil {
+					imgData = nil
+				}
+
+				return nil
+			},
+			0, alerts...)
+
+		if imgData != nil {
+			defer func() {
+				_ = imgData.Close()
+			}()
+
+			err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
+			if err != nil {
+				sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+			}
+		}
+	}
+
 	return true, nil
 }
 
@@ -268,10 +324,10 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 	return nil
 }
 
-func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	alerts := types.Alerts(as...)
+func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
+	alerts := types.Alerts(alrts...)
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
@@ -280,6 +336,8 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		Username:  tmpl(sn.Username),
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   tmpl(sn.IconURL),
+		// TODO: We should use the Block Kit API instead:
+		// https://api.slack.com/messaging/composing/layouts#when-to-use-attachments
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
@@ -294,6 +352,16 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+
+	_ = withStoredImage(ctx, sn.log, sn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil {
+				req.Attachments[0].ImageURL = image.URL
+			}
+			return nil
+		},
+		0, alrts...)
+
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
@@ -338,4 +406,60 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 
 func (sn *SlackNotifier) SendResolved() bool {
 	return !sn.GetDisableResolveMessage()
+}
+
+func (sn *SlackNotifier) slackFileUpload(ctx context.Context, data io.Reader, recipient, token string) error {
+	sn.log.Info("Uploading to slack via file.upload API")
+	headers, uploadBody, err := sn.generateFileUploadBody(data, token, recipient)
+	if err != nil {
+		return err
+	}
+	cmd := &models.SendWebhookSync{
+		Url: sn.ImageUploadURL, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
+	}
+	if err := sn.webhookSender.SendWebhookSync(ctx, cmd); err != nil {
+		sn.log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
+		return err
+	}
+	return nil
+}
+
+func (sn *SlackNotifier) generateFileUploadBody(data io.Reader, token string, recipient string) (map[string]string, bytes.Buffer, error) {
+	// Slack requires all POSTs to files.upload to present
+	// an "application/x-www-form-urlencoded" encoded querystring
+	// See https://api.slack.com/methods/files.upload
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	defer func() {
+		if err := w.Close(); err != nil {
+			// Shouldn't matter since we already close w explicitly on the non-error path
+			sn.log.Warn("Failed to close multipart writer", "err", err)
+		}
+	}()
+
+	// TODO: perhaps we should pass the filename through to here to use the local name.
+	// https://github.com/grafana/grafana/issues/49375
+	fw, err := w.CreateFormFile("file", fmt.Sprintf("screenshot-%v", rand.Intn(2e6)))
+	if err != nil {
+		return nil, b, err
+	}
+	if _, err := io.Copy(fw, data); err != nil {
+		return nil, b, err
+	}
+	// Add the authorization token
+	if err := w.WriteField("token", token); err != nil {
+		return nil, b, err
+	}
+	// Add the channel(s) to POST to
+	if err := w.WriteField("channels", recipient); err != nil {
+		return nil, b, err
+	}
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+	headers := map[string]string{
+		"Content-Type":  w.FormDataContentType(),
+		"Authorization": "auth_token=\"" + token + "\"",
+	}
+	return headers, b, nil
 }

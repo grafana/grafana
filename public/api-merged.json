@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a built-in role assignment.",
         "operationId": "addBuiltinRole",
@@ -71,7 +71,7 @@
     },
     "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
       "delete": {
-        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
+        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a built-in role assignment.",
         "operationId": "removeBuiltinRole",
@@ -136,7 +136,7 @@
         }
       },
       "post": {
-        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRoleWithPermissions",
@@ -195,7 +195,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRoleWithPermissions",
@@ -236,7 +236,7 @@
         }
       },
       "delete": {
-        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
@@ -319,7 +319,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.",
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
@@ -352,7 +352,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
@@ -396,7 +396,7 @@
     },
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
-        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
@@ -468,7 +468,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
@@ -501,11 +501,19 @@
         }
       },
       "post": {
-        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
         "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
           {
             "x-go-name": "Body",
             "name": "body",
@@ -514,14 +522,6 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -542,11 +542,19 @@
     },
     "/access-control/users/{user_id}/roles/{roleUID}": {
       "delete": {
-        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
         "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
           {
             "type": "string",
             "x-go-name": "RoleUID",
@@ -560,14 +568,6 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1793,956 +1793,6 @@
         }
       }
     },
-    "/alertmanager/grafana/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateGrafanaSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMStatus",
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestGrafanaReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMStatus",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAlertingConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteAlertingConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
     "/alerts": {
       "get": {
         "tags": ["legacy_alerts"],
@@ -3204,6 +2254,22 @@
       }
     },
     "/annotations/{annotation_id}": {
+      "get": {
+        "tags": ["annotations"],
+        "summary": "Get Annotation by Id.",
+        "operationId": "getAnnotation",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAnnotationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "put": {
         "description": "Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the Patch Annotation operation.",
         "tags": ["annotations"],
@@ -3643,9 +2709,11 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3653,6 +2721,14 @@
             "name": "DashboardID",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           }
         ],
         "responses": {
@@ -3676,9 +2752,11 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3727,9 +2805,11 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3990,6 +3070,138 @@
         }
       }
     },
+    "/dashboards/uid/{uid}/restore": {
+      "post": {
+        "tags": ["dashboard_versions"],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Gets all existing versions for the dashboard using UID.",
+        "operationId": "getDashboardVersionsByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Limit",
+            "description": "Maximum number of results to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Start",
+            "description": "Version to start from when returning queries",
+            "name": "start",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Get a specific dashboard version using UID.",
+        "operationId": "getDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
@@ -4045,7 +3257,7 @@
         }
       }
     },
-    "/datasources/id/{datasource_name}": {
+    "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -4055,7 +3267,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -4079,7 +3291,7 @@
         }
       }
     },
-    "/datasources/name/{datasource_name}": {
+    "/datasources/name/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -4089,7 +3301,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -4118,7 +3330,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -4142,7 +3354,7 @@
         }
       }
     },
-    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+    "/datasources/proxy/uid/{uid}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": ["datasources"],
@@ -4152,7 +3364,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -4194,7 +3406,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -4239,7 +3451,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -4273,17 +3485,18 @@
         }
       }
     },
-    "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
+    "/datasources/proxy/{id}/{datasource_proxy_route}": {
       "get": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy GET calls.",
         "operationId": "datasourceProxyGETcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -4317,15 +3530,16 @@
         }
       },
       "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy POST calls.",
         "operationId": "datasourceProxyPOSTcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -4370,15 +3584,16 @@
         }
       },
       "delete": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -4412,7 +3627,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}": {
+    "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
@@ -4422,76 +3637,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Delete an existing data source by UID.",
-        "operationId": "deleteDatasourceByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasource_id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDatasourceByID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -4521,12 +3667,12 @@
         "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Update an existing data source.",
-        "operationId": "updateDatasource",
+        "operationId": "updateDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -4555,15 +3701,15 @@
         }
       },
       "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDatasourceByID",
+        "summary": "Delete an existing data source by UID.",
+        "operationId": "deleteDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -4571,6 +3717,82 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{uid}/health": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources.",
+        "operationId": "fetchDatasourceResources",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4597,7 +3819,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -4634,7 +3856,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -4671,7 +3893,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -4704,15 +3926,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -4720,6 +3942,195 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Get a single data source by Id.",
+        "operationId": "getDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Update an existing data source by its sequential ID.",
+        "operationId": "updateDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Delete an existing data source by id.",
+        "operationId": "deleteDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/health": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealth) instead",
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealthByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/resources/{datasource_proxy_route}": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/fetchDatasourceResources) instead",
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources by Id.",
+        "operationId": "fetchDatasourceResourcesByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4755,6 +4166,9 @@
         ],
         "responses": {
           "200": {
+            "$ref": "#/responses/queryDataResponse"
+          },
+          "207": {
             "$ref": "#/responses/queryDataResponse"
           },
           "400": {
@@ -6566,258 +5980,6 @@
         }
       }
     },
-    "/prometheus/grafana/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaAlertStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/grafana/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaRuleStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceID}/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetAlertStatuses",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceID}/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetRuleStatuses",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the contact points.",
-        "operationId": "RouteGetContactpoints",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a contact point.",
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points/{ID}": {
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Delete a contact point.",
-        "operationId": "RouteDeleteContactpoints",
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/policies": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePostPolicyTree",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
     "/recording-rules": {
       "get": {
         "tags": ["recording_rules", "enterprise"],
@@ -7162,11 +6324,12 @@
     },
     "/reports/render/pdf/{DashboardID}": {
       "get": {
-        "description": "Available to all users and with a valid license.",
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": ["application/pdf"],
         "tags": ["reports", "enterprise"],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -7176,6 +6339,29 @@
             "required": true
           }
         ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for multiple dashboards.",
+        "operationId": "renderReportPDFs",
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -7402,374 +6588,6 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceID}/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulesConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameRulesConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulegGroupConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
           }
         }
       }
@@ -9390,185 +8208,6 @@
           }
         }
       }
-    },
-    "/v1/eval": {
-      "post": {
-        "description": "Test rule",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteEvalQueries",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesPayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "EvalQueriesResponse",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/admin_config": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
-        "operationId": "RouteGetNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "GettableNGalertConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableNGalertConfig"
-            }
-          },
-          "404": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
-        "operationId": "RoutePostNGalertConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableNGalertConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Deletes the NGalert configuration of the user's organization.",
-        "operationId": "RouteDeleteNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/alertmanagers": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
-        "operationId": "RouteGetAlertmanagers",
-        "responses": {
-          "200": {
-            "description": "GettableAlertmanagers",
-            "schema": {
-              "$ref": "#/definitions/GettableAlertmanagers"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/grafana": {
-      "post": {
-        "description": "Test a rule against Grafana ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleGrafanaConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/{DatasourceID}": {
-      "post": {
-        "description": "Test a rule against external data source ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleConfig",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -10513,6 +9152,9 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -10534,7 +9176,7 @@
           "x-go-name": "Role"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "ApiRuleNode": {
       "type": "object",
@@ -10722,6 +9364,13 @@
           "type": "string",
           "x-go-name": "DashboardUID"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
+        },
         "enableCsv": {
           "type": "boolean",
           "x-go-name": "EnableCSV"
@@ -10892,6 +9541,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -10927,6 +9581,13 @@
         "dashboardUid": {
           "type": "string",
           "x-go-name": "DashboardUID"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
         },
         "enableCsv": {
           "type": "boolean",
@@ -11218,6 +9879,22 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object",
+          "x-go-name": "ReportVariables"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
+    },
     "DashboardFullWithMeta": {
       "type": "object",
       "properties": {
@@ -11299,6 +9976,10 @@
           "type": "boolean",
           "x-go-name": "IsHome"
         },
+        "isPublic": {
+          "type": "boolean",
+          "x-go-name": "IsPublic"
+        },
         "isSnapshot": {
           "type": "boolean",
           "x-go-name": "IsSnapshot"
@@ -11353,6 +10034,25 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardReportDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "DashboardSnapshot": {
       "description": "DashboardSnapshot model",
@@ -11499,6 +10199,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUid": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -11565,6 +10269,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "RestoredFrom"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "version": {
           "type": "integer",
@@ -12018,7 +10726,7 @@
           "type": "string",
           "x-go-name": "Name"
         },
-        "provanance": {
+        "provenance": {
           "type": "string",
           "x-go-name": "Provenance"
         },
@@ -12510,6 +11218,9 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "secureFields": {
           "type": "object",
           "additionalProperties": {
@@ -12593,6 +11304,9 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgID"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "rule_group": {
           "type": "string",
@@ -12692,6 +11406,13 @@
       "properties": {
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          },
+          "x-go-name": "TemplateFileProvenances"
         },
         "template_files": {
           "type": "object",
@@ -13118,6 +11839,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -13292,6 +12017,10 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -13452,6 +12181,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64",
@@ -13496,6 +12229,37 @@
       "items": {
         "$ref": "#/definitions/Matcher"
       }
+    },
+    "MessageTemplate": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Template": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "MessageTemplateContent": {
+      "type": "object",
+      "properties": {
+        "Template": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "MessageTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MessageTemplate"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
@@ -13585,6 +12349,30 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "MuteTiming": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          },
+          "x-go-name": "TimeIntervals"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "MuteTimings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MuteTiming"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "NamespaceConfigResponse": {
       "type": "object",
       "additionalProperties": {
@@ -13628,7 +12416,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -13648,6 +12436,10 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "NotFound": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -14075,6 +12867,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -14114,6 +12911,10 @@
           "format": "int64",
           "default": 0,
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -14219,6 +13020,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -14580,6 +13385,10 @@
           "format": "int64",
           "x-go-name": "HomeDashboardID"
         },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -14695,7 +13504,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Receiver": {
       "type": "object",
@@ -14911,6 +13720,17 @@
         "$ref": "#/definitions/DataResponse"
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
+    "RestoreDashboardVersionCommand": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "RevokeAuthTokenCmd": {
       "type": "object",
@@ -16314,8 +15134,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16348,7 +15169,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -16660,6 +15481,10 @@
           "format": "int64",
           "default": 0,
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -17427,6 +16252,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -17469,9 +16295,7 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
       "type": "array",
@@ -17637,7 +16461,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17646,7 +16469,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",
@@ -18138,6 +16963,12 @@
         "items": {
           "$ref": "#/definitions/RoleDTO"
         }
+      }
+    },
+    "getAnnotationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ItemDTO"
       }
     },
     "getAnnotationTagsResponse": {

@@ -1,10 +1,16 @@
-+++
-title = "Heatmap"
-description = "Heatmap visualization documentation"
-keywords = ["grafana", "heatmap", "panel", "documentation"]
-aliases =["/docs/grafana/latest/features/panels/heatmap/"]
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/heatmap/
+  - /docs/grafana/latest/visualizations/heatmap/
+description: Heatmap visualization documentation
+keywords:
+  - grafana
+  - heatmap
+  - panel
+  - documentation
+title: Heatmap
+weight: 600
+---
 
 # Heatmap
 

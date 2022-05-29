@@ -7,6 +7,7 @@ interface DropdownIndicatorProps {
 }
 
 export const DropdownIndicator: React.FC<DropdownIndicatorProps> = ({ isOpen }) => {
-  const icon = isOpen ? 'angle-up' : 'angle-down';
-  return <Icon name={icon} />;
+  const icon = isOpen ? 'search' : 'angle-down';
+  const size = isOpen ? 'sm' : 'md';
+  return <Icon name={icon} size={size} />;
 };

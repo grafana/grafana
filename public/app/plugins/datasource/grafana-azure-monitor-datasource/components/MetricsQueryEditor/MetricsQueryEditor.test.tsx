@@ -4,6 +4,7 @@ import React from 'react';
 import { selectOptionInTest } from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
+import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
@@ -14,10 +15,12 @@ const variableOptionGroup = {
 };
 
 describe('Azure Monitor QueryEditor', () => {
+  const mockPanelData = createMockPanelData();
   it('should render', async () => {
     const mockDatasource = createMockDatasource();
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -47,6 +50,7 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={mockQuery}
         datasource={mockDatasource}
@@ -86,6 +90,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -126,6 +131,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -165,6 +171,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -209,6 +216,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -239,6 +247,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockQuery = createMockQuery();
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}

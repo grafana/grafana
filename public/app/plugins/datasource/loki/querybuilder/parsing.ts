@@ -120,7 +120,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case 'UnwrapExpr': {
-      const { operation, error } = getUnwrap(expr, node);
+      const { operation, error } = handleUnwrapExpr(expr, node, context);
       if (operation) {
         visQuery.operations.push(operation);
       }
@@ -297,25 +297,40 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   };
 }
 
-function getUnwrap(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
-  // Check for nodes not supported in visual builder and return error
-  if (node.getChild('ConvOp')) {
+function handleUnwrapExpr(
+  expr: string,
+  node: SyntaxNode,
+  context: Context
+): { operation?: QueryBuilderOperation; error?: string } {
+  const unwrapExprChild = node.getChild('UnwrapExpr');
+  const labelFilterChild = node.getChild('LabelFilter');
+  const unwrapChild = node.getChild('Unwrap');
+
+  if (unwrapExprChild) {
+    handleExpression(expr, unwrapExprChild, context);
+  }
+
+  if (labelFilterChild) {
+    handleExpression(expr, labelFilterChild, context);
+  }
+
+  if (unwrapChild) {
+    if (unwrapChild?.nextSibling?.type.name === 'ConvOp') {
+      return {
+        error: 'Unwrap with conversion operator not supported in query builder',
+      };
+    }
+
     return {
-      error: 'Unwrap with conversion operator not supported in query builder',
+      operation: {
+        id: 'unwrap',
+        params: [getString(expr, unwrapChild?.nextSibling)],
+      },
     };
   }
 
-  const id = 'unwrap';
-  const string = getString(expr, node.getChild('Identifier'));
-
-  return {
-    operation: {
-      id,
-      params: [string],
-    },
-  };
+  return {};
 }
-
 function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild('RangeOp');
   const funcName = getString(expr, nameNode);

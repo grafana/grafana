@@ -109,6 +109,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
               <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
                 <Select
                   value={fiscalYearStartMonth}
+                  menuShouldPortal={false}
                   options={monthOptions}
                   onChange={(value) => {
                     if (onChangeFiscalYearStartMonth) {

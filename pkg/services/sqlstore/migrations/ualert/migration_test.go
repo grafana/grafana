@@ -29,6 +29,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 		name           string
 		config         *setting.Cfg
 		isMigrationRun bool
+		shouldPanic    bool
 		expected       []string // set of migration titles
 	}{
 		{
@@ -47,6 +48,18 @@ func TestAddDashAlertMigration(t *testing.T) {
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: boolPointer(false),
 				},
+				ForceMigration: true,
+			},
+			isMigrationRun: true,
+			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(false),
+				},
+				ForceMigration: false,
 			},
 			isMigrationRun: true,
 			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
@@ -75,6 +88,12 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				// if the code should panic, make sure it has
+				if r := recover(); r == nil && tt.shouldPanic {
+					t.Errorf("The code did not panic")
+				}
+			}()
 			if tt.isMigrationRun {
 				log := migrator.MigrationLog{
 					MigrationID: ualert.MigTitle,
@@ -90,6 +109,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 			}
 
 			mg := migrator.NewMigrator(x, tt.config)
+
 			ualert.AddDashAlertMigration(mg)
 			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
 		})
@@ -423,7 +443,12 @@ func TestDashAlertMigration(t *testing.T) {
 
 				// Order of nested routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *ualert.Route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.SortSlices(func(a, b *ualert.Route) bool {
+						if a.Receiver != b.Receiver {
+							return a.Receiver < b.Receiver
+						}
+						return a.Matchers[0].Value < b.Matchers[0].Value
+					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
@@ -543,9 +568,22 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
+func createOrg(t *testing.T, id int64) *models.Org {
+	t.Helper()
+	return &models.Org{
+		Id:      id,
+		Version: 1,
+		Name:    fmt.Sprintf("org_%d", id),
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+}
+
 // teardown cleans the input tables between test cases.
 func teardown(t *testing.T, x *xorm.Engine) {
-	_, err := x.Exec("DELETE from alert")
+	_, err := x.Exec("DELETE from org")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert_notification")
 	require.NoError(t, err)
@@ -558,6 +596,11 @@ func teardown(t *testing.T, x *xorm.Engine) {
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
+
+	orgs := []models.Org{
+		*createOrg(t, 1),
+		*createOrg(t, 2),
+	}
 
 	// Setup dashboards.
 	dashboards := []models.Dashboard{
@@ -576,6 +619,10 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 		*createDatasource(t, 3, 2, "ds3-2"),
 		*createDatasource(t, 4, 2, "ds4-2"),
 	}
+
+	_, errOrgs := x.Insert(orgs)
+	require.NoError(t, errOrgs)
+
 	_, errDataSourcess := x.Insert(dataSources)
 	require.NoError(t, errDataSourcess)
 

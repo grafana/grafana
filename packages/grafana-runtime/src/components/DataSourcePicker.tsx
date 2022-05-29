@@ -165,7 +165,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         <Select
           aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
-          menuShouldPortal
           className="ds-picker select-container"
           isMulti={false}
           isClearable={isClearable}
