@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, buildExpr } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, buildExpr, buildLinkExpr } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -434,7 +434,24 @@ describe('Tempo data source', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range] @ end())) by (span_name))'
     );
-    // console.log(builtQuery);
+  });
+
+  it('should build link expr correctly', () => {
+    let builtQuery = buildLinkExpr({
+      expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+      params: [],
+    });
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
+
+    builtQuery = buildLinkExpr({
+      expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+      params: ['span_status="STATUS_CODE_ERROR"'],
+    });
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
   });
 });
 

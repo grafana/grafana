@@ -562,7 +562,7 @@ function getApmTable(
       ...rate[0].fields[2],
       name: 'Rate',
       config: {
-        links: [makePromLink('Rate', buildLinkExp(rateMetric), datasourceUid, false)],
+        links: [makePromLink('Rate', buildLinkExpr(rateMetric), datasourceUid, false)],
         decimals: 2,
       },
     });
@@ -598,7 +598,7 @@ function getApmTable(
       name: 'Error Rate',
       values: values,
       config: {
-        links: [makePromLink('Error Rate', buildLinkExp(errorRateMetric), datasourceUid, false)],
+        links: [makePromLink('Error Rate', buildLinkExpr(errorRateMetric), datasourceUid, false)],
         decimals: 2,
       },
     });
@@ -633,7 +633,7 @@ function getApmTable(
       name: 'Duration (p90)',
       values: getRateAlignedValues(rate, durationObj),
       config: {
-        links: [makePromLink('Duration', buildLinkExp(durationMetric), datasourceUid, false)],
+        links: [makePromLink('Duration', buildLinkExpr(durationMetric), datasourceUid, false)],
         unit: 's',
       },
     });
@@ -672,7 +672,7 @@ export function buildExpr(
   return metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
 }
 
-function buildLinkExp(metric: { expr: string; params: string[] }) {
+export function buildLinkExpr(metric: { expr: string; params: string[] }) {
   const expr = metric.expr.replace('__range', '__rate_interval').replace(' @ end()', '');
   return expr.replace('{}', '{' + metric.params.concat('span_name="${__data.fields[0]}"}').join(','));
 }
