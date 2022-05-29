@@ -26,7 +26,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash tzdata && \
+RUN apk add --no-cache ca-certificates bash tzdata tini && \
     apk add --no-cache musl-utils
 
 RUN apk add --no-cache openssl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
@@ -73,4 +73,4 @@ EXPOSE 3000
 COPY ./run.sh /run.sh
 
 USER "$GF_UID"
-ENTRYPOINT [ "/run.sh" ]
+ENTRYPOINT [ "/sbin/tini", "--", "/run.sh" ]

@@ -59,7 +59,7 @@ WORKDIR $GF_PATHS_HOME
 COPY conf conf
 
 # curl should be part of the image
-RUN apt-get update && apt-get install -y ca-certificates curl
+RUN apt-get update && apt-get install -y ca-certificates curl tini
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
   addgroup --system --gid $GF_GID grafana && \
@@ -84,4 +84,4 @@ COPY --from=js-builder /usr/src/app/tools tools
 COPY packaging/docker/run.sh /
 
 USER grafana
-ENTRYPOINT [ "/run.sh" ]
+ENTRYPOINT [ "/usr/bin/tini", "--", "/run.sh" ]

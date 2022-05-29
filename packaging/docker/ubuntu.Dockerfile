@@ -28,7 +28,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 # We need curl in the image
-RUN apt-get update && apt-get install -y ca-certificates curl tzdata && \
+RUN apt-get update && apt-get install -y ca-certificates curl tzdata tini && \
     apt-get autoremove -y && rm -rf /var/lib/apt/lists/*;
 
 COPY --from=grafana-builder /tmp/grafana "$GF_PATHS_HOME"
@@ -56,4 +56,4 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
 COPY ./run.sh /run.sh
 
 USER "$GF_UID"
-ENTRYPOINT [ "/run.sh" ]
+ENTRYPOINT [ "/usr/bin/tini", "--", "/run.sh" ]
