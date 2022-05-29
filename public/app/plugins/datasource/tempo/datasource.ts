@@ -709,7 +709,7 @@ export function getRateAlignedValues(
   return values;
 }
 
-function makeApmRequest(metrics: any[]) {
+export function makeApmRequest(metrics: any[]) {
   return metrics.map((metric) => {
     return {
       refId: metric,

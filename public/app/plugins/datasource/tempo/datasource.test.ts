@@ -22,6 +22,7 @@ import {
   buildExpr,
   buildLinkExpr,
   getRateAlignedValues,
+  makeApmRequest,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
@@ -503,6 +504,26 @@ describe('Tempo data source', () => {
 
     let value = getRateAlignedValues(resp, objToAlign as any);
     expect(value.toString()).toBe('0,0.2724936652307618,0.2724936652307618,0,0.03697421858453128');
+  });
+
+  it('should make apm request correctly', () => {
+    const apmRequest = makeApmRequest([
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
+    ]);
+    expect(apmRequest).toEqual([
+      {
+        refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
+        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
+        instant: true,
+      },
+      {
+        refId:
+          'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
+        instant: true,
+      },
+    ]);
   });
 });
 
