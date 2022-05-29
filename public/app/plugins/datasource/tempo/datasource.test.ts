@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, buildExpr } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -390,6 +390,51 @@ describe('Tempo data source', () => {
     });
     const lokiDS4 = ds4.getLokiSearchDS();
     expect(lokiDS4).toBe(undefined);
+  });
+
+  it('should build expr correctly', () => {
+    let targets = { targets: [{ queryType: 'serviceMap' }] } as any;
+    let builtQuery = buildExpr(
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))', params: [] },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))');
+
+    builtQuery = buildExpr(
+      {
+        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+        params: ['span_status="STATUS_CODE_ERROR"'],
+      },
+      'span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"}[$__range] @ end())) by (span_name))'
+    );
+
+    builtQuery = buildExpr(
+      {
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range] @ end())) by (le))',
+        params: ['span_status="STATUS_CODE_ERROR"'],
+      },
+      'span_name=~"HTTP Client"',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range] @ end())) by (le))'
+    );
+
+    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }] } as any;
+    builtQuery = buildExpr(
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))', params: [] },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range] @ end())) by (span_name))'
+    );
+    // console.log(builtQuery);
   });
 });
 

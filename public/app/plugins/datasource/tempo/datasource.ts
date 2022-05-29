@@ -655,7 +655,7 @@ function getApmTable(
   return df;
 }
 
-function buildExpr(
+export function buildExpr(
   metric: { expr: string; params: string[] },
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
