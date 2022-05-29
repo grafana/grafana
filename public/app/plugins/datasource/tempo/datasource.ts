@@ -679,7 +679,10 @@ export function buildLinkExpr(metric: { expr: string; params: string[] }) {
 
 // query result frames can come back in any order
 // here we align the table col values to the same row name (rateName) across the table
-function getRateAlignedValues(rateResp: DataQueryResponseData[], objToAlign: { [x: string]: { value: string } }) {
+export function getRateAlignedValues(
+  rateResp: DataQueryResponseData[],
+  objToAlign: { [x: string]: { value: string } }
+) {
   const rateNames = rateResp[0]?.fields[1]?.values.toArray().sort() ?? [];
   let tempRateNames = rateNames;
   let values: string[] = [];

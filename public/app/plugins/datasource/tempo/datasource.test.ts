@@ -2,6 +2,7 @@ import { lastValueFrom, Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
+  ArrayVector,
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
@@ -13,7 +14,15 @@ import {
 } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, buildExpr, buildLinkExpr } from './datasource';
+import {
+  DEFAULT_LIMIT,
+  TempoJsonData,
+  TempoDatasource,
+  TempoQuery,
+  buildExpr,
+  buildLinkExpr,
+  getRateAlignedValues,
+} from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -452,6 +461,48 @@ describe('Tempo data source', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
     );
+  });
+
+  it('should get rate aligned values correctly', () => {
+    const resp = [
+      {
+        refId:
+          'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range] @ end())) by (span_name))',
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            config: {},
+            values: [1653828275000, 1653828275000, 1653828275000, 1653828275000, 1653828275000],
+          },
+          {
+            name: 'span_name',
+            config: {
+              filterable: true,
+            },
+            type: 'string',
+            values: new ArrayVector(['HTTP Client', 'HTTP GET', 'HTTP GET - root', 'HTTP POST', 'HTTP POST - post']),
+          },
+        ],
+      },
+    ];
+    const objToAlign = {
+      'HTTP GET - root': {
+        name: 'HTTP GET - root',
+        value: 0.2724936652307618,
+      },
+      'HTTP GET': {
+        name: 'HTTP GET',
+        value: 0.2724936652307618,
+      },
+      'HTTP POST - post': {
+        name: 'HTTP POST - post',
+        value: 0.03697421858453128,
+      },
+    };
+
+    let value = getRateAlignedValues(resp, objToAlign as any);
+    expect(value.toString()).toBe('0,0.2724936652307618,0.2724936652307618,0,0.03697421858453128');
   });
 });
 
