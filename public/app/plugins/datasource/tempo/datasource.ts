@@ -195,7 +195,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid, this.name));
     }
 
     if (targets.traceId?.length > 0) {
@@ -383,7 +383,7 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
@@ -411,6 +411,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
+          makeTempoLink('Tempo search', `\${__data.fields[0]}`, tempoDatasourceUid),
         ],
       };
 
@@ -432,6 +433,21 @@ function makePromLink(title: string, metric: string, datasourceUid: string) {
       } as PromQuery,
       datasourceUid,
       datasourceName: 'Prometheus',
+    },
+  };
+}
+
+function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: serviceName,
+      } as TempoQuery,
+      datasourceUid: datasourceUid,
+      datasourceName: 'Tempo',
     },
   };
 }
