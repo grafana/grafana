@@ -23,6 +23,7 @@ import {
   buildLinkExpr,
   getRateAlignedValues,
   makeApmRequest,
+  makeTempoLink,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
@@ -524,6 +525,22 @@ describe('Tempo data source', () => {
         instant: true,
       },
     ]);
+  });
+
+  it('should make tempo link correctly', () => {
+    const tempoLink = makeTempoLink('Tempo', '"${__data.fields[0]}"', 'gdev-tempo');
+    expect(tempoLink).toEqual({
+      url: '',
+      title: 'Tempo',
+      internal: {
+        query: {
+          queryType: 'nativeSearch',
+          spanName: '"${__data.fields[0]}"',
+        },
+        datasourceUid: 'gdev-tempo',
+        datasourceName: 'Tempo',
+      },
+    });
   });
 });
 

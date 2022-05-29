@@ -719,7 +719,7 @@ export function makeApmRequest(metrics: any[]) {
   });
 }
 
-function makeTempoLink(title: string, spanName: string, tempoDatasourceUid: string) {
+export function makeTempoLink(title: string, spanName: string, tempoDatasourceUid: string) {
   return {
     url: '',
     title,
