@@ -104,7 +104,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
               options={queryTypeOptions}
               value={query.queryType}
               onChange={(v) => {
-                reportInteraction('grafana_tempo_query_type_changed', {
+                reportInteraction('grafana_traces_query_type_changed', {
                   datasourceType: 'tempo',
                   app: app ?? '',
                   newQueryType: v,
