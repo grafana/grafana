@@ -3,7 +3,7 @@ import { Action } from 'redux';
 
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
-import { AccessControlAction, FolderInfo } from '../../types';
+import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',

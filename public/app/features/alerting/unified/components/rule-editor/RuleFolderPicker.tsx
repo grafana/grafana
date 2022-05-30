@@ -10,15 +10,14 @@ export interface Folder {
   id: number;
 }
 
-export interface Props extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
+export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
+  /** An empty array of permissions means no filtering at all */
+  folderPermissions?: AccessControlAction[];
 }
 
-export const RuleFolderPicker: FC<Props> = ({ value, ...props }) => {
-  const folderFilter = useFolderPermissionFilter([
-    AccessControlAction.AlertingRuleCreate,
-    AccessControlAction.FoldersWrite,
-  ]);
+export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, folderPermissions = [], ...props }) => {
+  const folderFilter = useFolderPermissionFilter(folderPermissions);
 
   return (
     <FolderPicker
