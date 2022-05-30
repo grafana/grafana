@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/about-ge-license-through-aws/", "/docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/about-ge-license-through-aws/"]
-description = "About Grafana Enterprise licenses from AWS Marketplace"
-keywords = ["grafana", "about", "enterprise", "overview", "aws", "marketplace"]
-title = "About Grafana Enterprise licenses from AWS Marketplace"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/about-ge-license-through-aws/
+  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/about-ge-license-through-aws/
+description: About Grafana Enterprise licenses from AWS Marketplace
+keywords:
+  - grafana
+  - about
+  - enterprise
+  - overview
+  - aws
+  - marketplace
+title: About Grafana Enterprise licenses from AWS Marketplace
+weight: 100
+---
 
 # About Grafana Enterprise licenses from AWS Marketplace
 

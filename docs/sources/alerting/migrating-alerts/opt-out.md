@@ -1,9 +1,12 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/opt-in/", "/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
-description = "Disable Grafana alerts"
-title = "Opt-out of Grafana alerting"
-weight = 113
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/migrating-alerts/opt-out/
+  - /docs/grafana/latest/alerting/opt-in/
+  - /docs/grafana/latest/alerting/unified-alerting/opt-in/
+description: Disable Grafana alerts
+title: Opt-out of Grafana alerting
+weight: 113
+---
 
 # Opt-out to Grafana alerting in OSS
 
