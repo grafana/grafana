@@ -54,7 +54,7 @@ type MuteTimingService interface {
 }
 
 type AlertRuleService interface {
-	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, error)
+	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
@@ -233,12 +233,12 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":uid"]
-	rule, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgId, uid)
+	uid := web.Params(c.Req)[":UID"]
+	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgId, uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, rule)
+	return response.JSON(http.StatusOK, apimodels.NewAlertRule(rule, provenace))
 }
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
@@ -256,12 +256,13 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
+	ar.ID = updatedAlertRule.ID
 	ar.Updated = updatedAlertRule.Updated
 	return response.JSON(http.StatusOK, ar)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":uid"]
+	uid := web.Params(c.Req)[":UID"]
 	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgId, uid, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -270,8 +271,8 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
-	rulegroup := web.Params(c.Req)[":group"]
-	folderUID := web.Params(c.Req)[":folderUID"]
+	rulegroup := web.Params(c.Req)[":Group"]
+	folderUID := web.Params(c.Req)[":FolderUID"]
 	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")

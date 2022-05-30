@@ -44,6 +44,12 @@ import (
 //       202: Ack
 //       400: ValidationError
 
+// swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
+type AlertRuleUIDReference struct {
+	// in:path
+	UID string
+}
+
 // swagger:parameters RoutePostAlertRule RoutePutAlertRule
 type AlertRulePayload struct {
 	// in:body
@@ -54,20 +60,18 @@ type AlertRule struct {
 	ID           int64                      `json:"id"`
 	UID          string                     `json:"uid"`
 	OrgID        int64                      `json:"orgID"`
-	FolderUID    string                     `json:"folder"`
+	FolderUID    string                     `json:"folderUID"`
 	RuleGroup    string                     `json:"ruleGroup"`
 	Title        string                     `json:"title"`
 	Condition    string                     `json:"condition"`
 	Data         []models.AlertQuery        `json:"data"`
-	Updated      time.Time                  `json:"updated"`
-	DashboardUID string                     `json:"dashboardUID,omitempty"`
-	PanelID      int64                      `json:"panelID,omitempty"`
+	Updated      time.Time                  `json:"updated,omitempty"`
 	NoDataState  models.NoDataState         `json:"noDataState"`
 	ExecErrState models.ExecutionErrorState `json:"execErrState"`
 	For          time.Duration              `json:"for"`
-	Annotations  map[string]string          `json:"annotations"`
-	Labels       map[string]string          `json:"labels"`
-	Provenance   models.Provenance          `json:"provenance"`
+	Annotations  map[string]string          `json:"annotations,omitempty"`
+	Labels       map[string]string          `json:"labels,omitempty"`
+	Provenance   models.Provenance          `json:"provenance,omitempty"`
 }
 
 func (a *AlertRule) UpstreamModel() models.AlertRule {
@@ -81,13 +85,31 @@ func (a *AlertRule) UpstreamModel() models.AlertRule {
 		Condition:    a.Condition,
 		Data:         a.Data,
 		Updated:      a.Updated,
-		DashboardUID: &a.DashboardUID,
-		PanelID:      &a.PanelID,
 		NoDataState:  a.NoDataState,
 		ExecErrState: a.ExecErrState,
 		For:          a.For,
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
+	}
+}
+
+func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule {
+	return AlertRule{
+		ID:           rule.ID,
+		UID:          rule.UID,
+		OrgID:        rule.OrgID,
+		FolderUID:    rule.NamespaceUID,
+		RuleGroup:    rule.RuleGroup,
+		Title:        rule.Title,
+		For:          rule.For,
+		Condition:    rule.Condition,
+		Data:         rule.Data,
+		Updated:      rule.Updated,
+		NoDataState:  rule.NoDataState,
+		ExecErrState: rule.ExecErrState,
+		Annotations:  rule.Annotations,
+		Labels:       rule.Labels,
+		Provenance:   provenance,
 	}
 }
 

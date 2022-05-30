@@ -3405,7 +3405,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3464,14 +3463,17 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "properties": {
@@ -3663,7 +3665,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3703,9 +3704,12 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3716,9 +3720,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -5010,6 +5012,15 @@
      "application/json"
     ],
     "operationId": "RouteDeleteAlertRule",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "202": {
       "description": "Ack",
@@ -5031,6 +5042,15 @@
    },
    "get": {
     "operationId": "RouteGetAlertRule",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
       "description": "AlertRule",
@@ -5056,6 +5076,13 @@
     ],
     "operationId": "RoutePutAlertRule",
     "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "body",
       "name": "Body",

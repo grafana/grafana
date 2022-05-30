@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -29,22 +30,30 @@ func NewAlertRuleService(ruleStore store.RuleStore,
 	}
 }
 
-func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, error) {
+func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
 	query := &models.GetAlertRuleByUIDQuery{
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
 	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
-		return models.AlertRule{}, err
+		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	return *query.Result, nil
+	provenance, err := service.provenanceStore.GetProvenance(ctx, query.Result, orgID)
+	if err != nil {
+		return models.AlertRule{}, models.ProvenanceNone, err
+	}
+	return *query.Result, provenance, nil
 }
 
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	}
+	// TODO(jpq): check if any interval exists for the group
+	//				if yes use it
+	//            	if no use the default
+	rule.IntervalSeconds = 10
 	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
@@ -65,18 +74,19 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 }
 
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
-	// check that provenance is not changed in a invalid way
-	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, &rule, rule.OrgID)
+	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
-	storedRule, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
-	if err != nil {
-		return models.AlertRule{}, err
-	}
+	rule.Updated = time.Now()
+	rule.ID = storedRule.ID
+	// to modify the interval on should modify the alert group, thus we
+	// just copy the current value
+	rule.IntervalSeconds = storedRule.IntervalSeconds
+	service.log.Info("update rule", "ID", storedRule.ID, "labels", fmt.Sprintf("%+v", rule.Labels))
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
@@ -110,7 +120,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, ruleUID)

@@ -118,11 +118,13 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for i := range rules {
 			r := rules[i]
-			uid, err := GenerateNewAlertRuleUID(sess, r.OrgID, r.Title)
-			if err != nil {
-				return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.Title, err)
+			if r.UID == "" {
+				uid, err := GenerateNewAlertRuleUID(sess, r.OrgID, r.Title)
+				if err != nil {
+					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.Title, err)
+				}
+				r.UID = uid
 			}
-			r.UID = uid
 			r.Version = 1
 			if err := st.validateAlertRule(r); err != nil {
 				return err
@@ -426,6 +428,14 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 
 	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
+	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return err
 	}
 
 	return nil
