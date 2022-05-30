@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/enterprise-configuration/"]
-description = "Enterprise configuration documentation"
-keywords = ["grafana", "configuration", "documentation", "enterprise"]
-title = "Enterprise configuration"
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/enterprise-configuration/
+description: Enterprise configuration documentation
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - enterprise
+title: Enterprise configuration
+weight: 700
+---
 
 # Grafana Enterprise configuration
 
@@ -19,7 +24,7 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
@@ -27,7 +32,7 @@ the instance.
 
 ### auto_refresh_license
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
@@ -37,7 +42,7 @@ automatically. Defaults to `true`.
 
 ### license_validation_type
 
-> **Note:** Available in Grafana Enterprise v8.3+.
+> **Note:** Available in Grafana Enterprise version 8.3 and later.
 
 When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../enterprise/license/activate-aws-marketplace-license/" >}}).
 
@@ -322,7 +327,7 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-> **Note:** Available in Grafana Enterprise v7.4 and later versions.
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 Security egress makes it possible to control outgoing traffic from the Grafana server.
 
@@ -350,7 +355,7 @@ Encryption algorithm used to encrypt secrets stored in the database and cookies.
 
 ## [caching]
 
-> **Note:** Available in Grafana Enterprise v7.5 and later versions.
+> **Note:** Available in Grafana Enterprise version 7.5 and later.
 
 When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
@@ -366,7 +371,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}).
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "query-caching.md#enable-and-configure-query-caching" >}}).
 
 ### ttl
 

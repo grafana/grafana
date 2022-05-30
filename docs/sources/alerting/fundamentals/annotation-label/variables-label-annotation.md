@@ -1,9 +1,15 @@
-+++
-title = "Template variables for alerting rule labels and annotations"
-description = "Learn about labels and label matchers in alerting"
-keywords = ["grafana", "alerting", "guide", "fundamentals"]
-weight = 117
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
+description: Learn about labels and label matchers in alerting
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - fundamentals
+title: Template variables for alerting rule labels and annotations
+weight: 117
+---
 
 # Template variables for alerting rule labels and annotations
 

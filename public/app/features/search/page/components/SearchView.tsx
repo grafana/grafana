@@ -210,6 +210,7 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
+          getSortOptions={getGrafanaSearcher().getSortOptions}
           onDatasourceChange={onDatasourceChange}
           query={query}
         />
