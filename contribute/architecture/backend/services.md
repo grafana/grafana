@@ -8,7 +8,7 @@ Even though the services in Grafana do different things, they share a number of 
 
 Before a service can start communicating with the rest of Grafana, it needs to be registered with Wire, see `ProvideService` factory function/method in the service example below and how it's being referenced in the wire.go example below.
 
-When Wire is run, it will inspect the parameters of `ProvideService` and make sure that all its dependencies have been wired up and initialized properly.
+When Wire is run, it inspects the parameters of `ProvideService` and makes sure that all its dependencies have been wired up and initialized properly.
 
 **Service example:**
 
