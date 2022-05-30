@@ -111,7 +111,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} onChange={onChangeInternal} />}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
             datasource={props.datasource}

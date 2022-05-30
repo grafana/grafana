@@ -1,13 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-0/", "/docs/grafana/latest/whatsnew/whats-new-in-v8-0/"]
-description = "Feature and improvement highlights for Grafana v8.0"
-keywords = ["grafana", "new", "documentation", "8.0", "release notes"]
-title = "What's new in Grafana v8.0"
-weight = -33
-
-[_build]
-  list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v8-0/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v8-0/
+description: Feature and improvement highlights for Grafana v8.0
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.0'
+  - release notes
+title: What's new in Grafana v8.0
+weight: -33
+---
 
 # What’s new in Grafana v8.0
 
@@ -39,7 +45,7 @@ In addition to data source integration, events can be sent to dashboards by post
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
 
-For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/set-up-grafana-live" >}}).
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/set-up-grafana-live/" >}}).
 
 ### Prometheus metrics browser
 

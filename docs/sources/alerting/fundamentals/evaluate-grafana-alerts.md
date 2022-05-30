@@ -1,8 +1,11 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/", "/docs/grafana/latest/alerting/metrics/", "/docs/grafana/latest/alerting/unified-alerting/fundamentals/evaluate-grafana-alerts/"]
-title = "Alerting on numeric data"
-weight = 116
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/
+  - /docs/grafana/latest/alerting/metrics/
+  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/evaluate-grafana-alerts/
+title: Alerting on numeric data
+weight: 116
+---
 
 # Alerting on numeric data
 

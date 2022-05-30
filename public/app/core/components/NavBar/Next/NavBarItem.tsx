@@ -54,15 +54,14 @@ const NavBarItem = ({
 
   const onNavigate = (item: NavModelItem) => {
     const { url, target, onClick } = item;
-    if (!url) {
-      onClick?.();
-      return;
-    }
+    onClick?.();
 
-    if (!target && url.startsWith('/')) {
-      locationService.push(locationUtil.stripBaseFromUrl(url));
-    } else {
-      window.open(url, target);
+    if (url) {
+      if (!target && url.startsWith('/')) {
+        locationService.push(locationUtil.stripBaseFromUrl(url));
+      } else {
+        window.open(url, target);
+      }
     }
   };
 

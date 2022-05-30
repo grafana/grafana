@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/administration/database-encryption/"]
-description = "Grafana database encryption"
-keywords = ["grafana", "database", "encryption", "envelope encryption", "documentation"]
-title = "Database encryption"
-weight = 450
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/database-encryption/
+description: Grafana database encryption
+keywords:
+  - grafana
+  - database
+  - encryption
+  - envelope encryption
+  - documentation
+title: Database encryption
+weight: 450
+---
 
 # Grafana database encryption
 
@@ -95,7 +101,7 @@ New data keys for encryption operations are generated on-demand.
 > those secrets still encrypted with it. Look at [secrets re-encryption](#re-encrypt-secrets) to completely stop using
 > rotated data keys for both encryption and decryption.
 
-> **Note:** This operation is available through Grafana [Admin API]({{< relref "../developers/configuration/admin/#rotate-data-encryption-keys" >}}).
+> **Note:** This operation is available through Grafana [Admin API]({{< relref "../developers/http_api/admin/#rotate-data-encryption-keys" >}}).
 > It's safe to run more than once.
 
 # KMS integration

@@ -6,34 +6,34 @@
           "custom": {
             "stats": {
               "summary": {
-                "totalLinesProcessed": 55,
                 "execTime": 0.002216125,
                 "bytesProcessedPerSecond": 3507022,
                 "linesProcessedPerSecond": 24818,
-                "totalBytesProcessed": 7772
+                "totalBytesProcessed": 7772,
+                "totalLinesProcessed": 55
               },
               "store": {
-                "decompressedLines": 55,
-                "totalChunksRef": 2,
                 "totalChunksDownloaded": 2,
                 "chunksDownloadTime": 0.000390958,
+                "compressedBytes": 31432,
+                "totalDuplicates": 0,
+                "totalChunksRef": 2,
                 "headChunkBytes": 0,
                 "headChunkLines": 0,
                 "decompressedBytes": 7772,
-                "compressedBytes": 31432,
-                "totalDuplicates": 0
+                "decompressedLines": 55
               },
               "ingester": {
                 "totalBatches": 0,
                 "headChunkLines": 0,
                 "decompressedBytes": 0,
-                "totalDuplicates": 0,
-                "totalReached": 0,
-                "totalChunksMatched": 0,
                 "decompressedLines": 0,
                 "compressedBytes": 0,
+                "totalReached": 0,
                 "totalLinesSent": 0,
-                "headChunkBytes": 0
+                "headChunkBytes": 0,
+                "totalDuplicates": 0,
+                "totalChunksMatched": 0
               }
             }
           }
