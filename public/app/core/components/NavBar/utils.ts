@@ -1,6 +1,7 @@
 import { Location } from 'history';
 
 import { NavModelItem, NavSection } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -59,6 +60,7 @@ export const enrichConfigItems = (
       link.children = [
         ...getFooterLinks(),
         {
+          id: 'keyboard-shortcuts',
           text: 'Keyboard shortcuts',
           icon: 'keyboard',
           onClick: onOpenShortcuts,
@@ -70,6 +72,7 @@ export const enrichConfigItems = (
       link.children = [
         ...menuItems,
         {
+          id: 'switch-organization',
           text: 'Switch organization',
           icon: 'arrow-random',
           onClick: toggleOrgSwitcher,
@@ -78,6 +81,21 @@ export const enrichConfigItems = (
     }
   });
   return items;
+};
+
+export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
+  const onClick = item.onClick;
+  item.onClick = () => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      state: expandedState ? 'expanded' : 'collapsed',
+    });
+    onClick?.();
+  };
+  if (item.children) {
+    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  }
+  return item;
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
