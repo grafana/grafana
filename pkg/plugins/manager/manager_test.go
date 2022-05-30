@@ -767,6 +767,6 @@ func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 
 type fakeAuthorizer struct{}
 
-func (_ *fakeAuthorizer) CanLoadPlugin(signature.PluginDetails) bool {
+func (*fakeAuthorizer) CanLoadPlugin(signature.PluginDetails) bool {
 	return true
 }
