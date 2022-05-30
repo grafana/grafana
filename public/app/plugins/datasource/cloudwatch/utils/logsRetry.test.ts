@@ -28,7 +28,7 @@ describe('runWithRetry', () => {
     const queryFunc = jest.fn();
     const mockFrames = [createResponseFrame('A')];
     queryFunc.mockReturnValueOnce(throwError(() => createErrorResponse(targets)));
-    queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
+    queryFunc.mockReturnValueOnce(of(mockFrames));
 
     const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     jest.runAllTimers();
