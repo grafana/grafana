@@ -7,23 +7,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type InMemory struct {
-	cfg   *plugins.Cfg
 	store map[string]*plugins.Plugin
 	mu    sync.RWMutex
 	log   log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg) *InMemory {
-	return NewInMemory(plugins.FromGrafanaCfg(grafanaCfg))
+func ProvideService() *InMemory {
+	return NewInMemory()
 }
 
-func NewInMemory(cfg *plugins.Cfg) *InMemory {
+func NewInMemory() *InMemory {
 	return &InMemory{
-		cfg:   cfg,
 		store: make(map[string]*plugins.Plugin),
 		log:   log.New("plugin.registry"),
 	}
@@ -59,7 +56,7 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 
 func (i *InMemory) Remove(_ context.Context, pluginID string) error {
 	if !i.isRegistered(pluginID) {
-		return fmt.Errorf("plugin %s is already unregistered", pluginID)
+		return fmt.Errorf("plugin %s is not registered", pluginID)
 	}
 
 	i.mu.Lock()
