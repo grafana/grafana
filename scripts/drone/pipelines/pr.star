@@ -31,6 +31,7 @@ load(
     'benchmark_ldap_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
 )
@@ -126,6 +127,7 @@ def pr_pipelines(edition):
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
+        verify_gen_cue_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

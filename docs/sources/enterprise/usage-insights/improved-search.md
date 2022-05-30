@@ -13,7 +13,7 @@ weight: 400
 
 # Sort dashboards by using insights data
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 In the search view, you can sort dashboards by using insights data. Doing so helps you find unused or broken dashboards or discover those that are most viewed.
 

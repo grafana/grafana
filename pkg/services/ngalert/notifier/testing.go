@@ -27,6 +27,10 @@ func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.I
 	return nil, models.ErrImageNotFound
 }
 
+func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, error) {
+	return nil, models.ErrImageNotFound
+}
+
 func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
 	t.Helper()
 

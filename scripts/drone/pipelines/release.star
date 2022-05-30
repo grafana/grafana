@@ -41,6 +41,7 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
 )
@@ -183,6 +184,7 @@ def get_steps(edition, ver_mode):
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
+        verify_gen_cue_step(),
     ]
 
     integration_test_steps = [
