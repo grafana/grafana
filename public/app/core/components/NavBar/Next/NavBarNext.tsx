@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -14,7 +14,14 @@ import { KioskMode, StoreState } from 'app/types';
 
 import { OrgSwitcher } from '../../OrgSwitcher';
 import { NavBarContext } from '../context';
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
+import {
+  enrichConfigItems,
+  enrichWithInteractionTracking,
+  getActiveItem,
+  isMatchOrChildMatch,
+  isSearchActive,
+  SEARCH_ITEM_ID,
+} from '../utils';
 
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -27,21 +34,6 @@ const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
 };
 
-const searchItem: NavModelItem = {
-  id: SEARCH_ITEM_ID,
-  onClick: onOpenSearch,
-  text: 'Search dashboards',
-  icon: 'search',
-};
-
-// Here we need to hack in a "home" NavModelItem since this is constructed in the frontend
-const homeItem: NavModelItem = {
-  id: 'home',
-  text: 'Home',
-  url: config.appSubUrl || '/',
-  icon: 'grafana',
-};
-
 export const NavBarNext = React.memo(() => {
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const theme = useTheme2();
@@ -49,23 +41,50 @@ export const NavBarNext = React.memo(() => {
   const location = useLocation();
   const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
+
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree = cloneDeep(navBarTree);
-  navTree.unshift(homeItem);
 
-  const coreItems = navTree.filter((item) => item.section === NavSection.Core);
-  const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
+  // Here we need to hack in a "home" and "search" NavModelItem since this is constructed in the frontend
+  const searchItem: NavModelItem = enrichWithInteractionTracking(
+    {
+      id: SEARCH_ITEM_ID,
+      onClick: onOpenSearch,
+      text: 'Search dashboards',
+      icon: 'search',
+    },
+    menuOpen
+  );
+
+  const homeItem: NavModelItem = enrichWithInteractionTracking(
+    {
+      id: 'home',
+      text: 'Home',
+      url: config.appSubUrl || '/',
+      icon: 'grafana',
+    },
+    menuOpen
+  );
+
+  const navTree = cloneDeep(navBarTree);
+
+  const coreItems = navTree
+    .filter((item) => item.section === NavSection.Core)
+    .map((item) => enrichWithInteractionTracking(item, menuOpen));
+  const pluginItems = navTree
+    .filter((item) => item.section === NavSection.Plugin)
+    .map((item) => enrichWithInteractionTracking(item, menuOpen));
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
-  );
+  ).map((item) => enrichWithInteractionTracking(item, menuOpen));
+
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
-  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -87,16 +106,20 @@ export const NavBarNext = React.memo(() => {
             <NavBarToggle
               className={styles.menuExpandIcon}
               isExpanded={menuOpen}
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => {
+                reportInteraction('grafana_navigation_expanded');
+                setMenuOpen(true);
+              }}
             />
 
             <NavBarMenuPortalContainer />
 
             <NavBarItemWithoutMenu
               elClassName={styles.grafanaLogoInner}
-              label="Home"
+              label={homeItem.text}
               className={styles.grafanaLogo}
               url={homeItem.url}
+              onClick={homeItem.onClick}
             >
               <Branding.MenuLogo />
             </NavBarItemWithoutMenu>
@@ -111,7 +134,7 @@ export const NavBarNext = React.memo(() => {
                   <NavBarItem
                     key={`${link.id}-${index}`}
                     isActive={isMatchOrChildMatch(link, activeItem)}
-                    link={{ ...link, subTitle: undefined, onClick: undefined }}
+                    link={{ ...link, subTitle: undefined }}
                   >
                     {link.icon && <Icon name={link.icon as IconName} size="xl" />}
                     {link.img && <img src={link.img} alt={`${link.text} logo`} />}
