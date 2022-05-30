@@ -3,8 +3,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ApiKey } from 'app/types';
+import { ApiKey } from 'app/types';
 
 interface Props {
   tokens: ApiKey[];
@@ -18,41 +17,37 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
   const styles = getStyles(theme);
 
   return (
-    <>
-      <table className="filter-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Expires</th>
-            <th>Created</th>
-            <th style={{ width: '34px' }} />
-          </tr>
-        </thead>
-        <tbody>
-          {tokens.map((key) => {
-            return (
-              <tr key={key.id} className={styles.tableRow(key.hasExpired)}>
-                <td>{key.name}</td>
-                <td>
-                  <TokenExpiration timeZone={timeZone} token={key} />
-                </td>
-                <td>{formatDate(timeZone, key.created)}</td>
-                {contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
-                  <td>
-                    <DeleteButton
-                      aria-label={`Delete service account token ${key.name}`}
-                      size="sm"
-                      onConfirm={() => onDelete(key)}
-                      disabled={tokenActionsDisabled}
-                    />
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </>
+    <table className="filter-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Expires</th>
+          <th>Created</th>
+          <th />
+        </tr>
+      </thead>
+      <tbody>
+        {tokens.map((key) => {
+          return (
+            <tr key={key.id} className={styles.tableRow(key.hasExpired)}>
+              <td>{key.name}</td>
+              <td>
+                <TokenExpiration timeZone={timeZone} token={key} />
+              </td>
+              <td>{formatDate(timeZone, key.created)}</td>
+              <td>
+                <DeleteButton
+                  aria-label={`Delete service account token ${key.name}`}
+                  size="sm"
+                  onConfirm={() => onDelete(key)}
+                  disabled={tokenActionsDisabled}
+                />
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
 

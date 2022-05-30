@@ -44,8 +44,9 @@ export const ServiceAccountRoleRow = ({
         </td>
       ) : (
         <>
-          <td className="width-16">
+          <td>
             <OrgRolePicker
+              width={24}
               inputId={inputId}
               aria-label="Role"
               value={serviceAccount.role}

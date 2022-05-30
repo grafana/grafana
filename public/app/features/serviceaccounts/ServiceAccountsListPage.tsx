@@ -215,7 +215,7 @@ export const ServiceAccountsListPageUnconnected = ({
 
         <>
           <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table form-inline filter-table--hover">
+            <table className="filter-table filter-table--hover">
               <thead>
                 <tr>
                   <th></th>

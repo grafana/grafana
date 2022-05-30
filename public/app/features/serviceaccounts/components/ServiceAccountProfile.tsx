@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { dateTimeFormat, OrgRole, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
@@ -22,47 +24,50 @@ export function ServiceAccountProfile({
   builtInRoles,
   onChange,
 }: Props): JSX.Element {
+  const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
-  const handleServiceAccountRoleChange = (role: OrgRole) => {
+  const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
   };
 
-  const onServiceAccountNameChange = (newValue: string) => {
+  const onNameChange = (newValue: string) => {
     onChange({ ...serviceAccount, name: newValue });
   };
 
   return (
-    <>
+    <div className={styles.section}>
       <h4>Information</h4>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <table className="filter-table form-inline">
-            <tbody>
-              <ServiceAccountProfileRow
-                label="Name"
-                value={serviceAccount.name}
-                onChange={onServiceAccountNameChange}
-                disabled={!ableToWrite || serviceAccount.isDisabled}
-              />
-              <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
-              <ServiceAccountRoleRow
-                label="Roles"
-                serviceAccount={serviceAccount}
-                onRoleChange={handleServiceAccountRoleChange}
-                builtInRoles={builtInRoles}
-                roleOptions={roleOptions}
-              />
-              {/* <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} /> */}
-              <ServiceAccountProfileRow
-                label="Creation date"
-                value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
-                disabled={serviceAccount.isDisabled}
-              />
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+      <table className="filter-table">
+        <tbody>
+          <ServiceAccountProfileRow
+            label="Name"
+            value={serviceAccount.name}
+            onChange={onNameChange}
+            disabled={!ableToWrite || serviceAccount.isDisabled}
+          />
+          <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
+          <ServiceAccountRoleRow
+            label="Roles"
+            serviceAccount={serviceAccount}
+            onRoleChange={onRoleChange}
+            builtInRoles={builtInRoles}
+            roleOptions={roleOptions}
+          />
+          {/* <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} /> */}
+          <ServiceAccountProfileRow
+            label="Creation date"
+            value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
+            disabled={serviceAccount.isDisabled}
+          />
+        </tbody>
+      </table>
+    </div>
   );
 }
+
+export const getStyles = (theme: GrafanaTheme2) => ({
+  section: css`
+    margin-bottom: ${theme.spacing(4)};
+  `,
+});
