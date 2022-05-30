@@ -1,10 +1,16 @@
-+++
-title = "Remove silences"
-description = "Remove alerting silences"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 451
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/silences/remove-silence/
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Remove alerting silences
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Remove silences
+weight: 451
+---
 
 # Remove silences
 

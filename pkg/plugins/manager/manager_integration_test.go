@@ -95,9 +95,8 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 
-	pluginRegistry := registry.NewInMemory(pmCfg)
-
-	pm, err := ProvideService(cfg, registry.NewInMemory(pmCfg), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pluginRegistry := registry.NewInMemory()
+	pm, err := ProvideService(cfg, pluginRegistry, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
 	require.NoError(t, err)
 

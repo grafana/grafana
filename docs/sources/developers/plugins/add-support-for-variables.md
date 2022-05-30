@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/add-support-for-variables/"]
-title = "Add support for variables in plugins"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/add-support-for-variables/
+title: Add support for variables in plugins
+---
 
 # Add support for variables in plugins
 

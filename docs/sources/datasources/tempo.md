@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/tempo/", "/docs/grafana/latest/features/datasources/tempo/"]
-description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
-keywords = ["grafana", "tempo", "guide", "tracing"]
-title = "Tempo"
-weight = 1400
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/tempo/
+  - /docs/grafana/latest/features/datasources/tempo/
+description: High volume, minimal dependency trace storage. OSS tracing solution from
+  Grafana Labs.
+keywords:
+  - grafana
+  - tempo
+  - guide
+  - tracing
+title: Tempo
+weight: 1400
+---
 
 # Tempo data source
 
@@ -27,7 +34,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.

@@ -515,14 +515,13 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg := &plugins.Cfg{}
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
-
 	cfg.Azure = &azsettings.AzureSettings{
 		ManagedIdentityEnabled:  true,
 		Cloud:                   "AzureCloud",
 		ManagedIdentityClientId: "client-id",
 	}
 
-	pluginRegistry := registry.NewInMemory(cfg)
+	pluginRegistry := registry.NewInMemory()
 	manager := New(cfg, pluginRegistry, nil, &fakeLoader{}, &fakePluginInstaller{},
 		process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
 	ctx := &managerScenarioCtx{

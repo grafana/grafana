@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/enterprise-configuration/"]
-description = "Enterprise configuration documentation"
-keywords = ["grafana", "configuration", "documentation", "enterprise"]
-title = "Enterprise configuration"
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/enterprise-configuration/
+description: Enterprise configuration documentation
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - enterprise
+title: Enterprise configuration
+weight: 700
+---
 
 # Grafana Enterprise configuration
 
@@ -366,7 +371,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}).
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "query-caching.md#enable-and-configure-query-caching" >}}).
 
 ### ttl
 

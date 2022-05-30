@@ -1,9 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/folder_dashboard_search/", "/docs/grafana/latest/http_api/folder_dashboard_search/"]
-description = "Grafana Folder/Dashboard Search HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "search", "folder", "dashboard"]
-title = "Folder/Dashboard Search HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/folder_dashboard_search/
+  - /docs/grafana/latest/http_api/folder_dashboard_search/
+description: Grafana Folder/Dashboard Search HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - search
+  - folder
+  - dashboard
+title: 'Folder/Dashboard Search HTTP API '
+---
 
 # Folder/Dashboard Search API
 
@@ -11,7 +20,7 @@ title = "Folder/Dashboard Search HTTP API "
 
 `GET /api/search/`
 
-> Note: When using [Role-based access control]({{< relref "../../enterprise/access-control" >}}), search results will contain only dashboards and folders which you have access to.
+> Note: When using [Role-based access control]({{< relref "../../enterprise/access-control/" >}}), search results will contain only dashboards and folders which you have access to.
 
 Query parameters:
 

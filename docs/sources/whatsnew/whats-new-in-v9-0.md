@@ -1,13 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v9-0/", "/docs/grafana/latest/whatsnew/whats-new-in-v9-0/"]
-description = "Feature and improvement highlights for Grafana v9.0"
-keywords = ["grafana", "new", "documentation", "9.0", "release notes"]
-title = "What's new in Grafana v9.0"
-weight = -33
-
-[_build]
-  list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v9-0/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v9-0/
+description: Feature and improvement highlights for Grafana v9.0
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '9.0'
+  - release notes
+title: What's new in Grafana v9.0
+weight: -33
+---
 
 # What’s new in Grafana v9.0 ((beta))
 
@@ -197,6 +203,10 @@ Support for Elasticsearch versions that are after their end of life ( based on h
 
 In the Elasticsearch data source, browser access mode was deprecated in grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the data source configuration page.
 
+### Prometheus: NaN values representation changed in numeric data
+
+In the Prometheus data source, when grafana receives numeric data from Prometheus, it may contain NaN (not a number) values. For consistency and performance reasons we changed how we represent such values in Grafana. In previous versions, the behavior was different between alerting queries and other queries (like dashboard queries or explore queries). Alerting queries kept NaN values unchanged, but other queries converted these values to “null”. Starting with grafana 9.0.0, we will always keep NaN values unchanged for all queries.
+
 <!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
 In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/_index.md##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
@@ -205,12 +215,7 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 
 The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
 
-## ## A note on Grafana Enterprise licensing
-
-The Rename by regex transformation has been improved to allow global patterns of the form /<stringToReplace>/g. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), e.g. (._) becomes /(._)/
-Github Issue #48179
-
-## Deprecation Notices
+## A note on Grafana Enterprise licensing
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
