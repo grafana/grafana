@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/basics/"]
-title = "Grafana basics"
-weight = 15
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/
+title: Grafana basics
+weight: 15
+---
 
 # Grafana basics
 

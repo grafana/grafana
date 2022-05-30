@@ -1,9 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/administration/set-up-for-high-availability/", "/docs/grafana/latest/tutorials/ha_setup/"]
-keywords = ["grafana", "tutorials", "HA", "high availability"]
-title = "Set up Grafana for high availability"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/set-up-for-high-availability/
+  - /docs/grafana/latest/tutorials/ha_setup/
+keywords:
+  - grafana
+  - tutorials
+  - HA
+  - high availability
+title: Set up Grafana for high availability
+weight: 1200
+---
 
 # Set up Grafana for high availability
 
@@ -17,7 +23,7 @@ and other persistent data. So the default embedded SQLite database will not work
 ## Configure multiple servers to use the same database
 
 First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md#database" >}}) section in the Grafana config.
+You can find the configuration for doing that in the [[database]]({{< relref "configuration.md#database" >}}) section in the Grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on the database you're using.
 
 ## Alerting high availability

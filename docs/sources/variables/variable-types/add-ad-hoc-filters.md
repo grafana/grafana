@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/variables/add-ad-hoc-filters/", "/docs/grafana/latest/variables/variable-types/add-ad-hoc-filters/"]
-title = "Add ad hoc filters"
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/add-ad-hoc-filters/
+  - /docs/grafana/latest/variables/variable-types/add-ad-hoc-filters/
+title: Add ad hoc filters
+weight: 700
+---
 
 # Add ad hoc filters
 

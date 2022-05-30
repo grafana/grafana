@@ -20,14 +20,14 @@ export interface Props {
 }
 
 export default function DashboardSearch({ onCloseSearch }: Props) {
-  if (config.featureToggles.panelTitleSearch && !window.location.search?.includes('index=sql')) {
+  if (config.featureToggles.panelTitleSearch) {
     // TODO: "folder:current" ????
-    return <DashbaordSearchNEW onCloseSearch={onCloseSearch} />;
+    return <DashboardSearchNew onCloseSearch={onCloseSearch} />;
   }
   return <DashboardSearchOLD onCloseSearch={onCloseSearch} />;
 }
 
-function DashbaordSearchNEW({ onCloseSearch }: Props) {
+function DashboardSearchNew({ onCloseSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange } = useSearchQuery({});
 
@@ -56,7 +56,7 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
@@ -82,7 +82,7 @@ export const DashboardSearchOLD: FC<Props> = memo(({ onCloseSearch }) => {
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
@@ -137,6 +137,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     container: css`
+      display: flex;
+      flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
       padding: ${theme.spacing(2)};
@@ -162,6 +164,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     search: css`
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       height: 100%;
       padding: ${theme.spacing(2, 0, 3, 0)};
     `,
