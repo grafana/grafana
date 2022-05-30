@@ -1,7 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/", "/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
-title = "Add authentication for data source plugins"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/
+  - /docs/grafana/latest/plugins/developing/auth-for-datasources/
+  - /docs/grafana/next/developers/plugins/authentication/
+title: Add authentication for data source plugins
+---
 
 # Add authentication for data source plugins
 
@@ -265,7 +268,7 @@ While the data source proxy supports the most common authentication methods for 
 - Proxy routes only support HTTP or HTTPS
 - Proxy routes don't support custom token authentication
 
-If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "./backend/_index.md" >}}). Since backend plugins run on the server they can access decrypted secrets, which makes it easier to implement custom authentication methods.
+If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "backend/_index.md" >}}). Since backend plugins run on the server they can access decrypted secrets, which makes it easier to implement custom authentication methods.
 
 The decrypted secrets are available from the `DecryptedSecureJSONData` field in the instance settings.
 

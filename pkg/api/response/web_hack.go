@@ -42,7 +42,9 @@ func wrap_handler(h web.Handler) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := getReqCtx(r.Context())
 			res := handle(ctx)
-			res.WriteTo(ctx)
+			if res != nil {
+				res.WriteTo(ctx)
+			}
 		}
 	case handlerCtx:
 		return func(w http.ResponseWriter, r *http.Request) {

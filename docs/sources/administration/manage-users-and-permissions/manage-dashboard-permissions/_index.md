@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-dashboard-permissions/", "/docs/grafana/latest/permissions/dashboard_folder_permissions/"]
-title = "Manage dashboard permissions"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-dashboard-permissions/
+  - /docs/grafana/latest/permissions/dashboard_folder_permissions/
+title: Manage dashboard permissions
+weight: 500
+---
 
 # Manage dashboard permissions
 
@@ -74,7 +76,7 @@ This modification is useful for public Grafana installations where you want anon
 
 1. Open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../administration/configuration" >}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../configuration/" >}}).
 
 1. Locate the `viewers_can_edit` parameter.
 1. Set the `viewers_can_edit` value to `true`.

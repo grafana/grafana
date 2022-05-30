@@ -1,9 +1,15 @@
-+++
-title = "Label matchers"
-description = "Learn about labels and label matchers in alerting"
-keywords = ["grafana", "alerting", "guide", "fundamentals"]
-weight = 117
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
+description: Learn about labels and label matchers in alerting
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - fundamentals
+title: Label matchers
+weight: 117
+---
 
 # How label matching works
 

@@ -87,4 +87,4 @@ Access to Grafana alert rules is an intersection of many permissions:
 - Permission to read a folder. For example, the fixed role `fixed:folders:reader` includes the action `folders:read` and a folder scope `folders:id:`.
 - Permission to query **all** data sources that a given alert rule uses. If a user cannot query a given data source, they cannot see any alert rules that query that data source.
 
-For more information about the permissions required to access alert rules, refer to [Create a custom role to access alerts in a folder]({{< relref "./plan-rbac-rollout-strategy#create-a-custom-role-to-access-alerts-in-a-folder" >}}).
+For more information about the permissions required to access alert rules, refer to [Create a custom role to access alerts in a folder]({{< relref "plan-rbac-rollout-strategy/#create-a-custom-role-to-access-alerts-in-a-folder" >}}).

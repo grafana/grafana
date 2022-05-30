@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/prometheus/alertmanager/template"
@@ -101,21 +102,25 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
-	// Add a button widget (link to Grafana).
-	widgets = append(widgets, buttonWidget{
-		Buttons: []button{
-			{
-				TextButton: textButton{
-					Text: "OPEN IN GRAFANA",
-					OnClick: onClick{
-						OpenLink: openLink{
-							URL: ruleURL,
+	if gcn.isUrlAbsolute(ruleURL) {
+		// Add a button widget (link to Grafana).
+		widgets = append(widgets, buttonWidget{
+			Buttons: []button{
+				{
+					TextButton: textButton{
+						Text: "OPEN IN GRAFANA",
+						OnClick: onClick{
+							OpenLink: openLink{
+								URL: ruleURL,
+							},
 						},
 					},
 				},
 			},
-		},
-	})
+		})
+	} else {
+		gcn.log.Warn("Grafana External URL setting is missing or invalid. Skipping 'open in grafana' button to prevent google from displaying empty alerts.", "ruleURL", ruleURL)
+	}
 
 	// Add text paragraph widget for the build version and timestamp.
 	widgets = append(widgets, textParagraphWidget{
@@ -180,6 +185,16 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 func (gcn *GoogleChatNotifier) SendResolved() bool {
 	return !gcn.GetDisableResolveMessage()
+}
+
+func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
+	parsed, err := url.Parse(urlToCheck)
+	if err != nil {
+		gcn.log.Warn("Could not parse URL", "urlToCheck", urlToCheck)
+		return false
+	}
+
+	return parsed.IsAbs()
 }
 
 func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts []*types.Alert) *card {
