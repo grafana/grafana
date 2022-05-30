@@ -132,7 +132,7 @@ import "github.com/grafana/grafana/pkg/models"
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users.role:update` with scope `users:*`.
-// 
+//
 // Responses:
 // 200: okResponse
 // 400: badRequestError
