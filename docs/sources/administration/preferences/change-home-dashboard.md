@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/administration/change-home-dashboard/", "/docs/grafana/latest/administration/preferences/change-home-dashboard/"]
-description = "How to replace the default home dashboard"
-keywords = ["grafana", "configuration", "documentation", "home"]
-title = "Change home dashboard"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/change-home-dashboard/
+  - /docs/grafana/latest/administration/preferences/change-home-dashboard/
+description: How to replace the default home dashboard
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change home dashboard
+weight: 300
+---
 
 # Change the default home dashboard
 

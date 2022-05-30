@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/installation/windows/"]
-description = "Install Grafana on Windows"
-keywords = ["grafana", "configuration", "documentation", "windows"]
-title = "Install on Windows"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/windows/
+description: Install Grafana on Windows
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - windows
+title: Install on Windows
+weight: 400
+---
 
 # Install on Windows
 

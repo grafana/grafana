@@ -1,9 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/explore/", "/docs/grafana/latest/features/explore/"]
-keywords = ["explore", "loki", "logs"]
-title = "Explore"
-weight = 90
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/
+  - /docs/grafana/latest/features/explore/
+keywords:
+  - explore
+  - loki
+  - logs
+title: Explore
+weight: 90
+---
 
 # Explore
 

@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/auditing/"]
-description = "Auditing"
-keywords = ["grafana", "auditing", "audit", "logs"]
-title = "Auditing"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/auditing/
+description: Auditing
+keywords:
+  - grafana
+  - auditing
+  - audit
+  - logs
+title: Auditing
+weight: 1100
+---
 
 # Auditing
 
@@ -123,7 +128,7 @@ pattern of the `requestUri` field is given.
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./saml/configure-saml.md#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "configure-saml.md#single-logout" >}}).
 
 #### User management
 

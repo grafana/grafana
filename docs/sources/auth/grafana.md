@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/auth/grafana/"]
-description = "Grafana OAuthentication Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-title = "Grafana Authentication"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/grafana/
+description: 'Grafana OAuthentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: Grafana Authentication
+weight: 100
+---
 
 ## Grafana Auth
 
