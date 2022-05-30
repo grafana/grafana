@@ -294,11 +294,10 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 	}
 
 	if exist {
-		err := json.Unmarshal([]byte(secret), &decryptedValues)
-		if err != nil {
-			return nil, err
-		}
-	} else if len(ds.SecureJsonData) > 0 {
+		err = json.Unmarshal([]byte(secret), &decryptedValues)
+	}
+
+	if (!exist || err != nil) && len(ds.SecureJsonData) > 0 {
 		decryptedValues, err = s.MigrateSecrets(ctx, ds)
 		if err != nil {
 			return nil, err
