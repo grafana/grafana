@@ -1,23 +1,22 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { KeyValue } from '@grafana/data';
 import { Icon, Button, AutoSizeInput } from '@grafana/ui';
 
-import { getAvailableIcons, IconName } from '../../types';
+import { IconName } from '../../types';
+import { iconOptions } from '../../utils/storybook/knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './AutoSizeInput.mdx';
 
+const icons: { [key: string]: string | undefined } = { ...iconOptions };
+Object.keys(icons).forEach((key) => {
+  icons[key] = `icon-${icons[key]}`;
+});
+
 const prefixSuffixOpts = {
-  None: null,
   Text: '$',
-  ...getAvailableIcons().reduce<KeyValue<string>>((prev, c) => {
-    return {
-      ...prev,
-      [`Icon: ${c}`]: `icon-${c}`,
-    };
-  }, {}),
+  ...icons,
 };
 
 export default {
