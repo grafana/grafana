@@ -15,7 +15,7 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
-interface Props {
+export interface Props {
   navModel: NavModel;
 }
 
@@ -28,7 +28,7 @@ const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().po
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
 
-const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
+export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
@@ -150,4 +150,5 @@ const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
   );
 };
 
-export default connect(mapStateToProps)(ServiceAccountCreatePage);
+const ServiceAccountCreatePage = connect(mapStateToProps)(ServiceAccountCreatePageUnconnected);
+export default ServiceAccountCreatePage;
