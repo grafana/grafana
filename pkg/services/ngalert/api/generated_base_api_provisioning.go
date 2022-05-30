@@ -23,6 +23,7 @@ type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteDeleteMuteTiming(*models.ReqContext) response.Response
 	RouteDeleteTemplate(*models.ReqContext) response.Response
+	RouteGetAlertRule(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetMuteTiming(*models.ReqContext) response.Response
 	RouteGetMuteTimings(*models.ReqContext) response.Response
@@ -54,6 +55,9 @@ func (f *ForkedProvisioningApi) RouteDeleteMuteTiming(ctx *models.ReqContext) re
 func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteTemplate(ctx)
 }
+func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertRule(ctx)
+}
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)
 }
@@ -73,7 +77,11 @@ func (f *ForkedProvisioningApi) RouteGetTemplates(ctx *models.ReqContext) respon
 	return f.forkRouteGetTemplates(ctx)
 }
 func (f *ForkedProvisioningApi) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
-	return f.forkRoutePostAlertRule(ctx)
+	conf := apimodels.AlertRule{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostAlertRule(ctx, conf)
 }
 func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EmbeddedContactPoint{}
@@ -92,10 +100,18 @@ func (f *ForkedProvisioningApi) RoutePostMuteTiming(ctx *models.ReqContext) resp
 }
 
 func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
-	return f.forkRoutePutAlertRule(ctx)
+	conf := apimodels.AlertRule{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutAlertRule(ctx, conf)
 }
 func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
-	return f.forkRoutePutAlertRuleGroup(ctx)
+	conf := apimodels.AlertRuleGroup{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutAlertRuleGroup(ctx, conf)
 }
 func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EmbeddedContactPoint{}
@@ -131,11 +147,11 @@ func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) respons
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
-			toMacaronPath("/api/provisioning/alert-rules/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/alert-rules/{ID}"),
+			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/alert-rules/{ID}",
+				"/api/provisioning/alert-rules/{UID}",
 				srv.RouteDeleteAlertRule,
 				m,
 			),
@@ -167,6 +183,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodDelete,
 				"/api/provisioning/templates/{name}",
 				srv.RouteDeleteTemplate,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/provisioning/alert-rules/{ID}"),
+			api.authorize(http.MethodGet, "/api/provisioning/alert-rules/{ID}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/alert-rules/{ID}",
+				srv.RouteGetAlertRule,
 				m,
 			),
 		)
@@ -261,21 +287,21 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/alert-rules/{ID}"),
-			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/{ID}"),
+			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
+			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/alert-rules/{ID}",
+				"/api/provisioning/alert-rules/{UID}",
 				srv.RoutePutAlertRule,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/alert-rules/groups/{Group}"),
-			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/groups/{Group}"),
+			toMacaronPath("/api/provisioning/alert-rules/folder/{NamespaceUID}/groups/{Group}"),
+			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/folder/{NamespaceUID}/groups/{Group}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/alert-rules/groups/{Group}",
+				"/api/provisioning/alert-rules/folder/{NamespaceUID}/groups/{Group}",
 				srv.RoutePutAlertRuleGroup,
 				m,
 			),

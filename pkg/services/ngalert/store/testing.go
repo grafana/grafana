@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -296,6 +297,10 @@ func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule
 
 func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
+}
+
+func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+	return errors.New("not implemented")
 }
 
 type FakeInstanceStore struct {

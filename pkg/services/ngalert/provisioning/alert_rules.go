@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertRuleService struct {
@@ -19,8 +20,8 @@ type AlertRuleService struct {
 func NewAlertRuleService(ruleStore store.RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
-	log log.Logger) AlertRuleService {
-	return AlertRuleService{
+	log log.Logger) *AlertRuleService {
+	return &AlertRuleService{
 		ruleStore:       ruleStore,
 		provenanceStore: provenanceStore,
 		xact:            xact,
@@ -40,36 +41,43 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *query.Result, nil
 }
 
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
-	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	if rule.UID == "" {
+		rule.UID = util.GenerateShortUID()
+	}
+	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
 		})
 		if err != nil {
 			return err
 		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.RuleGroup, rule.IntervalSeconds)
+		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {
 			return err
 		}
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	return rule, nil
 }
 
-func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
+func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	// check that provenance is not changed in a invalid way
 	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, &rule, rule.OrgID)
 	if err != nil {
-		return err
+		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	storedRule, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
-		return err
+		return models.AlertRule{}, err
 	}
-	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
 				Existing: &storedRule,
@@ -79,12 +87,16 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 		if err != nil {
 			return err
 		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.RuleGroup, rule.IntervalSeconds)
+		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {
 			return err
 		}
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	return rule, err
 }
 
 func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance models.Provenance) error {
@@ -107,4 +119,8 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		}
 		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
 	})
+}
+
+func (service *AlertRuleService) UpdateAlertGroup(ctx context.Context, orgID int64, folderUID, roulegroup string, interval int64) error {
+	return service.ruleStore.UpdateRuleGroup(ctx, orgID, folderUID, roulegroup, interval)
 }

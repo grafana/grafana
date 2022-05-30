@@ -38,7 +38,7 @@ func TestAlertRuleService(t *testing.T) {
 			NoDataState:  models.OK,
 			ExecErrState: models.OkErrState,
 		}
-		err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
 		require.NoError(t, err)
 	})
 	t.Run("alert rule group should be updated on update", func(t *testing.T) {

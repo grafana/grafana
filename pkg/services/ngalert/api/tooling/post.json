@@ -194,6 +194,49 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "AlertRule": {
+   "properties": {
+    "folderUID": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "FolderUID"
+    },
+    "group": {
+     "type": "string",
+     "x-go-name": "Group"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "ID"
+    },
+    "orgID": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "OrgID"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertRuleGroup": {
+   "properties": {
+    "interval": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Interval"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -2923,7 +2966,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2956,9 +2998,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3563,6 +3605,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3602,9 +3645,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "properties": {
@@ -4843,50 +4884,18 @@
     "operationId": "RoutePostAlertRule",
     "parameters": [
      {
-      "format": "int64",
-      "in": "query",
-      "name": "id",
-      "type": "integer",
-      "x-go-name": "ID"
-     },
-     {
-      "in": "query",
-      "name": "uid",
-      "type": "string",
-      "x-go-name": "UID"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "orgID",
-      "type": "integer",
-      "x-go-name": "OrgID"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "folderUID",
-      "type": "integer",
-      "x-go-name": "FolderUID"
-     },
-     {
-      "in": "query",
-      "name": "group",
-      "type": "string",
-      "x-go-name": "Group"
-     },
-     {
-      "in": "query",
-      "name": "provenance",
-      "type": "string",
-      "x-go-name": "Provenance"
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
      }
     ],
     "responses": {
      "200": {
-      "description": "Route",
+      "description": "AlertRule",
       "schema": {
-       "$ref": "#/definitions/Route"
+       "$ref": "#/definitions/AlertRule"
       }
      },
      "400": {
@@ -4902,7 +4911,7 @@
     ]
    }
   },
-  "/api/provisioning/alert-rules/groups/{Group}": {
+  "/api/provisioning/alert-rules/folder/{NamespaceUID}/groups/{Group}": {
    "put": {
     "consumes": [
      "application/json"
@@ -4911,16 +4920,19 @@
     "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
      {
-      "format": "int64",
-      "in": "query",
-      "name": "interval",
-      "type": "integer",
-      "x-go-name": "Interval"
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
      }
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "AlertRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4935,6 +4947,29 @@
    }
   },
   "/api/provisioning/alert-rules/{ID}": {
+   "get": {
+    "operationId": "RouteGetAlertRule",
+    "responses": {
+     "200": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the contact points.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/alert-rules/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -4942,7 +4977,10 @@
     "operationId": "RouteDeleteAlertRule",
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4963,48 +5001,19 @@
     "operationId": "RoutePutAlertRule",
     "parameters": [
      {
-      "format": "int64",
-      "in": "query",
-      "name": "id",
-      "type": "integer",
-      "x-go-name": "ID"
-     },
-     {
-      "in": "query",
-      "name": "uid",
-      "type": "string",
-      "x-go-name": "UID"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "orgID",
-      "type": "integer",
-      "x-go-name": "OrgID"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "folderUID",
-      "type": "integer",
-      "x-go-name": "FolderUID"
-     },
-     {
-      "in": "query",
-      "name": "group",
-      "type": "string",
-      "x-go-name": "Group"
-     },
-     {
-      "in": "query",
-      "name": "provenance",
-      "type": "string",
-      "x-go-name": "Provenance"
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
      }
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
      },
      "400": {
       "description": "ValidationError",
