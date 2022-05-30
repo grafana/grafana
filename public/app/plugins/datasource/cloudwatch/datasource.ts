@@ -842,19 +842,25 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const valueVar = this.templateSrv
-        .getVariables()
-        .find(({ name }) => name === this.templateSrv.getVariableName(value));
-      if (valueVar) {
-        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-          const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
-          return { ...result, [key]: values };
-        }
-        return { ...result, [key]: [this.templateSrv.replace(value, scopedVars)] };
-      }
-
-      return { ...result, [key]: [value] };
+      const newValues = this.getVariableValue(value, scopedVars);
+      return { ...result, [key]: newValues };
     }, {});
+  }
+  // get the value for a given template variable
+  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+    const variableName = this.templateSrv.getVariableName(value);
+    const valueVar = this.templateSrv.getVariables().find(({ name }) => {
+      return name === variableName;
+    });
+    if (variableName && valueVar) {
+      if ((valueVar as unknown as VariableWithMultiSupport).multi) {
+        // rebuild the variable name to handle old migrated queries
+        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
+        return values;
+      }
+      return [this.templateSrv.replace(value, scopedVars)];
+    }
+    return [value];
   }
 
   replace(
@@ -929,13 +935,7 @@ export class CloudWatchDatasource
       namespace: this.replace(query.namespace, scopedVars),
       period: this.replace(query.period, scopedVars),
       sqlExpression: this.replace(query.sqlExpression, scopedVars),
-      dimensions: Object.entries(query.dimensions ?? {}).reduce((prev, [key, value]) => {
-        if (Array.isArray(value)) {
-          return { ...prev, [key]: value };
-        }
-
-        return { ...prev, [this.replace(key, scopedVars)]: this.replace(value, scopedVars) };
-      }, {}),
+      dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
   }
 }
