@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/auth/jwt/"]
-description = "Grafana JWT Authentication"
-keywords = ["grafana", "configuration", "documentation", "jwt", "jwk"]
-title = "JWT Authentication"
-weight = 250
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/jwt/
+description: Grafana JWT Authentication
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - jwt
+  - jwk
+title: JWT Authentication
+weight: 250
+---
 
 # JWT authentication
 

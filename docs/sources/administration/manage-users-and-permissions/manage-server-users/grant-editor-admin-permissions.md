@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/"]
-title = "Grant editors administrator permissions"
-weight = 60
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/
+title: Grant editors administrator permissions
+weight: 60
+---
 
 # Grant editors administrator permissions
 
@@ -25,7 +26,7 @@ When `editors_can_admin` is enabled:
 
 1. Log in to the Grafana server and open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../administration/configuration" >}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../administration/configuration/" >}}).
 
 1. Locate the `editors_can_admin` parameter.
 1. Set the `editors_can_admin` value to `true`.

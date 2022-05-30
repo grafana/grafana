@@ -9,8 +9,6 @@ import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { DashboardQuery, SearchLayout } from '../../types';
 
-import { getSortOptions } from './sorting';
-
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
   { value: SearchLayout.List, icon: 'list-ul', ariaLabel: 'View as list' },
@@ -26,6 +24,7 @@ interface Props {
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
+  getSortOptions: () => Promise<SelectableValue[]>;
   onDatasourceChange: (ds?: string) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
@@ -54,6 +53,7 @@ export const ActionRow: FC<Props> = ({
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
+  getSortOptions,
   onDatasourceChange,
   query,
   showStarredFilter,
