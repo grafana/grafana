@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -8,8 +8,8 @@ export const NoData = () => {
   const css = useStyles2(getStyles);
   return (
     <>
-      <PanelContainer data-testid="explore-no-data" className={cx([css.wrapper])}>
-        <span className={cx([css.message])}>{'No data'}</span>
+      <PanelContainer data-testid="explore-no-data" className={css.wrapper}>
+        <span className={css.message}>{'No data'}</span>
       </PanelContainer>
     </>
   );

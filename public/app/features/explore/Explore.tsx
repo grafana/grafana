@@ -368,7 +368,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div className={cx(styles.exploreContainer)}>
-            <PanelContainer className={cx(styles.queryContainer)}>
+            <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
