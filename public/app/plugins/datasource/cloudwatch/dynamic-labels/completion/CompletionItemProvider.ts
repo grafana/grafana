@@ -51,7 +51,7 @@ export class DynamicLabelsCompletionItemProvider implements Completeable {
         };
         let suggestions: CompletionItem[] = [];
         const next = currentToken?.next;
-        if (!next || next.isWhiteSpace()) {
+        if (!currentToken?.isFunction() && (!next || next.isWhiteSpace())) {
           suggestions = DYNAMIC_LABEL_PATTERNS.map((val) => toCompletionItem(val));
           // always insert suggestion for dimension value and allow user to complete pattern by providing the dimension name
           suggestions.push(
