@@ -55,9 +55,9 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - pkg/**
+    include: []
 type: docker
 volumes:
 - host:
@@ -4715,6 +4715,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ff085ddc71068da845df1504632d1f41e54ff42b01df979c9cbea184d8289a5d
+hmac: 4eea6c9f54b167ae04508a045f9aae5d7efd272abd650b2bdde427e6928db385
 
 ...

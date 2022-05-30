@@ -84,7 +84,7 @@ def pr_test_frontend():
         test_frontend_step(),
     ]
     return pipeline(
-        name='pr-test-frontend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**']), services=[], steps=init_steps + test_steps,
     )
 
 
