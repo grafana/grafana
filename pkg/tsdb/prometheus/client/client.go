@@ -80,6 +80,17 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 	return c.fetch(ctx, u, qs)
 }
 
+func (c *Client) QueryResource(ctx context.Context, p string, qs url.Values) (*http.Response, error) {
+	u, err := url.ParseRequestURI(c.baseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Path = path.Join(u.Path, p)
+
+	return c.fetch(ctx, u, qs)
+}
+
 func (c *Client) fetch(ctx context.Context, u *url.URL, qs url.Values) (*http.Response, error) {
 	if strings.ToUpper(c.method) == http.MethodGet {
 		u.RawQuery = qs.Encode()
