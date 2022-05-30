@@ -10,9 +10,9 @@ import (
 )
 
 type store interface {
-	Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error)
-	GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error)
-	Delete(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error)
+	Get(context.Context, *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error)
+	GetBatch(context.Context, *dashver.DeleteExpiredVersionsCommand, int, int) ([]interface{}, error)
+	Delete(context.Context, *dashver.DeleteExpiredVersionsCommand, []interface{}) (int64, error)
 }
 
 type sqlStore struct {
