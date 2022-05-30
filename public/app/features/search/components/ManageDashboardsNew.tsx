@@ -38,8 +38,8 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
 
   return (
     <>
-      <div className={cx([styles.actionBar], 'page-action-bar')}>
-        <div className={cx([styles.inputWrapper], 'gf-form gf-form--grow m-r-2')}>
+      <div className={cx(styles.actionBar, 'page-action-bar')}>
+        <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
           <Input
             value={inputValue}
             onChange={onSearchQueryChange}
