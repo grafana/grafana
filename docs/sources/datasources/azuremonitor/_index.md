@@ -274,7 +274,7 @@ You can use Grafana macros when constructing a query. Use the macros in the wher
 
 ### Working with large Azure resource data sets
 
-If a request exceeds the [maximum allowed value of 1000 records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result will be paginated but only the first page of results will be returned. You can use filters to reduce the amount of records returned under that value.
+If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned. You can use filters to reduce the amount of records returned under that value.
 
 ## Going further with Azure Monitor
 
