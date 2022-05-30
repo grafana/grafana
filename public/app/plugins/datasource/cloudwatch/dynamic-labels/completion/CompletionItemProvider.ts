@@ -11,8 +11,6 @@ export class DynamicLabelsCompletionItemProvider implements Completeable {
   tokenTypes: TokenTypes;
 
   constructor() {
-    // implement with more specific tokens when extending this class
-
     this.tokenTypes = {
       Parenthesis: 'delimiter.parenthesis.cloudwatch-dynamicLabels',
       Whitespace: 'white.cloudwatch-dynamicLabels',
