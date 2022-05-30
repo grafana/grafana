@@ -207,8 +207,8 @@
 // Right aligned dropdowns
 // ---------------------------
 .pull-right > .dropdown-menu {
-  left: 100% !important;
-  right: unset !important;
+  left: 100%;
+  right: unset;
 }
 
 // Allow for dropdowns to go bottom up (aka, dropup-menu)
