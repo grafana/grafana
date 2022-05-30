@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route GET /api/provisioning/alert-rules/{ID} provisioning RouteGetAlertRule
+// swagger:route GET /api/provisioning/alert-rules/{UID} provisioning RouteGetAlertRule
 //
 // Get all the contact points.
 //

@@ -271,8 +271,8 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
 	rulegroup := web.Params(c.Req)[":group"]
-	namespaceUID := web.Params(c.Req)[":folderUID"]
-	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, namespaceUID, rulegroup, ag.Interval)
+	folderUID := web.Params(c.Req)[":folderUID"]
+	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
