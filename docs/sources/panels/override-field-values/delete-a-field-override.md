@@ -15,7 +15,7 @@ When you delete an override, the appearance of value defaults to its original fo
 ## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
+- [Add a field override]({{< relref "add-a-field-override.md" >}}).
 
 **To delete a field override**:
 

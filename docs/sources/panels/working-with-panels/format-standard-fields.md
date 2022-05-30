@@ -18,7 +18,7 @@ For a complete list of field formatting options, refer to [Standard field defini
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
 
 **To format a standard field**:
 
