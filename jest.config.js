@@ -38,5 +38,4 @@ module.exports = {
     // Because we mock out <Trans /> anyway, we can mock the messages also
     'locales/\\w+/messages$': '<rootDir>/public/test/mocks/i18nMessages.ts',
   },
-  watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };
