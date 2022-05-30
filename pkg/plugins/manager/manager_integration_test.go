@@ -106,7 +106,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	verifyBundledPlugins(t, pluginStore)
 }
 
-func verifyCorePluginCatalogue(t *testing.T, pm plugins.Store) {
+func verifyCorePluginCatalogue(t *testing.T, ps plugins.Store) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -172,45 +172,45 @@ func verifyCorePluginCatalogue(t *testing.T, pm plugins.Store) {
 		"test-app": {},
 	}
 
-	panels := pm.Plugins(context.Background(), plugins.Panel)
+	panels := ps.Plugins(context.Background(), plugins.Panel)
 	assert.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
-		p, exists := pm.Plugin(context.Background(), p.ID)
+		p, exists := ps.Plugin(context.Background(), p.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
 	}
 
-	dataSources := pm.Plugins(context.Background(), plugins.DataSource)
+	dataSources := ps.Plugins(context.Background(), plugins.DataSource)
 	assert.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
-		p, exists := pm.Plugin(context.Background(), ds.ID)
+		p, exists := ps.Plugin(context.Background(), ds.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
 	}
 
-	apps := pm.Plugins(context.Background(), plugins.App)
+	apps := ps.Plugins(context.Background(), plugins.App)
 	assert.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
-		p, exists := pm.Plugin(context.Background(), app.ID)
+		p, exists := ps.Plugin(context.Background(), app.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
 	}
 
-	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(context.Background())))
+	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(context.Background())))
 }
 
-func verifyBundledPlugins(t *testing.T, pm plugins.Store) {
+func verifyBundledPlugins(t *testing.T, ps plugins.Store) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range pm.Plugins(context.Background(), plugins.DataSource) {
+	for _, p := range ps.Plugins(context.Background(), plugins.DataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
-	inputPlugin, exists := pm.Plugin(context.Background(), "input")
+	inputPlugin, exists := ps.Plugin(context.Background(), "input")
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])
