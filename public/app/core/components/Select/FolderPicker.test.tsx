@@ -1,6 +1,7 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardSearchHit } from '../../../features/search/types';
@@ -8,15 +9,16 @@ import { DashboardSearchHit } from '../../../features/search/types';
 import { FolderPicker, getInitialValues } from './FolderPicker';
 
 describe('FolderPicker', () => {
-  it('should render', () => {
+  it('should render', async () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
         { title: 'Dash 1', id: 1 } as DashboardSearchHit,
         { title: 'Dash 2', id: 2 } as DashboardSearchHit,
       ]);
-    const wrapper = shallow(<FolderPicker onChange={jest.fn()} />);
-    expect(wrapper).toMatchSnapshot();
+
+    render(<FolderPicker onChange={jest.fn()} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
   });
 });
 
