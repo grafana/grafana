@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
@@ -110,5 +111,53 @@ describe('ServiceAccountsListPage tests', () => {
     });
     expect(screen.getByRole('button', { name: 'Add token' })).toBeInTheDocument();
     expect(screen.getByText(/No tokens/)).toBeInTheDocument();
+  });
+
+  it('Should update service account role', async () => {
+    const updateServiceAccountMock = jest.fn();
+    setup({
+      serviceAccounts: [getDefaultServiceAccount()],
+      updateServiceAccount: updateServiceAccountMock,
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByText('Editor'));
+    await user.click(screen.getByText('Admin'));
+
+    expect(updateServiceAccountMock).toHaveBeenCalledWith({
+      ...getDefaultServiceAccount(),
+      role: OrgRole.Admin,
+    });
+  });
+
+  it('Should disable service account', async () => {
+    const updateServiceAccountMock = jest.fn();
+    setup({
+      serviceAccounts: [getDefaultServiceAccount()],
+      updateServiceAccount: updateServiceAccountMock,
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Disable/ }));
+    await user.click(screen.getByLabelText(/Confirm Modal Danger Button/));
+
+    expect(updateServiceAccountMock).toHaveBeenCalledWith({
+      ...getDefaultServiceAccount(),
+      isDisabled: true,
+    });
+  });
+
+  it('Should remove service account', async () => {
+    const deleteServiceAccountMock = jest.fn();
+    setup({
+      serviceAccounts: [getDefaultServiceAccount()],
+      deleteServiceAccount: deleteServiceAccountMock,
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByLabelText(/Delete service account/));
+    await user.click(screen.getByLabelText(/Confirm Modal Danger Button/));
+
+    expect(deleteServiceAccountMock).toHaveBeenCalledWith(1);
   });
 });
