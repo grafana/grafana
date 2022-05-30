@@ -75,7 +75,6 @@ type Store interface {
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error
-	DeleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand) error
 	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
