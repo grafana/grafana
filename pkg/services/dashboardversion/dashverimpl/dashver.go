@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	maxVersionsToDeletePerBatch = 100
+	maxVersionDeletionBatches   = 50
+)
+
 type Service struct {
 	store store
 }
@@ -29,19 +34,14 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 	return version, nil
 }
 
-const MAX_VERSIONS_TO_DELETE_PER_BATCH = 100
-const MAX_VERSION_DELETION_BATCHES = 50
-
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	maxBatches := MAX_VERSION_DELETION_BATCHES
-	perBatch := MAX_VERSIONS_TO_DELETE_PER_BATCH
 	versionsToKeep := setting.DashboardVersionsToKeep
 	if versionsToKeep < 1 {
 		versionsToKeep = 1
 	}
 
-	for batch := 0; batch < maxBatches; batch++ {
-		versionIdsToDelete, batchErr := s.store.GetBatch(ctx, cmd, perBatch, versionsToKeep)
+	for batch := 0; batch < maxVersionDeletionBatches; batch++ {
+		versionIdsToDelete, batchErr := s.store.GetBatch(ctx, cmd, maxVersionsToDeletePerBatch, versionsToKeep)
 		if batchErr != nil {
 			return batchErr
 		}
@@ -50,17 +50,16 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 			return nil
 		}
 
-		deleted, err := s.store.Delete(ctx, cmd, versionIdsToDelete)
+		deleted, err := s.store.DeleteBatch(ctx, cmd, versionIdsToDelete)
 		if err != nil {
 			return err
 		}
 
 		cmd.DeletedRows += deleted
 
-		if deleted < int64(perBatch) {
+		if deleted < int64(maxVersionsToDeletePerBatch) {
 			break
 		}
 	}
-
 	return nil
 }

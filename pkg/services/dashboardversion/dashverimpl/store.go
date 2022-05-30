@@ -12,7 +12,7 @@ import (
 type store interface {
 	Get(context.Context, *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error)
 	GetBatch(context.Context, *dashver.DeleteExpiredVersionsCommand, int, int) ([]interface{}, error)
-	Delete(context.Context, *dashver.DeleteExpiredVersionsCommand, []interface{}) (int64, error)
+	DeleteBatch(context.Context, *dashver.DeleteExpiredVersionsCommand, []interface{}) (int64, error)
 }
 
 type sqlStore struct {
@@ -60,7 +60,7 @@ func (ss *sqlStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVers
 	return versionIds, err
 }
 
-func (ss *sqlStore) Delete(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
+func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
 	var deleted int64
 	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
