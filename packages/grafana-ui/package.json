@@ -191,6 +191,7 @@
     "terser-webpack-plugin": "5.3.3",
     "ts-loader": "8.4.0",
     "typescript": "4.8.2",
+    "util": "0.11.1",
     "webpack": "5.74.0",
     "webpack-filter-warnings-plugin": "1.2.1"
   },

@@ -64,6 +64,11 @@ module.exports = {
       return rule;
     });
 
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      util: require.resolve('util/'),
+    };
+
     config.module.rules = [
       ...(config.module.rules || []),
       {
@@ -165,6 +170,14 @@ module.exports = {
         exclude: /export .* was not found in/,
       })
     );
+
+    return config;
+  },
+  managerWebpack: async (config: any) => {
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      util: require.resolve('util/'),
+    };
 
     return config;
   },

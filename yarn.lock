@@ -5726,6 +5726,7 @@ __metadata:
     tslib: 2.4.0
     typescript: 4.8.2
     uplot: 1.6.22
+    util: 0.11.1
     uuid: 8.3.2
     webpack: 5.74.0
     webpack-filter-warnings-plugin: 1.2.1
@@ -9858,7 +9859,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/client-api@npm:6.5.6":
+"@storybook/client-api@npm:*, @storybook/client-api@npm:6.5.6":
   version: 6.5.6
   resolution: "@storybook/client-api@npm:6.5.6"
   dependencies:
@@ -38191,7 +38192,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"util@npm:^0.11.0":
+"util@npm:0.11.1, util@npm:^0.11.0":
   version: 0.11.1
   resolution: "util@npm:0.11.1"
   dependencies:
