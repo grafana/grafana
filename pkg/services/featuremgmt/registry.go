@@ -19,11 +19,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "httpclientprovider_azure_auth",
-			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
@@ -98,6 +93,11 @@ var (
 		{
 			Name:        "prometheus_azure_auth",
 			Description: "Experimental. Azure authentication for Prometheus datasource",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
 		},
 		{
