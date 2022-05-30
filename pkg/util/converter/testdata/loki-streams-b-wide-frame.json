@@ -5,35 +5,35 @@
         "meta": {
           "custom": {
             "stats": {
+              "store": {
+                "totalChunksDownloaded": 2,
+                "decompressedLines": 55,
+                "totalDuplicates": 0,
+                "totalChunksRef": 2,
+                "chunksDownloadTime": 0.000390958,
+                "headChunkBytes": 0,
+                "headChunkLines": 0,
+                "decompressedBytes": 7772,
+                "compressedBytes": 31432
+              },
+              "ingester": {
+                "totalDuplicates": 0,
+                "totalReached": 0,
+                "totalLinesSent": 0,
+                "decompressedBytes": 0,
+                "compressedBytes": 0,
+                "decompressedLines": 0,
+                "totalChunksMatched": 0,
+                "totalBatches": 0,
+                "headChunkBytes": 0,
+                "headChunkLines": 0
+              },
               "summary": {
                 "bytesProcessedPerSecond": 3507022,
                 "linesProcessedPerSecond": 24818,
                 "totalBytesProcessed": 7772,
                 "totalLinesProcessed": 55,
                 "execTime": 0.002216125
-              },
-              "store": {
-                "headChunkLines": 0,
-                "decompressedBytes": 7772,
-                "totalChunksRef": 2,
-                "chunksDownloadTime": 0.000390958,
-                "decompressedLines": 55,
-                "compressedBytes": 31432,
-                "totalDuplicates": 0,
-                "totalChunksDownloaded": 2,
-                "headChunkBytes": 0
-              },
-              "ingester": {
-                "compressedBytes": 0,
-                "totalDuplicates": 0,
-                "totalReached": 0,
-                "totalBatches": 0,
-                "totalLinesSent": 0,
-                "headChunkBytes": 0,
-                "decompressedLines": 0,
-                "totalChunksMatched": 0,
-                "headChunkLines": 0,
-                "decompressedBytes": 0
               }
             }
           }

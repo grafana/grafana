@@ -1,10 +1,16 @@
-+++
-title = "Silences"
-description = "Silences"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 450
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/silences/
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Silences
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Silences
+weight: 450
+---
 
 # About alerting silences
 
@@ -20,4 +26,4 @@ See also:
 - [Create a silence]({{< relref "./create-silence.md" >}})
 - [Create a URL to link to a silence form]({{< relref "./linking-to-silence-form.md" >}})
 - [Edit silences]({{< relref "./edit-silence.md" >}})
-- [Remove a silences]({{< relref "./remove-silence.md" >}})
+- [Remove silences]({{< relref "./remove-silence.md" >}})

@@ -72,6 +72,13 @@ export const PIPE_PARSERS: CompletionItem[] = [
     insertText: 'pattern',
     documentation: 'Extracting labels from the log line using pattern parser. Only available in Loki 2.3+.',
   },
+  {
+    label: 'unpack',
+    insertText: 'unpack',
+    detail: 'unpack identifier',
+    documentation:
+      'Parses a JSON log line, unpacking all embedded labels in the pack stage. A special property "_entry" will also be used to replace the original log line. Only available in Loki 2.2+.',
+  },
 ];
 
 export const PIPE_OPERATORS: CompletionItem[] = [
@@ -81,13 +88,6 @@ export const PIPE_OPERATORS: CompletionItem[] = [
     detail: 'unwrap identifier',
     documentation:
       'Take labels and use the values as sample data for metric aggregations. Only available in Loki 2.0+.',
-  },
-  {
-    label: 'unpack',
-    insertText: 'unpack',
-    detail: 'unpack identifier',
-    documentation:
-      'Parses a JSON log line, unpacking all embedded labels in the pack stage. A special property "_entry" will also be used to replace the original log line. Only available in Loki 2.0+.',
   },
   {
     label: 'label_format',
@@ -121,6 +121,18 @@ export const RANGE_VEC_FUNCTIONS = [
     label: 'max_over_time',
     detail: 'max_over_time(range-vector)',
     documentation: 'The maximum of all values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'first_over_time',
+    label: 'first_over_time',
+    detail: 'first_over_time(range-vector)',
+    documentation: 'The first of all values in the specified interval. Only available in Loki 2.3+.',
+  },
+  {
+    insertText: 'last_over_time',
+    label: 'last_over_time',
+    detail: 'last_over_time(range-vector)',
+    documentation: 'The last of all values in the specified interval. Only available in Loki 2.3+.',
   },
   {
     insertText: 'sum_over_time',

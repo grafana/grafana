@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
-func createTestImg(fakeUrl string, fakePath string) *store.Image {
-	return &store.Image{
+func createTestImg(fakeUrl string, fakePath string) *models.Image {
+	return &models.Image{
 		ID:    0,
 		Token: "",
 		Path:  fakeUrl + "local",
@@ -25,12 +26,12 @@ func createTestImg(fakeUrl string, fakePath string) *store.Image {
 	}
 }
 
-func addID(img *store.Image, id int64) *store.Image {
+func addID(img *models.Image, id int64) *models.Image {
 	img.ID = id
 	return img
 }
 
-func addToken(img *store.Image) *store.Image {
+func addToken(img *models.Image) *models.Image {
 	token, err := uuid.NewV4()
 	if err != nil {
 		panic("wat")
@@ -47,7 +48,7 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// Here are some images to save.
 	imgs := []struct {
 		name   string
-		img    *store.Image
+		img    *models.Image
 		errors bool
 	}{
 		{
@@ -99,7 +100,7 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// Save two images.
-	imgs := []*store.Image{
+	imgs := []*models.Image{
 		createTestImg("", ""),
 		createTestImg("", ""),
 	}

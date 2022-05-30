@@ -1,10 +1,16 @@
-+++
-title = "Alert groups"
-description = "Alert groups"
-keywords = ["grafana", "alerting", "alerts", "groups"]
-weight = 445
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alert-groups/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alert-groups/
+  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
+description: Alert groups
+keywords:
+  - grafana
+  - alerting
+  - alerts
+  - groups
+title: Alert groups
+weight: 445
+---
 
 # Alert groups
 
@@ -12,5 +18,5 @@ Alert groups show grouped alerts from an Alertmanager instance. By default, the 
 
 For more information, see:
 
-- [View alert groupings]({{< relref "./view-alert-grouping.md" >}})
-- [Filter alerts by group]({{< relref "./filter-alerts.md" >}})
+- [View alert groupings]({{< relref "view-alert-grouping.md" >}})
+- [Filter alerts by group]({{< relref "filter-alerts.md" >}})

@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/export-pdf/"]
-description = ""
-keywords = ["grafana", "export", "pdf", "share"]
-title = "Export dashboard as PDF"
-weight = 1400
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/export-pdf/
+description: ''
+keywords:
+  - grafana
+  - export
+  - pdf
+  - share
+title: Export dashboard as PDF
+weight: 1400
+---
 
 # Export dashboard as PDF
 
