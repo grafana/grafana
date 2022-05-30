@@ -3,7 +3,8 @@
     "baseUrl": "./",
     "declarationDir": "dist",
     "outDir": "compiled",
-    "rootDirs": [".", "stories"]
+    "rootDirs": [".", "stories"],
+    "jsx": "react"
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",
