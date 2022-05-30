@@ -539,9 +539,10 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
 				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.Equal(t, false, *AlertingEnabled)
 			},
 		},
 		{
@@ -557,9 +558,9 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
 				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.Equal(t, false, *AlertingEnabled)
 			},
 		},
 		{
@@ -593,7 +594,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
 				assert.NotNil(t, AlertingEnabled)
 				assert.Equal(t, *AlertingEnabled, false)
 			},
@@ -610,7 +611,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.True(t, *cfg.UnifiedAlerting.Enabled)
 				assert.Nil(t, AlertingEnabled)
 			},
 		},
@@ -627,9 +629,8 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.True(t, *cfg.UnifiedAlerting.Enabled)
+				assert.Nil(t, AlertingEnabled)
 			},
 		},
 		{
