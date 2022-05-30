@@ -1,7 +1,7 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { useCallback, useRef } from 'react';
 
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor, Monaco, useTheme2 } from '@grafana/ui';
 
 import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/completion/CompletionItemProvider';
 import language from '../dynamic-labels/definition';
@@ -17,6 +17,7 @@ export interface Props {
 }
 
 export function DynamicLabelsField({ label, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
+  const theme = useTheme2();
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(
     (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -29,13 +30,13 @@ export function DynamicLabelsField({ label, onChange, onRunQuery }: React.PropsW
 
       const containerDiv = containerRef.current;
       if (containerDiv !== null) {
-        containerDiv.style.height = '32px';
+        containerDiv.style.height = theme.spacing(4);
         const pixelWidth = 440;
         containerDiv.style.width = `${pixelWidth}px`;
-        editor.layout({ width: pixelWidth, height: 32 });
+        editor.layout({ width: pixelWidth, height: parseInt(theme.spacing(4).replace('px', ''), 10) });
       }
     },
-    [onChange, onRunQuery]
+    [onChange, onRunQuery, theme]
   );
 
   return (
