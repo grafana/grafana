@@ -30,12 +30,14 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles(ctx context.Context) error
-
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+}
+
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
 }
 
 type PermissionsStore interface {

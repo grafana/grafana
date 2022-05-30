@@ -40,12 +40,12 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, accesscontrol accesscontrol.AccessControl,
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, accesscontrol, provisioningService, backgroundServiceProvider)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, accesscontr
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, accesscontrol accesscontrol.AccessControl,
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
@@ -68,7 +68,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, acces
 		childRoutines:       childRoutines,
 		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
-		accesscontrol:       accesscontrol,
+		roleRegistry:        roleRegistry,
 		shutdownFn:          shutdownFn,
 		shutdownFinished:    make(chan struct{}),
 		log:                 log.New("server"),
@@ -102,7 +102,7 @@ type Server struct {
 	backgroundServices []registry.BackgroundService
 
 	HTTPServer          *api.HTTPServer
-	accesscontrol       accesscontrol.AccessControl
+	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
 }
 
@@ -124,7 +124,7 @@ func (s *Server) init() error {
 	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
 	social.ProvideService(s.cfg)
 
-	if err := s.accesscontrol.RegisterFixedRoles(s.context); err != nil {
+	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
 		return err
 	}
 
