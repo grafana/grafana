@@ -102,11 +102,14 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 			default:
 				insts := load.Instances(nil, clcfg)
 				if len(insts) > 1 {
-					return fmt.Errorf("%s: resulted in more than one instance")
+					return fmt.Errorf("%s: resulted in more than one instance", path)
 				}
 				v := ctx.BuildInstance(insts[0])
 
 				b, err = cuetsy.Generate(v, cuetsy.Config{})
+				if err != nil {
+					return err
+				}
 
 			case strings.Contains(path, "public/app/plugins"): // panel plugin models.cue files
 				// The simple - and preferable - thing would be to have plugins use the same
@@ -154,11 +157,11 @@ func CuetsifyPlugins(ctx *cue.Context, root string) (WriteDiffer, error) {
 				f.WriteModelVersion = true
 
 				b, err = cuetsy.Generate(thema.SchemaP(lin, f.V).UnwrapCUE(), cuetsy.Config{})
+				if err != nil {
+					return err
+				}
 			}
 
-			if err != nil {
-				return err
-			}
 			f.Body = string(b)
 
 			var buf bytes.Buffer
