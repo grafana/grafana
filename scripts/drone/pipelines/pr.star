@@ -84,7 +84,7 @@ def pr_test_frontend():
         test_frontend_step(),
     ]
     return pipeline(
-        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**']), services=[], steps=init_steps + test_steps,
+        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**', 'packaging/*']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -104,7 +104,7 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**']), services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/*', '.drone.yml', 'conf/*']), services=[], steps=init_steps + test_steps,
     )
 
 

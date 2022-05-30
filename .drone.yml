@@ -57,6 +57,7 @@ trigger:
     exclude:
     - docs/**
     - pkg/**
+    - packaging/*
     include: []
 type: docker
 volumes:
@@ -146,6 +147,9 @@ trigger:
     - docs/**
     include:
     - pkg/**
+    - packaging/*
+    - .drone.yml
+    - conf/*
 type: docker
 volumes:
 - host:
@@ -4715,6 +4719,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 4eea6c9f54b167ae04508a045f9aae5d7efd272abd650b2bdde427e6928db385
+hmac: 991694433d2e5972ad587d5d3d310980893c8c6db66529643ae52426fcc8e704
 
 ...
