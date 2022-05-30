@@ -51,7 +51,6 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
 		require.NotNil(t, err)
 	})
-
 }
 
 type FakeDashboardVersionStore struct {
