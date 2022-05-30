@@ -66,6 +66,7 @@ func NewSimulationEngine() (*SimulationEngine, error) {
 	initializers := []simulationInitializer{
 		newFlightSimInfo,
 		newSinewaveInfo,
+		newTankSimInfo,
 	}
 
 	for _, init := range initializers {
@@ -155,7 +156,10 @@ func (s *SimulationEngine) QueryData(ctx context.Context, req *backend.QueryData
 			maxPoints := q.MaxDataPoints * 2
 			for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
 				t := time.UnixMilli(timeWalkerMs).UTC()
-				appendFrameRow(frame, sim.GetValues(t))
+				vals := sim.GetValues(t)
+				if vals != nil { // nil is returned when you ask for an invalid time
+					appendFrameRow(frame, vals)
+				}
 				timeWalkerMs += stepMillis
 			}
 		}
@@ -220,7 +224,6 @@ func (s *SimulationEngine) GetSimulationHandler(rw http.ResponseWriter, req *htt
 		}
 		result = v
 	} else if strings.HasPrefix(path, "/sim/") {
-		rw.WriteHeader(400)
 		sim, err := s.getSimFromPath(path)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusNotFound)

@@ -1,5 +1,6 @@
-import { Modal, VerticalGroup } from '@grafana/ui';
 import React from 'react';
+
+import { Modal, VerticalGroup } from '@grafana/ui';
 
 export interface AlertHowToModalProps {
   onDismiss: () => void;

@@ -15,7 +15,7 @@ type Service struct {
 	cfg   *setting.Cfg
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
@@ -30,6 +30,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		OrgID:  query.OrgID,
 		UserID: query.UserID,
 	}
+
 	prefs, err := s.store.List(ctx, listQuery)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,10 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 		TeamID: query.TeamID,
 	}
 	prefs, err := s.store.Get(ctx, getPref)
-	if err != nil && !errors.Is(err, pref.ErrPrefNotFound) {
+	if errors.Is(err, pref.ErrPrefNotFound) {
+		return &pref.Preference{}, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	return prefs, nil
@@ -96,12 +100,14 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		}
 		return err
 	}
+
 	preference.Timezone = cmd.Timezone
 	preference.WeekStart = cmd.WeekStart
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.JSONData = &pref.PreferenceJSONData{}
+	preference.HomeDashboardID = cmd.HomeDashboardID
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar

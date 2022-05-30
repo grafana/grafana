@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 
+import { rangeUtil } from '@grafana/data';
+
 import Datasource from '../../datasource';
+import TimegrainConverter from '../../time_grain_converter';
 import { AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
@@ -29,7 +32,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
         return;
       }
 
-      const results = await datasource.azureMonitorDatasource.newGetMetricNamespaces(resourceUri);
+      const results = await datasource.azureMonitorDatasource.getMetricNamespaces({ resourceUri });
       const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
@@ -55,7 +58,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
         return;
       }
 
-      const results = await datasource.azureMonitorDatasource.newGetMetricNames(resourceUri, metricNamespace);
+      const results = await datasource.azureMonitorDatasource.getMetricNames({ resourceUri, metricNamespace });
       const options = formatOptions(results, metricName);
 
       return options;
@@ -87,7 +90,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     }
 
     datasource.azureMonitorDatasource
-      .newGetMetricMetadata(resourceUri, metricNamespace, metricName)
+      .getMetricMetadata({ resourceUri, metricNamespace, metricName })
       .then((metadata) => {
         // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
         const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
@@ -118,6 +121,11 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           ...query.azureMonitor,
           aggregation: newAggregation,
           timeGrain: newTimeGrain,
+          allowedTimeGrainsMs: metricMetadata.timeGrains
+            .filter((timeGrain) => timeGrain.value !== 'auto')
+            .map((timeGrain) =>
+              rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
+            ),
         },
       });
     }
@@ -136,7 +144,7 @@ function formatOptions(
   const options = rawResults.map(toOption);
 
   // account for custom values that might have been set in json file like ones crafted with a template variable (ex: "cloud-datasource-resource-$Environment")
-  if (selectedValue && !options.find((option) => option.value === selectedValue)) {
+  if (selectedValue && !options.find((option) => option.value === selectedValue.toLowerCase())) {
     options.push({ label: selectedValue, value: selectedValue });
   }
 

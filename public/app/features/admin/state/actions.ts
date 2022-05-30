@@ -1,6 +1,10 @@
-import config from 'app/core/config';
+import { debounce } from 'lodash';
+
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, locationService } from '@grafana/runtime';
+import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
 
 import {
@@ -23,9 +27,6 @@ import {
   usersFetchBegin,
   usersFetchEnd,
 } from './reducers';
-import { debounce } from 'lodash';
-import { contextSrv } from 'app/core/core';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 // UserAdminPage
 
 export function loadAdminUserPage(userId: number): ThunkResult<void> {

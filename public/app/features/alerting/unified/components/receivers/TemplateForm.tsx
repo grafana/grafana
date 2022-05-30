@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+import { useForm, Validate } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC } from 'react';
-import { useForm, Validate } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
+
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
@@ -150,7 +152,11 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
             Saving...
           </Button>
         )}
-        {!loading && <Button variant="primary">Save template</Button>}
+        {!loading && (
+          <Button type="submit" variant="primary">
+            Save template
+          </Button>
+        )}
         <LinkButton
           disabled={loading}
           href={makeAMLink('alerting/notifications', alertManagerSourceName)}

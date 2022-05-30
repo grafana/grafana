@@ -1,35 +1,37 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
+import classnames from 'classnames';
+import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { locationService } from '@grafana/runtime';
+
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { Branding } from 'app/core/components/Branding/Branding';
-import { DashboardGrid } from '../dashgrid/DashboardGrid';
-import { DashNav } from '../components/DashNav';
-import { DashboardSettings } from '../components/DashboardSettings';
-import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { KioskMode, StoreState } from 'app/types';
+import { Branding } from 'app/core/components/Branding/Branding';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
-import { SubMenu } from '../components/SubMenu/SubMenu';
-import { cleanUpDashboardAndVariables } from '../state/actions';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { KioskMode, StoreState } from 'app/types';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
-import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getTimeSrv } from '../services/TimeSrv';
-import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
+import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import classnames from 'classnames';
-import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { DashboardSettings } from '../components/DashboardSettings';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { SubMenu } from '../components/SubMenu/SubMenu';
+import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
+import { getTimeSrv } from '../services/TimeSrv';
+import { cleanUpDashboardAndVariables } from '../state/actions';
+import { initDashboard } from '../state/initDashboard';
 
 export interface DashboardPageRouteParams {
   uid?: string;

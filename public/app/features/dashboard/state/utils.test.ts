@@ -1,6 +1,7 @@
+import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
+
 import { PanelModel } from './PanelModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
 
 describe('isOnTheSameGridRow', () => {
   describe('when source panel is next to a panel', () => {
@@ -49,14 +50,14 @@ describe('deleteScopeVars', () => {
       });
 
       expect(panel1.scopedVars).toBeDefined();
-      expect(panel1.panels[0].scopedVars).toBeDefined();
-      expect(panel1.panels[1].scopedVars).toBeDefined();
+      expect(panel1.panels?.[0].scopedVars).toBeDefined();
+      expect(panel1.panels?.[1].scopedVars).toBeDefined();
 
       deleteScopeVars([panel1]);
 
       expect(panel1.scopedVars).toBeUndefined();
-      expect(panel1.panels[0].scopedVars).toBeUndefined();
-      expect(panel1.panels[1].scopedVars).toBeUndefined();
+      expect(panel1.panels?.[0].scopedVars).toBeUndefined();
+      expect(panel1.panels?.[1].scopedVars).toBeUndefined();
     });
   });
 });

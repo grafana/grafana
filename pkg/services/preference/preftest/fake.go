@@ -30,3 +30,7 @@ func (f *FakePreferenceService) Save(ctx context.Context, cmd *pref.SavePreferen
 func (f *FakePreferenceService) GetDefaults() *pref.Preference {
 	return f.ExpectedPreference
 }
+
+func (f *FakePreferenceService) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
+	return f.ExpectedError
+}

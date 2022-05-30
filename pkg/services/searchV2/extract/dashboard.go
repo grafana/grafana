@@ -2,6 +2,7 @@ package extract
 
 import (
 	"io"
+	"strconv"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -12,9 +13,10 @@ func logf(format string, a ...interface{}) {
 
 // nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
-func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
+func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, error) {
 	dash := &DashboardInfo{}
+
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		// Skip null values so we don't need special int handling
@@ -28,7 +30,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 			dash.ID = iter.ReadInt64()
 
 		case "uid":
-			dash.UID = iter.ReadString()
+			iter.ReadString()
 
 		case "title":
 			dash.Title = iter.ReadString()
@@ -37,8 +39,17 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 			dash.Description = iter.ReadString()
 
 		case "schemaVersion":
-			dash.SchemaVersion = iter.ReadInt64()
-
+			switch iter.WhatIsNext() {
+			case jsoniter.NumberValue:
+				dash.SchemaVersion = iter.ReadInt64()
+			case jsoniter.StringValue:
+				val := iter.ReadString()
+				if v, err := strconv.ParseInt(val, 10, 64); err == nil {
+					dash.SchemaVersion = v
+				}
+			default:
+				iter.Skip()
+			}
 		case "timezone":
 			dash.TimeZone = iter.ReadString()
 
@@ -67,10 +78,13 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 		case "time":
 			obj, ok := iter.Read().(map[string]interface{})
 			if ok {
-				dash.TimeFrom, _ = obj["from"].(string)
-				dash.TimeTo, _ = obj["to"].(string)
+				if timeFrom, ok := obj["from"].(string); ok {
+					dash.TimeFrom = timeFrom
+				}
+				if timeTo, ok := obj["to"].(string); ok {
+					dash.TimeTo = timeTo
+				}
 			}
-
 		case "panels":
 			for iter.ReadArray() {
 				dash.Panels = append(dash.Panels, readPanelInfo(iter, lookup))
@@ -79,7 +93,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 		case "rows":
 			for iter.ReadArray() {
 				v := iter.Read()
-				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.UID, v)
+				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.ID, v)
 			}
 
 		case "annotations":
@@ -125,17 +139,13 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) *DashboardInfo {
 		}
 	}
 
-	if dash.UID == "" {
-		logf("All dashbaords should have a UID defined")
-	}
-
 	targets := newTargetInfo(lookup)
 	for _, panel := range dash.Panels {
 		targets.addPanel(panel)
 	}
 	dash.Datasource = targets.GetDatasourceInfo()
 
-	return dash
+	return dash, iter.Error
 }
 
 // will always return strings for now
@@ -176,15 +186,24 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
 			targets.addDatasource(iter)
 
 		case "targets":
-			for iter.ReadArray() {
-				targets.addTarget(iter)
+			switch iter.WhatIsNext() {
+			case jsoniter.ArrayValue:
+				for iter.ReadArray() {
+					targets.addTarget(iter)
+				}
+			case jsoniter.ObjectValue:
+				for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
+					targets.addTarget(iter)
+				}
+			default:
+				iter.Skip()
 			}
 
 		case "transformations":
 			for iter.ReadArray() {
 				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 					if sub == "id" {
-						panel.Transformations = append(panel.Transformations, iter.ReadString())
+						panel.Transformer = append(panel.Transformer, iter.ReadString())
 					} else {
 						iter.Skip()
 					}

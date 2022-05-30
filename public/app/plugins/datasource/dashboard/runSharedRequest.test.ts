@@ -1,5 +1,6 @@
-import { isSharedDashboardQuery } from './runSharedRequest';
 import { DataSourceApi } from '@grafana/data';
+
+import { isSharedDashboardQuery } from './runSharedRequest';
 
 describe('SharedQueryRunner', () => {
   it('should identify shared queries', () => {

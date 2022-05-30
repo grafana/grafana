@@ -1,5 +1,5 @@
-import { LokiQuery, LokiQueryType } from './types';
 import { getHighlighterExpressionsFromQuery, getNormalizedLokiQuery } from './query_utils';
+import { LokiQuery, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {

@@ -1,10 +1,12 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
-import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
+
+import { HeatmapMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
+import { colorSchemes } from './palettes';
 
 /**
  * This is called when the panel changes from another panel
@@ -27,28 +29,28 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
-  const source = angular.dataFormat === 'tsbuckets' ? HeatmapSourceMode.Data : HeatmapSourceMode.Calculate;
-  const heatmap: HeatmapCalculationOptions = {
-    ...defaultPanelOptions.heatmap,
+  const mode = angular.dataFormat === 'tsbuckets' ? HeatmapMode.Aggregated : HeatmapMode.Calculate;
+  const calculate: HeatmapCalculationOptions = {
+    ...defaultPanelOptions.calculate,
   };
 
-  if (source === HeatmapSourceMode.Calculate) {
+  if (mode === HeatmapMode.Calculate) {
     if (angular.xBucketSize) {
-      heatmap.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+      calculate.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
-      heatmap.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+      calculate.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
     }
 
     if (angular.yBucketSize) {
-      heatmap.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+      calculate.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
-      heatmap.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+      calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
     }
   }
 
   const options: PanelOptions = {
-    source,
-    heatmap,
+    mode,
+    calculate,
     color: {
       ...defaultPanelOptions.color,
       steps: 256, // best match with existing colors
@@ -58,16 +60,38 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     yAxisLabels: angular.yBucketBound,
     yAxisReverse: angular.reverseYBuckets,
     legend: {
-      displayMode: angular.legend.show ? LegendDisplayMode.List : LegendDisplayMode.Hidden,
-      calcs: [],
-      placement: 'bottom',
+      show: Boolean(angular.legend.show),
     },
     showValue: VisibilityMode.Never,
     tooltip: {
       show: Boolean(angular.tooltip?.show),
       yHistogram: Boolean(angular.tooltip?.showHistogram),
     },
+    exemplars: {
+      ...defaultPanelOptions.exemplars,
+    },
   };
+
+  // Migrate color options
+  const color = angular.color;
+  switch (color?.mode) {
+    case 'spectrum': {
+      options.color.mode = HeatmapColorMode.Scheme;
+
+      const current = color.colorScheme as string;
+      let scheme = colorSchemes.find((v) => v.name === current);
+      if (!scheme) {
+        scheme = colorSchemes.find((v) => current.indexOf(v.name) >= 0);
+      }
+      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color.scheme;
+      break;
+    }
+    case 'opacity': {
+      options.color.mode = HeatmapColorMode.Opacity;
+      options.color.scale = color.scale;
+      break;
+    }
+  }
 
   return { fieldConfig, options };
 }
@@ -78,6 +102,9 @@ function asNumber(v: any): number | undefined {
 }
 
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
-  // Nothing yet
+  // Migrating from angular
+  if (!panel.pluginVersion && Object.keys(panel.options).length === 0) {
+    return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
+  }
   return panel.options;
 };

@@ -1,5 +1,7 @@
+import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
+
 import {
   DataQuery,
   DataQueryRequest,
@@ -9,15 +11,25 @@ import {
   DataSourceJsonData,
   isValidGoDuration,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
+import {
+  config,
+  BackendSrvRequest,
+  DataSourceWithBackend,
+  getBackendSrv,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
+
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
+
 import {
   failedMetric,
   histogramMetric,
@@ -31,7 +43,6 @@ import {
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
 } from './resultTransformer';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
@@ -89,7 +100,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
@@ -148,7 +162,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         const timeRange = config.featureToggles.tempoBackendSearch
           ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
           : undefined;
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
+        const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
+        const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -190,6 +205,43 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(...subQueries);
   }
 
+  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
+    return this.applyVariables(query, scopedVars);
+  }
+
+  interpolateVariablesInQueries(queries: TempoQuery[], scopedVars: ScopedVars): TempoQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars),
+      };
+    });
+  }
+
+  applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
+    const expandedQuery = { ...query };
+
+    if (query.linkedQuery) {
+      expandedQuery.linkedQuery = {
+        ...query.linkedQuery,
+        expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
+      };
+    }
+
+    return {
+      ...expandedQuery,
+      query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      search: this.templateSrv.replace(query.search ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+    };
+  }
+
   /**
    * Handles the simplest of the queries where we have just a trace id and return trace data for it.
    * @param options
@@ -200,7 +252,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[]
   ): Observable<DataQueryResponse> {
-    const validTargets = targets.filter((t) => t.query);
+    const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
@@ -275,12 +327,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Validate query inputs and remove spaces if valid
     if (tempoQuery.minDuration) {
+      tempoQuery.minDuration = this.templateSrv.replace(tempoQuery.minDuration ?? '');
       if (!isValidGoDuration(tempoQuery.minDuration)) {
         throw new Error('Please enter a valid min duration.');
       }
       tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
     }
     if (tempoQuery.maxDuration) {
+      tempoQuery.maxDuration = this.templateSrv.replace(tempoQuery.maxDuration ?? '');
       if (!isValidGoDuration(tempoQuery.maxDuration)) {
         throw new Error('Please enter a valid max duration.');
       }

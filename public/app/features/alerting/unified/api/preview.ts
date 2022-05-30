@@ -1,3 +1,6 @@
+import { Observable, of } from 'rxjs';
+import { catchError, map, share } from 'rxjs/operators';
+
 import {
   dataFrameFromJSON,
   DataFrameJSON,
@@ -7,8 +10,7 @@ import {
   withLoadingIndicator,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
+
 import {
   CloudPreviewRuleRequest,
   GrafanaPreviewRuleRequest,

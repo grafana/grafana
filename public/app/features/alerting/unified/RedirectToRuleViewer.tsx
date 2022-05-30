@@ -1,14 +1,16 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Redirect } from 'react-router-dom';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
-import { createViewLink } from './utils/misc';
-import { getRulesSourceByName } from './utils/datasource';
-import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+
 import { AlertLabels } from './components/AlertLabels';
+import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import { getRulesSourceByName } from './utils/datasource';
+import { createViewLink } from './utils/misc';
 
 type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
 const pageTitle = 'Alerting / Find rule';

@@ -1,12 +1,14 @@
-import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { HTMLAttributes, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useTheme2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -22,7 +24,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -150,7 +152,7 @@ const getStyles = (
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
       max-height: 50vh;
-      overflow-y: scroll;
+      overflow-y: auto;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};

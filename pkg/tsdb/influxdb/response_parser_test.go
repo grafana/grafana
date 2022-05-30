@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -728,4 +729,77 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
+}
+
+func TestResponseParser_Parse(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		f     func(t *testing.T, got *backend.QueryDataResponse)
+	}{
+		{
+			name: "Influxdb response parser with valid value when null values returned",
+			input: `{ "results": [ { "series": [ {
+				"name": "cpu",
+				"columns": ["time","mean"],
+				"values": [
+					[100,null],
+					[101,null],
+					[102,52]
+				]
+			}]}]}`,
+			f: func(t *testing.T, got *backend.QueryDataResponse) {
+				newField := data.NewField("value", nil, []*float64{nil, nil, pointer.Float64(52)})
+				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+				testFrame := data.NewFrame("cpu.mean",
+					data.NewField("time", nil,
+						[]time.Time{
+							time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
+							time.Date(1970, 1, 1, 0, 1, 41, 0, time.UTC),
+							time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+						}),
+					newField,
+				)
+				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				assert.Equal(t, testFrame, got.Responses["A"].Frames[0])
+			},
+		},
+		{
+			name: "Influxdb response parser with valid value when all values are null",
+			input: `{ "results": [ { "series": [ {
+				"name": "cpu",
+				"columns": ["time","mean"],
+				"values": [
+					[100,null],
+					[101,null],
+					[102,null]
+				]
+			}]}]}`,
+			f: func(t *testing.T, got *backend.QueryDataResponse) {
+				newField := data.NewField("value", nil, []*float64{nil, nil, nil})
+				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
+				testFrame := data.NewFrame("cpu.mean",
+					data.NewField("time", nil,
+						[]time.Time{
+							time.Date(1970, 1, 1, 0, 1, 40, 0, time.UTC),
+							time.Date(1970, 1, 1, 0, 1, 41, 0, time.UTC),
+							time.Date(1970, 1, 1, 0, 1, 42, 0, time.UTC),
+						}),
+					newField,
+				)
+				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				assert.Equal(t, testFrame, got.Responses["A"].Frames[0])
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := &ResponseParser{}
+			got := parser.Parse(prepare(tt.input), addQueryToQueries(Query{}))
+			require.NotNil(t, got)
+			if tt.f != nil {
+				tt.f(t, got)
+			}
+		})
+	}
 }

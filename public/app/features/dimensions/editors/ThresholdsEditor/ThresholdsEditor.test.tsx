@@ -1,8 +1,10 @@
-import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
+import React, { ChangeEvent } from 'react';
+
 import { createTheme, ThresholdsMode } from '@grafana/data';
-import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { mockThemeContext, colors } from '@grafana/ui';
+
+import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {

@@ -163,7 +163,11 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
+    queryHistoryButton: 'Rich history button',
     addQuery: 'Query editor add query button',
+  },
+  QueryHistory: {
+    queryText: 'Query text',
   },
   QueryEditorRows: {
     rows: 'Query editor row',
@@ -261,7 +265,7 @@ export const Components = {
     placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
-    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+    spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
@@ -332,5 +336,9 @@ export const Components = {
     preferencesSaveButton: 'data-testid-shared-prefs-save',
     orgsTable: 'data-testid-user-orgs-table',
     sessionsTable: 'data-testid-user-sessions-table',
+  },
+  FileUpload: {
+    inputField: 'data-testid-file-upload-input-field',
+    fileNameSpan: 'data-testid-file-upload-file-name',
   },
 };

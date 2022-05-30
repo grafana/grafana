@@ -1,8 +1,10 @@
-import React from 'react';
-import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
-import { Story, Meta } from '@storybook/react';
-import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
+import { Story, Meta } from '@storybook/react';
+import React from 'react';
+
+import { Button } from '../Button/Button';
+
+import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
 
 export default {
   title: 'Layout/CallToActionCard',

@@ -1,8 +1,10 @@
-import { getPanelEditorTabs } from './selectors';
 import { PanelPlugin } from '@grafana/data';
-import { PanelEditorTabId } from '../types';
-import { updateConfig } from '../../../../../core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+
+import { updateConfig } from '../../../../../core/config';
+import { PanelEditorTabId } from '../types';
+
+import { getPanelEditorTabs } from './selectors';
 
 jest.mock('app/core/services/context_srv');
 

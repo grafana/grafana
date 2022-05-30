@@ -1,11 +1,14 @@
 import { cx } from '@emotion/css';
+import React, { memo } from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
-import React, { memo } from 'react';
+
 import { OrgRolePicker } from '../admin/OrgRolePicker';
+
 import { getStyles } from './ServiceAccountsListPage';
 
 type ServiceAccountListItemProps = {

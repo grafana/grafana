@@ -4,12 +4,13 @@ import {
   FieldCache,
   FieldColorModeId,
   Field,
-  getColorForTheme,
   applyFieldOverrides,
   createTheme,
   DataFrame,
 } from '@grafana/data';
+
 import { getTheme } from '../../themes';
+
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (
@@ -86,7 +87,7 @@ const cSeries = passThroughFieldOverrides(
 )[0];
 
 function getFixedThemedColor(field: Field): string {
-  return getColorForTheme(field.config.color!.fixedColor!, getTheme());
+  return getTheme().visualization.getColorByName(field.config.color!.fixedColor!);
 }
 
 describe('Graph utils', () => {

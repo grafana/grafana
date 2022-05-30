@@ -1,5 +1,6 @@
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
+
 import {
   DataFrame,
   DefaultTimeZone,
@@ -10,12 +11,14 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { AxisPlacement } from '@grafana/schema';
+
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
+import { getStackingBands, pluginLog, StackingGroup } from '../utils';
+
+import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement } from '@grafana/schema';
-import { getStackingBands, pluginLog, StackingGroup } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
 const cursorDefaults: Cursor = {

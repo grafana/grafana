@@ -1,5 +1,6 @@
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 export interface NoopTransformerOptions {
   include?: string;

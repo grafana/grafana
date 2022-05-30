@@ -125,16 +125,10 @@ var (
 			DisplayName: "Notifications Editor",
 			Description: "Can add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionAlertingNotificationsCreate,
-				},
-				{
-					Action: accesscontrol.ActionAlertingNotificationsUpdate,
-				},
-				{
-					Action: accesscontrol.ActionAlertingNotificationsDelete,
+					Action: accesscontrol.ActionAlertingNotificationsWrite,
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
@@ -162,7 +156,7 @@ var (
 			DisplayName: "Full access",
 			Description: "Can add,update and delete alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
 			Group:       AlertRolesGroup,
-			Version:     2,
+			Version:     3,
 			Permissions: accesscontrol.ConcatPermissions(rulesEditorRole.Role.Permissions, instancesEditorRole.Role.Permissions, notificationsEditorRole.Role.Permissions),
 		},
 		Grants: []string{string(models.ROLE_EDITOR), string(models.ROLE_ADMIN)},

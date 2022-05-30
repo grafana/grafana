@@ -1,6 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import { map } from 'lodash';
-import { getColorForTheme, dateTime, DateTime, AbsoluteTimeRange, GrafanaTheme } from '@grafana/data';
+
+import { dateTime, DateTime, AbsoluteTimeRange, GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 
 type TimeRegionColorDefinition = {
@@ -50,8 +51,8 @@ function getColor(timeRegion: any, theme: GrafanaTheme): TimeRegionColorDefiniti
 
   if (timeRegion.colorMode === 'custom') {
     return {
-      fill: timeRegion.fill && timeRegion.fillColor ? getColorForTheme(timeRegion.fillColor, theme) : null,
-      line: timeRegion.line && timeRegion.lineColor ? getColorForTheme(timeRegion.lineColor, theme) : null,
+      fill: timeRegion.fill && timeRegion.fillColor ? theme.visualization.getColorByName(timeRegion.fillColor) : null,
+      line: timeRegion.line && timeRegion.lineColor ? theme.visualization.getColorByName(timeRegion.lineColor) : null,
     };
   }
 
@@ -62,8 +63,8 @@ function getColor(timeRegion: any, theme: GrafanaTheme): TimeRegionColorDefiniti
   }
 
   return {
-    fill: timeRegion.fill ? getColorForTheme(colorMode.color.fill, theme) : null,
-    line: timeRegion.fill ? getColorForTheme(colorMode.color.line, theme) : null,
+    fill: timeRegion.fill ? theme.visualization.getColorByName(colorMode.color.fill) : null,
+    line: timeRegion.fill ? theme.visualization.getColorByName(colorMode.color.line) : null,
   };
 }
 

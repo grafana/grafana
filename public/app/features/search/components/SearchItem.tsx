@@ -1,11 +1,14 @@
-import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
+
+import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   item: DashboardSectionItem;

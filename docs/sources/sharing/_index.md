@@ -1,7 +1,9 @@
-+++
-title = "Sharing"
-weight = 85
-+++
+---
+aliases:
+  - /docs/grafana/latest/sharing/
+title: Sharing
+weight: 85
+---
 
 # Sharing dashboards and panels
 

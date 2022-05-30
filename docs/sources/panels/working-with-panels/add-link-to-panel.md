@@ -1,8 +1,10 @@
-+++
-title = "Add a link to a panel"
-aliases = ["/docs/sources/panels/working-with-panels/add-link-to-panel/"]
-weight = 60
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
+  - /docs/sources/panels/working-with-panels/add-link-to-panel/
+title: Add a link to a panel
+weight: 60
+---
 
 # Add a link to a panel
 

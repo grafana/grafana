@@ -1,3 +1,5 @@
+import { config } from '../config';
+import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 import {
   ExperimentViewEchoEvent,
@@ -6,8 +8,6 @@ import {
   MetaAnalyticsEventPayload,
   PageviewEchoEvent,
 } from '../types/analytics';
-import { locationService } from '../services';
-import { config } from '../config';
 
 /**
  * Helper function to report meta analytics to the {@link EchoSrv}.

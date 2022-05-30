@@ -1,7 +1,8 @@
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
 import { checkForPathSeparator, queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 describe('rule-editor', () => {
   const dataSource: AlertQuery = {

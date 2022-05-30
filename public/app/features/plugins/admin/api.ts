@@ -1,8 +1,9 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
 import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
+import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+
+import { createTheme } from '@grafana/data';
 import { config, GrafanaBootConfig, ThemeChangedEvent } from '@grafana/runtime';
 import { ThemeContext } from '@grafana/ui';
+
 import { appEvents } from '../core';
-import { createTheme } from '@grafana/data';
 
 export const ConfigContext = React.createContext<GrafanaBootConfig>(config);
 export const ConfigConsumer = ConfigContext.Consumer;

@@ -1,3 +1,7 @@
+import { map } from 'lodash';
+import { from, Observable } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -6,9 +10,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { map } from 'lodash';
-import { from, Observable } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -21,6 +22,7 @@ import {
   DatasourceValidationResult,
 } from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
+
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 
 interface AdhocQuery {
@@ -132,7 +134,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
-      refId: target.refId,
+      ...target,
       queryType: AzureQueryType.LogAnalytics,
 
       azureLogAnalytics: {

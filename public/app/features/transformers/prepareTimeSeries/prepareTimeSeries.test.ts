@@ -8,6 +8,7 @@ import {
   DataFrameType,
   getFrameDisplayName,
 } from '@grafana/data';
+
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 describe('Prepare time series transformer', () => {

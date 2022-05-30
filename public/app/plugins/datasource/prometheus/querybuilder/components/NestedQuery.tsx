@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
-import { IconButton, Select, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
+
 import { PrometheusDatasource } from '../../datasource';
-import { AutoSizeInput } from '../shared/AutoSizeInput';
-import { PromVisualQueryBinary } from '../types';
-import { PromQueryBuilder } from './PromQueryBuilder';
 import { binaryScalarDefs } from '../binaryScalarOperations';
+import { PromVisualQueryBinary } from '../types';
+
+import { PromQueryBuilder } from './PromQueryBuilder';
 
 export interface Props {
   nestedQuery: PromVisualQueryBinary;

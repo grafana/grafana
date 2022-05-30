@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { getNavModel } from 'app/core/selectors/navModel';
+
+import { getTimeZone, NavModel } from '@grafana/data';
+import { Button } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { StoreState, ServiceAccountDTO, ApiKey, Role, AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState, ServiceAccountDTO, ApiKey, Role, AccessControlAction } from 'app/types';
+
+import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
+import { ServiceAccountProfile } from './ServiceAccountProfile';
+import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import {
   deleteServiceAccountToken,
   loadServiceAccount,
@@ -14,11 +21,6 @@ import {
   updateServiceAccount,
   deleteServiceAccount,
 } from './state/actions';
-import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel } from '@grafana/data';
-import { Button } from '@grafana/ui';
-import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
-import { contextSrv } from 'app/core/core';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;

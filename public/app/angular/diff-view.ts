@@ -1,6 +1,8 @@
 import angular from 'angular';
-import coreModule from './core_module';
+
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
+
+import coreModule from './core_module';
 
 export class DeltaCtrl {
   observer: any;

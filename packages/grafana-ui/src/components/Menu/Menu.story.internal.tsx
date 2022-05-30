@@ -1,11 +1,13 @@
-import React from 'react';
 import { Story } from '@storybook/react';
-import { Menu, MenuProps } from './Menu';
-import { MenuItem } from './MenuItem';
-import { MenuGroup } from './MenuGroup';
+import React from 'react';
+
 import { GraphContextMenuHeader } from '..';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
+
+import { Menu, MenuProps } from './Menu';
+import { MenuGroup } from './MenuGroup';
+import { MenuItem } from './MenuItem';
 
 export default {
   title: 'General/Menu',

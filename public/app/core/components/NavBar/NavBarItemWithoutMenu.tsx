@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Link, useTheme2 } from '@grafana/ui';
+
 import { NavFeatureHighlight } from './NavFeatureHighlight';
 
 export interface NavBarItemWithoutMenuProps {

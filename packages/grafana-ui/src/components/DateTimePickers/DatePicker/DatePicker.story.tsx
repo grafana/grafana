@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { DatePicker } from './DatePicker';
-import { Button } from '../../Button/Button';
-import mdx from './DatePicker.mdx';
+
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
+import { Button } from '../../Button/Button';
+
+import { DatePicker } from './DatePicker';
+import mdx from './DatePicker.mdx';
 
 export default {
   title: 'Pickers and Editors/TimePickers/Pickers And Editors/DatePicker',

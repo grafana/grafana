@@ -1,7 +1,7 @@
 import { AnnotationEvent, getDefaultTimeRange } from '@grafana/data';
 
-import { DashboardQueryRunnerOptions } from './types';
 import { SnapshotWorker } from './SnapshotWorker';
+import { DashboardQueryRunnerOptions } from './types';
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
   const dashboard: any = {};

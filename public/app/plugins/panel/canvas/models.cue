@@ -21,7 +21,7 @@ Panel: {
                 PanelOptions: {
                     // anything for now
                     ...
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

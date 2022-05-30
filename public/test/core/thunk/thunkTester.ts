@@ -1,7 +1,7 @@
 // @ts-ignore
+import { PayloadAction } from '@reduxjs/toolkit';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { PayloadAction } from '@reduxjs/toolkit';
 
 const mockStore = configureMockStore([thunk]);
 

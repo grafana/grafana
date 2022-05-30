@@ -1,4 +1,5 @@
 import { ResourceDimensionMode } from 'app/features/dimensions';
+
 import { StyleConfig } from './types';
 import { getStyleConfigState } from './utils';
 

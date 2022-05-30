@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuotaCommandsAndQueries(t *testing.T) {
+func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	sqlStore := InitTestDB(t)
 	userId := int64(1)
 	orgId := int64(0)
@@ -49,7 +49,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 		UserId: 1,
 	}
 
-	err := CreateOrg(context.Background(), &userCmd)
+	err := sqlStore.CreateOrg(context.Background(), &userCmd)
 	require.NoError(t, err)
 	orgId = userCmd.Result.Id
 

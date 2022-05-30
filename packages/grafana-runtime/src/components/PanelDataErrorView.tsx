@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { FieldConfigSource, PanelData } from '@grafana/data';
 
 /**

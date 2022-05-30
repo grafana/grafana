@@ -1,12 +1,19 @@
-+++
-title = "What's New in Grafana v7.4"
-description = "Feature and improvement highlights for Grafana v7.4"
-keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
-weight = -31
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v7-4/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v7-4/
+description: Feature and improvement highlights for Grafana v7.4
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '7.4'
+  - release notes
+title: What's New in Grafana v7.4
+weight: -31
+---
 
 # What's new in Grafana v7.4
 
@@ -33,7 +40,7 @@ The following documentation topics were added for this feature:
 - [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
 - [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines.md" >}})
 - [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points/" >}})
 - [Change axis display]({{< relref "../visualizations/time-series/change-axis-display.md" >}})
 
 ### Node graph panel visualization (Beta)
@@ -54,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/reference-transformation-functions.md#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions.md#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -62,7 +69,7 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/reference-transformation-functions.md#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions.md#filter-data-by-value" >}}).
 
 ### New override option
 
@@ -107,7 +114,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
 
 ### Content security policy support
 
@@ -136,7 +143,7 @@ Grafana 7.4 includes the following enhancements
 
 > **Note:** We have deprecated browser access mode. It will be removed in a future release.
 
-For more information, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch.md">}}).
+For more information, refer to the [Elasticsearch docs]({{< relref "../datasources/elasticsearch.md" >}}).
 
 ### Azure Monitor updates
 
@@ -164,7 +171,7 @@ Google Cloud Monitoring data source ships with pre-configured dashboards for som
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md/#out-of-the-box-dashboards" >}}).
+For more information, refer to the [Google Cloud Monitoring docs]({{< relref "../datasources/google-cloud-monitoring/_index.md#out-of-the-box-dashboards" >}}).
 
 ### Query Editor Help
 
@@ -178,7 +185,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md">}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable.md" >}}).
 
 ## Grafana Enterprise features
 
@@ -202,7 +209,7 @@ For more information, refer to [Export logs of usage insights]({{< relref "../en
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/configure-saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 

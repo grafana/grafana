@@ -1,6 +1,8 @@
-import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 import {
   CodeEditor,
   stylesFactory,
@@ -8,7 +10,6 @@ import {
   CodeEditorSuggestionItem,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 
 import { PanelOptions, TextMode } from './models.gen';
 

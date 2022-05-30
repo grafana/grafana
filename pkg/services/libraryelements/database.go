@@ -245,6 +245,7 @@ func getLibraryElements(c context.Context, store *sqlstore.SQLStore, signedInUse
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
 			FolderID:    libraryElement.FolderID,
+			FolderUID:   libraryElement.FolderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,
@@ -357,6 +358,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				ID:          element.ID,
 				OrgID:       element.OrgID,
 				FolderID:    element.FolderID,
+				FolderUID:   element.FolderUID,
 				UID:         element.UID,
 				Name:        element.Name,
 				Kind:        element.Kind,
@@ -530,7 +532,6 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				},
 			},
 		}
-
 		return nil
 	})
 

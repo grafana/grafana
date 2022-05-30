@@ -1,6 +1,6 @@
 // We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import type { EditorProps } from '@monaco-editor/react';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 // we do not allow customizing the theme.
 // (theme is complicated in Monaco, right now there is

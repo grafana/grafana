@@ -1,7 +1,15 @@
-+++
-title = "Plugin protocol"
-keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/backend/plugin-protocol/
+keywords:
+  - grafana
+  - plugins
+  - backend
+  - plugin
+  - backend-plugins
+  - documentation
+title: Plugin protocol
+---
 
 # Plugin protocol
 

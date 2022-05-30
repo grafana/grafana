@@ -1,10 +1,12 @@
-import React from 'react';
-import { FolderSettingsPage, Props } from './FolderSettingsPage';
 import { shallow } from 'enzyme';
-import { NavModel } from '@grafana/data';
+import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { setFolderTitle } from './state/reducers';
+
+import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+
+import { FolderSettingsPage, Props } from './FolderSettingsPage';
+import { setFolderTitle } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

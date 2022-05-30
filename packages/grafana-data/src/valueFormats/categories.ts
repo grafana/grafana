@@ -1,12 +1,4 @@
-import {
-  locale,
-  scaledUnits,
-  simpleCountUnit,
-  toFixedUnit,
-  ValueFormatCategory,
-  stringFormater,
-  booleanValueFormatter,
-} from './valueFormats';
+import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -31,14 +23,22 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
+import {
+  locale,
+  scaledUnits,
+  simpleCountUnit,
+  toFixedUnit,
+  ValueFormatCategory,
+  stringFormater,
+  booleanValueFormatter,
+} from './valueFormats';
 
 export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
-      { name: 'none', id: 'none', fn: toFixedUnit('') },
+      { name: 'Number', id: 'none', fn: toFixedUnit('') },
       { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
