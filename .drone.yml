@@ -56,8 +56,11 @@ trigger:
   paths:
     exclude:
     - docs/**
+    - '*.md'
     - pkg/**
     - packaging/*
+    - go.sum
+    - go.mod
     include: []
 type: docker
 volumes:
@@ -145,11 +148,14 @@ trigger:
   paths:
     exclude:
     - docs/**
+    - '*.md'
     include:
     - pkg/**
     - packaging/*
     - .drone.yml
     - conf/*
+    - go.sum
+    - go.mod
 type: docker
 volumes:
 - host:
@@ -4719,6 +4725,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 991694433d2e5972ad587d5d3d310980893c8c6db66529643ae52426fcc8e704
+hmac: 78d89910f4e207c3975caef96c26558c8811846eabb95b16a1da2626462ed098
 
 ...

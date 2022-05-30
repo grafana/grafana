@@ -84,7 +84,7 @@ def pr_test_frontend():
         test_frontend_step(),
     ]
     return pipeline(
-        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**', 'packaging/*']), services=[], steps=init_steps + test_steps,
+        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**', 'packaging/*', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -104,7 +104,7 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/*', '.drone.yml', 'conf/*']), services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/*', '.drone.yml', 'conf/*', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -163,7 +163,7 @@ def pr_pipelines(edition):
 
 
 def get_pr_trigger(include_paths=None, exclude_paths=None):
-    paths_ex = ['docs/**']
+    paths_ex = ['docs/**', '*.md']
     paths_in = []
     if include_paths:
         for path in include_paths:
