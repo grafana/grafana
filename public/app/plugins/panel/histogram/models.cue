@@ -38,5 +38,4 @@ Panel: thema.#Lineage & {
 			]
 		},
 	]
-	migrations: []
 }
