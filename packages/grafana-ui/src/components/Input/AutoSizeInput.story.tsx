@@ -21,7 +21,7 @@ const prefixSuffixOpts = {
 };
 
 export default {
-  title: 'Forms/AutoSizeInput',
+  title: 'Forms/Input/AutoSizeInput',
   component: AutoSizeInput,
   decorators: [withCenteredStory],
   parameters: {
