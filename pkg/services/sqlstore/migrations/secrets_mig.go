@@ -63,26 +63,15 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	))
 
 	// ------- This is done for backward compatibility with versions > v8.3.x
-	mg.AddMigration("rename data_keys name column to temp_name", migrator.NewRenameColumnMigration(
-		dataKeysV1, "name", "temp_name",
+	mg.AddMigration("rename data_keys name column to legacy_name", migrator.NewRenameColumnMigration(
+		dataKeysV1, dataKeysV1.Columns[0], "temp_name",
 	))
 
 	mg.AddMigration("rename data_keys id column back to name", migrator.NewRenameColumnMigration(
-		migrator.Table{
-			Name: "data_keys",
-			Columns: []*migrator.Column{
-				{Name: "id", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
-			},
-		},
-		"id", "name",
+		dataKeysV1,
+		&migrator.Column{Name: "id", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+		"name",
 	))
 
-	updateNameCol := fmt.Sprintf("UPDATE %s SET name = CONCAT(temp_name, '/', name) WHERE name != temp_name;", dataKeysV1.Name)
-	mg.AddMigration("migrate data_keys uids to name column",
-		migrator.NewRawSQLMigration("").
-			SQLite(fmt.Sprintf("UPDATE %s SET name = temp_name || '/' || name WHERE name != temp_name;", dataKeysV1.Name)).
-			Postgres(updateNameCol).
-			Mysql(updateNameCol),
-	)
 	// --------------------
 }

@@ -322,20 +322,20 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{'#'})
 		if endOfKey == -1 {
-			err = fmt.Errorf("could not find valid key id in encrypted payload")
+			err = fmt.Errorf("could not find valid key name in encrypted payload")
 			return nil, err
 		}
 		b64Key := payload[:endOfKey]
 		payload = payload[endOfKey+1:]
-		keyId := make([]byte, b64.DecodedLen(len(b64Key)))
-		_, err = b64.Decode(keyId, b64Key)
+		keyName := make([]byte, b64.DecodedLen(len(b64Key)))
+		_, err = b64.Decode(keyName, b64Key)
 		if err != nil {
 			return nil, err
 		}
 
-		dataKey, err = s.dataKeyByName(ctx, string(keyId))
+		dataKey, err = s.dataKeyByName(ctx, string(keyName))
 		if err != nil {
-			s.log.Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
+			s.log.Error("Failed to lookup data key", "name", string(keyName), "error", err)
 			return nil, err
 		}
 	}
