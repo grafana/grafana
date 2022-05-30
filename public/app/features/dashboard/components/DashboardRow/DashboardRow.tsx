@@ -99,13 +99,13 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
           </span>
         </a>
         {canEdit && (
-          <div className="dashboard-row__actions" data-testid="dashboard-row-actions">
+          <div className="dashboard-row__actions">
             <RowOptionsButton
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
             />
-            <a className="pointer" onClick={this.onDelete}>
+            <a className="pointer" onClick={this.onDelete} role="button" aria-label="Delete row">
               <Icon name="trash-alt" />
             </a>
           </div>
