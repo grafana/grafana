@@ -210,6 +210,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRight: `1px solid ${theme.colors.border.weak}`,
 
     [theme.breakpoints.down('md')]: {
+      height: theme.spacing(7),
       position: 'fixed',
       paddingTop: '0px',
       backgroundColor: 'inherit',
