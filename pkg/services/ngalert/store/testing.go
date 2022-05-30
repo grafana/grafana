@@ -43,6 +43,8 @@ type FakeRuleStore struct {
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
 	Folders     map[int64][]*models2.Folder
+
+	err error // used to set and assert error conditions
 }
 
 type GenericRecordedQuery struct {
@@ -160,6 +162,11 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
+
+	if f.err != nil {
+		return f.err
+	}
+
 	for _, rules := range f.Rules {
 		for _, rule := range rules {
 			q.Result = append(q.Result, &models.SchedulableAlertRule{
@@ -296,6 +303,12 @@ func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule
 
 func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
+}
+
+func (f *FakeRuleStore) WithError(err error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.err = err
 }
 
 type FakeInstanceStore struct {

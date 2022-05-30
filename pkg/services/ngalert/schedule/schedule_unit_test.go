@@ -335,6 +335,37 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 }
 
+func TestSchedule_schedulePeriodic(t *testing.T) {
+	ruleStore := store.NewFakeRuleStore(t)
+	instanceStore := &store.FakeInstanceStore{}
+	adminConfigStore := store.NewFakeAdminConfigStore(t)
+
+	registry := prometheus.NewPedanticRegistry()
+	sch, c := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
+
+	_ = CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), eval.Normal)
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		sch.schedulePeriodic(ctx)
+	}()
+
+	t.Run("it should schedule rules as we fetch them from the database", func(t *testing.T) {
+		c.Add(11 * time.Second)
+		require.Len(t, sch.registry.keyMap(), 1)
+	})
+
+	t.Run("when the database fails, it should continue to evaluate rules already scheduled", func(t *testing.T) {
+		c.Add(11 * time.Second)
+		require.Len(t, sch.registry.keyMap(), 1)
+
+		ruleStore.WithError(errors.New("failed to fetch from the database"))
+
+		c.Add(11 * time.Second)
+		require.Len(t, sch.registry.keyMap(), 1)
+	})
+}
+
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,

@@ -97,6 +97,10 @@ type schedule struct {
 	adminConfigPollInterval time.Duration
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
+
+	// currentRuleSet holds the current set of rules we should schedule.
+	currentRuleSet     []*models.SchedulableAlertRule
+	currentRuleSetHash string
 }
 
 // SchedulerCfg is the scheduler configuration.
