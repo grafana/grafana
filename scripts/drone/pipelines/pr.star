@@ -104,7 +104,7 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -160,3 +160,24 @@ def pr_pipelines(edition):
             volumes=volumes,
         ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]
+
+
+def get_pr_trigger(include_paths=None, exclude_paths=None):
+    paths_ex = ['docs/**']
+    paths_in = []
+    if include_paths:
+        for path in include_paths:
+            paths_in.extend([path])
+    if exclude_paths:
+        for path in exclude_paths:
+            paths_ex.extend([path])
+    return {
+        'event': [
+            'pull_request',
+        ],
+        'paths': {
+            'exclude': paths_ex,
+            'include': paths_in,
+        },
+    }
+
