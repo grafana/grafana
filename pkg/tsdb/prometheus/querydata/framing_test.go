@@ -22,15 +22,16 @@ import (
 
 var update = true
 
-func TestMatrixResponses(t *testing.T) {
+func TestResponses(t *testing.T) {
 	tt := []struct {
 		name     string
 		filepath string
 	}{
 		{name: "parse a simple matrix response", filepath: "range_simple"},
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
-		{name: "parse a response with Infinity", filepath: "range_infinity"},
-		{name: "parse a response with NaN", filepath: "range_nan"},
+		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
+		{name: "parse a matrix response with NaN", filepath: "range_nan"},
+		{name: "parse an exemplar response", filepath: "exemplar"},
 	}
 
 	for _, test := range tt {
