@@ -13,12 +13,18 @@ import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, Se
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 interface Props {
   navModel: NavModel;
 }
 
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'serviceaccounts'),
+});
+
 const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
+
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
 
@@ -104,7 +110,7 @@ const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
     <Page navModel={navModel}>
       <Page.Contents>
         <h1>Create service account</h1>
-        <Form onSubmit={onSubmit} validateOn="onBlur">
+        <Form onSubmit={onSubmit} validateOn="onSubmit">
           {({ register, errors }) => {
             return (
               <>
@@ -116,22 +122,24 @@ const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
                 >
                   <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
                 </Field>
-                {contextSrv.accessControlEnabled() && (
-                  <Field label="Role">
+                <Field label="Role">
+                  {contextSrv.licensedAccessControlEnabled() ? (
                     <UserRolePicker
                       userId={serviceAccount.id || 0}
                       orgId={serviceAccount.orgId}
                       builtInRole={serviceAccount.role}
                       builtInRoles={builtinRoles}
-                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole)}
+                      onBuiltinRoleChange={onRoleChange}
                       builtinRolesDisabled={false}
                       roleOptions={roleOptions}
                       updateDisabled={true}
                       onApplyRoles={onPendingRolesUpdate}
                       pendingRoles={pendingRoles}
                     />
-                  </Field>
-                )}
+                  ) : (
+                    <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
+                  )}
+                </Field>
                 <Button type="submit">Create</Button>
               </>
             );
@@ -141,9 +149,5 @@ const ServiceAccountCreatePage = ({ navModel }: Props): JSX.Element => {
     </Page>
   );
 };
-
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-});
 
 export default connect(mapStateToProps)(ServiceAccountCreatePage);
