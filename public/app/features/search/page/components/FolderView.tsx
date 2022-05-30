@@ -108,7 +108,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: column;
       background: ${theme.v1.colors.panelBg};
-      border-bottom: solid 1px ${theme.v1.colors.border2};
+
+      &:not(:last-child) {
+        border-bottom: solid 1px ${theme.v1.colors.border2};
+      }
     `,
     sectionItems: css`
       margin: 0 24px 0 32px;
