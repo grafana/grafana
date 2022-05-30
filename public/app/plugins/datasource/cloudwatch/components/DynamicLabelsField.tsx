@@ -3,7 +3,6 @@ import React, { useCallback, useRef } from 'react';
 
 import { CodeEditor, Monaco } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
 import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/completion/CompletionItemProvider';
 import language from '../dynamic-labels/definition';
 import { TRIGGER_SUGGEST } from '../monarch/commands';
