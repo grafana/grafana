@@ -7,6 +7,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { Branding } from '../../Branding/Branding';
@@ -64,7 +65,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
                 variant="secondary"
               />
             </div>
-            <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
+            <NavBarToggle
+              className={styles.menuCollapseIcon}
+              isExpanded={isOpen}
+              onClick={() => {
+                reportInteraction('grafana_navigation_collapsed');
+                onClose();
+              }}
+            />
             <nav className={styles.content}>
               <CustomScrollbar hideHorizontalTrack>
                 <ul className={styles.itemList}>

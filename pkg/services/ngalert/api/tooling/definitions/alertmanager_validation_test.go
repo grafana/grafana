@@ -3,6 +3,8 @@ package definitions
 import (
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -251,6 +253,114 @@ func TestValidateRoutes(t *testing.T) {
 
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expMsg)
+			})
+		}
+	})
+}
+
+func TestValidateMuteTimeInterval(t *testing.T) {
+	type testCase struct {
+		desc   string
+		mti    MuteTimeInterval
+		expMsg string
+	}
+
+	t.Run("valid interval", func(t *testing.T) {
+		cases := []testCase{
+			{
+				desc: "nil intervals",
+				mti: MuteTimeInterval{
+					MuteTimeInterval: config.MuteTimeInterval{
+						Name: "interval",
+					},
+				},
+			},
+			{
+				desc: "empty intervals",
+				mti: MuteTimeInterval{
+					MuteTimeInterval: config.MuteTimeInterval{
+						Name:          "interval",
+						TimeIntervals: []timeinterval.TimeInterval{},
+					},
+				},
+			},
+			{
+				desc: "blank interval",
+				mti: MuteTimeInterval{
+					MuteTimeInterval: config.MuteTimeInterval{
+						Name: "interval",
+						TimeIntervals: []timeinterval.TimeInterval{
+							{},
+						},
+					},
+				},
+			},
+			{
+				desc: "simple",
+				mti: MuteTimeInterval{
+					MuteTimeInterval: config.MuteTimeInterval{
+						Name: "interval",
+						TimeIntervals: []timeinterval.TimeInterval{
+							{
+								Weekdays: []timeinterval.WeekdayRange{
+									{
+										InclusiveRange: timeinterval.InclusiveRange{
+											Begin: 1,
+											End:   2,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, c := range cases {
+			t.Run(c.desc, func(t *testing.T) {
+				err := c.mti.Validate()
+
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("invalid interval", func(t *testing.T) {
+		cases := []testCase{
+			{
+				desc:   "empty",
+				mti:    MuteTimeInterval{},
+				expMsg: "missing name",
+			},
+			{
+				desc: "empty",
+				mti: MuteTimeInterval{
+					MuteTimeInterval: config.MuteTimeInterval{
+						Name: "interval",
+						TimeIntervals: []timeinterval.TimeInterval{
+							{
+								Weekdays: []timeinterval.WeekdayRange{
+									{
+										InclusiveRange: timeinterval.InclusiveRange{
+											Begin: -1,
+											End:   7,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				expMsg: "unable to convert -1 into weekday",
+			},
+		}
+
+		for _, c := range cases {
+			t.Run(c.desc, func(t *testing.T) {
+				err := c.mti.Validate()
+
+				require.ErrorContains(t, err, c.expMsg)
 			})
 		}
 	})

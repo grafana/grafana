@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.48'
+grabpl_version = 'v2.9.49'
 build_image = 'grafana/build-container:1.5.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -1174,7 +1174,7 @@ def verify_gen_cue_step():
         'commands': [
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
-            'CODEGEN_VALIDATE=1 make gen-cue',
+            'CODEGEN_VERIFY=1 make gen-cue',
         ],
     }
 
