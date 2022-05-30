@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   DataLink,
   dataLinksOverrideProcessor,
@@ -19,7 +20,6 @@ import {
   FieldNamePickerConfigSettings,
 } from '@grafana/data';
 
-import { Switch } from '../components/Switch/Switch';
 import {
   NumberValueEditor,
   SliderValueEditor,
@@ -30,12 +30,13 @@ import {
   MultiSelectValueEditor,
   TimeZonePicker,
 } from '../components';
-import { UnitValueEditor } from '../components/OptionsUI/units';
-import { DataLinksValueEditor } from '../components/OptionsUI/links';
+import { FieldNamePicker } from '../components/MatchersUI/FieldNamePicker';
 import { ColorValueEditor } from '../components/OptionsUI/color';
 import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
+import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
-import { FieldNamePicker } from '../components/MatchersUI/FieldNamePicker';
+import { UnitValueEditor } from '../components/OptionsUI/units';
+import { Switch } from '../components/Switch/Switch';
 
 /**
  * Returns collection of common field config properties definitions

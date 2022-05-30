@@ -36,7 +36,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		for i := 1; i <= 2; i++ {
 			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
-			err := sqlstore.CreateOrg(context.Background(), &orgCommand)
+			err := store.CreateOrg(context.Background(), &orgCommand)
 			require.NoError(t, err)
 		}
 

@@ -1,9 +1,11 @@
-import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
-import { OrgRolePicker } from '../admin/OrgRolePicker';
-import { contextSrv } from 'app/core/core';
+import React, { PureComponent } from 'react';
+
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 interface Props {
   label: string;

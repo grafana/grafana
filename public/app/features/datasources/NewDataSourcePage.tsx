@@ -1,16 +1,18 @@
+import { css, cx } from '@emotion/css';
 import React, { FC, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { DataSourcePluginMeta, GrafanaTheme2, NavModel } from '@grafana/data';
-import { Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
-import { selectors } from '@grafana/e2e-selectors';
 
+import { DataSourcePluginMeta, GrafanaTheme2, NavModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
-import { addDataSource, loadDataSourcePlugins } from './state/actions';
-import { getDataSourcePlugins } from './state/selectors';
-import { setDataSourceTypeSearchQuery } from './state/reducers';
+
 import { PluginsErrorsInfo } from '../plugins/components/PluginsErrorsInfo';
+
+import { addDataSource, loadDataSourcePlugins } from './state/actions';
+import { setDataSourceTypeSearchQuery } from './state/reducers';
+import { getDataSourcePlugins } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
   return {

@@ -13,7 +13,9 @@
 // limitations under the License.
 
 import React from 'react';
+
 import { TraceSpanReference } from '../types/trace';
+
 import ExternalLinkContext from './externalLinkContext';
 
 type ReferenceLinkProps = {

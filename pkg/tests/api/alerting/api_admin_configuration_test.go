@@ -66,7 +66,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "no admin configuration available"}`, string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "no admin configuration available", res["message"])
 	}
 
 	// An invalid alertmanager choice should return an error.
@@ -149,8 +152,8 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
-		// create the namespace we'll save our alerts to
-		_, err := createFolder(t, s, 0, "default")
+		// Create the namespace we'll save our alerts to
+		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)

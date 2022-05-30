@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ServiceAccountFeatureToggleNotFound = "FeatureToggle service-accounts not found, try adding it to your custom.ini"
+	ServiceAccountFeatureToggleNotFound = "FeatureToggle serviceAccounts not found, try adding it to your custom.ini"
 )
 
 type ServiceAccountsService struct {

@@ -1,10 +1,12 @@
 // Libraries
 import React, { memo } from 'react';
+
 // Types
-import { LokiQuery } from '../types';
-import { LokiQueryField } from './LokiQueryField';
-import { LokiOptionFields } from './LokiOptionFields';
 import { LokiDatasource } from '../datasource';
+import { LokiQuery } from '../types';
+
+import { LokiOptionFields } from './LokiOptionFields';
+import { LokiQueryField } from './LokiQueryField';
 
 interface Props {
   expr: string;

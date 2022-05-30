@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
-import { selectors } from '@grafana/e2e-selectors';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Input, IconButton } from '@grafana/ui';
 
 export interface Props {

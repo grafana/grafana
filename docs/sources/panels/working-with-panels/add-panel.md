@@ -1,8 +1,10 @@
-+++
-title = "Add a panel to a dashboard"
-aliases = ["/docs/sources/panels/working-with-panels/add-panel/"]
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/add-panel/
+  - /docs/sources/panels/working-with-panels/add-panel/
+title: Add a panel to a dashboard
+weight: 20
+---
 
 # Add a panel to a dashboard
 
@@ -47,8 +49,8 @@ Panels allow you to show your data in visual form. Each panel needs at least one
    - [Format data using value mapping]({{< relref "../format-data/about-value-mapping.md" >}})
    - [Visualization-specific options]({{< relref "../../visualizations/_index.md" >}})
    - [Override field values]({{< relref "../override-field-values/about-field-overrides.md" >}})
-   - [Specify thresholds to set the color of visualization text and background]({{< relref "../specify-thresholds/about-thresholds.md" >}})
-   - [Apply color to series and fields]({{< relref "./apply-color-to-series.md" >}})
+   - [Configure thresholds]({{< relref "../configure-thresholds/" >}})
+   - [Apply color to series and fields]({{< relref "apply-color-to-series.md" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 

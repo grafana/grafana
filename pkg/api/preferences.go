@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -18,14 +19,28 @@ const (
 
 // POST /api/preferences/set-home-dash
 func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
-	cmd := models.SavePreferencesCommand{}
+	cmd := pref.SavePreferenceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserId = c.UserId
-	cmd.OrgId = c.OrgId
+	cmd.UserID = c.UserId
+	cmd.OrgID = c.OrgId
 
-	if err := hs.SQLStore.SavePreferences(c.Req.Context(), &cmd); err != nil {
+	// the default value of HomeDashboardID is taken from input, when HomeDashboardID is set also,
+	// UID is used in preference to identify dashboard
+	dashboardID := cmd.HomeDashboardID
+	if cmd.HomeDashboardUID != nil {
+		query := models.GetDashboardQuery{Uid: *cmd.HomeDashboardUID}
+		err := hs.dashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		dashboardID = query.Result.Id
+	}
+
+	cmd.HomeDashboardID = dashboardID
+
+	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to set home dashboard", err)
 	}
 
@@ -38,25 +53,38 @@ func (hs *HTTPServer) GetUserPreferences(c *models.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, teamID int64) response.Response {
-	prefsQuery := models.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
+	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
 
-	if err := hs.SQLStore.GetPreferences(ctx, &prefsQuery); err != nil {
+	preference, err := hs.preferenceService.Get(ctx, &prefsQuery)
+	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
+	var dashboardUID string
+
+	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
+	if preference.HomeDashboardID != 0 {
+		query := models.GetDashboardQuery{Id: preference.HomeDashboardID, OrgId: orgID}
+		err = hs.dashboardService.GetDashboard(ctx, &query)
+		if err == nil {
+			dashboardUID = query.Result.Uid
+		}
+	}
+
 	dto := dtos.Prefs{
-		Theme:           prefsQuery.Result.Theme,
-		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
-		Timezone:        prefsQuery.Result.Timezone,
-		WeekStart:       prefsQuery.Result.WeekStart,
+		Theme:            preference.Theme,
+		HomeDashboardID:  preference.HomeDashboardID,
+		HomeDashboardUID: dashboardUID,
+		Timezone:         preference.Timezone,
+		WeekStart:        preference.WeekStart,
 	}
 
-	if prefsQuery.Result.JsonData != nil {
-		dto.Navbar = prefsQuery.Result.JsonData.Navbar
-		dto.QueryHistory = prefsQuery.Result.JsonData.QueryHistory
+	if preference.JSONData != nil {
+		dto.Navbar = preference.JSONData.Navbar
+		dto.QueryHistory = preference.JSONData.QueryHistory
 	}
 
-	return response.JSON(200, &dto)
+	return response.JSON(http.StatusOK, &dto)
 }
 
 // PUT /api/user/preferences
@@ -72,17 +100,31 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	if dtoCmd.Theme != lightTheme && dtoCmd.Theme != darkTheme && dtoCmd.Theme != defaultTheme {
 		return response.Error(400, "Invalid theme", nil)
 	}
-	saveCmd := models.SavePreferencesCommand{
-		UserId:          userID,
-		OrgId:           orgID,
-		TeamId:          teamId,
+
+	dashboardID := dtoCmd.HomeDashboardID
+	if dtoCmd.HomeDashboardUID != nil {
+		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
+		err := hs.dashboardService.GetDashboard(ctx, &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		dashboardID = query.Result.Id
+	}
+	dtoCmd.HomeDashboardID = dashboardID
+
+	saveCmd := pref.SavePreferenceCommand{
+		UserID:          userID,
+		OrgID:           orgID,
+		TeamID:          teamId,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardId: dtoCmd.HomeDashboardID,
+		HomeDashboardID: dtoCmd.HomeDashboardID,
+		QueryHistory:    dtoCmd.QueryHistory,
+		Navbar:          dtoCmd.Navbar,
 	}
 
-	if err := hs.SQLStore.SavePreferences(ctx, &saveCmd); err != nil {
+	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 
@@ -102,19 +144,32 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme {
 		return response.Error(400, "Invalid theme", nil)
 	}
-	patchCmd := models.PatchPreferencesCommand{
-		UserId:          userID,
-		OrgId:           orgID,
-		TeamId:          teamId,
+
+	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	dashboardID := dtoCmd.HomeDashboardID
+	if dtoCmd.HomeDashboardUID != nil {
+		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
+		err := hs.dashboardService.GetDashboard(ctx, &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		dashboardID = &query.Result.Id
+	}
+	dtoCmd.HomeDashboardID = dashboardID
+
+	patchCmd := pref.PatchPreferenceCommand{
+		UserID:          userID,
+		OrgID:           orgID,
+		TeamID:          teamId,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardId: dtoCmd.HomeDashboardID,
+		HomeDashboardID: dtoCmd.HomeDashboardID,
 		Navbar:          dtoCmd.Navbar,
 		QueryHistory:    dtoCmd.QueryHistory,
 	}
 
-	if err := hs.SQLStore.PatchPreferences(ctx, &patchCmd); err != nil {
+	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 
@@ -132,6 +187,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Respon
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
 }
 

@@ -1,8 +1,10 @@
-+++
-title = "Package a plugin"
-type = "docs"
-aliases = ["/docs/grafana/latest/developers/plugins/share-a-plugin/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/package-a-plugin/
+  - /docs/grafana/latest/developers/plugins/share-a-plugin/
+title: Package a plugin
+type: docs
+---
 
 # Package a plugin
 

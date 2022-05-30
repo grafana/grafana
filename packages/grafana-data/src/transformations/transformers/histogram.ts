@@ -1,12 +1,13 @@
-import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector/ArrayVector';
-import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
+import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { ArrayVector } from '../../vector/ArrayVector';
+
+import { DataTransformerID } from './ids';
+import { AlignedData, join } from './joinDataFrames';
 
 /**
  * @internal

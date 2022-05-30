@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { SecretInput, RESET_BUTTON_TEXT, CONFIGURED_TEXT } from './SecretInput';
 
 const PLACEHOLDER_TEXT = 'Your secret...';
@@ -33,7 +34,7 @@ describe('<SecretInput />', () => {
     expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
   });
 
-  it('should be possible to reset a configured secret', () => {
+  it('should be possible to reset a configured secret', async () => {
     const onReset = jest.fn();
 
     render(<SecretInput isConfigured={true} onChange={() => {}} onReset={onReset} placeholder={PLACEHOLDER_TEXT} />);
@@ -43,12 +44,12 @@ describe('<SecretInput />', () => {
     expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
 
     // Click on "Reset"
-    userEvent.click(screen.getByRole('button', { name: RESET_BUTTON_TEXT }));
+    await userEvent.click(screen.getByRole('button', { name: RESET_BUTTON_TEXT }));
 
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
-  it('should be possible to change the value of the secret', () => {
+  it('should be possible to change the value of the secret', async () => {
     const onChange = jest.fn();
 
     render(<SecretInput isConfigured={false} onChange={onChange} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />);
@@ -57,7 +58,7 @@ describe('<SecretInput />', () => {
 
     expect(input).toHaveValue('');
 
-    userEvent.type(input, 'Foo');
+    await userEvent.type(input, 'Foo');
 
     expect(onChange).toHaveBeenCalled();
     expect(input).toHaveValue('Foo');

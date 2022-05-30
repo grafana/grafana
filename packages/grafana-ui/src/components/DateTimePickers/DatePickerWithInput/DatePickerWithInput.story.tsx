@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { DatePickerWithInput } from './DatePickerWithInput';
+
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
+
+import { DatePickerWithInput } from './DatePickerWithInput';
 import mdx from './DatePickerWithInput.mdx';
 
 export default {

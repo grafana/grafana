@@ -1,14 +1,17 @@
 package dtos
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	pref "github.com/grafana/grafana/pkg/services/preference"
+)
 
 type Prefs struct {
-	Theme           string                        `json:"theme"`
-	HomeDashboardID int64                         `json:"homeDashboardId"`
-	Timezone        string                        `json:"timezone"`
-	WeekStart       string                        `json:"weekStart"`
-	Navbar          models.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory    models.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Theme            string                      `json:"theme"`
+	HomeDashboardID  int64                       `json:"homeDashboardId"`
+	HomeDashboardUID string                      `json:"homeDashboardUID,omitempty"`
+	Timezone         string                      `json:"timezone"`
+	WeekStart        string                      `json:"weekStart"`
+	Navbar           pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 // swagger:model
@@ -17,12 +20,13 @@ type UpdatePrefsCmd struct {
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
-	HomeDashboardID int64 `json:"homeDashboardId"`
+	HomeDashboardID  int64   `json:"homeDashboardId"`
+	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// Enum: utc,browser
-	Timezone     string                         `json:"timezone"`
-	WeekStart    string                         `json:"weekStart"`
-	Navbar       *models.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory *models.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Timezone     string                       `json:"timezone"`
+	WeekStart    string                       `json:"weekStart"`
+	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 // swagger:model
@@ -33,8 +37,9 @@ type PatchPrefsCmd struct {
 	// Default:0
 	HomeDashboardID *int64 `json:"homeDashboardId,omitempty"`
 	// Enum: utc,browser
-	Timezone     *string                        `json:"timezone,omitempty"`
-	WeekStart    *string                        `json:"weekStart,omitempty"`
-	Navbar       *models.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory *models.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Timezone         *string                      `json:"timezone,omitempty"`
+	WeekStart        *string                      `json:"weekStart,omitempty"`
+	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 }

@@ -1,10 +1,14 @@
-+++
-title = "Provisioning"
-description = ""
-keywords = ["grafana", "provisioning"]
-aliases = ["/docs/grafana/latest/installation/provisioning"]
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/provisioning/
+  - /docs/grafana/latest/installation/provisioning/
+description: ''
+keywords:
+  - grafana
+  - provisioning
+title: Provisioning
+weight: 800
+---
 
 # Provisioning Grafana
 
@@ -601,4 +605,4 @@ The following sections detail the supported settings and secure settings for eac
 
 Grafana Enterprise supports provisioning for the following resources:
 
-- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})
+- [Role-based access control provisioning]({{< relref "../enterprise/access-control/rbac-provisioning.md" >}})

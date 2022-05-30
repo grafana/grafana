@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { useLocation } from 'react-router-dom';
+
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { StoreState } from 'app/types';
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
-import { InspectContent } from './InspectContent';
-import { useDatasourceMetadata, useInspectTabs } from './hooks';
-import { useLocation } from 'react-router-dom';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { StoreState } from 'app/types';
+
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+
+import { InspectContent } from './InspectContent';
+import { useDatasourceMetadata, useInspectTabs } from './hooks';
 
 interface OwnProps {
   dashboard: DashboardModel;

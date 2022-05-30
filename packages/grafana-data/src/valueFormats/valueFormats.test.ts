@@ -1,7 +1,8 @@
-import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
-import { DecimalCount } from '../types/displayValue';
-import { TimeZone } from '../types';
 import { dateTime } from '../datetime';
+import { TimeZone } from '../types';
+import { DecimalCount } from '../types/displayValue';
+
+import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
 
 interface ValueFormatTest {
   id: string;
@@ -102,6 +103,9 @@ describe('valueFormats', () => {
 
       expect(toFixed(100.4, 2)).toBe('100.40');
       expect(toFixed(100.5, 2)).toBe('100.50');
+
+      expect(toFixed(0, 1)).toBe('0.0');
+      expect(toFixed(0, 2)).toBe('0.00');
     });
   });
 

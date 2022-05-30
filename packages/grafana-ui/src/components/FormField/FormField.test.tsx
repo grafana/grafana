@@ -1,5 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import { FormField, Props } from './FormField';
 
 const setup = (propOverrides?: Partial<Props>) => {
@@ -12,26 +13,20 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<FormField {...props} />);
+  render(<FormField {...props} />);
 };
 
 describe('FormField', () => {
-  it('should render component with default inputEl', () => {
-    const wrapper = setup();
-
-    expect(wrapper).toMatchSnapshot();
+  it('should render a default inputEl', () => {
+    setup();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
-  it('should render component with custom inputEl', () => {
-    const wrapper = setup({
-      inputEl: (
-        <>
-          <span>Input</span>
-          <button>Ok</button>
-        </>
-      ),
+  it('should render a custom inputEl instead if specified', () => {
+    setup({
+      inputEl: <input role="checkbox" />,
     });
-
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 });

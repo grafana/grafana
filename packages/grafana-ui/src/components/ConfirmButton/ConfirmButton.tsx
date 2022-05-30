@@ -1,7 +1,9 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
 import { cx, css } from '@emotion/css';
-import { stylesFactory, withTheme } from '../../themes';
+import React, { PureComponent, SyntheticEvent } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
+import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';

@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { notifyApp } from 'app/core/actions';
 import { PanelModel } from 'app/features/dashboard/state';
+
 import {
   createPanelLibraryErrorNotification,
   createPanelLibrarySuccessNotification,
   saveAndRefreshLibraryPanel,
 } from '../utils';
-import { notifyApp } from 'app/core/actions';
 
 export const usePanelSave = () => {
   const dispatch = useDispatch();

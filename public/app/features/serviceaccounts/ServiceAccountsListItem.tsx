@@ -1,11 +1,14 @@
 import { cx } from '@emotion/css';
+import React, { memo } from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
-import React, { memo } from 'react';
+
 import { OrgRolePicker } from '../admin/OrgRolePicker';
+
 import { getStyles } from './ServiceAccountsListPage';
 
 type ServiceAccountListItemProps = {
@@ -65,8 +68,8 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         {contextSrv.licensedAccessControlEnabled() ? (
-          displayRolePicker && (
-            <td className={cx('link-td', styles.iconRow)}>
+          <td className={cx('link-td', styles.iconRow)}>
+            {displayRolePicker && (
               <UserRolePicker
                 userId={serviceAccount.id}
                 orgId={serviceAccount.orgId}
@@ -76,8 +79,8 @@ const ServiceAccountListItem = memo(
                 builtInRoles={builtInRoles}
                 disabled={!enableRolePicker}
               />
-            </td>
-          )
+            )}
+          </td>
         ) : (
           <td className={cx('link-td', styles.iconRow)}>
             <OrgRolePicker

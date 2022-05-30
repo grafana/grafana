@@ -23,7 +23,7 @@ export interface GrafanaQuery extends DataQuery {
   buffer?: number;
   path?: string; // for list and read
   query?: string; // for query endpoint
-}
+} // NOTE, query will have more field!!!
 
 export const defaultQuery: GrafanaQuery = {
   refId: 'A',

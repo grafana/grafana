@@ -1,8 +1,10 @@
-import React from 'react';
-import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { SeriesIcon } from '../VizLegend/SeriesIcon';
+import React from 'react';
+
+import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
  * @public

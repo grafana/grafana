@@ -16,10 +16,11 @@ import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { getConfigValue } from '../utils/config/get-config';
 import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
+import { getConfigValue } from '../utils/config/get-config';
+
 import { getTraceName } from './trace-viewer';
 
 // exported for tests

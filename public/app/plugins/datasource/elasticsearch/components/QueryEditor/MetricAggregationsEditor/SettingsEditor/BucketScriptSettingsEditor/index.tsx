@@ -1,20 +1,23 @@
-import React, { Fragment, useEffect } from 'react';
-import { Input, InlineLabel } from '@grafana/ui';
-import { changeMetricAttribute } from '../../state/actions';
 import { css } from '@emotion/css';
-import { AddRemove } from '../../../../AddRemove';
+import { uniqueId } from 'lodash';
+import React, { Fragment, useEffect } from 'react';
+
+import { Input, InlineLabel } from '@grafana/ui';
+
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
+import { AddRemove } from '../../../../AddRemove';
 import { MetricPicker } from '../../../../MetricPicker';
-import { reducer } from './state/reducer';
+import { BucketScript, MetricAggregation } from '../../aggregations';
+import { changeMetricAttribute } from '../../state/actions';
+import { SettingField } from '../SettingField';
+
 import {
   addPipelineVariable,
   removePipelineVariable,
   renamePipelineVariable,
   changePipelineVariableMetric,
 } from './state/actions';
-import { SettingField } from '../SettingField';
-import { BucketScript, MetricAggregation } from '../../aggregations';
-import { uniqueId } from 'lodash';
+import { reducer } from './state/reducer';
 
 interface Props {
   value: BucketScript;

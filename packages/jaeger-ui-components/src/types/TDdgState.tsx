@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ApiError } from './api-error';
 import { fetchedState } from '../constants';
 import { TDdgModel } from '../model/ddg/types';
+
+import { ApiError } from './api-error';
 
 export type TDdgStateEntry =
   | {

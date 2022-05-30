@@ -1,12 +1,14 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
-import { buildVisualQueryFromString } from '../parsing';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { LokiVisualQuery } from '../types';
+
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { QueryPreview } from './QueryPreview';
-import { LokiVisualQuery } from '../types';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Props {
   query: LokiQuery;
@@ -26,11 +28,15 @@ export interface State {
 export function LokiQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
-    expr: '',
-    visQuery: {
-      labels: [],
-      operations: [{ id: '__line_contains', params: [''] }],
-    },
+    expr: query.expr,
+    // Use initial visual query only if query.expr is empty string
+    visQuery:
+      query.expr === ''
+        ? {
+            labels: [],
+            operations: [{ id: '__line_contains', params: [''] }],
+          }
+        : undefined,
   });
 
   // Only rebuild visual query if expr changes from outside
@@ -56,13 +62,13 @@ export function LokiQueryBuilderContainer(props: Props) {
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
       />
-      <QueryPreview query={query.expr} />
+      {query.rawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }
 
 const stateSlice = createSlice({
-  name: 'prom-builder-container',
+  name: 'loki-builder-container',
   initialState: { expr: '' } as State,
   reducers: {
     visualQueryChange: (state, action: PayloadAction<{ visQuery: LokiVisualQuery; expr: string }>) => {

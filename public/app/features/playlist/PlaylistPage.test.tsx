@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, waitFor } from '@testing-library/react';
-import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
+import React from 'react';
+
 import { locationService } from '../../../../packages/grafana-runtime/src';
+
+import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
 
 const fnMock = jest.fn();
 

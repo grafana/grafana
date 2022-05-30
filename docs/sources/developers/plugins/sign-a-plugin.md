@@ -1,6 +1,8 @@
-+++
-title = "Sign a plugin"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/sign-a-plugin/
+title: Sign a plugin
+---
 
 # Sign a plugin
 

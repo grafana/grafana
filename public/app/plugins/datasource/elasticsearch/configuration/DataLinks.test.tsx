@@ -1,9 +1,11 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { DataLinks } from './DataLinks';
-import { Button } from '@grafana/ui';
-import { DataLink } from './DataLink';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { Button } from '@grafana/ui';
+
+import { DataLink } from './DataLink';
+import { DataLinks } from './DataLinks';
 
 describe('DataLinks', () => {
   let originalGetSelection: typeof window.getSelection;

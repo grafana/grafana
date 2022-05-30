@@ -1,5 +1,8 @@
+import { css } from '@emotion/css';
+import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
@@ -14,19 +17,18 @@ import {
   transformDataFrame,
   TimeZone,
 } from '@grafana/data';
-import { Button, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Spinner, Table } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { PanelModel } from 'app/features/dashboard/state';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
+import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
+import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { config } from 'app/core/config';
-import { saveAs } from 'file-saver';
-import { css } from '@emotion/css';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
-import { PanelModel } from 'app/features/dashboard/state';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
-import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 
 interface Props {
   isLoading: boolean;

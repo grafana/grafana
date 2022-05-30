@@ -1,6 +1,7 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from '../models.gen';
+
 import { AxisEditor } from './AxisEditor';
 
 export function addHeatmapCalculationOptions(

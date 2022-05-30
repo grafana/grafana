@@ -1,8 +1,10 @@
-+++
-title = "Release notes for Grafana 7.5.15"
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/release-notes/release-notes-7-5-15/
+title: Release notes for Grafana 7.5.15
+---
 
 # Release notes for Grafana 7.5.15
 

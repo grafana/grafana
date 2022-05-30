@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,7 +18,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	accessControlEnabled := hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)
+	accessControlEnabled := !hs.AccessControl.IsDisabled()
 	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
@@ -44,7 +43,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
-	return response.JSON(200, &util.DynMap{
+	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  team.Id,
 		"message": "Team created",
 	})
@@ -63,7 +62,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to update team", err)
 		}
@@ -88,7 +87,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	}
 	user := c.SignedInUser
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
 			return response.Error(403, "Not allowed to delete team", err)
 		}
@@ -116,7 +115,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 
 	// Using accesscontrol the filtering is done based on user permissions
 	userIdFilter := models.FilterIgnoreUser
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		userIdFilter = userFilter(c)
 	}
 
@@ -151,7 +150,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	query.Result.Page = page
 	query.Result.PerPage = perPage
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // UserFilter returns the user ID used in a filter when querying a team
@@ -174,7 +173,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 
 	// Using accesscontrol the filtering has already been performed at middleware layer
 	userIdFilter := models.FilterIgnoreUser
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		userIdFilter = userFilter(c)
 	}
 
@@ -198,7 +197,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "teams:id:", strconv.FormatInt(query.Result.Id, 10))
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
-	return response.JSON(200, &query.Result)
+	return response.JSON(http.StatusOK, &query.Result)
 }
 
 // GET /api/teams/:teamId/preferences
@@ -210,7 +209,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 
 	orgId := c.OrgId
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to view team preferences.", err)
 		}
@@ -233,7 +232,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Respo
 
 	orgId := c.OrgId
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if hs.AccessControl.IsDisabled() {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to update team preferences.", err)
 		}

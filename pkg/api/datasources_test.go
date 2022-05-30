@@ -583,3 +583,8 @@ func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *mode
 	cmd.Result = m.expectedDatasource
 	return m.expectedError
 }
+
+func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+	decryptedValues := make(map[string]string)
+	return decryptedValues, m.expectedError
+}

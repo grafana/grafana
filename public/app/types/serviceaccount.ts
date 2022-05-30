@@ -1,4 +1,5 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+
 import { ApiKey, OrgRole, Role } from '.';
 
 export interface OrgServiceAccount extends WithAccessControlMetadata {
@@ -35,6 +36,17 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   isDisabled: boolean;
   teams: string[];
   role: OrgRole;
+}
+
+export interface ServiceAccountCreateApiResponse {
+  avatarUrl?: string;
+  id: number;
+  isDisabled: boolean;
+  login: string;
+  name: string;
+  orgId: number;
+  role: OrgRole;
+  tokens: number;
 }
 
 export interface ServiceAccountProfileState {

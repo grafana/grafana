@@ -1,21 +1,24 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { getInputStyles, Icon, IconName, useStyles2, getSelectStyles } from '@grafana/ui';
+import React, { forwardRef, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { getInputStyles, Icon, IconName, useStyles2, getSelectStyles } from '@grafana/ui';
 
 export interface Props {
   children: ReactNode;
   iconName?: IconName;
 }
-export const ValueContainer = ({ children, iconName }: Props) => {
+export const ValueContainer = forwardRef<HTMLDivElement, Props>(({ children, iconName }, ref) => {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.container}>
+    <div className={styles.container} ref={ref}>
       {iconName && <Icon name={iconName} size="xs" />}
       {children}
     </div>
   );
-};
+});
+
+ValueContainer.displayName = 'ValueContainer';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const { prefix } = getInputStyles({ theme });

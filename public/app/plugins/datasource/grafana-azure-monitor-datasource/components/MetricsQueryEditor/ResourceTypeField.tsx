@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 
-import { Field } from '../Field';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { Field } from '../Field';
+
 import { setResourceType } from './setQueryValue';
 
 interface NamespaceFieldProps extends AzureQueryEditorFieldProps {
@@ -34,7 +36,6 @@ const NamespaceField: React.FC<NamespaceFieldProps> = ({
     <Field label="Resource type">
       {/* It's expected that the label reads Resource type but the property is metricDefinition */}
       <Select
-        menuShouldPortal
         inputId="azure-monitor-metrics-resource-type-field"
         value={query.azureMonitor?.metricDefinition}
         onChange={handleChange}

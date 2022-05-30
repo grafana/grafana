@@ -57,7 +57,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		if err != nil {
 			return err
 		} else if n == 0 {
-			return &ErrMisingSAToken{}
+			return &ErrMissingSAToken{}
 		}
 		return nil
 	})

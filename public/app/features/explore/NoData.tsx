@@ -1,15 +1,14 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-
-import { useStyles2 } from '@grafana/ui';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { useStyles2 } from '@grafana/ui';
 
 export const NoData = () => {
   const css = useStyles2(getStyles);
   return (
     <>
-      <div className={cx([css.wrapper, 'panel-container'])}>
+      <div data-testid="explore-no-data" className={cx([css.wrapper, 'panel-container'])}>
         <span className={cx([css.message])}>{'No data'}</span>
       </div>
     </>
@@ -29,9 +28,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-grow: 1;
   `,
   message: css`
-    margin-bottom: ${theme.spacing(3)};
-    font-size: 2em;
-    padding: 6em 1em;
+    font-size: ${theme.typography.h2.fontSize};
+    padding: ${theme.spacing(4)};
     color: ${theme.colors.text.disabled};
   `,
 });

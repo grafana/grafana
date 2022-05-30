@@ -1,10 +1,12 @@
 import { cloneDeep, isNumber } from 'lodash';
-import { coreModule } from 'app/angular/core_module';
+
 import { AnnotationEvent, dateTime } from '@grafana/data';
+import { coreModule } from 'app/angular/core_module';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
+
+import { contextSrv } from '../../../core/services/context_srv';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../../features/annotations/api';
 import { getDashboardQueryRunner } from '../../../features/query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { contextSrv } from '../../../core/services/context_srv';
 
 export class EventEditorCtrl {
   // @ts-ignore initialized through Angular not constructor
