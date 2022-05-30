@@ -1,7 +1,7 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { ConfirmModal } from '@grafana/ui';
 import { OrgUser } from 'app/types';
 
 import UsersTable, { Props } from './UsersTable';
@@ -15,39 +15,45 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
-const setup = (propOverrides?: object) => {
+function getProps(propOverrides?: object) {
   const props: Props = {
     users: [] as OrgUser[],
     onRoleChange: jest.fn(),
     onRemoveUser: jest.fn(),
   };
 
-  Object.assign(props, propOverrides);
-
-  return shallow(<UsersTable {...props} />);
-};
+  return Object.assign(props, propOverrides);
+}
 
 describe('Render', () => {
   it('should render component', () => {
-    const wrapper = setup();
-
-    expect(wrapper).toMatchSnapshot();
+    render(<UsersTable {...getProps()} />);
   });
 
   it('should render users table', () => {
-    const wrapper = setup({
-      users: getMockUsers(5),
-    });
-
-    expect(wrapper).toMatchSnapshot();
+    render(
+      <UsersTable
+        {...getProps({
+          users: getMockUsers(5),
+        })}
+      />
+    );
   });
 });
 
 describe('Remove modal', () => {
-  it('should render correct amount', () => {
-    const wrapper = setup({
-      users: getMockUsers(3),
-    });
-    expect(wrapper.find(ConfirmModal).length).toEqual(0);
+  it('should render confirm check on delete', async () => {
+    render(
+      <UsersTable
+        {...getProps({
+          users: getMockUsers(3),
+        })}
+      />
+    );
+    const user = userEvent.setup();
+
+    await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+
+    expect(screen.getAllByText(/sure/i).length).toEqual(1);
   });
 });
