@@ -5,35 +5,35 @@
         "meta": {
           "custom": {
             "stats": {
-              "store": {
-                "headChunkBytes": 0,
-                "headChunkLines": 0,
-                "decompressedBytes": 7772,
-                "compressedBytes": 31432,
-                "totalDuplicates": 0,
-                "totalChunksRef": 2,
-                "chunksDownloadTime": 0.000390958,
-                "totalChunksDownloaded": 2,
-                "decompressedLines": 55
-              },
-              "ingester": {
-                "totalDuplicates": 0,
-                "totalChunksMatched": 0,
-                "decompressedBytes": 0,
-                "totalLinesSent": 0,
-                "headChunkBytes": 0,
-                "headChunkLines": 0,
-                "decompressedLines": 0,
-                "compressedBytes": 0,
-                "totalReached": 0,
-                "totalBatches": 0
-              },
               "summary": {
+                "linesProcessedPerSecond": 24818,
                 "totalBytesProcessed": 7772,
                 "totalLinesProcessed": 55,
                 "execTime": 0.002216125,
-                "bytesProcessedPerSecond": 3507022,
-                "linesProcessedPerSecond": 24818
+                "bytesProcessedPerSecond": 3507022
+              },
+              "store": {
+                "decompressedLines": 55,
+                "compressedBytes": 31432,
+                "headChunkLines": 0,
+                "totalChunksDownloaded": 2,
+                "chunksDownloadTime": 0.000390958,
+                "headChunkBytes": 0,
+                "decompressedBytes": 7772,
+                "totalDuplicates": 0,
+                "totalChunksRef": 2
+              },
+              "ingester": {
+                "totalLinesSent": 0,
+                "headChunkBytes": 0,
+                "totalDuplicates": 0,
+                "totalBatches": 0,
+                "totalChunksMatched": 0,
+                "headChunkLines": 0,
+                "decompressedBytes": 0,
+                "decompressedLines": 0,
+                "compressedBytes": 0,
+                "totalReached": 0
               }
             }
           }

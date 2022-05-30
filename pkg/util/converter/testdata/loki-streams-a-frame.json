@@ -5,35 +5,35 @@
         "meta": {
           "custom": {
             "stats": {
-              "ingester": {
-                "totalReached": 0,
-                "totalChunksMatched": 0,
-                "headChunkBytes": 0,
-                "decompressedLines": 0,
-                "totalDuplicates": 0,
-                "totalBatches": 0,
-                "totalLinesSent": 0,
-                "headChunkLines": 0,
-                "decompressedBytes": 0,
-                "compressedBytes": 0
-              },
               "summary": {
-                "bytesProcessedPerSecond": 3507022,
-                "linesProcessedPerSecond": 24818,
                 "totalBytesProcessed": 7772,
                 "totalLinesProcessed": 55,
-                "execTime": 0.002216125
+                "execTime": 0.002216125,
+                "bytesProcessedPerSecond": 3507022,
+                "linesProcessedPerSecond": 24818
               },
               "store": {
                 "totalChunksRef": 2,
-                "totalChunksDownloaded": 2,
-                "decompressedLines": 55,
+                "headChunkLines": 0,
                 "compressedBytes": 31432,
+                "decompressedLines": 55,
                 "totalDuplicates": 0,
+                "totalChunksDownloaded": 2,
                 "chunksDownloadTime": 0.000390958,
                 "headChunkBytes": 0,
-                "headChunkLines": 0,
                 "decompressedBytes": 7772
+              },
+              "ingester": {
+                "totalLinesSent": 0,
+                "decompressedBytes": 0,
+                "compressedBytes": 0,
+                "totalReached": 0,
+                "totalBatches": 0,
+                "headChunkLines": 0,
+                "decompressedLines": 0,
+                "totalDuplicates": 0,
+                "totalChunksMatched": 0,
+                "headChunkBytes": 0
               }
             }
           }
