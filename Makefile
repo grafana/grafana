@@ -83,6 +83,11 @@ clean-api-spec:
 
 ##@ Building
 
+gen-cue: ## Do all CUE/Thema code generation
+	@echo "generate code from .cue files"
+	go generate ./pkg/framework/coremodel
+	go generate ./public/app/plugins
+
 gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner

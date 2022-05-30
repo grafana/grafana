@@ -1167,6 +1167,16 @@ def ensure_cuetsified_step():
         ],
     }
 
+def verify_gen_cue_step():
+    return {
+        'name': 'verify-gen-cue',
+        'image': build_image,
+        'commands': [
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
 
 def end_to_end_tests_deps(edition):
     if disable_tests:
