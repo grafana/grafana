@@ -8,7 +8,7 @@ export interface Props extends ButtonProps {
   /** Callback when the text has been successfully copied */
   onClipboardCopy?(copiedText: string): void;
   /** Callback when there was an error copying the text */
-  onClipboardError?(copiedText: string): void;
+  onClipboardError?(copiedText: string, error: unknown): void;
 }
 
 export function ClipboardButton({ onClipboardCopy, onClipboardError, children, getText, ...buttonProps }: Props) {
@@ -19,8 +19,8 @@ export function ClipboardButton({ onClipboardCopy, onClipboardError, children, g
     try {
       await copyText(textToCopy, buttonRef);
       onClipboardCopy?.(textToCopy);
-    } catch {
-      onClipboardError?.(textToCopy);
+    } catch (e) {
+      onClipboardError?.(textToCopy, e);
     }
   }, [getText, onClipboardCopy, onClipboardError]);
 
