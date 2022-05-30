@@ -2,7 +2,6 @@ package csrf
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,9 +57,6 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// If request has no login cookie - skip CSRF checks
-			if strings.Contains(r.URL.Path, "saml") {
-				fmt.Printf("path: %s\n", r.URL.Path)
-			}
 			if _, err := r.Cookie(i.cfg.LoginCookieName); errors.Is(err, http.ErrNoCookie) {
 				next.ServeHTTP(w, r)
 				return
