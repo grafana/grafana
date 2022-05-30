@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
@@ -30,7 +29,7 @@ const setup = (propOverrides: Partial<Props>) => {
       node: {
         text: 'Service accounts',
       },
-    } as NavModel,
+    },
     builtInRoles: {},
     isLoading: false,
     page: 0,
@@ -83,9 +82,9 @@ describe('ServiceAccountsListPage tests', () => {
     setup({
       serviceAccounts: [getDefaultServiceAccount()],
     });
-    expect(screen.getByText(/Data source scavenger/i)).toBeInTheDocument();
-    expect(screen.getByText(/sa-data-source-scavenger/i)).toBeInTheDocument();
-    expect(screen.getByText(/Editor/i)).toBeInTheDocument();
+    expect(screen.getByText(/Data source scavenger/)).toBeInTheDocument();
+    expect(screen.getByText(/sa-data-source-scavenger/)).toBeInTheDocument();
+    expect(screen.getByText(/Editor/)).toBeInTheDocument();
   });
 
   it('Should display enable button for disabled account', () => {
@@ -97,7 +96,7 @@ describe('ServiceAccountsListPage tests', () => {
         },
       ],
     });
-    expect(screen.getByText(/^Enable$/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enable' })).toBeInTheDocument();
   });
 
   it('Should display Add token button for account without tokens', () => {
@@ -109,7 +108,7 @@ describe('ServiceAccountsListPage tests', () => {
         },
       ],
     });
-    expect(screen.getByText(/^Add token$/i)).toBeInTheDocument();
-    expect(screen.getByText(/No tokens/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add token' })).toBeInTheDocument();
+    expect(screen.getByText(/No tokens/)).toBeInTheDocument();
   });
 });

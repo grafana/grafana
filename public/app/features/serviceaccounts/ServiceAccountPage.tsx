@@ -141,7 +141,7 @@ export const ServiceAccountPageUnconnected = ({
                 variant="secondary"
                 name="arrow-left"
                 className={styles.returnButton}
-                aria-label="Return"
+                aria-label="Back to service accounts list"
               />
             </a>
             <div className={styles.headerAvatar}>

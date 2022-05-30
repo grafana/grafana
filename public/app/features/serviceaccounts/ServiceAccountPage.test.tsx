@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
 import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
@@ -30,7 +29,7 @@ const setup = (propOverrides: Partial<Props>) => {
       node: {
         text: 'Service accounts',
       },
-    } as NavModel,
+    },
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
     builtInRoles: {},
