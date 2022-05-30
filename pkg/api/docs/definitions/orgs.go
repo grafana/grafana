@@ -130,9 +130,9 @@ import "github.com/grafana/grafana/pkg/models"
 //
 // Update Users in Organization.
 //
-// If you are running Grafana Enterprise and have Role-based access control enabled
-// you need to have a permission with action: `org.users:write` with scope `users:*`.
-//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users.role:update` with scope `users:*`.
+// 
 // Responses:
 // 200: okResponse
 // 400: badRequestError
