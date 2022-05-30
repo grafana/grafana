@@ -55,9 +55,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const ServiceAccountPageUnconnected = ({
+export const ServiceAccountPageUnconnected = ({
   navModel,
   match,
   serviceAccount,
