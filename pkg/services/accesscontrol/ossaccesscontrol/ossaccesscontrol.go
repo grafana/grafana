@@ -148,23 +148,6 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	return permissions
 }
 
-func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	builtInRoles := []string{string(user.OrgRole)}
-
-	// With built-in role simplifying, inheritance is performed upon role registration.
-	if ac.cfg.RBACBuiltInRoleAssignmentEnabled {
-		for _, br := range user.OrgRole.Children() {
-			builtInRoles = append(builtInRoles, string(br))
-		}
-	}
-
-	if user.IsGrafanaAdmin {
-		builtInRoles = append(builtInRoles, accesscontrol.RoleGrafanaAdmin)
-	}
-
-	return builtInRoles
-}
-
 // RegisterFixedRoles registers all declared roles in RAM
 func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error {
 	// If accesscontrol is disabled no need to register roles

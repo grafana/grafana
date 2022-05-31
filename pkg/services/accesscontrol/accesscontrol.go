@@ -260,6 +260,7 @@ func IsDisabled(cfg *setting.Cfg) bool {
 	return !cfg.RBACEnabled
 }
 
+// GetOrgRoles returns legacy org roles for a user
 func GetOrgRoles(cfg *setting.Cfg, user *models.SignedInUser) []string {
 	roles := []string{string(user.OrgRole)}
 
