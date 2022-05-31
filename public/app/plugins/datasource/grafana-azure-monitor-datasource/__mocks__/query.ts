@@ -1,7 +1,17 @@
 import { AzureMonitorQuery, AzureQueryType } from '../types';
 
-export default function createMockQuery(): AzureMonitorQuery {
+export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>): AzureMonitorQuery {
   return {
+    queryType: AzureQueryType.AzureMonitor,
+    refId: 'A',
+    subscription: '99999999-cccc-bbbb-aaaa-9106972f9572',
+    subscriptions: ['99999999-cccc-bbbb-aaaa-9106972f9572'],
+    datasource: {
+      type: 'grafana-azure-monitor-datasource',
+      uid: 'AAAAA11111BBBBB22222CCCC',
+    },
+    ...overrides,
+
     appInsights: undefined, // The actualy shape of this at runtime disagrees with the ts interface
 
     azureLogAnalytics: {
@@ -10,11 +20,13 @@ export default function createMockQuery(): AzureMonitorQuery {
       resultFormat: 'time_series',
       workspace: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
       resource: 'test-resource',
+      ...overrides?.azureLogAnalytics,
     },
 
     azureResourceGraph: {
       query: 'Resources | summarize count()',
       resultFormat: 'table',
+      ...overrides?.azureResourceGraph,
     },
 
     azureMonitor: {
@@ -32,20 +44,12 @@ export default function createMockQuery(): AzureMonitorQuery {
       alias: '',
       // timeGrains: [],
       top: '10',
+      ...overrides?.azureMonitor,
     },
 
     insightsAnalytics: {
       query: '',
       resultFormat: 'time_series',
-    },
-
-    queryType: AzureQueryType.AzureMonitor,
-    refId: 'A',
-    subscription: '99999999-cccc-bbbb-aaaa-9106972f9572',
-    subscriptions: ['99999999-cccc-bbbb-aaaa-9106972f9572'],
-    datasource: {
-      type: 'grafana-azure-monitor-datasource',
-      uid: 'AAAAA11111BBBBB22222CCCC',
     },
   };
 }
