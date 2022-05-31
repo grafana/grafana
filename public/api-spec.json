@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3926,15 +3926,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -9136,6 +9136,13 @@
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
         },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -9353,6 +9360,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "message": {
           "type": "string",
@@ -11657,7 +11671,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
@@ -12345,7 +12359,7 @@
         },
         "details_url": {
           "type": "string",
-          "x-go-name": "DetailsUrl"
+          "x-go-name": "DetailsURL"
         },
         "exp": {
           "type": "integer",
@@ -12357,20 +12371,10 @@
           "format": "int64",
           "x-go-name": "Issued"
         },
-        "included_admins": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedAdmins"
-        },
         "included_users": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "IncludedUsers"
-        },
-        "included_viewers": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedViewers"
         },
         "iss": {
           "type": "string",
@@ -12378,7 +12382,7 @@
         },
         "jti": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "lexp": {
           "type": "integer",
@@ -12392,7 +12396,7 @@
         },
         "lid": {
           "type": "string",
-          "x-go-name": "LicenseId"
+          "x-go-name": "LicenseID"
         },
         "limit_by": {
           "type": "string",
@@ -12480,6 +12484,10 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Type": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/models"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
