@@ -46,15 +46,14 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer               prometheus.Registerer
-	BehindSeconds            prometheus.Gauge
-	EvalTotal                *prometheus.CounterVec
-	EvalFailures             *prometheus.CounterVec
-	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
-	GetAlertRulesFailures    prometheus.Counter
-	SchedulePeriodicDuration prometheus.Histogram
-	Ticker                   *legacyMetrics.Ticker
+	Registerer                          prometheus.Registerer
+	BehindSeconds                       prometheus.Gauge
+	EvalTotal                           *prometheus.CounterVec
+	EvalFailures                        *prometheus.CounterVec
+	EvalDuration                        *prometheus.SummaryVec
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	SchedulePeriodicDuration            prometheus.Histogram
+	Ticker                              *legacyMetrics.Ticker
 }
 
 type MultiOrgAlertmanager struct {
@@ -164,21 +163,13 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
+		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
+				Name:      "update_schedulable_alert_rules_duration_seconds",
+				Help:      "The time taken to get update alert rules for the scheduler.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
-			},
-		),
-		GetAlertRulesFailures: promauto.With(r).NewCounter(
-			prometheus.CounterOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "get_alert_rules_failures_total",
-				Help:      "The total number of failures in getting the most recent alert rules for the scheduler.",
 			},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(

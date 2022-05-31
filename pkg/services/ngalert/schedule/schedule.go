@@ -98,9 +98,8 @@ type schedule struct {
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
 
-	// alertRules contains the alert rules scheduled in the most recent tick
-	alertRules    []*models.SchedulableAlertRule
-	alertRulesMtx sync.Mutex
+	// schedulableAlertRules contains the alert rules scheduled in the most recent tick
+	schedulableAlertRules []*models.SchedulableAlertRule
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -368,7 +367,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 
-			alertRules := sch.getAlertRules(ctx, disabledOrgs)
+			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+				sch.log.Error("scheduler failed to update alert rules", "error", err)
+			}
+			alertRules := sch.schedulableAlertRules
+
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
