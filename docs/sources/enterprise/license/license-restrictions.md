@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/license-restrictions/", "/docs/grafana/latest/enterprise/license/license-restrictions/"]
-description = "Grafana Enterprise license restrictions"
-keywords = ["grafana", "licensing", "enterprise"]
-title = "License restrictions"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/license-restrictions/
+  - /docs/grafana/latest/enterprise/license/license-restrictions/
+description: Grafana Enterprise license restrictions
+keywords:
+  - grafana
+  - licensing
+  - enterprise
+title: License restrictions
+weight: 300
+---
 
 # Grafana Enterprise license restrictions
 
@@ -45,7 +50,7 @@ Your license is controlled by the following rules:
 
 **License expiration date:** The license includes an expiration date, which is the date when a license becomes inactive.
 
-As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "./license-expiration.md" >}}).
+As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "license-expiration.md" >}}).
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
@@ -67,4 +72,4 @@ Usage billing involves a contractual agreement between you and Grafana Labs, and
 
 To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana.
 
-For instructions about how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
+For instructions about how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "activate-license.md" >}}).

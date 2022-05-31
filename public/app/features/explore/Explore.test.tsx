@@ -97,6 +97,12 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   };
 });
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
 // for the AutoSizer component to have a width
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });

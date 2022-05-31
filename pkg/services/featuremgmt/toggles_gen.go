@@ -11,13 +11,9 @@ const (
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
 
-	// FlagEnvelopeEncryption
-	// encrypt secrets
-	FlagEnvelopeEncryption = "envelopeEncryption"
-
-	// FlagHttpclientproviderAzureAuth
-	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
-	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
+	// FlagDisableEnvelopeEncryption
+	// Disable envelope encryption (emergency only)
+	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
 	// FlagServiceAccounts
 	// support service accounts
@@ -74,6 +70,10 @@ const (
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
@@ -147,10 +147,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagPersistNotifications
-	// PoC Notifications page
-	FlagPersistNotifications = "persistNotifications"
-
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
@@ -178,4 +174,12 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagPrometheusWideSeries
+	// Enable wide series responses in the Prometheus datasource
+	FlagPrometheusWideSeries = "prometheusWideSeries"
 )

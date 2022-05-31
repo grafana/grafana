@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -82,6 +84,7 @@ async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFu
 
 export function DashList(props: PanelProps<PanelOptions>) {
   const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
+  const dispatch = useDispatch();
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
@@ -89,6 +92,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
   }, [props.options, props.replaceVariables, props.renderCounter]);
 
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
+    const { uid, title, url } = dash;
     e.preventDefault();
     e.stopPropagation();
 
@@ -96,6 +100,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash.id, { ...dash, isStarred });
     setDashboards(updatedDashboards);
+    dispatch(setStarred({ id: uid ?? '', title, url, isStarred }));
   };
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {

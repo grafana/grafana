@@ -20,12 +20,15 @@ import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
+type Props = PromQueryEditorProps;
+
+export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query, app);
+  // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(

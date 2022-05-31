@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Service struct {
@@ -139,6 +140,7 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	m["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 	m["stats.api_keys.count"] = statsQuery.Result.APIKeys
 	m["stats.data_keys.count"] = statsQuery.Result.DataKeys
+	m["stats.active_data_keys.count"] = statsQuery.Result.ActiveDataKeys
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -327,7 +329,10 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
-	metrics.StatsTotalDataKeys.Set(float64(statsQuery.Result.DataKeys))
+
+	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsQuery.Result.ActiveDataKeys))
+	inactiveDataKeys := statsQuery.Result.DataKeys - statsQuery.Result.ActiveDataKeys
+	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {

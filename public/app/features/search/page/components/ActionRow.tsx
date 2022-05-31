@@ -24,6 +24,7 @@ interface Props {
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
+  getSortOptions: () => Promise<SelectableValue[]>;
   onDatasourceChange: (ds?: string) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
@@ -52,6 +53,7 @@ export const ActionRow: FC<Props> = ({
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
+  getSortOptions,
   onDatasourceChange,
   query,
   showStarredFilter,
@@ -75,7 +77,7 @@ export const ActionRow: FC<Props> = ({
               value={layout}
             />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">
@@ -102,11 +104,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.v1.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.v1.spacing.lg} 0;
+        padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
     `,

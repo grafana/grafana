@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { LegacyForms, Tooltip, Icon, Button, useTheme2 } from '@grafana/ui';
+import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -12,8 +12,6 @@ import { StoreState, TeamGroup } from '../../types';
 
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
-
-const { Input } = LegacyForms;
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -83,7 +81,13 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <Button size="sm" variant="destructive" onClick={() => this.onRemoveGroup(group)} disabled={isReadOnly}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => this.onRemoveGroup(group)}
+            disabled={isReadOnly}
+            aria-label={`Remove group ${group.groupId}`}
+          >
             <Icon name="times" />
           </Button>
         </td>
@@ -124,24 +128,23 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         <SlideDown in={isAdding}>
           <div className="cta-form">
             <CloseButton onClick={this.onToggleAdding} />
-            <h5>Add External Group</h5>
-            <form className="gf-form-inline" onSubmit={this.onAddGroup}>
-              <div className="gf-form">
-                <Input
-                  type="text"
-                  className="gf-form-input width-30"
-                  value={newGroupId}
-                  onChange={this.onNewGroupIdChanged}
-                  placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
-                  disabled={isReadOnly}
-                />
-              </div>
+            <form onSubmit={this.onAddGroup}>
+              <InlineFieldRow>
+                <InlineField label={'Add External Group'}>
+                  <Input
+                    type="text"
+                    id={'add-external-group'}
+                    value={newGroupId}
+                    onChange={this.onNewGroupIdChanged}
+                    placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
+                    disabled={isReadOnly}
+                  />
+                </InlineField>
 
-              <div className="gf-form">
-                <Button type="submit" disabled={isReadOnly || !this.isNewGroupValid()}>
+                <Button type="submit" disabled={isReadOnly || !this.isNewGroupValid()} style={{ marginLeft: 4 }}>
                   Add group
                 </Button>
-              </div>
+              </InlineFieldRow>
             </form>
           </div>
         </SlideDown>

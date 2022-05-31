@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/installation/mac/"]
-description = "Installing Grafana on macOS"
-keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
-title = "Install on macOS"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/mac/
+description: Installing Grafana on macOS
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - mac
+  - homebrew
+  - osx
+title: Install on macOS
+weight: 500
+---
 
 # Install on macOS
 
@@ -58,7 +65,7 @@ To install a nightly build, or to install the latest version of Grafana without 
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on. Also, refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on. Also, refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Upgrade
 

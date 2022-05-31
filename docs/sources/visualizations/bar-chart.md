@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/bar-chart/", "/docs/grafana/latest/visualizations/bar-chart/"]
-description = "Bar chart visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-title = "Bar chart"
-weight = 170
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/bar-chart/
+  - /docs/grafana/latest/visualizations/bar-chart/
+description: Bar chart visualization
+keywords:
+  - grafana
+  - docs
+  - bar chart
+  - panel
+  - barchart
+title: Bar chart
+weight: 170
+---
 
 # Bar chart
 
@@ -98,7 +105,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md" >}}) to show in the legend. You can have more than one.
 
 ## Text size
 
