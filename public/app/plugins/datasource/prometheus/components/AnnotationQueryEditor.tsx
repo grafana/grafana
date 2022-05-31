@@ -52,7 +52,7 @@ export function AnnotationQueryEditor(props: Props) {
               onCommitChange={(ev) => {
                 onAnnotationChange({
                   ...annotation,
-                  interval: ev.currentTarget.value,
+                  step: ev.currentTarget.value,
                 });
               }}
               defaultValue={query.interval}
