@@ -2,12 +2,11 @@ import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorRow, EditorField, EditorSwitch } from '@grafana/experimental';
-import { RadioButtonGroup, Select } from '@grafana/ui';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { PromQuery } from '../../types';
-import { AutoSizeInput } from '../shared/AutoSizeInput';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';

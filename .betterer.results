@@ -5,12 +5,6 @@
 //
 exports[`no enzyme tests`] = {
   value: `{
-    "packages/grafana-ui/src/components/BarGauge/BarGauge.test.tsx:4199795290": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.test.tsx:3129955645": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Graph/Graph.test.tsx:1664091255": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -22,12 +16,6 @@ exports[`no enzyme tests`] = {
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
       [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Typeahead/PartialHighlighter.test.tsx:1751923376": [
-      [0, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Typeahead/Typeahead.test.tsx:972524250": [
-      [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1440546721": [
       [0, 19, 13, "RegExp match", "2409514259"]
@@ -128,9 +116,6 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:2026575657": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/Select/FolderPicker.test.tsx:993468764": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/core/components/Select/MetricSelect.test.tsx:3351544014": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -183,9 +168,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamMemberRow.test.tsx:1649328210": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamMembers.test.tsx:4089428239": [
@@ -242,7 +224,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:3424320489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1597135392": [
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:3368730691": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ]
   }`
