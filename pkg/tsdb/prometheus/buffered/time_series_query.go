@@ -475,18 +475,9 @@ func normalizeExemplars(response []apiv1.ExemplarQueryResult) []ExemplarEvent {
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
 
-			// First sort the label key so that it is consistent (mainly for easier testing)
-			allLabels := make([]string, len(eventLabels))
-			i := 0
-			for key := range eventLabels {
-				allLabels[i] = key
-				i++
-			}
-			sort.Strings(allLabels)
-
 			// Fill in all the labels from eventLabels with values from exemplar labels or series labels or fill with
 			// empty string
-			for _, label := range allLabels {
+			for label, _ := range eventLabels {
 				if _, ok := exemplar.Labels[model.LabelName(label)]; ok {
 					event.Labels[label] = string(exemplar.Labels[model.LabelName(label)])
 				} else if _, ok := exemplarData.SeriesLabels[model.LabelName(label)]; ok {
@@ -590,11 +581,25 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	dataFields := make([]*data.Field, 0, len(labelsVector)+2)
 	dataFields = append(dataFields, timeField, valueField)
-	for label, vector := range labelsVector {
-		dataFields = append(dataFields, data.NewField(label, nil, vector))
+
+	// Sort the labels/fields so that it is consistent (mainly for easier testing)
+	allLabels := sortedLabels(labelsVector)
+	for _, label := range allLabels {
+		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
 	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+}
+
+func sortedLabels(labelsVector map[string][]string) []string {
+	allLabels := make([]string, len(labelsVector))
+	i := 0
+	for key := range labelsVector {
+		allLabels[i] = key
+		i++
+	}
+	sort.Strings(allLabels)
+	return allLabels
 }
 
 func deviation(values []float64) float64 {
