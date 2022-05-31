@@ -73,6 +73,18 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 	}
 }
 
+func getOauthTokenForCallResource(headersIn map[string][]string) map[string]string {
+	headers := make(map[string]string)
+	accessValues := headersIn["Authorization"]
+
+	if len(accessValues) == 0 {
+		return headers
+	}
+
+	headers["Authorization"] = accessValues[0]
+	return headers
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
@@ -96,16 +108,20 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	headers := make(map[string]string)
+	headers := getOauthTokenForCallResource(req.Headers)
 
 	statusCode, bytes, err := i.resource.Execute(ctx, headers, req)
-	if err != nil || statusCode != 200 {
+	if statusCode != 200 {
+		safeErr := errors.New("no error specified")
+		if err != nil {
+			safeErr = err
+		}
 		return sender.Send(&backend.CallResourceResponse{
 			Status: statusCode,
 			Headers: map[string][]string{
 				"content-type": {"application/json"},
 			},
-			Body: []byte(err.Error()),
+			Body: []byte(safeErr.Error()),
 		})
 	}
 
