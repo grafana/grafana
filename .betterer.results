@@ -179,8 +179,8 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:1224072551": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:2097436158": [
-      [1, 19, 13, "RegExp match", "2409514259"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:1501504663": [
+      [2, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:3481855642": [
       [0, 26, 13, "RegExp match", "2409514259"]
