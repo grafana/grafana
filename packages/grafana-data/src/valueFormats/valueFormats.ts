@@ -43,7 +43,15 @@ let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
 let hasBuiltIndex = false;
 
-export function toNumber(value: number): FormattedValue {
+export function toNumber(value: number | null, decimals?: DecimalCount): FormattedValue {
+  if (value === null) {
+    return { text: '' };
+  }
+
+  if (decimals !== undefined && decimals !== null) {
+    return { text: value.toFixed(decimals) };
+  }
+
   return { text: value.toString() };
 }
 
