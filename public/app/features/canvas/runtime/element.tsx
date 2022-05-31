@@ -201,13 +201,13 @@ export class ElementState implements LayerElement {
     }
 
     const relativeTop =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
+      elementContainer && parentContainer ? Math.round(elementContainer.top - parentContainer.top) : 0;
     const relativeBottom =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.bottom - parentContainer.bottom)) : 0;
+      elementContainer && parentContainer ? Math.round(parentContainer.bottom - elementContainer.bottom) : 0;
     const relativeLeft =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
+      elementContainer && parentContainer ? Math.round(elementContainer.left - parentContainer.left) : 0;
     const relativeRight =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.right - parentContainer.right)) : 0;
+      elementContainer && parentContainer ? Math.round(parentContainer.right - elementContainer.right) : 0;
 
     const placement = {} as Placement;
 

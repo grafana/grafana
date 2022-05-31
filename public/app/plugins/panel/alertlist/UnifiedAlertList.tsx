@@ -4,7 +4,8 @@ import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
@@ -17,6 +18,7 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -59,6 +61,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 
   const noAlertsMessage = rules.length ? '' : 'No alerts';
+
+  if (
+    !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
+  ) {
+    return (
+      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
+    );
+  }
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">

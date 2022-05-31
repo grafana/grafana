@@ -41,6 +41,7 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'trigger_oss'
 )
@@ -136,6 +137,7 @@ def get_steps(edition):
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
+        verify_gen_cue_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

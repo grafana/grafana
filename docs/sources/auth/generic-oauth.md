@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/auth/generic-oauth/"]
-description = "Grafana OAuthentication Guide "
-keywords = ["grafana", "configuration", "documentation", "oauth"]
-title = "OAuth authentication"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/generic-oauth/
+description: 'Grafana OAuthentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - oauth
+title: OAuth authentication
+weight: 500
+---
 
 # Generic OAuth authentication
 

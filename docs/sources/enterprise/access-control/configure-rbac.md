@@ -1,8 +1,9 @@
 ---
-title: 'Configure RBAC in Grafana'
-menuTitle: 'Configure RBAC'
-description: 'Learn how to configure RBAC.'
-aliases: []
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/configure-rbac/
+description: Learn how to configure RBAC.
+menuTitle: Configure RBAC
+title: Configure RBAC in Grafana
 weight: 30
 ---
 

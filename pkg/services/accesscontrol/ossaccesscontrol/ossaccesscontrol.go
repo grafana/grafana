@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,10 +14,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+func ProvideService(
+	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
+	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
+) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(cfg, provider)
+	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -32,10 +33,10 @@ func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, store accesscontrol.PermissionsStore) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		cfg:            cfg,
-		provider:       provider,
+		store:          store,
 		log:            log.New("accesscontrol"),
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
@@ -49,7 +50,7 @@ type OSSAccessControlService struct {
 	log            log.Logger
 	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
-	provider       accesscontrol.PermissionsProvider
+	store          accesscontrol.PermissionsStore
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 }
@@ -101,11 +102,6 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
 }
 
-// GetUserRoles returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
-	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
-}
-
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -113,7 +109,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	permissions := ac.getFixedPermissions(ctx, user)
 
-	dbPermissions, err := ac.provider.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
 		Roles:   ac.GetUserBuiltInRoles(user),

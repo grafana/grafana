@@ -1,15 +1,22 @@
-+++
-title = "About Grafana alerting"
-description = "A quick overview of Grafana alerting"
-keywords = ["grafana", "alerting", "overview", "concepts", "basics"]
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/about-alerting/
+description: A quick overview of Grafana alerting
+keywords:
+  - grafana
+  - alerting
+  - overview
+  - concepts
+  - basics
+title: About Grafana alerting
+weight: 100
+---
 
 # About Grafana alerting
 
 Grafana Alerting consists of several individual concepts that are at the core of a flexible and powerful alerting engine.
 
-This topic explains how to create [alert rules]({{< relref "./about-alert-rules/_index.md" >}}), their relationship with [alert instances]({{< relref "./about-alert-rules/alert-instances.md" >}}) and the various alert rule [states and transitions]({{< relref "./fundamentals/state-and-health.md" >}}), [notification policies]({{< relref "./notifications/_index.md" >}}) and [contact points]({{< relref "./contact-points/_index.md" >}}).
+This topic explains how to create [alert rules]({{< relref "./fundamentals/alert-rules/_index.md" >}}), their relationship with [alert instances]({{< relref "./fundamentals/alert-rules/alert-instances.md" >}}) and the various alert rule [states and transitions]({{< relref "./fundamentals/state-and-health.md" >}}), [notification policies]({{< relref "./notifications/_index.md" >}}) and [contact points]({{< relref "./contact-points/_index.md" >}}).
 
 These three individual concepts are the minimum necessities to successfully create alerts and receive notifications.
 

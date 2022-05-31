@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/influxdb/influxdb-flux/"]
-description = "Guide for Flux in Grafana"
-title = "Flux support in Grafana"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/influxdb/influxdb-flux/
+description: Guide for Flux in Grafana
+title: Flux support in Grafana
+weight: 200
+---
 
 # Flux query language in Grafana
 

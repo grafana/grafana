@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
@@ -226,34 +227,38 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, err
 	}
 
+	var imgData io.ReadCloser
+
 	// Try to upload if we have an image path but no image URL. This uploads the file
 	// immediately after the message. A bit of a hack, but it doesn't require the
 	// user to have an image host set up.
-	// TODO: how many image files should we upload? In what order? Should we
-	// assume the alerts array is already sorted?
 	// TODO: We need a refactoring so we don't do two database reads for the same data.
-	// TODO: Should we process all alerts' annotations? We can only have on image.
-	// TODO: Should we guard out-of-bounds errors here? Callers should prevent that from happening, imo
-	imgToken := getTokenFromAnnotations(alerts[0].Annotations)
-	dbContext, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	imgData, err := sn.images.GetData(dbContext, imgToken)
-	cancel()
-	if err != nil {
-		if !errors.Is(err, ErrImagesUnavailable) {
-			// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-			sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+	if len(msg.Attachments[0].ImageURL) == 0 {
+		_ = withStoredImage(ctx, sn.log, sn.images,
+			func(index int, image *ngmodels.Image) error {
+				if image == nil || len(image.Path) == 0 {
+					return nil
+				}
+
+				imgData, err = openImage(image.Path)
+				if err != nil {
+					imgData = nil
+				}
+
+				return nil
+			},
+			0, alerts...)
+
+		if imgData != nil {
+			defer func() {
+				_ = imgData.Close()
+			}()
+
+			err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
+			if err != nil {
+				sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+			}
 		}
-		return true, nil
-	}
-
-	defer func() {
-		// Nothing for us to do.
-		_ = imgData.Close()
-	}()
-
-	err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
-	if err != nil {
-		sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
 	}
 
 	return true, nil
@@ -319,25 +324,12 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 	return nil
 }
 
-func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	alerts := types.Alerts(as...)
+func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
+	alerts := types.Alerts(alrts...)
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
-
-	// TODO: Should we process all alerts' annotations? We can only have on image.
-	// TODO: Should we guard out-of-bounds errors here? Callers should prevent that from happening, imo
-	imgToken := getTokenFromAnnotations(as[0].Annotations)
-	timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	imgURL, err := sn.images.GetURL(timeoutCtx, imgToken)
-	cancel()
-	if err != nil {
-		if !errors.Is(err, ErrImagesUnavailable) {
-			// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-			sn.log.Warn("failed to retrieve image url from store", "error", err)
-		}
-	}
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -353,7 +345,6 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Fallback:   tmpl(sn.Title),
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
-				ImageURL:   imgURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
@@ -361,6 +352,16 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+
+	_ = withStoredImage(ctx, sn.log, sn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil {
+				req.Attachments[0].ImageURL = image.URL
+			}
+			return nil
+		},
+		0, alrts...)
+
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
