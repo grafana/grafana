@@ -13,7 +13,6 @@ var (
 )
 
 type dataKeyCacheEntry struct {
-	id         string
 	name       string
 	dataKey    []byte
 	expiration time.Time
@@ -25,46 +24,25 @@ func (e dataKeyCacheEntry) expired() bool {
 
 type dataKeyCache struct {
 	mtx      sync.RWMutex
-	byId     map[string]*dataKeyCacheEntry
-	byName   map[string]*dataKeyCacheEntry
+	entries  map[string]*dataKeyCacheEntry
 	cacheTTL time.Duration
 }
 
 func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 	return &dataKeyCache{
-		byId:     make(map[string]*dataKeyCacheEntry),
-		byName:   make(map[string]*dataKeyCacheEntry),
+		entries:  make(map[string]*dataKeyCacheEntry),
 		cacheTTL: ttl,
 	}
 }
 
-func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) get(name string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byId[id]
+	entry, exists := c.entries[name]
 
 	cacheReadsCounter.With(prometheus.Labels{
-		"hit":    strconv.FormatBool(exists),
-		"method": "byId",
-	}).Inc()
-
-	if !exists || entry.expired() {
-		return nil, false
-	}
-
-	return entry, true
-}
-
-func (c *dataKeyCache) getByName(name string) (*dataKeyCacheEntry, bool) {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-
-	entry, exists := c.byName[name]
-
-	cacheReadsCounter.With(prometheus.Labels{
-		"hit":    strconv.FormatBool(exists),
-		"method": "byName",
+		"hit": strconv.FormatBool(exists),
 	}).Inc()
 
 	if !exists || entry.expired() {
@@ -79,31 +57,22 @@ func (c *dataKeyCache) add(entry *dataKeyCacheEntry) {
 	defer c.mtx.Unlock()
 
 	entry.expiration = now().Add(c.cacheTTL)
-
-	c.byId[entry.id] = entry
-	c.byName[entry.name] = entry
+	c.entries[entry.name] = entry
 }
 
 func (c *dataKeyCache) removeExpired() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	for id, entry := range c.byId {
+	for id, entry := range c.entries {
 		if entry.expired() {
-			delete(c.byId, id)
-		}
-	}
-
-	for name, entry := range c.byName {
-		if entry.expired() {
-			delete(c.byName, name)
+			delete(c.entries, id)
 		}
 	}
 }
 
 func (c *dataKeyCache) flush() {
 	c.mtx.Lock()
-	c.byId = make(map[string]*dataKeyCacheEntry)
-	c.byName = make(map[string]*dataKeyCacheEntry)
+	c.entries = make(map[string]*dataKeyCacheEntry)
 	c.mtx.Unlock()
 }

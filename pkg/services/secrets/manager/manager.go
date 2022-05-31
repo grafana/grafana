@@ -146,7 +146,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 
 	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
-	namePrefix := secrets.KeyName(scope, s.currentProviderID)
+	namePrefix := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProviderID)
 
 	name, dataKey, err := s.currentDataKey(ctx, namePrefix, scope, sess)
 	if err != nil {
@@ -202,11 +202,6 @@ func (s *SecretsService) currentDataKey(ctx context.Context, prefix string, scop
 // dataKeyByPrefix looks up for data key in cache.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *SecretsService) dataKeyByPrefix(ctx context.Context, prefix string) (string, []byte, error) {
-	// 0. Get data key from in-memory cache.
-	//if entry, exists := s.dataKeyCache.getByPrefix(prefix); exists {
-	//	return entry.name, entry.dataKey, nil
-	//}
-
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, prefix)
 	if err != nil {
@@ -229,7 +224,10 @@ func (s *SecretsService) dataKeyByPrefix(ctx context.Context, prefix string) (st
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	//s.dataKeyCache.add(&dataKeyCacheEntry{id: dataKey.Id, name: dataKey.Name, dataKey: decrypted})
+	s.dataKeyCache.add(&dataKeyCacheEntry{
+		name:    dataKey.Name,
+		dataKey: decrypted,
+	})
 
 	return dataKey.Name, decrypted, nil
 }
@@ -275,7 +273,10 @@ func (s *SecretsService) newDataKey(ctx context.Context, prefix string, scope st
 	}
 
 	// 4. Store the decrypted data key into the in-memory cache.
-	//s.dataKeyCache.add(dataKeyCacheEntry{prefix: prefix, name: name, dataKey: dataKey, active: true})
+	s.dataKeyCache.add(&dataKeyCacheEntry{
+		name:    name,
+		dataKey: dataKey,
+	})
 
 	return name, dataKey, nil
 }
@@ -393,9 +394,9 @@ func (s *SecretsService) GetDecryptedValue(ctx context.Context, sjd map[string][
 // Otherwise, it fetches it from database and returns it decrypted.
 func (s *SecretsService) dataKeyByName(ctx context.Context, name string) ([]byte, error) {
 	// 0. Get decrypted data key from in-memory cache.
-	//if entry, exists := s.dataKeyCache.getById(id); exists {
-	//	return entry.dataKey, nil
-	//}
+	if entry, exists := s.dataKeyCache.get(name); exists {
+		return entry.dataKey, nil
+	}
 
 	// 1. Get encrypted data key from database.
 	dataKey, err := s.store.GetDataKey(ctx, name)
@@ -416,7 +417,10 @@ func (s *SecretsService) dataKeyByName(ctx context.Context, name string) ([]byte
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	//s.dataKeyCache.add(&dataKeyCacheEntry{id: id, name: dataKey.Name, dataKey: decrypted})
+	s.dataKeyCache.add(&dataKeyCacheEntry{
+		name:    dataKey.Name,
+		dataKey: decrypted,
+	})
 
 	return decrypted, nil
 }
