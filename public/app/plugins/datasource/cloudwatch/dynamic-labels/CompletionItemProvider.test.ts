@@ -1,13 +1,13 @@
 import { CompletionItemPriority } from '@grafana/experimental';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { afterLabelValue, insideLabelValue } from '../../__mocks__/dynamic-label-test-data';
-import MonacoMock from '../../__mocks__/monarch/Monaco';
-import TextModel from '../../__mocks__/monarch/TextModel';
-import cloudWatchDynamicLabelsLanguageDefinition from '../definition';
-import { DYNAMIC_LABEL_PATTERNS } from '../language';
+import { afterLabelValue, insideLabelValue } from '../__mocks__/dynamic-label-test-data';
+import MonacoMock from '../__mocks__/monarch/Monaco';
+import TextModel from '../__mocks__/monarch/TextModel';
 
 import { DynamicLabelsCompletionItemProvider } from './CompletionItemProvider';
+import cloudWatchDynamicLabelsLanguageDefinition from './definition';
+import { DYNAMIC_LABEL_PATTERNS } from './language';
 
 const getSuggestions = async (value: string, position: monacoTypes.IPosition) => {
   const setup = new DynamicLabelsCompletionItemProvider();
@@ -19,6 +19,7 @@ const getSuggestions = async (value: string, position: monacoTypes.IPosition) =>
   );
   return suggestions;
 };
+
 describe('Dynamic labels: CompletionItemProvider', () => {
   describe('getSuggestions', () => {
     it('returns all dynamic labels in case current token is a whitespace', async () => {
