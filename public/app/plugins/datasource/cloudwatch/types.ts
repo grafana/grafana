@@ -405,6 +405,7 @@ export interface VariableQuery extends DataQuery {
   attributeName: string;
   resourceType: string;
   tags?: MultiFilters;
+  logGroupPrefix?: string;
 }
 
 export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
