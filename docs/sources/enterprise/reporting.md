@@ -34,22 +34,26 @@ When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to h
 
 Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
 
-1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
-1. Enter report information. All fields are required unless otherwise indicated.
+1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports. The report form has a multistep layout. The steps do not need to be filled in succession and can be skipped over by clicking a step name.
+2. Select report dashboard.
+   - **Source dashboard -** Select the dashboard to generate the report from.
+   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+   - **Add another dashboard -** Add more than one dashboard to the report.
+3. Format report.
+   - **Choose format options for the report -** (at least one selected option required) Attach report as PDF, embed dashboard as an image or attach CSV file of table panel data.
+   - Select an orientation for the report: **Portrait** or **Landscape**.
+   - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
+   - **Preview PDF** View a rendered PDF with the options you have selected.
+4. Schedule report.
+   - Enter scheduling information. Options vary depending on the frequency you select.
+5. Enter report information. All fields are required unless otherwise indicated.
    - **Report name -** Name of the report as you want it to appear in the Reports list. It's also used as the email subject.
    - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
    - **Include a dashboard link -** Include a link to the dashboard from within the report email.
-   - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
-1. Select an orientation for the report: **Portrait** or **Landscape**.
-1. Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-1. **Add a CSV file of table panel data**: check this box to attach a CSV file to the report email for each table panel on the dashboard.
-1. **Preview PDF** View a rendered PDF with the options you have selected.
-1. Enter scheduling information. Options vary depending on the frequency you select.
-1. **Save** the report.
-1. **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+   - **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+6. Preview and Save the report.
 
 {{< figure src="/static/img/docs/enterprise/reports_create_new_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -145,11 +149,17 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-## Pause report
+### Pause report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
+
+### Add multiple dashboards to report
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+
+You can add more than one dashboard to the report, which will be rendered in the same PDF file or image. It is currently not possible to add the same dashboard more than once to the report.
 
 ## Send report via the API
 
