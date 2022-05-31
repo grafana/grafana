@@ -4284,7 +4284,6 @@ __metadata:
     inquirer: ^8.2.2
     jest: 27.5.1
     jest-canvas-mock: 2.3.1
-    jest-coverage-badges: ^1.1.2
     jest-junit: 13.1.0
     less: ^4.1.2
     less-loader: ^10.2.0
@@ -22828,17 +22827,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-coverage-badges@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "jest-coverage-badges@npm:1.1.2"
-  dependencies:
-    mkdirp: 0.5.1
-  bin:
-    jest-coverage-badges: cli.js
-  checksum: 0aa103d198d2167973d4b7da496abf7256aeb05437034c0eb6200926df6739230854b1eb53fbf62e5db41fbc21005ae0ee44e08b85ea6096ea5c1ad1e323cec3
-  languageName: node
-  linkType: hard
-
 "jest-date-mock@npm:1.0.8":
   version: 1.0.8
   resolution: "jest-date-mock@npm:1.0.8"
@@ -25658,13 +25646,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:0.0.8":
-  version: 0.0.8
-  resolution: "minimist@npm:0.0.8"
-  checksum: 042f8b626b1fa44dffc23bac55771425ac4ee9d267b56f9064c07713e516e1799f3ba933bb628d2475a210caf7dcdb98161611baa1f0daf49309a944cb4bc48f
-  languageName: node
-  linkType: hard
-
 "minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6":
   version: 1.2.6
   resolution: "minimist@npm:1.2.6"
@@ -25807,17 +25788,6 @@ __metadata:
     infer-owner: ^1.0.4
     mkdirp: ^1.0.3
   checksum: d8f4ecd32f6762459d6b5714eae6487c67ae9734ab14e26d14377ddd9b2a1bf868d8baa18c0f3e73d3d513f53ec7a698e0f81a9367102c870a55bef7833880f7
-  languageName: node
-  linkType: hard
-
-"mkdirp@npm:0.5.1":
-  version: 0.5.1
-  resolution: "mkdirp@npm:0.5.1"
-  dependencies:
-    minimist: 0.0.8
-  bin:
-    mkdirp: bin/cmd.js
-  checksum: ed1ab49bb1d06c88dba7cfe930a3186f2605b5465aab7c8f24119baaba6e38f9ab4ac1695c68f476c65a48df2a69a8495049cd6e26c360ea082151a0771343d2
   languageName: node
   linkType: hard
 
