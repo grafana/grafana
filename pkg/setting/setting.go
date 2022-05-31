@@ -49,12 +49,6 @@ const (
 	ApplicationName  = "Grafana"
 )
 
-// This constant corresponds to the default value for sync_ttl in .ini files
-// it is used for comparison and has to be kept in sync
-const (
-	authProxySyncTTL = 60
-)
-
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
