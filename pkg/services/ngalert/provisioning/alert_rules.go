@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 )
 
 type AlertRuleService struct {
+	defaultInterval int64
 	ruleStore       store.RuleStore
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
@@ -21,8 +23,10 @@ type AlertRuleService struct {
 func NewAlertRuleService(ruleStore store.RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
+	defaultInterval int64,
 	log log.Logger) *AlertRuleService {
 	return &AlertRuleService{
+		defaultInterval: defaultInterval,
 		ruleStore:       ruleStore,
 		provenanceStore: provenanceStore,
 		xact:            xact,
@@ -50,11 +54,15 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	}
-	// TODO(jpq): check if any interval exists for the group
-	//				if yes use it
-	//            	if no use the default
-	rule.IntervalSeconds = 10
-	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
+	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+	// if the alert group does not exists we just use the default
+	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
+		interval = service.defaultInterval
+	} else if err != nil {
+		return models.AlertRule{}, err
+	}
+	rule.IntervalSeconds = interval
+	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
 		})
@@ -83,9 +91,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
-	// to modify the interval on should modify the alert group, thus we
-	// just copy the current value
-	rule.IntervalSeconds = storedRule.IntervalSeconds
+	rule.IntervalSeconds, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	service.log.Info("update rule", "ID", storedRule.ID, "labels", fmt.Sprintf("%+v", rule.Labels))
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{

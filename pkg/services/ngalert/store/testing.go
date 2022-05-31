@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -299,8 +298,26 @@ func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Con
 	return fn(ctx)
 }
 
+func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			return rule.IntervalSeconds, nil
+		}
+	}
+	return 0, ErrAlertRuleGroupNotFound
+}
+
 func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	return errors.New("not implemented")
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			rule.IntervalSeconds = interval
+		}
+	}
+	return nil
 }
 
 type FakeInstanceStore struct {
