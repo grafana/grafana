@@ -1,9 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/alerting_notification_channels/", "/docs/grafana/latest/http_api/alerting_notification_channels/"]
-description = "Grafana Alerting Notification Channel HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts", "notifications"]
-title = "Alerting Notification Channels HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/alerting_notification_channels/
+  - /docs/grafana/latest/http_api/alerting_notification_channels/
+description: Grafana Alerting Notification Channel HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - alerting
+  - alerts
+  - notifications
+title: 'Alerting Notification Channels HTTP API '
+---
 
 # Alerting Notification Channels API
 

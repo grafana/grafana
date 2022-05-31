@@ -160,7 +160,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
-	res := converter.ReadPrometheusStyleResult(iter)
+	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false})
 
 	if res.Error != nil {
 		return nil, res.Error

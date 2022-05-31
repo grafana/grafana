@@ -117,6 +117,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 		name        string
 		alerts      []*types.Alert
 		messageTmpl string
+		subjectTmpl string
 		expSubject  string
 		expSnippets []string
 	}{
@@ -220,11 +221,25 @@ func TestEmailNotifierIntegration(t *testing.T) {
 				"&lt;li&gt;Firing: AlwaysFiring at warning &lt;/li&gt;",
 			},
 		},
+		{
+			name: "single alert with templated subject",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
+					},
+				},
+			},
+			subjectTmpl: `This notification is {{ .Status }}!`,
+			expSubject:  "This notification is firing!",
+			expSnippets: []string{},
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			emailNotifier := createSut(t, c.messageTmpl, emailTmpl, ns)
+			emailNotifier := createSut(t, c.messageTmpl, c.subjectTmpl, emailTmpl, ns)
 
 			ok, err := emailNotifier.Notify(context.Background(), c.alerts...)
 			require.NoError(t, err)
@@ -271,7 +286,7 @@ func createCoreEmailService(t *testing.T) *notifications.NotificationService {
 	return ns
 }
 
-func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
 	t.Helper()
 
 	json := `{
@@ -282,6 +297,11 @@ func createSut(t *testing.T, messageTmpl string, emailTmpl *template.Template, n
 	if messageTmpl != "" {
 		settingsJSON.Set("message", messageTmpl)
 	}
+
+	if subjectTmpl != "" {
+		settingsJSON.Set("subject", subjectTmpl)
+	}
+
 	require.NoError(t, err)
 	cfg, err := NewEmailConfig(&NotificationChannelConfig{
 		Name:     "ops",
