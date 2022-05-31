@@ -293,6 +293,17 @@ To allow Grafana to pass the access token to the plugin, update the data source 
 When configured, Grafana will pass the user's token to the plugin in an Authorization header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
 
 ```go
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	token := strings.Fields(req.Headers["Authorization"])
+	var (
+		tokenType   = token[0]
+		accessToken = token[1]
+	)
+
+	// ...
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+}
+
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
   token := strings.Fields(req.Headers["Authorization"])
 	var (
@@ -309,6 +320,13 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 In addition, if the user's token includes an ID token, Grafana will pass the user's ID token to the plugin in an `X-ID-Token` header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
 
 ```go
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	idToken := req.Headers["X-ID-Token"]
+
+	// ...
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+}
+
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
   idToken := req.Headers["X-ID-Token"]
 
