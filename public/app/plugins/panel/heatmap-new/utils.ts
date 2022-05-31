@@ -308,9 +308,11 @@ export function prepConfig(opts: PrepConfigOpts) {
       gap: cellGap,
       hideThreshold,
       xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
-      yAlign:
-        (dataRef.current?.yLayout === BucketLayout.le ? -1 : dataRef.current?.yLayout === BucketLayout.ge ? 1 : 0) *
-        (yAxisReverse ? -1 : 1),
+      yAlign: ((dataRef.current?.yLayout === BucketLayout.le
+        ? -1
+        : dataRef.current?.yLayout === BucketLayout.ge
+        ? 1
+        : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
