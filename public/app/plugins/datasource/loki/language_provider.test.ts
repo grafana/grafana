@@ -184,6 +184,29 @@ describe('Language completion provider', () => {
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'label2' }], label: 'Labels' }]);
     });
+
+    it('returns facetted label suggestions when invalid labelKey is given', async () => {
+      const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+
+      // test values from issue #49122
+      const input = createTypeaheadInput('|= `\\"invalidlabelkey\\": "+1"`', '\\', '= `\\"invalidlabelkey');
+      const getLabelValuesSpy = jest.spyOn(provider, 'getLabelValues');
+      const result = await provider.provideCompletionItems(input);
+
+      expect(getLabelValuesSpy).not.toHaveBeenCalled();
+
+      expect(result.context).toBe('context-labels');
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1', filterText: '"label1"' },
+            { label: 'label2', filterText: '"label2"' },
+          ],
+          label: 'Labels',
+        },
+      ]);
+    });
   });
 
   describe('label suggestions', () => {
@@ -247,6 +270,15 @@ describe('Language completion provider', () => {
       const nextLabelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
+    });
+
+    it('should encode special characters', async () => {
+      const datasource = makeMockLokiDatasource({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      await provider.fetchLabelValues('`\\"testkey');
+
+      expect(requestSpy).toHaveBeenCalledWith('label/%60%5C%22testkey/values', expect.any(Object));
     });
   });
 });

@@ -276,7 +276,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
       selector = EMPTY_SELECTOR;
     }
 
-    if (!labelKey && selector === EMPTY_SELECTOR) {
+    // In some occasions the labelKey will contain special characters. In that
+    // case, we assume the labelKey as invalid.
+    if ((!labelKey || /^\w*$/.test(labelKey) === false) && selector === EMPTY_SELECTOR) {
       // start task gets all labels
       await this.start();
       const allLabels = this.getLabelKeys();
@@ -439,7 +441,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = this.datasource.interpolateString(key);
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+
     const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
