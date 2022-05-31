@@ -265,7 +265,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelAndEditor(styles: EditorStyles) {
-    const { panel, dashboard, variables, plugin, tab } = this.props;
+    const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
     const isOnlyPanel = tabs.length === 0;
     const panelPane = this.renderPanel(styles, isOnlyPanel);
@@ -285,7 +285,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           key={panel.key}
           panel={panel}
           dashboard={dashboard}
-          variables={variables}
           tabs={tabs}
           onChangeTab={this.onChangeTab}
         />
