@@ -23,7 +23,6 @@ import { ExploreGraphLabel } from './ExploreGraphLabel';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import LogsContainer from './LogsContainer';
-import { LogsVolumePanel } from './LogsVolumePanel';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraphContainer';
@@ -35,7 +34,7 @@ import TableContainer from './TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
-import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -249,22 +248,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderLogsVolume(width: number) {
-    const { logsVolumeData, exploreId, loadLogsVolumeData, absoluteRange, timeZone, splitOpen } = this.props;
-
-    return (
-      <LogsVolumePanel
-        absoluteRange={absoluteRange}
-        width={width}
-        logsVolumeData={logsVolumeData}
-        onUpdateTimeRange={this.onUpdateTimeRange}
-        timeZone={timeZone}
-        splitOpen={splitOpen}
-        onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
-      />
-    );
-  }
-
   renderTablePanel(width: number) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
@@ -397,7 +380,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
-                          {<ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
@@ -443,7 +425,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeData,
     logsResult,
     showLogs,
     showMetrics,
@@ -462,7 +443,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
-    logsVolumeData,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -487,7 +467,6 @@ const mapDispatchToProps = {
   setQueries,
   updateTimeRange,
   makeAbsoluteTime,
-  loadLogsVolumeData,
   addQueryRow,
   splitOpen,
 };
