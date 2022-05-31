@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Snyk to check for vulnerabilities - sarif output
         continue-on-error: true
-        uses: snyk/actions/node@master
+        uses: snyk/actions/golang@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -25,18 +25,13 @@ jobs:
 
       - name: Run Snyk to check for vulnerabilities - json output
         continue-on-error: true
-        uses: snyk/actions/node@master
+        uses: snyk/actions/golang@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
           args: --json --all-projects --json-file-output=${{ github.event.repository.name }}.json  --strict-out-of-sync=false
 
-      - name: Use Node.js 18.x
-        uses: actions/setup-node@v2
-        with:
-          node-version: 18.x
-          cache: 'npm'
 
       - name: install snyk-to-html
         run: |
