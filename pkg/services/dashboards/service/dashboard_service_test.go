@@ -202,7 +202,3 @@ func TestIntegrationDashboardService(t *testing.T) {
 		})
 	})
 }
-
-type Result struct {
-	deleteWasCalled bool
-}

@@ -539,7 +539,6 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	require.Len(t, results, 2)
 	assert.Equal(t, dashB.Id, results[0].ID)
 	assert.Equal(t, dashA.Id, results[1].ID)
-
 }
 
 func TestIntegrationDashboard_Filter(t *testing.T) {
@@ -581,7 +580,6 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, dashB.Id, results[0].ID)
-
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {

@@ -134,7 +134,6 @@ type queryListFiles struct {
 
 type queryListFoldersInput struct {
 	path    string
-	paging  *Paging
 	options *ListOptions
 }
 

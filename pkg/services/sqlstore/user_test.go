@@ -360,7 +360,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
-
 		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -448,7 +447,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
-
 		ss = InitTestDB(t)
 
 		createUserCmd := models.CreateUserCommand{
