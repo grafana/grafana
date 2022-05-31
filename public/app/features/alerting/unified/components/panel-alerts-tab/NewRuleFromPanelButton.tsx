@@ -28,8 +28,6 @@ export const NewRuleFromPanelButton: FC<Props> = ({ dashboard, panel, variables,
     return <Button disabled={true}>Create alert rule from this panel</Button>;
   }
 
-  // console.log(formValues);
-
   if (!formValues) {
     return (
       <Alert severity="info" title="No alerting capable query found">

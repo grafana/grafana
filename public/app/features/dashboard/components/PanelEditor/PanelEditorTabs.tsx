@@ -8,7 +8,6 @@ import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { VariableModel } from 'app/features/variables/types';
-import { CoreEvents } from 'app/types';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 import { DashboardModel, PanelModel } from '../../state';
@@ -32,11 +31,6 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(
 
     useEffect(() => {
       const eventSubs = new Subscription();
-      eventSubs.add(
-        dashboard.events.on(CoreEvents.templateVariableValueUpdated, () => {
-          console.log('Template variables updates');
-        })
-      );
       eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
       eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
       return () => eventSubs.unsubscribe();
