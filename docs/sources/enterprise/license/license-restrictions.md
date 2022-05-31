@@ -6,29 +6,17 @@ title = "License restrictions"
 weight = 300
 +++
 
-# Understanding Grafana Enterprise licensing
+# Grafana Enterprise license restrictions
 
 When you become a Grafana Enterprise customer, you receive a license that governs your use of Grafana Enterprise.
-
-You either have:
-
-- [combined licensing](#combined-licensing), or
-- [tiered licensing](#tiered-licensing-deprecated) (deprecated)
-
-## Combined licensing
-
-As of Grafana Enterprise Version 8.3, you can purchase (or transition to) combined licensing. With combined licensing, you purchase a specific number of users, and you are free to distribute those users across all roles, in any combination.
-For example, if you purchase 150 licenses, you can have 20 admins, 70 editors, and 60 viewers, or you can have 10 admins, 100 editors, and 40 viewers. This change reduces license complexity.
-
-Before you upgrade to Grafana 8.3+, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana until the active user count returns below the licensed limit.
 
 ### Active users limit
 
 Your Grafana license includes a maximum number of active users.
 
 - An _active user_ is a user who has signed in to Grafana within the last 30 days. This is a rolling window that is updated daily.
-- When you reach the number of maximum active users, only currently active users can sign in; new users and non-active users cannot sign in when you reach the limit.
-- The number of dashboards that a user can view or edit, and the number of organizations that they can access does not affect the active user count.
+- When you reach the maximum number of active users, only currently active users (users who have signed in over the past 30 days) can sign in. When a new user or a previously-inactive user tries to sign in, the user will see an error message indicating that Grafana has reached its license limit.
+- The user's role, number of dashboards that a user can view or edit, and the number of organizations that they can access does not affect the active user count.
 - A license limit banner appears to administrators when Grafana reaches its active user limit; editors and viewers do not see the banner.
 
 ### Determine the number of active users
@@ -45,12 +33,13 @@ To determine the number of active users:
 
 ## Tiered licensing (deprecated)
 
-Tiered licensing defines dashboard viewers, and dashboard editors and administrators, as two distinct user types that each have their own user limit.
+A tiered license defines dashboard viewers, and dashboard editors and administrators, as two distinct user types that each have their own user limit.
 
-As of Grafana Enterprise Version 9.0, tiered licensing will be automatically treated as combined licensing.
-For example, your license might include 300 viewers and 50 editors or administrators. This will be handled as a combined license for 350 users.
+As of Grafana Enterprise version 9.0, Grafana only counts and enforces the *total* number of active users in your Grafana instance. For example, if you purchase 150 active users, you can have 20 admins, 70 editors, and 60 viewers, or you can have 150 admins. Grafana will enforce the total number of active users even if you use a license that grants a specific number of admins or editors and a certain number of viewers. This is a more permissive policy than before, which gives you the flexibility to change users' roles.
 
-## License restrictions common to both license types
+If you are running a pre-9.0 version of Grafana Enterprise, please refer to the documentation for that version to learn more about license enforcement in your current version.
+
+## Additional license restrictions
 
 Your license is controlled by the following rules:
 
@@ -60,7 +49,7 @@ As the license expiration date approaches, you will see a banner in Grafana that
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
-The License URL is the root URL of your Grafana instance.
+The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../administration/configuration/#root_url">}}) configuration setting. 
 
 **Concurrent sessions limit**: As of Grafana Enterprise 7.5, users can initiate up to three concurrent sessions of Grafana.
 
