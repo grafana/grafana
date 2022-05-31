@@ -348,10 +348,6 @@ func (m *SQLStoreMock) GetDashboardVersions(ctx context.Context, query *models.G
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand) error {
-	return m.ExpectedError
-}
-
 func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 	query.Result = m.ExpectedDashboardAclInfoList
 	return m.ExpectedError
