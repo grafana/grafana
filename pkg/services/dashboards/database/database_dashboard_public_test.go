@@ -190,22 +190,6 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
 	})
 
-	t.Run("throws an error if PublicDashboardConfig.PublicDashboard.Uid is not set", func(t *testing.T) {
-		setup()
-		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
-			PublicDashboardConfig: models.PublicDashboardConfig{
-				IsPublic: true,
-				PublicDashboard: models.PublicDashboard{
-					DashboardUid: "",
-					OrgId:        savedDashboard.OrgId,
-				},
-			},
-		})
-		require.Error(t, models.ErrPublicDashboardIdentifierNotSet, err)
-	})
-
 	t.Run("overwrites existing public dashboard", func(t *testing.T) {
 		setup()
 

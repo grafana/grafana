@@ -40,13 +40,15 @@ export const SharePublicDashboard = (props: Props) => {
       return;
     }
 
-    try {
-      savePublicDashboardConfig(props.dashboard.uid, publicDashboardConfig);
-      dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
-    } catch (err) {
-      console.error('Error while making dashboard public', err);
-      dispatch(notifyApp(createErrorNotification('Error making dashboard public')));
-    }
+    savePublicDashboardConfig(props.dashboard.uid, publicDashboardConfig)
+      .then((pdc: PublicDashboardConfig) => {
+        setPublicDashboardConfig(pdc);
+        dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+      })
+      .catch((err) => {
+        console.error('Error while making dashboard public', err);
+        dispatch(notifyApp(createErrorNotification('Error making dashboard public')));
+      });
   };
 
   return (

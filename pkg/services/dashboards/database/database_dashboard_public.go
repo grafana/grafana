@@ -118,10 +118,6 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
 
-	if len(cmd.PublicDashboardConfig.PublicDashboard.Uid) == 0 {
-		return nil, models.ErrPublicDashboardIdentifierNotSet
-	}
-
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		// update isPublic on dashboard entry
 		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.DashboardUid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
