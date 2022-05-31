@@ -73,18 +73,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 	}
 }
 
-func getOauthTokenForCallResource(headersIn map[string][]string) map[string]string {
-	headers := make(map[string]string)
-	accessValues := headersIn["Authorization"]
-
-	if len(accessValues) == 0 {
-		return headers
-	}
-
-	headers["Authorization"] = accessValues[0]
-	return headers
-}
-
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
@@ -108,9 +96,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	headers := getOauthTokenForCallResource(req.Headers)
-
-	statusCode, bytes, err := i.resource.Execute(ctx, headers, req)
+	statusCode, bytes, err := i.resource.Execute(ctx, req)
 	if statusCode >= 300 {
 		safeErr := errors.New("no error specified")
 		if err != nil {

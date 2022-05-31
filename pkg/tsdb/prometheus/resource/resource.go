@@ -64,8 +64,8 @@ func New(
 	}, nil
 }
 
-func (r *Resource) Execute(ctx context.Context, headers map[string]string, req *backend.CallResourceRequest) (int, []byte, error) {
-	client, err := r.provider.GetClient(headers)
+func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
+	client, err := r.provider.GetClient(reqHeaders(req.Headers))
 	if err != nil {
 		return 500, nil, err
 	}
@@ -111,4 +111,15 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 	}
 
 	return 200, data, err
+}
+
+func reqHeaders(headers map[string][]string) map[string]string {
+	h := make(map[string]string)
+	accessValues := headers["Authorization"]
+
+	if len(accessValues) > 0 {
+		h["Authorization"] = accessValues[0]
+	}
+
+	return h
 }
