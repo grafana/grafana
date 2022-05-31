@@ -98,9 +98,15 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	headers := make(map[string]string)
 
-	bytes, err := i.resource.Execute(ctx, headers, req)
-	if err != nil {
-		return err
+	statusCode, bytes, err := i.resource.Execute(ctx, headers, req)
+	if err != nil || statusCode != 200 {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: statusCode,
+			Headers: map[string][]string{
+				"content-type": {"application/json"},
+			},
+			Body: []byte(err.Error()),
+		})
 	}
 
 	return sender.Send(&backend.CallResourceResponse{

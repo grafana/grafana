@@ -63,41 +63,36 @@ func New(
 	}, nil
 }
 
-func (r *Resource) Execute(ctx context.Context, headers map[string]string, req *backend.CallResourceRequest) ([]byte, error) {
+func (r *Resource) Execute(ctx context.Context, headers map[string]string, req *backend.CallResourceRequest) (int, []byte, error) {
 	client, err := r.provider.GetClient(headers)
 	if err != nil {
-		return nil, err
+		return 500, nil, err
 	}
 
-	bytes, err := r.fetch(ctx, client, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return r.fetch(ctx, client, req)
 }
 
-func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backend.CallResourceRequest) ([]byte, error) {
+func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backend.CallResourceRequest) (int, []byte, error) {
 	r.log.Debug("Sending resource query", "URL", r.URL)
 	u, err := url.Parse(req.URL)
 	if err != nil {
-		return nil, err
+		return 500, nil, err
 	}
 
-	resp, err := client.QueryResource(ctx, u.Path, u.Query())
+	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
 	if err != nil {
-		return nil, err
+		return 500, nil, err
 	}
 
 	defer resp.Body.Close() //nolint
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return 500, nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, errors.New(string(data))
+		return resp.StatusCode, nil, errors.New(string(data))
 	}
 
-	return data, err
+	return 200, data, err
 }

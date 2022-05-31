@@ -63,7 +63,7 @@ import {
 import { PrometheusVariableSupport } from './variables';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+const POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -206,41 +206,18 @@ export class PrometheusDatasource
 
   // Use this for tab completion features, wont publish response to other components
   async metadataRequest<T = any>(url: string, params = {}) {
-    // // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
-    // if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
-    //   try {
-    //     const res = await this.postResource(url, params);
-    //     return {
-    //       data: res,
-    //     }
-    //   } catch (err) {
-    //     // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-    //     if (this.httpMethod === 'POST' && err.status === 405) {
-    //       console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
-    //     } else {
-    //       throw err;
-    //     }
-    //   }
-    // }
-
-    // const res = await this.getResource(url, params);
-    // return {
-    //   data: res,
-    // }
-    if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
-      try {
-        return await lastValueFrom(this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true }));
-      } catch (err) {
-        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && err.status === 405) {
-          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
-        } else {
-          throw err;
-        }
-      }
+    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
+    if (POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      const res = await this.postResource(url, params);
+      return {
+        data: res,
+      };
     }
 
-    return await lastValueFrom(this._request<T>(url, params, { method: 'GET', hideFromInspector: true })); // toPromise until we change getTagValues, getTagKeys to Observable
+    const res = await this.getResource(url, params);
+    return {
+      data: res,
+    };
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
