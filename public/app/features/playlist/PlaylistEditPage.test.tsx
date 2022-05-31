@@ -19,12 +19,12 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
   const route: any = {};
-  const match: any = { params: { id: 1 } };
+  const match: any = { params: { uid: 'foo' } };
   const location: any = {};
   const history: any = {};
   const navModel: any = {
@@ -36,7 +36,8 @@ async function getTestContext({ name, interval, items }: Partial<Playlist> = {})
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1', uid: 'foo' }],
+    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    uid: 'foo',
   });
   const { rerender } = render(
     <PlaylistEditPage
@@ -79,7 +80,7 @@ describe('PlaylistEditPage', () => {
       expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1', uid: 'foo' }],
+        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
