@@ -68,6 +68,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       if (legendMeasure) {
         size = { width: width - legendMeasure.width, height };
       }
+
+      if (legend.props.width) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
+      }
       break;
   }
 
@@ -81,24 +86,13 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     size.height = height;
   }
 
-  const scrollbarStyle: CSSProperties = {
-    overflow: 'scroll',
-    maxHeight: '100%',
-  };
-
-  if (placement === 'right' && legend.props.width) {
-    scrollbarStyle.width = legend.props.width;
-  }
-
   return (
     <div style={containerStyle}>
       <div tabIndex={0} className={styles.viz}>
         {size && children(size.width, size.height)}
       </div>
       <div style={legendStyle} ref={legendRef}>
-        <div style={scrollbarStyle}>
-          <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
-        </div>
+        <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
     </div>
   );
