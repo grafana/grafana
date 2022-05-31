@@ -86,7 +86,8 @@ export interface MapLayerHandler<TConfig = any> {
 
 /**
  * Map layer configuration
- *
+ * TODO: we might want to use different interfaces for basemaps vs data layers, since the 'isBaseMap'
+ * flag is useless for all non-basemaps, and the 'usesDataFrame' flag is now useless for all basemaps
  * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
