@@ -28,7 +28,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     includeButtonPress: true,
     parent: typeof window !== 'undefined' ? window : null,
     useCapture: false,
-    setHandlers: false,
+    setHandlers: true,
     className: null,
   };
   myRef = createRef<HTMLDivElement>();
