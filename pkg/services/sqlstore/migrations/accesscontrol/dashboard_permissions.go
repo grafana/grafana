@@ -296,10 +296,10 @@ func (m *managedFolderCreateAction) Exec(sess *xorm.Session, migrator *migrator.
 	return nil
 }
 
-const managedFolderPermissionsMigrationID = "managed folder permissions alert actions migration"
+const managedFolderAlertActionsMigratorID = "managed folder permissions alert actions migration"
 
-func AddManagedFolderPermissionsMigration(mg *migrator.Migrator) {
-	mg.AddMigration(managedFolderPermissionsMigrationID, &managedFolderAlertActionsMigrator{})
+func AddManagedFolderAlertActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsMigratorID, &managedFolderAlertActionsMigrator{})
 }
 
 type managedFolderAlertActionsMigrator struct {
