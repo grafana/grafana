@@ -49,7 +49,7 @@
     "@swc/helpers": "0.3.13",
     "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.4",
-    "@testing-library/react": "12.1.4",
+    "@testing-library/react": "13.3.0",
     "@testing-library/react-hooks": "8.0.0",
     "@testing-library/user-event": "14.2.0",
     "@types/history": "4.7.11",

@@ -3987,7 +3987,7 @@ __metadata:
     "@swc/helpers": 0.3.13
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
-    "@testing-library/react": 12.1.4
+    "@testing-library/react": 13.3.0
     "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/d3-interpolate": ^1.4.0
@@ -4153,7 +4153,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
     "@testing-library/dom": 8.13.0
-    "@testing-library/react": 12.1.4
+    "@testing-library/react": 13.3.0
     "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
@@ -4369,7 +4369,7 @@ __metadata:
     "@swc/helpers": 0.3.13
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
-    "@testing-library/react": 12.1.4
+    "@testing-library/react": 13.3.0
     "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/classnames": 2.3.0
@@ -4578,7 +4578,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.0.0-pre
     "@testing-library/jest-dom": 5.16.4
-    "@testing-library/react": 12.1.4
+    "@testing-library/react": 13.3.0
     "@testing-library/user-event": 14.2.0
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
@@ -9101,7 +9101,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:8.13.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
+"@testing-library/dom@npm:8.13.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.5.0":
   version: 8.13.0
   resolution: "@testing-library/dom@npm:8.13.0"
   dependencies:
@@ -9156,17 +9156,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:12.1.4":
-  version: 12.1.4
-  resolution: "@testing-library/react@npm:12.1.4"
+"@testing-library/react@npm:13.3.0":
+  version: 13.3.0
+  resolution: "@testing-library/react@npm:13.3.0"
   dependencies:
     "@babel/runtime": ^7.12.5
-    "@testing-library/dom": ^8.0.0
-    "@types/react-dom": "*"
+    "@testing-library/dom": ^8.5.0
+    "@types/react-dom": ^18.0.0
   peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 944c5f8d4abb22c0650c25c7ae499651828c37c0e741ff67a4635d4cd99b307d486dabec05b372aba638bd359d29cd2af97393b5055ea294a201d80b4bc384b8
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 98fd8616a7cae0ecfcbe97b5b3c5b91fbafccf449c04875395ccc0e3f0b139e53b3261b9536ec2169a5e2883a1be2098907209064061fe0c2ff21dfbc785dd40
   languageName: node
   linkType: hard
 
@@ -10517,6 +10517,15 @@ __metadata:
   dependencies:
     "@types/react": "*"
   checksum: b54cd0ef573236b3d87fe7493e6d1c36d8b4ca37a3b46364272a5c91ac178e3296b68ea1aeb299ce68f12ad663c5720ee890d0539b14881c6754bdcbdb0befa0
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:^18.0.0":
+  version: 18.0.5
+  resolution: "@types/react-dom@npm:18.0.5"
+  dependencies:
+    "@types/react": "*"
+  checksum: cd48b81950f499b52a3f0c08261f00046f9b7c96699fa249c9664e257e820daf6ecac815cd1028cebc9d105094adc39d047d1efd79214394b8b2d515574c0787
   languageName: node
   linkType: hard
 
@@ -20299,7 +20308,7 @@ __metadata:
     "@swc/helpers": 0.3.13
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
-    "@testing-library/react": 12.1.4
+    "@testing-library/react": 13.3.0
     "@testing-library/react-hooks": 8.0.0
     "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
