@@ -115,7 +115,7 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	}
 
 	protoContext := backend.ToProto().PluginContext(req.PluginContext)
-	protoResp, err := c.DiagnosticsClient.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext})
+	protoResp, err := c.DiagnosticsClient.CheckHealth(ctx, &pluginv2.CheckHealthRequest{PluginContext: protoContext, Headers: req.Headers})
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
