@@ -98,7 +98,10 @@ type schedule struct {
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
 
-	// schedulableAlertRules contains the alert rules scheduled in the most recent tick
+	// schedulableAlertRules contains the alert rules that are considered for
+	// evaluation in the current tick. The evaluation of an alert rule in the
+	// current tick depends on its evaluation interval and when it was
+	// last evaluated.
 	schedulableAlertRules []*models.SchedulableAlertRule
 }
 

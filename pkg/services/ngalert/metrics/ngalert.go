@@ -51,8 +51,10 @@ type Scheduler struct {
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.SummaryVec
-	UpdateSchedulableAlertRulesDuration prometheus.Histogram
 	SchedulePeriodicDuration            prometheus.Histogram
+	SchedulableAlertRules               prometheus.Gauge
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	UpdateSchedulableAlertRulesFailures prometheus.Counter
 	Ticker                              *legacyMetrics.Ticker
 }
 
@@ -163,6 +165,23 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
+		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_periodic_duration_seconds",
+				Help:      "The time taken to run the scheduler.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		SchedulableAlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedulable_alert_rules",
+				Help:      "The number of alert rules being considered for evaluation each tick.",
+			},
+		),
 		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
@@ -172,13 +191,12 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
-		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
-			prometheus.HistogramOpts{
+		UpdateSchedulableAlertRulesFailures: promauto.With(r).NewCounter(
+			prometheus.CounterOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "schedule_periodic_duration_seconds",
-				Help:      "The time taken to run the scheduler.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+				Name:      "update_schedulable_alert_rules_failures_total",
+				Help:      "The total number of failures to update the alert rules for the scheduler.",
 			},
 		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),
