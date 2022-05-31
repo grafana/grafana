@@ -1,9 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/team/", "/docs/grafana/latest/http_api/team/"]
-description = "Grafana Team HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group"]
-title = "Team HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/team/
+  - /docs/grafana/latest/http_api/team/
+description: Grafana Team HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - team
+  - teams
+  - group
+title: 'Team HTTP API '
+---
 
 # Team API
 

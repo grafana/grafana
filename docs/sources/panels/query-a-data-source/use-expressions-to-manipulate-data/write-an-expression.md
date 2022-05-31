@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/", "/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/"]
-title = "Write an expression"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
+  - /docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
+title: Write an expression
+weight: 20
+---
 
 # Write an expression
 

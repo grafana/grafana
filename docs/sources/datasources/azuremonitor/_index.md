@@ -1,10 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/azuremonitor/", "/docs/grafana/latest/features/datasources/azuremonitor/"]
-description = "Guide for using Azure Monitor in Grafana"
-keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-title = "Azure Monitor"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/azuremonitor/
+  - /docs/grafana/latest/features/datasources/azuremonitor/
+description: Guide for using Azure Monitor in Grafana
+keywords:
+  - grafana
+  - microsoft
+  - azure
+  - monitor
+  - application
+  - insights
+  - log
+  - analytics
+  - guide
+title: Azure Monitor
+weight: 300
+---
 
 # Azure Monitor data source
 
@@ -260,6 +271,10 @@ You can use Grafana macros when constructing a query. Use the macros in the wher
 - `$__contains(colName, $myVar)` - Use with multi-value template variables. If `$myVar` has the value `'value1','value2'`, the it expands to: `colName in ('value1','value2')`.
 
   If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
+
+### Working with large Azure resource data sets
+
+If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned. You can use filters to reduce the amount of records returned under that value.
 
 ## Going further with Azure Monitor
 

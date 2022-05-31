@@ -52,6 +52,7 @@ interface PrepConfigOpts {
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
+  yAxisReverse?: boolean;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -67,6 +68,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     palette,
     cellGap,
     hideThreshold,
+    yAxisReverse,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -210,14 +212,18 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
-    direction: ScaleDirection.Up,
+    direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
     log: 2,
     range: shouldUseLogScale
       ? undefined
       : (u, dataMin, dataMax) => {
-          const bucketSize = dataRef.current?.yBucketSize;
+          let bucketSize = dataRef.current?.yBucketSize;
+
+          if (bucketSize === 0) {
+            bucketSize = 1;
+          }
 
           if (bucketSize) {
             if (dataRef.current?.yLayout === BucketLayout.le) {
@@ -302,7 +308,11 @@ export function prepConfig(opts: PrepConfigOpts) {
       gap: cellGap,
       hideThreshold,
       xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
-      yAlign: dataRef.current?.yLayout === BucketLayout.le ? -1 : dataRef.current?.yLayout === BucketLayout.ge ? 1 : 0,
+      yAlign: ((dataRef.current?.yLayout === BucketLayout.le
+        ? -1
+        : dataRef.current?.yLayout === BucketLayout.ge
+        ? 1
+        : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
@@ -437,7 +447,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         // detect x and y bin qtys by detecting layout repetition in x & y data
         let yBinQty = dlen - ys.lastIndexOf(ys[0]);
         let xBinQty = dlen / yBinQty;
-        let yBinIncr = ys[1] - ys[0];
+        let yBinIncr = ys[1] - ys[0] || scaleY.max! - scaleY.min!;
         let xBinIncr = xs[yBinQty] - xs[0];
 
         // uniform tile sizes based on zoom level

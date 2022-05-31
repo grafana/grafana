@@ -1,8 +1,8 @@
 ---
-title: 'Configure RBAC in Grafana'
-menuTitle: 'Configure RBAC'
-description: 'Learn how to configure RBAC.'
 aliases: []
+description: Learn how to configure RBAC.
+menuTitle: Configure RBAC
+title: Configure RBAC in Grafana
 weight: 30
 ---
 

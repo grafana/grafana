@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/installation/upgrading/"]
-description = "Guide for upgrading Grafana"
-keywords = ["grafana", "configuration", "documentation", "upgrade"]
-title = "Upgrade Grafana"
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/upgrading/
+description: Guide for upgrading Grafana
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - upgrade
+title: Upgrade Grafana
+weight: 700
+---
 
 # Upgrade Grafana
 

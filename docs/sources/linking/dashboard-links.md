@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/linking/dashboard-links/"]
-description = ""
-keywords = ["grafana", "linking", "create links", "link dashboards", "navigate"]
-title = "Dashboard links"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/linking/dashboard-links/
+description: ''
+keywords:
+  - grafana
+  - linking
+  - create links
+  - link dashboards
+  - navigate
+title: Dashboard links
+weight: 200
+---
 
 # Dashboard links
 

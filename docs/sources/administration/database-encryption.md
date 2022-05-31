@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/administration/database-encryption/"]
-description = "Grafana database encryption"
-keywords = ["grafana", "database", "encryption", "envelope encryption", "documentation"]
-title = "Database encryption"
-weight = 450
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/database-encryption/
+description: Grafana database encryption
+keywords:
+  - grafana
+  - database
+  - encryption
+  - envelope encryption
+  - documentation
+title: Database encryption
+weight: 450
+---
 
 # Grafana database encryption
 

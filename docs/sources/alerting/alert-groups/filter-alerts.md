@@ -1,10 +1,15 @@
-+++
-title = "Filter alerts"
-description = "Alert groups"
-keywords = ["grafana", "alerting", "alerts", "groups"]
-weight = 445
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/alert-groups/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
+description: Alert groups
+keywords:
+  - grafana
+  - alerting
+  - alerts
+  - groups
+title: Filter alerts
+weight: 445
+---
 
 # Filter alerts by group
 

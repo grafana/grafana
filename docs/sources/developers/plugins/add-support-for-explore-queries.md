@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/"]
-title = "Add support for Explore queries"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/add-support-for-explore-queries/
+title: Add support for Explore queries
+---
 
 # Add support for Explore queries
 

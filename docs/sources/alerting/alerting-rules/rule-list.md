@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/alerting-rules/rule-list/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/"]
-description = "Manage alerting rules"
-keywords = ["grafana", "alerting", "guide", "rules", "view"]
-title = "Manage alerting rules"
-weight = 402
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alerting-rules/rule-list/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
+description: Manage alerting rules
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - view
+title: Manage alerting rules
+weight: 402
+---
 
 # Manage alerting rules
 

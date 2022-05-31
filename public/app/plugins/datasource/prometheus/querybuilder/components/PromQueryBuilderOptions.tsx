@@ -12,6 +12,15 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
+export interface UIOptions {
+  exemplars: boolean;
+  type: boolean;
+  format: boolean;
+  minStep: boolean;
+  legend: boolean;
+  resolution: boolean;
+}
+
 export interface Props {
   query: PromQuery;
   app?: CoreApp;
@@ -118,11 +127,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
   items.push(`Format: ${formatOption}`);
-
-  if (query.interval) {
-    items.push(`Step ${query.interval}`);
-  }
-
+  items.push(`Step ${query.interval}`);
   items.push(`Type: ${queryType}`);
 
   if (query.exemplar) {

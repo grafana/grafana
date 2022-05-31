@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/", "/docs/grafana/latest/http_api/", "/docs/grafana/latest/overview/"]
-description = "Grafana HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "overview"]
-title = "HTTP API"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/
+  - /docs/grafana/latest/http_api/
+  - /docs/grafana/latest/overview/
+description: Grafana HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - overview
+title: HTTP API
+weight: 100
+---
 
 # HTTP API reference
 

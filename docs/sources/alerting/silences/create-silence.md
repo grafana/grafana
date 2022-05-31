@@ -1,10 +1,15 @@
-+++
-title = "Create a silence"
-description = "Add silence alert notification"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 450
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Add silence alert notification
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Create a silence
+weight: 450
+---
 
 # Create a silence
 
