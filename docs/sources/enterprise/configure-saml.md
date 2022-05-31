@@ -19,7 +19,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 ## Supported SAML
 
@@ -47,7 +47,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
 
 ### Edit SAML options in the Grafana config file
 
-1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref ".././enterprise-configuration.md#enabled" >}}) to `true`.
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "enterprise-configuration.md#enabled" >}}) to `true`.
 1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
 1. Set the [`idp_metadata_url`]({{< relref "enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
