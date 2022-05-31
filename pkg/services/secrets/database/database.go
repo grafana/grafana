@@ -135,7 +135,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if !ok {
 				ss.log.Warn(
 					"Could not find provider to re-encrypt data encryption key",
-					"name", k.Name,
+					"key_id", k.Name,
 					"provider", k.Provider,
 				)
 				return nil
@@ -145,7 +145,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if err != nil {
 				ss.log.Warn(
 					"Error while decrypting data encryption key to re-encrypt it",
-					"name", k.Name,
+					"key_id", k.Name,
 					"provider", k.Provider,
 					"err", err,
 				)
@@ -155,13 +155,12 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			// Updating current data key by re-encrypting it with current provider.
 			// Accessing the current provider within providers map should be safe.
 			k.Provider = currProvider
-			k.Name = secrets.KeyName(k.Scope, currProvider)
 			k.Updated = time.Now()
 			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
 			if err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
-					"name", k.Name,
+					"key_id", k.Name,
 					"provider", k.Provider,
 					"err", err,
 				)
@@ -171,7 +170,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Name).Update(k); err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
-					"name", k.Name,
+					"key_id", k.Name,
 					"provider", k.Provider,
 					"err", err,
 				)
