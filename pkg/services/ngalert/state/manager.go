@@ -250,7 +250,8 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		st.log.Warn("Error generating a screenshot for an alert instance.",
 			"alert_rule", alertRule.UID,
 			"dashboard", alertRule.DashboardUID,
-			"panel", alertRule.PanelID)
+			"panel", alertRule.PanelID,
+			"error", err)
 	}
 
 	st.set(currentState)
