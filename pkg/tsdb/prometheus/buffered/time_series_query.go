@@ -477,7 +477,7 @@ func normalizeExemplars(response []apiv1.ExemplarQueryResult) []ExemplarEvent {
 
 			// Fill in all the labels from eventLabels with values from exemplar labels or series labels or fill with
 			// empty string
-			for label, _ := range eventLabels {
+			for label := range eventLabels {
 				if _, ok := exemplar.Labels[model.LabelName(label)]; ok {
 					event.Labels[label] = string(exemplar.Labels[model.LabelName(label)])
 				} else if _, ok := exemplarData.SeriesLabels[model.LabelName(label)]; ok {
