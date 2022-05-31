@@ -180,7 +180,7 @@ you can do that by:
 - For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
   password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
+  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning/" >}}) for example of current
   configuration.
 
 ### Embedding Grafana

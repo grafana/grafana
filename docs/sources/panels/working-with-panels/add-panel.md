@@ -50,7 +50,7 @@ Panels allow you to show your data in visual form. Each panel needs at least one
    - [Visualization-specific options]({{< relref "../../visualizations/_index.md" >}})
    - [Override field values]({{< relref "../override-field-values/about-field-overrides.md" >}})
    - [Configure thresholds]({{< relref "../configure-thresholds/" >}})
-   - [Apply color to series and fields]({{< relref "./apply-color-to-series.md" >}})
+   - [Apply color to series and fields]({{< relref "apply-color-to-series.md" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 

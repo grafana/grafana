@@ -30,4 +30,4 @@ The two types of messages gossiped between Grafana instances are:
 
 The notification logs and silences are persisted in the database periodically and during a graceful Grafana shut down.
 
-For configuration instructions, refer to [enable alerting high availability]({{< relref "./enable-alerting-ha.md" >}}).
+For configuration instructions, refer to [enable alerting high availability]({{< relref "enable-alerting-ha.md" >}}).

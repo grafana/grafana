@@ -137,7 +137,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 ### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 
