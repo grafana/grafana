@@ -52,6 +52,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
+    isSignedIn: true,
   },
 }));
 
