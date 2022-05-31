@@ -24,4 +24,4 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 <div class="clearfix"></div>
 
-> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).

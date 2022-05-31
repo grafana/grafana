@@ -19,7 +19,7 @@ This strategy can drastically reduce the number of queries being made when you f
 1. [Create a dashboard]({{< relref "../../getting-started/getting-started.md/#step-3-create-a-dashboard" >}}).
 1. [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
 1. Change the title to "Source panel". You'll use this panel as a source for the other panels.
-1. Define the [query]({{< relref "../query-a-data-source/add-a-query.md" >}}) or queries that you want share.
+1. Define the [query]({{< relref "add-a-query.md" >}}) or queries that you want share.
 
    If you don't have a data source available, use the **Grafana** data source, which returns a random time series that you can use for testing.
 

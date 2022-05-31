@@ -18,7 +18,7 @@ When you apply your changes, the visualization changes appear to all users of th
 
 ### Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
 
 **To isolate series data in a visualization**:
 
