@@ -145,6 +145,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 		return nil
 	})
+	require.NoError(t, err)
 
 	return dash
 }
