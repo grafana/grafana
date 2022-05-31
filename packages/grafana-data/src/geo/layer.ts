@@ -58,6 +58,9 @@ export interface MapLayerOptions<TConfig = any> {
   // Common method to define geometry fields
   location?: FrameGeometrySource;
 
+  // Defines which data query is associated with the layer
+  dataquery?: string;
+
   // Common properties:
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
@@ -72,7 +75,11 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
-  update?: (data: PanelData) => void;
+  update?: (
+    newData: PanelData,
+    previousData?: PanelData,
+    updateDataqueryName?: (newDataqueryName: string) => void
+  ) => void;
   legend?: ReactNode;
 
   /**

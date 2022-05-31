@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import {
+  DataFrame,
   MapLayerRegistryItem,
   MapLayerOptions,
   PanelData,
@@ -41,7 +42,34 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
+  dataquery: undefined,
   tooltip: true,
+};
+
+const getUpdatedFrame = (newData: PanelData, previousData: PanelData, options: MapLayerOptions<MarkersConfig>): DataFrame | undefined => {
+  // Check if the value we had selected is missing from the updated list
+  let updatedVal = newData.series.find((val) => {
+    return val.refId === options.dataquery;
+  });
+  if (!updatedVal) {
+    // Previously selected value is missing from the new list.
+    // Find the value that is in the new list but isn't in the old list
+    let changedTo = newData.series.find((val) => {
+      return !previousData.series.some((val2) => {
+        return val2.refId === val.refId;
+      });
+    });
+    if (changedTo) {
+      // Found the new value, we assume the old value changed to this one, so we'll use it
+      return changedTo;
+    } else {
+      // The old value was just deleted, fallback to the first available option
+      return;
+      // Could possibly fallback to another data source, but that might just confuse people
+      // return newData.series?.length ? newData.series[0] : undefined;
+    }
+  }
+  return;
 };
 
 /**
@@ -112,43 +140,54 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData) => {
-        if (!data.series?.length) {
+      update: (newData: PanelData, previousData?: PanelData, updateDataquery?: (newDataquery: string) => void) => {
+        if (!newData.series?.length) {
           source.clear();
           return; // ignore empty
         }
-
-        for (const frame of data.series) {
-          if (style.fields) {
-            const dims: StyleDimensions = {};
-            if (style.fields.color) {
-              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-            }
-            if (style.fields.size) {
-              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
-            }
-            if (style.fields.text) {
-              dims.text = getTextDimension(frame, style.config.text!);
-            }
-            if (style.fields.rotation) {
-              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
-            }
-            style.dims = dims;
+        let frame = newData.series.find(frame => {
+          return options.dataquery === frame.refId;
+        });
+        if (!frame) {
+          if (previousData) {
+            // it's possible that the series name changed, try to find it and recover
+            frame = getUpdatedFrame(newData, previousData, options);
           }
-
-          // Post updates to the legend component
-          if (legend) {
-            legendProps.next({
-              styleConfig: style,
-              size: style.dims?.size,
-              layerName: options.name,
-              layer: vectorLayer,
-            });
+          if (!frame) {
+            source.clear();
+            return;
           }
-
-          source.update(frame);
-          break; // Only the first frame for now!
+          // New data frame was found, need to force a reload of this layer
+          updateDataquery && frame.refId && updateDataquery(frame.refId);
         }
+        if (style.fields) {
+          const dims: StyleDimensions = {};
+          if (style.fields.color) {
+            dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+          }
+          if (style.fields.size) {
+            dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+          }
+          if (style.fields.text) {
+            dims.text = getTextDimension(frame, style.config.text!);
+          }
+          if (style.fields.rotation) {
+            dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+          }
+          style.dims = dims;
+        }
+
+        // Post updates to the legend component
+        if (legend) {
+          legendProps.next({
+            styleConfig: style,
+            size: style.dims?.size,
+            layerName: options.name,
+            layer: vectorLayer,
+          });
+        }
+
+        source.update(frame);
       },
 
       // Marker overlay options

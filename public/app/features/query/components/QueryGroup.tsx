@@ -34,6 +34,7 @@ interface Props {
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  onQueryRefChange?: () => void;
 }
 
 interface State {
@@ -265,7 +266,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   renderQueries(dsSettings: DataSourceInstanceSettings) {
-    const { onRunQueries } = this.props;
+    const { onRunQueries, onQueryRefChange } = this.props;
     const { data, queries } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
@@ -288,6 +289,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           onAddQuery={this.onAddQuery}
           onRunQueries={onRunQueries}
           data={data}
+          onQueryRefChange={onQueryRefChange}
         />
       </div>
     );

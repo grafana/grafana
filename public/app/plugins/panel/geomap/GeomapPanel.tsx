@@ -250,9 +250,16 @@ export class GeomapPanel extends Component<Props, State> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    for (const state of this.layers) {
-      if (state.handler.update) {
-        state.handler.update(data);
+    for (const layer of this.layers) {
+      if (layer.handler.update) {
+        layer.handler.update(data, this.props.data, (newDataqueryName) => {
+          // The dataquery changed for this layer, need to update it
+          let newOpts = {
+            ...layer.options,
+            dataquery: newDataqueryName,
+          };
+          this.updateLayer(layer.getName(), newOpts);
+        });
       }
     }
   }

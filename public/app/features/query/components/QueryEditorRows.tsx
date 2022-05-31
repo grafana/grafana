@@ -23,6 +23,7 @@ interface Props {
   onQueriesChange: (queries: DataQuery[]) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
+  onQueryRefChange?: () => void;
 
   // Query Response Data
   data: PanelData;
@@ -36,6 +37,7 @@ interface Props {
 export class QueryEditorRows extends PureComponent<Props> {
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
+    this.props.onQueryRefChange && this.props.onQueryRefChange();
   };
 
   onChangeQuery(query: DataQuery, index: number) {
@@ -156,6 +158,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onAddQuery}
                       onRunQuery={this.props.onRunQueries}
+                      onQueryRefChange={this.props.onQueryRefChange}
                       queries={queries}
                       app={app}
                       history={history}

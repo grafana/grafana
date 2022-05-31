@@ -1,6 +1,13 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import { FrameGeometrySourceMode, MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
+import {
+  DataFrame,
+  FrameGeometrySourceMode,
+  MapLayerOptions,
+  MapLayerRegistryItem,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { hasAlphaPanels } from 'app/core/config';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -75,6 +82,21 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           options: layerTypes.options,
         },
       });
+
+      if (!layer?.isBaseMap) {
+        builder.addSelect({
+          path: 'dataquery',
+          name: 'Query',
+          settings: {
+            options: context.data.map((value) => {
+              return {
+                value: value.refId,
+                label: value.refId,
+              } as SelectableValue<DataFrame>;
+            }),
+          },
+        });
+      }
 
       if (!layer) {
         return; // unknown layer type

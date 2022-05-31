@@ -49,6 +49,7 @@ interface Props<TQuery extends DataQuery> {
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
   onRunQuery: () => void;
+  onQueryRefChange?: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
   app?: CoreApp;
@@ -295,6 +296,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onHeaderChange = (query: TQuery) => {
+    this.props.onChange(query);
+    if (this.props.onQueryRefChange) {
+      this.props.onQueryRefChange();
+    }
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -365,7 +373,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, queries, renderHeaderExtras } = this.props;
 
     return (
       <QueryEditorRowHeader
@@ -375,7 +383,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         dataSource={dataSource}
         disabled={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
-        onChange={onChange}
+        onChange={this.onHeaderChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
         alerting={alerting}

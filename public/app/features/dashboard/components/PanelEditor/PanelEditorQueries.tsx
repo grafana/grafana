@@ -80,6 +80,10 @@ export class PanelEditorQueries extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  onQueryRefChange = () => {
+    this.props.panel.refresh();
+  };
+
   render() {
     const { panel } = this.props;
 
@@ -97,6 +101,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
         onOptionsChange={this.onOptionsChange}
+        onQueryRefChange={this.onQueryRefChange}
       />
     );
   }
