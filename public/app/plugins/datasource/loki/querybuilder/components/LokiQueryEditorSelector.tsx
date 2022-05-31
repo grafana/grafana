@@ -99,15 +99,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryEditorModeToggle
-          mode={editorMode!}
-          onChange={onEditorModeChange}
-          uiOptions={{
-            [QueryEditorMode.Explain]: true,
-            [QueryEditorMode.Code]: true,
-            [QueryEditorMode.Builder]: true,
-          }}
-        />
+        <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
