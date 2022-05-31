@@ -151,14 +151,8 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		req.Headers[k] = v
 	}
 
-	if parsedReq.httpRequest != nil && parsedReq.httpRequest.Header.Get("Cookie") != "" && ds.JsonData != nil {
-		keepCookieNames := []string{}
-
-		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			keepCookieNames = keepCookies.MustStringArray()
-		}
-
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, keepCookieNames)
+	if parsedReq.httpRequest != nil {
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
