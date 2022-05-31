@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 )
 
 type Service struct {
@@ -402,7 +401,8 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 	}
 
-	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
+	// TODO: #35857 Required for templating queries in Prometheus datasource when Azure authentication enabled
+	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
@@ -410,20 +410,17 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 
 		if credentials != nil {
-			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
-			if resourceIdStr == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) not provided")
+			var scopes []string
+
+			if scopes, err = promclient.GetOverriddenScopes(ds.JsonData.MustMap()); err != nil {
 				return nil, err
 			}
 
-			resourceId, err := url.Parse(resourceIdStr)
-			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
-				return nil, err
+			if scopes == nil {
+				if scopes, err = promclient.GetPrometheusScopes(s.cfg.Azure, credentials); err != nil {
+					return nil, err
+				}
 			}
-
-			resourceId.Path = path.Join(resourceId.Path, ".default")
-			scopes := []string{resourceId.String()}
 
 			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
