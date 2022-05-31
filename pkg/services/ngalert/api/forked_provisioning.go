@@ -77,7 +77,6 @@ func (f *ForkedProvisioningApi) forkRoutePutMuteTiming(ctx *models.ReqContext, m
 
 func (f *ForkedProvisioningApi) forkRouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteDeleteMuteTiming(ctx)
-
 }
 
 func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext) response.Response {
