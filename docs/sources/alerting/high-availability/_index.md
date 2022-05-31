@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/high-availability/", "/docs/grafana/latest/alerting/unified-alerting/high-availability/"]
-description = "High availability"
-keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
-title = " Alerting high availability"
-weight = 450
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/high-availability/
+  - /docs/grafana/latest/alerting/unified-alerting/high-availability/
+description: High availability
+keywords:
+  - grafana
+  - alerting
+  - tutorials
+  - ha
+  - high availability
+title: ' Alerting high availability'
+weight: 450
+---
 
 # About alerting high availability
 
@@ -23,4 +30,4 @@ The two types of messages gossiped between Grafana instances are:
 
 The notification logs and silences are persisted in the database periodically and during a graceful Grafana shut down.
 
-For configuration instructions, refer to [enable alerting high availability]({{< relref "./enable-alerting-ha.md" >}}).
+For configuration instructions, refer to [enable alerting high availability]({{< relref "enable-alerting-ha.md" >}}).

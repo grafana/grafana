@@ -203,8 +203,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           onClipboardCopy={() => {
             notifyApp.success('URL copied!');
           }}
-          onClipboardError={(e) => {
-            notifyApp.error('Error while copying URL', e.text);
+          onClipboardError={(copiedText) => {
+            notifyApp.error('Error while copying URL', copiedText);
           }}
           className={style.button}
           size="sm"
