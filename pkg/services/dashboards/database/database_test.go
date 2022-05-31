@@ -243,7 +243,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(res), 0)
 
-		sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -256,6 +256,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 			return nil
 		})
+		require.NoError(t, err)
 	})
 
 	t.Run("Should return error if no dashboard is found for update when dashboard id is greater than zero", func(t *testing.T) {
