@@ -118,7 +118,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               timeZone={timeZone}
               renderTooltip={renderCustomTooltip}
             />
-            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

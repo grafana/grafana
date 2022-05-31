@@ -23,9 +23,6 @@ type AccessControl interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
-
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
@@ -38,7 +35,12 @@ type AccessControl interface {
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
-type PermissionsProvider interface {
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
+}
+
+type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
@@ -127,6 +129,11 @@ var ReqSignedIn = func(c *models.ReqContext) bool {
 
 var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
+}
+
+// ReqViewer returns true if the current user has models.ROLE_VIEWER. Note: this can be anonymous user as well
+var ReqViewer = func(c *models.ReqContext) bool {
+	return c.OrgRole.Includes(models.ROLE_VIEWER)
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {

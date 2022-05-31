@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 func TestUnmarshalConditionCMD(t *testing.T) {
@@ -343,6 +344,37 @@ func TestConditionsCmdExecute(t *testing.T) {
 			resultNumber: func() mathexp.Number {
 				v := valBasedNumber(nil)
 				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+				return v
+			},
+		},
+		{
+			name: "should accept numbers",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{
+						valBasedNumber(ptr.Float64(5)),
+						valBasedNumber(ptr.Float64(10)),
+						valBasedNumber(ptr.Float64(15)),
+					},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+				},
+			},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(1))
+				v.SetMeta([]EvalMatch{
+					{Value: ptr.Float64(5)},
+					{Value: ptr.Float64(10)},
+					{Value: ptr.Float64(15)},
+				})
 				return v
 			},
 		},

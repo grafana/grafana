@@ -25,7 +25,7 @@ import (
 var orgID = int64(1)
 var user = &models.SignedInUser{UserId: 1}
 
-func TestProvideFolderService(t *testing.T) {
+func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
@@ -37,15 +37,14 @@ func TestProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 
 		ProvideFolderService(
-			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, folderPermissions, ac,
+			cfg, dashboardService, store, nil, features, folderPermissions, ac,
 		)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
 }
 
-func TestFolderService(t *testing.T) {
+func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()

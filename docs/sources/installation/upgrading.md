@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/installation/upgrading/"]
-description = "Guide for upgrading Grafana"
-keywords = ["grafana", "configuration", "documentation", "upgrade"]
-title = "Upgrade Grafana"
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/upgrading/
+description: Guide for upgrading Grafana
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - upgrade
+title: Upgrade Grafana
+weight: 700
+---
 
 # Upgrade Grafana
 
@@ -175,7 +180,7 @@ you can do that by:
 - For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
   password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
+  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning/" >}}) for example of current
   configuration.
 
 ### Embedding Grafana
@@ -315,7 +320,7 @@ NOTE: Only snapshots created on Grafana 7.3 or later will use this column to sto
 
 ### Use of the root group in the Docker images
 
-The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later">}})
+The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later" >}})
 
 ## Upgrading to v7.5
 

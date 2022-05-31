@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/variables/add-text-box-variable/", "/docs/grafana/latest/variables/variable-types/add-text-box-variable/"]
-title = "Add a text box variable"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/add-text-box-variable/
+  - /docs/grafana/latest/variables/variable-types/add-text-box-variable/
+title: Add a text box variable
+weight: 300
+---
 
 # Add a text box variable
 

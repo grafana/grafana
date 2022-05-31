@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Button, Checkbox, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
@@ -15,9 +15,10 @@ type Props = {
   items: Map<string, Set<string>>;
   folder?: FolderDTO; // when we are loading in folder page
   onChange: OnMoveOrDeleleSelectedItems;
+  clearSelection: () => void;
 };
 
-export function ManageActions({ items, folder, onChange }: Props) {
+export function ManageActions({ items, folder, onChange, clearSelection }: Props) {
   const styles = useStyles2(getStyles);
 
   const canSave = folder?.canSave;
@@ -43,30 +44,17 @@ export function ManageActions({ items, folder, onChange }: Props) {
     setIsDeleteModalOpen(true);
   };
 
-  const onToggleAll = () => {
-    alert('TODO, toggle all....');
-  };
-
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          <Checkbox value={false} onClick={onToggleAll} />
+          <IconButton name={'check-square' as IconName} onClick={clearSelection} title="Uncheck everything" />
           <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
             Move
           </Button>
           <Button disabled={!canDelete} onClick={onDelete} icon="trash-alt" variant="destructive">
             Delete
           </Button>
-
-          {[...items.keys()].map((k) => {
-            const vals = items.get(k);
-            return (
-              <div key={k}>
-                {k} ({vals?.size})
-              </div>
-            );
-          })}
         </HorizontalGroup>
       </div>
 

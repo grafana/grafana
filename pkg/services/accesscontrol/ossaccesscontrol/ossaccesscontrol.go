@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,10 +14,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+func ProvideService(
+	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
+	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
+) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(features, cfg, provider)
+	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -32,11 +33,10 @@ func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, store accesscontrol.PermissionsStore) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:       features,
 		cfg:            cfg,
-		provider:       provider,
+		store:          store,
 		log:            log.New("accesscontrol"),
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
@@ -48,10 +48,9 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.C
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log            log.Logger
-	features       featuremgmt.FeatureToggles
 	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
-	provider       accesscontrol.PermissionsProvider
+	store          accesscontrol.PermissionsStore
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 }
@@ -100,12 +99,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
-}
-
-// GetUserRoles returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
-	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
@@ -115,7 +109,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	permissions := ac.getFixedPermissions(ctx, user)
 
-	dbPermissions, err := ac.provider.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
 		Roles:   ac.GetUserBuiltInRoles(user),
@@ -158,7 +152,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	builtInRoles := []string{string(user.OrgRole)}
 
 	// With built-in role simplifying, inheritance is performed upon role registration.
-	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
+	if ac.cfg.RBACBuiltInRoleAssignmentEnabled {
 		for _, br := range user.OrgRole.Children() {
 			builtInRoles = append(builtInRoles, string(br))
 		}

@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/administration/configuration/", "/docs/grafana/latest/installation/configuration/"]
-description = "Configuration documentation"
-keywords = ["grafana", "configuration", "documentation"]
-title = "Configuration"
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/configuration/
+  - /docs/grafana/latest/installation/configuration/
+description: Configuration documentation
+keywords:
+  - grafana
+  - configuration
+  - documentation
+title: Configuration
+weight: 150
+---
 
 # Configuration
 
@@ -122,7 +127,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 <hr />
 
@@ -429,12 +434,6 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
-### max_idle_connections_per_host
-
-[Deprecated - use max_idle_connections instead]
-
-The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
-
 ### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
@@ -602,7 +601,7 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
 all plugins and core features that depend on angular support will stop working.
 
 Current core features that will stop working:
@@ -668,7 +667,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 
@@ -810,7 +809,7 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 
@@ -1381,7 +1380,7 @@ Configures Query history in Explore.
 
 ### enabled
 
-Enable or disable the Query history. Default is `disabled`.
+Enable or disable the Query history. Default is `enabled`.
 
 ## [metrics]
 
@@ -1945,3 +1944,7 @@ Maximum duration of a single crawl. Default is 1h.
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
 Refer to the [dashboards previews]({{< relref "../dashboards/previews.md" >}}) documentation for detailed instructions.
+
+## [rbac]
+
+Refer to [Role-based access control]({{< relref "../enterprise/access-control/about-rbac.md" >}}) for more information.

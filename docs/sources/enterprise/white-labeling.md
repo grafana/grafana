@@ -1,16 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
-description = "Change the look of Grafana to match your corporate brand"
-keywords = ["grafana", "white-labeling", "enterprise"]
-title = "White labeling"
-weight = 1300
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/white-labeling/
+description: Change the look of Grafana to match your corporate brand
+keywords:
+  - grafana
+  - white-labeling
+  - enterprise
+title: White labeling
+weight: 1300
+---
 
 # White labeling
 
 White labeling allows you to replace the Grafana brand and logo with your own corporate brand and logo.
 
-> Only available in Grafana Enterprise v6.6+.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 Grafana Enterprise has white labeling options in the `grafana.ini` file. As with all configuration options, you can also set them with environment variables.
 
@@ -31,7 +35,7 @@ You can change the following elements:
 
 {{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
-The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md">}}).
+The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md" >}}).
 
 ```ini
 # Enterprise only
