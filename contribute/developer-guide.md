@@ -138,7 +138,7 @@ go run build.go test
 
 ### Run SQLLite, PostgreSQL and MySQL integration tests
 
-By default grafana runs SQLite, to run test with SQLite
+By default, Grafana runs SQLite to run tests with SQLite.
 
 ```bash
 go test -covermode=atomic -tags=integration ./pkg/...
