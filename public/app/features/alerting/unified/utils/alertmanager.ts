@@ -117,6 +117,16 @@ export function matchersToString(matchers: Matcher[]) {
   return `{${combinedMatchers}}`;
 }
 
+// this function is used to unescape label values that are recorded in the "matchers" property as opposed to "object_matchers"
+// when we edit a Grafana managed rule that was migrated
+function unescapeMatcherValue(value: string) {
+  let trimmed = value.trim().replace(/\\"/g, '"');
+  if (trimmed.startsWith('"') && trimmed.endsWith('"') && !trimmed.endsWith('\\"')) {
+    trimmed = trimmed.slice(1, trimmed.length - 1);
+  }
+  return trimmed.replace(/\\"/g, '"');
+}
+
 export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
@@ -146,7 +156,7 @@ export function parseMatcher(matcher: string): Matcher {
   }
   const [operator, idx] = operatorsFound[0];
   const name = trimmed.slice(0, idx).trim();
-  const value = trimmed.slice(idx + operator.length).trim();
+  const value = unescapeMatcherValue(trimmed.slice(idx + operator.length).trim());
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }

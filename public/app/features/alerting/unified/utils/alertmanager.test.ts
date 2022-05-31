@@ -38,23 +38,27 @@ describe('Alertmanager utils', () => {
       });
     });
 
-    // Alertmanager has some strict requirements for label values;
-    // we should not automatically encode or decode any values sent
-    // and instead let AM return any errors like (matcher value contains unescaped double quote: bar"baz")
-    // and allow the user to update the values to the correct format
+    // For cloud rules we use the "matchers" property where the entire matcher is encoded in a single string and values might need to be wrapped in escaped double quotes.
+    // Grafana managed rules instead use a "object_matchers" proprietary field where values do not need to be escaped.
     //
     // see https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L55-L99
     // and https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L101-L178
-    it('should not parse escaped values', () => {
-      expect(parseMatcher('foo="^[a-z0-9-]{1}[a-z0-9-]{0,30}$"')).toEqual<Matcher>({
+    it('should parse escaped values', () => {
+      expect(parseMatcher('foo="bar"')).toEqual<Matcher>({
         name: 'foo',
-        value: '"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"',
+        value: 'bar',
         isRegex: false,
+        isEqual: true,
+      });
+      expect(parseMatcher('foo=~"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"')).toEqual<Matcher>({
+        name: 'foo',
+        value: '^[a-z0-9-]{1}[a-z0-9-]{0,30}$',
+        isRegex: true,
         isEqual: true,
       });
       expect(parseMatcher('foo=~bar\\"baz\\"')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar\\"baz\\"',
+        value: 'bar"baz"',
         isRegex: true,
         isEqual: true,
       });
