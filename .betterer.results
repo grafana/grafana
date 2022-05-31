@@ -167,9 +167,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/org/OrgProfile.test.tsx:623809345": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/teams/TeamMembers.test.tsx:4089428239": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/teams/TeamPages.test.tsx:3990420214": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
