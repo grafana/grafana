@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"xorm.io/xorm"
 )
@@ -58,6 +59,10 @@ func (id ProviderID) Kind() (string, error) {
 	}
 
 	return parts[0], nil
+}
+
+func KeyName(scope string, providerID ProviderID) string {
+	return fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, providerID)
 }
 
 // BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.

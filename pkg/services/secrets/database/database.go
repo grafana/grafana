@@ -155,6 +155,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			// Updating current data key by re-encrypting it with current provider.
 			// Accessing the current provider within providers map should be safe.
 			k.Provider = currProvider
+			k.Prefix = secrets.KeyName(k.Scope, currProvider)
 			k.Updated = time.Now()
 			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
 			if err != nil {

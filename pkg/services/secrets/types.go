@@ -13,6 +13,7 @@ type DataKey struct {
 	Scope         string
 	Provider      ProviderID
 	EncryptedData []byte
+	Prefix        string
 	Created       time.Time
 	Updated       time.Time
 }
