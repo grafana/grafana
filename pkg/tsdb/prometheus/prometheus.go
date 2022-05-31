@@ -74,7 +74,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) {
+	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) || s.features.IsEnabled(featuremgmt.FlagPrometheusWideSeries) {
 		return i.queryData.Execute(ctx, req)
 	}
 

@@ -152,6 +152,10 @@
     "menuTabs": {
       "height": 41
     },
+    "textHighlight": {
+      "text": "#000000",
+      "background": "#F5B73D"
+    },
     "horizontalDrawer": {
       "defaultHeight": 400
     }

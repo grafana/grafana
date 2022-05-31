@@ -1,13 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/folder/", "/docs/grafana/latest/http_api/folder/"]
-description = "Grafana Folder HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "folder"]
-title = "Folder HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/folder/
+  - /docs/grafana/latest/http_api/folder/
+description: Grafana Folder HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - folder
+title: 'Folder HTTP API '
+---
 
 # Folder API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
