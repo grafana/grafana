@@ -32,13 +32,14 @@ import {
   ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
+  toNumber,
 } from './valueFormats';
 
 export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
-      { name: 'Number', id: 'none', fn: toFixedUnit('') },
+      { name: 'Number', id: 'none', fn: toNumber },
       { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
