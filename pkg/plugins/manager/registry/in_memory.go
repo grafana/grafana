@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type InMemory struct {
 	store map[string]*plugins.Plugin
 	mu    sync.RWMutex
-	log   log.Logger
 }
 
 func ProvideService() *InMemory {
@@ -22,7 +20,6 @@ func ProvideService() *InMemory {
 func NewInMemory() *InMemory {
 	return &InMemory{
 		store: make(map[string]*plugins.Plugin),
-		log:   log.New("plugin.registry"),
 	}
 }
 
