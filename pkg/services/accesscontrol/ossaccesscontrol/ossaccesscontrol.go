@@ -112,7 +112,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
-		Roles:   ac.GetUserBuiltInRoles(user),
+		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
 		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
 	})
 	if err != nil {
@@ -137,7 +137,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []*accesscontrol.Permission {
 	permissions := make([]*accesscontrol.Permission, 0)
 
-	for _, builtin := range ac.GetUserBuiltInRoles(user) {
+	for _, builtin := range accesscontrol.GetOrgRoles(ac.cfg, user) {
 		if basicRole, ok := ac.roles[builtin]; ok {
 			for i := range basicRole.Permissions {
 				permissions = append(permissions, &basicRole.Permissions[i])
