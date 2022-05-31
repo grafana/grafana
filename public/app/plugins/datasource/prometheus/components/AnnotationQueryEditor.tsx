@@ -2,9 +2,10 @@ import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { EditorRow, EditorField, EditorSwitch, Space, EditorRows } from '@grafana/experimental';
-import { Input, AutoSizeInput } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
 import { PromQueryCodeEditor } from '../querybuilder/components/PromQueryCodeEditor';
+import { AutoSizeInput } from '../querybuilder/shared/AutoSizeInput';
 import { PromQuery } from '../types';
 
 import { PromQueryEditorProps } from './types';
