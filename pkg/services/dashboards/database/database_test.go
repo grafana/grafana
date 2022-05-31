@@ -585,7 +585,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
-	sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string
@@ -654,6 +654,7 @@ func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64,
 		require.NoError(t, err)
 		return err
 	})
+	require.NoError(t, err)
 }
 
 func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {

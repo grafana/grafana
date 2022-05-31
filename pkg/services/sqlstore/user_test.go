@@ -12,7 +12,6 @@ import (
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
-
 	ss := InitTestDB(t)
 	user := &models.SignedInUser{
 		OrgId:       1,

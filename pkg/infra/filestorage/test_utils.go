@@ -251,7 +251,6 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	default:
 		t.Fatalf("unrecognized output %s", interfaceName(output))
 	}
-
 }
 
 func formatPathStructure(files []*File) string {
@@ -357,5 +356,4 @@ func executeTestStep(t *testing.T, ctx context.Context, step interface{}, stepNu
 	default:
 		t.Fatalf("unrecognized step %s", name)
 	}
-
 }
