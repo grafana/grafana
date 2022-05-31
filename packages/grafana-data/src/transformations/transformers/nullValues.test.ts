@@ -254,39 +254,16 @@ describe('nullInsertThreshold Transformer', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [2, 4, 6] },
-        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [3, 4, 6] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [1, 1, 1] }, //noValue: '0'
       ],
     });
 
     const result = processNullValues([df], {
       from: dateTime(0),
-      to: dateTime(8),
+      to: dateTime(9),
       raw: {} as any,
     });
-    expect(dataFrameToJSON(result[0]).data).toMatchInlineSnapshot(`
-      Object {
-        "values": Array [
-          Array [
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-          ],
-          Array [
-            null,
-            1,
-            null,
-            1,
-            null,
-            1,
-            null,
-          ],
-        ],
-      }
-    `);
+    expect(dataFrameToJSON(result[0]).data).toMatchInlineSnapshot();
   });
 });

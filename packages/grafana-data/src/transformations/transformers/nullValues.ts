@@ -44,6 +44,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
   }
 
   const thresholds = frame.fields.map((field) => {
+    // NOTE: This value at the end is default threshold, what should it be when we don't have a value?
     return field.config.custom?.insertNulls ?? refField.config.interval ?? null;
   });
 
@@ -76,10 +77,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
       true
     );
 
-    console.log(filledFieldValues);
-
     if (filledFieldValues === frameValues) {
-      console.log('went here');
       return frame;
     }
 
@@ -120,8 +118,14 @@ function nullInsertThreshold(
 
   // Insert a frame time at the beginning of the sequence if the previous value
   // minus the threshold is greater than the minimum
-  if (refFieldPseudoMin != null && prevValue - threshold >= refFieldPseudoMin) {
-    refValuesNew.push(getInsertValue(refFieldPseudoMin, prevValue, threshold));
+  if (refFieldPseudoMin != null) {
+    let fillPrev = prevValue;
+    let fillValue = prevValue - threshold;
+    while (fillValue >= refFieldPseudoMin) {
+      refValuesNew.unshift(getInsertValue(fillPrev, fillValue, threshold));
+      fillPrev = fillValue;
+      fillValue -= threshold;
+    }
   }
 
   // Insert the initial value from the original sequence
@@ -150,8 +154,11 @@ function nullInsertThreshold(
 
   // Insert a frame time at the end of the sequence if the previous value
   // plus the threshold is greater than the maximum
-  if (refFieldPseudoMax != null && prevValue + threshold <= refFieldPseudoMax) {
-    refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
+  if (refFieldPseudoMax != null) {
+    while (prevValue + threshold <= refFieldPseudoMax) {
+      refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
+      prevValue += threshold;
+    }
   }
 
   // Retrieve the new length, if we didn't fill
@@ -224,6 +231,8 @@ function nullToValue(frame: DataFrame) {
         }
       }
 
+      console.log(values);
+
       // delete f.state?.calcs; // force recalculation of stats;
     }
   });
@@ -267,16 +276,23 @@ export function nullToUndefThreshold(refValues: number[], fieldValues: any[], ma
  */
 export function processNullValues(frames: DataFrame[], timeRange: TimeRange): DataFrame[] {
   return frames.map((frame) => {
+    // console.log(frame);
+
+    // Insert nulls
     let f = applyNullInsertThreshold({
       frame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
 
-    // f.fields.map((fieds) => console.log(fieds.values));
+    // console.log(f);
 
-    // f = nullToValue(frame);
-    return f;
+    // Convert null to the configured value
+    f = nullToValue(f);
+
+    // console.log(f);
+
     //return applySpanNullsThresholds(f, () => true);
+    return f;
   });
 }
