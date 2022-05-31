@@ -159,97 +159,6 @@ describe('Tempo data source', () => {
     ]);
   });
 
-  it('runs service graph queries', async () => {
-    const ds = new TempoDatasource({
-      ...defaultSettings,
-      jsonData: {
-        serviceMap: {
-          datasourceUid: 'prom',
-        },
-      },
-    });
-    setDataSourceSrv(backendSrvWithPrometheus as any);
-    const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
-    );
-
-    expect(response.data).toHaveLength(3);
-    expect(response.state).toBe(LoadingState.Done);
-
-    // APM table
-    expect(response.data[0].fields[0].name).toBe('Name');
-    expect(response.data[0].fields[0].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
-    expect(response.data[0].fields[0].values.toArray()[1]).toBe('HTTP GET - root');
-
-    expect(response.data[0].fields[1].name).toBe('Rate');
-    expect(response.data[0].fields[1].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[1].values.toArray()[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[1].values.toArray()[1]).toBe(12.121331111401608);
-    expect(response.data[0].fields[1].config.decimals).toBe(2);
-    expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
-    expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
-    );
-    expect(response.data[0].fields[1].config.links[0].internal.query.range).toBe(true);
-    expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
-    expect(response.data[0].fields[1].config.links[0].internal.query.instant).toBe(false);
-
-    expect(response.data[0].fields[2].values.toArray().length).toBe(2);
-    expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
-    expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
-    expect(response.data[0].fields[2].config.custom.displayMode).toBe('lcd-gauge');
-    expect(response.data[0].fields[2].config.decimals).toBe(3);
-
-    expect(response.data[0].fields[3].name).toBe('Error Rate');
-    expect(response.data[0].fields[3].values.length).toBe(2);
-    expect(response.data[0].fields[3].values[0]).toBe(3.75164671814457);
-    expect(response.data[0].fields[3].values[1]).toBe(3.121331111401608);
-    expect(response.data[0].fields[3].config.decimals).toBe(2);
-    expect(response.data[0].fields[3].config.links[0].title).toBe('Error Rate');
-    expect(response.data[0].fields[3].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
-    );
-    expect(response.data[0].fields[3].config.links[0].internal.query.range).toBe(true);
-    expect(response.data[0].fields[3].config.links[0].internal.query.exemplar).toBe(true);
-    expect(response.data[0].fields[3].config.links[0].internal.query.instant).toBe(false);
-
-    expect(response.data[0].fields[4].values.length).toBe(2);
-    expect(response.data[0].fields[4].values[0]).toBe(3.75164671814457);
-    expect(response.data[0].fields[4].values[1]).toBe(3.121331111401608);
-    expect(response.data[0].fields[4].config.color.mode).toBe('continuous-RdYlGr');
-    expect(response.data[0].fields[4].config.custom.displayMode).toBe('lcd-gauge');
-    expect(response.data[0].fields[4].config.decimals).toBe(3);
-
-    expect(response.data[0].fields[5].name).toBe('Duration (p90)');
-    expect(response.data[0].fields[5].values.length).toBe(2);
-    expect(response.data[0].fields[5].values[0]).toBe('0');
-    expect(response.data[0].fields[5].values[1]).toBe(0.12003505696757232);
-    expect(response.data[0].fields[5].config.unit).toBe('s');
-    expect(response.data[0].fields[5].config.links[0].title).toBe('Duration');
-    expect(response.data[0].fields[5].config.links[0].internal.query.expr).toBe(
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
-    );
-    expect(response.data[0].fields[5].config.links[0].internal.query.range).toBe(true);
-    expect(response.data[0].fields[5].config.links[0].internal.query.exemplar).toBe(true);
-    expect(response.data[0].fields[5].config.links[0].internal.query.instant).toBe(false);
-
-    expect(response.data[0].fields[6].config.links[0].url).toBe('');
-    expect(response.data[0].fields[6].config.links[0].title).toBe('Tempo');
-    expect(response.data[0].fields[6].config.links[0].internal.query.queryType).toBe('nativeSearch');
-    expect(response.data[0].fields[6].config.links[0].internal.query.spanName).toBe('${__data.fields[0]}');
-
-    // Service graph
-    expect(response.data[1].name).toBe('Nodes');
-    expect(response.data[1].fields[0].values.length).toBe(3);
-    expect(response.data[1].fields[0].config.links.length).toBeGreaterThan(0);
-    expect(response.data[1].fields[0].config.links).toEqual(serviceGraphLinks);
-
-    expect(response.data[2].name).toBe('Edges');
-    expect(response.data[2].fields[0].values.length).toBe(2);
-  });
-
   it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
@@ -401,6 +310,99 @@ describe('Tempo data source', () => {
     });
     const lokiDS4 = ds4.getLokiSearchDS();
     expect(lokiDS4).toBe(undefined);
+  });
+});
+
+describe('Tempo apm table', () => {
+  it('runs service graph queries', async () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        serviceMap: {
+          datasourceUid: 'prom',
+        },
+      },
+    });
+    setDataSourceSrv(backendSrvWithPrometheus as any);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+    );
+
+    expect(response.data).toHaveLength(3);
+    expect(response.state).toBe(LoadingState.Done);
+
+    // APM table
+    expect(response.data[0].fields[0].name).toBe('Name');
+    expect(response.data[0].fields[0].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
+    expect(response.data[0].fields[0].values.toArray()[1]).toBe('HTTP GET - root');
+
+    expect(response.data[0].fields[1].name).toBe('Rate');
+    expect(response.data[0].fields[1].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[1].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[1].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[1].config.decimals).toBe(2);
+    expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
+    expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
+    expect(response.data[0].fields[1].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[1].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[2].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
+    expect(response.data[0].fields[2].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[2].config.decimals).toBe(3);
+
+    expect(response.data[0].fields[3].name).toBe('Error Rate');
+    expect(response.data[0].fields[3].values.length).toBe(2);
+    expect(response.data[0].fields[3].values[0]).toBe(3.75164671814457);
+    expect(response.data[0].fields[3].values[1]).toBe(3.121331111401608);
+    expect(response.data[0].fields[3].config.decimals).toBe(2);
+    expect(response.data[0].fields[3].config.links[0].title).toBe('Error Rate');
+    expect(response.data[0].fields[3].config.links[0].internal.query.expr).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    );
+    expect(response.data[0].fields[3].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[3].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[3].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[4].values.length).toBe(2);
+    expect(response.data[0].fields[4].values[0]).toBe(3.75164671814457);
+    expect(response.data[0].fields[4].values[1]).toBe(3.121331111401608);
+    expect(response.data[0].fields[4].config.color.mode).toBe('continuous-RdYlGr');
+    expect(response.data[0].fields[4].config.custom.displayMode).toBe('lcd-gauge');
+    expect(response.data[0].fields[4].config.decimals).toBe(3);
+
+    expect(response.data[0].fields[5].name).toBe('Duration (p90)');
+    expect(response.data[0].fields[5].values.length).toBe(2);
+    expect(response.data[0].fields[5].values[0]).toBe('0');
+    expect(response.data[0].fields[5].values[1]).toBe(0.12003505696757232);
+    expect(response.data[0].fields[5].config.unit).toBe('s');
+    expect(response.data[0].fields[5].config.links[0].title).toBe('Duration');
+    expect(response.data[0].fields[5].config.links[0].internal.query.expr).toBe(
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
+    );
+    expect(response.data[0].fields[5].config.links[0].internal.query.range).toBe(true);
+    expect(response.data[0].fields[5].config.links[0].internal.query.exemplar).toBe(true);
+    expect(response.data[0].fields[5].config.links[0].internal.query.instant).toBe(false);
+
+    expect(response.data[0].fields[6].config.links[0].url).toBe('');
+    expect(response.data[0].fields[6].config.links[0].title).toBe('Tempo');
+    expect(response.data[0].fields[6].config.links[0].internal.query.queryType).toBe('nativeSearch');
+    expect(response.data[0].fields[6].config.links[0].internal.query.spanName).toBe('${__data.fields[0]}');
+
+    // Service graph
+    expect(response.data[1].name).toBe('Nodes');
+    expect(response.data[1].fields[0].values.length).toBe(3);
+    expect(response.data[1].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[1].fields[0].config.links).toEqual(serviceGraphLinks);
+
+    expect(response.data[2].name).toBe('Edges');
+    expect(response.data[2].fields[0].values.length).toBe(2);
   });
 
   it('should build expr correctly', () => {
