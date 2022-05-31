@@ -70,7 +70,7 @@ const setup = (propOverrides: Partial<Props>) => {
   };
 };
 
-const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
+const getDefaultServiceAccount = (): ServiceAccountDTO => ({
   id: 42,
   name: 'Data source scavenger',
   login: 'sa-data-source-scavenger',
@@ -82,7 +82,7 @@ const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
   createdAt: '2022-01-01 00:00:00',
 });
 
-const getDefaultToken: () => ApiKey = () => ({
+const getDefaultToken = (): ApiKey => ({
   id: 142,
   name: 'sa-data-source-scavenger-74f1634b-3273-4da6-994b-24bd32f5bdc6',
   role: OrgRole.Viewer,
@@ -109,7 +109,7 @@ describe('ServiceAccountPage tests', () => {
       },
       tokens: [getDefaultToken()],
     });
-    expect(screen.getByText(/^Enable service account$/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enable service account' })).toBeInTheDocument();
   });
 
   it('Should display Add token button for account without tokens', () => {
@@ -119,7 +119,7 @@ describe('ServiceAccountPage tests', () => {
         tokens: 0,
       },
     });
-    expect(screen.getByText(/^Add service account token$/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add service account token' })).toBeInTheDocument();
   });
 
   it('Should display token info', () => {

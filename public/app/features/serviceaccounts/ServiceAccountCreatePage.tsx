@@ -150,5 +150,4 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
   );
 };
 
-const ServiceAccountCreatePage = connect(mapStateToProps)(ServiceAccountCreatePageUnconnected);
-export default ServiceAccountCreatePage;
+export default connect(mapStateToProps)(ServiceAccountCreatePageUnconnected);

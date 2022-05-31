@@ -39,9 +39,6 @@ jest.mock('app/core/core', () => ({
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
-  // const createServiceAccountTokenMock = jest.fn();
-  // const deleteServiceAccountMock = jest.fn();
-
   const props: Props = {
     navModel: {
       main: {
@@ -55,11 +52,7 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ServiceAccountCreatePageUnconnected {...props} />);
-  return {
-    rerender,
-    props,
-  };
+  render(<ServiceAccountCreatePageUnconnected {...props} />);
 };
 
 describe('ServiceAccountCreatePage tests', () => {
