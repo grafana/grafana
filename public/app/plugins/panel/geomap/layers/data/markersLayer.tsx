@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import {
+  DataFrame,
   MapLayerRegistryItem,
   MapLayerOptions,
   PanelData,
@@ -113,43 +114,44 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData) => {
+      update: (data: PanelData, frame?: DataFrame) => {
         if (!data.series?.length) {
           source.clear();
           return; // ignore empty
         }
-
-        for (const frame of data.series) {
-          if (style.fields) {
-            const dims: StyleDimensions = {};
-            if (style.fields.color) {
-              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-            }
-            if (style.fields.size) {
-              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
-            }
-            if (style.fields.text) {
-              dims.text = getTextDimension(frame, style.config.text!);
-            }
-            if (style.fields.rotation) {
-              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
-            }
-            style.dims = dims;
-          }
-
-          // Post updates to the legend component
-          if (legend) {
-            legendProps.next({
-              styleConfig: style,
-              size: style.dims?.size,
-              layerName: options.name,
-              layer: vectorLayer,
-            });
-          }
-
-          source.update(frame);
-          break; // Only the first frame for now!
+        if (!frame) {
+          source.clear();
+          return;
         }
+        if (style.fields) {
+          const dims: StyleDimensions = {};
+          if (style.fields.color) {
+            dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+          }
+          if (style.fields.size) {
+            dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+          }
+          if (style.fields.text) {
+            dims.text = getTextDimension(frame, style.config.text!);
+          }
+          if (style.fields.rotation) {
+            dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+          }
+          style.dims = dims;
+        }
+
+        // Post updates to the legend component
+        if (legend) {
+          legendProps.next({
+            styleConfig: style,
+            size: style.dims?.size,
+            layerName: options.name,
+            layer: vectorLayer,
+          });
+        }
+
+        source.update(frame);
+
       },
 
       // Marker overlay options

@@ -1,4 +1,5 @@
 import {
+  DataFrame,
   MapLayerRegistryItem,
   MapLayerOptions,
   PanelData,
@@ -153,7 +154,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
+      update: (data: PanelData, frame: DataFrame | undefined) => {
         console.log('todo... find values matching the ID and update');
       },
       registerOptionsUI: (builder) => {

@@ -252,7 +252,8 @@ export class GeomapPanel extends Component<Props, State> {
   dataChanged(data: PanelData) {
     for (const state of this.layers) {
       if (state.handler.update) {
-        state.handler.update(data);
+        const frame = this.findFrameToRender(data, state.options);
+        state.handler.update(data, frame);
       }
     }
   }
@@ -469,7 +470,8 @@ export class GeomapPanel extends Component<Props, State> {
 
       // initialize with new data
       if (info.handler.update) {
-        info.handler.update(this.props.data);
+        const frame = this.findFrameToRender(this.props.data, newOptions);
+        info.handler.update(this.props.data, frame);
       }
     } catch (err) {
       console.warn('ERROR', err);
@@ -506,10 +508,6 @@ export class GeomapPanel extends Component<Props, State> {
     const handler = await item.create(map, options, config.theme2);
     const layer = handler.init();
 
-    if (handler.update) {
-      handler.update(this.props.data);
-    }
-
     if (!options.name) {
       options.name = this.getNextLayerName();
     }
@@ -533,6 +531,12 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
+
+    if (handler.update) {
+      const frame = this.findFrameToRender(this.props.data, options);
+      handler.update(this.props.data, frame);
+    }
+
     return state;
   }
 
@@ -630,6 +634,38 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     this.setState({ topRight });
+  }
+
+  findFrameToRender(data: PanelData, options: MapLayerOptions): DataFrame | undefined {
+    const frame = data.series?.find((frame) => {
+      return options.dataquery === frame.refId;
+    });
+    if (frame) {
+      return frame;
+    }
+    // It's possible that the series name changed, try to find it and recover
+    // Check if the value we had selected is missing from the new list
+    let updatedVal = data.series.find((val) => {
+      return val.refId === options.dataquery;
+    });
+    if (!updatedVal) {
+      // Previously selected value is missing from the new list.
+      // Find the value that is in the new list but isn't in the old list
+      let changedTo = data.series.find((val) => {
+        return !this.props.data.series.some((val2) => {
+          return val2.refId === val.refId;
+        });
+      });
+      if (changedTo) {
+        // Found the new value, we assume the old value changed to this one, so we'll use it
+        const newOpts = {
+          ...options,
+          dataquery: changedTo.refId,
+        };
+        this.updateLayer(options.name, newOpts);
+      }
+    }
+    return;
   }
 
   getLegends() {

@@ -1,4 +1,5 @@
 import {
+  DataFrame,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
@@ -66,9 +67,13 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
-        const frame = data.series[0];
+      update: (data: PanelData, frame?: DataFrame) => {
+        if (!data.series?.length) {
+          source.clear();
+          return; // ignore empty
+        }
         if (!frame) {
+          source.clear();
           return;
         }
         source.update(frame);
