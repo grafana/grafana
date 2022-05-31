@@ -247,11 +247,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
 	if err != nil {
-		st.log.Warn("Error generating a screenshot for an alert instance.",
+		st.log.Warn("failed to generate a screenshot for an alert instance",
 			"alert_rule", alertRule.UID,
 			"dashboard", alertRule.DashboardUID,
 			"panel", alertRule.PanelID,
-			"error", err)
+			"err", err)
 	}
 
 	st.set(currentState)
