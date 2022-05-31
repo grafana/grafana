@@ -43,21 +43,21 @@ func TestInMemory(t *testing.T) {
 }
 
 func TestInMemory_Add(t *testing.T) {
-	type fields struct {
+	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
 	type args struct {
 		p *plugins.Plugin
 	}
 	var tests = []struct {
-		name   string
-		fields fields
-		args   args
-		err    error
+		name  string
+		mocks mocks
+		args  args
+		err   error
 	}{
 		{
 			name: "Can add a new plugin to the registry",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
@@ -70,7 +70,7 @@ func TestInMemory_Add(t *testing.T) {
 		},
 		{
 			name: "Cannot add a plugin to the registry if it already exists",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginID: {
 						JSONData: plugins.JSONData{
@@ -92,7 +92,7 @@ func TestInMemory_Add(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &InMemory{
-				store: tt.fields.store,
+				store: tt.mocks.store,
 			}
 			err := i.Add(context.Background(), tt.args.p)
 			require.Equal(t, tt.err, err)
@@ -101,22 +101,22 @@ func TestInMemory_Add(t *testing.T) {
 }
 
 func TestInMemory_Plugin(t *testing.T) {
-	type fields struct {
+	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
 	type args struct {
 		pluginID string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   *plugins.Plugin
-		exists bool
+		name     string
+		mocks    mocks
+		args     args
+		expected *plugins.Plugin
+		exists   bool
 	}{
 		{
 			name: "Can retrieve a plugin",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginID: {
 						JSONData: plugins.JSONData{
@@ -128,7 +128,7 @@ func TestInMemory_Plugin(t *testing.T) {
 			args: args{
 				pluginID: pluginID,
 			},
-			want: &plugins.Plugin{
+			expected: &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: pluginID,
 				},
@@ -137,42 +137,42 @@ func TestInMemory_Plugin(t *testing.T) {
 		},
 		{
 			name: "Non-existing plugin",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
 				pluginID: pluginID,
 			},
-			want:   nil,
-			exists: false,
+			expected: nil,
+			exists:   false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &InMemory{
-				store: tt.fields.store,
+				store: tt.mocks.store,
 			}
 			p, exists := i.Plugin(context.Background(), tt.args.pluginID)
 			if exists != tt.exists {
 				t.Errorf("Plugin() got1 = %v, expected %v", exists, tt.exists)
 			}
-			require.Equal(t, tt.want, p)
+			require.Equal(t, tt.expected, p)
 		})
 	}
 }
 
 func TestInMemory_Plugins(t *testing.T) {
-	type fields struct {
+	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
 	tests := []struct {
 		name     string
-		fields   fields
+		mocks    mocks
 		expected []*plugins.Plugin
 	}{
 		{
 			name: "Can retrieve a list of plugin",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginID: {
 						JSONData: plugins.JSONData{
@@ -201,7 +201,7 @@ func TestInMemory_Plugins(t *testing.T) {
 		},
 		{
 			name: "No existing plugins",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{},
 			},
 			expected: []*plugins.Plugin{},
@@ -210,7 +210,7 @@ func TestInMemory_Plugins(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &InMemory{
-				store: tt.fields.store,
+				store: tt.mocks.store,
 			}
 			result := i.Plugins(context.Background())
 			require.Equal(t, tt.expected, result)
@@ -219,21 +219,21 @@ func TestInMemory_Plugins(t *testing.T) {
 }
 
 func TestInMemory_Remove(t *testing.T) {
-	type fields struct {
+	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
 	type args struct {
 		pluginID string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		err    error
+		name  string
+		mocks mocks
+		args  args
+		err   error
 	}{
 		{
 			name: "Can remove a plugin",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginID: {
 						JSONData: plugins.JSONData{
@@ -247,7 +247,7 @@ func TestInMemory_Remove(t *testing.T) {
 			},
 		}, {
 			name: "Cannot remove a plugin from the registry if it doesn't exist",
-			fields: fields{
+			mocks: mocks{
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
@@ -259,7 +259,7 @@ func TestInMemory_Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &InMemory{
-				store: tt.fields.store,
+				store: tt.mocks.store,
 			}
 			err := i.Remove(context.Background(), tt.args.pluginID)
 			require.Equal(t, tt.err, err)
