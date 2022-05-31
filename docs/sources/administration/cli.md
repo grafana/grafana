@@ -1,9 +1,15 @@
-+++
-title = "Grafana CLI"
-description = "Guide to using grafana-cli"
-keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/cli/
+description: Guide to using grafana-cli
+keywords:
+  - grafana
+  - cli
+  - grafana-cli
+  - command line interface
+title: Grafana CLI
+weight: 400
+---
 
 # Grafana CLI
 
@@ -131,7 +137,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 ### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 
@@ -213,7 +219,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
 
-If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../http_api/user.md#change-password" >}}).
+If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../developers/http_api/user.md#change-password" >}}).
 
 ### Migrate data and encrypt passwords
 

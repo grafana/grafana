@@ -1,8 +1,10 @@
-+++
-title = "About expressions"
-weight = 10
-aliases = ["/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+  - /docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+title: About expressions
+weight: 10
+---
 
 # About expressions
 

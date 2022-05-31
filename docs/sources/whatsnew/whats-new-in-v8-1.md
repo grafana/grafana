@@ -1,12 +1,19 @@
-+++
-title = "What's new in Grafana v8.1"
-description = "Feature and improvement highlights for Grafana v8.1"
-keywords = ["grafana", "new", "documentation", "8.1", "release notes"]
-weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-1/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v8-1/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v8-1/
+description: Feature and improvement highlights for Grafana v8.1
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.1'
+  - release notes
+title: What's new in Grafana v8.1
+weight: -33
+---
 
 # What’s new in Grafana v8.1
 
@@ -129,7 +136,7 @@ We’d love as much feedback as possible about this change, because we are consi
 
 ### High availability setup support for Grafana Live
 
-We have added an experimental HA setup support for Grafana Live with Redis. This resolves the limitation when clients were connected to different Grafana instances and those instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+We have added an experimental HA setup support for Grafana Live with Redis. This resolves the limitation when clients were connected to different Grafana instances and those instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ## Enterprise features
 

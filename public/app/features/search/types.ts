@@ -40,6 +40,7 @@ export interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
+  icon?: string; // used for grid view
   uid?: string;
   uri: string;
   url: string;
@@ -110,5 +111,4 @@ export interface SearchQueryParams {
 }
 
 // new Search Types
-export type OnDeleteSelectedItems = (folders: string[], dashboards: string[]) => void;
-export type OnMoveSelectedItems = (selectedDashboards: string[], folder: FolderInfo | null) => void;
+export type OnMoveOrDeleleSelectedItems = () => void;

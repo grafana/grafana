@@ -16,14 +16,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -97,13 +96,13 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `{"message":"Unauthorized"}`,
 			},
 			{
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -132,7 +131,7 @@ func TestAMConfigAccess(t *testing.T) {
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := ioutil.ReadAll(resp.Body)
 				require.NoError(t, err)
-				require.JSONEq(t, tc.expBody, string(b))
+				require.Contains(t, string(b), tc.expBody)
 			})
 		}
 	})
@@ -170,10 +169,10 @@ func TestAMConfigAccess(t *testing.T) {
 				expBody:   `{"message": "Unauthorized"}`,
 			},
 			{
-				desc:      "viewer request should fail",
+				desc:      "viewer request should succeed",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expStatus: http.StatusOK,
+				expBody:   cfgBody,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -230,25 +229,25 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v2/silences",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `{"message":"Unauthorized"}`,
 			},
 			{
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id": "0", "message":"silence created"}`,
+				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id": "0", "message":"silence created"}`,
+				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 		}
 
@@ -269,7 +268,7 @@ func TestAMConfigAccess(t *testing.T) {
 					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
 					b = re.ReplaceAll(b, []byte(`"id":"0"`))
 				}
-				require.JSONEq(t, tc.expBody, string(b))
+				require.Contains(t, string(b), tc.expBody)
 			})
 		}
 	})
@@ -336,25 +335,25 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `{"message":"Unauthorized"}`,
 			},
 			{
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusOK,
-				expBody:   `{"message": "silence deleted"}`,
+				expBody:   `{"message":"silence deleted"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusOK,
-				expBody:   `{"message": "silence deleted"}`,
+				expBody:   `{"message":"silence deleted"}`,
 			},
 		}
 
@@ -387,7 +386,7 @@ func TestAMConfigAccess(t *testing.T) {
 				if tc.expStatus == http.StatusOK {
 					unconsumedSilenceIdx++
 				}
-				require.JSONEq(t, tc.expBody, string(b))
+				require.Contains(t, string(b), tc.expBody)
 			})
 		}
 	})
@@ -484,7 +483,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	// Now, let's test the endpoint with some alerts.
 	{
 		// Create the namespace we'll save our alerts to.
-		_, err := createFolder(t, store, 0, "default")
+		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 	}
 
@@ -578,10 +578,6 @@ func TestRulerAccess(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a users to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
@@ -599,36 +595,41 @@ func TestRulerAccess(t *testing.T) {
 		Login:          "admin",
 	})
 
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "default", grafanaListedAddr, "editor", "editor")
+	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
+	require.NoError(t, err)
+
 	// Now, let's test the access policies.
 	testCases := []struct {
-		desc             string
-		url              string
-		expStatus        int
-		expectedResponse string
+		desc            string
+		url             string
+		expStatus       int
+		expectedMessage string
 	}{
 		{
-			desc:             "un-authenticated request should fail",
-			url:              "http://%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusUnauthorized,
-			expectedResponse: `{"message": "Unauthorized"}`,
+			desc:            "un-authenticated request should fail",
+			url:             "http://%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusUnauthorized,
+			expectedMessage: `Unauthorized`,
 		},
 		{
-			desc:             "viewer request should fail",
-			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "Permission denied"}`,
+			desc:            "viewer request should fail",
+			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusForbidden,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
 		},
 		{
-			desc:             "editor request should succeed",
-			url:              "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusAccepted,
-			expectedResponse: `{"message":"rule group updated successfully"}`,
+			desc:            "editor request should succeed",
+			url:             "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusAccepted,
+			expectedMessage: `rule group updated successfully`,
 		},
 		{
-			desc:             "admin request should succeed",
-			url:              "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusAccepted,
-			expectedResponse: `{"message":"rule group updated successfully"}`,
+			desc:            "admin request should succeed",
+			url:             "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusAccepted,
+			expectedMessage: `rule group updated successfully`,
 		},
 	}
 
@@ -686,7 +687,10 @@ func TestRulerAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expStatus, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
+			res := &Response{}
+			err = json.Unmarshal(b, &res)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedMessage, res.Message)
 		})
 	}
 }
@@ -706,10 +710,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace we'll save our alerts to.
-	namespaceUID, err := createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
@@ -720,6 +720,12 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		Password:       "editor",
 		Login:          "editor",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	namespaceUID := "default"
+	err = createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
+	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
+	require.NoError(t, err)
 
 	createRule(t, grafanaListedAddr, "default", "editor", "editor")
 
@@ -873,8 +879,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -2011,16 +2018,17 @@ func TestQuota(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -2265,16 +2273,16 @@ func TestEval(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	// test eval conditions
 	testCases := []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2300,8 +2308,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2335,7 +2345,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2361,8 +2372,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2396,7 +2409,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "condition not found in any query or expression",
@@ -2422,8 +2436,11 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedMessage:    "invalid condition: condition B not found in any query or expression: it should be one of: [A]",
+			expectedStatusCode: func() int { return http.StatusBadRequest },
+			expectedMessage: func() string {
+				return "invalid condition: condition B not found in any query or expression: it should be one of: [A]"
+			},
+			expectedResponse: func() string { return "" },
 		},
 		{
 			desc: "unknown query datasource",
@@ -2447,8 +2464,19 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedMessage:    "invalid condition: invalid query A: data source not found: unknown",
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid condition: invalid query A: data source not found: unknown"
+			},
+			expectedResponse: func() string { return "" },
 		},
 	}
 
@@ -2469,12 +2497,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-			if tc.expectedMessage != "" {
-				assert.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				assert.Equal(t, tc.expectedMessage(), res.Message)
 				assert.NotEmpty(t, res.TraceID)
 			}
 		})
@@ -2484,9 +2512,9 @@ func TestEval(t *testing.T) {
 	testCases = []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2509,8 +2537,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2539,7 +2569,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2562,8 +2593,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2592,7 +2625,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "unknown query datasource",
@@ -2613,8 +2647,19 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedMessage:    "invalid queries or expressions: invalid query A: data source not found: unknown",
+			expectedResponse: func() string { return "" },
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid queries or expressions: invalid query A: data source not found: unknown"
+			},
 		},
 	}
 
@@ -2635,13 +2680,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-
-			if tc.expectedMessage != "" {
-				require.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				require.Equal(t, tc.expectedMessage(), res.Message)
 				require.NotEmpty(t, res.TraceID)
 			}
 		})
@@ -2650,25 +2694,20 @@ func TestEval(t *testing.T) {
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
 // We use the dashboard command using IsFolder = true to tell it's a folder, it takes the dashboard as the name of the folder.
-func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) (string, error) {
+func createFolder(t *testing.T, folderUID, grafanaListedAddr, login, password string) error {
 	t.Helper()
 
-	cmd := models.SaveDashboardCommand{
-		OrgId:    1, // default organisation
-		FolderId: folderID,
-		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"title": folderName,
-		}),
-	}
-	dashboardsStore := database.ProvideDashboardStore(store)
-	f, err := dashboardsStore.SaveDashboard(cmd)
-
-	if err != nil {
-		return "", err
-	}
-
-	return f.Uid, nil
+	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, folderUID, folderUID)
+	u := fmt.Sprintf("http://%s:%s@%s/api/folders", login, password, grafanaListedAddr)
+	r := strings.NewReader(payload)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", r)
+	t.Cleanup(func() {
+		require.NoError(t, resp.Body.Close())
+	})
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	return err
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.

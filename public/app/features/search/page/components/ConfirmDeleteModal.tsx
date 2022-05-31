@@ -5,10 +5,10 @@ import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
 
-import { OnDeleteSelectedItems } from '../../types';
+import { OnMoveOrDeleleSelectedItems } from '../../types';
 
 interface Props {
-  onDeleteItems: OnDeleteSelectedItems;
+  onDeleteItems: OnMoveOrDeleleSelectedItems;
   results: Map<string, Set<string>>;
   isOpen: boolean;
   onDismiss: () => void;
@@ -40,8 +40,8 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
 
   const deleteItems = () => {
     deleteFoldersAndDashboards(folders, dashboards).then(() => {
+      onDeleteItems();
       onDismiss();
-      onDeleteItems(folders, dashboards);
     });
   };
 

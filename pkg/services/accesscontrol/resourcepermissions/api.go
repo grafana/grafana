@@ -118,7 +118,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
-	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
 		permissions = append(permissions, accesscontrol.ResourcePermission{
 			Actions:     a.service.actions,
 			Scope:       "*",

@@ -8,10 +8,10 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { moveDashboards } from 'app/features/manage-dashboards/state/actions';
 import { FolderInfo } from 'app/types';
 
-import { OnMoveSelectedItems } from '../../types';
+import { OnMoveOrDeleleSelectedItems } from '../../types';
 
 interface Props {
-  onMoveItems: OnMoveSelectedItems;
+  onMoveItems: OnMoveOrDeleleSelectedItems;
   results: Map<string, Set<string>>;
   isOpen: boolean;
   onDismiss: () => void;
@@ -23,11 +23,12 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   const styles = getStyles(theme);
   const notifyApp = useAppNotification();
   const selectedDashboards = Array.from(results.get('dashboard') ?? []);
+  const [moving, setMoving] = useState(false);
 
   const moveTo = () => {
     if (folder && selectedDashboards.length) {
       const folderTitle = folder.title ?? 'General';
-
+      setMoving(true);
       moveDashboards(selectedDashboards, folder).then((result: any) => {
         if (result.successCount > 0) {
           const ending = result.successCount === 1 ? '' : 's';
@@ -40,9 +41,10 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
           notifyApp.error('Error', `Dashboard already belongs to folder ${folderTitle}`);
         } else {
           //update the list
-          onMoveItems(selectedDashboards, folder);
+          onMoveItems();
         }
 
+        setMoving(false);
         onDismiss();
       });
     }
@@ -66,7 +68,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         </div>
 
         <HorizontalGroup justify="center">
-          <Button variant="primary" onClick={moveTo}>
+          <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
             Move
           </Button>
           <Button variant="secondary" onClick={onDismiss}>

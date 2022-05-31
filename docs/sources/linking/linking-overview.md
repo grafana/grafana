@@ -1,9 +1,17 @@
-+++
-title = "Linking overview"
-keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-aliases = ["/docs/grafana/latest/features/navigation-links/"]
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/navigation-links/
+  - /docs/grafana/latest/linking/linking-overview/
+keywords:
+  - grafana
+  - linking
+  - create links
+  - link panels
+  - link dashboards
+  - navigate
+title: Linking overview
+weight: 100
+---
 
 # Linking overview
 

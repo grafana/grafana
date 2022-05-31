@@ -1,7 +1,9 @@
-+++
-title = "Variable selection options"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/variable-selection-options/
+title: Variable selection options
+weight: 400
+---
 
 # Configure variable selection options
 

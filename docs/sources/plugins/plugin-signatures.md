@@ -1,8 +1,10 @@
-+++
-title = "Plugin signatures"
-type = "docs"
-aliases = ["/docs/grafana/latest/plugins/plugin-signature-verification"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/plugins/plugin-signature-verification/
+  - /docs/grafana/latest/plugins/plugin-signatures/
+title: Plugin signatures
+type: docs
+---
 
 # Plugin signatures
 

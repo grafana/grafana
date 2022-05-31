@@ -1,9 +1,13 @@
-+++
-title = "Pie chart"
-keywords = ["grafana", "pie chart"]
-weight = 850
-aliases = ["/docs/grafana/latest/panels/visualizations/pie-chart-pane/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/pie-chart-pane/
+  - /docs/grafana/latest/visualizations/pie-chart-panel/
+keywords:
+  - grafana
+  - pie chart
+title: Pie chart
+weight: 850
+---
 
 # Pie chart
 
