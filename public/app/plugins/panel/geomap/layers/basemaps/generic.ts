@@ -21,6 +21,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
   isBaseMap: true,
+  usesDataFrame: false,
 
   create: async (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({
     init: () => {

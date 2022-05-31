@@ -67,6 +67,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   description: 'Load static data from a geojson file',
   isBaseMap: false,
   state: PluginState.beta,
+  usesDataFrame: false,
 
   /**
    * Function that configures transformation and returns a transformer

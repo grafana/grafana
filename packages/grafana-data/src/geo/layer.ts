@@ -103,6 +103,12 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   showOpacity?: boolean;
 
   /**
+   * Whether this layer type renders its features from a data frame
+   * Required field as this determines key options layout logic
+   */
+  usesDataFrame: boolean;
+
+  /**
    * Function that configures transformation and returns a transformer
    * @param options
    */

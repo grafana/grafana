@@ -26,6 +26,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   id: 'carto',
   name: 'CARTO reference map',
   isBaseMap: true,
+  usesDataFrame: false,
   defaultOptions: defaultCartoConfig,
 
   /**

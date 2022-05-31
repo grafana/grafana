@@ -21,6 +21,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
   isBaseMap: false,
   showLocation: true,
   state: PluginState.alpha,
+  usesDataFrame: true,
 
   /**
    * Function that configures transformation and returns a transformer

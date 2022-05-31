@@ -18,6 +18,7 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,
+  usesDataFrame: false,
 
   create: (map: Map, options: MapLayerOptions, theme: GrafanaTheme2) => {
     const serverLayerType = config?.geomapDefaultBaseLayerConfig?.type;
