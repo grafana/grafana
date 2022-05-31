@@ -352,6 +352,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           timeZone={timeZone}
           splitOpen={splitOpen}
           onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
         />
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>

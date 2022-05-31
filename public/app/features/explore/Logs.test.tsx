@@ -17,6 +17,9 @@ describe('Logs', () => {
     return render(
       <Logs
         exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
         logRows={rows}
         timeZone={'utc'}
         width={50}
