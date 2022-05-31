@@ -7,6 +7,8 @@ import { config } from '@grafana/runtime';
 import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
+import { VariableModel } from 'app/features/variables/types';
+import { CoreEvents } from 'app/types';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 import { DashboardModel, PanelModel } from '../../state';
@@ -18,54 +20,64 @@ import { PanelEditorTab, PanelEditorTabId } from './types';
 interface PanelEditorTabsProps {
   panel: PanelModel;
   dashboard: DashboardModel;
+  variables: VariableModel[];
   tabs: PanelEditorTab[];
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, dashboard, tabs, onChangeTab }) => {
-  const forceUpdate = useForceUpdate();
-  const styles = useStyles2(getStyles);
+export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(
+  ({ panel, dashboard, variables, tabs, onChangeTab }) => {
+    const forceUpdate = useForceUpdate();
+    const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    const eventSubs = new Subscription();
-    eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
-    eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
-    return () => eventSubs.unsubscribe();
-  }, [panel, forceUpdate]);
+    useEffect(() => {
+      const eventSubs = new Subscription();
+      eventSubs.add(
+        dashboard.events.on(CoreEvents.templateVariableValueUpdated, () => {
+          console.log('Template variables updates');
+        })
+      );
+      eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
+      eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
+      return () => eventSubs.unsubscribe();
+    }, [panel, dashboard, forceUpdate]);
 
-  const activeTab = tabs.find((item) => item.active)!;
+    const activeTab = tabs.find((item) => item.active)!;
 
-  if (tabs.length === 0) {
-    return null;
+    if (tabs.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className={styles.wrapper}>
+        <TabsBar className={styles.tabBar} hideBorder>
+          {tabs.map((tab) => {
+            if (tab.id === PanelEditorTabId.Alert) {
+              return renderAlertTab(tab, panel, dashboard, onChangeTab);
+            }
+            return (
+              <Tab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={tab.icon as IconName}
+                counter={getCounter(panel, tab)}
+              />
+            );
+          })}
+        </TabsBar>
+        <TabContent className={styles.tabContent}>
+          {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
+          {activeTab.id === PanelEditorTabId.Alert && (
+            <AlertTabIndex panel={panel} dashboard={dashboard} variables={variables} />
+          )}
+          {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
+        </TabContent>
+      </div>
+    );
   }
-
-  return (
-    <div className={styles.wrapper}>
-      <TabsBar className={styles.tabBar} hideBorder>
-        {tabs.map((tab) => {
-          if (tab.id === PanelEditorTabId.Alert) {
-            return renderAlertTab(tab, panel, dashboard, onChangeTab);
-          }
-          return (
-            <Tab
-              key={tab.id}
-              label={tab.text}
-              active={tab.active}
-              onChangeTab={() => onChangeTab(tab)}
-              icon={tab.icon as IconName}
-              counter={getCounter(panel, tab)}
-            />
-          );
-        })}
-      </TabsBar>
-      <TabContent className={styles.tabContent}>
-        {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
-        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
-        {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
-      </TabContent>
-    </div>
-  );
-});
+);
 
 PanelEditorTabs.displayName = 'PanelEditorTabs';
 

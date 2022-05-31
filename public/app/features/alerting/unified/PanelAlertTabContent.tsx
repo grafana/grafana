@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,9 +15,10 @@ import { getRulesPermissions } from './utils/access-control';
 interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
+  variables: VariableModel[];
 }
 
-export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
+export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel, variables }) => {
   const styles = useStyles2(getStyles);
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboard,
@@ -51,7 +52,12 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
           {alert}
           <RulesTable rules={rules} />
           {!!dashboard.meta.canSave && canCreateRules && (
-            <NewRuleFromPanelButton className={styles.newButton} panel={panel} dashboard={dashboard} />
+            <NewRuleFromPanelButton
+              className={styles.newButton}
+              panel={panel}
+              dashboard={dashboard}
+              variables={variables}
+            />
           )}
         </div>
       </CustomScrollbar>
@@ -64,7 +70,9 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
       {!!dashboard.uid && (
         <>
           <p>There are no alert rules linked to this panel.</p>
-          {!!dashboard.meta.canSave && canCreateRules && <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />}
+          {!!dashboard.meta.canSave && canCreateRules && (
+            <NewRuleFromPanelButton panel={panel} dashboard={dashboard} variables={variables} />
+          )}
         </>
       )}
       {!dashboard.uid && !!dashboard.meta.canSave && (
