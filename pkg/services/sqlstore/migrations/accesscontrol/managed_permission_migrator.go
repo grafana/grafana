@@ -161,3 +161,126 @@ func ParseRoleFromName(roleName string) string {
 	return cases.Title(language.AmericanEnglish).
 		String(strings.TrimSuffix(strings.TrimPrefix(roleName, "managed:builtins:"), ":permissions"))
 }
+
+const ManagedFolderPermissionsMigrationID = "managed folder permissions migration"
+
+func AddManagedFolderPermissionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(ManagedFolderPermissionsMigrationID, &managedFolderPermissionsMigrator{})
+}
+
+type managedFolderPermissionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderPermissionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderPermissionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	// TODO:
+	// fetch all managed roles and their permissions
+	// check if permissions is "EDIT" or "ADMIN" for folder
+	// True - append alert actions
+	// False - continue
+
+	var ids []interface{}
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []accesscontrol.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]accesscontrol.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]accesscontrol.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []accesscontrol.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				toAdd = append(
+					toAdd,
+					accesscontrol.Permission{
+						RoleID:  id,
+						Action:  accesscontrol.ActionAlertingRuleRead,
+						Scope:   scope,
+						Updated: now,
+						Created: now,
+					},
+					accesscontrol.Permission{
+						RoleID:  id,
+						Action:  accesscontrol.ActionAlertingRuleCreate,
+						Scope:   scope,
+						Updated: now,
+						Created: now,
+					},
+					accesscontrol.Permission{
+						RoleID:  id,
+						Action:  accesscontrol.ActionAlertingRuleDelete,
+						Scope:   scope,
+						Updated: now,
+						Created: now,
+					},
+					accesscontrol.Permission{
+						RoleID:  id,
+						Action:  accesscontrol.ActionAlertingRuleUpdate,
+						Scope:   scope,
+						Updated: now,
+						Created: now,
+					},
+				)
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err := batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hasFolderAdmin(permissions []accesscontrol.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
+}
+
+func hasFolderEdit(permissions []accesscontrol.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
+}
+
+func hasActions(actions []string, permissions []accesscontrol.Permission) bool {
+	var contains int
+	for _, action := range actions {
+		for _, p := range permissions {
+			if action == p.Action {
+				contains++
+				break
+			}
+		}
+	}
+	return contains >= len(actions)
+}
