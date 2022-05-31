@@ -20,9 +20,10 @@ export interface Props {
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
+  onBlur?: () => void;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery, onBlur }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -97,6 +98,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onChange={onChange}
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
+          onBlur={onBlur}
         />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (

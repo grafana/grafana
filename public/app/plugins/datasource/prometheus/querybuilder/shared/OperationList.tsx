@@ -18,6 +18,7 @@ export interface Props<T extends QueryWithOperations> {
   onRunQuery: () => void;
   queryModeller: VisualQueryModeller;
   explainMode?: boolean;
+  onBlur?: () => void;
 }
 
 export function OperationList<T extends QueryWithOperations>({
@@ -26,6 +27,7 @@ export function OperationList<T extends QueryWithOperations>({
   queryModeller,
   onChange,
   onRunQuery,
+  onBlur,
 }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
@@ -102,6 +104,7 @@ export function OperationList<T extends QueryWithOperations>({
                       onRemove={onRemove}
                       onRunQuery={onRunQuery}
                       highlight={opsToHighlight[index]}
+                      onBlur={onBlur}
                     />
                   ))}
                   {provided.placeholder}

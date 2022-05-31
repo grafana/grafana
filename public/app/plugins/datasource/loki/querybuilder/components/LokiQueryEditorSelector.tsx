@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
@@ -19,7 +19,7 @@ import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
@@ -49,6 +49,13 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const onChangeInternal = (query: LokiQuery) => {
     setDataIsStale(true);
     onChange(query);
+    onRunQuery();
+  };
+
+  const onBlur = () => {
+    if (app !== CoreApp.Explore) {
+      onRunQuery();
+    }
   };
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -110,11 +117,12 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             query={query}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
+            onBlur={onBlur}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}
         {editorMode !== QueryEditorMode.Explain && (
-          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} />
+          <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} onBlur={onBlur} />
         )}
       </EditorRows>
     </>

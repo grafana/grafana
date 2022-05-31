@@ -39,6 +39,7 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
       }}
+      onBlur={props.onBlur}
     />
   );
 }

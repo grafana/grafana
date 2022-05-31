@@ -13,9 +13,10 @@ export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  onBlur?: () => void;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onRunQuery }) => {
+export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onRunQuery, onBlur }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
     onChange({ ...query, queryType: value });
     onRunQuery();
@@ -56,6 +57,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
             minWidth={14}
             defaultValue={query.legendFormat}
             onCommitChange={onLegendFormatChanged}
+            onBlur={onBlur}
           />
         </EditorField>
         <EditorField label="Type">
@@ -70,6 +72,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
               min={0}
               defaultValue={query.maxLines?.toString() ?? ''}
               onCommitChange={onMaxLinesChange}
+              onBlur={onBlur}
             />
           </EditorField>
         )}

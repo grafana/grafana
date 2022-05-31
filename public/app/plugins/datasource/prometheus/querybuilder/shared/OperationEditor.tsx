@@ -27,6 +27,7 @@ export interface Props {
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  onBlur?: () => void;
   highlight?: boolean;
 }
 
@@ -36,6 +37,7 @@ export function OperationEditor({
   onRemove,
   onChange,
   onRunQuery,
+  onBlur,
   queryModeller,
   query,
   datasource,
@@ -96,6 +98,7 @@ export function OperationEditor({
               operationIndex={index}
               onChange={onParamValueChanged}
               onRunQuery={onRunQuery}
+              onBlur={onBlur}
               query={query}
               datasource={datasource}
             />
