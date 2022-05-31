@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -107,78 +106,6 @@ func TestIntegrationGetDashboardVersions(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(query.Result))
-	})
-}
-
-func TestIntegrationDeleteExpiredVersions(t *testing.T) {
-	versionsToKeep := 5
-	versionsToWrite := 10
-	setting.DashboardVersionsToKeep = versionsToKeep
-
-	var sqlStore *SQLStore
-	var savedDash *models.Dashboard
-	setup := func(t *testing.T) {
-		sqlStore = InitTestDB(t)
-		savedDash = insertTestDashboard(t, sqlStore, "test dash 53", 1, 0, false, "diff-all")
-		for i := 0; i < versionsToWrite-1; i++ {
-			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
-				"tags": "different-tag",
-			})
-		}
-	}
-
-	t.Run("Clean up old dashboard versions", func(t *testing.T) {
-		setup(t)
-		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
-		require.Nil(t, err)
-
-		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-		err = sqlStore.GetDashboardVersions(context.Background(), &query)
-		require.Nil(t, err)
-
-		require.Equal(t, versionsToKeep, len(query.Result))
-		// Ensure latest versions were kept
-		require.Equal(t, versionsToWrite-versionsToKeep+1, query.Result[versionsToKeep-1].Version)
-		require.Equal(t, versionsToWrite, query.Result[0].Version)
-	})
-
-	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
-		setup(t)
-		setting.DashboardVersionsToKeep = versionsToWrite
-
-		err := sqlStore.DeleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{})
-		require.Nil(t, err)
-
-		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
-		err = sqlStore.GetDashboardVersions(context.Background(), &query)
-		require.Nil(t, err)
-
-		require.Equal(t, versionsToWrite, len(query.Result))
-	})
-
-	t.Run("Don't delete more than MAX_VERSIONS_TO_DELETE_PER_BATCH * MAX_VERSION_DELETION_BATCHES per iteration", func(t *testing.T) {
-		setup(t)
-		perBatch := 10
-		maxBatches := 10
-
-		versionsToWriteBigNumber := perBatch*maxBatches + versionsToWrite
-		for i := 0; i < versionsToWriteBigNumber-versionsToWrite; i++ {
-			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
-				"tags": "different-tag",
-			})
-		}
-
-		err := sqlStore.deleteExpiredVersions(context.Background(), &models.DeleteExpiredVersionsCommand{}, perBatch, maxBatches)
-		require.Nil(t, err)
-
-		query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
-		err = sqlStore.GetDashboardVersions(context.Background(), &query)
-		require.Nil(t, err)
-
-		// Ensure we have at least versionsToKeep versions
-		require.GreaterOrEqual(t, len(query.Result), versionsToKeep)
-		// Ensure we haven't deleted more than perBatch * maxBatches rows
-		require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
 	})
 }
 

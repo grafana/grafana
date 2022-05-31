@@ -3,16 +3,13 @@ import React from 'react';
 
 import { AutoSizeInput } from './AutoSizeInput';
 
-jest.mock('@grafana/ui', () => {
-  const original = jest.requireActual('@grafana/ui');
-  const mockedUi = { ...original };
-
+jest.mock('../../utils/measureText', () => {
   // Mocking measureText
-  mockedUi.measureText = (text: string, fontSize: number) => {
+  const measureText = (text: string, fontSize: number) => {
     return { width: text.length * fontSize };
   };
 
-  return mockedUi;
+  return { measureText };
 });
 
 describe('AutoSizeInput', () => {

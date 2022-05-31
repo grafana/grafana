@@ -98,9 +98,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:381298544": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/common/NewWindowIcon.test.js:1750458349": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/common/UiFindInput.test.js:2207118020": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -115,9 +112,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:2026575657": [
       [0, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/core/components/Select/FolderPicker.test.tsx:993468764": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/core/components/Select/MetricSelect.test.tsx:3351544014": [
       [0, 19, 13, "RegExp match", "2409514259"]
@@ -171,12 +165,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamMemberRow.test.tsx:1649328210": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamMembers.test.tsx:4089428239": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamPages.test.tsx:3990420214": [
