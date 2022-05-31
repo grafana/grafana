@@ -69,7 +69,7 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="alertname"
+            placeholder="{{alertname}}"
             value={annotation.titleFormat}
             onChange={(event) => {
               onAnnotationChange({
@@ -100,7 +100,7 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="instance"
+            placeholder="{{instance}}"
             value={annotation.textFormat}
             onChange={(event) => {
               onAnnotationChange({
