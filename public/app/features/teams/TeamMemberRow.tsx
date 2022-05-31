@@ -59,6 +59,7 @@ export class TeamMemberRow extends PureComponent<Props> {
               onChange={(item) => this.onPermissionChange(item, member)}
               value={value}
               width={32}
+              aria-label={`Select member's ${member.name} permission level`}
             />
           ) : (
             <span>{value.label}</span>
