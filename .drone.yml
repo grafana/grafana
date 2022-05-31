@@ -137,7 +137,7 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test-new-backend-integration
+  name: test-backend-integration
 trigger:
   event:
   - pull_request
@@ -809,7 +809,7 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test-new-backend-integration
+  name: test-backend-integration
 trigger:
   branch: main
   event:
@@ -1905,7 +1905,7 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test-new-backend-integration
+  name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -3695,7 +3695,7 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
-  name: test-new-backend-integration
+  name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -4703,6 +4703,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9e90197c5438a9b2d81013af2f20bcce46d17f47c5e783cd8a5d7003ddc86210
+hmac: b841e468fb2260055408e7a7a7287c1f9a71df23bba1cb88c645f8104a8a2b4e
 
 ...

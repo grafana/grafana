@@ -510,10 +510,10 @@ def test_backend_step(edition):
         ],
     }
 
-def test_new_backend_integration_step(edition):
+def test_backend_integration_step(edition):
     if edition == 'oss':
         return {
-            'name': 'test-new-backend-integration',
+            'name': 'test-backend-integration',
             'image': build_image,
             'depends_on': [
                 'wire-install',
