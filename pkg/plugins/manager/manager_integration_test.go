@@ -100,13 +100,14 @@ func TestPluginManager_int_init(t *testing.T) {
 		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	pluginStore := store.ProvideService(pm.pluginRegistry)
 
-	verifyCorePluginCatalogue(t, pluginStore)
-	verifyBundledPlugins(t, pluginStore)
+	verifyCorePluginCatalogue(t, ctx, pluginStore)
+	verifyBundledPlugins(t, ctx, pluginStore)
 }
 
-func verifyCorePluginCatalogue(t *testing.T, ps plugins.Store) {
+func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps plugins.Store) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -172,45 +173,45 @@ func verifyCorePluginCatalogue(t *testing.T, ps plugins.Store) {
 		"test-app": {},
 	}
 
-	panels := ps.Plugins(context.Background(), plugins.Panel)
+	panels := ps.Plugins(ctx, plugins.Panel)
 	assert.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
-		p, exists := ps.Plugin(context.Background(), p.ID)
+		p, exists := ps.Plugin(ctx, p.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
 	}
 
-	dataSources := ps.Plugins(context.Background(), plugins.DataSource)
+	dataSources := ps.Plugins(ctx, plugins.DataSource)
 	assert.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
-		p, exists := ps.Plugin(context.Background(), ds.ID)
+		p, exists := ps.Plugin(ctx, ds.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
 	}
 
-	apps := ps.Plugins(context.Background(), plugins.App)
+	apps := ps.Plugins(ctx, plugins.App)
 	assert.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
-		p, exists := ps.Plugin(context.Background(), app.ID)
+		p, exists := ps.Plugin(ctx, app.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
 	}
 
-	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(context.Background())))
+	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, ps plugins.Store) {
+func verifyBundledPlugins(t *testing.T, ctx context.Context, ps plugins.Store) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range ps.Plugins(context.Background(), plugins.DataSource) {
+	for _, p := range ps.Plugins(ctx, plugins.DataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
-	inputPlugin, exists := ps.Plugin(context.Background(), "input")
+	inputPlugin, exists := ps.Plugin(ctx, "input")
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])

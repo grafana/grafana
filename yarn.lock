@@ -4284,7 +4284,6 @@ __metadata:
     inquirer: ^8.2.2
     jest: 27.5.1
     jest-canvas-mock: 2.3.1
-    jest-coverage-badges: ^1.1.2
     jest-junit: 13.1.0
     less: ^4.1.2
     less-loader: ^10.2.0
@@ -4445,7 +4444,7 @@ __metadata:
     react-dropzone: 12.0.4
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
-    react-inlinesvg: 2.3.0
+    react-inlinesvg: 3.0.0
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-router-dom: ^5.2.0
@@ -4577,17 +4576,20 @@ __metadata:
     "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.0.0-pre
+    "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.2.0
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
+    "@types/jest": 27.5.1
     "@types/lodash": 4.14.182
     "@types/prop-types": 15.7.5
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
     "@types/reselect": 2.2.0
+    "@types/testing-library__jest-dom": 5.14.3
     "@types/tinycolor2": 1.4.3
     chance: ^1.0.10
     classnames: ^2.2.5
@@ -20477,7 +20479,7 @@ __metadata:
     react-grid-layout: 1.3.4
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
-    react-inlinesvg: 2.3.0
+    react-inlinesvg: 3.0.0
     react-loadable: 5.5.0
     react-moveable: 0.32.7
     react-popper: 2.3.0
@@ -22822,17 +22824,6 @@ __metadata:
     ts-node:
       optional: true
   checksum: 48bfbef4334a187ce6873fd515230e521f500fe2ae57e43ec5747abee95a80583e784cfb99dd1b11664774f33da63758cc63d4a2b2ecf95c8984f2a880cd773e
-  languageName: node
-  linkType: hard
-
-"jest-coverage-badges@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "jest-coverage-badges@npm:1.1.2"
-  dependencies:
-    mkdirp: 0.5.1
-  bin:
-    jest-coverage-badges: cli.js
-  checksum: 0aa103d198d2167973d4b7da496abf7256aeb05437034c0eb6200926df6739230854b1eb53fbf62e5db41fbc21005ae0ee44e08b85ea6096ea5c1ad1e323cec3
   languageName: node
   linkType: hard
 
@@ -25655,13 +25646,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:0.0.8":
-  version: 0.0.8
-  resolution: "minimist@npm:0.0.8"
-  checksum: 042f8b626b1fa44dffc23bac55771425ac4ee9d267b56f9064c07713e516e1799f3ba933bb628d2475a210caf7dcdb98161611baa1f0daf49309a944cb4bc48f
-  languageName: node
-  linkType: hard
-
 "minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6":
   version: 1.2.6
   resolution: "minimist@npm:1.2.6"
@@ -25804,17 +25788,6 @@ __metadata:
     infer-owner: ^1.0.4
     mkdirp: ^1.0.3
   checksum: d8f4ecd32f6762459d6b5714eae6487c67ae9734ab14e26d14377ddd9b2a1bf868d8baa18c0f3e73d3d513f53ec7a698e0f81a9367102c870a55bef7833880f7
-  languageName: node
-  linkType: hard
-
-"mkdirp@npm:0.5.1":
-  version: 0.5.1
-  resolution: "mkdirp@npm:0.5.1"
-  dependencies:
-    minimist: 0.0.8
-  bin:
-    mkdirp: bin/cmd.js
-  checksum: ed1ab49bb1d06c88dba7cfe930a3186f2605b5465aab7c8f24119baaba6e38f9ab4ac1695c68f476c65a48df2a69a8495049cd6e26c360ea082151a0771343d2
   languageName: node
   linkType: hard
 
@@ -30250,12 +30223,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-from-dom@npm:^0.6.0":
-  version: 0.6.1
-  resolution: "react-from-dom@npm:0.6.1"
+"react-from-dom@npm:^0.6.2":
+  version: 0.6.2
+  resolution: "react-from-dom@npm:0.6.2"
   peerDependencies:
-    react: ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: 2b642ce9000fca9583c4162a117bfcaa72f7645be4fb4a709d4c5620f0f5de09132b95e996c687a347f9919cdcc385dae511a18482524d5e7ab0bd7883ce3e51
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 5d66b0c1eb591247a73bed9487a04e390abb4ad6c65e6cea7bfdd35070685b90a5da720de30915b963aba3f4628135d6db4c93da40cd5114c8bbe34a9725a83e
   languageName: node
   linkType: hard
 
@@ -30347,15 +30320,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-inlinesvg@npm:2.3.0":
-  version: 2.3.0
-  resolution: "react-inlinesvg@npm:2.3.0"
+"react-inlinesvg@npm:3.0.0":
+  version: 3.0.0
+  resolution: "react-inlinesvg@npm:3.0.0"
   dependencies:
     exenv: ^1.2.2
-    react-from-dom: ^0.6.0
+    react-from-dom: ^0.6.2
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-  checksum: ea43f6ec069ae6ef5be65fe587bf3fbaae0668124ddf7ec7b4f569cd4b6a32654897065019611d3a068e69275727f5918b9218d1b3f368f2a8d5198aaaf93a17
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: ceb34c4c5494e4992a1949c7e6166f373858a40215a8e900f360ce60053b19dd6da8637ca87770b953c449ddfa48c52ec288e09978660de92f51aac25b110a71
   languageName: node
   linkType: hard
 
