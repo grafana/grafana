@@ -177,13 +177,7 @@ export const ServiceAccountsListPageUnconnected = ({
           )}
         </div>
         <div className={styles.filterRow}>
-          <FilterInput
-            placeholder="Search service account by name"
-            autoFocus={true}
-            value={query}
-            onChange={onQueryChange}
-            width={50}
-          />
+          <FilterInput placeholder="Search service account by name" value={query} onChange={onQueryChange} width={50} />
           <div className={styles.filterDelimiter}></div>
           <RadioButtonGroup
             options={[
