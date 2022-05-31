@@ -3,7 +3,7 @@ import React, { useCallback, useRef } from 'react';
 
 import { CodeEditor, Monaco, useTheme2 } from '@grafana/ui';
 
-import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/completion/CompletionItemProvider';
+import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/CompletionItemProvider';
 import language from '../dynamic-labels/definition';
 import { TRIGGER_SUGGEST } from '../monarch/commands';
 import { registerLanguage } from '../monarch/register';
@@ -16,7 +16,7 @@ export interface Props {
   label: string;
 }
 
-export function DynamicLabelsField({ label, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
+export function DynamicLabelsField({ label, onChange, onRunQuery }: Props) {
   const theme = useTheme2();
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(

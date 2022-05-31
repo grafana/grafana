@@ -1,9 +1,10 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
-import { LanguageDefinition } from '../../monarch/register';
-import { Completeable, CompletionItemPriority, TokenTypes } from '../../monarch/types';
-import { DYNAMIC_LABEL_PATTERNS } from '../language';
+import { linkedTokenBuilder } from '../monarch/linkedTokenBuilder';
+import { LanguageDefinition } from '../monarch/register';
+import { Completeable, CompletionItemPriority, TokenTypes } from '../monarch/types';
+
+import { DYNAMIC_LABEL_PATTERNS } from './language';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 

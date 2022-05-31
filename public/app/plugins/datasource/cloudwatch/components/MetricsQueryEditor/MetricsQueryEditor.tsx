@@ -135,13 +135,13 @@ export const MetricsQueryEditor = (props: Props) => {
         {config.featureToggles.cloudWatchDynamicLabels ? (
           <EditorField
             label="Label"
-            width={52}
+            width={26}
             optional
             tooltip="Change time series legend name using Dynamic labels. See documentation for details."
           >
             <DynamicLabelsField
               onRunQuery={onRunQuery}
-              label={query.label ?? ''}
+              label={preparedQuery.label ?? ''}
               onChange={(label) => props.onChange({ ...query, label })}
             ></DynamicLabelsField>
           </EditorField>
