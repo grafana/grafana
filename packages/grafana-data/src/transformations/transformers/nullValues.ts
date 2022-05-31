@@ -76,7 +76,10 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
       true
     );
 
+    console.log(filledFieldValues);
+
     if (filledFieldValues === frameValues) {
+      console.log('went here');
       return frame;
     }
 
@@ -113,12 +116,20 @@ function nullInsertThreshold(
 ) {
   const len = refValues.length;
   let prevValue: number = refValues[0];
-  const refValuesNew: number[] = [prevValue];
+  const refValuesNew: number[] = [];
 
-  if (refFieldPseudoMin != null && prevValue >= refFieldPseudoMin + threshold) {
-    refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMin, threshold));
+  // Insert a frame time at the beginning of the sequence if the previous value
+  // minus the threshold is greater than the minimum
+  if (refFieldPseudoMin != null && prevValue - threshold >= refFieldPseudoMin) {
+    refValuesNew.push(getInsertValue(refFieldPseudoMin, prevValue, threshold));
   }
 
+  // Insert the initial value from the original sequence
+  refValuesNew.push(prevValue);
+
+  // Insert frame times throughout the sequence when the
+  // current value minus the previus value is greater
+  // than the threshold
   for (let i = 1; i < len; i++) {
     const curValue = refValues[i];
 
@@ -137,18 +148,21 @@ function nullInsertThreshold(
     prevValue = curValue;
   }
 
+  // Insert a frame time at the end of the sequence if the previous value
+  // plus the threshold is greater than the maximum
   if (refFieldPseudoMax != null && prevValue + threshold <= refFieldPseudoMax) {
     refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
   }
 
+  // Retrieve the new length, if we didn't fill
+  // any nulls return the original values
   const filledLen = refValuesNew.length;
-
   if (filledLen === len) {
     return frameValues;
   }
 
+  // Fill in nulls as appropriate
   const filledFieldValues: any[][] = [];
-
   for (let fieldValues of frameValues) {
     let filledValues;
 
@@ -255,10 +269,14 @@ export function processNullValues(frames: DataFrame[], timeRange: TimeRange): Da
   return frames.map((frame) => {
     let f = applyNullInsertThreshold({
       frame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
-      //  refFieldPseudoMin: timeRange.from.valueOf(),
     });
-    f = nullToValue(frame);
-    return applySpanNullsThresholds(f, () => true);
+
+    // f.fields.map((fieds) => console.log(fieds.values));
+
+    // f = nullToValue(frame);
+    return f;
+    //return applySpanNullsThresholds(f, () => true);
   });
 }
