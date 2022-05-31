@@ -96,6 +96,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg)
+	accesscontrol.AddActionNameMigrator(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
