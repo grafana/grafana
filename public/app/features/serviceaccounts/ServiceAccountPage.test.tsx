@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
@@ -70,7 +71,7 @@ const setup = (propOverrides: Partial<Props>) => {
 };
 
 const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
-  id: 1,
+  id: 42,
   name: 'Data source scavenger',
   login: 'sa-data-source-scavenger',
   orgId: 1,
@@ -82,7 +83,7 @@ const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
 });
 
 const getDefaultToken: () => ApiKey = () => ({
-  id: 1,
+  id: 142,
   name: 'sa-data-source-scavenger-74f1634b-3273-4da6-994b-24bd32f5bdc6',
   role: OrgRole.Viewer,
   secondsToLive: null,
@@ -141,5 +142,39 @@ describe('ServiceAccountPage tests', () => {
       ],
     });
     expect(screen.getByText(/Expired/)).toBeInTheDocument();
+  });
+
+  it('Should call API with proper params when edit service account info', async () => {
+    const updateServiceAccountMock = jest.fn();
+    setup({
+      serviceAccount: getDefaultServiceAccount(),
+      updateServiceAccount: updateServiceAccountMock,
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await userEvent.clear(screen.getByLabelText('Name'));
+    await userEvent.type(screen.getByLabelText('Name'), 'Foo bar');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(updateServiceAccountMock).toHaveBeenCalledWith({
+      ...getDefaultServiceAccount(),
+      name: 'Foo bar',
+    });
+  });
+
+  it('Should call API with proper params when delete service account token', async () => {
+    const deleteServiceAccountTokenMock = jest.fn();
+    setup({
+      serviceAccount: getDefaultServiceAccount(),
+      tokens: [getDefaultToken()],
+      deleteServiceAccountToken: deleteServiceAccountTokenMock,
+    });
+
+    const user = userEvent.setup();
+    await userEvent.click(screen.getByLabelText(/Delete service account token/));
+    await user.click(screen.getByRole('button', { name: /^Delete$/ }));
+
+    expect(deleteServiceAccountTokenMock).toHaveBeenCalledWith(42, 142);
   });
 });

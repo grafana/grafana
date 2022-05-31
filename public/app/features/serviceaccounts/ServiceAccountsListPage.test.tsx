@@ -67,7 +67,7 @@ const setup = (propOverrides: Partial<Props>) => {
 };
 
 const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
-  id: 1,
+  id: 42,
   name: 'Data source scavenger',
   login: 'sa-data-source-scavenger',
   orgId: 1,
@@ -158,6 +158,6 @@ describe('ServiceAccountsListPage tests', () => {
     await user.click(screen.getByLabelText(/Delete service account/));
     await user.click(screen.getByLabelText(/Confirm Modal Danger Button/));
 
-    expect(deleteServiceAccountMock).toHaveBeenCalledWith(1);
+    expect(deleteServiceAccountMock).toHaveBeenCalledWith(42);
   });
 });
