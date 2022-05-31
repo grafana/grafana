@@ -52,6 +52,7 @@ type Scheduler struct {
 	EvalFailures             *prometheus.CounterVec
 	EvalDuration             *prometheus.SummaryVec
 	GetAlertRulesDuration    prometheus.Histogram
+	GetAlertRulesFailures    prometheus.Counter
 	SchedulePeriodicDuration prometheus.Histogram
 	Ticker                   *legacyMetrics.Ticker
 }
@@ -170,6 +171,14 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "get_alert_rules_duration_seconds",
 				Help:      "The time taken to get all alert rules.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		GetAlertRulesFailures: promauto.With(r).NewCounter(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "get_alert_rules_failures_total",
+				Help:      "The total number of failures in getting the most recent alert rules for the scheduler.",
 			},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(

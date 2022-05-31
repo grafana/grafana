@@ -97,6 +97,10 @@ type schedule struct {
 	adminConfigPollInterval time.Duration
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
+
+	// alertRules contains the alert rules scheduled in the most recent tick
+	alertRules    []*models.SchedulableAlertRule
+	alertRulesMtx sync.Mutex
 }
 
 // SchedulerCfg is the scheduler configuration.
