@@ -36,28 +36,24 @@ func (s *mockedCallResourceResponseSenderForOauth) Send(resp *backend.CallResour
 	return nil
 }
 
-func makeMockedDsInfoForOauth(oauthPassThru bool, body []byte, requestCallback func(req *http.Request)) datasourceInfo {
+func makeMockedDsInfoForOauth(body []byte, requestCallback func(req *http.Request)) datasourceInfo {
 	client := http.Client{
 		Transport: &mockedRoundTripperForOauth{requestCallback: requestCallback, body: body},
 	}
 
 	return datasourceInfo{
-		HTTPClient:    &client,
-		OauthPassThru: oauthPassThru,
+		HTTPClient: &client,
 	}
 }
 
 func TestOauthForwardIdentity(t *testing.T) {
 	tt := []struct {
-		name          string
-		oauthPassThru bool
-		headerGiven   bool
-		headerSent    bool
+		name        string
+		headerGiven bool
+		headerSent  bool
 	}{
-		{name: "when enabled and headers exist => add headers", oauthPassThru: true, headerGiven: true, headerSent: true},
-		{name: "when disabled and headers exist => do not add headers", oauthPassThru: false, headerGiven: true, headerSent: false},
-		{name: "when enabled and no headers exist => do not add headers", oauthPassThru: true, headerGiven: false, headerSent: false},
-		{name: "when disabled and no headers exist => do not add headers", oauthPassThru: false, headerGiven: false, headerSent: false},
+		{name: "when headers exist => add headers", headerGiven: true, headerSent: true},
+		{name: "when no headers exist => do not add headers", headerGiven: false, headerSent: false},
 	}
 
 	authName := "Authorization"
@@ -83,7 +79,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 			`)
 
 			clientUsed := false
-			dsInfo := makeMockedDsInfoForOauth(test.oauthPassThru, response, func(req *http.Request) {
+			dsInfo := makeMockedDsInfoForOauth(response, func(req *http.Request) {
 				clientUsed = true
 				if test.headerSent {
 					require.Equal(t, authValue, req.Header.Get(authName))
@@ -128,7 +124,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 			response := []byte("mocked resource response")
 
 			clientUsed := false
-			dsInfo := makeMockedDsInfoForOauth(test.oauthPassThru, response, func(req *http.Request) {
+			dsInfo := makeMockedDsInfoForOauth(response, func(req *http.Request) {
 				clientUsed = true
 				if test.headerSent {
 					require.Equal(t, authValue, req.Header.Get(authName))
