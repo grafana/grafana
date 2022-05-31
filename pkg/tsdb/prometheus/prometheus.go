@@ -111,7 +111,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	headers := getOauthTokenForCallResource(req.Headers)
 
 	statusCode, bytes, err := i.resource.Execute(ctx, headers, req)
-	if statusCode != 200 {
+	if statusCode >= 300 {
 		safeErr := errors.New("no error specified")
 		if err != nil {
 			safeErr = err
