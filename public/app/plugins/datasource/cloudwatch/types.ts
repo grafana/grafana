@@ -376,6 +376,7 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
 }
 
 export interface OldVariableQuery extends DataQuery {

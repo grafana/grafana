@@ -25,6 +25,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.EC2InstanceAttributes, label: 'EC2 Instance Attributes' },
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
+  { value: VariableQueryType.LogGroups, label: 'Log Groups' },
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -88,6 +89,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.EBSVolumeIDs,
     VariableQueryType.EC2InstanceAttributes,
     VariableQueryType.ResourceArns,
+    VariableQueryType.LogGroups,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
