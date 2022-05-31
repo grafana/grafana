@@ -64,7 +64,7 @@ func addSecretsMigration(mg *migrator.Migrator) {
 
 	// ------- This is done for backward compatibility with versions > v8.3.x
 	mg.AddMigration("rename data_keys name column to legacy_name", migrator.NewRenameColumnMigration(
-		dataKeysV1, dataKeysV1.Columns[0], "temp_name",
+		dataKeysV1, dataKeysV1.Columns[0], "legacy_name",
 	))
 
 	mg.AddMigration("rename data_keys id column back to name", migrator.NewRenameColumnMigration(
