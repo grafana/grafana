@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -79,7 +80,22 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return 500, nil, err
 	}
 
-	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
+	qs := u.Query()
+	if req.Method == http.MethodPost {
+		var opts map[string]interface{}
+		err = json.Unmarshal(req.Body, &opts)
+		if err != nil {
+			return 500, nil, err
+		}
+		for k, v := range opts {
+			switch val := v.(type) {
+			case string:
+				qs.Set(k, val)
+			}
+		}
+	}
+
+	resp, err := client.QueryResource(ctx, req.Method, u.Path, qs)
 	if err != nil {
 		return 500, nil, err
 	}

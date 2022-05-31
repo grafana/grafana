@@ -1,7 +1,7 @@
 import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError, from } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 
 import {
@@ -51,7 +51,6 @@ import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
   PromDataSuccessResponse,
-  PromExemplarData,
   PromMatrixData,
   PromOptions,
   PromQuery,
@@ -799,10 +798,12 @@ export class PrometheusDatasource
 
   getExemplars(query: PromQueryRequest) {
     const url = '/api/v1/query_exemplars';
-    return this._request<PromDataSuccessResponse<PromExemplarData>>(
-      url,
-      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
-      { requestId: query.requestId, headers: query.headers }
+    return from(
+      this.getResource(
+        url,
+        { query: query.expr, start: query.start.toString(), end: query.end.toString() }
+        // { requestId: query.requestId, headers: query.headers }
+      )
     );
   }
 
