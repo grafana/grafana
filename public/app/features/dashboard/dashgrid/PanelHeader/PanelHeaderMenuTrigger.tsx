@@ -20,8 +20,6 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
         return;
       }
 
-      event.stopPropagation();
-
       setPanelMenuOpen(!panelMenuOpen);
     },
     [clickCoordinates, panelMenuOpen, setPanelMenuOpen]

@@ -15,6 +15,8 @@ export interface Props {
    * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener. Defaults to false.
    */
   useCapture?: boolean;
+  setHandlers?: boolean;
+  className?: string;
 }
 
 interface State {
@@ -26,6 +28,8 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     includeButtonPress: true,
     parent: typeof window !== 'undefined' ? window : null,
     useCapture: false,
+    setHandlers: false,
+    className: null,
   };
   myRef = createRef<HTMLDivElement>();
   state = {
@@ -33,6 +37,26 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
+    if (this.props.setHandlers) {
+      this.setHandlers();
+    }
+  }
+
+  componentWillUnmount() {
+    this.removeHandlers();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.setHandlers) {
+      this.setHandlers();
+    } else {
+      if (prevProps.setHandlers) {
+        this.removeHandlers();
+      }
+    }
+  }
+
+  setHandlers() {
     this.props.parent.addEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
       // Use keyup since keydown already has an event listener on window
@@ -40,7 +64,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  removeHandlers() {
     this.props.parent.removeEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
       this.props.parent.removeEventListener('keyup', this.onOutsideClick, this.props.useCapture);
@@ -56,6 +80,10 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   };
 
   render() {
-    return <div ref={this.myRef}>{this.props.children}</div>;
+    return (
+      <div ref={this.myRef} className={this.props.className}>
+        {this.props.children}
+      </div>
+    );
   }
 }

@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Icon, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -48,7 +48,12 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
-              <div className="panel-title">
+              <ClickOutsideWrapper
+                onClick={closeMenu}
+                parent={document}
+                className="panel-title"
+                setHandlers={panelMenuOpen}
+              >
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
                 {alertState ? (
                   <Icon
@@ -60,13 +65,13 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
                 <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
+                {panelMenuOpen ? <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} /> : null}
                 {data.request && data.request.timeInfo && (
                   <span className="panel-time-info">
                     <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
                   </span>
                 )}
-              </div>
+              </ClickOutsideWrapper>
             );
           }}
         </PanelHeaderMenuTrigger>
