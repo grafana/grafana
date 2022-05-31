@@ -63,7 +63,7 @@ const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) => 
     render(
       <Provider store={store}>
         <Router history={locationService.getHistory()}>
-          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+          <PanelAlertTabContent dashboard={dashboard} panel={panel} variables={[]} />
         </Router>
       </Provider>
     );
