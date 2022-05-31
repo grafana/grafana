@@ -73,7 +73,7 @@ func TestQueryData(t *testing.T) {
 		require.NoError(t, err)
 		metricReq.HTTPRequest = httpReq
 		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Empty(t, tc.pluginContext.req.Headers)
 	})
@@ -94,7 +94,7 @@ func TestQueryData(t *testing.T) {
 		httpReq.AddCookie(&http.Cookie{Name: "c"})
 		metricReq.HTTPRequest = httpReq
 		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
 	})
