@@ -248,5 +248,11 @@ var (
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
