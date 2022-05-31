@@ -116,7 +116,7 @@ var (
 		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
 		Group:       "User administration (global)",
-		Version:     5,
+		Version:     6,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,

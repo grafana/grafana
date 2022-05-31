@@ -283,7 +283,7 @@ roles:
         global: true
     permissions:
       # Permissions to remove
-      - action: 'teams.roles:list'
+      - action: 'teams.roles:read'
         scope: 'teams:*'
         state: 'absent'
       - action: 'teams.roles:remove'

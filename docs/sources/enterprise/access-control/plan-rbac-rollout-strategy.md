@@ -173,7 +173,6 @@ roles:
 
 | action         | scope                       |
 | -------------- | --------------------------- |
-| `roles:list`   | `roles:*`                   |
 | `roles:read`   | `roles:*`                   |
 | `roles:write`  | `permissions:type:delegate` |
 | `roles:delete` | `permissions:type:delegate` |

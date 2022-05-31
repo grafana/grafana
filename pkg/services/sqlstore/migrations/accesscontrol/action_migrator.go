@@ -2,7 +2,6 @@ package accesscontrol
 
 import (
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
@@ -41,6 +40,12 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"users.password:update":    accesscontrol.ActionUsersPasswordUpdate,
 		"users.permissions:update": accesscontrol.ActionUsersPermissionsUpdate,
 		"users.quotas:update":      accesscontrol.ActionUsersQuotasUpdate,
+		"roles:list":               "roles:read",
+		"teams.roles:list":         "teams.roles:read",
+		"users.roles:list":         "users.roles:read",
+		"users.authtoken:list":     accesscontrol.ActionUsersAuthTokenList,
+		"users.quotas:list":        accesscontrol.ActionUsersQuotasList,
+		"users.permissions:list":   "users.permissions:read",
 	}
 
 	for oldName, newName := range actionNameMapping {

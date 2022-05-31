@@ -91,9 +91,9 @@ To learn more about the permissions you can grant for each resource, refer to [R
 
 If you are a Grafana Enterprise customer, you can create custom roles to manage user permissions in a way that meets your security requirements.
 
-Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action allows a user to see a list of roles associated with each team.
+Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:read` action allows a user to see a list of roles associated with each team.
 
-A scope describes where an action can be performed. For example, the `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
+A scope describes where an action can be performed. For example, the `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:read` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
 Consider creating a custom role when fixed roles do not meet your permissions requirements.
 

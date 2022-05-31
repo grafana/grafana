@@ -516,7 +516,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global.users:\* |
+| users.authtoken:read | global.users:\* |
 
 **Example Request**:
 

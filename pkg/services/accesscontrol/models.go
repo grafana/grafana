@@ -289,7 +289,7 @@ const (
 	ActionUsersWrite = "users:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenList = "users.authtoken:list"
+	ActionUsersAuthTokenList = "users.authtoken:read"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenUpdate = "users.authtoken:write"
@@ -302,7 +302,7 @@ const (
 	ActionUsersDisable           = "users:disable"
 	ActionUsersPermissionsUpdate = "users.permissions:write"
 	ActionUsersLogout            = "users:logout"
-	ActionUsersQuotasList        = "users.quotas:list"
+	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
 
 	// Org actions

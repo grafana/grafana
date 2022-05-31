@@ -10,7 +10,7 @@ export type UserPermission = Record<string, boolean>;
 export enum AccessControlAction {
   UsersRead = 'users:read',
   UsersWrite = 'users:write',
-  UsersAuthTokenList = 'users.authtoken:list',
+  UsersAuthTokenList = 'users.authtoken:read',
   UsersAuthTokenUpdate = 'users.authtoken:write',
   UsersPasswordUpdate = 'users.password:write',
   UsersDelete = 'users:delete',
@@ -19,7 +19,7 @@ export enum AccessControlAction {
   UsersDisable = 'users:disable',
   UsersPermissionsUpdate = 'users.permissions:write',
   UsersLogout = 'users:logout',
-  UsersQuotasList = 'users.quotas:list',
+  UsersQuotasList = 'users.quotas:read',
   UsersQuotasUpdate = 'users.quotas:write',
 
   ServiceAccountsRead = 'serviceaccounts:read',
@@ -58,12 +58,12 @@ export enum AccessControlAction {
   ActionTeamsPermissionsRead = 'teams.permissions:read',
   ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
-  ActionRolesList = 'roles:list',
+  ActionRolesList = 'roles:read',
   ActionBuiltinRolesList = 'roles.builtin:list',
-  ActionTeamsRolesList = 'teams.roles:list',
+  ActionTeamsRolesList = 'teams.roles:read',
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
-  ActionUserRolesList = 'users.roles:list',
+  ActionUserRolesList = 'users.roles:read',
 
   DashboardsRead = 'dashboards:read',
   DashboardsWrite = 'dashboards:write',
