@@ -24,3 +24,7 @@ func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.Ge
 	f.counter++
 	return f.ExpectedDashboardVersions[f.counter-1], f.ExpectedError
 }
+
+func (f *FakeDashboardVersionService) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
+	return f.ExpectedError
+}

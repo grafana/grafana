@@ -62,7 +62,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
-export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource

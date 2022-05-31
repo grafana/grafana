@@ -49,12 +49,6 @@ const (
 	ApplicationName  = "Grafana"
 )
 
-// This constant corresponds to the default value for ldap_sync_ttl in .ini files
-// it is used for comparison and has to be kept in sync
-const (
-	authProxySyncTTL = 60
-)
-
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
@@ -1332,15 +1326,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
-	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
-	syncVal := authProxy.Key("sync_ttl").MustInt()
-
-	if ldapSyncVal != authProxySyncTTL {
-		cfg.AuthProxySyncTTL = ldapSyncVal
-		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
-	} else {
-		cfg.AuthProxySyncTTL = syncVal
-	}
+	cfg.AuthProxySyncTTL = authProxy.Key("sync_ttl").MustInt()
 
 	cfg.AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
 
