@@ -381,7 +381,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 		case serviceaccounts.FilterOnlyDisabled:
 			whereConditions = append(
 				whereConditions,
-				"is_disabled = true")
+				"is_disabled = ?")
+			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
 		default:
 			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}
