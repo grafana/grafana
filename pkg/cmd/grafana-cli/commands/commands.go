@@ -100,12 +100,6 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	}
 }
 
-func runCueCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
-	return func(context *cli.Context) error {
-		return command(&utils.ContextCommandLine{Context: context})
-	}
-}
-
 // Command contains command state.
 type Command struct {
 	Client utils.ApiClient
