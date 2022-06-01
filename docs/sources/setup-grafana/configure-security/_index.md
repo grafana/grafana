@@ -1,9 +1,11 @@
-+++
-aliases = ["/docs/grafana/latest/administration/security/", "/docs/grafana/latest/installation/security/"]
-description = "Learn how to make Grafana secure."
-title = "Configure security"
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/security/
+  - /docs/grafana/latest/installation/security/
+description: Learn how to make Grafana secure.
+title: Configure security
+weight: 600
+---
 
 # Configure security
 
