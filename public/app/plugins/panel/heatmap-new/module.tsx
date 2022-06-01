@@ -8,7 +8,14 @@ import { addHeatmapCalculationOptions } from 'app/features/transformers/calculat
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions, HeatmapMode, HeatmapColorMode, HeatmapColorScale } from './models.gen';
+import {
+  PanelOptions,
+  defaultPanelOptions,
+  HeatmapMode,
+  HeatmapColorMode,
+  HeatmapColorScale,
+  AlignAxis,
+} from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
@@ -39,6 +46,21 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.mode === HeatmapMode.Calculate) {
       addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
+    } else if (opts.mode === HeatmapMode.Aggregated) {
+      builder.addRadio({
+        path: 'yAxisLabels',
+        name: 'Y Axis alignment',
+        defaultValue: defaultPanelOptions.yAxisLabels,
+        category,
+        settings: {
+          options: [
+            { label: 'Auto', value: AlignAxis.Auto },
+            { label: 'Middle', value: AlignAxis.Middle },
+            { label: 'Upper', value: AlignAxis.Upper },
+            { label: 'Lower', value: AlignAxis.Lower },
+          ],
+        },
+      });
     }
 
     category = ['Colors'];

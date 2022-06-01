@@ -90,6 +90,7 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
+  yAxisLabels: AlignAxis.Auto,
   showValue: VisibilityMode.Auto,
   tooltip: {
     show: true,
