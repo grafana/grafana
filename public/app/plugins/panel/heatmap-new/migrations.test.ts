@@ -32,7 +32,11 @@ describe('Heatmap Migrations', () => {
             },
             "yAxis": Object {
               "mode": "count",
-              "value": "20",
+              "scale": Object {
+                "log": 2,
+                "type": "log",
+              },
+              "value": "3",
             },
           },
           "cellGap": 2,
@@ -124,8 +128,8 @@ const oldHeatmap = {
     show: true,
     format: 'short',
     decimals: null,
-    logBase: 1,
-    splitFactor: null,
+    logBase: 2,
+    splitFactor: 3,
     min: null,
     max: null,
   },

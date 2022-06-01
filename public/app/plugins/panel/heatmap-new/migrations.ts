@@ -1,5 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -45,6 +45,18 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       calculate.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
       calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+    }
+
+    const oldYAxis = { logBase: 1, ...angular.yAxis };
+    if (oldYAxis.logBase > 1) {
+      calculate.yAxis = {
+        mode: HeatmapCalculationMode.Count,
+        value: +oldYAxis.splitFactor > 0 ? `${oldYAxis.splitFactor}` : undefined,
+        scale: {
+          type: ScaleDistribution.Log,
+          log: oldYAxis.logBase,
+        },
+      };
     }
   }
 

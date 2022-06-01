@@ -24,6 +24,13 @@ export enum HeatmapColorScale {
   Exponential = 'exponential',
 }
 
+export enum AlignAxis {
+  Auto = 'auto',
+  Upper = 'upper',
+  Middle = 'middle',
+  Lower = 'lower',
+};
+
 export interface HeatmapColorOptions {
   mode: HeatmapColorMode;
   scheme: string; // when in scheme mode -- the d3 scheme name
@@ -65,7 +72,7 @@ export interface PanelOptions {
   cellGap?: number; // was cardPadding
   cellSize?: number; // was cardRadius
 
-  yAxisLabels?: string;
+  yAxisLabels?: AlignAxis; // when buckets (not used for real scale)
   yAxisReverse?: boolean;
   legend: HeatmapLegend;
 
