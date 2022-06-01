@@ -41,8 +41,8 @@ describe('<TracePageSearchBar>', () => {
 
     it('renders buttons', () => {
       render(<TracePageSearchBar {...defaultProps} />);
-      const nextResButton = screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarNextResultButton);
-      const prevResButton = screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarNextResultButton);
+      const nextResButton = screen.queryByRole('button', { name: 'Next results button' });
+      const prevResButton = screen.queryByRole('button', { name: 'Prev results button' });
       expect(nextResButton).toBeInTheDocument();
       expect(prevResButton).toBeInTheDocument();
       expect(nextResButton['disabled']).toBe(false);
@@ -55,12 +55,8 @@ describe('<TracePageSearchBar>', () => {
         navigable: false,
       };
       render(<TracePageSearchBar {...props} />);
-      expect(
-        screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarNextResultButton)
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarPrevResultButton)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Next results button' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Prev results button' })).not.toBeInTheDocument();
     });
   });
 
@@ -78,12 +74,8 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      expect(
-        screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarNextResultButton)
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarPrevResultButton)
-      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Next results button' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Prev results button' })).toBeInTheDocument();
     });
   });
 });

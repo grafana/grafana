@@ -178,7 +178,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
-                data-testid={selectors.components.TraceViewer.tracePageSearchBarNextResultButton}
+                aria-label="Next results button"
                 onClick={nextResult}
               />
               <Button
@@ -187,7 +187,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-up"
-                data-testid={selectors.components.TraceViewer.tracePageSearchBarPrevResultButton}
+                aria-label="Prev results button"
                 onClick={prevResult}
               />
             </>
