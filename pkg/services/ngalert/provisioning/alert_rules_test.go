@@ -33,16 +33,33 @@ func TestAlertRuleService(t *testing.T) {
 	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
 		var orgID int64 = 1
 		rule := dummyRule("test#3", orgID)
-		rule.RuleGroup = "xyz"
+		rule.RuleGroup = "a"
 		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
 		require.NoError(t, err)
-		require.NotEqual(t, 60, rule.IntervalSeconds)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
 
 		var interval int64 = 120
 		err = ruleService.UpdateAlertGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
 		require.NoError(t, err)
 
 		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, interval, rule.IntervalSeconds)
+	})
+	t.Run("alert rule should get interval from existing rule group", func(t *testing.T) {
+		var orgID int64 = 1
+		rule := dummyRule("test#4", orgID)
+		rule.RuleGroup = "b"
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		var interval int64 = 120
+		err = ruleService.UpdateAlertGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
+		require.NoError(t, err)
+
+		rule = dummyRule("test#4-1", orgID)
+		rule.RuleGroup = "b"
+		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
