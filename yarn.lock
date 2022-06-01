@@ -6001,7 +6001,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:0.15.12, @lezer/common@npm:^0.15.0":
+"@lezer/common@npm:0.16.1":
+  version: 0.16.1
+  resolution: "@lezer/common@npm:0.16.1"
+  checksum: ee27598a8c2a4e5bcba285cf091b7c1aee36e5a5e8352b63ce65520e7279f6305e1272d8adede150fc4aee0073c1e3e93fb11271d538815db72bdff341c4be65
+  languageName: node
+  linkType: hard
+
+"@lezer/common@npm:^0.15.0":
   version: 0.15.12
   resolution: "@lezer/common@npm:0.15.12"
   checksum: dae65816187bd690bf446bec116313d3b5328e70e3e1f7c806273d9356ca2017cf82aa650ea53b95260fb98898ea73d44f33319f9dbbd48d473e2f20771b2377
@@ -20263,7 +20270,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.1.3
-    "@lezer/common": 0.15.12
+    "@lezer/common": 0.16.1
     "@lezer/lr": 0.15.8
     "@lingui/cli": 3.13.3
     "@lingui/core": 3.13.3
