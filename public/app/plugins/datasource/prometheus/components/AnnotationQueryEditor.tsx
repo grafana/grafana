@@ -1,11 +1,10 @@
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
-import { EditorRow, EditorField, EditorSwitch, Space } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { EditorRow, EditorField, EditorSwitch, Space, EditorRows } from '@grafana/experimental';
+import { Input, AutoSizeInput } from '@grafana/ui';
 
-import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEditorSelector';
-import { QueryEditorMode } from '../querybuilder/shared/types';
+import { PromQueryCodeEditor } from '../querybuilder/components/PromQueryCodeEditor';
 import { PromQuery } from '../types';
 
 import { PromQueryEditorProps } from './types';
@@ -19,35 +18,47 @@ export function AnnotationQueryEditor(props: Props) {
   // This is because of problematic typing. See AnnotationQueryEditorProps in grafana-data/annotations.ts.
   const annotation = props.annotation!;
   const onAnnotationChange = props.onAnnotationChange!;
+  const query = { expr: annotation.expr, refId: annotation.name, interval: annotation.step };
+
   return (
     <>
-      <PromQueryEditorSelector
-        {...props}
-        query={{ expr: annotation.expr, refId: annotation.name, interval: annotation.step }}
-        onChange={(query) =>
-          onAnnotationChange({
-            ...annotation,
-            expr: query.expr,
-            step: query.interval,
-          })
-        }
-        uiOptions={{
-          modes: {
-            [QueryEditorMode.Explain]: false,
-            [QueryEditorMode.Code]: true,
-            [QueryEditorMode.Builder]: true,
-          },
-          runQueryButton: false,
-          options: {
-            exemplars: false,
-            type: false,
-            format: false,
-            minStep: true,
-            legend: false,
-            resolution: false,
-          },
-        }}
-      />
+      <EditorRows>
+        <PromQueryCodeEditor
+          {...props}
+          query={query}
+          onChange={(query) => {
+            onAnnotationChange({
+              ...annotation,
+              expr: query.expr,
+            });
+          }}
+        />
+        <EditorRow>
+          <EditorField
+            label="Min step"
+            tooltip={
+              <>
+                An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                <code>$__interval</code> and <code>$__rate_interval</code> variables.
+              </>
+            }
+          >
+            <AutoSizeInput
+              type="text"
+              aria-label="Set lower limit for the step parameter"
+              placeholder={'auto'}
+              minWidth={10}
+              onCommitChange={(ev) => {
+                onAnnotationChange({
+                  ...annotation,
+                  step: ev.currentTarget.value,
+                });
+              }}
+              defaultValue={query.interval}
+            />
+          </EditorField>
+        </EditorRow>
+      </EditorRows>
       <Space v={0.5} />
       <EditorRow>
         <EditorField
@@ -58,7 +69,7 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="alertname"
+            placeholder="{{alertname}}"
             value={annotation.titleFormat}
             onChange={(event) => {
               onAnnotationChange({
@@ -89,7 +100,7 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="instance"
+            placeholder="{{instance}}"
             value={annotation.textFormat}
             onChange={(event) => {
               onAnnotationChange({

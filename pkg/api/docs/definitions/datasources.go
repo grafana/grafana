@@ -3,7 +3,6 @@ package definitions
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // swagger:route GET /datasources datasources getDatasources
@@ -334,29 +333,6 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /tsdb/query datasources queryDatasource
-//
-// Query metrics.
-//
-// Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead
-//
-// Queries a data source having backend implementation.
-//
-// Most of Grafana’s builtin data sources have backend implementation.
-//
-// If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:query`.
-//
-// Deprecated: true
-//
-// Responses:
-// 200: queryDatasourceResponse
-// 401: unauthorisedError
-// 400: badRequestError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
 // swagger:parameters updateDatasourceByID deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
 // swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
@@ -409,13 +385,6 @@ type UpdateDatasource struct {
 	// in:body
 	// required:true
 	Body models.UpdateDataSourceCommand
-}
-
-// swagger:parameters queryDatasource
-type QueryDatasource struct {
-	// in:body
-	// required:true
-	Body dtos.MetricRequest
 }
 
 // swagger:response getDatasourcesResponse
@@ -485,12 +454,4 @@ type DeleteDatasourceByNameResponse struct {
 		// example: Dashboard My Dashboard deleted
 		Message string `json:"message"`
 	} `json:"body"`
-}
-
-// swagger:response queryDatasourceResponse
-type QueryDatasourceResponse struct {
-	// The response message
-	// in: body
-	//nolint: staticcheck // plugins.DataResponse deprecated
-	Body legacydata.DataResponse `json:"body"`
 }

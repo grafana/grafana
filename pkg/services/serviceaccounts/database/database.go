@@ -378,6 +378,11 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				whereConditions,
 				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
 			whereParams = append(whereParams, now)
+		case serviceaccounts.FilterOnlyDisabled:
+			whereConditions = append(
+				whereConditions,
+				"is_disabled = ?")
+			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
 		default:
 			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}

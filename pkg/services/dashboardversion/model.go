@@ -1,9 +1,15 @@
 package dashver
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+)
+
+var (
+	ErrDashboardVersionNotFound = errors.New("dashboard version not found")
+	ErrNoVersionsForDashboardId = errors.New("no dashboard versions found for the given DashboardId")
 )
 
 type DashboardVersion struct {
@@ -24,4 +30,8 @@ type GetDashboardVersionQuery struct {
 	DashboardID int64
 	OrgID       int64
 	Version     int
+}
+
+type DeleteExpiredVersionsCommand struct {
+	DeletedRows int64
 }

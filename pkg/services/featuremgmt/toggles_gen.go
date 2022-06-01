@@ -182,4 +182,8 @@ const (
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
+
+	// FlagCanvasPanelNesting
+	// Allow elements nesting
+	FlagCanvasPanelNesting = "canvasPanelNesting"
 )
