@@ -118,11 +118,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "publicDashboards",
 			Description:     "enables public access to dashboards",
 			State:           FeatureStateAlpha,
@@ -247,6 +242,12 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

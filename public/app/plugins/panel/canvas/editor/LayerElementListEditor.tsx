@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 
 import { AppEvents, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime/src';
 import { Button, HorizontalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
@@ -269,7 +270,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
               Clear selection
             </Button>
           )}
-          {selection.length > 1 && (
+          {selection.length > 1 && config.featureToggles.canvasPanelNesting && (
             <Button size="sm" variant="secondary" onClick={this.onFrameSelection}>
               Frame selection
             </Button>

@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   FileDropzone,
@@ -67,7 +67,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
   };
 
   render() {
-    const { query, onChange, datasource } = this.props;
+    const { query, onChange, datasource, app } = this.props;
 
     const logsDatasourceUid = datasource.getLokiSearchDS();
 
@@ -104,6 +104,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
               options={queryTypeOptions}
               value={query.queryType}
               onChange={(v) => {
+                reportInteraction('grafana_traces_query_type_changed', {
+                  datasourceType: 'tempo',
+                  app: app ?? '',
+                  newQueryType: v,
+                  previousQueryType: query.queryType ?? '',
+                });
+
                 this.onClearResults();
 
                 onChange({
