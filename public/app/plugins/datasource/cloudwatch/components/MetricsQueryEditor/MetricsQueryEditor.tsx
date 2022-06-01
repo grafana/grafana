@@ -140,6 +140,7 @@ export const MetricsQueryEditor = (props: Props) => {
             tooltip="Change time series legend name using Dynamic labels. See documentation for details."
           >
             <DynamicLabelsField
+              width={52}
               onRunQuery={onRunQuery}
               label={preparedQuery.label ?? ''}
               onChange={(label) => props.onChange({ ...query, label })}

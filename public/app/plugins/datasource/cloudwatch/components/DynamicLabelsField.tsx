@@ -1,7 +1,8 @@
+import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { useCallback, useRef } from 'react';
 
-import { CodeEditor, Monaco, useTheme2 } from '@grafana/ui';
+import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 
 import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/CompletionItemProvider';
 import language from '../dynamic-labels/definition';
@@ -14,10 +15,12 @@ export interface Props {
   onChange: (query: string) => void;
   onRunQuery: () => void;
   label: string;
+  width: number;
 }
 
-export function DynamicLabelsField({ label, onChange, onRunQuery }: Props) {
+export function DynamicLabelsField({ label, width, onChange, onRunQuery }: Props) {
   const theme = useTheme2();
+  const styles = getInputStyles({ theme, width });
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(
     (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -29,19 +32,20 @@ export function DynamicLabelsField({ label, onChange, onRunQuery }: Props) {
       });
 
       const containerDiv = containerRef.current;
-      if (containerDiv !== null) {
-        containerDiv.style.height = theme.spacing(4);
-        const pixelWidth = 440;
-        containerDiv.style.width = `${pixelWidth}px`;
-        editor.layout({ width: pixelWidth, height: parseInt(theme.spacing(4).replace('px', ''), 10) });
-      }
+      containerDiv !== null && editor.layout({ width: containerDiv.clientWidth, height: containerDiv.clientHeight });
     },
-    [onChange, onRunQuery, theme]
+    [onChange, onRunQuery]
   );
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className={cx(styles.wrapper)}>
       <CodeEditor
+        containerStyles={css`
+          border: 1px solid ${theme.colors.action.disabledBackground};
+          &:hover {
+            border-color: ${theme.components.input.borderColor};
+          }
+        `}
         monacoOptions={{
           // without this setting, the auto-resize functionality causes an infinite loop, don't remove it!
           scrollBeyondLastLine: false,
