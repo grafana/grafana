@@ -12,6 +12,7 @@ const (
 	ScopeFoldersRoot   = "folders"
 	ScopeFoldersPrefix = "folders:uid:"
 
+	ActionDashboardsCreate        = "dashboards:create"
 	ActionFoldersCreate           = "folders:create"
 	ActionFoldersRead             = "folders:read"
 	ActionFoldersWrite            = "folders:write"
