@@ -11,7 +11,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "uid", Type: DB_NVarchar, Length: 40, IsPrimaryKey: true},
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "time_variables", Type: DB_Text, Nullable: false},
+			{Name: "time_settings", Type: DB_Text, Nullable: false},
 			{Name: "refresh_rate", Type: DB_Int, Nullable: false, Default: "30"},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
 		},

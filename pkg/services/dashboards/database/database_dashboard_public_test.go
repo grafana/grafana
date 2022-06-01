@@ -115,10 +115,10 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: true,
 				PublicDashboard: models.PublicDashboard{
-					Uid:           "pubdash-uid",
-					DashboardUid:  savedDashboard.Uid,
-					OrgId:         savedDashboard.OrgId,
-					TimeVariables: "{from: now, to: then}",
+					Uid:          "pubdash-uid",
+					DashboardUid: savedDashboard.Uid,
+					OrgId:        savedDashboard.OrgId,
+					TimeSettings: "{from: now, to: then}",
 				},
 			},
 		})
@@ -217,10 +217,10 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 			PublicDashboardConfig: models.PublicDashboardConfig{
 				IsPublic: false,
 				PublicDashboard: models.PublicDashboard{
-					Uid:           pdUid,
-					DashboardUid:  savedDashboard.Uid,
-					OrgId:         savedDashboard.OrgId,
-					TimeVariables: "{}",
+					Uid:          pdUid,
+					DashboardUid: savedDashboard.Uid,
+					OrgId:        savedDashboard.OrgId,
+					TimeSettings: "{}",
 				},
 			},
 		})

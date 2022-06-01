@@ -23,7 +23,7 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// FIXME insert logic to substitute pdc.TimeVariables into d
+	// FIXME insert logic to substitute pdc.TimeSettings into d
 
 	return d, nil
 }

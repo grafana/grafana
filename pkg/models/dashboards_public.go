@@ -22,10 +22,10 @@ type PublicDashboardConfig struct {
 }
 
 type PublicDashboard struct {
-	Uid           string `json:"uid" xorm:"uid"`
-	DashboardUid  string `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId         int64  `json:"orgId" xorm:"org_id"`
-	TimeVariables string `json:"timeVariables" xorm:"time_variables"`
+	Uid          string `json:"uid" xorm:"uid"`
+	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId        int64  `json:"orgId" xorm:"org_id"`
+	TimeSettings string `json:"timeSettings" xorm:"time_settings"`
 }
 
 func (pd PublicDashboard) TableName() string {
