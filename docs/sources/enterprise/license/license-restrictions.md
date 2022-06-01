@@ -15,7 +15,7 @@ weight: 300
 
 When you become a Grafana Enterprise customer, you receive a license that governs your use of Grafana Enterprise.
 
-### Active users limit
+## Active users limit
 
 Your Grafana license includes a maximum number of active users.
 
