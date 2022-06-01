@@ -41,7 +41,6 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"users.password:update":    accesscontrol.ActionUsersPasswordUpdate,
 		"users.permissions:update": accesscontrol.ActionUsersPermissionsUpdate,
 		"users.quotas:update":      accesscontrol.ActionUsersQuotasUpdate,
-		"roles:list":               "roles:read",
 		"teams.roles:list":         "teams.roles:read",
 		"users.roles:list":         "users.roles:read",
 		"users.authtoken:list":     accesscontrol.ActionUsersAuthTokenList,
@@ -50,17 +49,19 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"alert.instances:update":   accesscontrol.ActionAlertingInstanceUpdate,
 		"alert.rules:update":       accesscontrol.ActionAlertingRuleUpdate,
 	}
-
 	for oldName, newName := range actionNameMapping {
 		_, err := m.sess.Table(&accesscontrol.Permission{}).Where("action = ?", oldName).Update(&accesscontrol.Permission{Action: newName})
 		if err != nil {
-			return fmt.Errorf("failed to update permission table: %w", err)
+			return fmt.Errorf("failed to update permission table for action %s: %w", oldName, err)
 		}
 	}
 
-	_, err := m.sess.Table(&accesscontrol.Permission{}).Where("action = ?", "users.teams:read").Delete(accesscontrol.Permission{})
-	if err != nil {
-		return fmt.Errorf("failed to update permission table: %w", err)
+	actionsToDelete := []string{"users.teams:read", "roles:list"}
+	for _, action := range actionsToDelete {
+		_, err := m.sess.Table(&accesscontrol.Permission{}).Where("action = ?", action).Delete(accesscontrol.Permission{})
+		if err != nil {
+			return fmt.Errorf("failed to update permission table for action %s: %w", action, err)
+		}
 	}
 
 	return nil
