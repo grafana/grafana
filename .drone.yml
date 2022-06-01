@@ -2588,6 +2588,12 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend-enterprise2
+- commands:
+  - ./bin/grabpl integration-tests --edition enterprise2
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test-backend-integration-enterprise2
 trigger:
   event:
     exclude:
@@ -4350,6 +4356,12 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend-enterprise2
+- commands:
+  - ./bin/grabpl integration-tests --edition enterprise2
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.5.4
+  name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4713,6 +4725,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f4586777ea98ff85fec51ae5bf344bf549871f73aab2b6ff6611ce979b5bbfa1
+hmac: 766806dc9d5e5585e86671ded45d0048cab66c5dc9aaacb5ecb79b8e6754db18
 
 ...
