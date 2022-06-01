@@ -337,16 +337,19 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 
 	for id, a := range mapped {
 		for scope, p := range a {
+			if hasFolderView(p) {
+				toAdd = append(toAdd, ac.Permission{
+					RoleID:  id,
+					Updated: now,
+					Created: now,
+					Scope:   scope,
+					Action:  ac.ActionAlertingRuleRead,
+				})
+			}
+
 			if hasFolderAdmin(p) || hasFolderEdit(p) {
 				toAdd = append(
 					toAdd,
-					ac.Permission{
-						RoleID:  id,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionAlertingRuleRead,
-					},
 					ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -397,6 +400,10 @@ func hasFolderAdmin(permissions []ac.Permission) bool {
 
 func hasFolderEdit(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
+}
+
+func hasFolderView(permissions []ac.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_VIEW], permissions)
 }
 
 func hasActions(actions []string, permissions []ac.Permission) bool {
