@@ -37,6 +37,11 @@ export interface HeatmapColorOptions {
   max?: number;
 }
 
+export interface FilterValueRange {
+  min?: number;
+  max?: number;
+}
+
 export interface HeatmapTooltip {
   show: boolean;
   yHistogram?: boolean;
@@ -53,13 +58,13 @@ export interface PanelOptions {
   mode: HeatmapMode;
 
   color: HeatmapColorOptions;
+  filterValues?: FilterValueRange; // was hideZeroBuckets
   calculate?: HeatmapCalculationOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
   cellSize?: number; // was cardRadius
 
-  hideThreshold?: number; // was hideZeroBuckets
   yAxisLabels?: string;
   yAxisReverse?: boolean;
   legend: HeatmapLegend;
@@ -88,6 +93,9 @@ export const defaultPanelOptions: PanelOptions = {
   },
   exemplars: {
     color: 'rgba(255,0,255,0.7)',
+  },
+  filterValues: {
+    min: 1e-9,
   },
   cellGap: 1,
 };

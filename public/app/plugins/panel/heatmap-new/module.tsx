@@ -4,6 +4,7 @@ import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { defaultValues } from 'app/features/alerting/utils/notificationChannels';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
 import { HeatmapPanel } from './HeatmapPanel';
@@ -152,9 +153,9 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //   },
       // })
       .addNumberInput({
-        path: 'hideThreshold',
+        path: 'filterValues.min',
         name: 'Hide cell counts <=',
-        defaultValue: 1e-9,
+        defaultValue: defaultPanelOptions.filterValues?.min,
         category,
       })
       .addSliderInput({

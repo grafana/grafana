@@ -40,6 +40,8 @@ describe('Heatmap Migrations', () => {
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
+            "max": 100,
+            "min": 5,
             "mode": "scheme",
             "scale": "exponential",
             "scheme": "BuGn",
@@ -47,6 +49,9 @@ describe('Heatmap Migrations', () => {
           },
           "exemplars": Object {
             "color": "rgba(255,0,255,0.7)",
+          },
+          "filterValues": Object {
+            "min": 1e-9,
           },
           "legend": Object {
             "show": true,
@@ -103,8 +108,8 @@ const oldHeatmap = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateBuGn',
-    min: null,
-    max: null,
+    min: 5,
+    max: 100,
   },
   legend: {
     show: true,

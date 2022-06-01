@@ -72,6 +72,10 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     },
   };
 
+  if (angular.hideZeroBuckets) {
+    options.filterValues = { ...defaultPanelOptions.filterValues }; // min: 1e-9
+  }
+
   // Migrate color options
   const color = angular.color;
   switch (color?.mode) {
@@ -92,6 +96,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       break;
     }
   }
+  options.color.min = color.min;
+  options.color.max = color.max;
 
   return { fieldConfig, options };
 }
