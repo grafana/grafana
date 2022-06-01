@@ -31,8 +31,7 @@ describe('<TracePageSearchBar>', () => {
   describe('truthy textFilter', () => {
     it('renders UiFindInput with correct props', () => {
       render(<TracePageSearchBar {...defaultProps} />);
-      const uiFindInput = screen.getByTestId(selectors.components.TraceViewer.uiFindInput);
-      expect(uiFindInput['value']).toEqual('value');
+      expect(screen.getByPlaceholderText('Find...')['value']).toEqual('value');
       const suffix = screen.getByTestId(selectors.components.TraceViewer.tracePageSearchBarSuffix);
       const theme = createTheme();
       expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
@@ -74,7 +73,7 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      expect(screen.queryByRole('button', { name: 'Next results button' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Next results button' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Prev results button' })).toBeInTheDocument();
     });
   });

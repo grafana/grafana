@@ -268,7 +268,6 @@ export const Components = {
     spanBar: 'data-testid SpanBar--wrapper',
     tracePageSearchBar: 'data-testid-trace-page-search-bar',
     tracePageSearchBarSuffix: 'data-testid-trace-page-search-bar-suffix',
-    uiFindInput: 'data-testid-ui-find-input',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
