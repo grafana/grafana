@@ -97,7 +97,7 @@ You can build the back-end as follows:
 2. Generate code using Wire:
 
 ```
-# Normal Wire tool install path: $GOPATH/bin/wire.exe
+# Default Wire tool install path: $GOPATH/bin/wire.exe
 <Wire tool install path> gen -tags oss ./pkg/server ./pkg/cmd/grafana-cli/runner
 ```
 

@@ -107,21 +107,21 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 
 ## Background services
 
-A background service is a service that runs in the background of the lifecycle between Grafana startup and shutdown. If you want a service to be run in the background, your Service should satisfy the `registry.BackgroundService` interface and add it as argument to the [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) function and add it as argument to `NewBackgroundServiceRegistry` to register it as a background service.
+A background service runs in the background of the lifecycle between Grafana startup and shutdown. To run your service in the background, it must satisfy the `registry.BackgroundService` interface. Pass it through to the `NewBackgroundServiceRegistry` call in the [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) function to register it.
 
 You can see an example implementation above of the Run method.
 
 ## Disabled services
 
-If you want to guarantee that a background service is not run by Grafana when certain criteria are met/service is disabled, your service should satisfy the `registry.CanBeDisabled` interface. When the service.IsDisabled method returns false, Grafana will not call the service.Run method.
+If you want to guarantee that a background service is not run by Grafana when certain criteria are met/service is disabled, your service must satisfy the `registry.CanBeDisabled` interface. When the `service.IsDisabled` method returns true, Grafana will not call the `service.Run` method.
 
-If you want to run certain initialization code if service is disabled or not, you need to handle this in the service factory method.
+If you want to run certain initialization code whether service is disabled or not, you need to handle this in the service factory method.
 
-You can see an example implementation above of the IsDisabled method and custom initialization code when service is disabled.
+You can see an example implementation above of the `IsDisabled` method and custom initialization code when the service is disabled.
 
 ## Run Wire / generate code
 
-When running `make run` it will call `make gen-go` on the first run. `gen-go` in turn will call the wire binary and generate the code in [wire_gen.go](/pkg/server/wire_gen.go) and [wire_gen.go](/pkg/cmd/grafana-cli/runner/wire_gen.go). The wire binary is installed using [bingo](https://github.com/bwplotka/bingo) which will download and install all the tools needed, including the Wire binary at the specified version.
+Running `make run` calls `make gen-go` on the first run. `gen-go` in turn calls the wire binary and generates the code in [wire_gen.go](/pkg/server/wire_gen.go) and [wire_gen.go](/pkg/cmd/grafana-cli/runner/wire_gen.go). The wire binary is installed using [bingo](https://github.com/bwplotka/bingo) which downloads and installs all the tools needed, including the Wire binary at the specified version.
 
 ## OSS vs Enterprise
 
