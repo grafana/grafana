@@ -196,17 +196,24 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'no values found';
   }
 
-  if (options.yAxis?.scale?.type === ScaleDistribution.Log) {
+  const xAxisCfg = options.xAxis ?? {};
+  const yAxisCfg = options.yAxis ?? {};
+
+  if (xAxisCfg.scale?.type === ScaleDistribution.Log) {
+    throw 'X axis only supports linear buckets';
+  }
+
+  if (yAxisCfg.scale?.type === ScaleDistribution.Log) {
     throw 'log scale calculaitons not yet supported';
   }
 
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
-    xMode: options.xAxis?.mode,
-    xSize: +(options.xAxis?.value ?? 0),
-    yMode: options.yAxis?.mode,
-    ySize: +(options.yAxis?.value ?? 0),
+    xMode: xAxisCfg.mode,
+    xSize: +(xAxisCfg.value ?? 0),
+    yMode: yAxisCfg.mode,
+    ySize: +(yAxisCfg.value ?? 0),
   });
 
   const frame = {
