@@ -67,10 +67,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"

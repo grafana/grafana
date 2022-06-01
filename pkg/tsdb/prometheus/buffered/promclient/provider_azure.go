@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
@@ -23,11 +22,6 @@ var (
 )
 
 func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) error {
-	// Azure authentication is experimental (#35857)
-	if !p.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
-		return nil
-	}
-
 	credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
 	if err != nil {
 		err = fmt.Errorf("invalid Azure credentials: %w", err)

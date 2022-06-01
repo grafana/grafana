@@ -91,11 +91,6 @@ var (
 			Expression:   "true", // Enabled by default
 		},
 		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
