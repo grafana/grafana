@@ -12,7 +12,6 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
-import { mockData } from 'app/features/explore/__mocks__/mockData';
 import { QueryOptions } from 'app/types';
 
 import { describe } from '../../../../test/lib/common';
