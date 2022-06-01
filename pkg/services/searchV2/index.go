@@ -393,6 +393,13 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 	if err != nil {
 		return nil, err
 	}
+	for _, dashboardID := range dashboardIDs {
+		additionalPanelIDs, err := getDashboardPanelIDs(reader, dashboardID)
+		if err != nil {
+			return nil, err
+		}
+		panelIDs = append(panelIDs, additionalPanelIDs...)
+	}
 
 	batch := bluge.NewBatch()
 	batch.Delete(bluge.NewDocument(dashboardUID).ID())

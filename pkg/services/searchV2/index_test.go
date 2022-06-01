@@ -388,7 +388,44 @@ var dashboardsWithFolders = []dashboard{
 		uid:      "2",
 		folderID: 1,
 		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder",
+			Title: "Dashboard in folder 1",
+			Panels: []extract.PanelInfo{
+				{
+					ID:    1,
+					Title: "Panel 1",
+				},
+				{
+					ID:    2,
+					Title: "Panel 2",
+				},
+			},
+		},
+	},
+	{
+		id:       3,
+		uid:      "3",
+		folderID: 1,
+		info: &extract.DashboardInfo{
+			Title: "Dashboard in folder 2",
+			Panels: []extract.PanelInfo{
+				{
+					ID:    3,
+					Title: "Panel 3",
+				},
+			},
+		},
+	},
+	{
+		id:  4,
+		uid: "4",
+		info: &extract.DashboardInfo{
+			Title: "One more dash",
+			Panels: []extract.PanelInfo{
+				{
+					ID:    3,
+					Title: "Panel 4",
+				},
+			},
 		},
 	},
 }
@@ -405,6 +442,7 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		// TODO: golden file compare does not work here.
 		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter, DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}}, &NoopQueryExtender{})
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
+		require.Equal(t, uint64(2), custom.Count)
 		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
 		require.Equal(t, "/dashboards/f/1/", custom.Locations["1"].URL)
 	})
@@ -412,9 +450,19 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
 		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
+		// In response we expect one dashboard which does not belong to removed folder.
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
-			DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}},
+			DashboardQuery{Query: "dash", Kind: []string{string(entityKindDashboard)}},
 		)
+	})
+	t.Run("folders-panels-removed-on-folder-removed", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		require.NoError(t, err)
+		resp := doSearchQuery(context.Background(), testLogger, newReader, testAllowAllFilter, DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}}, &NoopQueryExtender{})
+		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
+		require.True(t, ok)
+		require.Equal(t, uint64(1), custom.Count) // 1 panel which does not belong to dashboards in removed folder.
 	})
 }
 
