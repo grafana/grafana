@@ -254,12 +254,13 @@ func (s *SecretsService) newDataKey(ctx context.Context, prefix string, scope st
 	}
 
 	// 3. Store its encrypted value into the DB.
-	name := prefix + util.GenerateShortUID()
+	name := util.GenerateShortUID()
 	dbDataKey := secrets.DataKey{
 		Active:        true,
 		Name:          name,
 		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
+		Prefix:        prefix,
 		Scope:         scope,
 	}
 

@@ -53,10 +53,11 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, prefix string
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
-	whereCond := fmt.Sprintf("name LIKE '%s' AND active=%s", prefix+"%", ss.sqlStore.Dialect.BooleanStr(true))
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		exists, err = sess.Table(dataKeysTable).Where(whereCond).Get(dataKey)
+		exists, err = sess.Table(dataKeysTable).
+			Where("prefix = ? AND active = ?", prefix, ss.sqlStore.Dialect.BooleanStr(true)).
+			Get(dataKey)
 		return err
 	})
 
