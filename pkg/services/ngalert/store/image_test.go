@@ -93,6 +93,56 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	}
 }
 
+func TestIntegrationGetImages(t *testing.T) {
+	mockTimeNow()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	// create an image foo.png
+	img1 := models.Image{Path: "foo.png"}
+	require.NoError(t, dbstore.SaveImage(ctx, &img1))
+
+	// GetImages should return the first image
+	imgs, err := dbstore.GetImages(ctx, []string{img1.Token})
+	require.NoError(t, err)
+	assert.Equal(t, []models.Image{img1}, imgs)
+
+	// create another image bar.png
+	img2 := models.Image{Path: "bar.png"}
+	require.NoError(t, dbstore.SaveImage(ctx, &img2))
+
+	// GetImages should return both images
+	imgs, err = dbstore.GetImages(ctx, []string{img1.Token, img2.Token})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []models.Image{img1, img2}, imgs)
+
+	// GetImages should return the first image
+	imgs, err = dbstore.GetImages(ctx, []string{img1.Token})
+	require.NoError(t, err)
+	assert.Equal(t, []models.Image{img1}, imgs)
+
+	// GetImages should return the second image
+	imgs, err = dbstore.GetImages(ctx, []string{img2.Token})
+	require.NoError(t, err)
+	assert.Equal(t, []models.Image{img2}, imgs)
+
+	// GetImages should return the first image and an error
+	imgs, err = dbstore.GetImages(ctx, []string{img1.Token, "unknown"})
+	assert.EqualError(t, err, "image not found")
+	assert.Equal(t, []models.Image{img1}, imgs)
+
+	// GetImages should return no images for no tokens
+	imgs, err = dbstore.GetImages(ctx, []string{})
+	require.NoError(t, err)
+	assert.Len(t, imgs, 0)
+
+	// GetImages should return no images for nil tokens
+	imgs, err = dbstore.GetImages(ctx, nil)
+	require.NoError(t, err)
+	assert.Len(t, imgs, 0)
+}
+
 func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
