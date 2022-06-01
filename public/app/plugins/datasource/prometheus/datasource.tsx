@@ -51,6 +51,7 @@ import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PromExemplarData,
   PromMatrixData,
   PromOptions,
   PromQuery,
@@ -108,7 +109,7 @@ export class PrometheusDatasource
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
-    this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     // `directUrl` is never undefined, we set it at https://github.com/grafana/grafana/blob/main/pkg/api/frontendsettings.go#L108
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
@@ -205,15 +206,24 @@ export class PrometheusDatasource
 
   // Use this for tab completion features, wont publish response to other components
   async metadataRequest<T = any>(url: string, params = {}) {
+    const qs: Record<string, any> = params;
+    for (const [key, value] of this.customQueryParameters) {
+      if (qs[key] == null) {
+        qs[key] = value;
+        if (!isNaN(parseFloat(value)) && isFinite(value)) {
+          qs[key] = parseInt(value, 10);
+        }
+      }
+    }
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
-    if (POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
-      const res = await this.postResource(url, params);
+    if (this.httpMethod === 'POST' || POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      const res = await this.postResource(url, qs);
       return {
         data: res,
       };
     }
 
-    const res = await this.getResource(url, params);
+    const res = await this.getResource(url, qs);
     return {
       data: res,
     };
@@ -798,12 +808,10 @@ export class PrometheusDatasource
 
   getExemplars(query: PromQueryRequest) {
     const url = '/api/v1/query_exemplars';
-    return from(
-      this.getResource(
-        url,
-        { query: query.expr, start: query.start.toString(), end: query.end.toString() }
-        // { requestId: query.requestId, headers: query.headers }
-      )
+    return this._request<PromDataSuccessResponse<PromExemplarData>>(
+      url,
+      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
+      { requestId: query.requestId, headers: query.headers }
     );
   }
 
