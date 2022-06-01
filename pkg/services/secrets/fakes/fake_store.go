@@ -24,9 +24,9 @@ func (f FakeSecretsStore) GetDataKey(_ context.Context, id string) (*secrets.Dat
 	return key, nil
 }
 
-func (f FakeSecretsStore) GetCurrentDataKey(_ context.Context, name string) (*secrets.DataKey, error) {
+func (f FakeSecretsStore) GetCurrentDataKey(_ context.Context, label string) (*secrets.DataKey, error) {
 	for _, key := range f.store {
-		if key.Name == name && key.Active {
+		if key.Label == label && key.Active {
 			return key, nil
 		}
 	}
@@ -43,12 +43,12 @@ func (f FakeSecretsStore) GetAllDataKeys(_ context.Context) ([]*secrets.DataKey,
 }
 
 func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey *secrets.DataKey) error {
-	f.store[dataKey.Name] = dataKey
+	f.store[dataKey.Id] = dataKey
 	return nil
 }
 
 func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, _ *xorm.Session) error {
-	f.store[dataKey.Name] = dataKey
+	f.store[dataKey.Id] = dataKey
 	return nil
 }
 

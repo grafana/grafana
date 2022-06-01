@@ -9,11 +9,11 @@ var ErrDataKeyNotFound = errors.New("data key not found")
 
 type DataKey struct {
 	Active        bool
-	Name          string
+	Id            string `xorm:"name"`
+	Label         string
 	Scope         string
 	Provider      ProviderID
 	EncryptedData []byte
-	Prefix        string
 	Created       time.Time
 	Updated       time.Time
 }

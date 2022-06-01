@@ -62,8 +62,8 @@ func addSecretsMigration(mg *migrator.Migrator) {
 		fmt.Sprintf("UPDATE %s SET %s = %s", dataKeysV1.Name, "name", "id"),
 	))
 	// ------- This is done for backward compatibility with versions > v8.3.x
-	mg.AddMigration("rename data_keys name column to prefix", migrator.NewRenameColumnMigration(
-		dataKeysV1, dataKeysV1.Columns[0], "prefix",
+	mg.AddMigration("rename data_keys name column to label", migrator.NewRenameColumnMigration(
+		dataKeysV1, dataKeysV1.Columns[0], "label",
 	))
 
 	mg.AddMigration("rename data_keys id column back to name", migrator.NewRenameColumnMigration(
