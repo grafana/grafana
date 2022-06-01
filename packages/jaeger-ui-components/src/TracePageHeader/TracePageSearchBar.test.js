@@ -32,7 +32,7 @@ describe('<TracePageSearchBar>', () => {
     it('renders UiFindInput with correct props', () => {
       render(<TracePageSearchBar {...defaultProps} />);
       expect(screen.getByPlaceholderText('Find...')['value']).toEqual('value');
-      const suffix = screen.getByTestId(selectors.components.TraceViewer.tracePageSearchBarSuffix);
+      const suffix = screen.getByLabelText('Search bar suffix');
       const theme = createTheme();
       expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
       expect(suffix.textContent).toBe('suffix');
@@ -69,7 +69,7 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('does not render suffix', () => {
-      expect(screen.queryByTestId(selectors.components.TraceViewer.tracePageSearchBarSuffix)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Search bar suffix')).not.toBeInTheDocument();
     });
 
     it('renders buttons', () => {

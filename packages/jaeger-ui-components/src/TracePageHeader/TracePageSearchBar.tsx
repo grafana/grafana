@@ -17,7 +17,6 @@ import cx from 'classnames';
 import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import UiFindInput from '../common/UiFindInput';
@@ -95,10 +94,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
-    <span
-      className={styles.TracePageSearchBarSuffix}
-      data-testid={selectors.components.TraceViewer.tracePageSearchBarSuffix}
-    >
+    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
       {searchBarSuffix}
     </span>
   ) : null;
