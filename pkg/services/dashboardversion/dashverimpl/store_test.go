@@ -14,10 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationDashboardVersion(t *testing.T) {
+func TestIntegrationGetDashboardVersion(t *testing.T) {
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss}
 
@@ -57,6 +58,27 @@ func TestIntegrationDashboardVersion(t *testing.T) {
 		_, err := dashVerStore.Get(context.Background(), &query)
 		require.Error(t, err)
 		require.Equal(t, models.ErrDashboardVersionNotFound, err)
+	})
+}
+
+func TestIntegrationDeleteExpiredVersions(t *testing.T) {
+	versionsToWrite := 10
+	ss := sqlstore.InitTestDB(t)
+	dashVerStore := sqlStore{db: ss}
+
+	for i := 0; i < versionsToWrite-1; i++ {
+		insertTestDashboard(t, ss, "test dash 53", 1, int64(i), false, "diff-all")
+	}
+
+	t.Run("Clean up old dashboard versions", func(t *testing.T) {
+		versionIDsToDelete := []interface{}{1, 2, 3, 4}
+		res, err := dashVerStore.DeleteBatch(
+			context.Background(),
+			&dashver.DeleteExpiredVersionsCommand{DeletedRows: 4},
+			versionIDsToDelete,
+		)
+		require.Nil(t, err)
+		assert.EqualValues(t, 4, res)
 	})
 }
 

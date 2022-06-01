@@ -18,6 +18,19 @@ type memoPrometheusFlavor struct {
 	memoized time.Time
 }
 
+func (s *Service) collectPrometheusFlavors(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	variants, err := s.detectPrometheusVariants(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for variant, count := range variants {
+		m["stats.ds.prometheus.flavor."+variant+".count"] = count
+	}
+	return m, nil
+}
+
 func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int64, error) {
 	if s.promFlavorCache.memoized.Add(promFlavorCacheLifetime).After(time.Now()) &&
 		s.promFlavorCache.variants != nil {
@@ -77,7 +90,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		// Possibly configuration error, the risk of a false positive is
 		// too high.
 		s.log.Debug("Failed to send Prometheus build info request", "error", err)
-		return "", nil
+		return "unreachable", nil
 	}
 	defer func() {
 		err := resp.Body.Close()

@@ -48,10 +48,13 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 }
 
 func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]interface{}) {
+	totC, errC := 0, 0
 	for _, fn := range uss.externalMetrics {
 		fnMetrics, err := fn(ctx)
+		totC++
 		if err != nil {
 			uss.log.Error("Failed to fetch external metrics", "error", err)
+			errC++
 			continue
 		}
 
@@ -59,6 +62,8 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]int
 			metrics[name] = value
 		}
 	}
+	metrics["stats.usagestats.debug.collect.total.count"] = totC
+	metrics["stats.usagestats.debug.collect.error.count"] = errC
 }
 
 func (uss *UsageStats) RegisterMetricsFunc(fn usagestats.MetricsFunc) {

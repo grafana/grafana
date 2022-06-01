@@ -146,6 +146,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
+                  {/* TODO: enable when API keys to service accounts migration is ready
+                    {config.featureToggles.serviceAccounts && (
+                      <Alert title="Switch from API keys to Service accounts" severity="info">
+                        Service accounts give you more control. API keys will be automatically migrated into tokens inside
+                        respective service accounts. The current API keys will still work, but will be called tokens and
+                        you will find them in the detail view of a respective service account.
+                      </Alert>
+                  )} */}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

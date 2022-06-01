@@ -59,7 +59,7 @@ export default (data) => {
         requests.push({ method: 'GET', url: '/api/annotations?dashboardId=2074&from=1548078832772&to=1548082432772' });
 
         for (let n = 0; n < batchCount; n++) {
-          requests.push({ method: 'POST', url: '/api/tsdb/query', body: payload });
+          requests.push({ method: 'POST', url: '/api/ds/query', body: payload });
         }
 
         let responses = client.batch(requests);
