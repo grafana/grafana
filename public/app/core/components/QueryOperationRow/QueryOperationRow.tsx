@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable, DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 import { useUpdateEffect } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -93,7 +93,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
-  const rowHeader = (
+  const getRowHeader = (dragHandleProps?: DraggableProvidedDragHandleProps) => (
     <div className={styles.header}>
       <div className={styles.column}>
         <Icon
@@ -112,7 +112,14 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       <div className={styles.column}>
         {actionsElement}
         {draggable && (
-          <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+          <Icon
+            title="Drag and drop to reorder"
+            name="draggabledots"
+            size="lg"
+            className={styles.dragIcon}
+            onMouseMove={reportDragMousePosition}
+            {...dragHandleProps}
+          />
         )}
       </div>
     </div>
@@ -122,13 +129,10 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     return (
       <Draggable draggableId={id} index={index}>
         {(provided) => {
-          const dragHandleProps = { ...provided.dragHandleProps, role: 'group' }; // replace the role="button" because it causes https://dequeuniversity.com/rules/axe/4.3/nested-interactive?application=msftAI
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-                <div {...dragHandleProps} onMouseMove={reportDragMousePosition}>
-                  {rowHeader}
-                </div>
+                <div>{getRowHeader(provided.dragHandleProps)}</div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
             </>
@@ -140,7 +144,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 
   return (
     <div className={styles.wrapper}>
-      {rowHeader}
+      {getRowHeader()}
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
