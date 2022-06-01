@@ -37,7 +37,7 @@ describe('formAmRouteToAmRoute', () => {
       const amRoute = formAmRouteToAmRoute('test', route, {});
 
       // Assert
-      expect(amRoute.group_by).toBe(undefined);
+      expect(amRoute.group_by).toStrictEqual([]);
     });
   });
 

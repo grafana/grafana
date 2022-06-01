@@ -150,7 +150,7 @@ export const formAmRouteToAmRoute = (
     repeatIntervalValueType,
   } = formAmRoute;
 
-  const group_by = overrideGrouping && groupBy ? groupBy : undefined;
+  const group_by = overrideGrouping && groupBy ? groupBy : [];
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
   const group_wait = overrideGroupWait ? `${groupWaitValue}${groupWaitValueType}` : undefined;
