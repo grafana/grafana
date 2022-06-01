@@ -15,34 +15,36 @@ import (
 
 func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t)
-	t.Run("alert rule group should be updated on creation", func(t *testing.T) {
+	t.Run("alert rule creation should return the created id", func(t *testing.T) {
 		var orgID int64 = 1
-		rule := models.AlertRule{
-			OrgID:           orgID,
-			Title:           "my-title",
-			Condition:       "some cond",
-			Version:         1,
-			IntervalSeconds: 60,
-			Data: []models.AlertQuery{
-				{
-					RefID: "A",
-					Model: json.RawMessage("{}"),
-					RelativeTimeRange: models.RelativeTimeRange{
-						From: models.Duration(60),
-						To:   models.Duration(0),
-					},
-				},
-			},
-			RuleGroup:    "my-cool-group",
-			For:          time.Second * 60,
-			NoDataState:  models.OK,
-			ExecErrState: models.OkErrState,
-		}
-		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#1", orgID), models.ProvenanceNone)
 		require.NoError(t, err)
+		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
 	})
-	t.Run("alert rule group should be updated on update", func(t *testing.T) {
+	t.Run("alert rule creation should set the right provenance", func(t *testing.T) {
+		var orgID int64 = 1
+		rule, err := ruleService.CreateAlertRule(context.Background(), dummyRule("test#2", orgID), models.ProvenanceAPI)
+		require.NoError(t, err)
 
+		_, provenance, err := ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceAPI, provenance)
+	})
+	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
+		var orgID int64 = 1
+		rule := dummyRule("test#3", orgID)
+		rule.RuleGroup = "xyz"
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.NotEqual(t, 60, rule.IntervalSeconds)
+
+		var interval int64 = 120
+		err = ruleService.UpdateAlertGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
+		require.NoError(t, err)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, interval, rule.IntervalSeconds)
 	})
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {
 		tests := []struct {
@@ -90,7 +92,17 @@ func TestAlertRuleService(t *testing.T) {
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
+				var orgID int64 = 1
+				rule := dummyRule(t.Name(), orgID)
+				rule, err := ruleService.CreateAlertRule(context.Background(), rule, test.from)
+				require.NoError(t, err)
 
+				_, err = ruleService.UpdateAlertRule(context.Background(), rule, test.to)
+				if test.errNil {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+				}
 			})
 		}
 	})
@@ -109,5 +121,29 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		xact:            sqlStore,
 		log:             log.New("testing"),
 		defaultInterval: 60,
+	}
+}
+
+func dummyRule(title string, orgID int64) models.AlertRule {
+	return models.AlertRule{
+		OrgID:           orgID,
+		Title:           title,
+		Condition:       "A",
+		Version:         1,
+		IntervalSeconds: 60,
+		Data: []models.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage("{}"),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
+				},
+			},
+		},
+		RuleGroup:    "my-cool-group",
+		For:          time.Second * 60,
+		NoDataState:  models.OK,
+		ExecErrState: models.OkErrState,
 	}
 }
