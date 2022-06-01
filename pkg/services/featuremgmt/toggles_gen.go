@@ -51,14 +51,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoSearch
-	// Enable searching in tempo datasources
-	FlagTempoSearch = "tempoSearch"
-
-	// FlagTempoBackendSearch
-	// Use backend for tempo search
-	FlagTempoBackendSearch = "tempoBackendSearch"
-
 	// FlagTempoServiceGraph
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
