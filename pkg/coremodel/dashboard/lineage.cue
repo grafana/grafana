@@ -65,7 +65,7 @@ seqs: [
 				schemaVersion: uint16 | *36 @reviewme()
 				// Version of the dashboard, incremented each time the dashboard is updated.
 				version?: uint32 @reviewme()
-				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)] @reviewme()
+				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @reviewme()
 				// TODO docs
 				templating?: list: [...#VariableModel] @reviewme()
 				// TODO docs
@@ -370,7 +370,7 @@ seqs: [
 					panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @reviewme()
 					// Name of template variable to repeat for.
 					repeat?: string @reviewme()
-				} @reviewme()
+				} @cuetsy(kind="interface") @reviewme()
 
 				// Support for legacy graph and heatmap panels.
 				#GraphPanel: {
