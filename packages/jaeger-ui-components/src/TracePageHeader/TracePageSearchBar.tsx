@@ -23,7 +23,6 @@ import { Button, useStyles2 } from '@grafana/ui';
 import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
-import * as markers from './TracePageSearchBar.markers';
 // eslint-disable-next-line no-duplicate-imports
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -106,7 +105,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
-    'data-test': markers.IN_TRACE_SEARCH,
+    'data-test': selectors.components.TraceViewer.tracePageSearchBar,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix,
