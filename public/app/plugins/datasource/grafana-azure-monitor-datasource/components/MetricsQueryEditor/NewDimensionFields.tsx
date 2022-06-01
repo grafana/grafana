@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, DataFrame, PanelData } from '@grafana/data';
+import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
 import { AccessoryButton, EditorList } from '@grafana/experimental';
-import { Select, HorizontalGroup, MultiSelect, Field } from '@grafana/ui';
+import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
+import { Field } from '../Field';
 
 import { setDimensionFilters } from './setQueryValue';
 
@@ -28,16 +29,14 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
       const labels = fields
         .map((fields) => fields.labels)
         .flat()
-        .filter((item) => item!);
+        .filter((item): item is Labels => item !== null && item !== undefined);
       for (const label of labels) {
         // Labels only exist for series that have a dimension selected
-        if (label) {
-          for (const [dimension, value] of Object.entries(label)) {
-            if (labelsObj[dimension]) {
-              labelsObj[dimension].add(value);
-            } else {
-              labelsObj[dimension] = new Set([value]);
-            }
+        for (const [dimension, value] of Object.entries(label)) {
+          if (labelsObj[dimension]) {
+            labelsObj[dimension].add(value);
+          } else {
+            labelsObj[dimension] = new Set([value]);
           }
         }
       }
