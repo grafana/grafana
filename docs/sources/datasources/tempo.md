@@ -211,6 +211,8 @@ Note: The metric traces_spanmetrics_calls_total is used to display the name, rat
 
 Clicking on any row in the rate, error rate or duration columns will open up a query in Prometheus with that rows span name automatically set in the query. Cicking on a row in the links column will open up a query in Tempo with that rows span name automatically set in the query.
 
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
+
 ## Linking Trace ID from logs
 
 You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
