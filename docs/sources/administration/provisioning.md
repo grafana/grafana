@@ -98,8 +98,6 @@ datasources:
     uid: my_unique_uid
     # <string> url
     url: http://localhost:8080
-    # <string> Deprecated, use secureJsonData.password
-    password:
     # <string> database user, if used
     user:
     # <string> database name, if used
