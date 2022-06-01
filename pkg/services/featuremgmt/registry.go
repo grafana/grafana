@@ -89,6 +89,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "lokiBackendMode",
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,

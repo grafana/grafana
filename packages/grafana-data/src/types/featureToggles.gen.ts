@@ -31,6 +31,7 @@ export interface FeatureToggles {
   tempoSearch?: boolean;
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
+  tempoApmTable?: boolean;
   lokiBackendMode?: boolean;
   prometheus_azure_auth?: boolean;
   influxdbBackendMigration?: boolean;

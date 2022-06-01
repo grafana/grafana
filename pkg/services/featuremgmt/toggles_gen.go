@@ -67,6 +67,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagTempoApmTable
+	// Show APM table
+	FlagTempoApmTable = "tempoApmTable"
+
 	// FlagLokiBackendMode
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
