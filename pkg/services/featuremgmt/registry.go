@@ -19,11 +19,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "httpclientprovider_azure_auth",
-			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
@@ -104,6 +99,11 @@ var (
 		{
 			Name:        "prometheus_azure_auth",
 			Description: "Experimental. Azure authentication for Prometheus datasource",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -242,7 +242,6 @@ var (
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateBeta,
-			Expression:  "true", // Enabled by default
 		},
 		{
 			Name:            "validateDashboardsOnSave",
@@ -254,6 +253,12 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

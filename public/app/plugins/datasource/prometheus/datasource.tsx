@@ -62,7 +62,7 @@ import {
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
-export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource
@@ -336,7 +336,7 @@ export class PrometheusDatasource
       const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
       // Remove targets that weren't processed yet (in targets array they are after current target)
       const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
-      const targets = request.targets.slice(0, currentTargetIdx);
+      const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
 
       if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
         return true;

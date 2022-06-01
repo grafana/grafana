@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagHttpclientproviderAzureAuth
-	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
-	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
-
 	// FlagServiceAccounts
 	// support service accounts
 	FlagServiceAccounts = "serviceAccounts"
@@ -78,6 +74,10 @@ const (
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
@@ -186,4 +186,8 @@ const (
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
+
+	// FlagCanvasPanelNesting
+	// Allow elements nesting
+	FlagCanvasPanelNesting = "canvasPanelNesting"
 )
