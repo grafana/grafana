@@ -31,6 +31,9 @@ type RawSQLMigration struct {
 	sql map[string]string
 }
 
+// NewRawSQLMigration should be used carefully, the usage
+// of SQL statements that cause breaking changes like renaming
+// a table or a column, or changing a column type should not be used.
 func NewRawSQLMigration(sql string) *RawSQLMigration {
 	m := &RawSQLMigration{}
 	if sql != "" {
@@ -115,6 +118,8 @@ type RenameColumnMigration struct {
 	newName string
 }
 
+// NewRenameColumnMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func NewRenameColumnMigration(table Table, column *Column, newName string) *RenameColumnMigration {
 	return &RenameColumnMigration{table: table, column: column, newName: newName}
 }
@@ -215,6 +220,8 @@ type RenameTableMigration struct {
 	newName string
 }
 
+// NewRenameTableMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func NewRenameTableMigration(oldName string, newName string) *RenameTableMigration {
 	return &RenameTableMigration{oldName: oldName, newName: newName}
 }
