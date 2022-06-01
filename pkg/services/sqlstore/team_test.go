@@ -296,7 +296,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, err, models.ErrTeamNotFound)
 
 				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = sqlStore.GetDashboardAclInfoList(context.Background(), permQuery)
+				err = getDashboardAclInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(permQuery.Result), 0)

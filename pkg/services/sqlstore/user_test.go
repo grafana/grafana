@@ -261,7 +261,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, query1.Result, 1)
 
 		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
+		err = getDashboardAclInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -335,7 +335,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, query2.Result, 1)
 
 		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
+		err = getDashboardAclInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)

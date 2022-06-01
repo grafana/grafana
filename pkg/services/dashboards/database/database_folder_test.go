@@ -310,24 +310,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, query.Result[1].ID, folder2.Id)
 				})
 
-				t.Run("should have write access to all folders and dashboards", func(t *testing.T) {
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       adminUser.Id,
-						OrgRole:      models.ROLE_ADMIN,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_ADMIN)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_ADMIN)
-				})
-
 				t.Run("should have edit permission in folders", func(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
@@ -361,24 +343,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
 					require.Equal(t, query.Result[1].ID, folder2.Id)
-				})
-
-				t.Run("should have edit access to folders with default ACL", func(t *testing.T) {
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       editorUser.Id,
-						OrgRole:      models.ROLE_EDITOR,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_EDIT)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_EDIT)
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
@@ -425,26 +389,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 0)
-				})
-
-				t.Run("should have view access to folders with default ACL", func(t *testing.T) {
-					setup3()
-
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       viewerUser.Id,
-						OrgRole:      models.ROLE_VIEWER,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_VIEW)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_VIEW)
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {

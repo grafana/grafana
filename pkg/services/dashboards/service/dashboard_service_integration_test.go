@@ -815,8 +815,14 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		service := ProvideDashboardService(
+			&setting.Cfg{}, dashboardStore, &dummyDashAlertExtractor{},
+			featuremgmt.WithFeatures(),
+			accesscontrolmock.NewMockedPermissionsService(),
+			accesscontrolmock.NewMockedPermissionsService(),
+		)
+		guardian.InitLegacyGuardian(sqlStore, service)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
