@@ -93,7 +93,6 @@ export interface QueryBuilderOperationParamEditorProps {
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
-  onBlur?: () => void;
 }
 
 export enum QueryEditorMode {
