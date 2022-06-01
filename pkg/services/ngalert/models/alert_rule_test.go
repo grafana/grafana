@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -543,5 +544,35 @@ func TestDiff(t *testing.T) {
 				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
 		})
+	})
+}
+
+func TestSortByGroupIndex(t *testing.T) {
+	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(5)+5, AlertRuleGen(WithUniqueGroupIndex()))
+		rand.Shuffle(len(rules), func(i, j int) {
+			rules[i], rules[j] = rules[j], rules[i]
+		})
+		require.False(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		}))
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		}))
+	})
+
+	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(5)+5, AlertRuleGen(WithUniqueID(), WithGroupIndex(rand.Int())))
+		rand.Shuffle(len(rules), func(i, j int) {
+			rules[i], rules[j] = rules[j], rules[i]
+		})
+		require.False(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		}))
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		}))
 	})
 }
