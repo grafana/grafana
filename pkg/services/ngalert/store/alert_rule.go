@@ -37,6 +37,7 @@ type RuleStore interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	// GetRuleGroups returns the unique rule groups across all organizations.
@@ -105,6 +106,22 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 			return err
 		}
 		query.Result = alertRule
+		return nil
+	})
+}
+
+// GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
+func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var result []*ngmodels.AlertRule
+		err := sess.Table("alert_rule").Alias("A").Join(
+			"INNER",
+			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
+		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+		if err != nil {
+			return err
+		}
+		query.Result = result
 		return nil
 	})
 }

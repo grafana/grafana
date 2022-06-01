@@ -127,4 +127,41 @@ describe('useExternalAmSelector', () => {
       },
     ]);
   });
+
+  it('The number of alert managers should match config entries when there are multiple entries of the same url', () => {
+    useSelectorMock.mockImplementation((callback) => {
+      return callback(
+        createMockStoreState(
+          [
+            { url: 'same/url/to/am/api/v2/alerts' },
+            { url: 'same/url/to/am/api/v2/alerts' },
+            { url: 'same/url/to/am/api/v2/alerts' },
+          ],
+          [],
+          ['same/url/to/am', 'same/url/to/am', 'same/url/to/am']
+        )
+      );
+    });
+
+    const alertmanagers = useExternalAmSelector();
+
+    expect(alertmanagers.length).toBe(3);
+    expect(alertmanagers).toEqual([
+      {
+        url: 'same/url/to/am',
+        actualUrl: 'same/url/to/am/api/v2/alerts',
+        status: 'active',
+      },
+      {
+        url: 'same/url/to/am',
+        actualUrl: 'same/url/to/am/api/v2/alerts',
+        status: 'active',
+      },
+      {
+        url: 'same/url/to/am',
+        actualUrl: 'same/url/to/am/api/v2/alerts',
+        status: 'active',
+      },
+    ]);
+  });
 });

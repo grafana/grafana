@@ -157,14 +157,16 @@ cookie_secure = true
 cookie_secure = true
 ```
 
-The `login_remember_days`, `cookie_username` and `cookie_remember_name` settings in the `security` section are no longer being used so they're safe to remove.
+The `login_remember_days`, `login_maximum_inactive_lifetime_days`, `login_maximum_lifetime_days`, `cookie_username` and `cookie_remember_name` settings in the `security` section are no longer being used so they're safe to remove.
+
+If you have `login_maximum_lifetime_days` or `login_maximum_inactive_lifetime_days` configured, you need to change it to `login_maximum_lifetime_duration` or `login_maximum_inactive_lifetime_duration` and append `d` to the configuration value to retain the previous behavior.
 
 If you have `login_remember_days` configured to 0 (zero) you should change your configuration to this to accomplish similar behavior, i.e. a logged in user will maximum be logged in for 1 day until being forced to login again:
 
 ```ini
 [auth]
-login_maximum_inactive_lifetime_days = 1
-login_maximum_lifetime_days = 1
+login_maximum_inactive_lifetime_duration = 1d
+login_maximum_lifetime_duration = 1d
 ```
 
 The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
