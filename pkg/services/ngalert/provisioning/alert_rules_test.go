@@ -108,5 +108,6 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		provenanceStore: store,
 		xact:            sqlStore,
 		log:             log.New("testing"),
+		defaultInterval: 60,
 	}
 }
