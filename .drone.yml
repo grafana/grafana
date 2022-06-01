@@ -58,7 +58,7 @@ trigger:
     - docs/**
     - '*.md'
     - pkg/**
-    - packaging/*
+    - packaging/**
     - go.sum
     - go.mod
     include: []
@@ -151,9 +151,9 @@ trigger:
     - '*.md'
     include:
     - pkg/**
-    - packaging/*
+    - packaging/**
     - .drone.yml
-    - conf/*
+    - conf/**
     - go.sum
     - go.mod
 type: docker
@@ -4725,6 +4725,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 78d89910f4e207c3975caef96c26558c8811846eabb95b16a1da2626462ed098
+hmac: f4586777ea98ff85fec51ae5bf344bf549871f73aab2b6ff6611ce979b5bbfa1
 
 ...
