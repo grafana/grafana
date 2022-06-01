@@ -10,29 +10,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
-	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
 type Resource struct {
-	intervalCalculator intervalv2.Calculator
-	tracer             tracing.Tracer
-	provider           *client.Provider
-	log                log.Logger
-	ID                 int64
-	URL                string
-	TimeInterval       string
+	provider *client.Provider
+	log      log.Logger
 }
 
 func New(
 	httpClientProvider httpclient.Provider,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*Resource, error) {
@@ -41,24 +32,11 @@ func New(
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
-	if err != nil {
-		return nil, err
-	}
-
 	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	if err != nil {
-		return nil, err
-	}
 
 	return &Resource{
-		intervalCalculator: intervalv2.NewCalculator(),
-		tracer:             tracer,
-		log:                plog,
-		provider:           p,
-		TimeInterval:       timeInterval,
-		ID:                 settings.ID,
-		URL:                settings.URL,
+		log:      plog,
+		provider: p,
 	}, nil
 }
 
@@ -72,7 +50,7 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 }
 
 func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backend.CallResourceRequest) (int, []byte, error) {
-	r.log.Debug("Sending resource query", "URL", r.URL)
+	r.log.Debug("Sending resource query", "URL", req.URL)
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		return 500, nil, err

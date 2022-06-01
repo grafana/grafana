@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -60,7 +61,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 			return nil, err
 		}
 
-		r, err := resource.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		r, err := resource.New(httpClientProvider, cfg, features, settings, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -91,6 +92,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if !strings.HasPrefix(req.URL, "/api/v1") {
+		sender.Send(&backend.CallResourceResponse{
+			Status: 404,
+			Headers: map[string][]string{
+				"content-type": {"application/json"},
+			},
+			Body: []byte(fmt.Sprintf("%s: Not a valid prometheus URL", req.URL)),
+		})
+	}
+
 	i, err := s.getInstance(req.PluginContext)
 	if err != nil {
 		return err
