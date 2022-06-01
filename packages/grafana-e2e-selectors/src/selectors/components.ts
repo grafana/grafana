@@ -266,7 +266,6 @@ export const Components = {
   },
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
-    tracePageSearchBar: 'data-testid-trace-page-search-bar',
     tracePageSearchBarSuffix: 'data-testid-trace-page-search-bar-suffix',
   },
   QueryField: { container: 'Query field' },

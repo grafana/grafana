@@ -105,7 +105,6 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
-    'data-test': selectors.components.TraceViewer.tracePageSearchBar,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix,
@@ -161,7 +160,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   };
 
   return (
-    <div className={styles.TracePageSearchBar} data-testid={selectors.components.TraceViewer.tracePageSearchBar}>
+    <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput
           onChange={setTraceSearch}
