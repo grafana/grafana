@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Retrieves public dashboard
+// gets public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
 	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
 	if err != nil {
@@ -19,7 +19,7 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 	return response.JSON(http.StatusOK, dash)
 }
 
-// Sets sharing configuration for dashboard
+// gets public dashboard configuration for dashboard
 func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
@@ -28,7 +28,7 @@ func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, pdc)
 }
 
-// Sets sharing configuration for dashboard
+// sets public dashboard configuration for dashboard
 func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc := &models.PublicDashboardConfig{}
 	if err := web.Bind(c.Req, pdc); err != nil {
