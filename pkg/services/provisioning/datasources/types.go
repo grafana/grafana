@@ -150,16 +150,16 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 		// Using Raw value for the warnings here so that even if it uses env interpolation and the env var is empty
 		// it will still warn
 		if len(ds.Password.Raw) > 0 {
-			cfg.log.Warn(
-				"[Deprecated] the use of password field is deprecated. Please use secureJsonData.password",
-				"datasource name",
+			cfg.log.Error(
+				"The use of password field is not supported. Please use secureJsonData.password",
+				"name",
 				ds.Name.Value(),
 			)
 		}
 		if len(ds.BasicAuthPassword.Raw) > 0 {
-			cfg.log.Warn(
-				"[Deprecated] the use of basicAuthPassword field is deprecated. Please use secureJsonData.basicAuthPassword",
-				"datasource name",
+			cfg.log.Error(
+				"The use of basicAuthPassword field is not supported. Please use secureJsonData.basicAuthPassword",
+				"name",
 				ds.Name.Value(),
 			)
 		}
@@ -225,23 +225,21 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 	}
 
 	cmd := &models.AddDataSourceCommand{
-		OrgId:             ds.OrgID,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            models.DsAccess(ds.Access),
-		Url:               ds.URL,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJSONData,
-		ReadOnly:          !ds.Editable,
-		Uid:               ds.UID,
+		OrgId:           ds.OrgID,
+		Name:            ds.Name,
+		Type:            ds.Type,
+		Access:          models.DsAccess(ds.Access),
+		Url:             ds.URL,
+		User:            ds.User,
+		Database:        ds.Database,
+		BasicAuth:       ds.BasicAuth,
+		BasicAuthUser:   ds.BasicAuthUser,
+		WithCredentials: ds.WithCredentials,
+		IsDefault:       ds.IsDefault,
+		JsonData:        jsonData,
+		SecureJsonData:  ds.SecureJSONData,
+		ReadOnly:        !ds.Editable,
+		Uid:             ds.UID,
 	}
 
 	if cmd.Uid == "" {
@@ -266,23 +264,21 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.Updat
 	}
 
 	return &models.UpdateDataSourceCommand{
-		Id:                id,
-		Uid:               ds.UID,
-		OrgId:             ds.OrgID,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            models.DsAccess(ds.Access),
-		Url:               ds.URL,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJSONData,
-		ReadOnly:          !ds.Editable,
+		Id:              id,
+		Uid:             ds.UID,
+		OrgId:           ds.OrgID,
+		Name:            ds.Name,
+		Type:            ds.Type,
+		Access:          models.DsAccess(ds.Access),
+		Url:             ds.URL,
+		User:            ds.User,
+		Database:        ds.Database,
+		BasicAuth:       ds.BasicAuth,
+		BasicAuthUser:   ds.BasicAuthUser,
+		WithCredentials: ds.WithCredentials,
+		IsDefault:       ds.IsDefault,
+		JsonData:        jsonData,
+		SecureJsonData:  ds.SecureJSONData,
+		ReadOnly:        !ds.Editable,
 	}
 }
