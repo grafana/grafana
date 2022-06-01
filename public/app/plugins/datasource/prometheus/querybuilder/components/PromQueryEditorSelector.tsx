@@ -10,43 +10,19 @@ import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { FeedbackLink } from '../shared/FeedbackLink';
-import { QueryEditorModeToggle, UIOptions as ModeToggleUIOptions } from '../shared/QueryEditorModeToggle';
+import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
-import { PromQueryBuilderOptions, UIOptions as OptionsUIOptions } from './PromQueryBuilderOptions';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-interface UIOptions {
-  modes: ModeToggleUIOptions;
-  runQueryButton: boolean;
-  options: OptionsUIOptions;
-}
-
-const defaultOptions: UIOptions = {
-  modes: {
-    [QueryEditorMode.Explain]: true,
-    [QueryEditorMode.Code]: true,
-    [QueryEditorMode.Builder]: true,
-  },
-  runQueryButton: true,
-  options: {
-    exemplars: true,
-    type: true,
-    format: true,
-    minStep: true,
-    legend: true,
-    resolution: true,
-  },
-};
-
-type Props = PromQueryEditorProps & { uiOptions?: UIOptions };
+type Props = PromQueryEditorProps;
 
 export const PromQueryEditorSelector = React.memo<Props>((props) => {
-  const uiOptions = props.uiOptions || defaultOptions;
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
@@ -130,18 +106,16 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
         )}
         <FlexItem grow={1} />
-        {uiOptions.runQueryButton && (
-          <Button
-            variant={dataIsStale ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-            disabled={data?.state === LoadingState.Loading}
-          >
-            Run query
-          </Button>
-        )}
-        <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} uiOptions={uiOptions.modes} />
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading}
+        >
+          Run query
+        </Button>
+        <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
@@ -157,13 +131,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
         {editorMode !== QueryEditorMode.Explain && (
-          <PromQueryBuilderOptions
-            query={query}
-            app={props.app}
-            onChange={onChange}
-            onRunQuery={onRunQuery}
-            uiOptions={uiOptions.options}
-          />
+          <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
         )}
       </EditorRows>
     </>

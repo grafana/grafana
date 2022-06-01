@@ -43,7 +43,7 @@ describe('Heatmap Migrations', () => {
             "mode": "scheme",
             "scale": "exponential",
             "scheme": "BuGn",
-            "steps": 256,
+            "steps": 128,
           },
           "exemplars": Object {
             "color": "rgba(255,0,255,0.7)",

@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -14,10 +14,6 @@ export class BlugeSearcher implements GrafanaSearcher {
       throw 'facets not supported!';
     }
     return doSearchQuery(query);
-  }
-
-  async list(location: string): Promise<QueryResponse> {
-    return doSearchQuery({ query: `list:${location ?? ''}` });
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -46,12 +42,29 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     return [];
   }
+
+  // This should eventually be filled by an API call, but hardcoded is a good start
+  getSortOptions(): Promise<SelectableValue[]> {
+    const opts: SelectableValue[] = [
+      { value: 'name_sort', label: 'Alphabetically (A-Z)' },
+      { value: '-name_sort', label: 'Alphabetically (Z-A)' },
+    ];
+
+    if (config.licenseInfo.enabledFeatures.analytics) {
+      for (const sf of sortFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
+      }
+    }
+
+    return Promise.resolve(opts);
+  }
 }
 
 const firstPageSize = 50;
 const nextPageSizes = 100;
 
-export async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
     ...query,
@@ -84,8 +97,19 @@ export async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> 
 
   const meta = first.meta.custom as SearchResultMeta;
   if (!meta.locationInfo) {
-    meta.locationInfo = {};
+    meta.locationInfo = {}; // always set it so we can append
   }
+
+  // Set the field name to a better display name
+  if (meta.sortBy?.length) {
+    const field = first.fields.find((f) => f.name === meta.sortBy);
+    if (field) {
+      const name = getSortFieldDisplayName(field.name);
+      meta.sortBy = name;
+      field.name = name; // make it look nicer
+    }
+  }
+
   const view = new DataFrameView<DashboardQueryResult>(first);
   return {
     totalRows: meta.count ?? first.length,
@@ -145,4 +169,22 @@ function getTermCountsFrom(frame: DataFrame): TermCount[] {
     counts.push({ term: keys.get(i), count: vals.get(i) });
   }
   return counts;
+}
+
+// Enterprise only sort field values for dashboards
+const sortFields = [
+  { name: 'views_total', display: 'Views total' },
+  { name: 'views_last_30_days', display: 'Views 30 days' },
+  { name: 'errors_total', display: 'Errors total' },
+  { name: 'errors_last_30_days', display: 'Errors 30 days' },
+];
+
+/** Given the internal field name, this gives a reasonable display name for the table colum header */
+function getSortFieldDisplayName(name: string) {
+  for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  return name;
 }

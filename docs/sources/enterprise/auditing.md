@@ -15,7 +15,7 @@ weight: 1100
 
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.3 and later, and [Grafana Cloud Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.3 and later, and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 ## Audit logs
 
@@ -128,7 +128,7 @@ pattern of the `requestUri` field is given.
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./saml/configure-saml.md#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "configure-saml.md#single-logout" >}}).
 
 #### User management
 

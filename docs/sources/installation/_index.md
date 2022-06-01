@@ -17,13 +17,13 @@ weight: 30
 
 This section discusses the hardware and software requirements as well as the process of installing Grafana on different operating systems. This section has the following topics:
 
-- [Requirements]({{< relref "requirements" >}})
-- [Install on Debian or Ubuntu]({{< relref "debian" >}})
-- [Install on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm" >}})
-- [Install on macOS]({{< relref "mac" >}})
-- [Install on Windows]({{< relref "windows" >}})
-- [Run Docker image]({{< relref "docker" >}})
-- [Deploy Grafana on Kubernetes]({{< relref "kubernetes" >}})
+- [Requirements]({{< relref "requirements/" >}})
+- [Install on Debian or Ubuntu]({{< relref "debian/" >}})
+- [Install on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm/" >}})
+- [Install on macOS]({{< relref "mac/" >}})
+- [Install on Windows]({{< relref "windows/" >}})
+- [Run Docker image]({{< relref "docker/" >}})
+- [Deploy Grafana on Kubernetes]({{< relref "kubernetes/" >}})
 
 For upgrade instructions, refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}).
 To restart Grafana, refer to [Restart Grafana]({{< relref "restart-grafana.md" >}}).

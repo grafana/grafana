@@ -1,18 +1,12 @@
 package accesscontrol
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
 )
-
-type RoleRegistry interface {
-	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles(ctx context.Context) error
-}
 
 // Roles definition
 var (

@@ -272,13 +272,17 @@ You can use Grafana macros when constructing a query. Use the macros in the wher
 
   If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
 
+### Working with large Azure resource data sets
+
+If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned. You can use filters to reduce the amount of records returned under that value.
+
 ## Going further with Azure Monitor
 
 See the following topics to learn more about the Azure Monitor data source:
 
-- [Azure Monitor template variables]({{< relref "./template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
-- [Provisioning Azure Monitor]({{< relref "./provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
-- [Deprecating Application Insights]({{< relref "./provisioning.md" >}}) and migrating to Metrics and Logs queries
+- [Azure Monitor template variables]({{< relref "template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
+- [Provisioning Azure Monitor]({{< relref "provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
+- [Deprecating Application Insights]({{< relref "provisioning.md" >}}) and migrating to Metrics and Logs queries
 
 ### Configuring using Managed Identity
 

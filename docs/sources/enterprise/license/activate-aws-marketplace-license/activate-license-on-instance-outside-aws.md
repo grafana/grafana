@@ -32,7 +32,7 @@ To activate a Grafana Enterprise license from AWS on a Grafana Enterprise instan
 To install Grafana, refer to the documentation specific to your implementation.
 
 - [Install Grafana]({{< relref "../../../installation/" >}}).
-- [Run Grafana Docker image]({{< relref "../../../installation/docker" >}}).
+- [Run Grafana Docker image]({{< relref "../../../installation/docker/" >}}).
 - [Deploy Grafana on Kubernetes]({{< relref "../../../installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes" >}}).
 
 ## Task 2: Create an AWS IAM user with access to your Grafana Enterprise license
@@ -127,4 +127,4 @@ Choose one of the following options to update the [license_validation_type]({{< 
 
 To activate Grafana Enterprise features, start (or restart) Grafana.
 
-For information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../installation/restart-grafana" >}}).
+For information about restarting Grafana, refer to [Restart Grafana]({{< relref "../../../installation/restart-grafana/" >}}).

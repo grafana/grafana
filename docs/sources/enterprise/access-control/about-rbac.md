@@ -58,8 +58,8 @@ You can use RBAC to modify the permissions associated with any basic role, which
 Note that any modification to any of these basic role is not propagated to the other basic roles.
 For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
-To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
+To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
 
 ## Fixed roles
 
@@ -85,7 +85,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "rbac-fixed-basic-role-definitions.md" >}}).
 
 ## Custom roles
 
@@ -101,7 +101,7 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles.md" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "assign-rbac-roles.md" >}}).
 - RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../developers/http_api/access_control.md" >}}).
 
 ## Limitation
