@@ -66,6 +66,7 @@ export interface ServiceAccountsState {
   isLoading: boolean;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
+  serviceAccountsUpgraded: boolean;
 
   // search / filtering
   query: string;

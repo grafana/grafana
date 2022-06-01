@@ -15,6 +15,7 @@ import {
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
+  serviceAccountsUpgradeStatusLoaded,
   stateFilterChanged,
 } from './reducers';
 
@@ -38,6 +39,13 @@ export function fetchACOptions(): ThunkResult<void> {
     } catch (error) {
       console.error(error);
     }
+  };
+}
+
+export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
+    dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
   };
 }
 
