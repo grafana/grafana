@@ -22,11 +22,7 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datas
 }
 
 export function isDataQuery(url: string): boolean {
-  if (
-    url.indexOf('api/datasources/proxy') !== -1 ||
-    url.indexOf('api/tsdb/query') !== -1 ||
-    url.indexOf('api/ds/query') !== -1
-  ) {
+  if (url.indexOf('api/datasources/proxy') !== -1 || url.indexOf('api/ds/query') !== -1) {
     return true;
   }
 
