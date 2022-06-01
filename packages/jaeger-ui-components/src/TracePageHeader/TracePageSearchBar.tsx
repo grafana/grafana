@@ -17,6 +17,7 @@ import cx from 'classnames';
 import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import UiFindInput from '../common/UiFindInput';
@@ -95,7 +96,10 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
-    <span className={styles.TracePageSearchBarSuffix} data-testid="trace-page-search-bar-suffix">
+    <span
+      className={styles.TracePageSearchBarSuffix}
+      data-testid={selectors.components.TraceViewer.tracePageSearchBarSuffix}
+    >
       {searchBarSuffix}
     </span>
   ) : null;
@@ -158,7 +162,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   };
 
   return (
-    <div className={styles.TracePageSearchBar}>
+    <div className={styles.TracePageSearchBar} data-testid={selectors.components.TraceViewer.tracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput
           onChange={setTraceSearch}
@@ -175,7 +179,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
-                data-testid="trace-page-search-bar-next-result-button"
+                data-testid={selectors.components.TraceViewer.tracePageSearchBarNextResultButton}
                 onClick={nextResult}
               />
               <Button
@@ -184,7 +188,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-up"
-                data-testid="trace-page-search-bar-prev-result-button"
+                data-testid={selectors.components.TraceViewer.tracePageSearchBarPrevResultButton}
                 onClick={prevResult}
               />
             </>
