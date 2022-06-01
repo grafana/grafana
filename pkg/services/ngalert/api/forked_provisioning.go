@@ -66,3 +66,15 @@ func (f *ForkedProvisioningApi) forkRouteGetMuteTiming(ctx *models.ReqContext) r
 func (f *ForkedProvisioningApi) forkRouteGetMuteTimings(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetMuteTimings(ctx)
 }
+
+func (f *ForkedProvisioningApi) forkRoutePostMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return f.svc.RoutePostMuteTiming(ctx, mt)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return f.svc.RoutePutMuteTiming(ctx, mt)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteDeleteMuteTiming(ctx)
+}

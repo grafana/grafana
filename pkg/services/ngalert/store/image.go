@@ -12,10 +12,14 @@ import (
 )
 
 type ImageStore interface {
-	// Get returns the image with the token or ErrImageNotFound.
+	// GetImage returns the image with the token or ErrImageNotFound.
 	GetImage(ctx context.Context, token string) (*models.Image, error)
 
-	// Saves the image or returns an error.
+	// GetImages returns all images that match the tokens. If one or more
+	// tokens does not exist then it also returns ErrImageNotFound.
+	GetImages(ctx context.Context, tokens []string) ([]models.Image, error)
+
+	// SaveImage saves the image or returns an error.
 	SaveImage(ctx context.Context, img *models.Image) error
 }
 
@@ -34,6 +38,19 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, er
 		return nil, err
 	}
 	return &img, nil
+}
+
+func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Image, error) {
+	var imgs []models.Image
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.In("token", tokens).Find(&imgs)
+	}); err != nil {
+		return nil, err
+	}
+	if len(imgs) < len(tokens) {
+		return imgs, models.ErrImageNotFound
+	}
+	return imgs, nil
 }
 
 func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {

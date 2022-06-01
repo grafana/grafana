@@ -1,10 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/installation/restart-grafana/"]
-description = "Instructions for restarting Grafana"
-keywords = ["grafana", "restart", "documentation"]
-title = "Restart Grafana"
-weight = 750
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/restart-grafana/
+description: Instructions for restarting Grafana
+keywords:
+  - grafana
+  - restart
+  - documentation
+title: Restart Grafana
+weight: 750
+---
 
 # Restart Grafana
 

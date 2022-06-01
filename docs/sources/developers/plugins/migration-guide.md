@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/migration-guide/"]
-title = "Plugin migration guide"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/migration-guide/
+title: Plugin migration guide
+---
 
 # Plugin migration guide
 

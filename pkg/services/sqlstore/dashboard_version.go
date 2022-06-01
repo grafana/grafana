@@ -2,10 +2,8 @@ package sqlstore
 
 import (
 	"context"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
@@ -41,70 +39,4 @@ func (ss *SQLStore) GetDashboardVersions(ctx context.Context, query *models.GetD
 		}
 		return nil
 	})
-}
-
-const MAX_VERSIONS_TO_DELETE_PER_BATCH = 100
-const MAX_VERSION_DELETION_BATCHES = 50
-
-func (ss *SQLStore) DeleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand) error {
-	return ss.deleteExpiredVersions(ctx, cmd, MAX_VERSIONS_TO_DELETE_PER_BATCH, MAX_VERSION_DELETION_BATCHES)
-}
-
-func (ss *SQLStore) deleteExpiredVersions(ctx context.Context, cmd *models.DeleteExpiredVersionsCommand, perBatch int, maxBatches int) error {
-	versionsToKeep := setting.DashboardVersionsToKeep
-	if versionsToKeep < 1 {
-		versionsToKeep = 1
-	}
-
-	for batch := 0; batch < maxBatches; batch++ {
-		deleted := int64(0)
-
-		batchErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-			// Idea of this query is finding version IDs to delete based on formula:
-			// min_version_to_keep = min_version + (versions_count - versions_to_keep)
-			// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
-			// versions, but in some cases (when versions are sparse) this number may be more.
-			versionIdsToDeleteQuery := `SELECT id
-				FROM dashboard_version, (
-					SELECT dashboard_id, count(version) as count, min(version) as min
-					FROM dashboard_version
-					GROUP BY dashboard_id
-				) AS vtd
-				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
-				AND version < vtd.min + vtd.count - ?
-				LIMIT ?`
-
-			var versionIdsToDelete []interface{}
-			err := sess.SQL(versionIdsToDeleteQuery, versionsToKeep, perBatch).Find(&versionIdsToDelete)
-			if err != nil {
-				return err
-			}
-
-			if len(versionIdsToDelete) < 1 {
-				return nil
-			}
-
-			deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
-			sqlOrArgs := append([]interface{}{deleteExpiredSQL}, versionIdsToDelete...)
-			expiredResponse, err := sess.Exec(sqlOrArgs...)
-			if err != nil {
-				return err
-			}
-
-			deleted, err = expiredResponse.RowsAffected()
-			return err
-		})
-
-		if batchErr != nil {
-			return batchErr
-		}
-
-		cmd.DeletedRows += deleted
-
-		if deleted < int64(perBatch) {
-			break
-		}
-	}
-
-	return nil
 }

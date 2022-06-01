@@ -41,13 +41,11 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 		dashboards.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersCreate,
 		dashboards.ActionFoldersDelete,
 	}...),
 	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersCreate,
 		dashboards.ActionFoldersDelete,
 		dashboards.ActionFoldersPermissionsRead,
 		dashboards.ActionFoldersPermissionsWrite,
@@ -57,6 +55,7 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 func AddDashboardPermissionsMigrator(mg *migrator.Migrator) {
 	mg.AddMigration("dashboard permissions", &dashboardPermissionsMigrator{})
 	mg.AddMigration("dashboard permissions uid scopes", &dashboardUidPermissionMigrator{})
+	mg.AddMigration("drop managed folder create actions", &managedFolderCreateAction{})
 }
 
 var _ migrator.CodeMigration = new(dashboardPermissionsMigrator)
@@ -277,6 +276,21 @@ func (d *dashboardUidPermissionMigrator) migrateIdScopes(sess *xorm.Session) err
 		if _, err := sess.Exec("UPDATE permission SET scope = ? WHERE scope = ?", uidScope, idScope); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+type managedFolderCreateAction struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderCreateAction) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderCreateAction) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'folders:create' AND scope LIKE 'folders:uid:%'"); err != nil {
+		return err
 	}
 	return nil
 }
