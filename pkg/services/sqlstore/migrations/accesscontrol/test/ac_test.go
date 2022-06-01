@@ -7,6 +7,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -20,6 +21,16 @@ import (
 
 type rawPermission struct {
 	Action, Scope string
+}
+
+func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.Permission {
+	return accesscontrol.Permission{
+		RoleID:  roleID,
+		Action:  rp.Action,
+		Scope:   rp.Scope,
+		Updated: ts,
+		Created: ts,
+	}
 }
 
 // Setup users
@@ -209,9 +220,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{
-		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-	})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

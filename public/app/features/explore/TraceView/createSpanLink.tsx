@@ -20,7 +20,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -149,41 +149,43 @@ function legacyCreateSpanLinkFactory(
     }
 
     // Get metrics links
-    if (metricsDataSourceSettings && traceToMetricsOptions) {
-      const defaultQuery = `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
-      const dataLink: DataLink<PromQuery> = {
-        title: metricsDataSourceSettings.name,
-        url: '',
-        internal: {
-          datasourceUid: metricsDataSourceSettings.uid,
-          datasourceName: metricsDataSourceSettings.name,
-          query: {
-            expr: traceToMetricsOptions.query ?? defaultQuery,
-            refId: '',
+    if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
+      links.metricLinks = [];
+      for (const query of traceToMetricsOptions.queries) {
+        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags, span);
+        const dataLink: DataLink<PromQuery> = {
+          title: metricsDataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: metricsDataSourceSettings.uid,
+            datasourceName: metricsDataSourceSettings.name,
+            query: {
+              expr,
+              refId: 'A',
+            },
           },
-        },
-      };
+        };
 
-      const link = mapInternalLinkToExplore({
-        link: dataLink,
-        internalLink: dataLink.internal!,
-        scopedVars: {},
-        range: getTimeRangeFromSpan(span, {
-          startMs: 0,
-          endMs: 0,
-        }),
-        field: {} as Field,
-        onClickFn: splitOpenFn,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      });
+        const link = mapInternalLinkToExplore({
+          link: dataLink,
+          internalLink: dataLink.internal!,
+          scopedVars: {},
+          range: getTimeRangeFromSpan(span, {
+            startMs: 0,
+            endMs: 0,
+          }),
+          field: {} as Field,
+          onClickFn: splitOpenFn,
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        });
 
-      links.metricLinks = [
-        {
+        links.metricLinks.push({
+          title: query?.name,
           href: link.href,
           onClick: link.onClick,
           content: <Icon name="chart-line" title="Explore metrics for this span" />,
-        },
-      ];
+        });
+      }
     }
 
     // Get trace links
@@ -358,4 +360,28 @@ function getTimeRangeFromSpan(
       to,
     },
   };
+}
+
+// Interpolates span attributes into trace to metric query, or returns default query
+function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<string>> = [], span: TraceSpan): string {
+  if (!query.query) {
+    return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
+  }
+
+  let expr = query.query;
+  if (tags.length && expr.indexOf('$__tags') !== -1) {
+    const spanTags = [...span.process.tags, ...span.tags];
+    const labels = tags.reduce((acc, tag) => {
+      const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
+      if (tagValue) {
+        acc.push(`${tag.value ? tag.value : tag.key}="${tagValue}"`);
+      }
+      return acc;
+    }, [] as string[]);
+
+    const labelsQuery = labels?.join(', ');
+    expr = expr.replace('$__tags', labelsQuery);
+  }
+
+  return expr;
 }

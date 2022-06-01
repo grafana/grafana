@@ -18,7 +18,7 @@ func mockTime(mock time.Time) time.Time {
 	return mock
 }
 
-func TestLoginAttempts(t *testing.T) {
+func TestIntegrationLoginAttempts(t *testing.T) {
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
 	var sqlStore *SQLStore
 	user := "user"

@@ -3,9 +3,7 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Checkbox, CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
-import impressionSrv from 'app/core/services/impression_srv';
+import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -21,6 +19,7 @@ export interface DashboardSection {
   selected?: boolean; // not used ?  keyboard
   url?: string;
   icon?: string;
+  itemsUIDs?: string[]; // for pseudo folders
 }
 
 interface SectionHeaderProps {
@@ -29,6 +28,7 @@ interface SectionHeaderProps {
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
+  tags?: string[];
 }
 
 export const FolderSection: FC<SectionHeaderProps> = ({
@@ -37,6 +37,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   onTagSelected,
   selection,
   renderStandaloneBody,
+  tags,
 }) => {
   const editable = selectionToggle != null;
   const theme = useTheme();
@@ -53,28 +54,17 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
+      sort: 'name_sort',
     };
-    if (section.title === 'Starred') {
-      const stars = await getBackendSrv().get('api/user/stars');
-      if (stars.length > 0) {
-        query = {
-          uid: stars, // array of UIDs
-        };
-      }
-      folderUid = undefined;
-      folderTitle = undefined;
-    } else if (section.title === 'Recent') {
-      const ids = impressionSrv.getDashboardOpened();
-      const uids = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
-      if (uids?.length) {
-        query = {
-          uid: uids,
-        };
-      }
+    if (section.itemsUIDs) {
+      query = {
+        uid: section.itemsUIDs, // array of UIDs
+      };
       folderUid = undefined;
       folderTitle = undefined;
     }
-    const raw = await getGrafanaSearcher().search(query);
+
+    const raw = await getGrafanaSearcher().search({ ...query, tags });
     const v = raw.view.map(
       (item) =>
         ({
@@ -91,7 +81,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
         } as DashboardSectionItem)
     );
     return v;
-  }, [sectionExpanded, section]);
+  }, [sectionExpanded, section, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
@@ -128,7 +118,15 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const renderResults = () => {
     if (!results.value?.length) {
-      return <div>No items found</div>;
+      if (results.loading) {
+        return <Spinner className={styles.spinner} />;
+      }
+
+      return (
+        <Card>
+          <Card.Heading>No results found</Card.Heading>
+        </Card>
+      );
     }
 
     return results.value.map((v) => {
@@ -178,7 +176,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && (
+            {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>
@@ -245,6 +243,11 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     content: css`
       padding-top: 0px;
       padding-bottom: 0px;
+    `,
+    spinner: css`
+      display: grid;
+      place-content: center;
+      padding-bottom: 1rem;
     `,
   };
 });

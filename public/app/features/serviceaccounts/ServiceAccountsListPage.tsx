@@ -66,16 +66,23 @@ const ServiceAccountsListPage = ({
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    fetchServiceAccounts();
-    if (contextSrv.licensedAccessControlEnabled()) {
-      fetchACOptions();
-    }
+    const fetchData = async () => {
+      await fetchServiceAccounts();
+      if (contextSrv.licensedAccessControlEnabled()) {
+        await fetchACOptions();
+      }
+    };
+    fetchData();
   }, [fetchServiceAccounts, fetchACOptions]);
 
   const onRoleChange = async (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
     await updateServiceAccount(updatedServiceAccount);
+    // need to refetch to display the new value in the list
     await fetchServiceAccounts();
+    if (contextSrv.licensedAccessControlEnabled()) {
+      fetchACOptions();
+    }
   };
 
   return (

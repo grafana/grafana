@@ -169,5 +169,15 @@ lerna.json @grafana/frontend-ops
 /grafana-mixin/ @grafana/hosted-grafana-team
 
 # Grafana authentication and authorization
-/pkg/services/accesscontrol @grafana/grafana-enterprise-operations-team
-/pkg/services/serviceaccounts @grafana/grafana-enterprise-operations-team
+/pkg/services/accesscontrol @grafana/grafana-authnz-team
+/pkg/services/auth @grafana/grafana-authnz-team
+/pkg/services/dashboards/accesscontrol.go @grafana/grafana-authnz-team
+/pkg/services/datasources/permissions @grafana/grafana-authnz-team
+/pkg/services/datasources/permissions/accesscontrol.go @grafana/grafana-authnz-team
+/pkg/services/guardian @grafana/grafana-authnz-team
+/pkg/services/ldap @grafana/grafana-authnz-team
+/pkg/services/login @grafana/grafana-authnz-team
+/pkg/services/multildap @grafana/grafana-authnz-team
+/pkg/services/oauthtoken @grafana/grafana-authnz-team
+/pkg/services/teamguardian @grafana/grafana-authnz-team
+/pkg/services/serviceaccounts @grafana/grafana-authnz-team

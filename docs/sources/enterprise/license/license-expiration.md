@@ -1,10 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/license-expiration/", "/docs/grafana/latest/enterprise/license/license-expiration/"]
-description = ""
-keywords = ["grafana", "licensing"]
-title = "License expiration"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/license-expiration/
+  - /docs/grafana/latest/enterprise/license/license-expiration/
+description: ''
+keywords:
+  - grafana
+  - licensing
+title: License expiration
+weight: 200
+---
 
 # License expiration
 
@@ -44,6 +48,11 @@ Your current data source permissions will keep working as expected, but you'll b
 ### SAML authentication
 
 SAML authentication is not affected by an expired license.
+
+### Role-based access control (RBAC)
+
+- Creating, updating and deleting custom roles is not available.
+- Modifying permissions for custom roles is not available.
 
 ### Reporting
 

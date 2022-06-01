@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,48 +34,57 @@ func TestReadPromFrames(t *testing.T) {
 	}
 
 	for _, name := range files {
-		t.Run(name, func(t *testing.T) {
-			// nolint:gosec
-			// We can ignore the gosec G304 because this is a test with static defined paths
-			f, err := os.Open(path.Join("testdata", name+".json"))
-			require.NoError(t, err)
+		t.Run(name, runScenario(name, Options{}))
+		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true}))
+	}
+}
 
-			iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
-			rsp := ReadPrometheusStyleResult(iter)
+func runScenario(name string, opts Options) func(t *testing.T) {
+	return func(t *testing.T) {
+		// nolint:gosec
+		// We can ignore the gosec G304 because this is a test with static defined paths
+		f, err := os.Open(path.Join("testdata", name+".json"))
+		require.NoError(t, err)
 
-			out, err := jsoniter.MarshalIndent(rsp, "", "  ")
-			require.NoError(t, err)
+		if opts.MatrixWideSeries || opts.VectorWideSeries {
+			name = name + "-wide"
+		}
 
-			save := false
-			fpath := path.Join("testdata", name+"-frame.json")
+		iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
+		rsp := ReadPrometheusStyleResult(iter, opts)
 
-			// nolint:gosec
-			// We can ignore the gosec G304 because this is a test with static defined paths
-			current, err := ioutil.ReadFile(fpath)
-			if err == nil {
-				same := assert.JSONEq(t, string(out), string(current))
-				if !same {
-					save = true
-				}
-			} else {
-				assert.Fail(t, "missing file: "+fpath)
+		out, err := jsoniter.MarshalIndent(rsp, "", "  ")
+		require.NoError(t, err)
+
+		save := true
+		fpath := path.Join("testdata", name+"-frame.json")
+
+		// nolint:gosec
+		// We can ignore the gosec G304 because this is a test with static defined paths
+		current, err := ioutil.ReadFile(fpath)
+		if err == nil {
+			same := assert.JSONEq(t, string(out), string(current))
+			if !same {
 				save = true
 			}
+		} else {
+			assert.Fail(t, "missing file: "+fpath)
+			save = true
+		}
 
-			if save {
-				err = os.WriteFile(fpath, out, 0600)
-				require.NoError(t, err)
-			}
+		if save {
+			err = os.WriteFile(fpath, out, 0600)
+			require.NoError(t, err)
+		}
 
-			// skip checking golden file for error response. it's not currently supported
-			if name == "prom-error" {
-				return
-			}
+		// skip checking golden file for error response. it's not currently supported
+		if strings.Contains(name, "prom-error") {
+			return
+		}
 
-			fpath = path.Join("testdata", name+"-golden.txt")
-			err = experimental.CheckGoldenDataResponse(fpath, rsp, true)
-			assert.NoError(t, err)
-		})
+		fpath = path.Join("testdata", name+"-golden.txt")
+		err = experimental.CheckGoldenDataResponse(fpath, rsp, true)
+		assert.NoError(t, err)
 	}
 }
 

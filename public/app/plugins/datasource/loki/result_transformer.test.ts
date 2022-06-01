@@ -242,7 +242,7 @@ describe('loki result transformer', () => {
 
 describe('enhanceDataFrame', () => {
   it('adds links to fields', () => {
-    const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
+    const df = new MutableDataFrame({ fields: [{ name: 'Line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     ResultTransformer.enhanceDataFrame(df, {
       derivedFields: [
         {

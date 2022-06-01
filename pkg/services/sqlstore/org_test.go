@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAccountDataAccess(t *testing.T) {
+func TestIntegrationAccountDataAccess(t *testing.T) {
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		testUser := &models.SignedInUser{

@@ -29,8 +29,8 @@ type WriteValueResponse struct {
 }
 
 type storageTree interface {
-	GetFile(ctx context.Context, path string) (*filestorage.File, error)
-	ListFolder(ctx context.Context, path string) (*data.Frame, error)
+	GetFile(ctx context.Context, orgId int64, path string) (*filestorage.File, error)
+	ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error)
 }
 
 //-------------------------------------------
