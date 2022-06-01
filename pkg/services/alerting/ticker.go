@@ -68,7 +68,7 @@ LOOP:
 			break LOOP
 		}
 	}
-	logger.New("ticker").Info("stopped", "last_tick", t.last)
+	logger.Info("stopped", "last_tick", t.last)
 }
 
 // Stop stops the ticker. It does not close the C channel
