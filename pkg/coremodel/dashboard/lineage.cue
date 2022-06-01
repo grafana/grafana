@@ -250,7 +250,7 @@ seqs: [
 					// TODO docs
 					maxDataPoints?: number
 
-					// TODO docs
+					// TODO docs - seems to be an old field from old dashboard alerts?
 					thresholds?: [...]
 
 					// TODO docs
