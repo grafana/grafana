@@ -429,25 +429,12 @@ func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgU
 	return testData.Response
 }
 
-func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	return nil, m.ExpectedError
-}
-
-func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
-	query.Result = m.ExpectedPersistedDashboards
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return nil // TODO: Implement
 }
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	query.Result = m.ExpectedDashboards
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	return m.ExpectedError
 }
 
@@ -611,10 +598,6 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 }
 
 func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
 	return m.ExpectedError
 }
 

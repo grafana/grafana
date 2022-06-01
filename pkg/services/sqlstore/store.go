@@ -16,7 +16,6 @@ type Store interface {
 	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
 	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
 	GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error
-	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
@@ -75,7 +74,6 @@ type Store interface {
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error
-	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
 	GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error
@@ -134,7 +132,5 @@ type Store interface {
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
-	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
-	GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
 }
