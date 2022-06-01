@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -100,20 +99,19 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return 500, nil, err
 	}
 
-	defer resp.Body.Close() //nolint
+	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return 500, nil, err
 	}
-	if resp.StatusCode != 200 {
-		return resp.StatusCode, nil, errors.New(string(data))
-	}
 
-	return 200, data, err
+	return resp.StatusCode, data, err
 }
 
 func reqHeaders(headers map[string][]string) map[string]string {
+	// Keep only the authorization header, incase downstream the authorization header is required.
+	// Strip all the others out as appropriate headers will be applied to speak with prometheus.
 	h := make(map[string]string)
 	accessValues := headers["Authorization"]
 
