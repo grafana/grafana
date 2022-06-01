@@ -60,4 +60,5 @@ export interface FeatureToggles {
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
   prometheusWideSeries?: boolean;
+  canvasPanelNesting?: boolean;
 }
