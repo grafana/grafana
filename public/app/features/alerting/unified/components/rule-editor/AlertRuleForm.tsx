@@ -155,7 +155,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   <QueryStep />
-                  {type === RuleFormType.grafana ? <GrafanaConditionsStep /> : <CloudConditionsStep />}
+                  {type === RuleFormType.grafana ? (
+                    <GrafanaConditionsStep existing={!!existing} />
+                  ) : (
+                    <CloudConditionsStep />
+                  )}
                   <DetailsStep />
                 </>
               )}
