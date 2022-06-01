@@ -69,7 +69,7 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 				}
 			}
 			// Skip CSRF checks for "safe" endpoints
-			for endpoint, _ := range i.safeEndpoints {
+			for endpoint := range i.safeEndpoints {
 				if r.URL.Path == endpoint {
 					next.ServeHTTP(w, r)
 					return
