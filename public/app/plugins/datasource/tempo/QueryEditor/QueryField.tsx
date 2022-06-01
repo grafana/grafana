@@ -5,7 +5,6 @@ import useAsync from 'react-use/lib/useAsync';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  Badge,
   FileDropzone,
   InlineField,
   InlineFieldRow,
