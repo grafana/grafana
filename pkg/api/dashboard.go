@@ -271,8 +271,11 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	}
 
 	err = hs.dashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
-	if err != nil {
-		handleDashboardErr(http.StatusInternalServerError, "Failed to delete dashboard", err)
+	var dashboardErr models.DashboardErr
+	if ok := errors.As(err, &dashboardErr); ok {
+		if errors.Is(err, models.ErrDashboardCannotDeleteProvisionedDashboard) {
+			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
 	}
 
 	if hs.entityEventsService != nil {
