@@ -14,6 +14,7 @@
 
 import * as React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, Input } from '@grafana/ui';
 
 import { TNil } from '../types/index';
@@ -56,6 +57,7 @@ export default class UiFindInput extends React.PureComponent<Props> {
         onChange={(e) => this.props.onChange(e.currentTarget.value)}
         suffix={suffix}
         value={value}
+        data-testid={selectors.components.TraceViewer.uiFindInput}
       />
     );
   }
