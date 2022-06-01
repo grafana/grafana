@@ -184,29 +184,6 @@ describe('Language completion provider', () => {
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'label2' }], label: 'Labels' }]);
     });
-
-    it('returns facetted label suggestions when invalid labelKey is given', async () => {
-      const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
-      const provider = await getLanguageProvider(datasource);
-
-      // test values from issue #49122
-      const input = createTypeaheadInput('|= `\\"invalidlabelkey\\": "+1"`', '\\', '= `\\"invalidlabelkey');
-      const getLabelValuesSpy = jest.spyOn(provider, 'getLabelValues');
-      const result = await provider.provideCompletionItems(input);
-
-      expect(getLabelValuesSpy).not.toHaveBeenCalled();
-
-      expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([
-        {
-          items: [
-            { label: 'label1', filterText: '"label1"' },
-            { label: 'label2', filterText: '"label2"' },
-          ],
-          label: 'Labels',
-        },
-      ]);
-    });
   });
 
   describe('label suggestions', () => {
