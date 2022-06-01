@@ -15,22 +15,20 @@
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import UiFindInput from './UiFindInput';
 
 describe('UiFindInput', () => {
   describe('rendering', () => {
     it('renders as expected with no value', () => {
       render(<UiFindInput value={undefined} />);
-      const uiFindInput = screen.queryByTestId(selectors.components.TraceViewer.uiFindInput);
+      const uiFindInput = screen.queryByPlaceholderText('Find...');
       expect(uiFindInput).toBeInTheDocument();
-      expect(uiFindInput['placeholder']).toBe('Find...');
+      expect(uiFindInput['value']).toEqual('');
     });
 
     it('renders as expected with value', () => {
       render(<UiFindInput value="value" />);
-      const uiFindInput = screen.queryByTestId(selectors.components.TraceViewer.uiFindInput);
+      const uiFindInput = screen.queryByPlaceholderText('Find...');
       expect(uiFindInput).toBeInTheDocument();
       expect(uiFindInput['value']).toEqual('value');
     });
