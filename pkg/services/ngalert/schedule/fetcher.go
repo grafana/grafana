@@ -16,6 +16,8 @@ import (
 func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
 	h := fnv.New64()
 	for _, uid := range sortedUIDs(alertRules) {
+		// We can ignore err as fnv64 does not return an error
+		// nolint:errcheck,gosec
 		h.Write([]byte(uid))
 	}
 	return h.Sum64()
