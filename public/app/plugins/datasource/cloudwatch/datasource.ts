@@ -227,6 +227,7 @@ export class CloudWatchDatasource
               options,
               this.timeSrv.timeRange(),
               this.replace.bind(this),
+              this.getVariableValue.bind(this),
               this.getActualRegion.bind(this),
               this.tracingDataSourceUid
             );
@@ -596,9 +597,12 @@ export class CloudWatchDatasource
         for (const fieldName of fieldsToReplace) {
           if (query.hasOwnProperty(fieldName)) {
             if (Array.isArray(anyQuery[fieldName])) {
-              anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
-                this.replace(val, options.scopedVars, true, fieldName)
-              );
+              anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
+                if (fieldName === 'logGroupNames') {
+                  return this.getVariableValue(val, options.scopedVars || {});
+                }
+                return this.replace(val, options.scopedVars, true, fieldName);
+              });
             } else {
               anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
             }

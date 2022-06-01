@@ -25,6 +25,7 @@ import { CloudWatchLanguageProvider } from '../language_provider';
 import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
+import { appendTemplateVariables } from '../utils/utils';
 
 import QueryHeader from './QueryHeader';
 
@@ -309,7 +310,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 aria-label="Log Groups"
                 menuShouldPortal
                 allowCustomValue={allowCustomValue}
-                options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
+                options={appendTemplateVariables(datasource, unionBy(availableLogGroups, selectedLogGroups, 'value'))}
                 value={selectedLogGroups}
                 onChange={(v) => {
                   this.setSelectedLogGroups(v);
