@@ -8,6 +8,7 @@ import { UPlotConfigBuilder } from '@grafana/ui';
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { BucketLayout, HeatmapData } from './fields';
+import { YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -52,7 +53,7 @@ interface PrepConfigOpts {
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
-  yAxisReverse?: boolean;
+  yAxisConfig: YAxisConfig;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -68,7 +69,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     palette,
     cellGap,
     hideThreshold,
-    yAxisReverse,
+    yAxisConfig,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -205,6 +206,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
+  const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = heatmapType === DataFrameType.HeatmapSparse;
 
   builder.addScale({
@@ -246,7 +248,9 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addAxis({
     scaleKey: 'y',
-    placement: AxisPlacement.Left,
+    show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
+    placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
+    size: yAxisConfig.axisWidth || null,
     theme: theme,
     splits: hasLabeledY
       ? () => {

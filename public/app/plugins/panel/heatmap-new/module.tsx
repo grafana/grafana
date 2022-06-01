@@ -21,7 +21,15 @@ import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    disableStandardOptions: [FieldConfigProperty.Color, FieldConfigProperty.Thresholds],
+    // This keeps: unit, decimals, displayName
+    disableStandardOptions: [
+      FieldConfigProperty.Color,
+      FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Min,
+      FieldConfigProperty.Max,
+      FieldConfigProperty.Mappings,
+      FieldConfigProperty.NoValue,
+    ],
   })
   .setPanelChangeHandler(heatmapChangedHandler)
   .setMigrationHandler(heatmapMigrationHandler)
