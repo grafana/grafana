@@ -36,7 +36,11 @@ type Dialect interface {
 	DropTable(tableName string) string
 	DropIndexSQL(tableName string, index *Index) string
 
+	// RenameTable is deprecated, its use cause breaking changes
+	// so, it should no longer be used. Kept for legacy reasons.
 	RenameTable(oldName string, newName string) string
+	// RenameColumn is deprecated, its use cause breaking changes
+	// so, it should no longer be used. Kept for legacy reasons.
 	RenameColumn(table Table, column *Column, newName string) string
 
 	UpdateTableSQL(tableName string, columns []*Column) string
