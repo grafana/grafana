@@ -291,11 +291,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/alert-rules/folder/{FolderUID}/groups/{Group}"),
-			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/folder/{FolderUID}/groups/{Group}"),
+			toMacaronPath("/api/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.authorize(http.MethodPut, "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/alert-rules/folder/{FolderUID}/groups/{Group}",
+				"/api/provisioning/folder/{FolderUID}/rule-groups/{Group}",
 				srv.RoutePutAlertRuleGroup,
 				m,
 			),

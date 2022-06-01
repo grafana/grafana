@@ -113,7 +113,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 	}
 }
 
-// swagger:route PUT /api/provisioning/alert-rules/folder/{FolderUID}/groups/{Group} provisioning RoutePutAlertRuleGroup
+// swagger:route PUT /api/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning RoutePutAlertRuleGroup
 //
 // Update the interval of an rulegroup
 //

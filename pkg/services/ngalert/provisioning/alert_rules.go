@@ -55,19 +55,25 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		rule.UID = util.GenerateShortUID()
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-	// if the alert group does not exists we just use the default
+	// if the alert group does not exists we just use the default interval
 	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
 		interval = service.defaultInterval
 	} else if err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.IntervalSeconds = interval
+	rule.Updated = time.Now()
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
+		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
 		})
 		if err != nil {
 			return err
+		}
+		if id, ok := ids[rule.UID]; ok {
+			rule.ID = id
+		} else {
+			return errors.New("couldn't find newly created id")
 		}
 		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {

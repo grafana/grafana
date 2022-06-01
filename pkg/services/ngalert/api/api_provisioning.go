@@ -246,6 +246,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodel
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
+	ar.ID = createdAlertRule.ID
 	ar.UID = createdAlertRule.UID
 	ar.Updated = createdAlertRule.Updated
 	return response.JSON(http.StatusOK, ar)
@@ -256,7 +257,6 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	ar.ID = updatedAlertRule.ID
 	ar.Updated = updatedAlertRule.Updated
 	return response.JSON(http.StatusOK, ar)
 }

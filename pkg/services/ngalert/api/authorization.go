@@ -200,7 +200,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPost + "/api/provisioning/alert-rules",
 		http.MethodPut + "/api/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/provisioning/alert-rules/folder/{FolderUID}/groups/{Group}":
+		http.MethodPut + "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		return middleware.ReqEditorRole
 	}
 
