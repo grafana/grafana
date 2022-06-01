@@ -22,7 +22,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 	}
 	mg.AddMigration("create dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
 
-	// table has no dependencies. Drop then recreate with correct values
+	// table has no dependencies and was created with incorrect pkey type.
+	// drop then recreate with correct values
 	addDropAllIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 	mg.AddMigration("Drop old dashboard public config table", NewDropTableMigration("dashboard_public_config"))
 
