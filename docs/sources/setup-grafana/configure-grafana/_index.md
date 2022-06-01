@@ -8,7 +8,7 @@ title: Configure Grafana
 weight: 200
 ---
 
-# Configure Grafana OSS
+# Configure Grafana
 
 Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/view-server/view-server-settings/" >}}).
 
