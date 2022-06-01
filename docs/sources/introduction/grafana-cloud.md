@@ -1,8 +1,9 @@
-+++
-aliases = [""]
-title = "Grafana Cloud"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/introduction/grafana-cloud/
+title: Grafana Cloud
+weight: 300
+---
 
 # Grafana Cloud
 

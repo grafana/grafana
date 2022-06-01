@@ -1,8 +1,11 @@
-+++
-aliases = ["/docs/grafana/latest/guides/what-is-grafana/", "/docs/grafana/latest/introduction/", "/docs/grafana/latest/introduction/oss-details/"]
-title = "Introduction to Grafana"
-weight = 5
-+++
+---
+aliases:
+  - /docs/grafana/latest/guides/what-is-grafana/
+  - /docs/grafana/latest/introduction/
+  - /docs/grafana/latest/introduction/oss-details/
+title: Introduction to Grafana
+weight: 5
+---
 
 # Grafana OSS
 

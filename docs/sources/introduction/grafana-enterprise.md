@@ -1,9 +1,11 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/"]
-description = "Grafana Enterprise overview"
-title = "Grafana Enterprise"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/
+  - /docs/grafana/latest/introduction/grafana-enterprise/
+description: Grafana Enterprise overview
+title: Grafana Enterprise
+weight: 200
+---
 
 # Grafana Enterprise
 
