@@ -24,12 +24,6 @@ var (
 	// MProxyStatus is a metric proxy http response status
 	MProxyStatus *prometheus.CounterVec
 
-	// MHttpRequestTotal is a metric http request counter
-	MHttpRequestTotal *prometheus.CounterVec
-
-	// MHttpRequestSummary is a metric http request summary
-	MHttpRequestSummary *prometheus.SummaryVec
-
 	// MApiUserSignUpStarted is a metric amount of users who started the signup flow
 	MApiUserSignUpStarted prometheus.Counter
 
@@ -225,23 +219,6 @@ func init() {
 			Help:      "proxy http response status",
 			Namespace: ExporterName,
 		}, []string{"code"}, httpStatusCodes...)
-
-	MHttpRequestTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_request_total",
-			Help: "http request counter",
-		},
-		[]string{"handler", "statuscode", "method"},
-	)
-
-	MHttpRequestSummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       "http_request_duration_milliseconds",
-			Help:       "http request summary",
-			Objectives: objectiveMap,
-		},
-		[]string{"handler", "statuscode", "method"},
-	)
 
 	MApiUserSignUpStarted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_started_total",
@@ -615,8 +592,6 @@ func initMetricVars() {
 		MPageStatus,
 		MApiStatus,
 		MProxyStatus,
-		MHttpRequestTotal,
-		MHttpRequestSummary,
 		MApiUserSignUpStarted,
 		MApiUserSignUpCompleted,
 		MApiUserSignUpInvite,

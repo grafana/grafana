@@ -118,11 +118,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "publicDashboards",
 			Description:     "enables public access to dashboards",
 			State:           FeatureStateAlpha,
