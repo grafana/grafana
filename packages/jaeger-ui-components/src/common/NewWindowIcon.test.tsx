@@ -12,29 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 import NewWindowIcon, { getStyles } from './NewWindowIcon';
 
 describe('NewWindowIcon', () => {
-  const props = {
-    notIsLarge: 'not is large',
-  };
-  let wrapper;
-
-  beforeEach(() => {
-    wrapper = shallow(<NewWindowIcon {...props} />);
-  });
-
-  it('renders as expected', () => {
-    expect(wrapper).toMatchSnapshot();
-  });
-
   it('adds is-large className when props.isLarge is true', () => {
+    const { container } = render(<NewWindowIcon isLarge />);
     const styles = getStyles();
-    expect(wrapper.hasClass(styles.NewWindowIconLarge)).toBe(false);
-    wrapper.setProps({ isLarge: true });
-    expect(wrapper.hasClass(styles.NewWindowIconLarge)).toBe(true);
+    expect(container.firstChild).toHaveClass(styles.NewWindowIconLarge);
   });
 });

@@ -8,7 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
+import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
@@ -368,7 +368,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div className={cx(styles.exploreContainer)}>
-            <div className={cx('panel-container', styles.queryContainer)}>
+            <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
@@ -382,7 +382,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
               <ResponseErrorContainer exploreId={exploreId} />
-            </div>
+            </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {

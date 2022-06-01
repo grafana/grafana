@@ -56,7 +56,7 @@ require (
 	github.com/grafana/cuetsy v0.0.2
 	github.com/grafana/grafana-aws-sdk v0.10.3
 	github.com/grafana/grafana-azure-sdk-go v1.2.0
-	github.com/grafana/grafana-plugin-sdk-go v0.134.0
+	github.com/grafana/grafana-plugin-sdk-go v0.135.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
