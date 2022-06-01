@@ -164,14 +164,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 		if len(newRules) > 0 {
 			// we have to insert the rules one by one as otherwise we are
 			// not able to fetch the inserted id as it's not supported by xorm
-			for _, rule := range newRules {
-				if _, err := sess.Insert(&rule); err != nil {
+			for i := range newRules {
+				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
-				ids[rule.UID] = rule.ID
+				ids[newRules[i].UID] = newRules[i].ID
 			}
 		}
 
@@ -187,7 +187,6 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
 			var parentVersion int64
@@ -225,14 +224,6 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 				Annotations:      r.New.Annotations,
 				Labels:           r.New.Labels,
 			})
-		}
-		if len(newRules) > 0 {
-			if _, err := sess.Insert(&newRules); err != nil {
-				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-					return ngmodels.ErrAlertRuleUniqueConstraintViolation
-				}
-				return fmt.Errorf("failed to create new rules: %w", err)
-			}
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
