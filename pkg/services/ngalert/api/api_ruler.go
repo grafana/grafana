@@ -237,16 +237,12 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Resp
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
-	groupRules := make([]*ngmodels.AlertRule, 0, len(q.Result))
-	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
-		}
-		groupRules = append(groupRules, r)
+	if !authorizeAccessToRuleGroup(q.Result, hasAccess) {
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, groupRules, namespace.Id, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.Id, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
