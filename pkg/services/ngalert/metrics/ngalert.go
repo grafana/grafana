@@ -53,6 +53,7 @@ type Scheduler struct {
 	EvalDuration                        *prometheus.SummaryVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
+	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
 	UpdateSchedulableAlertRulesFailures prometheus.Counter
 	Ticker                              *legacyMetrics.Ticker
@@ -182,6 +183,13 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The number of alert rules being considered for evaluation each tick.",
 			},
 		),
+		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedulable_alert_rules_hash",
+				Help:      "A hash of the alert rules over time.",
+			}),
 		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,

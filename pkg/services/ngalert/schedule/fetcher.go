@@ -3,10 +3,33 @@ package schedule
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// hashUIDs returns a fnv64 hash of the UIDs for all alert rules.
+// The order of the alert rules does not matter as hashUIDs sorts
+// the UIDs in increasing order.
+func hashUIDs(alertRules []*models.SchedulableAlertRule) uint64 {
+	h := fnv.New64()
+	for _, uid := range sortedUIDs(alertRules) {
+		h.Write([]byte(uid))
+	}
+	return h.Sum64()
+}
+
+// sortedUIDs returns a slice of sorted UIDs.
+func sortedUIDs(alertRules []*models.SchedulableAlertRule) []string {
+	uids := make([]string, 0, len(alertRules))
+	for _, alertRule := range alertRules {
+		uids = append(uids, alertRule.UID)
+	}
+	sort.Strings(uids)
+	return uids
+}
 
 // updateSchedulableAlertRules updates the alert rules for the scheduler.
 // It returns an error if the database is unavailable or the query returned
@@ -27,5 +50,6 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context, disabledOr
 	}
 	sch.schedulableAlertRules = q.Result
 	sch.metrics.SchedulableAlertRules.Set(float64(len(q.Result)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(q.Result)))
 	return nil
 }
