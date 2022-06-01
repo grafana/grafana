@@ -622,24 +622,15 @@ func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (
 }
 
 type fakeLoader struct {
-	mockedLoadedPlugins       []*plugins.Plugin
-	mockedFactoryLoadedPlugin *plugins.Plugin
+	mockedLoadedPlugins []*plugins.Plugin
 
 	loadedPaths []string
-
-	plugins.Loader
 }
 
 func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
 	l.loadedPaths = append(l.loadedPaths, paths...)
 
 	return l.mockedLoadedPlugins, nil
-}
-
-func (l *fakeLoader) LoadWithFactory(_ context.Context, _ plugins.Class, path string, _ backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	l.loadedPaths = append(l.loadedPaths, path)
-
-	return l.mockedFactoryLoadedPlugin, nil
 }
 
 type fakePluginClient struct {

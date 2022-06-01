@@ -12,12 +12,13 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
   ],
-  moduleDirectories: ['node_modules', 'public'],
+  moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],
   testTimeout: 30000,
+  resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
@@ -37,5 +38,4 @@ module.exports = {
     // Because we mock out <Trans /> anyway, we can mock the messages also
     'locales/\\w+/messages$': '<rootDir>/public/test/mocks/i18nMessages.ts',
   },
-  watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };

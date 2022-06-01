@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -169,6 +170,13 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
+
+	tokens, err := api.store.ListTokens(ctx.Req.Context(), serviceAccount.OrgId, serviceAccount.Id)
+	if err != nil {
+		api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccount.Id)
+	}
+	serviceAccount.Tokens = int64(len(tokens))
+
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 
@@ -205,7 +213,12 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
 	resp.AccessControl = metadata[saIDString]
 
-	return response.JSON(http.StatusOK, resp)
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message":        "Service account updated",
+		"id":             resp.Id,
+		"name":           resp.Name,
+		"serviceaccount": resp,
+	})
 }
 
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
@@ -222,9 +235,13 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	}
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
 	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
+	onlyDisabled := c.QueryBool("disabled")
 	filter := serviceaccounts.FilterIncludeAll
 	if onlyWithExpiredTokens {
 		filter = serviceaccounts.FilterOnlyExpiredTokens
+	}
+	if onlyDisabled {
+		filter = serviceaccounts.FilterOnlyDisabled
 	}
 	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgId, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {

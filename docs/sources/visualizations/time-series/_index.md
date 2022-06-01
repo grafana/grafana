@@ -37,11 +37,11 @@ Choose which of the [standard calculations]({{< relref "../../panels/calculation
 
 Use these options to choose how to display your time series data.
 
-- [Graph time series as lines]({{< relref "./graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "./graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "./graph-time-series-as-points.md" >}})
-- [Graph stacked time series]({{< relref "./graph-time-series-stacking.md" >}})
-- [Graph and color schemes]({{< relref "./graph-color-scheme.md" >}})
+- [Graph time series as lines]({{< relref "graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
+- [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}})
+- [Graph and color schemes]({{< relref "graph-color-scheme.md" >}})
 
 ### Transform
 

@@ -15,7 +15,7 @@ weight: 450
 
 # Enable alerting high availability
 
-You can enable [alerting high availability]({{< relref "./_index.md" >}}) support by updating the Grafana configuration file. On Kubernetes, you can enable alerting high availability by updating the Kubernetes container definition.
+You can enable [alerting high availability]({{< relref "_index.md" >}}) support by updating the Grafana configuration file. On Kubernetes, you can enable alerting high availability by updating the Kubernetes container definition.
 
 ## Update Grafana configuration file
 

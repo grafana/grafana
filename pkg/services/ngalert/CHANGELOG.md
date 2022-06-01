@@ -59,6 +59,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
 - [BUGFIX] Fix access to alerts for Viewer role with editor permissions in folder #49270
 - [FEATURE] Alert rules with associated panels will take screenshots. #49293 #49338 #49374 #49377 #49378 #49379 #49381 #49385 #49439 #49445
+- [ENHANCEMENT] Scheduler: ticker to support stopping #48142
 
 ## 8.5.3
 
@@ -81,4 +82,3 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] (Legacy) Templates: Parse notification templates using all the matches of the alert rule when going from `Alerting` to `OK` in legacy alerting #47355
 - [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
-

@@ -10,6 +10,7 @@ keywords:
   - contact point
   - templating
 title: Template functions
+weight: 125
 ---
 
 # Template Functions
