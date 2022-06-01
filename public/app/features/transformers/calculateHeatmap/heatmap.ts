@@ -12,6 +12,7 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
+import { ScaleDistribution } from '@grafana/schema';
 
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
@@ -193,6 +194,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   if (!xs.length || !ys.length) {
     throw 'no values found';
+  }
+
+  if (options.yAxis?.scale?.type === ScaleDistribution.Log) {
+    throw 'log scale calculaitons not yet supported';
   }
 
   const heat2d = heatmap(xs, ys, {
