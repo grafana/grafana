@@ -3,7 +3,7 @@ aliases:
   - /docs/grafana/latest/getting-started/
   - /docs/grafana/latest/guides/what-is-grafana/
 title: Get started
-weight: 25
+weight: 15
 ---
 
 # Get started

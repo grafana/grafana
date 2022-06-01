@@ -3,11 +3,11 @@ aliases:
   - /docs/grafana/latest/setup-grafana/
 description: Includes topics for setting up a Grafana instance.
 title: Setup
-weight: 20
+weight: 10
 ---
 
 # Setup
 
-This section includes information on how to set up Grafana and get it running, and includes the following topics:
+This section includes information that helps you get Grafana up and running.
 
 {{< section >}}
