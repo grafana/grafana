@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/auth/azuread/
+  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/azuread/
 description: Grafana Azure AD OAuth Guide
 keywords:
   - grafana

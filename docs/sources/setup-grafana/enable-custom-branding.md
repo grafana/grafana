@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/enterprise/white-labeling/
+  - /docs/grafana/latest/setup-grafana/enable-custom-branding/
 description: Change the look of Grafana to match your corporate brand.
 title: Enable custom branding
 weight: 1200

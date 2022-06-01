@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/administration/security/
   - /docs/grafana/latest/installation/security/
+  - /docs/grafana/latest/setup-grafana/configure-security/
 description: Learn how to make Grafana secure.
 title: Configure security
 weight: 600

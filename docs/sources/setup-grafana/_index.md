@@ -1,5 +1,6 @@
 ---
-aliases: []
+aliases:
+  - /docs/grafana/latest/setup-grafana/
 description: Includes topics for setting up a Grafana instance.
 title: Setup
 weight: 20

@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/setup-grafana/enable-diagnostics/
   - /docs/grafana/latest/troubleshooting/diagnostics/
 title: Enable diagnostics to troubleshoot Grafana
 weight: 1100

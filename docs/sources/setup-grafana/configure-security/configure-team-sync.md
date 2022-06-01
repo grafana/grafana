@@ -3,7 +3,9 @@ aliases:
   - /docs/grafana/latest/auth/saml/
   - /docs/grafana/latest/auth/team-sync/
   - /docs/grafana/latest/enterprise/team-sync/
-description: Learn how to use Team Sync to synchronize between your authentication provider teams and Grafana teams.
+  - /docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/
+description: Learn how to use Team Sync to synchronize between your authentication
+  provider teams and Grafana teams.
 title: Configure Team Sync
 weight: 1200
 ---
