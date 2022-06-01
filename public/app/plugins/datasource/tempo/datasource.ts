@@ -211,11 +211,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
       const dsId = this.serviceMap.datasourceUid;
-      subQueries.push(
-        firstServiceMapQuery(options, this.serviceMap.datasourceUid).pipe(
-          concatMap((result) => secondServiceMapQuery(options, result, dsId, this.name))
-        )
-      );
+      if (config.featureToggles.tempoApmTable) {
+        subQueries.push(
+          serviceMapQuery(options, dsId).pipe(
+            concatMap((result) =>
+              rateQuery(options, result, dsId).pipe(
+                concatMap((result) => errorAndDurationQuery(options, result, dsId, this.name))
+              )
+            )
+          )
+        );
+      } else {
+        subQueries.push(serviceMapQuery(options, dsId));
+      }
     }
 
     if (targets.traceId?.length > 0) {
@@ -401,7 +409,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
 }
 
-function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
+function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
   return from(getDatasourceSrv().get(datasourceUid)).pipe(
     mergeMap((ds) => {
       return (ds as PrometheusDatasource).query(request);
@@ -409,13 +417,10 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function firstServiceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, '', request)]).concat(
-    serviceMapRequest.targets as any
-  );
 
-  return queryServiceMapPrometheus(serviceMapRequest, datasourceUid).pipe(
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
@@ -449,25 +454,48 @@ function firstServiceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceU
       };
 
       return {
-        data: [responses[0]?.data ?? [], nodes, edges],
+        data: [nodes, edges],
         state: LoadingState.Done,
       };
     })
   );
 }
 
-// we need the response from the first query to get the rate span_name(s),
-// -> which determine the errorRate/duration span_name(s) we need to query
-function secondServiceMapQuery(
+function rateQuery(
   request: DataQueryRequest<TempoQuery>,
-  firstResponse: DataQueryResponse,
+  serviceMapResponse: DataQueryResponse,
+  datasourceUid: string
+) {
+  const serviceMapRequest = makePromServiceMapRequest(request);
+  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, '', request)]);
+
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
+    toArray(),
+    map((responses: DataQueryResponse[]) => {
+      const errorRes = responses.find((res) => !!res.error);
+      if (errorRes) {
+        throw new Error(errorRes.error!.message);
+      }
+      return {
+        data: [responses[0]?.data ?? [], serviceMapResponse.data[0], serviceMapResponse.data[1]],
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+// we need the response from the rate query to get the rate span_name(s),
+// -> which determine the errorRate/duration span_name(s) we need to query
+function errorAndDurationQuery(
+  request: DataQueryRequest<TempoQuery>,
+  rateResponse: DataQueryResponse,
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
   let apmMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
-  const spanNames = firstResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+  const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -482,34 +510,34 @@ function secondServiceMapQuery(
   const serviceMapRequest = makePromServiceMapRequest(request);
   serviceMapRequest.targets = makeApmRequest(apmMetrics);
 
-  return queryServiceMapPrometheus(serviceMapRequest, datasourceUid).pipe(
+  return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
-    map((secondResponses: DataQueryResponse[]) => {
-      const errorRes = secondResponses.find((res) => !!res.error);
+    map((errorAndDurationResponse: DataQueryResponse[]) => {
+      const errorRes = errorAndDurationResponse.find((res) => !!res.error);
       if (errorRes) {
         throw new Error(errorRes.error!.message);
       }
 
       const apmTable = getApmTable(
         request,
-        firstResponse,
-        secondResponses[0],
+        rateResponse,
+        errorAndDurationResponse[0],
         errorRateBySpanName,
         durationsBySpanName,
         datasourceUid,
         tempoDatasourceUid
       );
 
-      if (!config.featureToggles.tempoApmTable || apmTable.fields.length === 0) {
+      if (apmTable.fields.length === 0) {
         return {
-          data: [firstResponse.data[1], firstResponse.data[2]],
+          data: [rateResponse.data[1], rateResponse.data[2]],
           state: LoadingState.Done,
         };
       }
 
       return {
-        data: [apmTable, firstResponse.data[1], firstResponse.data[2]],
+        data: [apmTable, rateResponse.data[1], rateResponse.data[2]],
         state: LoadingState.Done,
       };
     })
@@ -550,7 +578,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
 
 function getApmTable(
   request: DataQueryRequest<TempoQuery>,
-  firstResponse: DataQueryResponse,
+  rateResponse: DataQueryResponse,
   secondResponse: DataQueryResponse,
   errorRateBySpanName: string,
   durationsBySpanName: string[],
@@ -558,7 +586,7 @@ function getApmTable(
   tempoDatasourceUid: string
 ) {
   let df: any = { fields: [] };
-  const rate = firstResponse.data[0]?.filter((x: { refId: string }) => {
+  const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
     return x.refId === buildExpr(rateMetric, '', request);
   });
   const errorRate = secondResponse.data.filter((x) => {
