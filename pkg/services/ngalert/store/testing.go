@@ -152,6 +152,37 @@ func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 	return nil
 }
 
+func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
+		return err
+	}
+	rules, ok := f.Rules[q.OrgID]
+	if !ok {
+		return nil
+	}
+
+	var selected *models.AlertRule
+	for _, rule := range rules {
+		if rule.UID == q.UID {
+			selected = rule
+			break
+		}
+	}
+	if selected == nil {
+		return nil
+	}
+
+	for _, rule := range rules {
+		if rule.GetGroupKey() == selected.GetGroupKey() {
+			q.Result = append(q.Result, rule)
+		}
+	}
+	return nil
+}
+
 // For now, we're not implementing namespace filtering.
 func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
 	f.mtx.Lock()
