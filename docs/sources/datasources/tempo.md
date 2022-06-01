@@ -194,6 +194,23 @@ The color of each circle represents the percentage of requests in each of the fo
 
 Click on the service to see a context menu with additional links for quick navigation to other relevant information.
 
+## APM table
+
+The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
+
+To display the APM table:
+
+- Enable the tempoApmTable feature flag in your ini file
+- Link a Prometheus datasource in the Tempo datasource settings
+- Navigate to [Explore]({{< relref "../explore/_index.md" >}})
+- Select the Tempo datasource
+- Select the **Service Graph** query type and run the query
+- Optionally, filter your results
+
+Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_duration_seconds_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+
+Clicking on any row in the rate, error rate or duration columns will open up a query in Prometheus with that rows span name automatically set in the query. Cicking on a row in the links column will open up a query in Tempo with that rows span name automatically set in the query.
+
 ## Linking Trace ID from logs
 
 You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
