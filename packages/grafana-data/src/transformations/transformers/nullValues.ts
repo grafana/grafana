@@ -119,12 +119,12 @@ function nullInsertThreshold(
   // Insert a frame time at the beginning of the sequence if the previous value
   // minus the threshold is greater than the minimum
   if (refFieldPseudoMin != null) {
-    let fillPrev = prevValue;
-    let fillValue = prevValue - threshold;
-    while (fillValue >= refFieldPseudoMin) {
-      refValuesNew.unshift(getInsertValue(fillPrev, fillValue, threshold));
-      fillPrev = fillValue;
-      fillValue -= threshold;
+    let minValue = refFieldPseudoMin;
+
+    while (minValue <= prevValue) {
+      let nextValue = minValue + threshold;
+      refValuesNew.push(getInsertValue(minValue, nextValue, threshold));
+      minValue = nextValue;
     }
   }
 
