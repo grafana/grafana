@@ -38,7 +38,7 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       title={props.paramDef.description}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
-        if (props.paramDef.runQueryOnEnter && evt.type !== 'blur') {
+        if (props.paramDef.runQueryOnEnter && evt.type === 'keydown') {
           props.onRunQuery();
         }
       }}
