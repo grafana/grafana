@@ -74,7 +74,7 @@ function getRandomLogLine(counter) {
     counter: counter.toString(),
     float: Math.random() > 0.2 ? (100 * Math.random()).toString() : 'NaN',
     label: chooseRandomElement(['val1', 'val2', 'val3']),
-    level: chooseRandomElement(['info', 'info', 'error']),
+    level: chooseRandomElement(['debug','info', 'info', 'info', 'info', 'warning', 'error', 'error']),
   });
 }
 
