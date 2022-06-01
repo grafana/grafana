@@ -20,7 +20,8 @@ type Service struct {
 func ProvideService(db db.DB) dashver.Service {
 	return &Service{
 		store: &sqlStore{
-			db: db,
+			db:      db,
+			dialect: db.GetDialect(),
 		},
 	}
 }

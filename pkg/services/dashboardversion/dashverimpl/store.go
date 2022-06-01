@@ -98,7 +98,7 @@ func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersio
 			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
 			OrderBy("dashboard_version.version DESC").
 			Limit(query.Limit, query.Start).
-			Find(dashboardVersion)
+			Find(&dashboardVersion)
 		if err != nil {
 			return err
 		}
