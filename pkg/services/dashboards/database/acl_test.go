@@ -1,17 +1,13 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDashboardAclDataAccess(t *testing.T) {
@@ -85,7 +81,6 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given a dashboard folder and a user", func(t *testing.T) {
-
 		t.Run("Given dashboard folder permission", func(t *testing.T) {
 			setup(t)
 			err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{

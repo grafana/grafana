@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -396,7 +393,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				// should not receive service account from query
 				require.Equal(t, len(teamMembersQuery.Result), 1)
 			})
-
 		})
 	})
 }
@@ -480,7 +476,6 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store *SQLStore) {
-
 		team1, errCreateTeam := store.CreateTeam("group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := store.CreateTeam("group2 name", "test2@example.org", testOrgID)

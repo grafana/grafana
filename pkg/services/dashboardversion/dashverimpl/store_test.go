@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package dashverimpl
 
 import (
@@ -148,6 +145,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 		return nil
 	})
+	require.NoError(t, err)
 
 	return dash
 }

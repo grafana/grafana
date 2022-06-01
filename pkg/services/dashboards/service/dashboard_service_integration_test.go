@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -14,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -797,7 +793,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
 	sqlStore                 *sqlstore.SQLStore
-	dashboardStore           dashboards.Store
+	dashboardStore           dashbboardservice.Store
 	savedFolder              *models.Dashboard
 	savedDashInFolder        *models.Dashboard
 	otherSavedFolder         *models.Dashboard

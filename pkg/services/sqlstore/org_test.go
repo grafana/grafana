@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -465,6 +462,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 
 		return nil
 	})
+	require.NoError(t, err)
 
 	return dash
 }
