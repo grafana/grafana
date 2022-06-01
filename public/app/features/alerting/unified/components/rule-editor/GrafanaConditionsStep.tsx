@@ -46,7 +46,11 @@ const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
-export const GrafanaConditionsStep: FC = () => {
+interface Props {
+  existing?: boolean;
+}
+
+export const GrafanaConditionsStep: FC<Props> = ({ existing = false }) => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const {
@@ -59,7 +63,7 @@ export const GrafanaConditionsStep: FC = () => {
 
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
-      <ConditionField />
+      <ConditionField existing={existing} />
       <Field
         label="Evaluate"
         description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
