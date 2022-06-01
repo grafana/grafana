@@ -157,6 +157,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
+// RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
@@ -198,6 +199,8 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 	return response.JSON(http.StatusAccepted, result)
 }
 
+// RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
+// If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
 func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
@@ -234,6 +237,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Resp
 	return response.JSON(http.StatusAccepted, result)
 }
 
+// RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
