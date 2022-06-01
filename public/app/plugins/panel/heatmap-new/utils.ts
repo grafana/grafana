@@ -251,6 +251,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
     placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
     size: yAxisConfig.axisWidth || null,
+    label: yAxisConfig.axisLabel,
     theme: theme,
     splits: hasLabeledY
       ? () => {

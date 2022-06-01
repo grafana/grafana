@@ -58,7 +58,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     category = ['Y Axis'];
     builder.addRadio({
-      path: 'yAxis.placement',
+      path: 'yAxis.axisPlacement',
       name: 'Placement',
       defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
       category,
@@ -73,7 +73,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.mode === HeatmapMode.Aggregated) {
       builder.addRadio({
-        path: 'yAxis.alignment',
+        path: 'yAxis.align',
         name: 'Alignment',
         defaultValue: defaultPanelOptions.yAxis.align ?? AlignAxis.Auto,
         category,
@@ -90,7 +90,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     builder
       .addNumberInput({
-        path: 'yAxis.width',
+        path: 'yAxis.axisWidth',
         name: 'Axis width',
         defaultValue: defaultPanelOptions.yAxis.axisWidth,
         settings: {
