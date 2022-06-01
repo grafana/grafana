@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
-import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
+import { Alert, InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
@@ -19,7 +19,13 @@ import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
 import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysTable } from './ApiKeysTable';
-import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
+import {
+  addApiKey,
+  deleteApiKey,
+  loadApiKeys,
+  toggleIncludeExpired,
+  getServiceAccountsUpgradeStatus,
+} from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
@@ -36,6 +42,7 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
+    serviceAccountsUpgraded: state.apiKeys.serviceAccountsUpgraded,
   };
 }
 
@@ -45,6 +52,7 @@ const mapDispatchToProps = {
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
+  getServiceAccountsUpgradeStatus,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -64,6 +72,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchApiKeys();
+    this.props.getServiceAccountsUpgradeStatus();
   }
 
   async fetchApiKeys() {
@@ -127,6 +136,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
+      serviceAccountsUpgraded,
     } = this.props;
 
     if (!hasFetched) {
@@ -146,14 +156,13 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {/* TODO: enable when API keys to service accounts migration is ready
-                    {config.featureToggles.serviceAccounts && (
-                      <Alert title="Switch from API keys to Service accounts" severity="info">
-                        Service accounts give you more control. API keys will be automatically migrated into tokens inside
-                        respective service accounts. The current API keys will still work, but will be called tokens and
-                        you will find them in the detail view of a respective service account.
-                      </Alert>
-                  )} */}
+                  {config.featureToggles.serviceAccounts && !serviceAccountsUpgraded && (
+                    <Alert title="Switch from API keys to Service accounts" severity="info">
+                      Service accounts give you more control. API keys will be automatically migrated into tokens inside
+                      respective service accounts. The current API keys will still work, but will be called tokens and
+                      you will find them in the detail view of a respective service account.
+                    </Alert>
+                  )}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

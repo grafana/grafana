@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -18,12 +19,14 @@ import (
 
 type ServiceAccountsStoreImpl struct {
 	sqlStore *sqlstore.SQLStore
+	kvStore  kvstore.KVStore
 	log      log.Logger
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl {
+func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
+		kvStore:  kvStore,
 	}
 }
 
@@ -80,6 +83,22 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 		}
 		return nil
 	})
+}
+
+func (s *ServiceAccountsStoreImpl) GetServiceAccountsUpgradeStatus(ctx context.Context, orgID int64) (status *serviceaccounts.ServiceAccountsUpgradeStatus, err error) {
+	upgraded, exists, err := s.kvStore.Get(ctx, orgID, "serviceaccounts", "upgradeStatus")
+	if err != nil {
+		return nil, err
+	}
+	if exists && upgraded != "" {
+		return &serviceaccounts.ServiceAccountsUpgradeStatus{
+			Upgraded: true,
+		}, nil
+	} else {
+		return &serviceaccounts.ServiceAccountsUpgradeStatus{
+			Upgraded: false,
+		}, nil
+	}
 }
 
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {

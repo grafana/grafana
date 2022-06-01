@@ -75,3 +75,7 @@ export interface ServiceAccountsState {
   showPaging: boolean;
   serviceAccountStateFilter: ServiceAccountStateFilter;
 }
+
+export interface ServiceAccountsUpgradeStatus {
+  upgraded: boolean;
+}

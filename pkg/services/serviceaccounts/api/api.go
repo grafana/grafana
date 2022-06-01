@@ -67,8 +67,10 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		// TODO:
 		// for 9.0 please reenable this with issue https://github.com/grafana/grafana-enterprise/issues/2969
-		// serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin,
-		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
+		serviceAccountsRoute.Get("/upgradestatus", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.GetServiceAccountsUpgradeStatus))
+		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
 		// serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
 		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -111,6 +113,14 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("Service account deleted")
+}
+
+func (api *ServiceAccountsAPI) GetServiceAccountsUpgradeStatus(ctx *models.ReqContext) response.Response {
+	upgradeStatus, err := api.store.GetServiceAccountsUpgradeStatus(ctx.Req.Context(), ctx.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+	return response.JSON(http.StatusOK, upgradeStatus)
 }
 
 func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) response.Response {

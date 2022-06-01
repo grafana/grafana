@@ -73,6 +73,10 @@ type ServiceAccountProfileDTO struct {
 
 type ServiceAccountFilter string // used for filtering
 
+type ServiceAccountsUpgradeStatus struct {
+	Upgraded bool `json:"upgraded"`
+}
+
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -29,13 +30,14 @@ func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	store *sqlstore.SQLStore,
+	kvStore kvstore.KVStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
 		features: features,
-		store:    database.NewServiceAccountsStore(store),
+		store:    database.NewServiceAccountsStore(store, kvStore),
 		log:      log.New("serviceaccounts"),
 	}
 

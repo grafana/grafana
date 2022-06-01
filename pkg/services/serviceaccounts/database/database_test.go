@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -71,7 +72,8 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := sqlstore.InitTestDB(t)
-	return db, NewServiceAccountsStore(db)
+	kvStore := kvstore.ProvideService(db)
+	return db, NewServiceAccountsStore(db, kvStore)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {

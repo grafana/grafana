@@ -8,6 +8,7 @@ export const initialApiKeysState: ApiKeysState = {
   keys: [],
   keysIncludingExpired: [],
   searchQuery: '',
+  serviceAccountsUpgraded: false,
 };
 
 const apiKeysSlice = createSlice({
@@ -22,6 +23,9 @@ const apiKeysSlice = createSlice({
           : state.includeExpired;
       return { ...state, hasFetched: true, keys, keysIncludingExpired, includeExpired };
     },
+    serviceAccountsUpgradeStatusLoaded: (state, action): ApiKeysState => {
+      return { ...state, serviceAccountsUpgraded: action.payload };
+    },
     setSearchQuery: (state, action): ApiKeysState => {
       return { ...state, searchQuery: action.payload };
     },
@@ -34,7 +38,8 @@ const apiKeysSlice = createSlice({
   },
 });
 
-export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery } = apiKeysSlice.actions;
+export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery, serviceAccountsUpgradeStatusLoaded } =
+  apiKeysSlice.actions;
 
 export const apiKeysReducer = apiKeysSlice.reducer;
 

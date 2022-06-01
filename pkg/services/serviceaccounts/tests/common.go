@@ -72,17 +72,18 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 var _ serviceaccounts.Service = new(ServiceAccountMock)
 
 type Calls struct {
-	CreateServiceAccount           []interface{}
-	RetrieveServiceAccount         []interface{}
-	DeleteServiceAccount           []interface{}
-	UpgradeServiceAccounts         []interface{}
-	ConvertServiceAccounts         []interface{}
-	ListTokens                     []interface{}
-	DeleteServiceAccountToken      []interface{}
-	UpdateServiceAccount           []interface{}
-	AddServiceAccountToken         []interface{}
-	SearchOrgServiceAccounts       []interface{}
-	RetrieveServiceAccountIdByName []interface{}
+	CreateServiceAccount            []interface{}
+	RetrieveServiceAccount          []interface{}
+	DeleteServiceAccount            []interface{}
+	GetServiceAccountsUpgradeStatus []interface{}
+	UpgradeServiceAccounts          []interface{}
+	ConvertServiceAccounts          []interface{}
+	ListTokens                      []interface{}
+	DeleteServiceAccountToken       []interface{}
+	UpdateServiceAccount            []interface{}
+	AddServiceAccountToken          []interface{}
+	SearchOrgServiceAccounts        []interface{}
+	RetrieveServiceAccountIdByName  []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -104,6 +105,11 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) GetServiceAccountsUpgradeStatus(ctx context.Context, orgID int64) (*serviceaccounts.ServiceAccountsUpgradeStatus, error) {
+	s.Calls.UpgradeServiceAccounts = append(s.Calls.GetServiceAccountsUpgradeStatus, []interface{}{ctx})
+	return nil, nil
 }
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {

@@ -1,7 +1,13 @@
 ﻿import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ApiKey, ThunkResult } from 'app/types';
 
-import { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery } from './reducers';
+import {
+  apiKeysLoaded,
+  includeExpiredToggled,
+  isFetching,
+  serviceAccountsUpgradeStatusLoaded,
+  setSearchQuery,
+} from './reducers';
 
 export function addApiKey(apiKey: ApiKey, openModal: (key: string) => void): ThunkResult<void> {
   return async (dispatch) => {
@@ -28,6 +34,13 @@ export function deleteApiKey(id: number): ThunkResult<void> {
     getBackendSrv()
       .delete(`/api/auth/keys/${id}`)
       .then(() => dispatch(loadApiKeys()));
+  };
+}
+
+export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
+    dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
   };
 }
 
