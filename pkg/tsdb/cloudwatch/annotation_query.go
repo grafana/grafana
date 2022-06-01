@@ -3,13 +3,13 @@ package cloudwatch
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type annotationEvent struct {
@@ -19,21 +19,35 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	usePrefixMatch := model.Get("prefixMatching").MustBool(false)
-	region := model.Get("region").MustString("")
-	namespace := model.Get("namespace").MustString("")
-	metricName := model.Get("metricName").MustString("")
-	dimensions := model.Get("dimensions").MustMap()
-	statistic := model.Get("statistic").MustString()
-	period := int64(model.Get("period").MustInt(0))
+	usePrefixMatch := model.PrefixMatching
+	region := model.Region
+	namespace := model.Namespace
+	metricName := model.MetricName
+	dimensions := model.Dimensions
+	statistic := ""
+
+	if model.Statistic != nil {
+		statistic = *model.Statistic
+	}
+
+	var period int64
+	if model.Period != "" {
+		p, err := strconv.Atoi(model.Period)
+		if err != nil {
+			return nil, err
+		}
+		period = int64(p)
+	}
+
 	if period == 0 && !usePrefixMatch {
 		period = 300
 	}
-	actionPrefix := model.Get("actionPrefix").MustString("")
-	alarmNamePrefix := model.Get("alarmNamePrefix").MustString("")
+
+	actionPrefix := model.ActionPrefix
+	alarmNamePrefix := model.AlarmNamePrefix
 
 	cli, err := e.getCWClient(pluginCtx, region)
 	if err != nil {
