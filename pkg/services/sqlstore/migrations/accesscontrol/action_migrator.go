@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
@@ -21,7 +22,7 @@ type actionNameMigrator struct {
 var _ migrator.CodeMigration = new(actionNameMigrator)
 
 func (m *actionNameMigrator) SQL(migrator.Dialect) string {
-	return "code migration"
+	return CodeMigrationSQL
 }
 
 func (m *actionNameMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
