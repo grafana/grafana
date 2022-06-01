@@ -40,11 +40,6 @@ jobs:
           snyk-to-html -i ${{ github.event.repository.name }}.json -o ${{ github.event.repository.name }}.html
           snyk test --json --strict-out-of-sync=false | snyk2spdx --output ${{ github.event.repository.name }}.spdx
 
-      - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: ${{ github.event.repository.name }}.sarif
-
       - name: Create results dir
         run: mkdir -p snyk_scans && cp -v ${{ github.event.repository.name }}.{html,json,sarif,spdx} snyk_scans/
 
