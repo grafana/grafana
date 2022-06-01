@@ -1,4 +1,5 @@
-﻿import { getBackendSrv } from 'app/core/services/backend_srv';
+﻿import { config } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ApiKey, ThunkResult } from 'app/types';
 
 import {
@@ -39,8 +40,11 @@ export function deleteApiKey(id: number): ThunkResult<void> {
 
 export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
   return async (dispatch) => {
-    const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
-    dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
+    // TODO: remove when service account enabled by default (or use another way to detect if it's enabled)
+    if (config.featureToggles.serviceAccounts) {
+      const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
+      dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
+    }
   };
 }
 

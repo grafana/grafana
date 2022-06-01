@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
-import { Alert, InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
+import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
@@ -19,6 +19,7 @@ import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
 import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysTable } from './ApiKeysTable';
+import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
 import {
   addApiKey,
   deleteApiKey,
@@ -156,12 +157,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {config.featureToggles.serviceAccounts && !serviceAccountsUpgraded && (
-                    <Alert title="Switch from API keys to Service accounts" severity="info">
-                      Service accounts give you more control. API keys will be automatically migrated into tokens inside
-                      respective service accounts. The current API keys will still work, but will be called tokens and
-                      you will find them in the detail view of a respective service account.
-                    </Alert>
+                  {!serviceAccountsUpgraded && (
+                    <MigrateToServiceAccountsCard
+                      onMigrate={() => {}}
+                      disabled={!config.featureToggles.serviceAccounts}
+                    />
                   )}
                   {showCTA ? (
                     <EmptyListCTA
