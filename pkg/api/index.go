@@ -245,6 +245,10 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, hs.buildAlertNavLinks(c)...)
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
+		navTree = append(navTree, hs.buildDataConnectionsNavLink(c))
+	}
+
 	appLinks, err := hs.getAppLinks(c)
 	if err != nil {
 		return nil, err
@@ -628,6 +632,58 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	}
 
 	return children
+}
+
+func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.NavLink {
+	var children []*dtos.NavLink
+	var navLink *dtos.NavLink
+
+	baseId := "data-connections"
+	baseUrl := hs.Cfg.AppSubURL + "/" + baseId
+
+	children = append(children, &dtos.NavLink{
+		Id:          "datasources",
+		Text:        "Data sources",
+		Icon:        "database",
+		Description: "Add and configure data sources",
+		Url:         baseUrl + "/datasources",
+	})
+
+	children = append(children, &dtos.NavLink{
+		Id:          "plugins",
+		Text:        "Plugins",
+		Icon:        "plug",
+		Description: "Manage plugins",
+		Url:         baseUrl + "/plugins",
+	})
+
+	children = append(children, &dtos.NavLink{
+		Id:          "cloud-integrations",
+		Text:        "Cloud integrations",
+		Icon:        "bolt",
+		Description: "Manage your cloud integrations",
+		Url:         baseUrl + "/cloud-integrations",
+	})
+
+	children = append(children, &dtos.NavLink{
+		Id:          "recorded-queries",
+		Text:        "Recorded queries",
+		Icon:        "record-audio",
+		Description: "Manage your recorded queries",
+		Url:         baseUrl + "/recorded-queries",
+	})
+
+	navLink = &dtos.NavLink{
+		Text:       "Data Connections",
+		Icon:       "link",
+		Id:         baseId,
+		Url:        baseUrl,
+		Children:   children,
+		Section:    dtos.NavSectionCore,
+		SortWeight: dtos.WeightDataConnections,
+	}
+
+	return navLink
 }
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
