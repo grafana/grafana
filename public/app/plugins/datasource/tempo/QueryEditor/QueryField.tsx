@@ -5,7 +5,6 @@ import useAsync from 'react-use/lib/useAsync';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  Badge,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -82,12 +81,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
       queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
     }
 
-    if (config.featureToggles.tempoSearch && !datasource?.search?.hide) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search - Beta' });
+    if (!datasource?.search?.hide) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
     }
 
     if (logsDatasourceUid) {
-      if (!config.featureToggles.tempoSearch) {
+      if (datasource?.search?.hide) {
         // Place at beginning as Search if no native search
         queryTypeOptions.unshift({ value: 'search', label: 'Search' });
       } else {
@@ -122,20 +121,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'nativeSearch' && (
-          <div style={{ maxWidth: '65ch' }}>
-            <Badge icon="rocket" text="Beta" color="blue" />
-            {config.featureToggles.tempoBackendSearch ? (
-              <>&nbsp;Tempo search is currently in beta.</>
-            ) : (
-              <>
-                &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the
-                time range picker. We are actively working on full backend search. Look for improvements in the near
-                future!
-              </>
-            )}
-          </div>
-        )}
         {query.queryType === 'search' && (
           <SearchSection
             logsDatasourceUid={logsDatasourceUid}
