@@ -252,8 +252,17 @@ export class GeomapPanel extends Component<Props, State> {
   dataChanged(data: PanelData) {
     for (const state of this.layers) {
       if (state.handler.update) {
-        const frame = this.findFrameToRender(data, state.options);
-        state.handler.update(data, frame);
+        let panelData = this.props.data;
+        if (state.options.dataquery) {
+          const frame = this.findFrameToRender(this.props.data, state.options);
+          if (frame) {
+            panelData = {
+              ...panelData,
+              series: [frame],
+            };
+          }
+        }
+        state.handler.update(panelData);
       }
     }
   }
@@ -470,8 +479,17 @@ export class GeomapPanel extends Component<Props, State> {
 
       // initialize with new data
       if (info.handler.update) {
-        const frame = this.findFrameToRender(this.props.data, newOptions);
-        info.handler.update(this.props.data, frame);
+        let panelData = this.props.data;
+        if (newOptions.dataquery) {
+          const frame = this.findFrameToRender(this.props.data, newOptions);
+          if (frame) {
+            panelData = {
+              ...panelData,
+              series: [frame],
+            };
+          }
+        }
+        info.handler.update(panelData);
       }
     } catch (err) {
       console.warn('ERROR', err);
@@ -533,8 +551,17 @@ export class GeomapPanel extends Component<Props, State> {
     (state.layer as any).__state = state;
 
     if (handler.update) {
-      const frame = this.findFrameToRender(this.props.data, options);
-      handler.update(this.props.data, frame);
+      let panelData = this.props.data;
+      if (options.dataquery) {
+        const frame = this.findFrameToRender(this.props.data, options);
+        if (frame) {
+          panelData = {
+            ...panelData,
+            series: [frame],
+          };
+        }
+      }
+      handler.update(panelData);
     }
 
     return state;

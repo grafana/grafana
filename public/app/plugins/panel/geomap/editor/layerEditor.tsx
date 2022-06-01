@@ -83,7 +83,8 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         },
       });
 
-      if (!layer?.isBaseMap && layer?.usesDataFrame) {
+      // Show data filter if the layer type can do something with the data query results
+      if (handler.update) {
         builder.addSelect({
           path: 'dataquery',
           name: 'Query',

@@ -3,7 +3,7 @@ import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '../themes';
-import { PanelData, DataFrame } from '../types';
+import { PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -75,7 +75,7 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
-  update?: (data: PanelData, frame?: DataFrame) => void;
+  update?: (data: PanelData) => void;
   legend?: ReactNode;
 
   /**
@@ -110,7 +110,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Whether this layer type renders its features from a data frame
    * Required field as this determines key options layout logic
    */
-  usesDataFrame: boolean;
+  //  usesDataFrame: boolean;
 
   /**
    * Function that configures transformation and returns a transformer

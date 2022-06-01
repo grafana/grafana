@@ -1,5 +1,4 @@
 import {
-  DataFrame,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
@@ -41,7 +40,6 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
   description: 'Visualizes a heatmap of the data',
   isBaseMap: false,
   showLocation: true,
-  usesDataFrame: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -67,13 +65,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData, frame?: DataFrame) => {
-        if (!data.series?.length) {
-          source.clear();
-          return; // ignore empty
-        }
+      update: (data: PanelData) => {
+        const frame = data.series[0];
         if (!frame) {
-          source.clear();
           return;
         }
         source.update(frame);

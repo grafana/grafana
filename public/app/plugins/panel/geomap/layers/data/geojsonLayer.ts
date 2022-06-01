@@ -1,5 +1,4 @@
 import {
-  DataFrame,
   MapLayerRegistryItem,
   MapLayerOptions,
   PanelData,
@@ -68,7 +67,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   description: 'Load static data from a geojson file',
   isBaseMap: false,
   state: PluginState.beta,
-  usesDataFrame: false,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -154,7 +152,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData, frame?: DataFrame) => {
+      update: (data: PanelData) => {
         console.log('todo... find values matching the ID and update');
       },
       registerOptionsUI: (builder) => {

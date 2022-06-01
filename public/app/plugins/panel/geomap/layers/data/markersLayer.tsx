@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import {
-  DataFrame,
   MapLayerRegistryItem,
   MapLayerOptions,
   PanelData,
@@ -54,7 +53,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
-  usesDataFrame: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -114,44 +112,43 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     return {
       init: () => vectorLayer,
       legend: legend,
-      update: (data: PanelData, frame?: DataFrame) => {
+      update: (data: PanelData) => {
         if (!data.series?.length) {
           source.clear();
           return; // ignore empty
         }
-        if (!frame) {
-          source.clear();
-          return;
-        }
-        if (style.fields) {
-          const dims: StyleDimensions = {};
-          if (style.fields.color) {
-            dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-          }
-          if (style.fields.size) {
-            dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
-          }
-          if (style.fields.text) {
-            dims.text = getTextDimension(frame, style.config.text!);
-          }
-          if (style.fields.rotation) {
-            dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
-          }
-          style.dims = dims;
-        }
 
-        // Post updates to the legend component
-        if (legend) {
-          legendProps.next({
-            styleConfig: style,
-            size: style.dims?.size,
-            layerName: options.name,
-            layer: vectorLayer,
-          });
+        for (const frame of data.series) {
+          if (style.fields) {
+            const dims: StyleDimensions = {};
+            if (style.fields.color) {
+              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
+            }
+            if (style.fields.size) {
+              dims.size = getScaledDimension(frame, style.config.size ?? defaultStyleConfig.size);
+            }
+            if (style.fields.text) {
+              dims.text = getTextDimension(frame, style.config.text!);
+            }
+            if (style.fields.rotation) {
+              dims.rotation = getScalarDimension(frame, style.config.rotation ?? defaultStyleConfig.rotation);
+            }
+            style.dims = dims;
+          }
+
+          // Post updates to the legend component
+          if (legend) {
+            legendProps.next({
+              styleConfig: style,
+              size: style.dims?.size,
+              layerName: options.name,
+              layer: vectorLayer,
+            });
+          }
+
+          source.update(frame);
+          break; // Only the first frame for now!
         }
-
-        source.update(frame);
-
       },
 
       // Marker overlay options

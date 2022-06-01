@@ -1,4 +1,4 @@
-import { DataFrame, MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
@@ -21,7 +21,6 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
   isBaseMap: false,
   showLocation: true,
   state: PluginState.alpha,
-  usesDataFrame: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -50,7 +49,8 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
     const matchers = await getLocationMatchers(options.location);
     return {
       init: () => vectorLayer,
-      update: (data: PanelData, frame?: DataFrame) => {
+      update: (data: PanelData) => {
+        const frame = data.series[0];
         if (frame && frame.length) {
           const out = getGeometryField(frame, matchers);
           if (!out.field) {
