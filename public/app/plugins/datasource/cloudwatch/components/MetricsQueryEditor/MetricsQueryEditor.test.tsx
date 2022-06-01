@@ -181,6 +181,7 @@ describe('QueryEditor', () => {
 
         expect(screen.getByText('Label')).toBeInTheDocument();
         expect(screen.queryByText('Alias')).toBeNull();
+        expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
 
         config.featureToggles.cloudWatchDynamicLabels = originalValue;
       });
