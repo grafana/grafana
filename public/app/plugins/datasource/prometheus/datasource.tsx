@@ -64,7 +64,7 @@ import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const POST_METADATA_ENDPOINTS = ['/api/v1/series', '/api/v1/labels'];
-const GET_METADATA_ENDPOINTS = ['/api/v1/rules', '/api/v1/metadata', '/api/v1/label'];
+const GET_METADATA_ENDPOINTS = ['/api/v1/rules', '/api/v1/metadata', '/api/v1/label/'];
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -218,8 +218,8 @@ export class PrometheusDatasource
     }
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (
-      (this.httpMethod === 'POST' || POST_METADATA_ENDPOINTS.some((endpoint) => url === endpoint)) &&
-      !GET_METADATA_ENDPOINTS.some((endpoint) => url === endpoint)
+      (this.httpMethod === 'POST' || POST_METADATA_ENDPOINTS.some((endpoint) => url.startsWith(endpoint))) &&
+      !GET_METADATA_ENDPOINTS.some((endpoint) => url.startsWith(endpoint))
     ) {
       const res = await this.postResource(url, qs);
       return {
