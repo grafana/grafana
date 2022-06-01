@@ -42,6 +42,7 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
+	WeightDataConnections
 	WeightPlugin
 	WeightConfig
 	WeightAdmin
