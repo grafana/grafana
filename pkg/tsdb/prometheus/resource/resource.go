@@ -99,7 +99,7 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return 500, nil, err
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint (we don't care about the error being returned by resp.Body.Close())
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
