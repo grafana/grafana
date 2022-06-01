@@ -18,8 +18,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
-  const hasEditPermission = contextSrv.hasPermission(rulePermission.update);
-  const hasRemovePermission = contextSrv.hasPermission(rulePermission.delete);
 
   const { folder, loading } = useFolder(folderUID);
 
@@ -36,8 +34,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       );
     }
     return {
-      isEditable: hasEditPermission && folder?.canSave,
-      isRemovable: hasRemovePermission && folder?.canSave,
+      isEditable: contextSrv.hasAccess(rulePermission.update, folder?.canSave ?? false),
+      isRemovable: contextSrv.hasAccess(rulePermission.delete, folder?.canSave ?? false),
       loading,
     };
   }
@@ -45,8 +43,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   const isRulerAvailable = Boolean(dataSources[rulesSourceName]?.result?.rulerConfig);
   return {
-    isEditable: hasEditPermission && contextSrv.isEditor && isRulerAvailable,
-    isRemovable: hasRemovePermission && contextSrv.isEditor && isRulerAvailable,
+    isEditable: contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor) && isRulerAvailable,
+    isRemovable: contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor) && isRulerAvailable,
     loading: dataSources[rulesSourceName]?.loading,
   };
 }
