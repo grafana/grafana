@@ -362,12 +362,12 @@ const (
 	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rules:create"
 	ActionAlertingRuleRead   = "alert.rules:read"
-	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleUpdate = "alert.rules:write"
 	ActionAlertingRuleDelete = "alert.rules:delete"
 
 	// Alerting instances (+silences) actions
 	ActionAlertingInstanceCreate = "alert.instances:create"
-	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions

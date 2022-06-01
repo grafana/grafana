@@ -82,12 +82,12 @@ export enum AccessControlAction {
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
   AlertingRuleRead = 'alert.rules:read',
-  AlertingRuleUpdate = 'alert.rules:update',
+  AlertingRuleUpdate = 'alert.rules:write',
   AlertingRuleDelete = 'alert.rules:delete',
 
   // Alerting instances (+silences)
   AlertingInstanceCreate = 'alert.instances:create',
-  AlertingInstanceUpdate = 'alert.instances:update',
+  AlertingInstanceUpdate = 'alert.instances:write',
   AlertingInstanceRead = 'alert.instances:read',
 
   // Alerting Notification policies

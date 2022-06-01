@@ -47,6 +47,8 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"users.authtoken:list":     accesscontrol.ActionUsersAuthTokenList,
 		"users.quotas:list":        accesscontrol.ActionUsersQuotasList,
 		"users.permissions:list":   "users.permissions:read",
+		"alert.instances:update":   accesscontrol.ActionAlertingInstanceUpdate,
+		"alert.rules:update":       accesscontrol.ActionAlertingRuleUpdate,
 	}
 
 	for oldName, newName := range actionNameMapping {
