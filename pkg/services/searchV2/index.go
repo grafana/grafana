@@ -30,6 +30,7 @@ type dashboardLoader interface {
 }
 
 type eventStore interface {
+	OnEvent(handler store.EventHandler)
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
@@ -94,6 +95,8 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't build initial dashboard search index: %w", err)
 	}
+
+	i.eventStore.OnEvent(i.applyEventOnIndex)
 
 	for {
 		select {
@@ -293,7 +296,6 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 	}
 	started := time.Now()
 	for _, e := range events {
-		i.logger.Debug("processing event", "event", e)
 		err := i.applyEventOnIndex(ctx, e)
 		if err != nil {
 			i.logger.Error("can't apply event", "error", err)
@@ -306,6 +308,8 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 }
 
 func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
+	i.logger.Debug("processing event", "event", e)
+
 	if !strings.HasPrefix(e.EntityId, "database/") {
 		i.logger.Warn("unknown storage", "entityId", e.EntityId)
 		return nil
@@ -382,11 +386,21 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 	if err != nil {
 		return nil, err
 	}
+	// Find all dashboard docs to remove with folder.
+	// TODO: at this moment we can not distinguish whether dashboardUID represents folder or not,
+	// so some unnecessary work here when dashboard (not a folder) removed.
+	dashboardIDs, err := getFolderDashboardIDs(reader, dashboardUID)
+	if err != nil {
+		return nil, err
+	}
 
 	batch := bluge.NewBatch()
 	batch.Delete(bluge.NewDocument(dashboardUID).ID())
 	for _, panelID := range panelIDs {
 		batch.Delete(bluge.NewDocument(panelID).ID())
+	}
+	for _, dashboardID := range dashboardIDs {
+		batch.Delete(bluge.NewDocument(dashboardID).ID())
 	}
 
 	err = writer.Batch(batch)
@@ -430,7 +444,7 @@ func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, write
 		}
 
 		location := folderUID
-		doc = getNonFolderDashboardDoc(dash, location)
+		doc = getNonFolderDashboardDoc(dash, folderUID, location)
 		if err := extendDoc(dash.uid, doc); err != nil {
 			return nil, err
 		}
@@ -438,7 +452,7 @@ func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, write
 		var actualPanelIDs []string
 
 		location += "/" + dash.uid
-		panelDocs := getDashboardPanelDocs(dash, location)
+		panelDocs := getDashboardPanelDocs(dash, dash.uid, location)
 		for _, panelDoc := range panelDocs {
 			actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
 			batch.Update(panelDoc.ID(), panelDoc)

@@ -2,6 +2,7 @@ package searchV2
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -369,6 +370,90 @@ func TestDashboardIndex_MultipleTokensScattered(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "powerful secret"},
+		)
+	})
+}
+
+var dashboardsWithFolders = []dashboard{
+	{
+		id:       1,
+		uid:      "1",
+		isFolder: true,
+		info: &extract.DashboardInfo{
+			Title: "My folder",
+		},
+	},
+	{
+		id:       2,
+		uid:      "2",
+		folderID: 1,
+		info: &extract.DashboardInfo{
+			Title: "Dashboard in folder",
+		},
+	},
+}
+
+func TestDashboardIndex_Folders(t *testing.T) {
+	t.Run("folders-indexed", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithFolders)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+			DashboardQuery{Query: "My folder", Kind: []string{string(entityKindFolder)}},
+		)
+	})
+	t.Run("folders-dashboard-has-folder", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithFolders)
+		// TODO: golden file compare does not work here.
+		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter, DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}}, &NoopQueryExtender{})
+		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
+		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
+		require.Equal(t, "/dashboards/f/1/", custom.Locations["1"].URL)
+	})
+	t.Run("folders-dashboard-removed-on-folder-removed", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		require.NoError(t, err)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+			DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}},
+		)
+	})
+}
+
+var dashboardsWithPanels = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "My Dash",
+			Panels: []extract.PanelInfo{
+				{
+					ID:    1,
+					Title: "Panel 1",
+				},
+				{
+					ID:    2,
+					Title: "Panel 2",
+				},
+			},
+		},
+	},
+}
+
+func TestDashboardIndex_Panels(t *testing.T) {
+	t.Run("panels-indexed", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithPanels)
+		// TODO: golden file compare does not work here.
+		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter, DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}}, &NoopQueryExtender{})
+		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
+		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
+		require.Equal(t, uint64(2), custom.Count)
+		require.Equal(t, "/d/1/", custom.Locations["1"].URL)
+	})
+	t.Run("panels-panel-removed-on-dashboard-removed", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithPanels)
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		require.NoError(t, err)
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 		)
 	})
 }
