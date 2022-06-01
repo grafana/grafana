@@ -95,7 +95,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	}
 
 	if err := ss.initEngine(engine); err != nil {
-		return nil, errutil.Wrap("failed to connect to database", err)
+		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
