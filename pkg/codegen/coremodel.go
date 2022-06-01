@@ -111,7 +111,7 @@ func (ls *ExtractedLineage) toTemplateObj() tplVars {
 	return tplVars{
 		Name:        lin.Name(),
 		LineagePath: ls.RelativePath,
-		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", filepath.Dir(ls.RelativePath))),
+		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", ls.RelativePath)),
 		TitleName:   strings.Title(lin.Name()), // nolint
 		LatestSeqv:  sch.Version()[0],
 		LatestSchv:  sch.Version()[1],
@@ -194,16 +194,8 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		return nil, fmt.Errorf("goimports processing failed: %w", err)
 	}
 
-	// Generate the assignability test. TODO do this in a framework test instead
-	var buf3 bytes.Buffer
-	err = tmplAssignableTest.Execute(&buf3, vars)
-	if err != nil {
-		return nil, fmt.Errorf("failed generating assignability test file: %w", err)
-	}
-
 	wd := NewWriteDiffer()
 	wd[filepath.Join(path, "coremodel_gen.go")] = byt
-	wd[filepath.Join(path, "coremodel_gen_test.go")] = buf3.Bytes()
 
 	return wd, nil
 }
@@ -289,14 +281,17 @@ func (m modelReplacer) replacePrefix(str string) string {
 // with references to all the Go code that is expected to be generated from the
 // provided lineages.
 func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
-	cml := struct {
-		Coremodels []*ExtractedLineage
-	}{
-		Coremodels: ecl,
+	var cml []tplVars
+	for _, ec := range ecl {
+		cml = append(cml, ec.toTemplateObj())
 	}
 
 	var buf bytes.Buffer
-	err := tmplRegistry.Execute(&buf, cml)
+	err := tmplRegistry.Execute(&buf, struct {
+		Coremodels []tplVars
+	}{
+		Coremodels: cml,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed generating template: %w", err)
 	}
@@ -402,30 +397,6 @@ func ProvideCoremodel(lib thema.Library) (*Coremodel, error) {
 }
 `))
 
-var tmplAssignableTest = template.Must(template.New("addenda").Parse(fmt.Sprintf(genHeader, "{{ .LineagePath }}") + `package {{ .Name }}
-
-import (
-	"testing"
-
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/thema"
-)
-
-func TestSchemaAssignability(t *testing.T) {
-	lin, err := Lineage(cuectx.ProvideThemaLibrary())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	sch := thema.SchemaP(lin, currentVersion)
-
-	err = thema.AssignableTo(sch, &Model{})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-`))
-
 var tmplTypedef = `{{range .Types}}
 {{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
 //
@@ -447,8 +418,7 @@ import (
 
 	"github.com/google/wire"
 	{{range .Coremodels }}
-	//"github.com/grafana/grafana/pkg/coremodel/{{ .Name }}"{{end}}
-	{{ .PkgPath }}"{{end}}
+	"{{ .PkgPath }}"{{end}}
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
