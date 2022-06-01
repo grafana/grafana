@@ -9,7 +9,6 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -320,20 +319,20 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 		return nil
 	}
 
-	var permissions []accesscontrol.Permission
+	var permissions []ac.Permission
 	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
 		return err
 	}
 
-	mapped := make(map[int64]map[string][]accesscontrol.Permission, len(ids)-1)
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
 	for _, p := range permissions {
 		if mapped[p.RoleID] == nil {
-			mapped[p.RoleID] = make(map[string][]accesscontrol.Permission)
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
 		}
 		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
 	}
 
-	var toAdd []accesscontrol.Permission
+	var toAdd []ac.Permission
 	now := time.Now()
 
 	for id, a := range mapped {
@@ -341,33 +340,33 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 			if hasFolderAdmin(p) || hasFolderEdit(p) {
 				toAdd = append(
 					toAdd,
-					accesscontrol.Permission{
+					ac.Permission{
 						RoleID:  id,
 						Updated: now,
 						Created: now,
 						Scope:   scope,
-						Action:  accesscontrol.ActionAlertingRuleRead,
+						Action:  ac.ActionAlertingRuleRead,
 					},
-					accesscontrol.Permission{
+					ac.Permission{
 						RoleID:  id,
 						Updated: now,
 						Created: now,
 						Scope:   scope,
-						Action:  accesscontrol.ActionAlertingRuleCreate,
+						Action:  ac.ActionAlertingRuleCreate,
 					},
-					accesscontrol.Permission{
+					ac.Permission{
 						RoleID:  id,
 						Updated: now,
 						Created: now,
 						Scope:   scope,
-						Action:  accesscontrol.ActionAlertingRuleDelete,
+						Action:  ac.ActionAlertingRuleDelete,
 					},
-					accesscontrol.Permission{
+					ac.Permission{
 						RoleID:  id,
 						Updated: now,
 						Created: now,
 						Scope:   scope,
-						Action:  accesscontrol.ActionAlertingRuleUpdate,
+						Action:  ac.ActionAlertingRuleUpdate,
 					},
 				)
 			}
@@ -392,15 +391,15 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 	return nil
 }
 
-func hasFolderAdmin(permissions []accesscontrol.Permission) bool {
+func hasFolderAdmin(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
 }
 
-func hasFolderEdit(permissions []accesscontrol.Permission) bool {
+func hasFolderEdit(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
 }
 
-func hasActions(actions []string, permissions []accesscontrol.Permission) bool {
+func hasActions(actions []string, permissions []ac.Permission) bool {
 	var contains int
 	for _, action := range actions {
 		for _, p := range permissions {
