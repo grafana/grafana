@@ -33,7 +33,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*secre
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		exists, err = sess.Table(dataKeysTable).
-			Where("name = ? AND active = ?", name, ss.sqlStore.Dialect.BooleanStr(true)).
+			Where("name = ?", name).
 			Get(dataKey)
 		return err
 	})
