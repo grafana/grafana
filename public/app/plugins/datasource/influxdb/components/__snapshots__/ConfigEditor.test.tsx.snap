@@ -57,7 +57,6 @@ exports[`Render should disable basic auth password input 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 21,
@@ -322,7 +321,6 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 21,
@@ -587,7 +585,6 @@ exports[`Render should hide white listed cookies input when browser access chose
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 21,
@@ -852,7 +849,6 @@ exports[`Render should render component 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 21,

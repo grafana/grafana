@@ -108,8 +108,6 @@ datasources:
     basicAuth:
     # <string> basic auth username
     basicAuthUser:
-    # <string> Deprecated, use secureJsonData.basicAuthPassword
-    basicAuthPassword:
     # <bool> enable/disable with credentials headers
     withCredentials:
     # <bool> mark as default datasource. Max one per org
