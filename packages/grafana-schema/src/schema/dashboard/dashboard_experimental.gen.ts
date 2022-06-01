@@ -76,6 +76,21 @@ interface FieldColor {
   seriesBy?: FieldColorSeriesByMode;
 }
 
+interface GridPos {
+  h: number;
+  static?: boolean;
+  w: number;
+  x: number;
+  y: number;
+}
+
+const defaultGridPos: Partial<GridPos> = {
+  h: 9,
+  w: 12,
+  x: 0,
+  y: 0,
+};
+
 interface Threshold {
   color: string;
   state?: string;
@@ -123,12 +138,7 @@ interface Panel {
       }[];
     }[];
   };
-  gridPos?: {
-    h: number;
-    w: number;
-    x: number;
-    y: number;
-  };
+  gridPos?: GridPos;
   id?: number;
   interval?: string;
   links?: DashboardLink[];
