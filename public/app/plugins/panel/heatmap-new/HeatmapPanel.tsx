@@ -115,7 +115,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       cellGap: options.cellGap,
       hideThreshold: options.filterValues?.min, // eventually a better range
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
-      yAxisReverse: options.yAxisReverse,
+      yAxisReverse: options.yAxis?.reverse,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);

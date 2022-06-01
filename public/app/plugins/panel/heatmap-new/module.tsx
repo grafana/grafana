@@ -2,7 +2,7 @@ import React from 'react';
 
 import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 
@@ -46,11 +46,28 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.mode === HeatmapMode.Calculate) {
       addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
-    } else if (opts.mode === HeatmapMode.Aggregated) {
+    }
+
+    category = ['Y Axis'];
+    builder.addRadio({
+      path: 'yAxis.placement',
+      name: 'Placement',
+      defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
+      category,
+      settings: {
+        options: [
+          { label: 'Left', value: AxisPlacement.Left },
+          { label: 'Right', value: AxisPlacement.Right },
+          { label: 'Hidden', value: AxisPlacement.Hidden },
+        ],
+      },
+    });
+
+    if (opts.mode === HeatmapMode.Aggregated) {
       builder.addRadio({
-        path: 'yAxisLabels',
-        name: 'Y Axis alignment',
-        defaultValue: defaultPanelOptions.yAxisLabels,
+        path: 'yAxis.alignment',
+        name: 'Alignment',
+        defaultValue: defaultPanelOptions.yAxis.align ?? AlignAxis.Auto,
         category,
         settings: {
           options: [
@@ -62,6 +79,33 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
     }
+
+    builder
+      .addNumberInput({
+        path: 'yAxis.width',
+        name: 'Axis width',
+        defaultValue: defaultPanelOptions.yAxis.axisWidth,
+        settings: {
+          placeholder: 'Auto',
+          min: 5, // smaller should just be hidden
+        },
+        category,
+      })
+      .addTextInput({
+        path: 'yAxis.axisLabel',
+        name: 'Axis label',
+        defaultValue: defaultPanelOptions.yAxis.axisLabel,
+        settings: {
+          placeholder: 'Auto',
+        },
+        category,
+      })
+      .addBooleanSwitch({
+        path: 'yAxis.reverse',
+        name: 'Reverse',
+        defaultValue: defaultPanelOptions.yAxis.reverse === true,
+        category,
+      });
 
     category = ['Colors'];
 
@@ -188,37 +232,17 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           min: 0,
           max: 25,
         },
-      })
-      // .addSliderInput({
-      //   name: 'Cell radius',
-      //   path: 'cellRadius',
-      //   defaultValue: defaultPanelOptions.cellRadius,
-      //   category,
-      //   settings: {
-      //     min: 0,
-      //     max: 100,
-      //   },
-      // })
-      // .addRadio({
-      //   path: 'yAxisLabels',
-      //   name: 'Axis labels',
-      //   defaultValue: 'auto',
-      //   category,
-      //   settings: {
-      //     options: [
-      //       { value: 'auto', label: 'Auto' },
-      //       { value: 'middle', label: 'Middle' },
-      //       { value: 'bottom', label: 'Bottom' },
-      //       { value: 'top', label: 'Top' },
-      //     ],
-      //   },
-      // })
-      .addBooleanSwitch({
-        path: 'yAxisReverse',
-        name: 'Reverse buckets',
-        defaultValue: defaultPanelOptions.yAxisReverse === true,
-        category,
       });
+    // .addSliderInput({
+    //   name: 'Cell radius',
+    //   path: 'cellRadius',
+    //   defaultValue: defaultPanelOptions.cellRadius,
+    //   category,
+    //   settings: {
+    //     min: 0,
+    //     max: 100,
+    //   },
+    // })
 
     category = ['Tooltip'];
 

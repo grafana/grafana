@@ -1,5 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { ScaleDistribution, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -34,6 +34,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     ...defaultPanelOptions.calculate,
   };
 
+  const oldYAxis = { logBase: 1, ...angular.yAxis };
+
   if (mode === HeatmapMode.Calculate) {
     if (angular.xBucketSize) {
       calculate.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
@@ -47,7 +49,6 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
     }
 
-    const oldYAxis = { logBase: 1, ...angular.yAxis };
     if (oldYAxis.logBase > 1) {
       calculate.yAxis = {
         mode: HeatmapCalculationMode.Count,
@@ -69,8 +70,12 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     },
     cellGap: asNumber(angular.cards?.cardPadding),
     cellSize: asNumber(angular.cards?.cardRound),
-    yAxisLabels: angular.yBucketBound,
-    yAxisReverse: angular.reverseYBuckets,
+    yAxis: {
+      axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
+      align: angular.yBucketBound,
+      reverse: Boolean(angular.reverseYBuckets),
+      axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+    },
     legend: {
       show: Boolean(angular.legend.show),
     },

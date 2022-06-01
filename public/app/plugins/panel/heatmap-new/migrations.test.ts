@@ -66,8 +66,12 @@ describe('Heatmap Migrations', () => {
             "show": true,
             "yHistogram": true,
           },
-          "yAxisLabels": "auto",
-          "yAxisReverse": false,
+          "yAxis": Object {
+            "align": "auto",
+            "axisPlacement": "left",
+            "axisWidth": 400,
+            "reverse": false,
+          },
         },
       }
     `);
@@ -132,6 +136,7 @@ const oldHeatmap = {
     splitFactor: 3,
     min: null,
     max: null,
+    width: '400',
   },
   xBucketSize: null,
   xBucketNumber: 100,
