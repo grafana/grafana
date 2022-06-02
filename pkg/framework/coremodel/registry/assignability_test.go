@@ -8,7 +8,7 @@ import (
 )
 
 func TestSchemaAssignability(t *testing.T) {
-	reg, err := registry.ProvideRegistry()
+	reg, err := registry.ProvideGeneric()
 	if err != nil {
 		t.Fatal(err)
 	}

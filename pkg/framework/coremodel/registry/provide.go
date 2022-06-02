@@ -5,9 +5,9 @@ import (
 	"github.com/grafana/thema"
 )
 
-// ProvideExplicitRegistry provides access to individual coremodels via explicit method calls.
+// ProvideStatic provides access to individual coremodels via explicit method calls.
 //
-// Prefer this to the generic ProvideRegistry type when your code works with known,
+// Prefer this to the generic ProvideGeneric type when your code works with known,
 // specific coremodels(s), rather than generically across all of them. This allows
 // standard Go static analysis tools to determine which code is depending on
 // particular coremodels.
@@ -15,25 +15,25 @@ import (
 // This will use the default Grafana thema.Library, defined in pkg/cuectx, which
 // will avoid duplicate parsing of Thema CUE schemas. If you need control over the
 // thema.Library in use, use ProvideExplicitRegistryWithLib instead.
-func ProvideExplicitRegistry() (ExplicitRegistry, error) {
-	return provideExplicitRegistry(nil)
+func ProvideStatic() (*Static, error) {
+	return provideStatic(nil)
 }
 
-// ProvideExplicitRegistryWithLib is the same as ProvideExplicitRegistry, but
+// ProvideExplicitRegistryWithLib is the same as ProvideStatic, but
 // allows control over the thema.Library used to initialize the underlying
 // coremodels.
 //
-// Prefer ProvideExplicitRegistry unless you absolutely need this control.
-func ProvideExplicitRegistryWithLib(lib thema.Library) (ExplicitRegistry, error) {
-	return provideExplicitRegistry(&lib)
+// Prefer ProvideStatic unless you absolutely need this control.
+func ProvideExplicitRegistryWithLib(lib thema.Library) (*Static, error) {
+	return provideStatic(&lib)
 }
 
-// ProvideRegistry provides a simple static Registry for coremodels.
+// ProvideGeneric provides a simple static Registry for coremodels.
 //
-// Prefer this to the static ProvideExplicitRegistry when your code needs to
+// Prefer this to the static ProvideStatic when your code needs to
 // work with all coremodels generically, rather than specific coremodels.
-func ProvideRegistry() (*coremodel.Registry, error) {
-	return provideRegistry()
+func ProvideGeneric() (*coremodel.Registry, error) {
+	return provideGeneric()
 }
 
 // NOTE - no ProvideRegistryWithLib is defined because there are no anticipated

@@ -159,7 +159,7 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	starService                  star.Service
 	CoremodelRegistry            *coremodel.Registry
-	CoremodelStaticRegistry      registry.ExplicitRegistry
+	CoremodelStaticRegistry      registry.Static
 }
 
 type ServerOptions struct {
@@ -194,7 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, coremodelRegistry *coremodel.Registry, coremodelStaticRegistry registry.ExplicitRegistry,
+	starService star.Service, coremodelRegistry *coremodel.Registry, coremodelStaticRegistry registry.Static,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
