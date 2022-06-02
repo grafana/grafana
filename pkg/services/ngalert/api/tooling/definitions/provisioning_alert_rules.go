@@ -19,7 +19,7 @@ import (
 // Get all the contact points.
 //
 //     Responses:
-//       200: AlertRule
+//       202: AlertRule
 //       400: ValidationError
 
 // swagger:route PUT /api/provisioning/alert-rules/{UID} provisioning RoutePutAlertRule
@@ -41,7 +41,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Ack
+//       204: Ack
 //       400: ValidationError
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
@@ -121,7 +121,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //     - application/json
 //
 //     Responses:
-//       202: AlertRuleGroup
+//       200: AlertRuleGroup
 //       400: ValidationError
 
 // swagger:parameters RoutePutAlertRuleGroup
