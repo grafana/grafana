@@ -443,8 +443,8 @@ var (
 	defaultStatic    *Static
 	defaultStaticErr error
 
-	genericOnce        sync.Once
-	defaultGeneric    *coremodel.Registry
+	genericOnce       sync.Once
+	defaultGeneric    *Generic
 	defaultGenericErr error
 )
 
@@ -494,7 +494,7 @@ func doProvideStatic(lib thema.Library) (*Static, error) {
 	return reg, nil
 }
 
-func provideGeneric() (*coremodel.Registry, error) {
+func provideGeneric() (*Generic, error) {
 	ereg, err := provideStatic(nil)
 	if err != nil {
 		return nil, err
@@ -506,8 +506,8 @@ func provideGeneric() (*coremodel.Registry, error) {
 	return defaultGeneric, defaultGenericErr
 }
 
-func doProvideGeneric(ereg *Static) (*coremodel.Registry, error) {
-	return coremodel.NewRegistry({{ range .Coremodels }}
+func doProvideGeneric(ereg *Static) (*Generic, error) {
+	return NewRegistry({{ range .Coremodels }}
 		ereg.{{ .TitleName }}(),{{ end }}
 	)
 }

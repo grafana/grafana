@@ -1,16 +1,15 @@
 package registry
 
 import (
-	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
 )
 
 // ProvideStatic provides access to individual coremodels via explicit method calls.
 //
-// Prefer this to the generic ProvideGeneric type when your code works with known,
-// specific coremodels(s), rather than generically across all of them. This allows
-// standard Go static analysis tools to determine which code is depending on
-// particular coremodels.
+// Prefer this to the ProvideGeneric type when your code works with known,
+// specific coremodels(s), rather than generically across all of them. This
+// allows standard Go static analysis tools to determine which code is depending
+// on particular coremodels.
 //
 // This will use the default Grafana thema.Library, defined in pkg/cuectx, which
 // will avoid duplicate parsing of Thema CUE schemas. If you need control over the
@@ -28,11 +27,11 @@ func ProvideExplicitRegistryWithLib(lib thema.Library) (*Static, error) {
 	return provideStatic(&lib)
 }
 
-// ProvideGeneric provides a simple static Registry for coremodels.
+// ProvideGeneric provides a simple Generic registry of all coremodels.
 //
 // Prefer this to the static ProvideStatic when your code needs to
 // work with all coremodels generically, rather than specific coremodels.
-func ProvideGeneric() (*coremodel.Registry, error) {
+func ProvideGeneric() (*Generic, error) {
 	return provideGeneric()
 }
 

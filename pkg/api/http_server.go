@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -158,8 +157,8 @@ type HTTPServer struct {
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
 	starService                  star.Service
-	CoremodelRegistry            *coremodel.Registry
-	CoremodelStaticRegistry      registry.Static
+	CoremodelRegistry            *registry.Generic
+	CoremodelStaticRegistry      *registry.Static
 }
 
 type ServerOptions struct {
@@ -194,7 +193,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, coremodelRegistry *coremodel.Registry, coremodelStaticRegistry registry.Static,
+	starService star.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
