@@ -1,26 +1,26 @@
+import { css, cx } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { useCallback, useRef } from 'react';
 
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
-import language from '../metric-math/definition';
+import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/CompletionItemProvider';
+import language from '../dynamic-labels/definition';
 import { TRIGGER_SUGGEST } from '../monarch/commands';
 import { registerLanguage } from '../monarch/register';
+
+const dynamicLabelsCompletionItemProvider = new DynamicLabelsCompletionItemProvider();
 
 export interface Props {
   onChange: (query: string) => void;
   onRunQuery: () => void;
-  expression: string;
-  datasource: CloudWatchDatasource;
+  label: string;
+  width: number;
 }
 
-export function MathExpressionQueryField({
-  expression: query,
-  onChange,
-  onRunQuery,
-  datasource,
-}: React.PropsWithChildren<Props>) {
+export function DynamicLabelsField({ label, width, onChange, onRunQuery }: Props) {
+  const theme = useTheme2();
+  const styles = getInputStyles({ theme, width });
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(
     (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -31,29 +31,21 @@ export function MathExpressionQueryField({
         onRunQuery();
       });
 
-      // auto resizes the editor to be the height of the content it holds
-      // this code comes from the Prometheus query editor.
-      // We may wish to consider abstracting it into the grafana/ui repo in the future
-      const updateElementHeight = () => {
-        const containerDiv = containerRef.current;
-        if (containerDiv !== null && editor.getContentHeight() < 200) {
-          const pixelHeight = Math.max(32, editor.getContentHeight());
-          containerDiv.style.height = `${pixelHeight}px`;
-          containerDiv.style.width = '100%';
-          const pixelWidth = containerDiv.clientWidth;
-          editor.layout({ width: pixelWidth, height: pixelHeight });
-        }
-      };
-
-      editor.onDidContentSizeChange(updateElementHeight);
-      updateElementHeight();
+      const containerDiv = containerRef.current;
+      containerDiv !== null && editor.layout({ width: containerDiv.clientWidth, height: containerDiv.clientHeight });
     },
     [onChange, onRunQuery]
   );
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className={cx(styles.wrapper)}>
       <CodeEditor
+        containerStyles={css`
+          border: 1px solid ${theme.colors.action.disabledBackground};
+          &:hover {
+            border-color: ${theme.components.input.borderColor};
+          }
+        `}
         monacoOptions={{
           // without this setting, the auto-resize functionality causes an infinite loop, don't remove it!
           scrollBeyondLastLine: false,
@@ -62,26 +54,26 @@ export function MathExpressionQueryField({
           fontSize: 14,
           lineNumbers: 'off',
           renderLineHighlight: 'none',
+          overviewRulerLanes: 0,
           scrollbar: {
             vertical: 'hidden',
             horizontal: 'hidden',
           },
           suggestFontSize: 12,
-          wordWrap: 'on',
           padding: {
             top: 6,
           },
         }}
         language={language.id}
-        value={query}
+        value={label}
         onBlur={(value) => {
-          if (value !== query) {
+          if (value !== label) {
             onChange(value);
             onRunQuery();
           }
         }}
         onBeforeEditorMount={(monaco: Monaco) =>
-          registerLanguage(monaco, language, datasource.metricMathCompletionItemProvider)
+          registerLanguage(monaco, language, dynamicLabelsCompletionItemProvider)
         }
         onEditorDidMount={onEditorMount}
       />
