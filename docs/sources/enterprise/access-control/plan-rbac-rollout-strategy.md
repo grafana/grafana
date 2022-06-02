@@ -52,7 +52,7 @@ For example:
    - If a team does not exist in Grafana, team sync creates it.
    - If a team exists in Grafana, team sync updates its membership.
 
-   For more information about team sync, refer to [Team sync]({{< relref "../team-sync/" >}}).
+   For more information about team sync, refer to [Team sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -85,7 +85,7 @@ We've compiled the following permissions rollout scenarios based on current Graf
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:querier` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../team-sync/" >}}).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions

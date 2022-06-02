@@ -273,7 +273,7 @@ By default, new Grafana users using SAML authentication will have an account cre
 
 To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
-[Learn more about Team Sync]({{< relref "team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../setup-grafana/configure-security/configure-team-sync/" >}})
 
 ### Configure role sync
 

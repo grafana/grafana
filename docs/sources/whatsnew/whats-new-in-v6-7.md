@@ -102,4 +102,4 @@ You can now use either portrait or landscape mode in your reports. Portrait will
 ### Azure OAuth Team Sync support
 
 When setting up OAuth with Microsoft Azure AD, you can now sync Azure groups with Teams in Grafana.
-Learn more in [Team sync]({{< relref "../enterprise/team-sync/" >}}).
+Learn more in [Team sync]({{< relref "../setup-grafana/configure-security/configure-team-sync/" >}}).

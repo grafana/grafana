@@ -83,4 +83,4 @@ the correct teams.
 
 Okta groups can be referenced by group name, like `Admins`.
 
-[Learn more about Team Sync]({{< relref "../../../enterprise/team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../configure-team-sync/" >}})

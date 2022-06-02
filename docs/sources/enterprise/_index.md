@@ -34,7 +34,7 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 
 ### Team sync
 
-[Team sync]({{< relref "team-sync/" >}}) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
+[Team sync]({{< relref "../setup-grafana/configure-security/configure-team-sync/" >}}) allows you to set up synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
 
 Supported auth providers:
 
