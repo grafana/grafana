@@ -11,7 +11,7 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { changeEditorMode, getQueryWithDefaults } from '../state';
+import { changeEditorMode, getQueryWithDefaults, useRawQuery } from '../state';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -24,6 +24,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query);
+  const [rawQuery, setRawQuery] = useRawQuery();
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -53,7 +54,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, rawQuery: isEnabled });
+    setRawQuery(isEnabled);
   };
 
   return (
@@ -86,7 +87,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
               }}
               options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
-            <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
           </>
         )}
         <FlexItem grow={1} />
@@ -110,6 +111,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             query={query}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
+            showRawQuery={rawQuery}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}

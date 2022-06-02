@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
@@ -601,29 +603,28 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 				SeriesLabels: p.LabelSet{
 					"__name__": "tns_request_duration_seconds_bucket",
 					"instance": "app:80",
-					"job":      "tns/app",
 					"service":  "example",
 				},
 				Exemplars: []apiv1.Exemplar{
 					{
 						Labels:    p.LabelSet{"traceID": "test1"},
 						Value:     0.003535405,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
+						Timestamp: 1,
 					},
 				},
 			},
 			{
 				SeriesLabels: p.LabelSet{
-					"__name__": "tns_request_duration_seconds_bucket",
-					"instance": "app:80",
-					"job":      "tns/app",
-					"service":  "example",
+					"__name__":         "tns_request_duration_seconds_bucket",
+					"instance":         "app:80",
+					"service":          "example2",
+					"additional_label": "foo",
 				},
 				Exemplars: []apiv1.Exemplar{
 					{
 						Labels:    p.LabelSet{"traceID": "test2", "userID": "test3"},
 						Value:     0.003535405,
-						Timestamp: p.TimeFromUnixNano(time.Now().Add(-2 * time.Minute).UnixNano()),
+						Timestamp: 10,
 					},
 				},
 			},
@@ -639,6 +640,20 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		// Test frame marshal json no error.
 		_, err = res[0].MarshalJSON()
 		require.NoError(t, err)
+
+		fields := []*data.Field{
+			data.NewField("Time", map[string]string{}, []time.Time{time.UnixMilli(1), time.UnixMilli(10)}),
+			data.NewField("Value", map[string]string{}, []float64{0.003535405, 0.003535405}),
+			data.NewField("__name__", map[string]string{}, []string{"tns_request_duration_seconds_bucket", "tns_request_duration_seconds_bucket"}),
+			data.NewField("additional_label", map[string]string{}, []string{"", "foo"}),
+			data.NewField("instance", map[string]string{}, []string{"app:80", "app:80"}),
+			data.NewField("service", map[string]string{}, []string{"example", "example2"}),
+			data.NewField("traceID", map[string]string{}, []string{"test1", "test2"}),
+			data.NewField("userID", map[string]string{}, []string{"", "test3"}),
+		}
+		if diff := cmp.Diff(newDataFrame("exemplar", "exemplar", fields...), res[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {

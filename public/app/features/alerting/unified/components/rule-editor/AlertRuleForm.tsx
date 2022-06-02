@@ -9,6 +9,7 @@ import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -155,7 +156,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
-                  <DetailsStep />
+                  <DetailsStep
+                    folderPermissions={[
+                      existing ? AccessControlAction.AlertingRuleUpdate : AccessControlAction.AlertingRuleCreate,
+                    ]}
+                  />
                   <NotificationsStep />
                 </>
               )}

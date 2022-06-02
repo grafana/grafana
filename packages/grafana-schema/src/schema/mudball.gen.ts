@@ -78,7 +78,7 @@ export enum ScaleDirection {
 
 export interface LineStyle {
   dash?: number[];
-  fill?: 'solid' | 'dash' | 'dot' | 'square';
+  fill?: ('solid' | 'dash' | 'dot' | 'square');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {
@@ -90,7 +90,7 @@ export interface LineConfig {
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
   lineWidth?: number;
-  spanNulls?: boolean | number;
+  spanNulls?: (boolean | number);
 }
 
 export interface BarConfig {
@@ -158,7 +158,7 @@ export interface GraphThresholdsStyleConfig {
   mode: GraphTresholdsStyleMode;
 }
 
-export type LegendPlacement = 'bottom' | 'right';
+export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
   Hidden = 'hidden',
@@ -230,7 +230,7 @@ export enum BigValueTextMode {
   ValueAndName = 'value_and_name',
 }
 
-export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
+export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 export enum TableCellDisplayMode {
   Auto = 'auto',
