@@ -115,7 +115,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     } else {
       spanIdCounts.set(spanID, 1);
     }
-    span.process = data.processes[processID];
+    span.resource = data.processes[processID];
     spanMap.set(spanID, span);
   }
   // tree is necessary to sort the spans, so children follow parents, and
@@ -134,7 +134,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (!span) {
       return;
     }
-    const { serviceName } = span.process;
+    const { serviceName } = span.resource;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;

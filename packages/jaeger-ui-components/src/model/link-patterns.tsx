@@ -130,7 +130,7 @@ export function getParameterInArray(name: string, array: TraceKeyValuePair[]) {
 export function getParameterInAncestor(name: string, span: TraceSpan) {
   let currentSpan: TraceSpan | TNil = span;
   while (currentSpan) {
-    const result = getParameterInArray(name, currentSpan.tags) || getParameterInArray(name, currentSpan.process.tags);
+    const result = getParameterInArray(name, currentSpan.tags) || getParameterInArray(name, currentSpan.resource.tags);
     if (result) {
       return result;
     }
@@ -182,7 +182,7 @@ export function computeLinks(
 ) {
   const item = items[itemIndex];
   let type = 'logs';
-  const processTags = span.process.tags === items;
+  const processTags = span.resource.tags === items;
   if (processTags) {
     type = 'process';
   }

@@ -45,7 +45,7 @@ function getItem(span: TraceSpan): SpanItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
-    serviceName: span.process.serviceName,
+    serviceName: span.resource.serviceName,
   };
 }
 

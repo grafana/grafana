@@ -378,7 +378,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderSpanBarRow(span: TraceSpan, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
     const { spanID } = span;
-    const { serviceName } = span.process;
+    const { serviceName } = span.resource;
     const {
       childrenHiddenIDs,
       childrenToggle,
@@ -413,9 +413,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       if (rpcSpan) {
         const rpcViewBounds = this.getViewedBounds()(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
-          color: getColorByKey(rpcSpan.process.serviceName, theme),
+          color: getColorByKey(rpcSpan.resource.serviceName, theme),
           operationName: rpcSpan.operationName,
-          serviceName: rpcSpan.process.serviceName,
+          serviceName: rpcSpan.resource.serviceName,
           viewEnd: rpcViewBounds.end,
           viewStart: rpcViewBounds.start,
         };
@@ -465,7 +465,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}) {
     const { spanID } = span;
-    const { serviceName } = span.process;
+    const { serviceName } = span.resource;
     const {
       detailLogItemToggle,
       detailLogsToggle,

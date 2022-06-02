@@ -152,7 +152,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   } = detailState;
   const {
     operationName,
-    process,
+    resource,
     duration,
     relativeStartTime,
     traceID,
@@ -167,7 +167,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'svc',
       label: 'Service:',
-      value: process.serviceName,
+      value: resource.serviceName,
     },
     {
       key: 'duration',
@@ -217,11 +217,11 @@ export default function SpanDetail(props: SpanDetailProps) {
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
           />
-          {process.tags && (
+          {resource.tags && (
             <AccordianKeyValues
               className={ubMb1}
-              data={process.tags}
-              label="Process"
+              data={resource.tags}
+              label="Resource"
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}

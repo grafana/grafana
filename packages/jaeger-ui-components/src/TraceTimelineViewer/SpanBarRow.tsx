@@ -381,7 +381,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       duration,
       hasChildren: isParent,
       operationName,
-      process: { serviceName },
+      resource: { serviceName },
     } = span;
     const label = formatDuration(duration);
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);

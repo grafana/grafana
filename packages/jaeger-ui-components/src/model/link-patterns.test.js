@@ -175,7 +175,7 @@ describe('getParameterInAncestor()', () => {
   const spans = [
     {
       depth: 0,
-      process: {
+      resource: {
         tags: [
           { key: 'a', value: 'a7' },
           { key: 'b', value: 'b7' },
@@ -199,7 +199,7 @@ describe('getParameterInAncestor()', () => {
     },
     {
       depth: 1,
-      process: {
+      resource: {
         tags: [
           { key: 'a', value: 'a5' },
           { key: 'b', value: 'b5' },
@@ -219,7 +219,7 @@ describe('getParameterInAncestor()', () => {
     },
     {
       depth: 1,
-      process: {
+      resource: {
         tags: [
           { key: 'a', value: 'a3' },
           { key: 'b', value: 'b3' },
@@ -235,7 +235,7 @@ describe('getParameterInAncestor()', () => {
     },
     {
       depth: 2,
-      process: {
+      resource: {
         tags: [
           { key: 'a', value: 'a1' },
           { key: 'b', value: 'b1' },
@@ -309,7 +309,7 @@ describe('getParameterInAncestor()', () => {
     const spansWithUndefinedTags = [
       {
         depth: 0,
-        process: {},
+        resource: {},
       },
     ];
     expect(getParameterInAncestor('a', spansWithUndefinedTags[0])).toBeUndefined();
@@ -366,8 +366,8 @@ describe('computeLinks()', () => {
   ].map(processLinkPattern);
 
   const spans = [
-    { depth: 0, process: {}, tags: [{ key: 'myKey', value: 'valueOfMyKey' }] },
-    { depth: 1, process: {}, logs: [{ fields: [{ key: 'myOtherKey', value: 'valueOfMy+Other+Key' }] }] },
+    { depth: 0, resource: {}, tags: [{ key: 'myKey', value: 'valueOfMyKey' }] },
+    { depth: 1, resource: {}, logs: [{ fields: [{ key: 'myOtherKey', value: 'valueOfMy+Other+Key' }] }] },
   ];
   spans[1].references = [
     {
@@ -402,7 +402,7 @@ describe('getLinks()', () => {
   ].map(processLinkPattern);
   const template = jest.spyOn(linkPatterns[0].url, 'template');
 
-  const span = { depth: 0, process: {}, tags: [{ key: 'mySpecialKey', value: 'valueOfMyKey' }] };
+  const span = { depth: 0, resource: {}, tags: [{ key: 'mySpecialKey', value: 'valueOfMyKey' }] };
 
   let cache;
 

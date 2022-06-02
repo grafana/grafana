@@ -27,7 +27,7 @@ const references = [
       spanID: 'span1',
       traceID,
       operationName: 'op1',
-      process: {
+      resource: {
         serviceName: 'service1',
       },
     },
@@ -40,7 +40,7 @@ const references = [
       spanID: 'span3',
       traceID,
       operationName: 'op2',
-      process: {
+      resource: {
         serviceName: 'service2',
       },
     },

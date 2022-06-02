@@ -1,5 +1,5 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
-import { Trace, TraceProcess, TraceResponse, transformTraceData } from '@jaegertracing/jaeger-ui-components';
+import { Trace, TraceResource, TraceResponse, transformTraceData } from '@jaegertracing/jaeger-ui-components';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
@@ -15,7 +15,7 @@ export function transformDataFrames(frame?: DataFrame): Trace | null {
 
 function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const view = new DataFrameView<TraceSpanRow>(frame);
-  const processes: Record<string, TraceProcess> = {};
+  const processes: Record<string, TraceResource> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
     if (!processes[span.spanID]) {

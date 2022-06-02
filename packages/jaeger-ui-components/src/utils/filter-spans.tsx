@@ -55,10 +55,10 @@ export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNi
 
   const isSpanAMatch = (span: TraceSpan) =>
     isTextInFilters(includeFilters, span.operationName) ||
-    isTextInFilters(includeFilters, span.process.serviceName) ||
+    isTextInFilters(includeFilters, span.resource.serviceName) ||
     isTextInKeyValues(span.tags) ||
     (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
-    isTextInKeyValues(span.process.tags) ||
+    isTextInKeyValues(span.resource.tags) ||
     includeFilters.some((filter) => filter === span.spanID);
 
   // declare as const because need to disambiguate the type

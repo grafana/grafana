@@ -33,7 +33,7 @@ export type TraceLog = {
   fields: TraceKeyValuePair[];
 };
 
-export type TraceProcess = {
+export type TraceResource = {
   serviceName: string;
   tags: TraceKeyValuePair[];
 };
@@ -69,7 +69,7 @@ export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
   childSpanCount: number;
-  process: TraceProcess;
+  resource: TraceResource;
   relativeStartTime: number;
   tags: NonNullable<TraceSpanData['tags']>;
   references: NonNullable<TraceSpanData['references']>;
@@ -78,7 +78,7 @@ export type TraceSpan = TraceSpanData & {
 };
 
 export type TraceData = {
-  processes: Record<string, TraceProcess>;
+  processes: Record<string, TraceResource>;
   traceID: string;
   warnings?: string[] | null;
 };

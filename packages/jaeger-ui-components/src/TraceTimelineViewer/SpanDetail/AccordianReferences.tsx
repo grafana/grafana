@@ -140,7 +140,7 @@ export function References(props: ReferenceItemProps) {
                 {reference.span ? (
                   <span>
                     <span className={cx('span-svc-name', styles.serviceName)}>
-                      {reference.span.process.serviceName}
+                      {reference.span.resource.serviceName}
                     </span>
                     <small className="endpoint-name">{reference.span.operationName}</small>
                   </span>

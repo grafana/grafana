@@ -71,7 +71,7 @@ describe('<SpanGraph>', () => {
     const items = trace.spans.map((span) => ({
       valueOffset: span.relativeStartTime,
       valueWidth: span.duration,
-      serviceName: span.process.serviceName,
+      serviceName: span.resource.serviceName,
     }));
     expect(canvasGraph.prop('items')).toEqual(items);
   });

@@ -20,7 +20,7 @@ describe('filterSpans', () => {
   const span0 = {
     spanID: spanID0,
     operationName: 'operationName0',
-    process: {
+    resource: {
       serviceName: 'serviceName0',
       tags: [
         {
@@ -64,7 +64,7 @@ describe('filterSpans', () => {
   const span2 = {
     spanID: spanID2,
     operationName: 'operationName2',
-    process: {
+    resource: {
       serviceName: 'serviceName2',
       tags: [
         {

@@ -16,7 +16,7 @@ export type TraceLog = {
   fields: TraceKeyValuePair[];
 };
 
-export type TraceProcess = {
+export type TraceResource = {
   serviceName: string;
   tags: TraceKeyValuePair[];
 };
@@ -44,7 +44,7 @@ export type Span = {
 };
 
 export type TraceResponse = {
-  processes: Record<string, TraceProcess>;
+  processes: Record<string, TraceResource>;
   traceID: string;
   warnings?: string[] | null;
   spans: Span[];

@@ -46,7 +46,7 @@ export function _getTraceNameImpl(spans: TraceSpan[]) {
       candidateSpan = spans[i];
     }
   }
-  return candidateSpan ? `${candidateSpan.process.serviceName}: ${candidateSpan.operationName}` : '';
+  return candidateSpan ? `${candidateSpan.resource.serviceName}: ${candidateSpan.operationName}` : '';
 }
 
 export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {

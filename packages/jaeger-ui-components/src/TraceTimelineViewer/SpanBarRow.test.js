@@ -45,7 +45,7 @@ describe('<SpanBarRow>', () => {
     span: {
       duration: 'test-duration',
       hasChildren: true,
-      process: {
+      resource: {
         serviceName: 'service-name',
         tags: [],
       },

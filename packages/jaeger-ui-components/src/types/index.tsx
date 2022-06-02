@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { TraceSpan, TraceResponse, Trace, TraceProcess, TraceKeyValuePair, TraceLink } from './trace';
+export { TraceSpan, TraceResponse, Trace, TraceResource, TraceKeyValuePair, TraceLink } from './trace';
 export { SpanLinkFunc, SpanLinkDef } from './links';
 export { default as TTraceTimeline } from './TTraceTimeline';
 export { default as TNil } from './TNil';

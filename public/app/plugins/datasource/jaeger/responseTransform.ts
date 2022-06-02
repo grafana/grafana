@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
 
-import { JaegerResponse, Span, TraceProcess, TraceResponse } from './types';
+import { JaegerResponse, Span, TraceResource, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
   const spans = data.spans.map((s) => toSpanRow(s, data.processes));
@@ -43,7 +43,7 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
   return frame;
 }
 
-function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
+function toSpanRow(span: Span, processes: Record<string, TraceResource>): TraceSpanRow {
   return {
     spanID: span.spanID,
     traceID: span.traceID,

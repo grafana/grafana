@@ -234,7 +234,7 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
   // In order, try to use mapped tags -> tags -> default tags
   const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
   // Build tag portion of query
-  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
+  const tags = [...span.resource.tags, ...span.tags].reduce((acc, tag) => {
     if (mapTagNamesEnabled) {
       const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
       if (keyValue) {
@@ -286,7 +286,7 @@ function getLinkForSplunk(
   // In order, try to use mapped tags -> tags -> default tags
   const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
   // Build tag portion of query
-  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
+  const tags = [...span.resource.tags, ...span.tags].reduce((acc, tag) => {
     if (mapTagNamesEnabled) {
       const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
       if (keyValue) {
@@ -370,7 +370,7 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
 
   let expr = query.query;
   if (tags.length && expr.indexOf('$__tags') !== -1) {
-    const spanTags = [...span.process.tags, ...span.tags];
+    const spanTags = [...span.resource.tags, ...span.tags];
     const labels = tags.reduce((acc, tag) => {
       const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
       if (tagValue) {

@@ -52,7 +52,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'hostname', value: 'hostname1' },
@@ -77,7 +77,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'hostname', value: 'hostname1' },
@@ -103,7 +103,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'hostname', value: 'hostname1' },
@@ -172,7 +172,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'service.name', value: 'serviceName' },
@@ -202,7 +202,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'service.name', value: 'serviceName' },
@@ -228,7 +228,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'service.name', value: 'serviceName' },
@@ -309,7 +309,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [{ key: 'ip', value: '192.168.0.1' }],
           },
@@ -332,7 +332,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'hostname', value: 'hostname1' },
@@ -362,7 +362,7 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(
         createTraceSpan({
-          process: {
+          resource: {
             serviceName: 'service',
             tags: [
               { key: 'service.name', value: 'serviceName' },
@@ -495,7 +495,7 @@ describe('createSpanLinkFactory', () => {
 
     const links = createLink!(
       createTraceSpan({
-        process: {
+        resource: {
           serviceName: 'service',
           tags: [
             { key: 'job', value: 'tns/app' },
@@ -601,7 +601,7 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
         value: 'host',
       },
     ],
-    process: {
+    resource: {
       serviceName: 'test service',
       tags: [
         {
