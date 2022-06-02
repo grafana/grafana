@@ -1,10 +1,8 @@
 name: Fusebit - Publish
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        required: true
-        description: Needs to match, exactly, the tag to publish
+  push:
+    tags:
+      - 'fusebit-*'
 jobs:
   main:
     runs-on: ubuntu-latest
