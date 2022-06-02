@@ -18,7 +18,7 @@ You can configure Grafana to accept a JWT token provided in the HTTP header. The
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../administration/configuration.md" >}}).
+1. Enable JWT in the [main config file]({{< relref "../../configure-grafana/" >}}).
 1. Specify the header name that contains a token.
 
 ```ini

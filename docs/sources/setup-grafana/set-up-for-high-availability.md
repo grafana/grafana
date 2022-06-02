@@ -23,12 +23,12 @@ and other persistent data. So the default embedded SQLite database will not work
 ## Configure multiple servers to use the same database
 
 First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "configuration.md#database" >}}) section in the Grafana config.
+You can find the configuration for doing that in the [[database]]({{< relref "configure-grafana/#database" >}}) section in the Grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on the database you're using.
 
 ## Alerting high availability
 
-Grafana alerting provides a new [highly-available model]({{< relref "../alerting/high-availability/_index.md" >}}). It also preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
+Grafana alerting provides a new [highly-available model]({{< relref "../alerting/high-availability/" >}}). It also preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
 
 For instructions on setting up alerting high availability, see [enable alerting high availability](https://grafana.com/docs/grafana/next/alerting/old-alerting/notifications/).
 
@@ -38,7 +38,7 @@ Legacy Grafana alerting supports a limited form of high availability. In this mo
 
 ## Grafana Live
 
-Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup]({{< relref "../live/set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
+Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup]({{< relref "set-up-grafana-live/#configure-grafana-live-ha-setup" >}}).
 
 ## User sessions
 

@@ -101,7 +101,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../configure-grafana/#config-file-locations" >}}):
 
 ```
 [auth.azuread]
@@ -125,7 +125,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../administration/configuration/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [root_url]({{< relref "../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
 
 ### Configure allowed groups
 
@@ -159,4 +159,4 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "team-sync.md" >}}) documentation.
+To learn more, refer to the [Team Sync]({{< relref "../configure-team-sync/" >}}) documentation.

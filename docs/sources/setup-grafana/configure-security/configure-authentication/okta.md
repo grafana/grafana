@@ -34,7 +34,7 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 ## Enable Okta OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../configure-grafana/#config-file-locations" >}}):
 
 ```ini
 [auth.okta]
@@ -72,9 +72,9 @@ allowed_domains = mycompany.com mycompany.org
 
 Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) for more information about roles and permissions in Grafana.
+Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. Refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}) for more information about roles and permissions in Grafana.
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "generic-oauth.md#jmespath-examples" >}}).
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "generic-oauth/#jmespath-examples" >}}).
 
 ### Team Sync (Enterprise only)
 
@@ -83,4 +83,4 @@ the correct teams.
 
 Okta groups can be referenced by group name, like `Admins`.
 
-[Learn more about Team Sync]({{< relref "../enterprise/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "../../../enterprise/team-sync/" >}})

@@ -23,4 +23,4 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 1. Add global configuration settings.
 1. Click **Save global config** to save your changes.
 
-> **Note** This option is available only for external Alertmanagers. You can configure some global options for Grafana contact types, like email settings, via [Grafana configuration]({{< relref "../../administration/configuration.md" >}})
+> **Note** This option is available only for external Alertmanagers. You can configure some global options for Grafana contact types, like email settings, via [Grafana configuration]({{< relref "../../setup-grafana/configure-grafana/" >}})

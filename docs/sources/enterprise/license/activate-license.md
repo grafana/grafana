@@ -64,9 +64,9 @@ environment variable.
 
 ## Step 3. Ensure that the license file's root URL matches the root_url configuration option
 
-Update the [`root_url`]({{< relref "../../administration/configuration/#root-url" >}}) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
+Update the [`root_url`]({{< relref "../../setup-grafana/configure-grafana/#root-url" >}}) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
 
-This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`]({{< relref "../../administration/configuration/#root-url" >}}) in your configuration.
+This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`]({{< relref "../../setup-grafana/configure-grafana/#root-url" >}}) in your configuration.
 
 In your configuration file:
 
@@ -83,4 +83,4 @@ GF_SERVER_ROOT_URL=https://grafana.example.com/
 
 ## Step 4. Restart Grafana
 
-To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../installation/restart-grafana.md" >}}) for more information.
+To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../setup-grafana/restart-grafana/" >}}) for more information.

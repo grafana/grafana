@@ -250,12 +250,12 @@ chown -R grafana:grafana /usr/share/grafana
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "../administration/configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.

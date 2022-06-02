@@ -14,19 +14,19 @@ weight: 900
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications/_index.md" >}}), [PDF export]({{< relref "../enterprise/export-pdf.md" >}}), and [Reporting]({{< relref "../enterprise/reporting.md" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../../alerting/notifications/" >}}), [PDF export]({{< relref "../../enterprise/export-pdf/" >}}), and [Reporting]({{< relref "../../enterprise/reporting/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../administration/configuration/#temp_data_lifetime" >}}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana/#temp_data_lifetime" >}}) setting.
 
 You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../administration/configuration/#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana/#concurrent_render_limit" >}}).
 
 ## Install Grafana Image Renderer plugin
 
@@ -38,7 +38,7 @@ To install the plugin, refer to the [Grafana Image Renderer Installation instruc
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../administration/configuration/#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana/#plugingrafana-image-renderer" >}}).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -110,7 +110,7 @@ In `contextPerRenderKey` mode, the plugin will reuse the same [browser context](
 
 In the case of `contextPerRenderKey` mode, the `clustering.max_concurrency` option refers to the number of open contexts rather than the number of open pages. There is no way to limit the number of open pages in a context.
 
-`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../dashboards/previews.md#about-the-dashboard-previews-crawler" >}}).
+`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../../dashboards/previews/#about-the-dashboard-previews-crawler" >}}).
 
 ```json
 {
