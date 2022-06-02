@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type OrgListResponse []struct {
@@ -608,8 +607,4 @@ func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdmin
 
 func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
 	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDialect() migrator.Dialect {
-	return nil
 }
