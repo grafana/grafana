@@ -137,10 +137,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	appSubURL := ""
-	if s.cfg != nil {
-		appSubURL = s.cfg.AppSubURL
-	}
-
-	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), appSubURL)
+	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
 }
