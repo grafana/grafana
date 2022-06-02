@@ -172,7 +172,10 @@ describe('variables', () => {
   describe('log groups', () => {
     it('should call describe log groups', async () => {
       const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.LogGroups });
-      expect(result).toEqual([{ text: 'd', value: 'd', expandable: true }]);
+      expect(result).toEqual([
+        { text: 'a', value: 'a', expandable: true },
+        { text: 'b', value: 'b', expandable: true },
+      ]);
     });
   });
 });
