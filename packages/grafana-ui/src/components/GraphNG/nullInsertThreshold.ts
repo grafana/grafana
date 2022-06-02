@@ -108,9 +108,9 @@ function nullInsertThreshold(
   // While this is less than "prevValue" which is the lowest
   // time value in the sequence add in time frames
   if (refFieldPseudoMin != null) {
-    let minValue = refFieldPseudoMin;
+    let minValue = refFieldPseudoMin - threshold;
 
-    while (minValue <= prevValue) {
+    while (minValue < prevValue - threshold) {
       let nextValue = minValue + threshold;
       refValuesNew.push(getInsertValue(minValue, nextValue, threshold));
       minValue = nextValue;

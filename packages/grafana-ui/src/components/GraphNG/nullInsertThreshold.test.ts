@@ -98,6 +98,56 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
   });
 
+  test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [4, 6, 13] },
+        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold({
+      frame: df,
+      refFieldName: null,
+      refFieldPseudoMin: 1,
+      refFieldPseudoMax: 13,
+    });
+
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([
+      null,
+      null,
+      null,
+      4,
+      null,
+      6,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      8,
+    ]);
+    expect(result.fields[2].values.toArray()).toStrictEqual([
+      null,
+      null,
+      null,
+      'a',
+      null,
+      'b',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'c',
+    ]);
+  });
+
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
     const df = new MutableDataFrame({
       refId: 'A',
