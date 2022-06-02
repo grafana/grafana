@@ -38,7 +38,7 @@ import (
 // Delete a specific alert rule by UID.
 //
 //     Responses:
-//       204: Ack
+//       204: description: The alert rule was deleted successfully.
 //       400: ValidationError
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
@@ -123,13 +123,14 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 
 // swagger:parameters RoutePutAlertRuleGroup
 type FolderUIDPathParam struct {
-    // in:path
-    FolderUID string `json:"FolderUID"`
+	// in:path
+	FolderUID string `json:"FolderUID"`
 }
+
 // swagger:parameters RoutePutAlertRuleGroup
 type RuleGroupPathParam struct {
-    // in:path
-    Group string `json:"Group"`
+	// in:path
+	Group string `json:"Group"`
 }
 
 // swagger:parameters RoutePutAlertRuleGroup
