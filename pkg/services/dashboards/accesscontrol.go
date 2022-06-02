@@ -2,8 +2,9 @@ package dashboards
 
 import (
 	"context"
-	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/models"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -64,7 +65,7 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, ac.ErrInvalidScope
 		}
 
-		id, err := strconv.ParseInt(scope[len(prefix):], 10, 64)
+		id, err := ac.ParseScopeID(scope)
 		if err != nil {
 			return nil, ac.ErrInvalidScope
 		}
@@ -79,5 +80,41 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 		}
 
 		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+	})
+}
+
+// NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:"
+// into uid based scopes for both dashboard and folder
+func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
+	prefix := ScopeDashboardsProvider.GetResourceScope("")
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+		if !strings.HasPrefix(scope, prefix) {
+			return nil, ac.ErrInvalidScope
+		}
+		id, err := ac.ParseScopeID(scope)
+		if err != nil {
+			return nil, ac.ErrInvalidScope
+		}
+
+		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Id: id, OrgId: orgID})
+		if err != nil {
+			return nil, err
+		}
+
+		var folderUID string
+		if dashboard.FolderId == 0 {
+			folderUID = ac.GeneralFolderUID
+		} else {
+			folder, err := db.GetFolderByID(ctx, orgID, dashboard.FolderId)
+			if err != nil {
+				return nil, err
+			}
+			folderUID = folder.Uid
+		}
+
+		return []string{
+			ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid),
+			ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+		}, nil
 	})
 }
