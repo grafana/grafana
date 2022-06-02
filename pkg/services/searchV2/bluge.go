@@ -29,7 +29,6 @@ const (
 	documentFieldName_ngram  = "name_ngram"
 	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
-	documentFieldParentUID   = "parent_uid"
 	documentFieldPanelType   = "panel_type"
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
@@ -96,7 +95,7 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 		folderUID := folderIdLookup[dash.folderID]
 		location := folderUID
-		doc := getNonFolderDashboardDoc(dash, folderUID, location)
+		doc := getNonFolderDashboardDoc(dash, location)
 		if err := extendDoc(dash.uid, doc); err != nil {
 			return nil, nil, err
 		}
@@ -106,8 +105,11 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 
 		// Index each panel in dashboard.
-		location += "/" + dash.uid
-		docs := getDashboardPanelDocs(dash, dash.uid, location)
+		if location != "" {
+			location += "/"
+		}
+		location += dash.uid
+		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
 			if err := flushIfRequired(false); err != nil {
@@ -150,14 +152,13 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue())
 }
 
-func getNonFolderDashboardDoc(dash dashboard, parentUID, location string) *bluge.Document {
+func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 
 	// Dashboard document
 	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldParentUID, parentUID).Aggregatable().StoreValue())
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue())
 
 	for _, tag := range dash.info.Tags {
 		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
@@ -184,7 +185,7 @@ func getNonFolderDashboardDoc(dash dashboard, parentUID, location string) *bluge
 	return doc
 }
 
-func getDashboardPanelDocs(dash dashboard, parentUID, location string) []*bluge.Document {
+func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 	for _, panel := range dash.info.Panels {
@@ -198,7 +199,6 @@ func getDashboardPanelDocs(dash dashboard, parentUID, location string) []*bluge.
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldParentUID, parentUID).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
 		for _, xform := range panel.Transformer {
@@ -265,10 +265,10 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
+func getDashboardPanelIDs(reader *bluge.Reader, path string) ([]string, error) {
 	var panelIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldParentUID))
+	fullQuery.AddMust(bluge.NewPrefixQuery(path).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
@@ -293,10 +293,10 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 	return panelIDs, err
 }
 
-func getFolderDashboardIDs(reader *bluge.Reader, folderUID string) ([]string, error) {
+func getFolderDashboardIDs(reader *bluge.Reader, path string) ([]string, error) {
 	var dashboardIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(folderUID).SetField(documentFieldParentUID))
+	fullQuery.AddMust(bluge.NewPrefixQuery(path).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)

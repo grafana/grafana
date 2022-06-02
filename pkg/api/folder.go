@@ -73,7 +73,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	}
 	if hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(folder.Uid, c.OrgId, store.EntityTypeDashboard),
+			EntityId:  store.CreateDatabaseEntityId(folder.Uid, c.OrgId, store.EntityTypeFolder),
 			EventType: store.EntityEventTypeCreate,
 		}); err != nil {
 			hs.log.Warn("failed to save folder entity event", "uid", folder.Uid, "error", err)
@@ -95,7 +95,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	}
 	if hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(cmd.Uid, c.OrgId, store.EntityTypeDashboard),
+			EntityId:  store.CreateDatabaseEntityId(cmd.Uid, c.OrgId, store.EntityTypeFolder),
 			EventType: store.EntityEventTypeUpdate,
 		}); err != nil {
 			hs.log.Warn("failed to save folder entity event", "uid", cmd.Uid, "error", err)
@@ -122,7 +122,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 	if hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(uid, c.OrgId, store.EntityTypeDashboard),
+			EntityId:  store.CreateDatabaseEntityId(uid, c.OrgId, store.EntityTypeFolder),
 			EventType: store.EntityEventTypeDelete,
 		}); err != nil {
 			hs.log.Warn("failed to save folder entity event", "uid", uid, "error", err)

@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 )
@@ -112,7 +113,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 	t.Run("dashboard-delete", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
 
-		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2")
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2", "2")
 		require.NoError(t, err)
 
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
@@ -448,7 +449,7 @@ func TestDashboardIndex_Folders(t *testing.T) {
 	})
 	t.Run("folders-dashboard-removed-on-folder-removed", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
-		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		newReader, err := index.removeFolder(context.Background(), writer, reader, "1", "1")
 		require.NoError(t, err)
 		// In response we expect one dashboard which does not belong to removed folder.
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
@@ -457,7 +458,7 @@ func TestDashboardIndex_Folders(t *testing.T) {
 	})
 	t.Run("folders-panels-removed-on-folder-removed", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
-		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		newReader, err := index.removeFolder(context.Background(), writer, reader, "1", "1")
 		require.NoError(t, err)
 		resp := doSearchQuery(context.Background(), testLogger, newReader, testAllowAllFilter, DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}}, &NoopQueryExtender{})
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
@@ -498,7 +499,7 @@ func TestDashboardIndex_Panels(t *testing.T) {
 	})
 	t.Run("panels-panel-removed-on-dashboard-removed", func(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithPanels)
-		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
+		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1", "1")
 		require.NoError(t, err)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
