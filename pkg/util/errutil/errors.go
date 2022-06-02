@@ -112,21 +112,6 @@ func (e Error) Error() string {
 	return fmt.Sprintf("[%s] %s", e.MessageID, e.LogMessage)
 }
 
-// Log writes the error to a logger based on Error.LogLevel.
-//
-// If the logger is nil, this method is a no-op.
-func (e Error) Log(logger LogInterface) {
-	if logger == nil {
-		return
-	}
-
-	e.LogLevel.LogFunc(logger)(
-		e.MessageID,
-		"err", e.LogMessage,
-		"reason", e.Reason,
-	)
-}
-
 // Unwrap is used by errors.As to iterate over the sequence of
 // underlying errors until a matching type is found.
 func (e Error) Unwrap() error {
