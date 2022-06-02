@@ -17,7 +17,6 @@ export function getTreeViewEditor(opts: InstanceState): NestedPanelOptions<TreeV
   const { selected, scene } = opts;
 
   if (selected) {
-    console.log('yes select');
     for (const element of selected) {
       if (element instanceof FrameState) {
         scene.currentLayer = element;

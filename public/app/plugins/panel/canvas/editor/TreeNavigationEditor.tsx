@@ -5,14 +5,56 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { StandardEditorProps } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 
+import { FrameState } from '../../../../features/canvas/runtime/frame';
 import { PanelOptions } from '../models.gen';
+import { FlatElement, getFlatElements, getParent, reorder } from '../tree';
 
-import { TreeNode } from './TreeNode';
+import { TreeView } from './TreeView';
 import { TreeViewEditorProps } from './treeViewEditor';
 
 type Props = StandardEditorProps<any, TreeViewEditorProps, PanelOptions>;
 
-export class TreeNavigationEditor extends PureComponent<Props> {
+type State = {
+  flatElements: FlatElement[];
+};
+
+export class TreeNavigationEditor extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      flatElements: getFlatElements(props.item?.settings?.scene.root),
+    };
+  }
+
+  onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const src = this.state.flatElements[result.source.index];
+    const dest = this.state.flatElements[result.destination.index];
+
+    if (src.node.parent === dest.node.parent) {
+      // update the frame
+      src.node.parent?.reorder(src, dest);
+    } else {
+      if (src.node.parent instanceof FrameState) {
+        src.node.parent.elements = src.node.parent.elements.filter((e) => e !== src.node);
+        src.node.parent = dest.node.parent;
+      }
+    }
+
+    this.reorder(src, dest);
+  };
+
+  reorder = (src: FlatElement, dest: FlatElement) => {
+    const result = reorder(src, dest, this.state.flatElements);
+    this.setState({ flatElements: result });
+
+    const { settings } = this.props.item;
+    settings?.scene.root.reinitializeMoveable();
+  };
+
   render() {
     const { settings } = this.props.item;
     if (!settings) {
@@ -21,51 +63,21 @@ export class TreeNavigationEditor extends PureComponent<Props> {
 
     const styles = getStyles();
 
-    const elements = settings.scene?.root.elements;
     const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
 
-    const excludeBaseLayer = false;
-
-    const onDragEnd = (result: DropResult) => {
-      if (!result.destination) {
-        return;
-      }
-
-      if (!settings?.layer) {
-        return;
-      }
-
-      const { layer } = settings;
-
-      const count = layer.elements.length - 1;
-      const src = (result.source.index - count) * -1;
-      const dst = (result.destination.index - count) * -1;
-
-      layer.reorder(src, dst);
-    };
-
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="droppable">
           {(provided, snapshot) => (
             <div {...provided.droppableProps} ref={provided.innerRef}>
-              {(() => {
-                // reverse order
-                const rows: any = [];
-                const lastLayerIndex = excludeBaseLayer ? 1 : 0;
-                // const shouldRenderDragIconLengthThreshold = excludeBaseLayer ? 2 : 1;
-                for (let i = elements.length - 1; i >= lastLayerIndex; i--) {
-                  const element = elements[i];
-                  rows.push(
-                    <ul className={styles.treeListContainer} key={element.UID}>
-                      <TreeNode node={element} selection={selection} settings={settings} index={rows.length} />
-                    </ul>
-                  );
-                }
-
-                return rows;
-              })()}
-
+              {this.state.flatElements.map((element, index) => {
+                const parent = getParent(element, this.state.flatElements);
+                return (
+                  <div className={styles.treeListContainer} key={element.node.UID}>
+                    <TreeView node={element} selection={selection} settings={settings} index={index} parent={parent} />
+                  </div>
+                );
+              })}
               {provided.placeholder}
             </div>
           )}
