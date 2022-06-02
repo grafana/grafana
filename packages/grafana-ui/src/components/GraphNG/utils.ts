@@ -9,7 +9,6 @@ import {
 
 import { FIXED_UNIT } from './GraphNG';
 import { applyNullInsertThreshold } from './nullInsertThreshold';
-import { nullToFormattedValue } from './nullToFormattedValue';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
@@ -45,16 +44,14 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
-  // and change null values to configured values
-  frames = frames.map((frame) => {
-    let f = applyNullInsertThreshold({
+  frames = frames.map((frame) =>
+    applyNullInsertThreshold({
       frame,
       refFieldName: null,
       refFieldPseudoMin: timeRange?.from.valueOf(),
       refFieldPseudoMax: timeRange?.to.valueOf(),
-    });
-    return nullToFormattedValue(f);
-  });
+    })
+  );
 
   let numBarSeries = 0;
 

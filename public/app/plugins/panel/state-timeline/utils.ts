@@ -31,7 +31,8 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-// import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 
 import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
@@ -393,14 +394,15 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
-    // let nulledFrame = applyNullInsertThreshold({
-    //   frame,
-    //   refFieldPseudoMin: timeRange.from.valueOf(),
-    //   refFieldPseudoMax: timeRange.to.valueOf(),
-    // });
+
+    let nulledFrame = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
+      refFieldPseudoMax: timeRange.to.valueOf(),
+    });
 
     const fields: Field[] = [];
-    for (let field of frame.fields) {
+    for (let field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
