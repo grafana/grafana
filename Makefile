@@ -43,6 +43,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:/go \
 	-v $$(pwd):/grafana \
+	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	generate spec -m -o /grafana/public/api-spec.json \
 	-w /grafana/pkg/server \
