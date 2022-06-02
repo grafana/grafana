@@ -38,13 +38,13 @@ enable = dashboardPreviews
 
 3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
-Verify that your setup was successful in the dashboard search page. You should see dashboard preview placeholders for all your existing dashboards after selecting the new grid layout.
+The first crawler run should begin approximately five minutes after Grafana server restart.
+
+To determine that your setup is successful, select the new grid layout and verify that the dashboard preview placeholders appear.
 
 {{< video-embed src="/static/img/docs/dashboards/previews-successful-setup.webm" max-width="950px" >}}
 
-The first crawler run should begin approximately five minutes after restarting the Grafana instance.
-
-In case you see any warnings after switching to the grid layout, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
+If the dashboard preview placeholders do not appear or if you see any warning messages, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
 
 {{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 
