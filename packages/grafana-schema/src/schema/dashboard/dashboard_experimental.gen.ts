@@ -56,9 +56,9 @@ const defaultDashboardLink: Partial<DashboardLink> = {
   targetBlank: false,
 };
 
-type DashboardLinkType = 'link' | 'dashboards';
+type DashboardLinkType = ('link' | 'dashboards');
 
-type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system';
+type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 enum FieldColorModeId {
   ContinuousGrYlRd = 'continuous-GrYlRd',
@@ -68,11 +68,11 @@ enum FieldColorModeId {
   Thresholds = 'thresholds',
 }
 
-type FieldColorSeriesByMode = 'min' | 'max' | 'last';
+type FieldColorSeriesByMode = ('min' | 'max' | 'last');
 
 interface FieldColor {
   fixedColor?: string;
-  mode: FieldColorModeId | string;
+  mode: (FieldColorModeId | string);
   seriesBy?: FieldColorSeriesByMode;
 }
 
@@ -146,7 +146,7 @@ interface Panel {
   options: {};
   pluginVersion?: string;
   repeat?: string;
-  repeatDirection: 'h' | 'v';
+  repeatDirection: ('h' | 'v');
   tags?: string[];
   targets?: {}[];
   thresholds?: any[];
@@ -170,6 +170,26 @@ const defaultPanel: Partial<Panel> = {
   transparent: false,
 };
 
+interface RowPanel {
+  collapsed: boolean;
+  datasource?: {};
+  gridPos?: GridPos;
+  id: number;
+  panels: (Panel | {
+      type: 'graph';
+    } | {
+      type: 'heatmap';
+    })[];
+  repeat?: string;
+  title?: string;
+  type: 'row';
+}
+
+const defaultRowPanel: Partial<RowPanel> = {
+  collapsed: false,
+  panels: [],
+};
+
 interface Dashboard {
   annotations?: {
     list: AnnotationQuery[];
@@ -182,23 +202,14 @@ interface Dashboard {
   id?: number;
   links?: DashboardLink[];
   liveNow?: boolean;
-  panels?: Panel | {
+  panels?: (Panel | RowPanel | {
       type: 'graph';
     } | {
       type: 'heatmap';
-    } | {
-      type: 'row';
-      collapsed: boolean;
-      id: number;
-      panels: Panel | {
-          type: 'graph';
-        } | {
-          type: 'heatmap';
-        }[];
-    }[];
-  refresh?: string | false;
+    })[];
+  refresh?: (string | false);
   schemaVersion: number;
-  style: 'light' | 'dark';
+  style: ('light' | 'dark');
   tags?: string[];
   templating?: {
     list: VariableModel[];
@@ -213,7 +224,7 @@ interface Dashboard {
     hidden: boolean;
     refresh_intervals: string[];
   };
-  timezone?: 'browser' | 'utc' | '';
+  timezone?: ('browser' | 'utc' | '');
   title?: string;
   uid?: string;
   version?: number;

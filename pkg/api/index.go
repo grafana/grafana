@@ -670,7 +670,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := hs.SQLStore.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+	if err := hs.dashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return false
 	}
 	return hasEditPermissionInFoldersQuery.Result

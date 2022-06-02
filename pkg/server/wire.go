@@ -6,7 +6,6 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -252,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	cmreg.CoremodelSet,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	csrf.ProvideCSRFFilter,
 	ossaccesscontrol.ProvideTeamPermissions,
 	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
 	ossaccesscontrol.ProvideFolderPermissions,

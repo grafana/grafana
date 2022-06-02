@@ -35,3 +35,4 @@ Before you begin, we recommend that you familiarize yourself with some of the [f
 - [Add or edit an alert contact point]({{< relref "contact-points/_index.md" >}})
 - [Add or edit notification policies]({{< relref "notifications/_index.md" >}})
 - [Add or edit silences]({{< relref "silences/_index.md" >}})
+- [Performance considerations for alerting]({{< relref "performance.md" >}})

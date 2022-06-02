@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -27,15 +26,12 @@ type PrometheusApiForkingService interface {
 func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAlertStatuses(ctx)
 }
-
 func (f *ForkedPrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAlertStatuses(ctx)
 }
-
 func (f *ForkedPrometheusApi) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaRuleStatuses(ctx)
 }
-
 func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetRuleStatuses(ctx)
 }
