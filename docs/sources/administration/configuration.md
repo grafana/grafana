@@ -1453,14 +1453,6 @@ You can also use the standard `JAEGER_*` environment variables to configure
 Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
 for the full list. Environment variables will override any settings provided here.
 
-## [tracing.opentelemetry.jaeger]
-
-Configure Grafana's Jaeger client for distributed tracing.
-
-## [tracing.opentelemetry.otlp]
-
-Configure Grafana's otlp client for distributed tracing.
-
 ### address
 
 The host:port destination for reporting spans. (ex: `localhost:6831`)
@@ -1515,6 +1507,34 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+<hr>
+
+## [tracing.opentelemetry.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`)
+
+### propagation
+
+The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+
+<hr>
+
+## [tracing.opentelemetry.otlp]
+
+Configure Grafana's otlp client for distributed tracing.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:4317`)
+
+### propagation
+
+The propagation specifies the text map propagation format.(ex: jaeger, w3c)
 
 <hr>
 
