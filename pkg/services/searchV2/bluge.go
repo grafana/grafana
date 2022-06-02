@@ -291,7 +291,15 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
+func doSearchQuery(
+	ctx context.Context,
+	logger log.Logger,
+	reader *bluge.Reader,
+	filter ResourceFilter,
+	q DashboardQuery,
+	extender QueryExtender,
+	appSubUrl string,
+) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
 
@@ -473,7 +481,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldName:
 				name = string(value)
 			case documentFieldURL:
-				url = string(value)
+				url = appSubUrl + string(value)
 			case documentFieldLocation:
 				loc = string(value)
 			case documentFieldDSUID:
