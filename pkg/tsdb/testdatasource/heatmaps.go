@@ -100,7 +100,7 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 
 	// standard buckets format
 	default:
-		rsp.Error = fmt.Errorf("Format not yet supported: %s", q.Format)
+		rsp.Error = fmt.Errorf("heatmap format not yet supported: %s", q.Format)
 		return rsp
 	}
 
