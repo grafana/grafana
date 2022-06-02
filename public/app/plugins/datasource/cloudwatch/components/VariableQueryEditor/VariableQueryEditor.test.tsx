@@ -249,7 +249,8 @@ describe('VariableEditor', () => {
       };
       render(<VariableQueryEditor {...props} />);
 
-      expect(screen.queryByLabelText('Log group prefix')).toBeInTheDocument();
+      const rendered = await waitFor(() => screen.queryByLabelText('Log group prefix'));
+      expect(rendered).toBeInTheDocument();
     });
   });
 });
