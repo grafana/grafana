@@ -14,7 +14,7 @@ weight: 800
 
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud Pro and Advanced and in Grafana Enterprise.
 
-> If you have [Role-based access control]({{< relref "access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
+> If you have [Role-based access control]({{< relref "access-control/" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
 {{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
@@ -23,16 +23,16 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
-- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) for more information.
 
 ## Access control
 
-When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/rbac-fixed-basic-role-definitions/" >}}) to create and manage reports.
+When [RBAC]({{< relref "access-control/" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "access-control/rbac-fixed-basic-role-definitions/" >}}) to create and manage reports.
 
 ## Create or update a report
 
-Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
+Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/" >}}).
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
@@ -57,7 +57,7 @@ Only organization admins can create reports by default. You can customize who ca
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section.
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/" >}}) section.
 
 > **Note:** The query variables saved with a report might go out of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that happens, the selected variables will need to be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report will stay up-to-date as new values are added.
 
@@ -84,7 +84,7 @@ By default, reports use the saved time range of the dashboard. Changing the time
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "../dashboards/time-range-controls.md#dashboard-time-settings" >}}).
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "../dashboards/time-range-controls/#dashboard-time-settings" >}}).
 
 ### Layout and orientation
 
@@ -103,11 +103,11 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb won't be sent to avoid email servers to reject the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
-This feature relies on the same plugin that supports the [image rendering]({{< relref "../image-rendering/" >}}) features.
+This feature relies on the same plugin that supports the [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) features.
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
+A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../setup-grafana/configure-grafana/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Scheduling
 
@@ -153,7 +153,7 @@ You can pause sending of reports from the report list view by clicking the pause
 
 ## Send report via the API
 
-You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api/" >}}).
+You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting/#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api/" >}}).
 
 ## Rendering configuration
 
@@ -163,7 +163,7 @@ To make a panel more legible, you can set a scale factor for the rendered images
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
-These options are available in the [configuration]({{< relref "../administration/configuration.md" >}}) file.
+These options are available in the [configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) file.
 
 ```ini
 [reporting]
@@ -209,7 +209,7 @@ Email branding:
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../setup-grafana/configure-grafana/#filters" >}}) for more information.
 
 ```bash
 [log]
