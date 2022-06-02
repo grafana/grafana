@@ -2,7 +2,7 @@ name: Fusebit - Publish
 on:
   push:
     tags:
-      - 'fusebit-*'
+      - '*'
 jobs:
   main:
     runs-on: ubuntu-latest
