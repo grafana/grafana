@@ -285,16 +285,12 @@ function makeTypeColumn(
             break;
 
           case 'panel':
-            icon = 'public/img/icons/unicons/graph-bar.svg';
+            icon = 'public/img/icons/mono/library-panel.svg';
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
               const info = config.panels[txt];
               if (info?.name) {
-                const v = info.info?.logos.small;
-                if (v && v.endsWith('.svg')) {
-                  icon = v;
-                }
                 txt = info.name;
               } else {
                 switch (type) {
@@ -304,7 +300,6 @@ function makeTypeColumn(
                     break;
                   case 'singlestat': // auto-migration
                     txt = 'Singlestat';
-                    icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
                     break;
                   default:
                     icon = `public/img/icons/unicons/question.svg`; // plugin not found
