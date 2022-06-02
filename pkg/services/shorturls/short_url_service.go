@@ -28,8 +28,8 @@ type Service interface {
 }
 
 var (
-	errAbsolutePath = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.absolute-path")
-	errInvalidPath  = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.invalid-path")
+	errAbsolutePath = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.absolute-path", errutil.WithPublicMessage("Path should be relative"))
+	errInvalidPath  = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.invalid-path", errutil.WithPublicMessage("Invalid short URL path"))
 	errInternal     = errutil.NewBase(errutil.StatusInternal, "shorturl.internal")
 )
 
