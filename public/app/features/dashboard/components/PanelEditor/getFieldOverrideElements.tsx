@@ -1,5 +1,7 @@
-import React from 'react';
+import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
+import React from 'react';
+
 import {
   FieldConfigOptionsRegistry,
   SelectableValue,
@@ -10,13 +12,13 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
-import { OptionPaneRenderProps } from './types';
-import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
-import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+
+import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
+import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
-import { css } from '@emotion/css';
+import { OptionPaneRenderProps } from './types';
 
 export function getFieldOverrideCategories(
   props: OptionPaneRenderProps,

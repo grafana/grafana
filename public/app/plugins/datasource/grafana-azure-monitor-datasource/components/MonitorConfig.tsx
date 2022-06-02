@@ -1,9 +1,12 @@
 import React, { FunctionComponent, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
+
 import { getCredentials, updateCredentials } from '../credentials';
+import { AzureDataSourceSettings, AzureCredentials } from '../types';
+
+import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 const azureClouds = [
   { value: 'azuremonitor', label: 'Azure' },

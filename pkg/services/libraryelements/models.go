@@ -64,6 +64,7 @@ type LibraryElementDTO struct {
 	ID          int64                 `json:"id"`
 	OrgID       int64                 `json:"orgId"`
 	FolderID    int64                 `json:"folderId"`
+	FolderUID   string                `json:"folderUid"`
 	UID         string                `json:"uid"`
 	Name        string                `json:"name"`
 	Kind        int64                 `json:"kind"`
@@ -162,6 +163,8 @@ var (
 type CreateLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.
@@ -181,6 +184,8 @@ type CreateLibraryElementCommand struct {
 type PatchLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId" binding:"Default(-1)"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.

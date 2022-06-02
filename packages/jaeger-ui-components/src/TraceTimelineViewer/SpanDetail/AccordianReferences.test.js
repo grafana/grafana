@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
-import AccordianReferences, { References } from './AccordianReferences';
+import React from 'react';
+
 import ReferenceLink from '../../url/ReferenceLink';
+
+import AccordianReferences, { References } from './AccordianReferences';
 
 const traceID = 'trace1';
 const references = [

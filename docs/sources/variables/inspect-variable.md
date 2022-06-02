@@ -1,9 +1,17 @@
-+++
-title = "Inspect variables"
-keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-aliases = ["/docs/grafana/latest/reference/templating"]
-weight = 125
-+++
+---
+aliases:
+  - /docs/grafana/latest/reference/templating/
+  - /docs/grafana/latest/variables/inspect-variable/
+keywords:
+  - grafana
+  - templating
+  - documentation
+  - guide
+  - template
+  - variable
+title: Inspect variables
+weight: 125
+---
 
 # Inspect variables and their dependencies
 

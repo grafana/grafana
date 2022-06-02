@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a built-in role assignment.",
         "operationId": "addBuiltinRole",
@@ -70,7 +70,7 @@
     },
     "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
       "delete": {
-        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
+        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a built-in role assignment.",
         "operationId": "removeBuiltinRole",
@@ -132,7 +132,7 @@
         }
       },
       "post": {
-        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRoleWithPermissions",
@@ -189,7 +189,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRoleWithPermissions",
@@ -228,7 +228,7 @@
         }
       },
       "delete": {
-        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
@@ -309,7 +309,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.",
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
@@ -341,7 +341,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
@@ -383,7 +383,7 @@
     },
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
-        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
@@ -452,7 +452,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
@@ -484,7 +484,7 @@
         }
       },
       "post": {
-        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
@@ -523,7 +523,7 @@
     },
     "/access-control/users/{user_id}/roles/{roleUID}": {
       "delete": {
-        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
@@ -2175,6 +2175,30 @@
       }
     },
     "/annotations/{annotation_id}": {
+      "get": {
+        "tags": ["annotations"],
+        "summary": "Get Annotation by Id.",
+        "operationId": "getAnnotation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "annotation_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAnnotationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "put": {
         "description": "Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the Patch Annotation operation.",
         "tags": ["annotations"],
@@ -2525,9 +2549,11 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2556,10 +2582,11 @@
         }
       },
       "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -2601,9 +2628,11 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2611,6 +2640,14 @@
             "name": "DashboardID",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           }
         ],
         "responses": {
@@ -2634,9 +2671,11 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2683,9 +2722,11 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2868,6 +2909,207 @@
         }
       }
     },
+    "/dashboards/uid/{uid}/permissions": {
+      "get": {
+        "tags": ["dashboard_permissions"],
+        "summary": "Gets all existing permissions for the given dashboard.",
+        "operationId": "getDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "tags": ["dashboard_permissions"],
+        "summary": "Updates permissions for a dashboard.",
+        "operationId": "postDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/restore": {
+      "post": {
+        "tags": ["dashboard_versions"],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Gets all existing versions for the dashboard using UID.",
+        "operationId": "getDashboardVersionsByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "description": "Maximum number of results to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "description": "Version to start from when returning queries",
+            "name": "start",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Get a specific dashboard version using UID.",
+        "operationId": "getDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
@@ -2923,7 +3165,7 @@
         }
       }
     },
-    "/datasources/id/{datasource_name}": {
+    "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -2932,7 +3174,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -2956,7 +3198,7 @@
         }
       }
     },
-    "/datasources/name/{datasource_name}": {
+    "/datasources/name/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -2965,7 +3207,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -2993,7 +3235,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3017,7 +3259,7 @@
         }
       }
     },
-    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+    "/datasources/proxy/uid/{uid}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": ["datasources"],
@@ -3026,7 +3268,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3066,7 +3308,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3109,7 +3351,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_uid",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3142,16 +3384,17 @@
         }
       }
     },
-    "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
+    "/datasources/proxy/{id}/{datasource_proxy_route}": {
       "get": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy GET calls.",
         "operationId": "datasourceProxyGETcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3184,14 +3427,15 @@
         }
       },
       "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy POST calls.",
         "operationId": "datasourceProxyPOSTcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3235,14 +3479,15 @@
         }
       },
       "delete": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3275,7 +3520,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}": {
+    "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
@@ -3284,74 +3529,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Delete an existing data source by UID.",
-        "operationId": "deleteDatasourceByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasource_id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDatasourceByID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_id",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3381,11 +3559,11 @@
         "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Update an existing data source.",
-        "operationId": "updateDatasource",
+        "operationId": "updateDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3414,14 +3592,14 @@
         }
       },
       "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDatasourceByID",
+        "summary": "Delete an existing data source by UID.",
+        "operationId": "deleteDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3445,7 +3623,80 @@
         }
       }
     },
-    "/datasources/{datasource_id}/disable-permissions": {
+    "/datasources/uid/{uid}/health": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources.",
+        "operationId": "fetchDatasourceResources",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasourceId}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3454,7 +3705,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3481,7 +3732,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/enable-permissions": {
+    "/datasources/{datasourceId}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3490,7 +3741,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3517,7 +3768,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions": {
+    "/datasources/{datasourceId}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3526,7 +3777,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3550,7 +3801,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions/{permissionId}": {
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3559,13 +3810,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "permissionId",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_id",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -3573,6 +3824,189 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Get a single data source by Id.",
+        "operationId": "getDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Update an existing data source by its sequential ID.",
+        "operationId": "updateDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Delete an existing data source by id.",
+        "operationId": "deleteDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/health": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealth) instead",
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealthByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/resources/{datasource_proxy_route}": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/fetchDatasourceResources) instead",
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources by Id.",
+        "operationId": "fetchDatasourceResourcesByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3607,6 +4041,9 @@
         ],
         "responses": {
           "200": {
+            "$ref": "#/responses/queryDataResponse"
+          },
+          "207": {
             "$ref": "#/responses/queryDataResponse"
           },
           "400": {
@@ -5690,11 +6127,12 @@
     },
     "/reports/render/pdf/{DashboardID}": {
       "get": {
-        "description": "Available to all users and with a valid license.",
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": ["application/pdf"],
         "tags": ["reports", "enterprise"],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5704,6 +6142,29 @@
             "required": true
           }
         ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for multiple dashboards.",
+        "operationId": "renderReportPDFs",
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -6372,19 +6833,19 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6418,14 +6879,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -6755,45 +7216,6 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/tsdb/query": {
-      "post": {
-        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
-        "tags": ["datasources"],
-        "summary": "Query metrics.",
-        "operationId": "queryDatasource",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MetricRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/queryDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -7536,7 +7958,8 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         },
         "secondsToLive": {
           "type": "integer",
@@ -7624,7 +8047,8 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         },
         "sendEmail": {
           "type": "boolean"
@@ -7638,7 +8062,8 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -8146,6 +8571,9 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time"
@@ -8158,7 +8586,8 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -8209,6 +8638,11 @@
         }
       }
     },
+    "ConfFloat64": {
+      "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+      "type": "number",
+      "format": "double"
+    },
     "ConfigDTO": {
       "description": "ConfigDTO is model representation in transfer",
       "type": "object",
@@ -8227,11 +8661,23 @@
         "dashboardUid": {
           "type": "string"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
         "enableCsv": {
           "type": "boolean"
         },
         "enableDashboardUrl": {
           "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
         },
         "id": {
           "type": "integer",
@@ -8365,6 +8811,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -8394,11 +8844,23 @@
         "dashboardUid": {
           "type": "string"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
         "enableCsv": {
           "type": "boolean"
         },
         "enableDashboardUrl": {
           "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
         },
         "message": {
           "type": "string"
@@ -8553,7 +9015,8 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         },
         "slug": {
           "type": "string"
@@ -8606,7 +9069,8 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         },
         "teamId": {
           "type": "integer",
@@ -8615,6 +9079,20 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
         }
       }
     },
@@ -8683,6 +9161,9 @@
         "isHome": {
           "type": "boolean"
         },
+        "isPublic": {
+          "type": "boolean"
+        },
         "isSnapshot": {
           "type": "boolean"
         },
@@ -8721,6 +9202,21 @@
       "type": "object",
       "properties": {
         "redirectUri": {
+          "type": "string"
+        }
+      }
+    },
+    "DashboardReportDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -8852,6 +9348,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "dashboardUid": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -8906,63 +9405,42 @@
           "type": "integer",
           "format": "int64"
         },
+        "uid": {
+          "type": "string"
+        },
         "version": {
           "type": "integer",
           "format": "int64"
         }
       }
     },
-    "DataFrames": {
-      "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
-      "type": "object",
-      "title": "DataFrames is an interface for retrieving encoded and decoded data frames."
-    },
-    "DataQueryResult": {
-      "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
+    "DataLink": {
+      "description": "DataLink define what",
       "type": "object",
       "properties": {
-        "dataframes": {
-          "$ref": "#/definitions/DataFrames"
+        "targetBlank": {
+          "type": "boolean"
         },
-        "error": {
+        "title": {
           "type": "string"
         },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        },
-        "refId": {
+        "url": {
           "type": "string"
-        },
-        "series": {
-          "$ref": "#/definitions/DataTimeSeriesSlice"
-        },
-        "tables": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTable"
-          }
         }
       }
     },
     "DataResponse": {
-      "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
+      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "message": {
+        "Error": {
+          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
           "type": "string"
         },
-        "results": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/DataQueryResult"
-          }
+        "Frames": {
+          "$ref": "#/definitions/Frames"
         }
-      }
-    },
-    "DataRowValues": {
-      "type": "array",
-      "items": {
-        "type": "object"
       }
     },
     "DataSource": {
@@ -9100,67 +9578,6 @@
         }
       }
     },
-    "DataTable": {
-      "type": "object",
-      "properties": {
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTableColumn"
-          }
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataRowValues"
-          }
-        }
-      }
-    },
-    "DataTableColumn": {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string"
-        }
-      }
-    },
-    "DataTimePoint": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Float"
-      }
-    },
-    "DataTimeSeries": {
-      "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "points": {
-          "$ref": "#/definitions/DataTimeSeriesPoints"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "DataTimeSeriesPoints": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimePoint"
-      }
-    },
-    "DataTimeSeriesSlice": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimeSeries"
-      }
-    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -9226,6 +9643,103 @@
         },
         "Login": {
           "type": "string"
+        }
+      }
+    },
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/Labels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string"
+        }
+      }
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          }
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
         }
       }
     },
@@ -9319,6 +9833,90 @@
         "uid": {
           "type": "string"
         }
+      }
+    },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      }
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string"
+        },
+        "custom": {
+          "description": "Custom datasource specific values.",
+          "type": "object"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "type": "string"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      }
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.",
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
       }
     },
     "GetAnnotationTagsResponse": {
@@ -9520,6 +10118,11 @@
         }
       }
     },
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice."
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -9540,6 +10143,9 @@
         "dashboardId": {
           "type": "integer",
           "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -9594,6 +10200,13 @@
     "Json": {
       "type": "object"
     },
+    "Labels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "LibraryElementConnectionDTO": {
       "type": "object",
       "title": "LibraryElementConnectionDTO is the frontend DTO for element connections.",
@@ -9645,6 +10258,9 @@
         "folderId": {
           "type": "integer",
           "format": "int64"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "id": {
           "type": "integer",
@@ -9778,6 +10394,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "dashboardUID": {
+          "type": "string"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64"
@@ -9871,6 +10490,31 @@
           "type": "string"
         }
       }
+    },
+    "Notice": {
+      "type": "object",
+      "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+      "properties": {
+        "inspect": {
+          "$ref": "#/definitions/InspectType"
+        },
+        "link": {
+          "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/definitions/NoticeSeverity"
+        },
+        "text": {
+          "description": "Text is freeform descriptive text for the notice.",
+          "type": "string"
+        }
+      }
+    },
+    "NoticeSeverity": {
+      "type": "integer",
+      "format": "int64",
+      "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -10008,6 +10652,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -10040,6 +10688,9 @@
           "type": "integer",
           "format": "int64",
           "default": 0
+        },
+        "homeDashboardUID": {
+          "type": "string"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -10111,6 +10762,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "dashboardUID": {
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -10162,6 +10816,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "homeDashboardUID": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -10208,6 +10865,91 @@
       "properties": {
         "homeTab": {
           "type": "string"
+        }
+      }
+    },
+    "QueryStat": {
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+      "type": "object",
+      "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          }
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
         }
       }
     },
@@ -10301,6 +11043,15 @@
         "$ref": "#/definitions/DataResponse"
       }
     },
+    "RestoreDashboardVersionCommand": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "RevokeAuthTokenCmd": {
       "type": "object",
       "properties": {
@@ -10353,9 +11104,6 @@
           "format": "int64"
         }
       }
-    },
-    "RoleType": {
-      "type": "string"
     },
     "SaveDashboardCommand": {
       "type": "object",
@@ -10727,7 +11475,8 @@
           "format": "int64"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -10738,6 +11487,41 @@
       }
     },
     "TempUserStatus": {
+      "type": "string"
+    },
+    "Threshold": {
+      "description": "Threshold a single step on the threshold list",
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/ConfFloat64"
+        }
+      }
+    },
+    "ThresholdsConfig": {
+      "description": "ThresholdsConfig setup thresholds",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/ThresholdsMode"
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          }
+        }
+      }
+    },
+    "ThresholdsMode": {
+      "description": "ThresholdsMode absolute or percentage",
       "type": "string"
     },
     "TimeRangeDTO": {
@@ -10771,15 +11555,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "included_admins": {
-          "type": "integer",
-          "format": "int64"
-        },
         "included_users": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "included_viewers": {
           "type": "integer",
           "format": "int64"
         },
@@ -10871,6 +11647,9 @@
           "$ref": "#/definitions/Json"
         }
       }
+    },
+    "Type": {
+      "type": "string"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -11106,7 +11885,8 @@
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -11118,6 +11898,9 @@
           "type": "integer",
           "format": "int64",
           "default": 0
+        },
+        "homeDashboardUID": {
+          "type": "string"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -11261,7 +12044,8 @@
           "format": "int64"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -11433,6 +12217,20 @@
           "format": "int64"
         }
       }
+    },
+    "ValueMapping": {
+      "description": "ValueMapping allows mapping input values to text and color",
+      "type": "object"
+    },
+    "ValueMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ValueMapping"
+      }
+    },
+    "VisType": {
+      "type": "string",
+      "title": "VisType is used to indicate how the data should be visualized in explore."
     }
   },
   "responses": {
@@ -11810,6 +12608,12 @@
         "items": {
           "$ref": "#/definitions/RoleDTO"
         }
+      }
+    },
+    "getAnnotationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ItemDTO"
       }
     },
     "getAnnotationTagsResponse": {
@@ -12268,12 +13072,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
-      }
-    },
-    "queryDatasourceResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataResponse"
       }
     },
     "recordingRuleResponse": {

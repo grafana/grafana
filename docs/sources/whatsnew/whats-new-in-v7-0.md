@@ -1,12 +1,19 @@
-+++
-title = "What's New in Grafana v7.0"
-description = "Feature and improvement highlights for Grafana v7"
-keywords = ["grafana", "new", "documentation", "7.0", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-0/"]
-weight = -27
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v7-0/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v7-0/
+description: Feature and improvement highlights for Grafana v7
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '7.0'
+  - release notes
+title: What's New in Grafana v7.0
+weight: -27
+---
 
 # What's new in Grafana v7.0
 
@@ -58,7 +65,7 @@ In the future we will add more workflows and integrations so that correlating be
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels/reference-transformation-functions.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels/transform-data/transformation-functions.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
 [Transformations]({{< relref "../panels/transform-data/about-transformation.md" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
@@ -78,7 +85,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels/reference-transformation-functions.md" >}}).
+Learn more about this feature in [Transformations]({{< relref "../panels/transform-data/transformation-functions.md" >}}).
 
 ## Field options and overrides
 
@@ -175,11 +182,11 @@ Read more about [Image Rendering]({{< relref "../image-rendering/" >}}) in the d
 
 The Query history feature lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor, write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in the Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
 
-It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../explore" >}}).
+It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../explore/" >}}).
 
 ## Stackdriver data source supports Service Monitoring
 
-[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/google-cloud-monitoring/_index.md/#slo-service-level-objective-queries" >}}).
+[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/google-cloud-monitoring/_index.md#slo-service-level-objective-queries" >}}).
 
 ## Time zone support
 
@@ -214,7 +221,7 @@ This release includes a series of features that build on our new usage analytics
 
 ### SAML Role and Team Sync
 
-SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation]({{< relref "../enterprise/saml.md#configure-team-sync" >}}).
+SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation]({{< relref "../enterprise/configure-saml.md#configure-team-sync" >}}).
 
 ### Okta OAuth Team Sync
 

@@ -1,5 +1,7 @@
 import { css } from '@emotion/react';
+
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
@@ -152,6 +154,12 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     .text-center {
       text-align: center;
+    }
+
+    .highlight-search-match {
+      background: ${theme.components.textHighlight.background};
+      color: ${theme.components.textHighlight.text};
+      padding: 0;
     }
   `;
 }

@@ -11,6 +11,7 @@ export interface RuleFormValues {
   name: string;
   type?: RuleFormType;
   dataSourceName: string | null;
+  group: string;
 
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;
@@ -26,7 +27,6 @@ export interface RuleFormValues {
 
   // cortex / loki rules
   namespace: string;
-  group: string;
   forTime: number;
   forTimeUnit: string;
   expression: string;

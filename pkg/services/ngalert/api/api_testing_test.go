@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -61,7 +62,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -102,7 +103,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
@@ -182,7 +183,7 @@ func TestRouteEvalQueries(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -226,7 +227,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &datasources.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
@@ -265,7 +266,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(ds *datasources.FakeCacheService, ac *acMock.Mock, evaluator *eval.FakeEvaluator) *TestingApiSrv {
+func createTestingApiSrv(ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator *eval.FakeEvaluator) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New().WithDisabled()
 	}

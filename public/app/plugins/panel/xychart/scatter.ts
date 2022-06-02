@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 import {
   DataFrame,
   FieldColorModeId,
@@ -8,6 +10,8 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { config } from '@grafana/runtime';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
@@ -17,13 +21,12 @@ import {
   ScaleDimensionConfig,
   ScaleDimensionMode,
 } from 'app/features/dimensions';
-import { config } from '@grafana/runtime';
-import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
+
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import uPlot from 'uplot';
-import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
+
 import { isGraphable } from './dims';
+import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
+import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;

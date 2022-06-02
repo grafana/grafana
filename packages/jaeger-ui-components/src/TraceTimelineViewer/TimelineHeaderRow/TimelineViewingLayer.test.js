@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { mount } from 'enzyme';
 import { cx } from '@emotion/css';
+import { mount } from 'enzyme';
+import React from 'react';
 
 import TimelineViewingLayer, { getStyles } from './TimelineViewingLayer';
 

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -55,20 +54,26 @@ func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write 
 }
 
 func (a *api) registerEndpoints() {
-	auth := middleware.Middleware(a.ac)
-	uidSolver := solveUID(a.service.options.UidSolver)
+	auth := accesscontrol.Middleware(a.ac)
+	disable := disableMiddleware(a.ac.IsDisabled())
 	inheritanceSolver := solveInheritedScopes(a.service.options.InheritedScopesSolver)
-	disable := middleware.Disable(a.ac.IsDisabled())
+
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		readEvaluator, writeEvaluator := a.getEvaluators(actionRead, actionWrite, scope)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", inheritanceSolver, uidSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", inheritanceSolver, uidSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", inheritanceSolver, uidSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, uidSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", inheritanceSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
+		if a.service.options.Assignments.Users {
+			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
+		}
+		if a.service.options.Assignments.Teams {
+			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
+		}
+		if a.service.options.Assignments.BuiltInRoles {
+			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+		}
 	})
 }
 
@@ -113,7 +118,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "failed to get permissions", err)
 	}
 
-	if a.service.options.Assignments.BuiltInRoles && !a.service.cfg.IsEnterprise {
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
 		permissions = append(permissions, accesscontrol.ResourcePermission{
 			Actions:     a.service.actions,
 			Scope:       "*",

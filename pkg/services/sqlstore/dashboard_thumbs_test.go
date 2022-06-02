@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -14,8 +11,7 @@ import (
 var theme = models.ThemeDark
 var kind = models.ThumbnailKindDefault
 
-func TestSqlStorage(t *testing.T) {
-
+func TestIntegrationSqlStorage(t *testing.T) {
 	var sqlStore *SQLStore
 	var savedFolder *models.Dashboard
 

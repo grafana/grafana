@@ -1,9 +1,11 @@
-import React from 'react';
 import { cx } from '@emotion/css';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { unwrap } from './unwrap';
 import { Select } from '@grafana/ui';
+
 import { paddingRightClass } from './styles';
+import { unwrap } from './unwrap';
 
 type Mode = 'ASC' | 'DESC';
 

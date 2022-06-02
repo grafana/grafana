@@ -2,13 +2,14 @@ import { map } from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+
 import { PromQuery } from '../types';
 
-import PromQueryField from './PromQueryField';
-import PromLink from './PromLink';
 import { PromExemplarField } from './PromExemplarField';
+import PromLink from './PromLink';
+import PromQueryField from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
@@ -173,7 +174,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               <div className="gf-form-label">Resolution</div>
               <Select
                 aria-label="Select resolution"
-                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -184,7 +184,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
-                menuShouldPortal
                 className="select-container"
                 width={16}
                 isSearchable={false}

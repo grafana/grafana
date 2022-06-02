@@ -1,3 +1,9 @@
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import differenceInHours from 'date-fns/differenceInHours';
+import formatDistance from 'date-fns/formatDistance';
+
 import {
   ArrayVector,
   DataFrame,
@@ -12,11 +18,7 @@ import {
   TraceSpanRow,
   dateTimeFormat,
 } from '@grafana/data';
-import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
-import formatDistance from 'date-fns/formatDistance';
-import differenceInHours from 'date-fns/differenceInHours';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -598,6 +600,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
         name: 'traceID',
         type: FieldType.string,
         config: {
+          unit: 'string',
           displayNameFromDS: 'Trace ID',
           links: [
             {

@@ -1,7 +1,9 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
 import { autoColor } from '../Theme';
 
 const getStyles = (theme: GrafanaTheme2) => {

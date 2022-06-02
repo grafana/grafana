@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -15,7 +12,7 @@ import (
 
 var ErrProvokedError = errors.New("testing error")
 
-func TestTransaction(t *testing.T) {
+func TestIntegrationTransaction(t *testing.T) {
 	ss := InitTestDB(t)
 
 	cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
@@ -56,7 +53,7 @@ func TestTransaction(t *testing.T) {
 	})
 }
 
-func TestReuseSessionWithTransaction(t *testing.T) {
+func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	ss := InitTestDB(t)
 
 	t.Run("top level transaction", func(t *testing.T) {

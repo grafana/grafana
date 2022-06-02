@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -42,7 +43,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := sqlstore.CreateOrg(context.Background(), orgCmd)
+	err := store.CreateOrg(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
@@ -237,7 +238,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 			SignedInUser: signedUser,
 			Logger:       log.New("serviceaccounts-test"),
 		}
-		c.Map(ctx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
 	})
 	a.RouterRegister.Register(m.Router)
 	return m, a
@@ -451,9 +452,10 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
 				require.NoError(t, err)
 				assert.Equal(t, scopeID, int(actualBody["id"].(float64)))
-				assert.Equal(t, string(*tc.body.Role), actualBody["role"].(string))
 				assert.Equal(t, *tc.body.Name, actualBody["name"].(string))
-				assert.Equal(t, tc.user.Login, actualBody["login"].(string))
+				serviceAccountData := actualBody["serviceaccount"].(map[string]interface{})
+				assert.Equal(t, string(*tc.body.Role), serviceAccountData["role"].(string))
+				assert.Equal(t, tc.user.Login, serviceAccountData["login"].(string))
 
 				// Ensure the user was updated in DB
 				sa, err := saAPI.store.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))

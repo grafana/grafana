@@ -1,16 +1,35 @@
 import React, { FC } from 'react';
-import { Button, Field, HorizontalGroup, InlineField, InlineFieldRow } from '@grafana/ui';
-import { StandardEditorProps } from '@grafana/data';
-
-import { PanelOptions } from '../models.gen';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
-import { CanvasEditorOptions } from './elementEditor';
-import { Anchor, Placement } from 'app/features/canvas';
+
+import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
-const anchors: Array<keyof Anchor> = ['top', 'left', 'bottom', 'right'];
+import { PanelOptions } from '../models.gen';
+
+import { ConstraintSelectionBox } from './ConstraintSelectionBox';
+import { QuickPositioning } from './QuickPositioning';
+import { CanvasEditorOptions } from './elementEditor';
+
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
+
+const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
+  { label: 'Left', value: HorizontalConstraint.Left },
+  { label: 'Right', value: HorizontalConstraint.Right },
+  { label: 'Left and right', value: HorizontalConstraint.LeftRight },
+  { label: 'Center', value: HorizontalConstraint.Center },
+  { label: 'Scale', value: HorizontalConstraint.Scale },
+];
+
+const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
+  { label: 'Top', value: VerticalConstraint.Top },
+  { label: 'Bottom', value: VerticalConstraint.Bottom },
+  { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
+  { label: 'Center', value: VerticalConstraint.Center },
+  { label: 'Scale', value: VerticalConstraint.Scale },
+];
 
 export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({ item }) => {
   const settings = item.settings;
@@ -26,35 +45,79 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   if (!element) {
     return <div>???</div>;
   }
-  const { placement } = element;
+  const { options } = element;
+  const { placement, constraint: layout } = options;
+
+  const reselectElementAfterChange = () => {
+    setTimeout(() => {
+      settings.scene.select({ targets: [element.div!] });
+    });
+  };
+
+  const onHorizontalConstraintSelect = (h: SelectableValue<HorizontalConstraint>) => {
+    onHorizontalConstraintChange(h.value!);
+  };
+
+  const onHorizontalConstraintChange = (h: HorizontalConstraint) => {
+    element.options.constraint!.horizontal = h;
+    element.setPlacementFromConstraint();
+    settings.scene.revId++;
+    settings.scene.save(true);
+    reselectElementAfterChange();
+  };
+
+  const onVerticalConstraintSelect = (v: SelectableValue<VerticalConstraint>) => {
+    onVerticalConstraintChange(v.value!);
+  };
+
+  const onVerticalConstraintChange = (v: VerticalConstraint) => {
+    element.options.constraint!.vertical = v;
+    element.setPlacementFromConstraint();
+    settings.scene.revId++;
+    settings.scene.save(true);
+    reselectElementAfterChange();
+  };
+
+  const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
+    element.options.placement![placement] = value ?? element.options.placement![placement];
+    element.applyLayoutStylesToDiv();
+    settings.scene.clearCurrentSelection(true);
+    reselectElementAfterChange();
+  };
+
+  const constraint = element.tempConstraint ?? layout ?? {};
 
   return (
     <div>
-      <HorizontalGroup>
-        {anchors.map((a) => (
-          <Button
-            key={a}
-            size="sm"
-            variant={element.anchor[a] ? 'primary' : 'secondary'}
-            onClick={() => settings.scene.toggleAnchor(element, a)}
-          >
-            {a}
-          </Button>
-        ))}
-      </HorizontalGroup>
+      <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
+      <br />
+      <Field label="Constraints">
+        <HorizontalGroup>
+          <ConstraintSelectionBox
+            onVerticalConstraintChange={onVerticalConstraintChange}
+            onHorizontalConstraintChange={onHorizontalConstraintChange}
+            currentConstraints={constraint}
+          />
+          <VerticalGroup>
+            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
+            <Select options={horizontalOptions} onChange={onHorizontalConstraintSelect} value={constraint.horizontal} />
+          </VerticalGroup>
+        </HorizontalGroup>
+      </Field>
+
       <br />
 
       <Field label="Position">
         <>
           {places.map((p) => {
-            const v = placement[p];
+            const v = placement![p];
             if (v == null) {
               return null;
             }
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput value={v} onChange={(v) => console.log('TODO, edit!!!', p, v)} />
+                  <NumberInput value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );

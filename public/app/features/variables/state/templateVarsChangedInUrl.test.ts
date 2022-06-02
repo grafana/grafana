@@ -1,15 +1,16 @@
-import { variableAdapters } from '../adapters';
-import { constantBuilder, customBuilder } from '../shared/testing/builders';
 import { DashboardState, StoreState } from '../../../types';
-import { initialState } from '../../dashboard/state/reducers';
-import { ExtendedUrlQueryMap } from '../utils';
-import { templateVarsChangedInUrl } from './actions';
-import { createCustomVariableAdapter } from '../custom/adapter';
-import { VariablesState } from './types';
 import { DashboardModel } from '../../dashboard/state';
-import { getPreloadedState } from './helpers';
+import { initialState } from '../../dashboard/state/reducers';
+import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { constantBuilder, customBuilder } from '../shared/testing/builders';
 import { VariableModel } from '../types';
+import { ExtendedUrlQueryMap } from '../utils';
+
+import { templateVarsChangedInUrl } from './actions';
+import { getPreloadedState } from './helpers';
+import { VariablesState } from './types';
 
 const dashboardModel = new DashboardModel({});
 

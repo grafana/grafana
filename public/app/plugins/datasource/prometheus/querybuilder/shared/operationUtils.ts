@@ -1,4 +1,11 @@
 import { capitalize } from 'lodash';
+import pluralize from 'pluralize';
+
+import { SelectableValue } from '@grafana/data/src';
+
+import { LabelParamEditor } from '../components/LabelParamEditor';
+import { PromVisualQueryOperationCategory } from '../types';
+
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -6,10 +13,6 @@ import {
   QueryBuilderOperationParamValue,
   QueryWithOperations,
 } from './types';
-import { SelectableValue } from '@grafana/data/src';
-import { LabelParamEditor } from '../components/LabelParamEditor';
-import { PromVisualQueryOperationCategory } from '../types';
-import pluralize from 'pluralize';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);

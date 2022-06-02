@@ -1,11 +1,14 @@
 import React, { FC } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { Button, Input, Field, Form } from '@grafana/ui';
-import { StoreState } from 'app/types';
 import { connect, ConnectedProps } from 'react-redux';
-import { getNavModel } from '../../core/selectors/navModel';
-import { createOrganization } from './state/actions';
+
+import { Button, Input, Field, Form } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
+import { StoreState } from 'app/types';
+
+import { getNavModel } from '../../core/selectors/navModel';
+
+import { createOrganization } from './state/actions';
 
 const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };

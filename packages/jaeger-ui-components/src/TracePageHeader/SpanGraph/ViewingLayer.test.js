@@ -14,13 +14,15 @@
 
 import { shallow } from 'enzyme';
 import React from 'react';
+
 import { createTheme } from '@grafana/data';
+
+import { EUpdateTypes } from '../../utils/DraggableManager';
+import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
 import ViewingLayer, { dragTypes, getStyles } from './ViewingLayer';
-import { EUpdateTypes } from '../../utils/DraggableManager';
-import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 function getViewRange(viewStart, viewEnd) {
   return {

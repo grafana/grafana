@@ -1,6 +1,7 @@
-import { getSeriesTimeStep, hasMsResolution } from './series';
 import { Field, FieldType } from '../types';
 import { ArrayVector } from '../vector';
+
+import { getSeriesTimeStep, hasMsResolution } from './series';
 
 const uniformTimeField: Field = {
   name: 'time',

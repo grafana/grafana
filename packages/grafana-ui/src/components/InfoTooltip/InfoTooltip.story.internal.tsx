@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { InfoTooltip } from './InfoTooltip';
 import { VizTooltip } from '../VizTooltip';
+
+import { InfoTooltip } from './InfoTooltip';
 
 export default {
   title: 'Overlays/TooltipInternal',

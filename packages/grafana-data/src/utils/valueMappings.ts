@@ -1,3 +1,5 @@
+import { getActiveThreshold } from '../field';
+import { stringToJsRegex } from '../text/string';
 import {
   MappingType,
   SpecialValueMatch,
@@ -7,8 +9,6 @@ import {
   ValueMappingResult,
   SpecialValueOptions,
 } from '../types';
-import { getActiveThreshold } from '../field';
-import { stringToJsRegex } from '../text/string';
 
 export function getValueMappingResult(valueMappings: ValueMapping[], value: any): ValueMappingResult | null {
   for (const vm of valueMappings) {

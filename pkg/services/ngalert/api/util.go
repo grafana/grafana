@@ -35,21 +35,19 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := web.Params(ctx.Req)[":Recipient"]
-	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-			switch ds.Type {
-			case "loki", "prometheus":
-				return apimodels.LoTexRulerBackend, nil
-			case "alertmanager":
-				return apimodels.AlertmanagerBackend, nil
-			default:
-				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-			}
+func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		switch ds.Type {
+		case "loki", "prometheus":
+			return apimodels.LoTexRulerBackend, nil
+		case "alertmanager":
+			return apimodels.AlertmanagerBackend, nil
+		default:
+			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 		}
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", recipient)
+	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -98,12 +96,21 @@ func (p *AlertingProxy) withReq(
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
 
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Recipient is invalid")
-	}
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
+		}
 
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+		p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceUID is empty")
+		}
+		p.DataProxy.ProxyDatasourceRequestWithUID(newCtx, datasourceUID)
+	}
 
 	status := resp.Status()
 	if status >= 400 {

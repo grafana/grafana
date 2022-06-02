@@ -36,8 +36,18 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  textHighlight: {
+    background: string;
+    text: string;
+  };
   sidemenu: {
     width: number;
+  };
+  menuTabs: {
+    height: number;
+  };
+  horizontalDrawer: {
+    defaultHeight: number;
   };
 }
 
@@ -69,8 +79,8 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.mode === 'light' ? '#555' : '#35383e',
-      text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
+      background: colors.background.secondary,
+      text: colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
@@ -81,6 +91,16 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     },
     sidemenu: {
       width: 48,
+    },
+    menuTabs: {
+      height: 41,
+    },
+    textHighlight: {
+      text: colors.warning.contrastText,
+      background: colors.warning.main,
+    },
+    horizontalDrawer: {
+      defaultHeight: 400,
     },
   };
 }

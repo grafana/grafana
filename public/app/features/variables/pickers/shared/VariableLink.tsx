@@ -1,8 +1,9 @@
-import React, { FC, MouseEvent, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { Icon, Tooltip, useStyles } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import React, { FC, MouseEvent, useCallback } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Icon, Tooltip, useStyles } from '@grafana/ui';
 
 interface Props {
   onClick: () => void;

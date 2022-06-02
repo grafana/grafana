@@ -1,9 +1,14 @@
-+++
-title = "Jaeger instrumentation"
-description = "Jaeger traces emitted and propagation by Grafana"
-keywords = ["grafana", "jaeger", "tracing"]
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/jaeger-instrumentation/
+description: Jaeger traces emitted and propagation by Grafana
+keywords:
+  - grafana
+  - jaeger
+  - tracing
+title: Jaeger instrumentation
+weight: 900
+---
 
 # Jaeger instrumentation
 

@@ -12,7 +12,6 @@ import (
 const ExporterName = "grafana"
 
 var (
-
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -24,12 +23,6 @@ var (
 
 	// MProxyStatus is a metric proxy http response status
 	MProxyStatus *prometheus.CounterVec
-
-	// MHttpRequestTotal is a metric http request counter
-	MHttpRequestTotal *prometheus.CounterVec
-
-	// MHttpRequestSummary is a metric http request summary
-	MHttpRequestSummary *prometheus.SummaryVec
 
 	// MApiUserSignUpStarted is a metric amount of users who started the signup flow
 	MApiUserSignUpStarted prometheus.Counter
@@ -191,6 +184,9 @@ var (
 
 	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
 	StatsTotalLibraryVariables prometheus.Gauge
+
+	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
+	StatsTotalDataKeys *prometheus.GaugeVec
 )
 
 func init() {
@@ -223,23 +219,6 @@ func init() {
 			Help:      "proxy http response status",
 			Namespace: ExporterName,
 		}, []string{"code"}, httpStatusCodes...)
-
-	MHttpRequestTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_request_total",
-			Help: "http request counter",
-		},
-		[]string{"handler", "statuscode", "method"},
-	)
-
-	MHttpRequestSummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       "http_request_duration_milliseconds",
-			Help:       "http request summary",
-			Objectives: objectiveMap,
-		},
-		[]string{"handler", "statuscode", "method"},
-	)
 
 	MApiUserSignUpStarted = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_user_signup_started_total",
@@ -565,6 +544,12 @@ func init() {
 		Help:      "total amount of library variables in the database",
 		Namespace: ExporterName,
 	})
+
+	StatsTotalDataKeys = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "stat_totals_data_keys",
+		Help:      "total amount of data keys in the database",
+		Namespace: ExporterName,
+	}, []string{"active"})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -607,8 +592,6 @@ func initMetricVars() {
 		MPageStatus,
 		MApiStatus,
 		MProxyStatus,
-		MHttpRequestTotal,
-		MHttpRequestSummary,
 		MApiUserSignUpStarted,
 		MApiUserSignUpCompleted,
 		MApiUserSignUpInvite,
@@ -660,6 +643,7 @@ func initMetricVars() {
 		MAccessEvaluationCount,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
+		StatsTotalDataKeys,
 	)
 }
 

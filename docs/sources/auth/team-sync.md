@@ -1,10 +1,15 @@
-+++
-title = "Team Sync"
-description = "Grafana Team Sync"
-keywords = ["grafana", "auth", "documentation"]
-aliases = ["/docs/grafana/latest/auth/saml/"]
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/auth/team-sync/
+description: Grafana Team Sync
+keywords:
+  - grafana
+  - auth
+  - documentation
+title: Team Sync
+weight: 1200
+---
 
 # Team sync
 
@@ -19,4 +24,4 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 <div class="clearfix"></div>
 
-> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).

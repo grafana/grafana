@@ -1,13 +1,15 @@
 import { size } from 'lodash';
-import ResponseParser, { getSelectedParams } from '../response_parser';
-import InfluxQueryModel from '../influx_query_model';
-import { FieldType, MutableDataFrame } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import InfluxDatasource from '../datasource';
 import { of } from 'rxjs';
-import { FetchResponse } from '@grafana/runtime';
 import { TemplateSrvStub } from 'test/specs/helpers';
+
+import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+import InfluxDatasource from '../datasource';
+import InfluxQueryModel from '../influx_query_model';
+import ResponseParser, { getSelectedParams } from '../response_parser';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();

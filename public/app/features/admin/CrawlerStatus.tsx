@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, useTheme2 } from '@grafana/ui';
+import React, { useEffect, useState } from 'react';
+
 import { GrafanaTheme2, isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
+import { Button, useTheme2 } from '@grafana/ui';
+
 import { CrawlerStartButton } from './CrawlerStartButton';
 
 interface CrawlerStatusMessage {

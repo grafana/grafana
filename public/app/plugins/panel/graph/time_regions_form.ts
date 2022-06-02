@@ -1,4 +1,5 @@
 import coreModule from 'app/angular/core_module';
+
 import { getColorModes } from './time_region_manager';
 
 export class TimeRegionFormCtrl {

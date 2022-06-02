@@ -3,19 +3,25 @@ package statscollector
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,12 +79,40 @@ func TestTotalStatsUpdate(t *testing.T) {
 	}
 }
 
+var _ registry.ProvidesUsageStats = (*dummyUsageStatProvider)(nil)
+
+type dummyUsageStatProvider struct {
+	stats map[string]interface{}
+}
+
+func (d dummyUsageStatProvider) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return d.stats
+}
+
+func TestUsageStatsProviders(t *testing.T) {
+	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
+	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
+
+	store := mockstore.NewSQLStoreMock()
+	mockSystemStats(store)
+	s := createService(t, setting.NewCfg(), store)
+	s.RegisterProviders([]registry.ProvidesUsageStats{provider1, provider2})
+
+	m, err := s.collectAdditionalMetrics(context.Background())
+	require.NoError(t, err, "Expected no error")
+
+	assert.Equal(t, "val1", m["my_stat_1"])
+	assert.Equal(t, "val2", m["my_stat_2"])
+	assert.Equal(t, "valx", m["my_stat_x"])
+	assert.Equal(t, "valz", m["my_stat_z"])
+}
+
 func TestFeatureUsageStats(t *testing.T) {
 	store := mockstore.NewSQLStoreMock()
 	mockSystemStats(store)
 	s := createService(t, setting.NewCfg(), store)
 
-	m, err := s.collect(context.Background())
+	m, err := s.collectSystemStats(context.Background())
 	require.NoError(t, err, "Expected no error")
 
 	assert.Equal(t, 1, m["stats.features.feature_1.count"])
@@ -101,6 +135,56 @@ func TestCollectingUsageStats(t *testing.T) {
 	s.startTime = time.Now().Add(-1 * time.Minute)
 
 	mockSystemStats(sqlStore)
+
+	createConcurrentTokens(t, sqlStore)
+
+	s.social = &mockSocial{
+		OAuthProviders: map[string]bool{
+			"github":        true,
+			"gitlab":        true,
+			"azuread":       true,
+			"google":        true,
+			"generic_oauth": true,
+			"grafana_com":   true,
+		},
+	}
+
+	metrics, err := s.collectSystemStats(context.Background())
+	require.NoError(t, err)
+
+	assert.EqualValues(t, 15, metrics["stats.total_auth_token.count"])
+	assert.EqualValues(t, 2, metrics["stats.api_keys.count"])
+	assert.EqualValues(t, 5, metrics["stats.avg_auth_token_per_user.count"])
+	assert.EqualValues(t, 16, metrics["stats.dashboard_versions.count"])
+	assert.EqualValues(t, 17, metrics["stats.annotations.count"])
+	assert.EqualValues(t, 18, metrics["stats.alert_rules.count"])
+	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
+	assert.EqualValues(t, 20, metrics["stats.library_variables.count"])
+
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.anonymous.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.basic_auth.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.ldap.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.auth_proxy.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_github.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_gitlab.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_google.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_azuread.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_generic_oauth.count"])
+	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_grafana_com.count"])
+
+	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
+	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
+
+	assert.EqualValues(t, 11, metrics["stats.data_keys.count"])
+	assert.EqualValues(t, 3, metrics["stats.active_data_keys.count"])
+
+	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
+}
+
+func TestDatasourceStats(t *testing.T) {
+	sqlStore := mockstore.NewSQLStoreMock()
+	s := createService(t, &setting.Cfg{}, sqlStore)
+
 	setupSomeDataSourcePlugins(t, s)
 
 	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{
@@ -183,6 +267,31 @@ func TestCollectingUsageStats(t *testing.T) {
 		},
 	}
 
+	{
+		db, err := s.collectDatasourceStats(context.Background())
+		require.NoError(t, err)
+
+		assert.EqualValues(t, 9, db["stats.ds."+models.DS_ES+".count"])
+		assert.EqualValues(t, 10, db["stats.ds."+models.DS_PROMETHEUS+".count"])
+		assert.EqualValues(t, 11+12, db["stats.ds.other.count"])
+	}
+
+	{
+		dba, err := s.collectDatasourceAccess(context.Background())
+		require.NoError(t, err)
+
+		assert.EqualValues(t, 1, dba["stats.ds_access."+models.DS_ES+".direct.count"])
+		assert.EqualValues(t, 2, dba["stats.ds_access."+models.DS_ES+".proxy.count"])
+		assert.EqualValues(t, 3, dba["stats.ds_access."+models.DS_PROMETHEUS+".proxy.count"])
+		assert.EqualValues(t, 6+7, dba["stats.ds_access.other.direct.count"])
+		assert.EqualValues(t, 4+8, dba["stats.ds_access.other.proxy.count"])
+	}
+}
+
+func TestAlertNotifiersStats(t *testing.T) {
+	sqlStore := mockstore.NewSQLStoreMock()
+	s := createService(t, &setting.Cfg{}, sqlStore)
+
 	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{
 		{
 			Type:  "slack",
@@ -194,60 +303,11 @@ func TestCollectingUsageStats(t *testing.T) {
 		},
 	}
 
-	createConcurrentTokens(t, sqlStore)
-
-	s.social = &mockSocial{
-		OAuthProviders: map[string]bool{
-			"github":        true,
-			"gitlab":        true,
-			"azuread":       true,
-			"google":        true,
-			"generic_oauth": true,
-			"grafana_com":   true,
-		},
-	}
-
-	metrics, err := s.collect(context.Background())
+	metrics, err := s.collectAlertNotifierStats(context.Background())
 	require.NoError(t, err)
-
-	assert.EqualValues(t, 15, metrics["stats.total_auth_token.count"])
-	assert.EqualValues(t, 2, metrics["stats.api_keys.count"])
-	assert.EqualValues(t, 5, metrics["stats.avg_auth_token_per_user.count"])
-	assert.EqualValues(t, 16, metrics["stats.dashboard_versions.count"])
-	assert.EqualValues(t, 17, metrics["stats.annotations.count"])
-	assert.EqualValues(t, 18, metrics["stats.alert_rules.count"])
-	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
-	assert.EqualValues(t, 20, metrics["stats.library_variables.count"])
-
-	assert.EqualValues(t, 9, metrics["stats.ds."+models.DS_ES+".count"])
-	assert.EqualValues(t, 10, metrics["stats.ds."+models.DS_PROMETHEUS+".count"])
-
-	assert.EqualValues(t, 11+12, metrics["stats.ds.other.count"])
-
-	assert.EqualValues(t, 1, metrics["stats.ds_access."+models.DS_ES+".direct.count"])
-	assert.EqualValues(t, 2, metrics["stats.ds_access."+models.DS_ES+".proxy.count"])
-	assert.EqualValues(t, 3, metrics["stats.ds_access."+models.DS_PROMETHEUS+".proxy.count"])
-	assert.EqualValues(t, 6+7, metrics["stats.ds_access.other.direct.count"])
-	assert.EqualValues(t, 4+8, metrics["stats.ds_access.other.proxy.count"])
 
 	assert.EqualValues(t, 1, metrics["stats.alert_notifiers.slack.count"])
 	assert.EqualValues(t, 2, metrics["stats.alert_notifiers.webhook.count"])
-
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.anonymous.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.basic_auth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.ldap.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.auth_proxy.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_github.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_gitlab.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_google.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_azuread.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_generic_oauth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_grafana_com.count"])
-
-	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
-	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
-
-	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
 func mockSystemStats(sqlStore *mockstore.SQLStoreMock) {
@@ -289,6 +349,8 @@ func mockSystemStats(sqlStore *mockstore.SQLStoreMock) {
 		FoldersViewersCanAdmin:    1,
 		FoldersViewersCanEdit:     5,
 		APIKeys:                   2,
+		DataKeys:                  11,
+		ActiveDataKeys:            3,
 	}
 }
 
@@ -348,8 +410,14 @@ func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type
 	return result
 }
 
-func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Service {
+func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
+
+	o := &serviceOptions{datasources: mockDatasourceService{}}
+
+	for _, opt := range opts {
+		opt(o)
+	}
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
@@ -358,5 +426,32 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Servic
 		&mockSocial{},
 		&fakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
+		o.datasources,
+		httpclient.NewProvider(),
 	)
+}
+
+type serviceOptions struct {
+	datasources datasources.DataSourceService
+}
+
+func withDatasources(ds datasources.DataSourceService) func(*serviceOptions) {
+	return func(options *serviceOptions) {
+		options.datasources = ds
+	}
+}
+
+type mockDatasourceService struct {
+	datasources.DataSourceService
+
+	datasources []*models.DataSource
+}
+
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	query.Result = s.datasources
+	return nil
+}
+
+func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+	return provider.GetTransport()
 }

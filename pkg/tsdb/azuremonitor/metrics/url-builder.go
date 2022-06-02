@@ -18,7 +18,7 @@ type urlBuilder struct {
 	ResourceName        string
 }
 
-func (params *urlBuilder) buildMetricsURLFromLegacyQuery() string {
+func (params *urlBuilder) buildResourceURIFromLegacyQuery() string {
 	subscription := params.Subscription
 
 	if params.Subscription == "" {
@@ -54,7 +54,7 @@ func (params *urlBuilder) BuildMetricsURL() string {
 
 	// Prior to Grafana 9, we had a legacy query object rather than a resourceURI, so we manually create the resource URI
 	if resourceURI == "" {
-		resourceURI = params.buildMetricsURLFromLegacyQuery()
+		resourceURI = params.buildResourceURIFromLegacyQuery()
 	}
 
 	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", resourceURI)

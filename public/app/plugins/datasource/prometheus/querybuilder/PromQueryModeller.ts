@@ -1,4 +1,5 @@
 import { FUNCTIONS } from '../promql';
+
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';

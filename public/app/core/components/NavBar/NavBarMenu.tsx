@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 import React, { useRef } from 'react';
+
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
-import { css } from '@emotion/css';
+
 import { NavBarMenuItem } from './NavBarMenuItem';
 
 export interface Props {

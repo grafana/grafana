@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
+
 import {
   ArrayVector,
   CoreApp,
@@ -16,12 +17,13 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
-
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
-import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
+
+import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
@@ -114,7 +116,7 @@ function getTestContext({
 describe('ElasticDatasource', function (this: any) {
   describe('When testing datasource with index pattern', () => {
     it('should translate index pattern to current day', () => {
-      const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 } });
+      const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' } });
 
       ds.testDatasource();
 
@@ -152,7 +154,7 @@ describe('ElasticDatasource', function (this: any) {
           },
         ],
       };
-      const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2 }, data });
+      const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' }, data });
 
       let result: any = {};
       await expect(ds.query(query)).toEmitValuesWith((received) => {
@@ -205,7 +207,7 @@ describe('ElasticDatasource', function (this: any) {
     async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
       jsonData = {
         interval: 'Daily',
-        esVersion: '2.0.0',
+        esVersion: '7.10.0',
         timeField: '@timestamp',
         ...(jsonData || {}),
       };
@@ -277,7 +279,7 @@ describe('ElasticDatasource', function (this: any) {
       const query: any = { range, targets };
       const data = { responses: [] };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: 2 }, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: '7.10.0' }, data, database: 'test' });
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -320,7 +322,7 @@ describe('ElasticDatasource', function (this: any) {
 
     it('should process it properly', async () => {
       const { ds } = getTestContext({
-        jsonData: { interval: 'Daily', esVersion: 7 },
+        jsonData: { interval: 'Daily', esVersion: '7.10.0' },
         data: {
           took: 1,
           responses: [
@@ -338,7 +340,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{\n    "reason": "all shards failed"\n}',
         message: 'all shards failed',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 
@@ -355,8 +357,8 @@ describe('ElasticDatasource', function (this: any) {
           message: 'Authentication to data source failed',
         },
         status: 400,
-        url: 'http://localhost:3000/api/tsdb/query',
-        config: { url: 'http://localhost:3000/api/tsdb/query' },
+        url: 'http://localhost:3000/api/ds/query',
+        config: { url: 'http://localhost:3000/api/ds/query' },
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
@@ -366,6 +368,8 @@ describe('ElasticDatasource', function (this: any) {
 
       const { ds } = getTestContext({
         mockImplementation: () => throwError(response),
+        from: undefined,
+        jsonData: { esVersion: '7.10.0' },
       });
 
       const errObject = {
@@ -381,7 +385,7 @@ describe('ElasticDatasource', function (this: any) {
 
     it('should properly throw an unknown error', async () => {
       const { ds } = getTestContext({
-        jsonData: { interval: 'Daily', esVersion: 7 },
+        jsonData: { interval: 'Daily', esVersion: '7.10.0' },
         data: {
           took: 1,
           responses: [
@@ -397,7 +401,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{}',
         message: 'Unknown elastic error response',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 
@@ -408,101 +412,101 @@ describe('ElasticDatasource', function (this: any) {
     });
   });
 
-  describe('When getting fields', () => {
-    const data = {
-      metricbeat: {
-        mappings: {
-          metricsets: {
-            _all: {},
-            _meta: {
-              test: 'something',
-            },
-            properties: {
-              '@timestamp': { type: 'date' },
-              __timestamp: { type: 'date' },
-              '@timestampnano': { type: 'date_nanos' },
-              beat: {
-                properties: {
-                  name: {
-                    fields: { raw: { type: 'keyword' } },
-                    type: 'string',
-                  },
-                  hostname: { type: 'string' },
-                },
-              },
-              system: {
-                properties: {
-                  cpu: {
-                    properties: {
-                      system: { type: 'float' },
-                      user: { type: 'float' },
-                    },
-                  },
-                  process: {
-                    properties: {
-                      cpu: {
-                        properties: {
-                          total: { type: 'float' },
-                        },
-                      },
-                      name: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    };
+  // describe('When getting fields', () => {
+  // const data = {
+  //   metricbeat: {
+  //     mappings: {
+  //       metricsets: {
+  //         _all: {},
+  //         _meta: {
+  //           test: 'something',
+  //         },
+  //         properties: {
+  //           '@timestamp': { type: 'date' },
+  //           __timestamp: { type: 'date' },
+  //           '@timestampnano': { type: 'date_nanos' },
+  //           beat: {
+  //             properties: {
+  //               name: {
+  //                 fields: { raw: { type: 'keyword' } },
+  //                 type: 'string',
+  //               },
+  //               hostname: { type: 'string' },
+  //             },
+  //           },
+  //           system: {
+  //             properties: {
+  //               cpu: {
+  //                 properties: {
+  //                   system: { type: 'float' },
+  //                   user: { type: 'float' },
+  //                 },
+  //               },
+  //               process: {
+  //                 properties: {
+  //                   cpu: {
+  //                     properties: {
+  //                       total: { type: 'float' },
+  //                     },
+  //                   },
+  //                   name: { type: 'string' },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  // };
 
-    it('should return nested fields', async () => {
-      const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  // it('should return nested fields', async () => {
+  //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields()).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
-        const fieldObjects = received[0];
-        const fields = map(fieldObjects, 'text');
+  //   await expect(ds.getFields()).toEmitValuesWith((received) => {
+  //     expect(received.length).toBe(1);
+  //     const fieldObjects = received[0];
+  //     const fields = map(fieldObjects, 'text');
 
-        expect(fields).toEqual([
-          '@timestamp',
-          '__timestamp',
-          '@timestampnano',
-          'beat.name.raw',
-          'beat.name',
-          'beat.hostname',
-          'system.cpu.system',
-          'system.cpu.user',
-          'system.process.cpu.total',
-          'system.process.name',
-        ]);
-      });
-    });
+  //     expect(fields).toEqual([
+  //       '@timestamp',
+  //       '__timestamp',
+  //       '@timestampnano',
+  //       'beat.name.raw',
+  //       'beat.name',
+  //       'beat.hostname',
+  //       'system.cpu.system',
+  //       'system.cpu.user',
+  //       'system.process.cpu.total',
+  //       'system.process.name',
+  //     ]);
+  //   });
+  // });
 
-    it('should return number fields', async () => {
-      const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  // it('should return number fields', async () => {
+  //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
-        const fieldObjects = received[0];
-        const fields = map(fieldObjects, 'text');
+  //   await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+  //     expect(received.length).toBe(1);
+  //     const fieldObjects = received[0];
+  //     const fields = map(fieldObjects, 'text');
 
-        expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-      });
-    });
+  //     expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+  //   });
+  // });
 
-    it('should return date fields', async () => {
-      const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  //   it('should return date fields', async () => {
+  //     const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
-        const fieldObjects = received[0];
-        const fields = map(fieldObjects, 'text');
+  //     await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+  //       expect(received.length).toBe(1);
+  //       const fieldObjects = received[0];
+  //       const fields = map(fieldObjects, 'text');
 
-        expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
-      });
-    });
-  });
+  //       expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
+  //     });
+  //   });
+  // });
 
   describe('When getting field mappings on indices with gaps', () => {
     const basicResponse = {
@@ -523,54 +527,54 @@ describe('ElasticDatasource', function (this: any) {
       },
     };
 
-    const alternateResponse = {
-      metricbeat: {
-        mappings: {
-          metricsets: {
-            _all: {},
-            properties: {
-              '@timestamp': { type: 'date' },
-            },
-          },
-        },
-      },
-    };
+    // const alternateResponse = {
+    //   metricbeat: {
+    //     mappings: {
+    //       metricsets: {
+    //         _all: {},
+    //         properties: {
+    //           '@timestamp': { type: 'date' },
+    //         },
+    //       },
+    //     },
+    //   },
+    // };
 
-    it('should return fields of the newest available index', async () => {
-      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
-      const threeDaysBefore = toUtc().subtract(3, 'day').format('YYYY.MM.DD');
-      const baseUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`;
-      const alternateUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${threeDaysBefore}/_mapping`;
+    // it('should return fields of the newest available index', async () => {
+    //   const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
+    //   const threeDaysBefore = toUtc().subtract(3, 'day').format('YYYY.MM.DD');
+    //   const baseUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`;
+    //   const alternateUrl = `${ELASTICSEARCH_MOCK_URL}/asd-${threeDaysBefore}/_mapping`;
 
-      const { ds, timeSrv } = getTestContext({
-        from: 'now-2w',
-        jsonData: { interval: 'Daily', esVersion: 50 },
-        mockImplementation: (options) => {
-          if (options.url === baseUrl) {
-            return of(createFetchResponse(basicResponse));
-          } else if (options.url === alternateUrl) {
-            return of(createFetchResponse(alternateResponse));
-          }
-          return throwError({ status: 404 });
-        },
-      });
+    //   const { ds, timeSrv } = getTestContext({
+    //     from: 'now-2w',
+    //     jsonData: { interval: 'Daily', esVersion: 50 },
+    //     mockImplementation: (options) => {
+    //       if (options.url === baseUrl) {
+    //         return of(createFetchResponse(basicResponse));
+    //       } else if (options.url === alternateUrl) {
+    //         return of(createFetchResponse(alternateResponse));
+    //       }
+    //       return throwError({ status: 404 });
+    //     },
+    //   });
 
-      const range = timeSrv.timeRange();
+    //   const range = timeSrv.timeRange();
 
-      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
-        const fieldObjects = received[0];
-        const fields = map(fieldObjects, 'text');
-        expect(fields).toEqual(['@timestamp', 'beat.hostname']);
-      });
-    });
+    //   await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+    //     expect(received.length).toBe(1);
+    //     const fieldObjects = received[0];
+    //     const fields = map(fieldObjects, 'text');
+    //     expect(fields).toEqual(['@timestamp', 'beat.hostname']);
+    //   });
+    // });
 
     it('should not retry when ES is down', async () => {
       const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
 
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
-        jsonData: { interval: 'Daily', esVersion: 50 },
+        jsonData: { interval: 'Daily', esVersion: '7.10.0' },
         mockImplementation: (options) => {
           if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
             return of(createFetchResponse(basicResponse));
@@ -591,7 +595,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should not retry more than 7 indices', async () => {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
-        jsonData: { interval: 'Daily', esVersion: 50 },
+        jsonData: { interval: 'Daily', esVersion: '7.10.0' },
         mockImplementation: (options) => {
           return throwError({ status: 404 });
         },
@@ -701,7 +705,11 @@ describe('ElasticDatasource', function (this: any) {
     ];
 
     it('should return nested fields', async () => {
-      const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+      const { ds } = getTestContext({
+        data,
+        database: 'genuine.es7._mapping.response',
+        jsonData: { esVersion: '7.10.0' },
+      });
 
       await expect(ds.getFields()).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -728,7 +736,11 @@ describe('ElasticDatasource', function (this: any) {
     });
 
     it('should return number fields', async () => {
-      const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+      const { ds } = getTestContext({
+        data,
+        database: 'genuine.es7._mapping.response',
+        jsonData: { esVersion: '7.10.0' },
+      });
 
       await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -740,7 +752,11 @@ describe('ElasticDatasource', function (this: any) {
     });
 
     it('should return date fields', async () => {
-      const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+      const { ds } = getTestContext({
+        data,
+        database: 'genuine.es7._mapping.response',
+        jsonData: { esVersion: '7.10.0' },
+      });
 
       await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -766,7 +782,7 @@ describe('ElasticDatasource', function (this: any) {
       const query: any = { range, targets };
       const data = { responses: [] };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: 5 }, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: '7.10.0' }, data, database: 'test' });
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -814,7 +830,7 @@ describe('ElasticDatasource', function (this: any) {
         ],
       };
 
-      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: 5 }, data, database: 'test' });
+      const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: '7.10.0' }, data, database: 'test' });
 
       const results = await ds.metricFindQuery('{"find": "terms", "field": "test"}');
 
@@ -856,7 +872,7 @@ describe('ElasticDatasource', function (this: any) {
 
   describe('query', () => {
     it('should replace range as integer not string', async () => {
-      const { ds } = getTestContext({ jsonData: { interval: 'Daily', esVersion: 2, timeField: '@time' } });
+      const { ds } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0', timeField: '@time' } });
       const postMock = jest.fn((url: string, data: any) => of(createFetchResponse({ responses: [] })));
       ds['post'] = postMock;
 
@@ -900,37 +916,23 @@ describe('ElasticDatasource', function (this: any) {
 });
 
 describe('getMultiSearchUrl', () => {
-  describe('When esVersion >= 6.6.0', () => {
+  describe('When esVersion >= 7.10.0', () => {
     it('Should add correct params to URL if "includeFrozen" is enabled', () => {
-      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: true } });
+      const { ds } = getTestContext({ jsonData: { esVersion: '7.10.0', includeFrozen: true, xpack: true } });
 
       expect(ds.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
     });
 
     it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
-      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: false, xpack: true } });
+      const { ds } = getTestContext({ jsonData: { esVersion: '7.10.0', includeFrozen: false, xpack: true } });
 
       expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
     });
 
     it('Should NOT add ignore_throttled if "xpack" is disabled', () => {
-      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: false } });
+      const { ds } = getTestContext({ jsonData: { esVersion: '7.10.0', includeFrozen: true, xpack: false } });
 
       expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
-    });
-  });
-
-  describe('When esVersion < 6.6.0', () => {
-    it('Should NOT add ignore_throttled params regardless of includeFrozen', () => {
-      const { ds: dsWithIncludeFrozen } = getTestContext({
-        jsonData: { esVersion: '5.6.0', includeFrozen: false, xpack: true },
-      });
-      const { ds: dsWithoutIncludeFrozen } = getTestContext({
-        jsonData: { esVersion: '5.6.0', includeFrozen: true, xpack: true },
-      });
-
-      expect(dsWithIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
-      expect(dsWithoutIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
     });
   });
 });

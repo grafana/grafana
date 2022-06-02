@@ -1,5 +1,6 @@
 import { FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+
 import { calculateHeatmapFromData } from './heatmap';
 import { HeatmapCalculationOptions } from './models.gen';
 

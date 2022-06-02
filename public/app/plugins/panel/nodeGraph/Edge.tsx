@@ -1,4 +1,5 @@
 import React, { MouseEvent, memo } from 'react';
+
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 

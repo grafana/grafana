@@ -26,7 +26,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points provisioning RoutePutContactpoints
+// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -48,14 +48,14 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:parameters RouteDeleteContactpoints
+// swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
 	// ContactPointUID should be the contact point UID identifier
 	// in:path
 	ID string
 }
 
-// swagger:parameters RoutePostContactpoints RoutePutContactpoints
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {
 	// in:body
 	Body EmbeddedContactPoint
@@ -73,7 +73,7 @@ type EmbeddedContactPoint struct {
 	Type                  string           `json:"type" binding:"required"`
 	Settings              *simplejson.Json `json:"settings" binding:"required"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Provenance            string           `json:"provanance"`
+	Provenance            string           `json:"provenance"`
 }
 
 const RedactedValue = "[REDACTED]"
@@ -92,7 +92,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
 		Settings: e.Settings,
 		Type:     e.Type,
-	}, nil, decryptFunc, nil)
+	}, nil, decryptFunc, nil, nil)
 	if _, err := factory(cfg); err != nil {
 		return err
 	}

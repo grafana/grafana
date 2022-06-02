@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+
 import {
   PanelOptionsEditorBuilder,
   PluginState,
@@ -7,9 +8,10 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 
-import { HeatmapTransformerOptions, heatmapTransformer } from './heatmap';
-import { addHeatmapCalculationOptions } from './editor/helper';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
+
+import { addHeatmapCalculationOptions } from './editor/helper';
+import { HeatmapTransformerOptions, heatmapTransformer } from './heatmap';
 
 // Nothing defined in state
 const supplier = (

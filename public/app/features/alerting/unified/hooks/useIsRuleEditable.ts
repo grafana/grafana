@@ -1,7 +1,9 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { getRulesPermissions } from '../utils/access-control';
 import { isGrafanaRulerRule } from '../utils/rules';
+
 import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -16,8 +18,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
-  const hasEditPermission = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
-  const hasRemovePermission = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
+  const hasEditPermission = contextSrv.hasPermission(rulePermission.update);
+  const hasRemovePermission = contextSrv.hasPermission(rulePermission.delete);
 
   const { folder, loading } = useFolder(folderUID);
 
@@ -25,7 +27,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     return { isEditable: false, isRemovable: false, loading: false };
   }
 
-  // grafana rules can be edited if user can edit the folder they're in
+  // Grafana rules can be edited if user can edit the folder they're in
+  // When RBAC is disabled access to a folder is the only requirement for managing rules
   if (isGrafanaRulerRule(rule)) {
     if (!folderUID) {
       throw new Error(
@@ -42,8 +45,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   const isRulerAvailable = Boolean(dataSources[rulesSourceName]?.result?.rulerConfig);
   return {
-    isEditable: hasEditPermission && isRulerAvailable,
-    isRemovable: hasRemovePermission && isRulerAvailable,
+    isEditable: hasEditPermission && contextSrv.isEditor && isRulerAvailable,
+    isRemovable: hasRemovePermission && contextSrv.isEditor && isRulerAvailable,
     loading: dataSources[rulesSourceName]?.loading,
   };
 }

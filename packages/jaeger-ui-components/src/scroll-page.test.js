@@ -14,8 +14,8 @@
 
 jest.mock('./Tween');
 
-import { scrollBy, scrollTo, cancel } from './scroll-page';
 import Tween from './Tween';
+import { scrollBy, scrollTo, cancel } from './scroll-page';
 
 // keep track of instances, manually
 // https://github.com/facebook/jest/issues/5019

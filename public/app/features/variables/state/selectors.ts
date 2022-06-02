@@ -1,9 +1,11 @@
+import memoizeOne from 'memoize-one';
+
+import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
 import { VariableModel } from '../types';
-import { getState } from '../../../store/store';
-import memoizeOne from 'memoize-one';
-import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { toStateKey } from '../utils';
+
+import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { KeyedVariableIdentifier, VariablesState } from './types';
 
 export const getVariable = <T extends VariableModel = VariableModel>(

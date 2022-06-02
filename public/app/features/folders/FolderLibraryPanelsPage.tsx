@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
-import { getLoadingNav } from './state/navModel';
-import { LibraryElementDTO } from '../library-panels/types';
 import Page from '../../core/components/Page/Page';
+import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
+import { LibraryElementDTO } from '../library-panels/types';
+
 import { getFolderByUid } from './state/actions';
+import { getLoadingNav } from './state/navModel';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

@@ -1,8 +1,11 @@
 import { keyBy } from 'lodash';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { initialState, invitesReducer } from './reducers';
-import { fetchInvitees, revokeInvite } from './actions';
+
 import { getMockInvitees } from 'app/features/users/__mocks__/userMocks';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+
+import { fetchInvitees, revokeInvite } from './actions';
+import { initialState, invitesReducer } from './reducers';
 
 describe('inviteesReducer', () => {
   describe('when fetchInvitees is dispatched', () => {

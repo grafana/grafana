@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -354,7 +353,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				s.sqlStore.Dialect.Quote("user"),
 				s.sqlStore.Dialect.BooleanStr(true)))
 
-		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !accesscontrol.IsDisabled(s.sqlStore.Cfg) {
 			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
@@ -379,6 +378,11 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				whereConditions,
 				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
 			whereParams = append(whereParams, now)
+		case serviceaccounts.FilterOnlyDisabled:
+			whereConditions = append(
+				whereConditions,
+				"is_disabled = ?")
+			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
 		default:
 			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}

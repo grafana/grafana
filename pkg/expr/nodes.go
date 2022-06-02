@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -236,6 +237,15 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
+		dataSource := dn.datasource.Type
+		if isAllFrameVectors(dataSource, qr.Frames) {
+			vals, err = framesToNumbers(qr.Frames)
+			if err != nil {
+				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
+			}
+			return mathexp.Results{Values: vals}, nil
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
@@ -254,7 +264,6 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			}
 		}
 
-		dataSource := dn.datasource.Type
 		for _, frame := range qr.Frames {
 			logger.Debug("expression datasource query (seriesSet)", "query", refID)
 			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
@@ -276,6 +285,51 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	return mathexp.Results{
 		Values: vals,
 	}, nil
+}
+
+func isAllFrameVectors(datasourceType string, frames data.Frames) bool {
+	if datasourceType != "prometheus" {
+		return false
+	}
+	allVector := false
+	for i, frame := range frames {
+		if frame.Meta != nil && frame.Meta.Custom != nil {
+			if sMap, ok := frame.Meta.Custom.(map[string]string); ok {
+				if sMap != nil {
+					if sMap["resultType"] == "vector" {
+						if i != 0 && !allVector {
+							break
+						}
+						allVector = true
+					}
+				}
+			}
+		}
+	}
+	return allVector
+}
+
+func framesToNumbers(frames data.Frames) ([]mathexp.Value, error) {
+	vals := make([]mathexp.Value, 0, len(frames))
+	for _, frame := range frames {
+		if frame == nil {
+			continue
+		}
+		if len(frame.Fields) == 2 && frame.Fields[0].Len() == 1 {
+			// Can there be zero Len Field results that are being skipped?
+			valueField := frame.Fields[1]
+			if valueField.Type().Numeric() { // should be []float64
+				val, err := valueField.FloatAt(0) // FloatAt should not err if numeric
+				if err != nil {
+					return nil, fmt.Errorf("failed to read value of frame [%v] (RefID %v) of type [%v] as float: %w", frame.Name, frame.RefID, valueField.Type(), err)
+				}
+				n := mathexp.NewNumber(frame.Name, valueField.Labels)
+				n.SetValue(&val)
+				vals = append(vals, n)
+			}
+		}
+	}
+	return vals, nil
 }
 
 func isNumberTable(frame *data.Frame) bool {

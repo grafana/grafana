@@ -1,7 +1,10 @@
-// Libraries
+import { css } from '@emotion/css';
+import { debounce, intersectionBy, unionBy } from 'lodash';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
-import { intersectionBy, debounce, unionBy } from 'lodash';
+import { Editor, Node, Plugin } from 'slate';
 
+import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import {
   BracesPlugin,
   LegacyForms,
@@ -11,25 +14,21 @@ import {
   TypeaheadInput,
   TypeaheadOutput,
 } from '@grafana/ui';
-
-// Utils & Services
-// dom also includes Element polyfills
-import { Editor, Node, Plugin } from 'slate';
-import syntax from '../syntax';
-
-// Types
-import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
-import { CloudWatchDatasource } from '../datasource';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import { CloudWatchLanguageProvider } from '../language_provider';
-import { css } from '@emotion/css';
-import { ExploreId } from 'app/types';
-import { dispatch } from 'app/store/store';
+import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
+import { dispatch } from 'app/store/store';
+import { ExploreId } from 'app/types';
+// Utils & Services
+// dom also includes Element polyfills
+
+import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchLanguageProvider } from '../language_provider';
+import syntax from '../syntax';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
+import { appendTemplateVariables } from '../utils/utils';
+
 import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
@@ -311,9 +310,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             inputEl={
               <MultiSelect
                 aria-label="Log Groups"
-                menuShouldPortal
                 allowCustomValue={allowCustomValue}
-                options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
+                options={appendTemplateVariables(datasource, unionBy(availableLogGroups, selectedLogGroups, 'value'))}
                 value={selectedLogGroups}
                 onChange={(v) => {
                   this.setSelectedLogGroups(v);
@@ -321,6 +319,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onCreateOption={(v) => {
                   this.setCustomLogGroups(v);
                 }}
+                onBlur={this.props.onRunQuery}
                 className={containerClass}
                 closeMenuOnSelect={false}
                 isClearable={true}
@@ -342,9 +341,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              query={query.expression ?? ''}
+              query={(query as CloudWatchLogsQuery).expression ?? ''}
               onChange={this.onChangeQuery}
-              onBlur={this.props.onBlur}
               onClick={this.onQueryFieldClick}
               onRunQuery={this.props.onRunQuery}
               onTypeahead={this.onTypeahead}

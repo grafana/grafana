@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
 import classNames from 'classnames';
 import { isNil } from 'lodash';
 import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
 
 export type ScrollbarPosition = positionValues;
 
 interface Props {
   className?: string;
+  testId?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHeightMax?: string;
@@ -31,6 +34,7 @@ export const CustomScrollbar: FC<Props> = ({
   autoHideTimeout = 200,
   setScrollTop,
   className,
+  testId,
   autoHeightMin = '0',
   autoHeightMax = '100%',
   hideTracksWhenNotNeeded = false,
@@ -116,6 +120,7 @@ export const CustomScrollbar: FC<Props> = ({
 
   return (
     <Scrollbars
+      data-testid={testId}
       ref={ref}
       className={classNames(styles.customScrollbar, className)}
       onScrollStop={onScrollStop}

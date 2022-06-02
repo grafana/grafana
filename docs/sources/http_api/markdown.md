@@ -109,37 +109,6 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 | PUT    | /api/admin/users/{user_id}/permissions           | [setPermissions](#set-permissions)    | Set permissions for user.                                                                                                                                                                   |
 | PUT    | /api/admin/users/{user_id}/quotas/{quota_target} | [updateUserQuota](#update-user-quota) | Update user quota.                                                                                                                                                                          |
 
-### alertmanager
-
-Grafana Alerting Alertmanager-compatible endpoints
-
-| Method | URI                                                        | Name                                                                      | Summary                                             |
-| ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------- |
-| POST   | /api/alertmanager/grafana/api/v2/silences                  | [RouteCreateGrafanaSilence](#route-create-grafana-silence)                |                                                     |
-| POST   | /api/alertmanager/{Recipient}/api/v2/silences              | [RouteCreateSilence](#route-create-silence)                               |                                                     |
-| DELETE | /api/alertmanager/{Recipient}/config/api/v1/alerts         | [RouteDeleteAlertingConfig](#route-delete-alerting-config)                |                                                     |
-| DELETE | /api/alertmanager/grafana/config/api/v1/alerts             | [RouteDeleteGrafanaAlertingConfig](#route-delete-grafana-alerting-config) |                                                     |
-| DELETE | /api/alertmanager/grafana/api/v2/silence/{SilenceId}       | [RouteDeleteGrafanaSilence](#route-delete-grafana-silence)                |                                                     |
-| DELETE | /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}   | [RouteDeleteSilence](#route-delete-silence)                               |                                                     |
-| GET    | /api/alertmanager/{Recipient}/api/v2/alerts/groups         | [RouteGetAMAlertGroups](#route-get-a-m-alert-groups)                      |                                                     |
-| GET    | /api/alertmanager/{Recipient}/api/v2/alerts                | [RouteGetAMAlerts](#route-get-a-m-alerts)                                 |                                                     |
-| GET    | /api/alertmanager/{Recipient}/api/v2/status                | [RouteGetAMStatus](#route-get-a-m-status)                                 |                                                     |
-| GET    | /api/alertmanager/{Recipient}/config/api/v1/alerts         | [RouteGetAlertingConfig](#route-get-alerting-config)                      |                                                     |
-| GET    | /api/alertmanager/grafana/api/v2/alerts/groups             | [RouteGetGrafanaAMAlertGroups](#route-get-grafana-a-m-alert-groups)       |                                                     |
-| GET    | /api/alertmanager/grafana/api/v2/alerts                    | [RouteGetGrafanaAMAlerts](#route-get-grafana-a-m-alerts)                  |                                                     |
-| GET    | /api/alertmanager/grafana/api/v2/status                    | [RouteGetGrafanaAMStatus](#route-get-grafana-a-m-status)                  |                                                     |
-| GET    | /api/alertmanager/grafana/config/api/v1/alerts             | [RouteGetGrafanaAlertingConfig](#route-get-grafana-alerting-config)       |                                                     |
-| GET    | /api/alertmanager/grafana/api/v2/silence/{SilenceId}       | [RouteGetGrafanaSilence](#route-get-grafana-silence)                      |                                                     |
-| GET    | /api/alertmanager/grafana/api/v2/silences                  | [RouteGetGrafanaSilences](#route-get-grafana-silences)                    |                                                     |
-| GET    | /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}   | [RouteGetSilence](#route-get-silence)                                     |                                                     |
-| GET    | /api/alertmanager/{Recipient}/api/v2/silences              | [RouteGetSilences](#route-get-silences)                                   |                                                     |
-| POST   | /api/alertmanager/{Recipient}/api/v2/alerts                | [RoutePostAMAlerts](#route-post-a-m-alerts)                               |                                                     |
-| POST   | /api/alertmanager/{Recipient}/config/api/v1/alerts         | [RoutePostAlertingConfig](#route-post-alerting-config)                    |                                                     |
-| POST   | /api/alertmanager/grafana/api/v2/alerts                    | [RoutePostGrafanaAMAlerts](#route-post-grafana-a-m-alerts)                |                                                     |
-| POST   | /api/alertmanager/grafana/config/api/v1/alerts             | [RoutePostGrafanaAlertingConfig](#route-post-grafana-alerting-config)     |                                                     |
-| POST   | /api/alertmanager/grafana/config/api/v1/receivers/test     | [RoutePostTestGrafanaReceivers](#route-post-test-grafana-receivers)       | Test Grafana managed receivers without saving them. |
-| POST   | /api/alertmanager/{Recipient}/config/api/v1/receivers/test | [RoutePostTestReceivers](#route-post-test-receivers)                      | Test Grafana managed receivers without saving them. |
-
 ### annotations
 
 Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
@@ -149,6 +118,7 @@ Grafana Annotations feature released in Grafana 4.6. Annotations are saved in th
 | POST   | /api/annotations                 | [createAnnotation](#create-annotation)                  | Create Annotation.                    |
 | POST   | /api/annotations/graphite        | [createGraphiteAnnotation](#create-graphite-annotation) | Create Annotation in Graphite format. |
 | DELETE | /api/annotations/{annotation_id} | [deleteAnnotation](#delete-annotation)                  | Delete Annotation By ID.              |
+| GET    | /api/annotations/{annotation_id} | [getAnnotation](#get-annotation)                        | Get Annotation by Id.                 |
 | GET    | /api/annotations/tags            | [getAnnotationTags](#get-annotation-tags)               | Find Annotations Tags.                |
 | GET    | /api/annotations                 | [getAnnotations](#get-annotations)                      | Find Annotations.                     |
 | POST   | /api/annotations/mass-delete     | [massDeleteAnnotations](#mass-delete-annotations)       | Delete multiple annotations.          |
@@ -162,15 +132,6 @@ Grafana Annotations feature released in Grafana 4.6. Annotations are saved in th
 | POST   | /api/auth/keys      | [addAPIkey](#add-a-p-ikey)       | Creates an API key. |
 | DELETE | /api/auth/keys/{id} | [deleteAPIkey](#delete-a-p-ikey) | Delete API key.     |
 | GET    | /api/auth/keys      | [getAPIkeys](#get-a-p-ikeys)     | Get auth keys.      |
-
-### configuration
-
-| Method | URI                           | Name                                                      | Summary                                                                                                                                     |
-| ------ | ----------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| DELETE | /api/v1/ngalert/admin_config  | [RouteDeleteNGalertConfig](#route-delete-n-galert-config) | Deletes the NGalert configuration of the user's organization.                                                                               |
-| GET    | /api/v1/ngalert/alertmanagers | [RouteGetAlertmanagers](#route-get-alertmanagers)         | Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.                               |
-| GET    | /api/v1/ngalert/admin_config  | [RouteGetNGalertConfig](#route-get-n-galert-config)       | Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.                                       |
-| POST   | /api/v1/ngalert/admin_config  | [RoutePostNGalertConfig](#route-post-n-galert-config)     | Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to "all". |
 
 ### current_org_details
 
@@ -189,18 +150,23 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 ### dashboard_permissions
 
-| Method | URI                                          | Name                                                    | Summary                                                |
-| ------ | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------ |
-| GET    | /api/dashboards/id/{DashboardID}/permissions | [getDashboardPermissions](#get-dashboard-permissions)   | Gets all existing permissions for the given dashboard. |
-| POST   | /api/dashboards/id/{DashboardID}/permissions | [postDashboardPermissions](#post-dashboard-permissions) | Updates permissions for a dashboard.                   |
+| Method | URI                                          | Name                                                                    | Summary                                                |
+| ------ | -------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------ |
+| GET    | /api/dashboards/id/{DashboardID}/permissions | [getDashboardPermissions](#get-dashboard-permissions)                   | Gets all existing permissions for the given dashboard. |
+| GET    | /api/dashboards/uid/{uid}/permissions        | [getDashboardPermissionsWithUid](#get-dashboard-permissions-with-uid)   | Gets all existing permissions for the given dashboard. |
+| POST   | /api/dashboards/id/{DashboardID}/permissions | [postDashboardPermissions](#post-dashboard-permissions)                 | Updates permissions for a dashboard.                   |
+| POST   | /api/dashboards/uid/{uid}/permissions        | [postDashboardPermissionsWithUid](#post-dashboard-permissions-with-uid) | Updates permissions for a dashboard.                   |
 
 ### dashboard_versions
 
-| Method | URI                                                            | Name                                                  | Summary                                           |
-| ------ | -------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| GET    | /api/dashboards/id/{DashboardID}/versions/{DashboardVersionID} | [getDashboardVersion](#get-dashboard-version)         | Get a specific dashboard version.                 |
-| GET    | /api/dashboards/id/{DashboardID}/versions                      | [getDashboardVersions](#get-dashboard-versions)       | Gets all existing versions for the dashboard.     |
-| POST   | /api/dashboards/id/{DashboardID}/restore                       | [restoreDashboardVersion](#restore-dashboard-version) | Restore a dashboard to a given dashboard version. |
+| Method | URI                                                            | Name                                                              | Summary                                                     |
+| ------ | -------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------- |
+| GET    | /api/dashboards/id/{DashboardID}/versions/{DashboardVersionID} | [getDashboardVersion](#get-dashboard-version)                     | Get a specific dashboard version.                           |
+| GET    | /api/dashboards/uid/{uid}/versions/{DashboardVersionID}        | [getDashboardVersionByUID](#get-dashboard-version-by-uid)         | Get a specific dashboard version using UID.                 |
+| GET    | /api/dashboards/id/{DashboardID}/versions                      | [getDashboardVersions](#get-dashboard-versions)                   | Gets all existing versions for the dashboard.               |
+| GET    | /api/dashboards/uid/{uid}/versions                             | [getDashboardVersionsByUID](#get-dashboard-versions-by-uid)       | Gets all existing versions for the dashboard using UID.     |
+| POST   | /api/dashboards/id/{DashboardID}/restore                       | [restoreDashboardVersion](#restore-dashboard-version)             | Restore a dashboard to a given dashboard version.           |
+| POST   | /api/dashboards/uid/{uid}/restore                              | [restoreDashboardVersionByUID](#restore-dashboard-version-by-uid) | Restore a dashboard to a given dashboard version using UID. |
 
 ### dashboards
 
@@ -222,36 +188,40 @@ Permissions can be set for a user or a team. Permissions cannot be set for Admin
 This is only available in Grafana Enterprise
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                         | Name                                       | Summary                                |
-| ------ | ----------------------------------------------------------- | ------------------------------------------ | -------------------------------------- |
-| DELETE | /api/datasources/{datasource_id}/permissions/{permissionId} | [deletePermissions](#delete-permissions)   | Remove permission for a data source.   |
-| POST   | /api/datasources/{datasource_id}/disable-permissions        | [disablePermissions](#disable-permissions) | Disable permissions for a data source. |
-| POST   | /api/datasources/{datasource_id}/enable-permissions         | [enablePermissions](#enable-permissions)   | Enable permissions for a data source.  |
-| GET    | /api/datasources/{datasource_id}/permissions                | [getPermissions](#get-permissions)         | Get permissions for a data source.     |
+| Method | URI                                                        | Name                                       | Summary                                |
+| ------ | ---------------------------------------------------------- | ------------------------------------------ | -------------------------------------- |
+| DELETE | /api/datasources/{datasourceId}/permissions/{permissionId} | [deletePermissions](#delete-permissions)   | Remove permission for a data source.   |
+| POST   | /api/datasources/{datasourceId}/disable-permissions        | [disablePermissions](#disable-permissions) | Disable permissions for a data source. |
+| POST   | /api/datasources/{datasourceId}/enable-permissions         | [enablePermissions](#enable-permissions)   | Enable permissions for a data source.  |
+| GET    | /api/datasources/{datasourceId}/permissions                | [getPermissions](#get-permissions)         | Get permissions for a data source.     |
 
 ### datasources
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                                  | Name                                                                          | Summary                                 |
-| ------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------- |
-| POST   | /api/datasources                                                     | [addDatasource](#add-datasource)                                              | Create a data source.                   |
-| DELETE | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyDELETEByUIDcalls](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.         |
-| DELETE | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyDELETEcalls](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.         |
-| GET    | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyGETByUIDcalls](#datasource-proxy-g-e-t-by-ui-dcalls)          | Data source proxy GET calls.            |
-| GET    | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyGETcalls](#datasource-proxy-g-e-tcalls)                       | Data source proxy GET calls.            |
-| POST   | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyPOSTByUIDcalls](#datasource-proxy-p-o-s-t-by-ui-dcalls)       | Data source proxy POST calls.           |
-| POST   | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyPOSTcalls](#datasource-proxy-p-o-s-tcalls)                    | Data source proxy POST calls.           |
-| DELETE | /api/datasources/{datasource_id}                                     | [deleteDatasourceByID](#delete-datasource-by-id)                              | Delete an existing data source by id.   |
-| DELETE | /api/datasources/name/{datasource_name}                              | [deleteDatasourceByName](#delete-datasource-by-name)                          | Delete an existing data source by name. |
-| DELETE | /api/datasources/uid/{datasource_uid}                                | [deleteDatasourceByUID](#delete-datasource-by-uid)                            | Delete an existing data source by UID.  |
-| GET    | /api/datasources/{datasource_id}                                     | [getDatasourceByID](#get-datasource-by-id)                                    | Get a single data source by Id.         |
-| GET    | /api/datasources/name/{datasource_name}                              | [getDatasourceByName](#get-datasource-by-name)                                | Get a single data source by Name.       |
-| GET    | /api/datasources/uid/{datasource_uid}                                | [getDatasourceByUID](#get-datasource-by-uid)                                  | Get a single data source by UID.        |
-| GET    | /api/datasources/id/{datasource_name}                                | [getDatasourceIdByName](#get-datasource-id-by-name)                           | Get data source Id by Name.             |
-| GET    | /api/datasources                                                     | [getDatasources](#get-datasources)                                            | Get all data sources.                   |
-| POST   | /api/tsdb/query                                                      | [queryDatasource](#query-datasource)                                          | Query metrics.                          |
-| PUT    | /api/datasources/{datasource_id}                                     | [updateDatasource](#update-datasource)                                        | Update an existing data source.         |
+| Method | URI                                                           | Name                                                                          | Summary                                              |
+| ------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
+| POST   | /api/datasources                                              | [addDatasource](#add-datasource)                                              | Create a data source.                                |
+| GET    | /api/datasources/uid/{uid}/health                             | [checkDatasourceHealth](#check-datasource-health)                             | Check data source health by Id.                      |
+| GET    | /api/datasources/{id}/health                                  | [checkDatasourceHealthByID](#check-datasource-health-by-id)                   | Check data source health by Id.                      |
+| DELETE | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyDELETEByUIDcalls](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.                      |
+| DELETE | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyDELETEcalls](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.                      |
+| GET    | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyGETByUIDcalls](#datasource-proxy-g-e-t-by-ui-dcalls)          | Data source proxy GET calls.                         |
+| GET    | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyGETcalls](#datasource-proxy-g-e-tcalls)                       | Data source proxy GET calls.                         |
+| POST   | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyPOSTByUIDcalls](#datasource-proxy-p-o-s-t-by-ui-dcalls)       | Data source proxy POST calls.                        |
+| POST   | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyPOSTcalls](#datasource-proxy-p-o-s-tcalls)                    | Data source proxy POST calls.                        |
+| DELETE | /api/datasources/{id}                                         | [deleteDatasourceByID](#delete-datasource-by-id)                              | Delete an existing data source by id.                |
+| DELETE | /api/datasources/name/{name}                                  | [deleteDatasourceByName](#delete-datasource-by-name)                          | Delete an existing data source by name.              |
+| DELETE | /api/datasources/uid/{uid}                                    | [deleteDatasourceByUID](#delete-datasource-by-uid)                            | Delete an existing data source by UID.               |
+| GET    | /api/datasources/uid/{uid}/resources/{datasource_proxy_route} | [fetchDatasourceResources](#fetch-datasource-resources)                       | Fetch data source resources.                         |
+| GET    | /api/datasources/{id}/resources/{datasource_proxy_route}      | [fetchDatasourceResourcesByID](#fetch-datasource-resources-by-id)             | Fetch data source resources by Id.                   |
+| GET    | /api/datasources/{id}                                         | [getDatasourceByID](#get-datasource-by-id)                                    | Get a single data source by Id.                      |
+| GET    | /api/datasources/name/{name}                                  | [getDatasourceByName](#get-datasource-by-name)                                | Get a single data source by Name.                    |
+| GET    | /api/datasources/uid/{uid}                                    | [getDatasourceByUID](#get-datasource-by-uid)                                  | Get a single data source by UID.                     |
+| GET    | /api/datasources/id/{name}                                    | [getDatasourceIdByName](#get-datasource-id-by-name)                           | Get data source Id by Name.                          |
+| GET    | /api/datasources                                              | [getDatasources](#get-datasources)                                            | Get all data sources.                                |
+| PUT    | /api/datasources/{id}                                         | [updateDatasourceByID](#update-datasource-by-id)                              | Update an existing data source by its sequential ID. |
+| PUT    | /api/datasources/uid/{uid}                                    | [updateDatasourceByUID](#update-datasource-by-uid)                            | Update an existing data source.                      |
 
 ### ds
 
@@ -393,28 +363,6 @@ The Admin Organizations HTTP API does not currently work with an API Token. API 
 | GET    | /api/orgs                                | [searchOrg](#search-org)                           |                                            |
 | PUT    | /api/orgs/{org_id}/quotas/{quota_target} | [updateOrgQuota](#update-org-quota)                | Update user quota.                         |
 
-### prometheus
-
-Grafana Alerting Prometheus-compatible endpoints
-
-| Method | URI                                       | Name                                                              | Summary |
-| ------ | ----------------------------------------- | ----------------------------------------------------------------- | ------- |
-| GET    | /api/prometheus/{Recipient}/api/v1/alerts | [RouteGetAlertStatuses](#route-get-alert-statuses)                |         |
-| GET    | /api/prometheus/grafana/api/v1/alerts     | [RouteGetGrafanaAlertStatuses](#route-get-grafana-alert-statuses) |         |
-| GET    | /api/prometheus/grafana/api/v1/rules      | [RouteGetGrafanaRuleStatuses](#route-get-grafana-rule-statuses)   |         |
-| GET    | /api/prometheus/{Recipient}/api/v1/rules  | [RouteGetRuleStatuses](#route-get-rule-statuses)                  |         |
-
-### provisioning
-
-| Method | URI                                   | Name                                                    | Summary                            |
-| ------ | ------------------------------------- | ------------------------------------------------------- | ---------------------------------- |
-| DELETE | /api/provisioning/contact-points/{ID} | [RouteDeleteContactpoints](#route-delete-contactpoints) | Delete a contact point.            |
-| GET    | /api/provisioning/contact-points      | [RouteGetContactpoints](#route-get-contactpoints)       | Get all the contact points.        |
-| GET    | /api/provisioning/policies            | [RouteGetPolicyTree](#route-get-policy-tree)            | Get the notification policy tree.  |
-| POST   | /api/provisioning/contact-points      | [RoutePostContactpoints](#route-post-contactpoints)     | Create a contact point.            |
-| POST   | /api/provisioning/policies            | [RoutePostPolicyTree](#route-post-policy-tree)          | Sets the notification policy tree. |
-| PUT    | /api/provisioning/contact-points      | [RoutePutContactpoints](#route-put-contactpoints)       | Update an existing contact point.  |
-
 ### recording_rules
 
 | Method | URI                                    | Name                                                                  | Summary                      |
@@ -434,37 +382,19 @@ This API allows you to interact programmatically with the Reporting feature.
 Reporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.
 If you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                   | Name                                        | Summary                      |
-| ------ | ------------------------------------- | ------------------------------------------- | ---------------------------- |
-| POST   | /api/reports                          | [createReport](#create-report)              | Create a report.             |
-| DELETE | /api/reports/{reportID}               | [deleteReport](#delete-report)              | Delete a report.             |
-| GET    | /api/reports/{reportID}               | [getReport](#get-report)                    | Get a report.                |
-| GET    | /api/reports/settings                 | [getReportSettings](#get-report-settings)   | Get settings.                |
-| GET    | /api/reports                          | [getReports](#get-reports)                  | List reports.                |
-| GET    | /api/reports/render/pdf/{DashboardID} | [renderReportPDF](#render-report-p-d-f)     | Render report for dashboard. |
-| POST   | /api/reports/settings                 | [saveReportSettings](#save-report-settings) | Save settings.               |
-| POST   | /api/reports/email                    | [sendReport](#send-report)                  | Send a report.               |
-| POST   | /api/reports/test-email               | [sendTestEmail](#send-test-email)           | Send test report via email.  |
-| PUT    | /api/reports/{reportID}               | [updateReport](#update-report)              | Update a report.             |
-
-### ruler
-
-Grafana Alerting endpoints for managing rules
-
-| Method | URI                                                         | Name                                                                                   | Summary |
-| ------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------- |
-| DELETE | /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}     | [RouteDeleteGrafanaRuleGroupConfig](#route-delete-grafana-rule-group-config)           |         |
-| DELETE | /api/ruler/grafana/api/v1/rules/{Namespace}                 | [RouteDeleteNamespaceGrafanaRulesConfig](#route-delete-namespace-grafana-rules-config) |         |
-| DELETE | /api/ruler/{Recipient}/api/v1/rules/{Namespace}             | [RouteDeleteNamespaceRulesConfig](#route-delete-namespace-rules-config)                |         |
-| DELETE | /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} | [RouteDeleteRuleGroupConfig](#route-delete-rule-group-config)                          |         |
-| GET    | /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}     | [RouteGetGrafanaRuleGroupConfig](#route-get-grafana-rule-group-config)                 |         |
-| GET    | /api/ruler/grafana/api/v1/rules                             | [RouteGetGrafanaRulesConfig](#route-get-grafana-rules-config)                          |         |
-| GET    | /api/ruler/grafana/api/v1/rules/{Namespace}                 | [RouteGetNamespaceGrafanaRulesConfig](#route-get-namespace-grafana-rules-config)       |         |
-| GET    | /api/ruler/{Recipient}/api/v1/rules/{Namespace}             | [RouteGetNamespaceRulesConfig](#route-get-namespace-rules-config)                      |         |
-| GET    | /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} | [RouteGetRulegGroupConfig](#route-get-ruleg-group-config)                              |         |
-| GET    | /api/ruler/{Recipient}/api/v1/rules                         | [RouteGetRulesConfig](#route-get-rules-config)                                         |         |
-| POST   | /api/ruler/grafana/api/v1/rules/{Namespace}                 | [RoutePostNameGrafanaRulesConfig](#route-post-name-grafana-rules-config)               |         |
-| POST   | /api/ruler/{Recipient}/api/v1/rules/{Namespace}             | [RoutePostNameRulesConfig](#route-post-name-rules-config)                              |         |
+| Method | URI                                   | Name                                        | Summary                                |
+| ------ | ------------------------------------- | ------------------------------------------- | -------------------------------------- |
+| POST   | /api/reports                          | [createReport](#create-report)              | Create a report.                       |
+| DELETE | /api/reports/{reportID}               | [deleteReport](#delete-report)              | Delete a report.                       |
+| GET    | /api/reports/{reportID}               | [getReport](#get-report)                    | Get a report.                          |
+| GET    | /api/reports/settings                 | [getReportSettings](#get-report-settings)   | Get settings.                          |
+| GET    | /api/reports                          | [getReports](#get-reports)                  | List reports.                          |
+| GET    | /api/reports/render/pdf/{DashboardID} | [renderReportPDF](#render-report-p-d-f)     | Render report for dashboard.           |
+| GET    | /api/reports/render/pdfs              | [renderReportPDFs](#render-report-p-d-fs)   | Render report for multiple dashboards. |
+| POST   | /api/reports/settings                 | [saveReportSettings](#save-report-settings) | Save settings.                         |
+| POST   | /api/reports/email                    | [sendReport](#send-report)                  | Send a report.                         |
+| POST   | /api/reports/test-email               | [sendTestEmail](#send-test-email)           | Send test report via email.            |
+| PUT    | /api/reports/{reportID}               | [updateReport](#update-report)              | Update a report.                       |
 
 ### saml
 
@@ -538,16 +468,6 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 | PUT    | /api/teams/{team_id}/members/{user_id} | [updateTeamMember](#update-team-member)           | Update Team Member.      |
 | PUT    | /api/teams/{team_id}/preferences       | [updateTeamPreferences](#update-team-preferences) | Update Team Preferences. |
 
-### testing
-
-Grafana Alerting testing endpoints
-
-| Method | URI                           | Name                                                          | Summary |
-| ------ | ----------------------------- | ------------------------------------------------------------- | ------- |
-| POST   | /api/v1/eval                  | [RouteEvalQueries](#route-eval-queries)                       |         |
-| POST   | /api/v1/rule/test/{Recipient} | [RouteTestRuleConfig](#route-test-rule-config)                |         |
-| POST   | /api/v1/rule/test/grafana     | [RouteTestRuleGrafanaConfig](#route-test-rule-grafana-config) |         |
-
 ### user_preferences
 
 | Method | URI                   | Name                                              | Summary                  |
@@ -569,2052 +489,6 @@ Grafana Alerting testing endpoints
 | PUT    | /api/users/{user_id}       | [updateUser](#update-user)                           | Update user.                |
 
 ## Paths
-
-### <span id="route-create-grafana-silence"></span> RouteCreateGrafanaSilence (_RouteCreateGrafanaSilence_)
-
-```
-POST /api/alertmanager/grafana/api/v2/silences
-```
-
-create silence
-
-#### Parameters
-
-| Name    | Source | Type                                 | Go type                  | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------------------ | ------------------------ | --------- | :------: | ------- | ----------- |
-| Silence | `body` | [PostableSilence](#postable-silence) | `models.PostableSilence` |           |          |         |             |
-
-#### All responses
-
-| Code                                     | Status      | Description     | Has headers | Schema                                             |
-| ---------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------- |
-| [201](#route-create-grafana-silence-201) | Created     | gettableSilence |             | [schema](#route-create-grafana-silence-201-schema) |
-| [400](#route-create-grafana-silence-400) | Bad Request | ValidationError |             | [schema](#route-create-grafana-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-create-grafana-silence-201"></span> 201 - gettableSilence
-
-Status: Created
-
-###### <span id="route-create-grafana-silence-201-schema"></span> Schema
-
-[GettableSilence](#gettable-silence)
-
-##### <span id="route-create-grafana-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-create-grafana-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-create-silence"></span> RouteCreateSilence (_RouteCreateSilence_)
-
-```
-POST /api/alertmanager/{Recipient}/api/v2/silences
-```
-
-create silence
-
-#### Parameters
-
-| Name      | Source | Type                                 | Go type                  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------------------ | ------------------------ | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer)            | `int64`                  |           |    ✓     |         | Recipient should be the numeric datasource id |
-| Silence   | `body` | [PostableSilence](#postable-silence) | `models.PostableSilence` |           |          |         |                                               |
-
-#### All responses
-
-| Code                             | Status      | Description     | Has headers | Schema                                     |
-| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
-| [201](#route-create-silence-201) | Created     | gettableSilence |             | [schema](#route-create-silence-201-schema) |
-| [400](#route-create-silence-400) | Bad Request | ValidationError |             | [schema](#route-create-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-create-silence-201"></span> 201 - gettableSilence
-
-Status: Created
-
-###### <span id="route-create-silence-201-schema"></span> Schema
-
-[GettableSilence](#gettable-silence)
-
-##### <span id="route-create-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-create-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-delete-alerting-config"></span> RouteDeleteAlertingConfig (_RouteDeleteAlertingConfig_)
-
-```
-DELETE /api/alertmanager/{Recipient}/config/api/v1/alerts
-```
-
-deletes the Alerting config for a tenant
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                     | Status      | Description     | Has headers | Schema                                             |
-| ---------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------- |
-| [200](#route-delete-alerting-config-200) | OK          | Ack             |             | [schema](#route-delete-alerting-config-200-schema) |
-| [400](#route-delete-alerting-config-400) | Bad Request | ValidationError |             | [schema](#route-delete-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-delete-alerting-config-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-delete-alerting-config-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-delete-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
-
-```
-DELETE /api/provisioning/contact-points/{ID}
-```
-
-#### Consumes
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description                                                |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------------------------------------------------- |
-| ID   | `path` | string | `string` |           |    ✓     |         | ContactPointUID should be the contact point UID identifier |
-
-#### All responses
-
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [202](#route-delete-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-delete-contactpoints-202-schema) |
-| [400](#route-delete-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-delete-contactpoints-400-schema) |
-
-#### Responses
-
-##### <span id="route-delete-contactpoints-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-delete-contactpoints-202-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-contactpoints-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-delete-contactpoints-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-delete-grafana-alerting-config"></span> RouteDeleteGrafanaAlertingConfig (_RouteDeleteGrafanaAlertingConfig_)
-
-```
-DELETE /api/alertmanager/grafana/config/api/v1/alerts
-```
-
-deletes the Alerting config for a tenant
-
-#### All responses
-
-| Code                                             | Status      | Description     | Has headers | Schema                                                     |
-| ------------------------------------------------ | ----------- | --------------- | :---------: | ---------------------------------------------------------- |
-| [200](#route-delete-grafana-alerting-config-200) | OK          | Ack             |             | [schema](#route-delete-grafana-alerting-config-200-schema) |
-| [400](#route-delete-grafana-alerting-config-400) | Bad Request | ValidationError |             | [schema](#route-delete-grafana-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-delete-grafana-alerting-config-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-delete-grafana-alerting-config-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-grafana-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-delete-grafana-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-delete-grafana-rule-group-config"></span> RouteDeleteGrafanaRuleGroupConfig (_RouteDeleteGrafanaRuleGroupConfig_)
-
-```
-DELETE /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}
-```
-
-Delete rule group
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| Groupname | `path` | string | `string` |           |    ✓     |         |             |
-| Namespace | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                               | Status   | Description | Has headers | Schema                                                       |
-| -------------------------------------------------- | -------- | ----------- | :---------: | ------------------------------------------------------------ |
-| [202](#route-delete-grafana-rule-group-config-202) | Accepted | Ack         |             | [schema](#route-delete-grafana-rule-group-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-delete-grafana-rule-group-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-delete-grafana-rule-group-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-delete-grafana-silence"></span> RouteDeleteGrafanaSilence (_RouteDeleteGrafanaSilence_)
-
-```
-DELETE /api/alertmanager/grafana/api/v2/silence/{SilenceId}
-```
-
-delete silence
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| SilenceId | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                     | Status      | Description     | Has headers | Schema                                             |
-| ---------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------- |
-| [200](#route-delete-grafana-silence-200) | OK          | Ack             |             | [schema](#route-delete-grafana-silence-200-schema) |
-| [400](#route-delete-grafana-silence-400) | Bad Request | ValidationError |             | [schema](#route-delete-grafana-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-delete-grafana-silence-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-delete-grafana-silence-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-grafana-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-delete-grafana-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-delete-n-galert-config"></span> Deletes the NGalert configuration of the user's organization. (_RouteDeleteNGalertConfig_)
-
-```
-DELETE /api/v1/ngalert/admin_config
-```
-
-#### Consumes
-
-- application/json
-
-#### All responses
-
-| Code                                     | Status                | Description | Has headers | Schema                                             |
-| ---------------------------------------- | --------------------- | ----------- | :---------: | -------------------------------------------------- |
-| [200](#route-delete-n-galert-config-200) | OK                    | Ack         |             | [schema](#route-delete-n-galert-config-200-schema) |
-| [500](#route-delete-n-galert-config-500) | Internal Server Error | Failure     |             | [schema](#route-delete-n-galert-config-500-schema) |
-
-#### Responses
-
-##### <span id="route-delete-n-galert-config-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-delete-n-galert-config-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-n-galert-config-500"></span> 500 - Failure
-
-Status: Internal Server Error
-
-###### <span id="route-delete-n-galert-config-500-schema"></span> Schema
-
-[Failure](#failure)
-
-### <span id="route-delete-namespace-grafana-rules-config"></span> RouteDeleteNamespaceGrafanaRulesConfig (_RouteDeleteNamespaceGrafanaRulesConfig_)
-
-```
-DELETE /api/ruler/grafana/api/v1/rules/{Namespace}
-```
-
-Delete namespace
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| Namespace | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                                    | Status   | Description | Has headers | Schema                                                            |
-| ------------------------------------------------------- | -------- | ----------- | :---------: | ----------------------------------------------------------------- |
-| [202](#route-delete-namespace-grafana-rules-config-202) | Accepted | Ack         |             | [schema](#route-delete-namespace-grafana-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-delete-namespace-grafana-rules-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-delete-namespace-grafana-rules-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-delete-namespace-rules-config"></span> RouteDeleteNamespaceRulesConfig (_RouteDeleteNamespaceRulesConfig_)
-
-```
-DELETE /api/ruler/{Recipient}/api/v1/rules/{Namespace}
-```
-
-Delete namespace
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Namespace | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                            | Status   | Description | Has headers | Schema                                                    |
-| ----------------------------------------------- | -------- | ----------- | :---------: | --------------------------------------------------------- |
-| [202](#route-delete-namespace-rules-config-202) | Accepted | Ack         |             | [schema](#route-delete-namespace-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-delete-namespace-rules-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-delete-namespace-rules-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-delete-rule-group-config"></span> RouteDeleteRuleGroupConfig (_RouteDeleteRuleGroupConfig_)
-
-```
-DELETE /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}
-```
-
-Delete rule group
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Groupname | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Namespace | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                       | Status   | Description | Has headers | Schema                                               |
-| ------------------------------------------ | -------- | ----------- | :---------: | ---------------------------------------------------- |
-| [202](#route-delete-rule-group-config-202) | Accepted | Ack         |             | [schema](#route-delete-rule-group-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-delete-rule-group-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-delete-rule-group-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-delete-silence"></span> RouteDeleteSilence (_RouteDeleteSilence_)
-
-```
-DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}
-```
-
-delete silence
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-| SilenceId | `path` | string                    | `string` |           |    ✓     |         |                                               |
-
-#### All responses
-
-| Code                             | Status      | Description     | Has headers | Schema                                     |
-| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
-| [200](#route-delete-silence-200) | OK          | Ack             |             | [schema](#route-delete-silence-200-schema) |
-| [400](#route-delete-silence-400) | Bad Request | ValidationError |             | [schema](#route-delete-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-delete-silence-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-delete-silence-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-delete-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-delete-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-eval-queries"></span> RouteEvalQueries (_RouteEvalQueries_)
-
-```
-POST /api/v1/eval
-```
-
-Test rule
-
-#### Consumes
-
-- application/json
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type                                        | Go type                     | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [EvalQueriesPayload](#eval-queries-payload) | `models.EvalQueriesPayload` |           |          |         |             |
-
-#### All responses
-
-| Code                           | Status | Description         | Has headers | Schema                                   |
-| ------------------------------ | ------ | ------------------- | :---------: | ---------------------------------------- |
-| [200](#route-eval-queries-200) | OK     | EvalQueriesResponse |             | [schema](#route-eval-queries-200-schema) |
-
-#### Responses
-
-##### <span id="route-eval-queries-200"></span> 200 - EvalQueriesResponse
-
-Status: OK
-
-###### <span id="route-eval-queries-200-schema"></span> Schema
-
-[EvalQueriesResponse](#eval-queries-response)
-
-### <span id="route-get-a-m-alert-groups"></span> RouteGetAMAlertGroups (_RouteGetAMAlertGroups_)
-
-```
-GET /api/alertmanager/{Recipient}/api/v2/alerts/groups
-```
-
-get alertmanager alerts
-
-#### Parameters
-
-| Name      | Source  | Type                      | Go type    | Separator | Required | Default | Description                                    |
-| --------- | ------- | ------------------------- | ---------- | --------- | :------: | ------- | ---------------------------------------------- |
-| Recipient | `path`  | int64 (formatted integer) | `int64`    |           |    ✓     |         | Recipient should be the numeric datasource id  |
-| active    | `query` | boolean                   | `bool`     |           |          | `true`  | Show active alerts                             |
-| filter    | `query` | []string                  | `[]string` |           |          |         | A list of matchers to filter alerts by         |
-| inhibited | `query` | boolean                   | `bool`     |           |          | `true`  | Show inhibited alerts                          |
-| receiver  | `query` | string                    | `string`   |           |          |         | A regex matching receivers to filter alerts by |
-| silenced  | `query` | boolean                   | `bool`     |           |          | `true`  | Show silenced alerts                           |
-
-#### All responses
-
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [200](#route-get-a-m-alert-groups-200) | OK          | alertGroups     |             | [schema](#route-get-a-m-alert-groups-200-schema) |
-| [400](#route-get-a-m-alert-groups-400) | Bad Request | ValidationError |             | [schema](#route-get-a-m-alert-groups-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-a-m-alert-groups-200"></span> 200 - alertGroups
-
-Status: OK
-
-###### <span id="route-get-a-m-alert-groups-200-schema"></span> Schema
-
-[AlertGroups](#alert-groups)
-
-##### <span id="route-get-a-m-alert-groups-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-a-m-alert-groups-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-a-m-alerts"></span> RouteGetAMAlerts (_RouteGetAMAlerts_)
-
-```
-GET /api/alertmanager/{Recipient}/api/v2/alerts
-```
-
-get alertmanager alerts
-
-#### Parameters
-
-| Name      | Source  | Type                      | Go type    | Separator | Required | Default | Description                                    |
-| --------- | ------- | ------------------------- | ---------- | --------- | :------: | ------- | ---------------------------------------------- |
-| Recipient | `path`  | int64 (formatted integer) | `int64`    |           |    ✓     |         | Recipient should be the numeric datasource id  |
-| active    | `query` | boolean                   | `bool`     |           |          | `true`  | Show active alerts                             |
-| filter    | `query` | []string                  | `[]string` |           |          |         | A list of matchers to filter alerts by         |
-| inhibited | `query` | boolean                   | `bool`     |           |          | `true`  | Show inhibited alerts                          |
-| receiver  | `query` | string                    | `string`   |           |          |         | A regex matching receivers to filter alerts by |
-| silenced  | `query` | boolean                   | `bool`     |           |          | `true`  | Show silenced alerts                           |
-
-#### All responses
-
-| Code                             | Status      | Description     | Has headers | Schema                                     |
-| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
-| [200](#route-get-a-m-alerts-200) | OK          | gettableAlerts  |             | [schema](#route-get-a-m-alerts-200-schema) |
-| [400](#route-get-a-m-alerts-400) | Bad Request | ValidationError |             | [schema](#route-get-a-m-alerts-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-a-m-alerts-200"></span> 200 - gettableAlerts
-
-Status: OK
-
-###### <span id="route-get-a-m-alerts-200-schema"></span> Schema
-
-[GettableAlerts](#gettable-alerts)
-
-##### <span id="route-get-a-m-alerts-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-a-m-alerts-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-a-m-status"></span> RouteGetAMStatus (_RouteGetAMStatus_)
-
-```
-GET /api/alertmanager/{Recipient}/api/v2/status
-```
-
-get alertmanager status and configuration
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                             | Status      | Description     | Has headers | Schema                                     |
-| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
-| [200](#route-get-a-m-status-200) | OK          | GettableStatus  |             | [schema](#route-get-a-m-status-200-schema) |
-| [400](#route-get-a-m-status-400) | Bad Request | ValidationError |             | [schema](#route-get-a-m-status-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-a-m-status-200"></span> 200 - GettableStatus
-
-Status: OK
-
-###### <span id="route-get-a-m-status-200-schema"></span> Schema
-
-[GettableStatus](#gettable-status)
-
-##### <span id="route-get-a-m-status-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-a-m-status-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-alert-statuses"></span> RouteGetAlertStatuses (_RouteGetAlertStatuses_)
-
-```
-GET /api/prometheus/{Recipient}/api/v1/alerts
-```
-
-gets the current alerts
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                 | Status | Description   | Has headers | Schema                                         |
-| ------------------------------------ | ------ | ------------- | :---------: | ---------------------------------------------- |
-| [200](#route-get-alert-statuses-200) | OK     | AlertResponse |             | [schema](#route-get-alert-statuses-200-schema) |
-
-#### Responses
-
-##### <span id="route-get-alert-statuses-200"></span> 200 - AlertResponse
-
-Status: OK
-
-###### <span id="route-get-alert-statuses-200-schema"></span> Schema
-
-[AlertResponse](#alert-response)
-
-### <span id="route-get-alerting-config"></span> RouteGetAlertingConfig (_RouteGetAlertingConfig_)
-
-```
-GET /api/alertmanager/{Recipient}/config/api/v1/alerts
-```
-
-gets an Alerting config
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                  | Status      | Description        | Has headers | Schema                                          |
-| ------------------------------------- | ----------- | ------------------ | :---------: | ----------------------------------------------- |
-| [200](#route-get-alerting-config-200) | OK          | GettableUserConfig |             | [schema](#route-get-alerting-config-200-schema) |
-| [400](#route-get-alerting-config-400) | Bad Request | ValidationError    |             | [schema](#route-get-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-alerting-config-200"></span> 200 - GettableUserConfig
-
-Status: OK
-
-###### <span id="route-get-alerting-config-200-schema"></span> Schema
-
-[GettableUserConfig](#gettable-user-config)
-
-##### <span id="route-get-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-alertmanagers"></span> Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration. (_RouteGetAlertmanagers_)
-
-```
-GET /api/v1/ngalert/alertmanagers
-```
-
-#### Produces
-
-- application/json
-
-#### All responses
-
-| Code                                | Status | Description           | Has headers | Schema                                        |
-| ----------------------------------- | ------ | --------------------- | :---------: | --------------------------------------------- |
-| [200](#route-get-alertmanagers-200) | OK     | GettableAlertmanagers |             | [schema](#route-get-alertmanagers-200-schema) |
-
-#### Responses
-
-##### <span id="route-get-alertmanagers-200"></span> 200 - GettableAlertmanagers
-
-Status: OK
-
-###### <span id="route-get-alertmanagers-200-schema"></span> Schema
-
-[GettableAlertmanagers](#gettable-alertmanagers)
-
-### <span id="route-get-contactpoints"></span> Get all the contact points. (_RouteGetContactpoints_)
-
-```
-GET /api/provisioning/contact-points
-```
-
-#### All responses
-
-| Code                                | Status      | Description     | Has headers | Schema                                        |
-| ----------------------------------- | ----------- | --------------- | :---------: | --------------------------------------------- |
-| [200](#route-get-contactpoints-200) | OK          | Route           |             | [schema](#route-get-contactpoints-200-schema) |
-| [400](#route-get-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-get-contactpoints-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-contactpoints-200"></span> 200 - Route
-
-Status: OK
-
-###### <span id="route-get-contactpoints-200-schema"></span> Schema
-
-[Route](#route)
-
-##### <span id="route-get-contactpoints-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-contactpoints-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-a-m-alert-groups"></span> RouteGetGrafanaAMAlertGroups (_RouteGetGrafanaAMAlertGroups_)
-
-```
-GET /api/alertmanager/grafana/api/v2/alerts/groups
-```
-
-get alertmanager alerts
-
-#### Parameters
-
-| Name      | Source  | Type     | Go type    | Separator | Required | Default | Description                                    |
-| --------- | ------- | -------- | ---------- | --------- | :------: | ------- | ---------------------------------------------- |
-| active    | `query` | boolean  | `bool`     |           |          | `true`  | Show active alerts                             |
-| filter    | `query` | []string | `[]string` |           |          |         | A list of matchers to filter alerts by         |
-| inhibited | `query` | boolean  | `bool`     |           |          | `true`  | Show inhibited alerts                          |
-| receiver  | `query` | string   | `string`   |           |          |         | A regex matching receivers to filter alerts by |
-| silenced  | `query` | boolean  | `bool`     |           |          | `true`  | Show silenced alerts                           |
-
-#### All responses
-
-| Code                                           | Status      | Description     | Has headers | Schema                                                   |
-| ---------------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------------- |
-| [200](#route-get-grafana-a-m-alert-groups-200) | OK          | alertGroups     |             | [schema](#route-get-grafana-a-m-alert-groups-200-schema) |
-| [400](#route-get-grafana-a-m-alert-groups-400) | Bad Request | ValidationError |             | [schema](#route-get-grafana-a-m-alert-groups-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-a-m-alert-groups-200"></span> 200 - alertGroups
-
-Status: OK
-
-###### <span id="route-get-grafana-a-m-alert-groups-200-schema"></span> Schema
-
-[AlertGroups](#alert-groups)
-
-##### <span id="route-get-grafana-a-m-alert-groups-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-a-m-alert-groups-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-a-m-alerts"></span> RouteGetGrafanaAMAlerts (_RouteGetGrafanaAMAlerts_)
-
-```
-GET /api/alertmanager/grafana/api/v2/alerts
-```
-
-get alertmanager alerts
-
-#### Parameters
-
-| Name      | Source  | Type     | Go type    | Separator | Required | Default | Description                                    |
-| --------- | ------- | -------- | ---------- | --------- | :------: | ------- | ---------------------------------------------- |
-| active    | `query` | boolean  | `bool`     |           |          | `true`  | Show active alerts                             |
-| filter    | `query` | []string | `[]string` |           |          |         | A list of matchers to filter alerts by         |
-| inhibited | `query` | boolean  | `bool`     |           |          | `true`  | Show inhibited alerts                          |
-| receiver  | `query` | string   | `string`   |           |          |         | A regex matching receivers to filter alerts by |
-| silenced  | `query` | boolean  | `bool`     |           |          | `true`  | Show silenced alerts                           |
-
-#### All responses
-
-| Code                                     | Status      | Description     | Has headers | Schema                                             |
-| ---------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------- |
-| [200](#route-get-grafana-a-m-alerts-200) | OK          | gettableAlerts  |             | [schema](#route-get-grafana-a-m-alerts-200-schema) |
-| [400](#route-get-grafana-a-m-alerts-400) | Bad Request | ValidationError |             | [schema](#route-get-grafana-a-m-alerts-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-a-m-alerts-200"></span> 200 - gettableAlerts
-
-Status: OK
-
-###### <span id="route-get-grafana-a-m-alerts-200-schema"></span> Schema
-
-[GettableAlerts](#gettable-alerts)
-
-##### <span id="route-get-grafana-a-m-alerts-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-a-m-alerts-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-a-m-status"></span> RouteGetGrafanaAMStatus (_RouteGetGrafanaAMStatus_)
-
-```
-GET /api/alertmanager/grafana/api/v2/status
-```
-
-get alertmanager status and configuration
-
-#### All responses
-
-| Code                                     | Status      | Description     | Has headers | Schema                                             |
-| ---------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------- |
-| [200](#route-get-grafana-a-m-status-200) | OK          | GettableStatus  |             | [schema](#route-get-grafana-a-m-status-200-schema) |
-| [400](#route-get-grafana-a-m-status-400) | Bad Request | ValidationError |             | [schema](#route-get-grafana-a-m-status-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-a-m-status-200"></span> 200 - GettableStatus
-
-Status: OK
-
-###### <span id="route-get-grafana-a-m-status-200-schema"></span> Schema
-
-[GettableStatus](#gettable-status)
-
-##### <span id="route-get-grafana-a-m-status-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-a-m-status-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-alert-statuses"></span> RouteGetGrafanaAlertStatuses (_RouteGetGrafanaAlertStatuses_)
-
-```
-GET /api/prometheus/grafana/api/v1/alerts
-```
-
-gets the current alerts
-
-#### Parameters
-
-| Name                  | Source  | Type    | Go type | Separator | Required | Default | Description                                              |
-| --------------------- | ------- | ------- | ------- | --------- | :------: | ------- | -------------------------------------------------------- |
-| includeInternalLabels | `query` | boolean | `bool`  |           |          |         | Include Grafana specific labels as part of the response. |
-
-#### All responses
-
-| Code                                         | Status | Description   | Has headers | Schema                                                 |
-| -------------------------------------------- | ------ | ------------- | :---------: | ------------------------------------------------------ |
-| [200](#route-get-grafana-alert-statuses-200) | OK     | AlertResponse |             | [schema](#route-get-grafana-alert-statuses-200-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-alert-statuses-200"></span> 200 - AlertResponse
-
-Status: OK
-
-###### <span id="route-get-grafana-alert-statuses-200-schema"></span> Schema
-
-[AlertResponse](#alert-response)
-
-### <span id="route-get-grafana-alerting-config"></span> RouteGetGrafanaAlertingConfig (_RouteGetGrafanaAlertingConfig_)
-
-```
-GET /api/alertmanager/grafana/config/api/v1/alerts
-```
-
-gets an Alerting config
-
-#### All responses
-
-| Code                                          | Status      | Description        | Has headers | Schema                                                  |
-| --------------------------------------------- | ----------- | ------------------ | :---------: | ------------------------------------------------------- |
-| [200](#route-get-grafana-alerting-config-200) | OK          | GettableUserConfig |             | [schema](#route-get-grafana-alerting-config-200-schema) |
-| [400](#route-get-grafana-alerting-config-400) | Bad Request | ValidationError    |             | [schema](#route-get-grafana-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-alerting-config-200"></span> 200 - GettableUserConfig
-
-Status: OK
-
-###### <span id="route-get-grafana-alerting-config-200-schema"></span> Schema
-
-[GettableUserConfig](#gettable-user-config)
-
-##### <span id="route-get-grafana-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-rule-group-config"></span> RouteGetGrafanaRuleGroupConfig (_RouteGetGrafanaRuleGroupConfig_)
-
-```
-GET /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}
-```
-
-Get rule group
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| Groupname | `path` | string | `string` |           |    ✓     |         |             |
-| Namespace | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                            | Status   | Description             | Has headers | Schema                                                    |
-| ----------------------------------------------- | -------- | ----------------------- | :---------: | --------------------------------------------------------- |
-| [202](#route-get-grafana-rule-group-config-202) | Accepted | RuleGroupConfigResponse |             | [schema](#route-get-grafana-rule-group-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-rule-group-config-202"></span> 202 - RuleGroupConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-grafana-rule-group-config-202-schema"></span> Schema
-
-[RuleGroupConfigResponse](#rule-group-config-response)
-
-### <span id="route-get-grafana-rule-statuses"></span> RouteGetGrafanaRuleStatuses (_RouteGetGrafanaRuleStatuses_)
-
-```
-GET /api/prometheus/grafana/api/v1/rules
-```
-
-gets the evaluation statuses of all rules
-
-#### Parameters
-
-| Name                  | Source  | Type                      | Go type  | Separator | Required | Default | Description                                                                                               |
-| --------------------- | ------- | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------------------------------------------------------------------- |
-| DashboardUID          | `query` | string                    | `string` |           |          |         | Filter the list of rules to those that belong to the specified dashboard UID.                             |
-| PanelID               | `query` | int64 (formatted integer) | `int64`  |           |          |         | Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified. |
-| includeInternalLabels | `query` | boolean                   | `bool`   |           |          |         | Include Grafana specific labels as part of the response.                                                  |
-
-#### All responses
-
-| Code                                        | Status | Description  | Has headers | Schema                                                |
-| ------------------------------------------- | ------ | ------------ | :---------: | ----------------------------------------------------- |
-| [200](#route-get-grafana-rule-statuses-200) | OK     | RuleResponse |             | [schema](#route-get-grafana-rule-statuses-200-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-rule-statuses-200"></span> 200 - RuleResponse
-
-Status: OK
-
-###### <span id="route-get-grafana-rule-statuses-200-schema"></span> Schema
-
-[RuleResponse](#rule-response)
-
-### <span id="route-get-grafana-rules-config"></span> RouteGetGrafanaRulesConfig (_RouteGetGrafanaRulesConfig_)
-
-```
-GET /api/ruler/grafana/api/v1/rules
-```
-
-List rule groups
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name         | Source  | Type                      | Go type  | Separator | Required | Default | Description |
-| ------------ | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
-| DashboardUID | `query` | string                    | `string` |           |          |         |             |
-| PanelID      | `query` | int64 (formatted integer) | `int64`  |           |          |         |             |
-
-#### All responses
-
-| Code                                       | Status   | Description             | Has headers | Schema                                               |
-| ------------------------------------------ | -------- | ----------------------- | :---------: | ---------------------------------------------------- |
-| [202](#route-get-grafana-rules-config-202) | Accepted | NamespaceConfigResponse |             | [schema](#route-get-grafana-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-rules-config-202"></span> 202 - NamespaceConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-grafana-rules-config-202-schema"></span> Schema
-
-[NamespaceConfigResponse](#namespace-config-response)
-
-### <span id="route-get-grafana-silence"></span> RouteGetGrafanaSilence (_RouteGetGrafanaSilence_)
-
-```
-GET /api/alertmanager/grafana/api/v2/silence/{SilenceId}
-```
-
-get silence
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| SilenceId | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                  | Status      | Description     | Has headers | Schema                                          |
-| ------------------------------------- | ----------- | --------------- | :---------: | ----------------------------------------------- |
-| [200](#route-get-grafana-silence-200) | OK          | gettableSilence |             | [schema](#route-get-grafana-silence-200-schema) |
-| [400](#route-get-grafana-silence-400) | Bad Request | ValidationError |             | [schema](#route-get-grafana-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-silence-200"></span> 200 - gettableSilence
-
-Status: OK
-
-###### <span id="route-get-grafana-silence-200-schema"></span> Schema
-
-[GettableSilence](#gettable-silence)
-
-##### <span id="route-get-grafana-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-grafana-silences"></span> RouteGetGrafanaSilences (_RouteGetGrafanaSilences_)
-
-```
-GET /api/alertmanager/grafana/api/v2/silences
-```
-
-get silences
-
-#### Parameters
-
-| Name   | Source  | Type     | Go type    | Separator | Required | Default | Description |
-| ------ | ------- | -------- | ---------- | --------- | :------: | ------- | ----------- |
-| filter | `query` | []string | `[]string` |           |          |         |             |
-
-#### All responses
-
-| Code                                   | Status      | Description      | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | ---------------- | :---------: | ------------------------------------------------ |
-| [200](#route-get-grafana-silences-200) | OK          | gettableSilences |             | [schema](#route-get-grafana-silences-200-schema) |
-| [400](#route-get-grafana-silences-400) | Bad Request | ValidationError  |             | [schema](#route-get-grafana-silences-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-grafana-silences-200"></span> 200 - gettableSilences
-
-Status: OK
-
-###### <span id="route-get-grafana-silences-200-schema"></span> Schema
-
-[GettableSilences](#gettable-silences)
-
-##### <span id="route-get-grafana-silences-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-grafana-silences-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-n-galert-config"></span> Get the NGalert configuration of the user's organization, returns 404 if no configuration is present. (_RouteGetNGalertConfig_)
-
-```
-GET /api/v1/ngalert/admin_config
-```
-
-#### Produces
-
-- application/json
-
-#### All responses
-
-| Code                                  | Status                | Description           | Has headers | Schema                                          |
-| ------------------------------------- | --------------------- | --------------------- | :---------: | ----------------------------------------------- |
-| [200](#route-get-n-galert-config-200) | OK                    | GettableNGalertConfig |             | [schema](#route-get-n-galert-config-200-schema) |
-| [404](#route-get-n-galert-config-404) | Not Found             | Failure               |             | [schema](#route-get-n-galert-config-404-schema) |
-| [500](#route-get-n-galert-config-500) | Internal Server Error | Failure               |             | [schema](#route-get-n-galert-config-500-schema) |
-
-#### Responses
-
-##### <span id="route-get-n-galert-config-200"></span> 200 - GettableNGalertConfig
-
-Status: OK
-
-###### <span id="route-get-n-galert-config-200-schema"></span> Schema
-
-[GettableNGalertConfig](#gettable-n-galert-config)
-
-##### <span id="route-get-n-galert-config-404"></span> 404 - Failure
-
-Status: Not Found
-
-###### <span id="route-get-n-galert-config-404-schema"></span> Schema
-
-[Failure](#failure)
-
-##### <span id="route-get-n-galert-config-500"></span> 500 - Failure
-
-Status: Internal Server Error
-
-###### <span id="route-get-n-galert-config-500-schema"></span> Schema
-
-[Failure](#failure)
-
-### <span id="route-get-namespace-grafana-rules-config"></span> RouteGetNamespaceGrafanaRulesConfig (_RouteGetNamespaceGrafanaRulesConfig_)
-
-```
-GET /api/ruler/grafana/api/v1/rules/{Namespace}
-```
-
-Get rule groups by namespace
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name      | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| Namespace | `path` | string | `string` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                                                 | Status   | Description             | Has headers | Schema                                                         |
-| ---------------------------------------------------- | -------- | ----------------------- | :---------: | -------------------------------------------------------------- |
-| [202](#route-get-namespace-grafana-rules-config-202) | Accepted | NamespaceConfigResponse |             | [schema](#route-get-namespace-grafana-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-namespace-grafana-rules-config-202"></span> 202 - NamespaceConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-namespace-grafana-rules-config-202-schema"></span> Schema
-
-[NamespaceConfigResponse](#namespace-config-response)
-
-### <span id="route-get-namespace-rules-config"></span> RouteGetNamespaceRulesConfig (_RouteGetNamespaceRulesConfig_)
-
-```
-GET /api/ruler/{Recipient}/api/v1/rules/{Namespace}
-```
-
-Get rule groups by namespace
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Namespace | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                         | Status   | Description             | Has headers | Schema                                                 |
-| -------------------------------------------- | -------- | ----------------------- | :---------: | ------------------------------------------------------ |
-| [202](#route-get-namespace-rules-config-202) | Accepted | NamespaceConfigResponse |             | [schema](#route-get-namespace-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-namespace-rules-config-202"></span> 202 - NamespaceConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-namespace-rules-config-202-schema"></span> Schema
-
-[NamespaceConfigResponse](#namespace-config-response)
-
-### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
-
-```
-GET /api/provisioning/policies
-```
-
-#### All responses
-
-| Code                              | Status      | Description     | Has headers | Schema                                      |
-| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
-| [200](#route-get-policy-tree-200) | OK          | Route           |             | [schema](#route-get-policy-tree-200-schema) |
-| [400](#route-get-policy-tree-400) | Bad Request | ValidationError |             | [schema](#route-get-policy-tree-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-policy-tree-200"></span> 200 - Route
-
-Status: OK
-
-###### <span id="route-get-policy-tree-200-schema"></span> Schema
-
-[Route](#route)
-
-##### <span id="route-get-policy-tree-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-policy-tree-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-rule-statuses"></span> RouteGetRuleStatuses (_RouteGetRuleStatuses_)
-
-```
-GET /api/prometheus/{Recipient}/api/v1/rules
-```
-
-gets the evaluation statuses of all rules
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                | Status | Description  | Has headers | Schema                                        |
-| ----------------------------------- | ------ | ------------ | :---------: | --------------------------------------------- |
-| [200](#route-get-rule-statuses-200) | OK     | RuleResponse |             | [schema](#route-get-rule-statuses-200-schema) |
-
-#### Responses
-
-##### <span id="route-get-rule-statuses-200"></span> 200 - RuleResponse
-
-Status: OK
-
-###### <span id="route-get-rule-statuses-200-schema"></span> Schema
-
-[RuleResponse](#rule-response)
-
-### <span id="route-get-ruleg-group-config"></span> RouteGetRulegGroupConfig (_RouteGetRulegGroupConfig_)
-
-```
-GET /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}
-```
-
-Get rule group
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Groupname | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Namespace | `path` | string                    | `string` |           |    ✓     |         |                                               |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-
-#### All responses
-
-| Code                                     | Status   | Description             | Has headers | Schema                                             |
-| ---------------------------------------- | -------- | ----------------------- | :---------: | -------------------------------------------------- |
-| [202](#route-get-ruleg-group-config-202) | Accepted | RuleGroupConfigResponse |             | [schema](#route-get-ruleg-group-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-ruleg-group-config-202"></span> 202 - RuleGroupConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-ruleg-group-config-202-schema"></span> Schema
-
-[RuleGroupConfigResponse](#rule-group-config-response)
-
-### <span id="route-get-rules-config"></span> RouteGetRulesConfig (_RouteGetRulesConfig_)
-
-```
-GET /api/ruler/{Recipient}/api/v1/rules
-```
-
-List rule groups
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name         | Source  | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| ------------ | ------- | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient    | `path`  | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-| DashboardUID | `query` | string                    | `string` |           |          |         |                                               |
-| PanelID      | `query` | int64 (formatted integer) | `int64`  |           |          |         |                                               |
-
-#### All responses
-
-| Code                               | Status   | Description             | Has headers | Schema                                       |
-| ---------------------------------- | -------- | ----------------------- | :---------: | -------------------------------------------- |
-| [202](#route-get-rules-config-202) | Accepted | NamespaceConfigResponse |             | [schema](#route-get-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-get-rules-config-202"></span> 202 - NamespaceConfigResponse
-
-Status: Accepted
-
-###### <span id="route-get-rules-config-202-schema"></span> Schema
-
-[NamespaceConfigResponse](#namespace-config-response)
-
-### <span id="route-get-silence"></span> RouteGetSilence (_RouteGetSilence_)
-
-```
-GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}
-```
-
-get silence
-
-#### Parameters
-
-| Name      | Source | Type                      | Go type  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------- | -------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         | Recipient should be the numeric datasource id |
-| SilenceId | `path` | string                    | `string` |           |    ✓     |         |                                               |
-
-#### All responses
-
-| Code                          | Status      | Description     | Has headers | Schema                                  |
-| ----------------------------- | ----------- | --------------- | :---------: | --------------------------------------- |
-| [200](#route-get-silence-200) | OK          | gettableSilence |             | [schema](#route-get-silence-200-schema) |
-| [400](#route-get-silence-400) | Bad Request | ValidationError |             | [schema](#route-get-silence-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-silence-200"></span> 200 - gettableSilence
-
-Status: OK
-
-###### <span id="route-get-silence-200-schema"></span> Schema
-
-[GettableSilence](#gettable-silence)
-
-##### <span id="route-get-silence-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-silence-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-get-silences"></span> RouteGetSilences (_RouteGetSilences_)
-
-```
-GET /api/alertmanager/{Recipient}/api/v2/silences
-```
-
-get silences
-
-#### Parameters
-
-| Name      | Source  | Type                      | Go type    | Separator | Required | Default | Description                                   |
-| --------- | ------- | ------------------------- | ---------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path`  | int64 (formatted integer) | `int64`    |           |    ✓     |         | Recipient should be the numeric datasource id |
-| filter    | `query` | []string                  | `[]string` |           |          |         |                                               |
-
-#### All responses
-
-| Code                           | Status      | Description      | Has headers | Schema                                   |
-| ------------------------------ | ----------- | ---------------- | :---------: | ---------------------------------------- |
-| [200](#route-get-silences-200) | OK          | gettableSilences |             | [schema](#route-get-silences-200-schema) |
-| [400](#route-get-silences-400) | Bad Request | ValidationError  |             | [schema](#route-get-silences-400-schema) |
-
-#### Responses
-
-##### <span id="route-get-silences-200"></span> 200 - gettableSilences
-
-Status: OK
-
-###### <span id="route-get-silences-200-schema"></span> Schema
-
-[GettableSilences](#gettable-silences)
-
-##### <span id="route-get-silences-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-get-silences-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-a-m-alerts"></span> RoutePostAMAlerts (_RoutePostAMAlerts_)
-
-```
-POST /api/alertmanager/{Recipient}/api/v2/alerts
-```
-
-create alertmanager alerts
-
-#### Parameters
-
-| Name           | Source | Type                               | Go type                   | Separator | Required | Default | Description                                   |
-| -------------- | ------ | ---------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient      | `path` | int64 (formatted integer)          | `int64`                   |           |    ✓     |         | Recipient should be the numeric datasource id |
-| PostableAlerts | `body` | [][postablealert](#postable-alert) | `[]*models.PostableAlert` |           |          |         |                                               |
-
-#### All responses
-
-| Code                              | Status      | Description     | Has headers | Schema                                      |
-| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
-| [200](#route-post-a-m-alerts-200) | OK          | Ack             |             | [schema](#route-post-a-m-alerts-200-schema) |
-| [400](#route-post-a-m-alerts-400) | Bad Request | ValidationError |             | [schema](#route-post-a-m-alerts-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-a-m-alerts-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-post-a-m-alerts-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-a-m-alerts-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-a-m-alerts-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-alerting-config"></span> RoutePostAlertingConfig (_RoutePostAlertingConfig_)
-
-```
-POST /api/alertmanager/{Recipient}/config/api/v1/alerts
-```
-
-sets an Alerting config
-
-#### Parameters
-
-| Name      | Source | Type                                        | Go type                     | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------------------------- | --------------------------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer)                   | `int64`                     |           |    ✓     |         | Recipient should be the numeric datasource id |
-| Body      | `body` | [PostableUserConfig](#postable-user-config) | `models.PostableUserConfig` |           |          |         |                                               |
-
-#### All responses
-
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [201](#route-post-alerting-config-201) | Created     | Ack             |             | [schema](#route-post-alerting-config-201-schema) |
-| [400](#route-post-alerting-config-400) | Bad Request | ValidationError |             | [schema](#route-post-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-alerting-config-201"></span> 201 - Ack
-
-Status: Created
-
-###### <span id="route-post-alerting-config-201-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-contactpoints"></span> Create a contact point. (_RoutePostContactpoints_)
-
-```
-POST /api/provisioning/contact-points
-```
-
-#### Consumes
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
-
-#### All responses
-
-| Code                                 | Status      | Description     | Has headers | Schema                                         |
-| ------------------------------------ | ----------- | --------------- | :---------: | ---------------------------------------------- |
-| [202](#route-post-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-post-contactpoints-202-schema) |
-| [400](#route-post-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-post-contactpoints-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-contactpoints-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-post-contactpoints-202-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-contactpoints-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-contactpoints-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-grafana-a-m-alerts"></span> RoutePostGrafanaAMAlerts (_RoutePostGrafanaAMAlerts_)
-
-```
-POST /api/alertmanager/grafana/api/v2/alerts
-```
-
-create alertmanager alerts
-
-#### Parameters
-
-| Name           | Source | Type                               | Go type                   | Separator | Required | Default | Description |
-| -------------- | ------ | ---------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| PostableAlerts | `body` | [][postablealert](#postable-alert) | `[]*models.PostableAlert` |           |          |         |             |
-
-#### All responses
-
-| Code                                      | Status      | Description     | Has headers | Schema                                              |
-| ----------------------------------------- | ----------- | --------------- | :---------: | --------------------------------------------------- |
-| [200](#route-post-grafana-a-m-alerts-200) | OK          | Ack             |             | [schema](#route-post-grafana-a-m-alerts-200-schema) |
-| [400](#route-post-grafana-a-m-alerts-400) | Bad Request | ValidationError |             | [schema](#route-post-grafana-a-m-alerts-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-grafana-a-m-alerts-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-post-grafana-a-m-alerts-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-grafana-a-m-alerts-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-grafana-a-m-alerts-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-grafana-alerting-config"></span> RoutePostGrafanaAlertingConfig (_RoutePostGrafanaAlertingConfig_)
-
-```
-POST /api/alertmanager/grafana/config/api/v1/alerts
-```
-
-sets an Alerting config
-
-#### Parameters
-
-| Name | Source | Type                                        | Go type                     | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [PostableUserConfig](#postable-user-config) | `models.PostableUserConfig` |           |          |         |             |
-
-#### All responses
-
-| Code                                           | Status      | Description     | Has headers | Schema                                                   |
-| ---------------------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------------------- |
-| [201](#route-post-grafana-alerting-config-201) | Created     | Ack             |             | [schema](#route-post-grafana-alerting-config-201-schema) |
-| [400](#route-post-grafana-alerting-config-400) | Bad Request | ValidationError |             | [schema](#route-post-grafana-alerting-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-grafana-alerting-config-201"></span> 201 - Ack
-
-Status: Created
-
-###### <span id="route-post-grafana-alerting-config-201-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-grafana-alerting-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-grafana-alerting-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-n-galert-config"></span> Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to "all". (_RoutePostNGalertConfig_)
-
-```
-POST /api/v1/ngalert/admin_config
-```
-
-#### Consumes
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type                                               | Go type                        | Separator | Required | Default | Description |
-| ---- | ------ | -------------------------------------------------- | ------------------------------ | --------- | :------: | ------- | ----------- |
-| Body | `body` | [PostableNGalertConfig](#postable-n-galert-config) | `models.PostableNGalertConfig` |           |          |         |             |
-
-#### All responses
-
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [201](#route-post-n-galert-config-201) | Created     | Ack             |             | [schema](#route-post-n-galert-config-201-schema) |
-| [400](#route-post-n-galert-config-400) | Bad Request | ValidationError |             | [schema](#route-post-n-galert-config-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-n-galert-config-201"></span> 201 - Ack
-
-Status: Created
-
-###### <span id="route-post-n-galert-config-201-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-n-galert-config-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-n-galert-config-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-name-grafana-rules-config"></span> RoutePostNameGrafanaRulesConfig (_RoutePostNameGrafanaRulesConfig_)
-
-```
-POST /api/ruler/grafana/api/v1/rules/{Namespace}
-```
-
-Creates or updates a rule group
-
-#### Consumes
-
-- application/json
-- application/yaml
-
-#### Parameters
-
-| Name      | Source | Type                                                   | Go type                          | Separator | Required | Default | Description |
-| --------- | ------ | ------------------------------------------------------ | -------------------------------- | --------- | :------: | ------- | ----------- |
-| Namespace | `path` | string                                                 | `string`                         |           |    ✓     |         |             |
-| Body      | `body` | [PostableRuleGroupConfig](#postable-rule-group-config) | `models.PostableRuleGroupConfig` |           |          |         |             |
-
-#### All responses
-
-| Code                                             | Status   | Description | Has headers | Schema                                                     |
-| ------------------------------------------------ | -------- | ----------- | :---------: | ---------------------------------------------------------- |
-| [202](#route-post-name-grafana-rules-config-202) | Accepted | Ack         |             | [schema](#route-post-name-grafana-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-post-name-grafana-rules-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-post-name-grafana-rules-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-post-name-rules-config"></span> RoutePostNameRulesConfig (_RoutePostNameRulesConfig_)
-
-```
-POST /api/ruler/{Recipient}/api/v1/rules/{Namespace}
-```
-
-Creates or updates a rule group
-
-#### Consumes
-
-- application/json
-- application/yaml
-
-#### Parameters
-
-| Name      | Source | Type                                                   | Go type                          | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------------------------------------ | -------------------------------- | --------- | :------: | ------- | --------------------------------------------- |
-| Namespace | `path` | string                                                 | `string`                         |           |    ✓     |         |                                               |
-| Recipient | `path` | int64 (formatted integer)                              | `int64`                          |           |    ✓     |         | Recipient should be the numeric datasource id |
-| Body      | `body` | [PostableRuleGroupConfig](#postable-rule-group-config) | `models.PostableRuleGroupConfig` |           |          |         |                                               |
-
-#### All responses
-
-| Code                                     | Status   | Description | Has headers | Schema                                             |
-| ---------------------------------------- | -------- | ----------- | :---------: | -------------------------------------------------- |
-| [202](#route-post-name-rules-config-202) | Accepted | Ack         |             | [schema](#route-post-name-rules-config-202-schema) |
-
-#### Responses
-
-##### <span id="route-post-name-rules-config-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-post-name-rules-config-202-schema"></span> Schema
-
-[Ack](#ack)
-
-### <span id="route-post-policy-tree"></span> Sets the notification policy tree. (_RoutePostPolicyTree_)
-
-```
-POST /api/provisioning/policies
-```
-
-#### Consumes
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type            | Go type        | Separator | Required | Default | Description |
-| ---- | ------ | --------------- | -------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [Route](#route) | `models.Route` |           |          |         |             |
-
-#### All responses
-
-| Code                               | Status      | Description     | Has headers | Schema                                       |
-| ---------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------- |
-| [202](#route-post-policy-tree-202) | Accepted    | Ack             |             | [schema](#route-post-policy-tree-202-schema) |
-| [400](#route-post-policy-tree-400) | Bad Request | ValidationError |             | [schema](#route-post-policy-tree-400-schema) |
-
-#### Responses
-
-##### <span id="route-post-policy-tree-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-post-policy-tree-202-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-policy-tree-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-policy-tree-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-post-test-grafana-receivers"></span> Test Grafana managed receivers without saving them. (_RoutePostTestGrafanaReceivers_)
-
-```
-POST /api/alertmanager/grafana/config/api/v1/receivers/test
-```
-
-#### Parameters
-
-| Name | Source | Type                                                                | Go type                                | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------------------------------------- | -------------------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [TestReceiversConfigBodyParams](#test-receivers-config-body-params) | `models.TestReceiversConfigBodyParams` |           |          |         |             |
-
-#### All responses
-
-| Code                                          | Status          | Description          | Has headers | Schema                                                  |
-| --------------------------------------------- | --------------- | -------------------- | :---------: | ------------------------------------------------------- |
-| [200](#route-post-test-grafana-receivers-200) | OK              | Ack                  |             | [schema](#route-post-test-grafana-receivers-200-schema) |
-| [207](#route-post-test-grafana-receivers-207) | Multi-Status    | MultiStatus          |             | [schema](#route-post-test-grafana-receivers-207-schema) |
-| [400](#route-post-test-grafana-receivers-400) | Bad Request     | ValidationError      |             | [schema](#route-post-test-grafana-receivers-400-schema) |
-| [403](#route-post-test-grafana-receivers-403) | Forbidden       | PermissionDenied     |             | [schema](#route-post-test-grafana-receivers-403-schema) |
-| [404](#route-post-test-grafana-receivers-404) | Not Found       | AlertManagerNotFound |             | [schema](#route-post-test-grafana-receivers-404-schema) |
-| [408](#route-post-test-grafana-receivers-408) | Request Timeout | Failure              |             | [schema](#route-post-test-grafana-receivers-408-schema) |
-| [409](#route-post-test-grafana-receivers-409) | Conflict        | AlertManagerNotReady |             | [schema](#route-post-test-grafana-receivers-409-schema) |
-
-#### Responses
-
-##### <span id="route-post-test-grafana-receivers-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-post-test-grafana-receivers-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-test-grafana-receivers-207"></span> 207 - MultiStatus
-
-Status: Multi-Status
-
-###### <span id="route-post-test-grafana-receivers-207-schema"></span> Schema
-
-[MultiStatus](#multi-status)
-
-##### <span id="route-post-test-grafana-receivers-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-test-grafana-receivers-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-##### <span id="route-post-test-grafana-receivers-403"></span> 403 - PermissionDenied
-
-Status: Forbidden
-
-###### <span id="route-post-test-grafana-receivers-403-schema"></span> Schema
-
-[PermissionDenied](#permission-denied)
-
-##### <span id="route-post-test-grafana-receivers-404"></span> 404 - AlertManagerNotFound
-
-Status: Not Found
-
-###### <span id="route-post-test-grafana-receivers-404-schema"></span> Schema
-
-[AlertManagerNotFound](#alert-manager-not-found)
-
-##### <span id="route-post-test-grafana-receivers-408"></span> 408 - Failure
-
-Status: Request Timeout
-
-###### <span id="route-post-test-grafana-receivers-408-schema"></span> Schema
-
-[Failure](#failure)
-
-##### <span id="route-post-test-grafana-receivers-409"></span> 409 - AlertManagerNotReady
-
-Status: Conflict
-
-###### <span id="route-post-test-grafana-receivers-409-schema"></span> Schema
-
-[AlertManagerNotReady](#alert-manager-not-ready)
-
-### <span id="route-post-test-receivers"></span> Test Grafana managed receivers without saving them. (_RoutePostTestReceivers_)
-
-```
-POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test
-```
-
-#### Parameters
-
-| Name      | Source | Type                                                                | Go type                                | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------------------------------------------------- | -------------------------------------- | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer)                                           | `int64`                                |           |    ✓     |         | Recipient should be the numeric datasource id |
-| Body      | `body` | [TestReceiversConfigBodyParams](#test-receivers-config-body-params) | `models.TestReceiversConfigBodyParams` |           |          |         |                                               |
-
-#### All responses
-
-| Code                                  | Status          | Description          | Has headers | Schema                                          |
-| ------------------------------------- | --------------- | -------------------- | :---------: | ----------------------------------------------- |
-| [200](#route-post-test-receivers-200) | OK              | Ack                  |             | [schema](#route-post-test-receivers-200-schema) |
-| [207](#route-post-test-receivers-207) | Multi-Status    | MultiStatus          |             | [schema](#route-post-test-receivers-207-schema) |
-| [400](#route-post-test-receivers-400) | Bad Request     | ValidationError      |             | [schema](#route-post-test-receivers-400-schema) |
-| [403](#route-post-test-receivers-403) | Forbidden       | PermissionDenied     |             | [schema](#route-post-test-receivers-403-schema) |
-| [404](#route-post-test-receivers-404) | Not Found       | AlertManagerNotFound |             | [schema](#route-post-test-receivers-404-schema) |
-| [408](#route-post-test-receivers-408) | Request Timeout | Failure              |             | [schema](#route-post-test-receivers-408-schema) |
-| [409](#route-post-test-receivers-409) | Conflict        | AlertManagerNotReady |             | [schema](#route-post-test-receivers-409-schema) |
-
-#### Responses
-
-##### <span id="route-post-test-receivers-200"></span> 200 - Ack
-
-Status: OK
-
-###### <span id="route-post-test-receivers-200-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-post-test-receivers-207"></span> 207 - MultiStatus
-
-Status: Multi-Status
-
-###### <span id="route-post-test-receivers-207-schema"></span> Schema
-
-[MultiStatus](#multi-status)
-
-##### <span id="route-post-test-receivers-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-post-test-receivers-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-##### <span id="route-post-test-receivers-403"></span> 403 - PermissionDenied
-
-Status: Forbidden
-
-###### <span id="route-post-test-receivers-403-schema"></span> Schema
-
-[PermissionDenied](#permission-denied)
-
-##### <span id="route-post-test-receivers-404"></span> 404 - AlertManagerNotFound
-
-Status: Not Found
-
-###### <span id="route-post-test-receivers-404-schema"></span> Schema
-
-[AlertManagerNotFound](#alert-manager-not-found)
-
-##### <span id="route-post-test-receivers-408"></span> 408 - Failure
-
-Status: Request Timeout
-
-###### <span id="route-post-test-receivers-408-schema"></span> Schema
-
-[Failure](#failure)
-
-##### <span id="route-post-test-receivers-409"></span> 409 - AlertManagerNotReady
-
-Status: Conflict
-
-###### <span id="route-post-test-receivers-409-schema"></span> Schema
-
-[AlertManagerNotReady](#alert-manager-not-ready)
-
-### <span id="route-put-contactpoints"></span> Update an existing contact point. (_RoutePutContactpoints_)
-
-```
-PUT /api/provisioning/contact-points
-```
-
-#### Consumes
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
-
-#### All responses
-
-| Code                                | Status      | Description     | Has headers | Schema                                        |
-| ----------------------------------- | ----------- | --------------- | :---------: | --------------------------------------------- |
-| [202](#route-put-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-put-contactpoints-202-schema) |
-| [400](#route-put-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-put-contactpoints-400-schema) |
-
-#### Responses
-
-##### <span id="route-put-contactpoints-202"></span> 202 - Ack
-
-Status: Accepted
-
-###### <span id="route-put-contactpoints-202-schema"></span> Schema
-
-[Ack](#ack)
-
-##### <span id="route-put-contactpoints-400"></span> 400 - ValidationError
-
-Status: Bad Request
-
-###### <span id="route-put-contactpoints-400-schema"></span> Schema
-
-[ValidationError](#validation-error)
-
-### <span id="route-test-rule-config"></span> RouteTestRuleConfig (_RouteTestRuleConfig_)
-
-```
-POST /api/v1/rule/test/{Recipient}
-```
-
-Test a rule against external data source ruler
-
-#### Consumes
-
-- application/json
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name      | Source | Type                                  | Go type                  | Separator | Required | Default | Description                                   |
-| --------- | ------ | ------------------------------------- | ------------------------ | --------- | :------: | ------- | --------------------------------------------- |
-| Recipient | `path` | int64 (formatted integer)             | `int64`                  |           |    ✓     |         | Recipient should be the numeric datasource id |
-| Body      | `body` | [TestRulePayload](#test-rule-payload) | `models.TestRulePayload` |           |          |         |                                               |
-
-#### All responses
-
-| Code                               | Status | Description      | Has headers | Schema                                       |
-| ---------------------------------- | ------ | ---------------- | :---------: | -------------------------------------------- |
-| [200](#route-test-rule-config-200) | OK     | TestRuleResponse |             | [schema](#route-test-rule-config-200-schema) |
-
-#### Responses
-
-##### <span id="route-test-rule-config-200"></span> 200 - TestRuleResponse
-
-Status: OK
-
-###### <span id="route-test-rule-config-200-schema"></span> Schema
-
-[TestRuleResponse](#test-rule-response)
-
-### <span id="route-test-rule-grafana-config"></span> RouteTestRuleGrafanaConfig (_RouteTestRuleGrafanaConfig_)
-
-```
-POST /api/v1/rule/test/grafana
-```
-
-Test a rule against Grafana ruler
-
-#### Consumes
-
-- application/json
-
-#### Produces
-
-- application/json
-
-#### Parameters
-
-| Name | Source | Type                                  | Go type                  | Separator | Required | Default | Description |
-| ---- | ------ | ------------------------------------- | ------------------------ | --------- | :------: | ------- | ----------- |
-| Body | `body` | [TestRulePayload](#test-rule-payload) | `models.TestRulePayload` |           |          |         |             |
-
-#### All responses
-
-| Code                                       | Status | Description      | Has headers | Schema                                               |
-| ------------------------------------------ | ------ | ---------------- | :---------: | ---------------------------------------------------- |
-| [200](#route-test-rule-grafana-config-200) | OK     | TestRuleResponse |             | [schema](#route-test-rule-grafana-config-200-schema) |
-
-#### Responses
-
-##### <span id="route-test-rule-grafana-config-200"></span> 200 - TestRuleResponse
-
-Status: OK
-
-###### <span id="route-test-rule-grafana-config-200-schema"></span> Schema
-
-[TestRuleResponse](#test-rule-response)
 
 ### <span id="add-a-p-ikey"></span> Creates an API key. (_addAPIkey_)
 
@@ -2697,7 +571,7 @@ Status: Internal Server Error
 POST /api/access-control/builtin-roles
 ```
 
-You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
+You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
 
 #### Parameters
 
@@ -3118,7 +992,7 @@ Status: Internal Server Error
 POST /api/access-control/teams/{teamId}/roles
 ```
 
-You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.
+You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.
 
 #### Parameters
 
@@ -3187,7 +1061,7 @@ POST /api/access-control/users/{user_id}/roles
 
 Assign a role to a specific user. For bulk updates consider Set user role assignments.
 
-You need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
+You need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
 
 #### Parameters
 
@@ -3893,6 +1767,136 @@ Status: Forbidden
 Status: Internal Server Error
 
 ###### <span id="change-user-password-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="check-datasource-health"></span> Check data source health by Id. (_checkDatasourceHealth_)
+
+```
+GET /api/datasources/uid/{uid}/health
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#check-datasource-health-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#check-datasource-health-200-schema) |
+| [400](#check-datasource-health-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#check-datasource-health-400-schema) |
+| [401](#check-datasource-health-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#check-datasource-health-401-schema) |
+| [403](#check-datasource-health-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#check-datasource-health-403-schema) |
+| [500](#check-datasource-health-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#check-datasource-health-500-schema) |
+
+#### Responses
+
+##### <span id="check-datasource-health-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="check-datasource-health-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="check-datasource-health-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="check-datasource-health-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="check-datasource-health-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="check-datasource-health-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="check-datasource-health-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="check-datasource-health-by-id"></span> Check data source health by Id. (_checkDatasourceHealthByID_)
+
+```
+GET /api/datasources/{id}/health
+```
+
+Please refer to [updated API](#/datasources/checkDatasourceHealth) instead
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
+| [200](#check-datasource-health-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#check-datasource-health-by-id-200-schema) |
+| [400](#check-datasource-health-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#check-datasource-health-by-id-400-schema) |
+| [401](#check-datasource-health-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#check-datasource-health-by-id-401-schema) |
+| [403](#check-datasource-health-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#check-datasource-health-by-id-403-schema) |
+| [500](#check-datasource-health-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#check-datasource-health-by-id-500-schema) |
+
+#### Responses
+
+##### <span id="check-datasource-health-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="check-datasource-health-by-id-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="check-datasource-health-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="check-datasource-health-by-id-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="check-datasource-health-by-id-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="check-datasource-health-by-id-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="check-datasource-health-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="check-datasource-health-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -4625,7 +2629,7 @@ POST /api/access-control/roles
 
 Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.
 
-You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
+You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
 
 #### Parameters
@@ -4906,7 +2910,7 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls"></span> Data source proxy DELETE calls. (_datasourceProxyDELETEByUIDcalls_)
 
 ```
-DELETE /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+DELETE /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source.
@@ -4916,7 +2920,7 @@ Proxies all calls to the actual data source.
 | Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
 | datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+| uid                    | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -4980,17 +2984,19 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-d-e-l-e-t-ecalls"></span> Data source proxy DELETE calls. (_datasourceProxyDELETEcalls_)
 
 ```
-DELETE /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}
+DELETE /api/datasources/proxy/{id}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source.
+
+Please refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead
 
 #### Parameters
 
 | Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id          | `path` | string | `string` |           |    ✓     |         |             |
 | datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| id                     | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5054,7 +3060,7 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-g-e-t-by-ui-dcalls"></span> Data source proxy GET calls. (_datasourceProxyGETByUIDcalls_)
 
 ```
-GET /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+GET /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source.
@@ -5064,7 +3070,7 @@ Proxies all calls to the actual data source.
 | Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
 | datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+| uid                    | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5128,17 +3134,19 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-g-e-tcalls"></span> Data source proxy GET calls. (_datasourceProxyGETcalls_)
 
 ```
-GET /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}
+GET /api/datasources/proxy/{id}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source.
+
+Please refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead
 
 #### Parameters
 
 | Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id          | `path` | string | `string` |           |    ✓     |         |             |
 | datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| id                     | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5202,7 +3210,7 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls"></span> Data source proxy POST calls. (_datasourceProxyPOSTByUIDcalls_)
 
 ```
-POST /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+POST /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
@@ -5212,7 +3220,7 @@ Proxies all calls to the actual data source. The data source should support POST
 | Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
 | datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+| uid                    | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5283,17 +3291,19 @@ Status: Internal Server Error
 ### <span id="datasource-proxy-p-o-s-tcalls"></span> Data source proxy POST calls. (_datasourceProxyPOSTcalls_)
 
 ```
-POST /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}
+POST /api/datasources/proxy/{id}/{datasource_proxy_route}
 ```
 
 Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
+
+Please refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead
 
 #### Parameters
 
 | Name                   | Source | Type                      | Go type       | Separator | Required | Default | Description |
 | ---------------------- | ------ | ------------------------- | ------------- | --------- | :------: | ------- | ----------- |
-| datasource_id          | `path` | string                    | `string`      |           |    ✓     |         |             |
 | datasource_proxy_route | `path` | string                    | `string`      |           |    ✓     |         |             |
+| id                     | `path` | string                    | `string`      |           |    ✓     |         |             |
 | DatasourceProxyParam   | `body` | [interface{}](#interface) | `interface{}` |           |    ✓     |         |             |
 
 #### All responses
@@ -5634,7 +3644,7 @@ DELETE /api/access-control/roles/{roleUID}
 
 Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.
 
-You need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.
+You need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.
 
 #### Parameters
 
@@ -5766,17 +3776,19 @@ Status: Internal Server Error
 ### <span id="delete-datasource-by-id"></span> Delete an existing data source by id. (_deleteDatasourceByID_)
 
 ```
-DELETE /api/datasources/{datasource_id}
+DELETE /api/datasources/{id}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
+you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+
+Please refer to [updated API](#/datasources/deleteDatasourceByUID) instead
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5833,7 +3845,7 @@ Status: Internal Server Error
 ### <span id="delete-datasource-by-name"></span> Delete an existing data source by name. (_deleteDatasourceByName_)
 
 ```
-DELETE /api/datasources/name/{datasource_name}
+DELETE /api/datasources/name/{name}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -5841,9 +3853,9 @@ you need to have a permission with action: `datasources:delete` and scopes: `dat
 
 #### Parameters
 
-| Name            | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_name | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| name | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -5911,7 +3923,7 @@ Status: Internal Server Error
 ### <span id="delete-datasource-by-uid"></span> Delete an existing data source by UID. (_deleteDatasourceByUID_)
 
 ```
-DELETE /api/datasources/uid/{datasource_uid}
+DELETE /api/datasources/uid/{uid}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -5919,9 +3931,9 @@ you need to have a permission with action: `datasources:delete` and scopes: `dat
 
 #### Parameters
 
-| Name           | Source | Type   | Go type  | Separator | Required | Default | Description |
-| -------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_uid | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -6287,7 +4299,7 @@ Status: Internal Server Error
 ### <span id="delete-permissions"></span> Remove permission for a data source. (_deletePermissions_)
 
 ```
-DELETE /api/datasources/{datasource_id}/permissions/{permissionId}
+DELETE /api/datasources/{datasourceId}/permissions/{permissionId}
 ```
 
 Removes the permission with the given permissionId for the data source with the given id.
@@ -6296,10 +4308,10 @@ You need to have a permission with action `datasources.permissions:delete` and s
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
-| permissionId  | `path` | string | `string` |           |    ✓     |         |             |
+| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
+| permissionId | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -6810,7 +4822,7 @@ Status: Internal Server Error
 ### <span id="disable-permissions"></span> Disable permissions for a data source. (_disablePermissions_)
 
 ```
-POST /api/datasources/{datasource_id}/disable-permissions
+POST /api/datasources/{datasourceId}/disable-permissions
 ```
 
 Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.
@@ -6819,9 +4831,9 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -6970,7 +4982,7 @@ Status: Internal Server Error
 ### <span id="enable-permissions"></span> Enable permissions for a data source. (_enablePermissions_)
 
 ```
-POST /api/datasources/{datasource_id}/enable-permissions
+POST /api/datasources/{datasourceId}/enable-permissions
 ```
 
 Enables permissions for the data source with the given id.
@@ -6981,9 +4993,9 @@ You need to have a permission with action `datasources.permissions:toggle` and s
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -7126,6 +5138,156 @@ Status: Not Found
 Status: Internal Server Error
 
 ###### <span id="enable-user-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="fetch-datasource-resources"></span> Fetch data source resources. (_fetchDatasourceResources_)
+
+```
+GET /api/datasources/uid/{uid}/resources/{datasource_proxy_route}
+```
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| uid                    | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                   | Status                | Description                                                                                                 | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------ |
+| [200](#fetch-datasource-resources-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#fetch-datasource-resources-200-schema) |
+| [400](#fetch-datasource-resources-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#fetch-datasource-resources-400-schema) |
+| [401](#fetch-datasource-resources-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#fetch-datasource-resources-401-schema) |
+| [403](#fetch-datasource-resources-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#fetch-datasource-resources-403-schema) |
+| [404](#fetch-datasource-resources-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#fetch-datasource-resources-404-schema) |
+| [500](#fetch-datasource-resources-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#fetch-datasource-resources-500-schema) |
+
+#### Responses
+
+##### <span id="fetch-datasource-resources-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="fetch-datasource-resources-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="fetch-datasource-resources-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="fetch-datasource-resources-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="fetch-datasource-resources-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="fetch-datasource-resources-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="fetch-datasource-resources-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="fetch-datasource-resources-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="fetch-datasource-resources-by-id"></span> Fetch data source resources by Id. (_fetchDatasourceResourcesByID_)
+
+```
+GET /api/datasources/{id}/resources/{datasource_proxy_route}
+```
+
+Please refer to [updated API](#/datasources/fetchDatasourceResources) instead
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| id                     | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
+| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
+| [200](#fetch-datasource-resources-by-id-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#fetch-datasource-resources-by-id-200-schema) |
+| [400](#fetch-datasource-resources-by-id-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#fetch-datasource-resources-by-id-400-schema) |
+| [401](#fetch-datasource-resources-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#fetch-datasource-resources-by-id-401-schema) |
+| [403](#fetch-datasource-resources-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#fetch-datasource-resources-by-id-403-schema) |
+| [404](#fetch-datasource-resources-by-id-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#fetch-datasource-resources-by-id-404-schema) |
+| [500](#fetch-datasource-resources-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#fetch-datasource-resources-by-id-500-schema) |
+
+#### Responses
+
+##### <span id="fetch-datasource-resources-by-id-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="fetch-datasource-resources-by-id-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="fetch-datasource-resources-by-id-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="fetch-datasource-resources-by-id-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="fetch-datasource-resources-by-id-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="fetch-datasource-resources-by-id-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-by-id-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="fetch-datasource-resources-by-id-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="fetch-datasource-resources-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="fetch-datasource-resources-by-id-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -7577,6 +5739,52 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="get-annotation"></span> Get Annotation by Id. (_getAnnotation_)
+
+```
+GET /api/annotations/{annotation_id}
+```
+
+#### Parameters
+
+| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| annotation_id | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                       | Status                | Description                                                                        | Has headers | Schema                               |
+| -------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
+| [200](#get-annotation-200) | OK                    |                                                                                    |             | [schema](#get-annotation-200-schema) |
+| [401](#get-annotation-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#get-annotation-401-schema) |
+| [500](#get-annotation-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#get-annotation-500-schema) |
+
+#### Responses
+
+##### <span id="get-annotation-200"></span> 200
+
+Status: OK
+
+###### <span id="get-annotation-200-schema"></span> Schema
+
+[ItemDTO](#item-d-t-o)
+
+##### <span id="get-annotation-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-annotation-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-annotation-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-annotation-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="get-annotation-tags"></span> Find Annotations Tags. (_getAnnotationTags_)
 
 ```
@@ -7886,6 +6094,8 @@ Status: Internal Server Error
 GET /api/dashboards/id/{DashboardID}/permissions
 ```
 
+Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead
+
 #### Parameters
 
 | Name        | Source | Type                      | Go type | Separator | Required | Default | Description |
@@ -7941,6 +6151,70 @@ Status: Not Found
 Status: Internal Server Error
 
 ###### <span id="get-dashboard-permissions-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-dashboard-permissions-with-uid"></span> Gets all existing permissions for the given dashboard. (_getDashboardPermissionsWithUid_)
+
+```
+GET /api/dashboards/uid/{uid}/permissions
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                           | Status                | Description                                                                                                 | Has headers | Schema                                                   |
+| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------- |
+| [200](#get-dashboard-permissions-with-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-permissions-with-uid-200-schema) |
+| [401](#get-dashboard-permissions-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-permissions-with-uid-401-schema) |
+| [403](#get-dashboard-permissions-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-permissions-with-uid-403-schema) |
+| [404](#get-dashboard-permissions-with-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-permissions-with-uid-404-schema) |
+| [500](#get-dashboard-permissions-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-permissions-with-uid-500-schema) |
+
+#### Responses
+
+##### <span id="get-dashboard-permissions-with-uid-200"></span> 200
+
+Status: OK
+
+###### <span id="get-dashboard-permissions-with-uid-200-schema"></span> Schema
+
+[][dashboardaclinfodto](#dashboard-acl-info-d-t-o)
+
+##### <span id="get-dashboard-permissions-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-dashboard-permissions-with-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-permissions-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-dashboard-permissions-with-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-permissions-with-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-dashboard-permissions-with-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-permissions-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-dashboard-permissions-with-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -8036,6 +6310,8 @@ Status: Internal Server Error
 GET /api/dashboards/id/{DashboardID}/versions/{DashboardVersionID}
 ```
 
+Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
+
 #### Parameters
 
 | Name               | Source | Type                      | Go type | Separator | Required | Default | Description |
@@ -8095,11 +6371,78 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="get-dashboard-version-by-uid"></span> Get a specific dashboard version using UID. (_getDashboardVersionByUID_)
+
+```
+GET /api/dashboards/uid/{uid}/versions/{DashboardVersionID}
+```
+
+#### Parameters
+
+| Name               | Source | Type                      | Go type  | Separator | Required | Default | Description |
+| ------------------ | ------ | ------------------------- | -------- | --------- | :------: | ------- | ----------- |
+| DashboardVersionID | `path` | int64 (formatted integer) | `int64`  |           |    ✓     |         |             |
+| uid                | `path` | string                    | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                     | Status                | Description                                                                                                 | Has headers | Schema                                             |
+| ---------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------- |
+| [200](#get-dashboard-version-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-version-by-uid-200-schema) |
+| [401](#get-dashboard-version-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-version-by-uid-401-schema) |
+| [403](#get-dashboard-version-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-version-by-uid-403-schema) |
+| [404](#get-dashboard-version-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-version-by-uid-404-schema) |
+| [500](#get-dashboard-version-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-version-by-uid-500-schema) |
+
+#### Responses
+
+##### <span id="get-dashboard-version-by-uid-200"></span> 200
+
+Status: OK
+
+###### <span id="get-dashboard-version-by-uid-200-schema"></span> Schema
+
+[DashboardVersionMeta](#dashboard-version-meta)
+
+##### <span id="get-dashboard-version-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-dashboard-version-by-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-version-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-dashboard-version-by-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-version-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-dashboard-version-by-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-version-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-dashboard-version-by-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="get-dashboard-versions"></span> Gets all existing versions for the dashboard. (_getDashboardVersions_)
 
 ```
 GET /api/dashboards/id/{DashboardID}/versions
 ```
+
+Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
 
 #### Parameters
 
@@ -8161,20 +6504,88 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="get-datasource-by-id"></span> Get a single data source by Id. (_getDatasourceByID_)
+### <span id="get-dashboard-versions-by-uid"></span> Gets all existing versions for the dashboard using UID. (_getDashboardVersionsByUID_)
 
 ```
-GET /api/datasources/{datasource_id}
+GET /api/dashboards/uid/{uid}/versions
 ```
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name  | Source  | Type                      | Go type  | Separator | Required | Default | Description                                  |
+| ----- | ------- | ------------------------- | -------- | --------- | :------: | ------- | -------------------------------------------- |
+| uid   | `path`  | string                    | `string` |           |    ✓     |         |                                              |
+| limit | `query` | int64 (formatted integer) | `int64`  |           |          |         | Maximum number of results to return          |
+| start | `query` | int64 (formatted integer) | `int64`  |           |          |         | Version to start from when returning queries |
+
+#### All responses
+
+| Code                                      | Status                | Description                                                                                                 | Has headers | Schema                                              |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------- |
+| [200](#get-dashboard-versions-by-uid-200) | OK                    |                                                                                                             |             | [schema](#get-dashboard-versions-by-uid-200-schema) |
+| [401](#get-dashboard-versions-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#get-dashboard-versions-by-uid-401-schema) |
+| [403](#get-dashboard-versions-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#get-dashboard-versions-by-uid-403-schema) |
+| [404](#get-dashboard-versions-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#get-dashboard-versions-by-uid-404-schema) |
+| [500](#get-dashboard-versions-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#get-dashboard-versions-by-uid-500-schema) |
+
+#### Responses
+
+##### <span id="get-dashboard-versions-by-uid-200"></span> 200
+
+Status: OK
+
+###### <span id="get-dashboard-versions-by-uid-200-schema"></span> Schema
+
+[][dashboardversiondto](#dashboard-version-d-t-o)
+
+##### <span id="get-dashboard-versions-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="get-dashboard-versions-by-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-versions-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="get-dashboard-versions-by-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-versions-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="get-dashboard-versions-by-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="get-dashboard-versions-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="get-dashboard-versions-by-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="get-datasource-by-id"></span> Get a single data source by Id. (_getDatasourceByID_)
+
+```
+GET /api/datasources/{id}
+```
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+
+Please refer to [updated API](#/datasources/getDatasourceByUID) instead
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -8240,7 +6651,7 @@ Status: Internal Server Error
 ### <span id="get-datasource-by-name"></span> Get a single data source by Name. (_getDatasourceByName_)
 
 ```
-GET /api/datasources/name/{datasource_name}
+GET /api/datasources/name/{name}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -8248,9 +6659,9 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### Parameters
 
-| Name            | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_name | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| name | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -8298,7 +6709,7 @@ Status: Internal Server Error
 ### <span id="get-datasource-by-uid"></span> Get a single data source by UID. (_getDatasourceByUID_)
 
 ```
-GET /api/datasources/uid/{datasource_uid}
+GET /api/datasources/uid/{uid}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -8306,9 +6717,9 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### Parameters
 
-| Name           | Source | Type   | Go type  | Separator | Required | Default | Description |
-| -------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_uid | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -8374,7 +6785,7 @@ Status: Internal Server Error
 ### <span id="get-datasource-id-by-name"></span> Get data source Id by Name. (_getDatasourceIdByName_)
 
 ```
-GET /api/datasources/id/{datasource_name}
+GET /api/datasources/id/{name}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
@@ -8382,9 +6793,9 @@ you need to have a permission with action: `datasources:read` and scopes: `datas
 
 #### Parameters
 
-| Name            | Source | Type   | Go type  | Separator | Required | Default | Description |
-| --------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_name | `path` | string | `string` |           |    ✓     |         |             |
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| name | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -9619,7 +8030,7 @@ Status: Internal Server Error
 ### <span id="get-permissions"></span> Get permissions for a data source. (_getPermissions_)
 
 ```
-GET /api/datasources/{datasource_id}/permissions
+GET /api/datasources/{datasourceId}/permissions
 ```
 
 Gets all existing permissions for the data source with the given id.
@@ -9628,9 +8039,9 @@ You need to have a permission with action `datasources.permissions:read` and sco
 
 #### Parameters
 
-| Name          | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name         | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ------------ | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasourceId | `path` | string | `string` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -12295,6 +10706,8 @@ Status: Internal Server Error
 POST /api/dashboards/id/{DashboardID}/permissions
 ```
 
+Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead
+
 This operation will remove existing permissions if they’re not included in the request.
 
 #### Parameters
@@ -12362,6 +10775,82 @@ Status: Not Found
 Status: Internal Server Error
 
 ###### <span id="post-dashboard-permissions-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="post-dashboard-permissions-with-uid"></span> Updates permissions for a dashboard. (_postDashboardPermissionsWithUid_)
+
+```
+POST /api/dashboards/uid/{uid}/permissions
+```
+
+This operation will remove existing permissions if they’re not included in the request.
+
+#### Parameters
+
+| Name | Source | Type                                                       | Go type                            | Separator | Required | Default | Description |
+| ---- | ------ | ---------------------------------------------------------- | ---------------------------------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string                                                     | `string`                           |           |    ✓     |         |             |
+| Body | `body` | [UpdateDashboardACLCommand](#update-dashboard-acl-command) | `models.UpdateDashboardACLCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                            | Status                | Description                                                                                                 | Has headers | Schema                                                    |
+| ----------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------- |
+| [200](#post-dashboard-permissions-with-uid-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#post-dashboard-permissions-with-uid-200-schema) |
+| [400](#post-dashboard-permissions-with-uid-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#post-dashboard-permissions-with-uid-400-schema) |
+| [401](#post-dashboard-permissions-with-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#post-dashboard-permissions-with-uid-401-schema) |
+| [403](#post-dashboard-permissions-with-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#post-dashboard-permissions-with-uid-403-schema) |
+| [404](#post-dashboard-permissions-with-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#post-dashboard-permissions-with-uid-404-schema) |
+| [500](#post-dashboard-permissions-with-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#post-dashboard-permissions-with-uid-500-schema) |
+
+#### Responses
+
+##### <span id="post-dashboard-permissions-with-uid-200"></span> 200 - An OKResponse is returned if the request was successful.
+
+Status: OK
+
+###### <span id="post-dashboard-permissions-with-uid-200-schema"></span> Schema
+
+[SuccessResponseBody](#success-response-body)
+
+##### <span id="post-dashboard-permissions-with-uid-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="post-dashboard-permissions-with-uid-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-dashboard-permissions-with-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="post-dashboard-permissions-with-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-dashboard-permissions-with-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="post-dashboard-permissions-with-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-dashboard-permissions-with-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="post-dashboard-permissions-with-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="post-dashboard-permissions-with-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="post-dashboard-permissions-with-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -12506,88 +10995,6 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="query-datasource"></span> Query metrics. (_queryDatasource_)
-
-```
-POST /api/tsdb/query
-```
-
-Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead
-
-Queries a data source having backend implementation.
-
-Most of Grafana’s builtin data sources have backend implementation.
-
-If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:query`.
-
-#### Parameters
-
-| Name | Source | Type                             | Go type                | Separator | Required | Default | Description |
-| ---- | ------ | -------------------------------- | ---------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [MetricRequest](#metric-request) | `models.MetricRequest` |           |    ✓     |         |             |
-
-#### All responses
-
-| Code                         | Status                | Description                                                                                                 | Has headers | Schema                                 |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------- |
-| [200](#query-datasource-200) | OK                    |                                                                                                             |             | [schema](#query-datasource-200-schema) |
-| [400](#query-datasource-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#query-datasource-400-schema) |
-| [401](#query-datasource-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#query-datasource-401-schema) |
-| [403](#query-datasource-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#query-datasource-403-schema) |
-| [404](#query-datasource-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#query-datasource-404-schema) |
-| [500](#query-datasource-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#query-datasource-500-schema) |
-
-#### Responses
-
-##### <span id="query-datasource-200"></span> 200
-
-Status: OK
-
-###### <span id="query-datasource-200-schema"></span> Schema
-
-[DataResponse](#data-response)
-
-##### <span id="query-datasource-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
-
-Status: Bad Request
-
-###### <span id="query-datasource-400-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="query-datasource-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
-
-Status: Unauthorized
-
-###### <span id="query-datasource-401-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="query-datasource-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
-
-Status: Forbidden
-
-###### <span id="query-datasource-403-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="query-datasource-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
-
-Status: Not Found
-
-###### <span id="query-datasource-404-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
-##### <span id="query-datasource-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
-
-Status: Internal Server Error
-
-###### <span id="query-datasource-500-schema"></span> Schema
-
-[ErrorResponseBody](#error-response-body)
-
 ### <span id="query-metrics-with-expressions"></span> Query metrics with expressions (_queryMetricsWithExpressions_)
 
 ```
@@ -12608,6 +11015,7 @@ you need to have a permission with action: `datasources:query`.
 | Code                                       | Status                | Description                                                                                                 | Has headers | Schema                                               |
 | ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------------- |
 | [200](#query-metrics-with-expressions-200) | OK                    |                                                                                                             |             | [schema](#query-metrics-with-expressions-200-schema) |
+| [207](#query-metrics-with-expressions-207) | Multi-Status          |                                                                                                             |             | [schema](#query-metrics-with-expressions-207-schema) |
 | [400](#query-metrics-with-expressions-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#query-metrics-with-expressions-400-schema) |
 | [401](#query-metrics-with-expressions-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#query-metrics-with-expressions-401-schema) |
 | [403](#query-metrics-with-expressions-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#query-metrics-with-expressions-403-schema) |
@@ -12620,6 +11028,14 @@ you need to have a permission with action: `datasources:query`.
 Status: OK
 
 ###### <span id="query-metrics-with-expressions-200-schema"></span> Schema
+
+[QueryDataResponse](#query-data-response)
+
+##### <span id="query-metrics-with-expressions-207"></span> 207
+
+Status: Multi-Status
+
+###### <span id="query-metrics-with-expressions-207-schema"></span> Schema
 
 [QueryDataResponse](#query-data-response)
 
@@ -13031,7 +11447,7 @@ DELETE /api/access-control/builtin-roles/{builtinRole}/roles/{roleUID}
 
 Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.
 
-You need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.
+You need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.
 
 #### Parameters
 
@@ -13238,7 +11654,7 @@ Status: Internal Server Error
 DELETE /api/access-control/teams/{teamId}/roles/{roleUID}
 ```
 
-You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.
+You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.
 
 #### Parameters
 
@@ -13307,7 +11723,7 @@ DELETE /api/access-control/users/{user_id}/roles/{roleUID}
 
 Revoke a role from a user. For bulk updates consider Set user role assignments.
 
-You need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
+You need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
 #### Parameters
 
@@ -13375,7 +11791,7 @@ Status: Internal Server Error
 GET /api/reports/render/pdf/{DashboardID}
 ```
 
-Available to all users and with a valid license.
+Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.
 
 #### Produces
 
@@ -13430,17 +11846,75 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="render-report-p-d-fs"></span> Render report for multiple dashboards. (_renderReportPDFs_)
+
+```
+GET /api/reports/render/pdfs
+```
+
+Available to all users and with a valid license.
+
+#### Produces
+
+- application/pdf
+
+#### All responses
+
+| Code                             | Status                | Description                                                                         | Has headers | Schema                                     |
+| -------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ------------------------------------------ |
+| [200](#render-report-p-d-fs-200) | OK                    |                                                                                     |             | [schema](#render-report-p-d-fs-200-schema) |
+| [400](#render-report-p-d-fs-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#render-report-p-d-fs-400-schema) |
+| [401](#render-report-p-d-fs-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#render-report-p-d-fs-401-schema) |
+| [500](#render-report-p-d-fs-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#render-report-p-d-fs-500-schema) |
+
+#### Responses
+
+##### <span id="render-report-p-d-fs-200"></span> 200
+
+Status: OK
+
+###### <span id="render-report-p-d-fs-200-schema"></span> Schema
+
+[]uint8 (formatted integer)
+
+##### <span id="render-report-p-d-fs-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="render-report-p-d-fs-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="render-report-p-d-fs-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="render-report-p-d-fs-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="render-report-p-d-fs-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="render-report-p-d-fs-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="restore-dashboard-version"></span> Restore a dashboard to a given dashboard version. (_restoreDashboardVersion_)
 
 ```
 POST /api/dashboards/id/{DashboardID}/restore
 ```
 
+Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+
 #### Parameters
 
-| Name        | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ----------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| DashboardID | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name        | Source | Type                                                                 | Go type                                 | Separator | Required | Default | Description |
+| ----------- | ------ | -------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
+| DashboardID | `path` | int64 (formatted integer)                                            | `int64`                                 |           |    ✓     |         |             |
+| Body        | `body` | [RestoreDashboardVersionCommand](#restore-dashboard-version-command) | `models.RestoreDashboardVersionCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -13497,6 +11971,86 @@ Status: Internal Server Error
 ###### Inlined models
 
 **<span id="restore-dashboard-version-o-k-body"></span> RestoreDashboardVersionOKBody**
+
+**Properties**
+
+| Name    | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
+| id      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
+| status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
+| title   | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
+| uid     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
+| url     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
+| version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
+
+### <span id="restore-dashboard-version-by-uid"></span> Restore a dashboard to a given dashboard version using UID. (_restoreDashboardVersionByUID_)
+
+```
+POST /api/dashboards/uid/{uid}/restore
+```
+
+#### Parameters
+
+| Name | Source | Type                                                                 | Go type                                 | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------------------- | --------------------------------------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string                                                               | `string`                                |           |    ✓     |         |             |
+| Body | `body` | [RestoreDashboardVersionCommand](#restore-dashboard-version-command) | `models.RestoreDashboardVersionCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
+| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
+| [200](#restore-dashboard-version-by-uid-200) | OK                    | Create/update dashboard response.                                                                           |             | [schema](#restore-dashboard-version-by-uid-200-schema) |
+| [401](#restore-dashboard-version-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#restore-dashboard-version-by-uid-401-schema) |
+| [403](#restore-dashboard-version-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#restore-dashboard-version-by-uid-403-schema) |
+| [404](#restore-dashboard-version-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#restore-dashboard-version-by-uid-404-schema) |
+| [500](#restore-dashboard-version-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#restore-dashboard-version-by-uid-500-schema) |
+
+#### Responses
+
+##### <span id="restore-dashboard-version-by-uid-200"></span> 200 - Create/update dashboard response.
+
+Status: OK
+
+###### <span id="restore-dashboard-version-by-uid-200-schema"></span> Schema
+
+[RestoreDashboardVersionByUIDOKBody](#restore-dashboard-version-by-uid-o-k-body)
+
+##### <span id="restore-dashboard-version-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="restore-dashboard-version-by-uid-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="restore-dashboard-version-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="restore-dashboard-version-by-uid-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="restore-dashboard-version-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="restore-dashboard-version-by-uid-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="restore-dashboard-version-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="restore-dashboard-version-by-uid-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="restore-dashboard-version-by-uid-o-k-body"></span> RestoreDashboardVersionByUIDOKBody**
 
 **Properties**
 
@@ -14515,7 +13069,7 @@ Status: Internal Server Error
 PUT /api/access-control/teams/{teamId}/roles
 ```
 
-You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.
+You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.
 
 #### Parameters
 
@@ -14584,7 +13138,7 @@ PUT /api/access-control/users/{user_id}/roles
 Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.
 If you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.
 
-You need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
+You need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
 #### Parameters
 
@@ -15221,10 +13775,88 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-datasource"></span> Update an existing data source. (_updateDatasource_)
+### <span id="update-datasource-by-id"></span> Update an existing data source by its sequential ID. (_updateDatasourceByID_)
 
 ```
-PUT /api/datasources/{datasource_id}
+PUT /api/datasources/{id}
+```
+
+Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
+secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
+encrypted fields are listed under secureJsonFields section in the response.
+
+If you are running Grafana Enterprise and have Fine-grained access control enabled
+you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+
+Please refer to [updated API](#/datasources/updateDatasourceByUID) instead
+
+#### Parameters
+
+| Name | Source | Type                                                   | Go type                          | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------ | -------------------------------- | --------- | :------: | ------- | ----------- |
+| id   | `path` | string                                                 | `string`                         |           |    ✓     |         |             |
+| Body | `body` | [UpdateDataSourceCommand](#update-data-source-command) | `models.UpdateDataSourceCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                | Status                | Description                                                                                                 | Has headers | Schema                                        |
+| ----------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------- |
+| [200](#update-datasource-by-id-200) | OK                    |                                                                                                             |             | [schema](#update-datasource-by-id-200-schema) |
+| [401](#update-datasource-by-id-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-datasource-by-id-401-schema) |
+| [403](#update-datasource-by-id-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-datasource-by-id-403-schema) |
+| [500](#update-datasource-by-id-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-datasource-by-id-500-schema) |
+
+#### Responses
+
+##### <span id="update-datasource-by-id-200"></span> 200
+
+Status: OK
+
+###### <span id="update-datasource-by-id-200-schema"></span> Schema
+
+[UpdateDatasourceByIDOKBody](#update-datasource-by-id-o-k-body)
+
+##### <span id="update-datasource-by-id-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="update-datasource-by-id-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-datasource-by-id-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="update-datasource-by-id-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="update-datasource-by-id-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="update-datasource-by-id-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+###### Inlined models
+
+**<span id="update-datasource-by-id-o-k-body"></span> UpdateDatasourceByIDOKBody**
+
+**Properties**
+
+| Name       | Type                       | Go type             | Required | Default | Description                               | Example             |
+| ---------- | -------------------------- | ------------------- | :------: | ------- | ----------------------------------------- | ------------------- |
+| datasource | [DataSource](#data-source) | `models.DataSource` |    ✓     |         |                                           |                     |
+| id         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
+| message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
+| name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
+
+### <span id="update-datasource-by-uid"></span> Update an existing data source. (_updateDatasourceByUID_)
+
+```
+PUT /api/datasources/uid/{uid}
 ```
 
 Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
@@ -15236,57 +13868,57 @@ you need to have a permission with action: `datasources:write` and scopes: `data
 
 #### Parameters
 
-| Name          | Source | Type                                                   | Go type                          | Separator | Required | Default | Description |
-| ------------- | ------ | ------------------------------------------------------ | -------------------------------- | --------- | :------: | ------- | ----------- |
-| datasource_id | `path` | string                                                 | `string`                         |           |    ✓     |         |             |
-| Body          | `body` | [UpdateDataSourceCommand](#update-data-source-command) | `models.UpdateDataSourceCommand` |           |    ✓     |         |             |
+| Name | Source | Type                                                   | Go type                          | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------ | -------------------------------- | --------- | :------: | ------- | ----------- |
+| uid  | `path` | string                                                 | `string`                         |           |    ✓     |         |             |
+| Body | `body` | [UpdateDataSourceCommand](#update-data-source-command) | `models.UpdateDataSourceCommand` |           |    ✓     |         |             |
 
 #### All responses
 
-| Code                          | Status                | Description                                                                                                 | Has headers | Schema                                  |
-| ----------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------- |
-| [200](#update-datasource-200) | OK                    |                                                                                                             |             | [schema](#update-datasource-200-schema) |
-| [401](#update-datasource-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-datasource-401-schema) |
-| [403](#update-datasource-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-datasource-403-schema) |
-| [500](#update-datasource-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-datasource-500-schema) |
+| Code                                 | Status                | Description                                                                                                 | Has headers | Schema                                         |
+| ------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ---------------------------------------------- |
+| [200](#update-datasource-by-uid-200) | OK                    |                                                                                                             |             | [schema](#update-datasource-by-uid-200-schema) |
+| [401](#update-datasource-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-datasource-by-uid-401-schema) |
+| [403](#update-datasource-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-datasource-by-uid-403-schema) |
+| [500](#update-datasource-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-datasource-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="update-datasource-200"></span> 200
+##### <span id="update-datasource-by-uid-200"></span> 200
 
 Status: OK
 
-###### <span id="update-datasource-200-schema"></span> Schema
+###### <span id="update-datasource-by-uid-200-schema"></span> Schema
 
-[UpdateDatasourceOKBody](#update-datasource-o-k-body)
+[UpdateDatasourceByUIDOKBody](#update-datasource-by-uid-o-k-body)
 
-##### <span id="update-datasource-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="update-datasource-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="update-datasource-401-schema"></span> Schema
+###### <span id="update-datasource-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="update-datasource-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="update-datasource-403-schema"></span> Schema
+###### <span id="update-datasource-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-datasource-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="update-datasource-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="update-datasource-500-schema"></span> Schema
+###### <span id="update-datasource-by-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
 ###### Inlined models
 
-**<span id="update-datasource-o-k-body"></span> UpdateDatasourceOKBody**
+**<span id="update-datasource-by-uid-o-k-body"></span> UpdateDatasourceByUIDOKBody**
 
 **Properties**
 
@@ -16024,7 +14656,7 @@ Status: Internal Server Error
 PUT /api/access-control/roles/{roleUID}
 ```
 
-You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
+You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
 
 #### Parameters
 
@@ -16633,11 +15265,11 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name          | Type                      | Go type    | Required | Default | Description | Example |
-| ------------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| name          | string                    | `string`   |          |         |             |         |
-| role          | [RoleType](#role-type)    | `RoleType` |          |         |             |         |
-| secondsToLive | int64 (formatted integer) | `int64`    |          |         |             |         |
+| Name          | Type                      | Go type  | Required | Default | Description | Example |
+| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| Name          | string                    | `string` |          |         |             |         |
+| Role          | string                    | `string` |          |         |             |         |
+| SecondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="add-built-in-role-command"></span> AddBuiltInRoleCommand
 
@@ -16677,21 +15309,21 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name         | Type                   | Go type    | Required | Default | Description | Example |
-| ------------ | ---------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| loginOrEmail | string                 | `string`   |          |         |             |         |
-| name         | string                 | `string`   |          |         |             |         |
-| role         | [RoleType](#role-type) | `RoleType` |          |         |             |         |
-| sendEmail    | boolean                | `bool`     |          |         |             |         |
+| Name         | Type    | Go type  | Required | Default | Description | Example |
+| ------------ | ------- | -------- | :------: | ------- | ----------- | ------- |
+| loginOrEmail | string  | `string` |          |         |             |         |
+| name         | string  | `string` |          |         |             |         |
+| role         | string  | `string` |          |         |             |         |
+| sendEmail    | boolean | `bool`   |          |         |             |         |
 
 ### <span id="add-org-user-command"></span> AddOrgUserCommand
 
 **Properties**
 
-| Name         | Type                   | Go type    | Required | Default | Description | Example |
-| ------------ | ---------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| loginOrEmail | string                 | `string`   |          |         |             |         |
-| role         | [RoleType](#role-type) | `RoleType` |          |         |             |         |
+| Name         | Type   | Go type  | Required | Default | Description | Example |
+| ------------ | ------ | -------- | :------: | ------- | ----------- | ------- |
+| loginOrEmail | string | `string` |          |         |             |         |
+| role         | string | `string` |          |         |             |         |
 
 ### <span id="add-permission-d-t-o"></span> AddPermissionDTO
 
@@ -16802,18 +15434,6 @@ Status: Internal Server Error
 
 ### <span id="alert"></span> Alert
 
-**Properties**
-
-| Name        | Type                               | Go type           | Required | Default | Description | Example |
-| ----------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| ActiveAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| State       | string                             | `string`          |    ✓     |         |             |         |
-| Value       | string                             | `string`          |    ✓     |         |             |         |
-| annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
-| labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
-
-### <span id="alert"></span> Alert
-
 > Alert alert
 
 **Properties**
@@ -16823,6 +15443,18 @@ Status: Internal Server Error
 | GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
 | Format: uri  |                        |
 | labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+
+### <span id="alert"></span> Alert
+
+**Properties**
+
+| Name        | Type                               | Go type           | Required | Default | Description | Example |
+| ----------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| ActiveAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
+| State       | string                             | `string`          |    ✓     |         |             |         |
+| Value       | string                             | `string`          |    ✓     |         |             |         |
+| annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
+| labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 
 ### <span id="alert-discovery"></span> AlertDiscovery
 
@@ -17073,12 +15705,13 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name       | Type                         | Go type           | Required | Default | Description | Example |
-| ---------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| expiration | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| id         | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| name       | string                       | `string`          |          |         |             |         |
-| role       | [RoleType](#role-type)       | `RoleType`        |          |         |             |         |
+| Name          | Type                         | Go type           | Required | Default | Description | Example |
+| ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| accessControl | [Metadata](#metadata)        | `Metadata`        |          |         |             |         |
+| expiration    | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| name          | string                       | `string`          |          |         |             |         |
+| role          | string                       | `string`          |          |         |             |         |
 
 ### <span id="api-rule-node"></span> ApiRuleNode
 
@@ -17156,6 +15789,16 @@ Status: Internal Server Error
 | Peers  | [][peerstatus](#peer-status) | `[]*PeerStatus` |          |         | peers       |         |
 | Status | string                       | `string`        |    ✓     |         | status      |         |
 
+### <span id="conf-float64"></span> ConfFloat64
+
+> ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf
+> to null.
+
+| Name        | Type                      | Go type | Default | Description                                                        | Example |
+| ----------- | ------------------------- | ------- | ------- | ------------------------------------------------------------------ | ------- |
+| ConfFloat64 | double (formatted number) | float64 |         | ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf |
+| to null.    |                           |
+
 ### <span id="config"></span> Config
 
 **Properties**
@@ -17180,8 +15823,10 @@ Status: Internal Server Error
 | dashboardId        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
 | dashboardName      | string                                    | `string`           |          |         |             |         |
 | dashboardUid       | string                                    | `string`           |          |         |             |         |
+| dashboards         | [][dashboarddto](#dashboard-d-t-o)        | `[]*DashboardDTO`  |          |         |             |         |
 | enableCsv          | boolean                                   | `bool`             |          |         |             |         |
 | enableDashboardUrl | boolean                                   | `bool`             |          |         |             |         |
+| formats            | [][type](#type)                           | `[]Type`           |          |         |             |         |
 | id                 | int64 (formatted integer)                 | `int64`            |          |         |             |         |
 | message            | string                                    | `string`           |          |         |             |         |
 | name               | string                                    | `string`           |          |         |             |         |
@@ -17241,10 +15886,11 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name     | Type                      | Go type | Required | Default | Description                                                     | Example |
-| -------- | ------------------------- | ------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| folderId | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
-| kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
+| Name      | Type                      | Go type  | Required | Default | Description                                                     | Example |
+| --------- | ------------------------- | -------- | :------: | ------- | --------------------------------------------------------------- | ------- |
+| folderId  | int64 (formatted integer) | `int64`  |          |         | ID of the folder where the library element is stored.           |         |
+| folderUid | string                    | `string` |          |         | UID of the folder where the library element is stored.          |         |
+| kind      | int64 (formatted integer) | `int64`  |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
 
 Description:
 1 - library panels
@@ -17261,8 +15907,10 @@ Description:
 | ------------------ | ----------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
 | dashboardId        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
 | dashboardUid       | string                                    | `string`           |          |         |             |         |
+| dashboards         | [][dashboarddto](#dashboard-d-t-o)        | `[]*DashboardDTO`  |          |         |             |         |
 | enableCsv          | boolean                                   | `bool`             |          |         |             |         |
 | enableDashboardUrl | boolean                                   | `bool`             |          |         |             |         |
+| formats            | [][type](#type)                           | `[]Type`           |          |         |             |         |
 | message            | string                                    | `string`           |          |         |             |         |
 | name               | string                                    | `string`           |          |         |             |         |
 | options            | [ReportOptionsDTO](#report-options-d-t-o) | `ReportOptionsDTO` |          |         |             |         |
@@ -17337,7 +15985,7 @@ Description:
 | isFolder       | boolean                            | `bool`            |          |         |             |         |
 | permission     | [PermissionType](#permission-type) | `PermissionType`  |          |         |             |         |
 | permissionName | string                             | `string`          |          |         |             |         |
-| role           | [RoleType](#role-type)             | `RoleType`        |          |         |             |         |
+| role           | string                             | `string`          |          |         |             |         |
 | slug           | string                             | `string`          |          |         |             |         |
 | team           | string                             | `string`          |          |         |             |         |
 | teamAvatarUrl  | string                             | `string`          |          |         |             |         |
@@ -17359,9 +16007,19 @@ Description:
 | Name       | Type                               | Go type          | Required | Default | Description | Example |
 | ---------- | ---------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
 | permission | [PermissionType](#permission-type) | `PermissionType` |          |         |             |         |
-| role       | [RoleType](#role-type)             | `RoleType`       |          |         |             |         |
+| role       | string                             | `string`         |          |         |             |         |
 | teamId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
 | userId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
+
+### <span id="dashboard-d-t-o"></span> DashboardDTO
+
+**Properties**
+
+| Name            | Type                                          | Go type              | Required | Default | Description | Example |
+| --------------- | --------------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| dashboard       | [DashboardReportDTO](#dashboard-report-d-t-o) | `DashboardReportDTO` |          |         |             |         |
+| reportVariables | [interface{}](#interface)                     | `interface{}`        |          |         |             |         |
+| timeRange       | [TimeRangeDTO](#time-range-d-t-o)             | `TimeRangeDTO`       |          |         |             |         |
 
 ### <span id="dashboard-full-with-meta"></span> DashboardFullWithMeta
 
@@ -17394,6 +16052,7 @@ Description:
 | hasAcl                 | boolean                                        | `bool`                 |          |         |             |         |
 | isFolder               | boolean                                        | `bool`                 |          |         |             |         |
 | isHome                 | boolean                                        | `bool`                 |          |         |             |         |
+| isPublic               | boolean                                        | `bool`                 |          |         |             |         |
 | isSnapshot             | boolean                                        | `bool`                 |          |         |             |         |
 | isStarred              | boolean                                        | `bool`                 |          |         |             |         |
 | provisioned            | boolean                                        | `bool`                 |          |         |             |         |
@@ -17412,6 +16071,16 @@ Description:
 | Name        | Type   | Go type  | Required | Default | Description | Example |
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | redirectUri | string | `string` |          |         |             |         |
+
+### <span id="dashboard-report-d-t-o"></span> DashboardReportDTO
+
+**Properties**
+
+| Name | Type                      | Go type  | Required | Default | Description | Example |
+| ---- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| name | string                    | `string` |          |         |             |         |
+| uid  | string                    | `string` |          |         |             |         |
 
 ### <span id="dashboard-snapshot"></span> DashboardSnapshot
 
@@ -17476,6 +16145,7 @@ Description:
 | created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 | createdBy     | string                       | `string`          |          |         |             |         |
 | dashboardId   | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| dashboardUid  | string                       | `string`          |          |         |             |         |
 | id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
 | message       | string                       | `string`          |          |         |             |         |
 | parentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
@@ -17500,43 +16170,32 @@ Description:
 | message       | string                       | `string`          |          |         |             |         |
 | parentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
 | restoredFrom  | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| uid           | string                       | `string`          |          |         |             |         |
 | version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
-### <span id="data-frames"></span> DataFrames
+### <span id="data-link"></span> DataLink
 
-> See NewDecodedDataFrames and NewEncodedDataFrames for more information.
-
-[interface{}](#interface)
-
-### <span id="data-query-result"></span> DataQueryResult
-
-> Deprecated: DataQueryResult should use backend.QueryDataResponse
+> DataLink define what
 
 **Properties**
 
-| Name       | Type                                           | Go type               | Required | Default | Description | Example |
-| ---------- | ---------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| dataframes | [DataFrames](#data-frames)                     | `DataFrames`          |          |         |             |         |
-| error      | string                                         | `string`              |          |         |             |         |
-| meta       | [JSON](#json)                                  | `JSON`                |          |         |             |         |
-| refId      | string                                         | `string`              |          |         |             |         |
-| series     | [DataTimeSeriesSlice](#data-time-series-slice) | `DataTimeSeriesSlice` |          |         |             |         |
-| tables     | [][datatable](#data-table)                     | `[]*DataTable`        |          |         |             |         |
+| Name        | Type    | Go type  | Required | Default | Description | Example |
+| ----------- | ------- | -------- | :------: | ------- | ----------- | ------- |
+| targetBlank | boolean | `bool`   |          |         |             |         |
+| title       | string  | `string` |          |         |             |         |
+| url         | string  | `string` |          |         |             |         |
 
 ### <span id="data-response"></span> DataResponse
 
-> Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse
+> A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.
+> The Error property is used to allow for partial success responses from the containing QueryDataResponse.
 
 **Properties**
 
-| Name    | Type                                         | Go type                      | Required | Default | Description | Example |
-| ------- | -------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
-| message | string                                       | `string`                     |          |         |             |         |
-| results | map of [DataQueryResult](#data-query-result) | `map[string]DataQueryResult` |          |         |             |         |
-
-### <span id="data-row-values"></span> DataRowValues
-
-[][interface{}](#interface)
+| Name   | Type              | Go type  | Required | Default | Description                                                                    | Example |
+| ------ | ----------------- | -------- | :------: | ------- | ------------------------------------------------------------------------------ | ------- |
+| Error  | string            | `string` |          |         | Error is a property to be set if the the corresponding DataQuery has an error. |         |
+| Frames | [Frames](#frames) | `Frames` |          |         |                                                                                |         |
 
 ### <span id="data-source"></span> DataSource
 
@@ -17592,47 +16251,6 @@ Description:
 | uid         | string                    | `string`   |          |         |             |         |
 | url         | string                    | `string`   |          |         |             |         |
 | user        | string                    | `string`   |          |         |             |         |
-
-### <span id="data-table"></span> DataTable
-
-**Properties**
-
-| Name    | Type                                    | Go type              | Required | Default | Description | Example |
-| ------- | --------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
-| columns | [][datatablecolumn](#data-table-column) | `[]*DataTableColumn` |          |         |             |         |
-| rows    | [][datarowvalues](#data-row-values)     | `[]DataRowValues`    |          |         |             |         |
-
-### <span id="data-table-column"></span> DataTableColumn
-
-**Properties**
-
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| text | string | `string` |          |         |             |         |
-
-### <span id="data-time-point"></span> DataTimePoint
-
-[][float](#float)
-
-### <span id="data-time-series"></span> DataTimeSeries
-
-> DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK
-
-**Properties**
-
-| Name   | Type                                             | Go type                | Required | Default | Description | Example |
-| ------ | ------------------------------------------------ | ---------------------- | :------: | ------- | ----------- | ------- |
-| name   | string                                           | `string`               |          |         |             |         |
-| points | [DataTimeSeriesPoints](#data-time-series-points) | `DataTimeSeriesPoints` |          |         |             |         |
-| tags   | map of string                                    | `map[string]string`    |          |         |             |         |
-
-### <span id="data-time-series-points"></span> DataTimeSeriesPoints
-
-[][datatimepoint](#data-time-point)
-
-### <span id="data-time-series-slice"></span> DataTimeSeriesSlice
-
-[][datatimeseries](#data-time-series)
 
 ### <span id="date-time"></span> DateTime
 
@@ -17701,15 +16319,15 @@ Enum: 0,1 | |
 
 ### <span id="duration"></span> Duration
 
-[Duration](#duration)
-
-#### Inlined models
-
-### <span id="duration"></span> Duration
-
 | Name     | Type                      | Go type | Default | Description | Example |
 | -------- | ------------------------- | ------- | ------- | ----------- | ------- |
 | Duration | int64 (formatted integer) | int64   |         |             |         |
+
+### <span id="duration"></span> Duration
+
+[Duration](#duration)
+
+#### Inlined models
 
 ### <span id="email-config"></span> EmailConfig
 
@@ -17834,6 +16452,55 @@ For example, a 412 Precondition Failed error may include additional information 
 
 - composed type [ResponseDetails](#response-details)
 
+### <span id="field"></span> Field
+
+> A Field is essentially a slice of various types with extra properties and methods.
+> See NewField() for supported types.
+
+The slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.
+
+**Properties**
+
+| Name                                                                       | Type                         | Go type       | Required | Default | Description                                                                                       | Example |
+| -------------------------------------------------------------------------- | ---------------------------- | ------------- | :------: | ------- | ------------------------------------------------------------------------------------------------- | ------- |
+| config                                                                     | [FieldConfig](#field-config) | `FieldConfig` |          |         |                                                                                                   |         |
+| labels                                                                     | [Labels](#labels)            | `Labels`      |          |         |                                                                                                   |         |
+| name                                                                       | string                       | `string`      |          |         | Name is default identifier of the field. The name does not have to be unique, but the combination |
+| of name and Labels should be unique for proper behavior in all situations. |                              |
+
+### <span id="field-config"></span> FieldConfig
+
+**Properties**
+
+| Name                                                                               | Type                       | Go type                  | Required | Default | Description                                                                                                 | Example |
+| ---------------------------------------------------------------------------------- | -------------------------- | ------------------------ | :------: | ------- | ----------------------------------------------------------------------------------------------------------- | ------- |
+| color                                                                              | map of any                 | `map[string]interface{}` |          |         | Map values to a display color                                                                               |
+| NOTE: this interface is under development in the frontend... so simple map for now |                            |
+| custom                                                                             | map of any                 | `map[string]interface{}` |          |         | Panel Specific Values                                                                                       |         |
+| decimals                                                                           | uint16 (formatted integer) | `uint16`                 |          |         |                                                                                                             |         |
+| description                                                                        | string                     | `string`                 |          |         | Description is human readable field metadata                                                                |         |
+| displayName                                                                        | string                     | `string`                 |          |         | DisplayName overrides Grafana default naming, should not be used from a data source                         |         |
+| displayNameFromDS                                                                  | string                     | `string`                 |          |         | DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily. |         |
+| filterable                                                                         | boolean                    | `bool`                   |          |         | Filterable indicates if the Field's data can be filtered by additional calls.                               |         |
+| interval                                                                           | double (formatted number)  | `float64`                |          |         | Interval indicates the expected regular step between values in the series.                                  |
+
+When an interval exists, consumers can identify "missing" values when the expected value is not present.
+The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+The interval uses the same units as the values. For time.Time, this is defined in milliseconds. | |
+| links | [][datalink](#data-link)| `[]*DataLink` | | | The behavior when clicking on a result | |
+| mappings | [ValueMappings](#value-mappings)| `ValueMappings` | | | | |
+| max | [ConfFloat64](#conf-float64)| `ConfFloat64` | | | | |
+| min | [ConfFloat64](#conf-float64)| `ConfFloat64` | | | | |
+| noValue | string| `string` | | | Alternative to empty string | |
+| path | string| `string` | | | Path is an explicit path to the field in the datasource. When the frame meta includes a path,
+this will default to `${frame.meta.path}/${field.name}
+
+When defined, this value can be used as an identifier within the datasource scope, and
+may be used as an identifier to update values in a subsequent request | |
+| thresholds | [ThresholdsConfig](#thresholds-config)| `ThresholdsConfig` | | | | |
+| unit | string| `string` | | | Numeric Options | |
+| writeable | boolean| `bool` | | | Writeable indicates that the datasource knows how to update this value | |
+
 ### <span id="find-tags-result"></span> FindTagsResult
 
 **Properties**
@@ -17885,6 +16552,66 @@ For example, a 412 Precondition Failed error may include additional information 
 | title | string                    | `string` |          |         |             |         |
 | uid   | string                    | `string` |          |         |             |         |
 
+### <span id="frame"></span> Frame
+
+> Each Field is well typed by its FieldType and supports optional Labels.
+
+A Frame is a general data container for Grafana. A Frame can be table data
+or time series data depending on its content and field types.
+
+**Properties**
+
+| Name                                                                                   | Type                     | Go type     | Required | Default | Description                                                                    | Example |
+| -------------------------------------------------------------------------------------- | ------------------------ | ----------- | :------: | ------- | ------------------------------------------------------------------------------ | ------- |
+| Fields                                                                                 | [][field](#field)        | `[]*Field`  |          |         | Fields are the columns of a frame.                                             |
+| All Fields must be of the same the length when marshalling the Frame for transmission. |                          |
+| Meta                                                                                   | [FrameMeta](#frame-meta) | `FrameMeta` |          |         |                                                                                |         |
+| Name                                                                                   | string                   | `string`    |          |         | Name is used in some Grafana visualizations.                                   |         |
+| RefID                                                                                  | string                   | `string`    |          |         | RefID is a property that can be set to match a Frame to its originating query. |         |
+
+### <span id="frame-meta"></span> FrameMeta
+
+> https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11
+> NOTE -- in javascript this can accept any `[key: string]: any;` however
+> this interface only exposes the values we want to be exposed
+
+**Properties**
+
+| Name                                                                                           | Type                       | Go type        | Required | Default | Description                                                                                     | Example |
+| ---------------------------------------------------------------------------------------------- | -------------------------- | -------------- | :------: | ------- | ----------------------------------------------------------------------------------------------- | ------- |
+| channel                                                                                        | string                     | `string`       |          |         | Channel is the path to a stream in grafana live that has real-time updates for this data.       |         |
+| custom                                                                                         | [interface{}](#interface)  | `interface{}`  |          |         | Custom datasource specific values.                                                              |         |
+| executedQueryString                                                                            | string                     | `string`       |          |         | ExecutedQueryString is the raw query sent to the underlying system. All macros and templating   |
+| have been applied. When metadata contains this value, it will be shown in the query inspector. |                            |
+| notices                                                                                        | [][notice](#notice)        | `[]*Notice`    |          |         | Notices provide additional information about the data in the Frame that                         |
+| Grafana can display to the user in the user interface.                                         |                            |
+| path                                                                                           | string                     | `string`       |          |         | Path is a browsable path on the datasource.                                                     |         |
+| pathSeparator                                                                                  | string                     | `string`       |          |         | PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'. |         |
+| preferredVisualisationType                                                                     | [VisType](#vis-type)       | `VisType`      |          |         |                                                                                                 |         |
+| stats                                                                                          | [][querystat](#query-stat) | `[]*QueryStat` |          |         | Stats is an array of query result statistics.                                                   |         |
+| type                                                                                           | [FrameType](#frame-type)   | `FrameType`    |          |         |                                                                                                 |         |
+
+### <span id="frame-type"></span> FrameType
+
+> A FrameType string, when present in a frame's metadata, asserts that the
+> frame's structure conforms to the FrameType's specification.
+> This property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of
+> the Frame correspond to a defined FrameType.
+
+| Name      | Type   | Go type | Default | Description                                                              | Example |
+| --------- | ------ | ------- | ------- | ------------------------------------------------------------------------ | ------- |
+| FrameType | string | string  |         | A FrameType string, when present in a frame's metadata, asserts that the |
+
+frame's structure conforms to the FrameType's specification.
+This property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of
+the Frame correspond to a defined FrameType. | |
+
+### <span id="frames"></span> Frames
+
+> It is the main data container within a backend.DataResponse.
+
+[][frame](#frame)
+
 ### <span id="get-annotation-tags-response"></span> GetAnnotationTagsResponse
 
 **Properties**
@@ -17920,10 +16647,6 @@ For example, a 412 Precondition Failed error may include additional information 
 | ------ | --------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
 | Status | string                                        | `string`              |          |         |             |         |
 | data   | [AlertManagersResult](#alert-managers-result) | `AlertManagersResult` |          |         |             |         |
-
-### <span id="gettable-alerts"></span> GettableAlerts
-
-[][gettablealert](#gettable-alert)
 
 ### <span id="gettable-api-alerting-config"></span> GettableApiAlertingConfig
 
@@ -17974,14 +16697,15 @@ For example, a 412 Precondition Failed error may include additional information 
 
 **Properties**
 
-| Name                  | Type           | Go type           | Required | Default | Description | Example |
-| --------------------- | -------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean        | `bool`            |          |         |             |         |
-| Name                  | string         | `string`          |          |         |             |         |
-| SecureFields          | map of boolean | `map[string]bool` |          |         |             |         |
-| Type                  | string         | `string`          |          |         |             |         |
-| UID                   | string         | `string`          |          |         |             |         |
-| settings              | [JSON](#json)  | `JSON`            |          |         |             |         |
+| Name                  | Type                      | Go type           | Required | Default | Description | Example |
+| --------------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| DisableResolveMessage | boolean                   | `bool`            |          |         |             |         |
+| Name                  | string                    | `string`          |          |         |             |         |
+| SecureFields          | map of boolean            | `map[string]bool` |          |         |             |         |
+| Type                  | string                    | `string`          |          |         |             |         |
+| UID                   | string                    | `string`          |          |         |             |         |
+| provenance            | [Provenance](#provenance) | `Provenance`      |          |         |             |         |
+| settings              | [JSON](#json)             | `JSON`            |          |         |             |         |
 
 ### <span id="gettable-grafana-receivers"></span> GettableGrafanaReceivers
 
@@ -18011,6 +16735,7 @@ For example, a 412 Precondition Failed error may include additional information 
 | UID             | string                       | `string`          |          |         |             |         |
 | Updated         | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 | Version         | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| provenance      | [Provenance](#provenance)    | `Provenance`      |          |         |             |         |
 
 ### <span id="gettable-n-galert-config"></span> GettableNGalertConfig
 
@@ -18032,6 +16757,10 @@ For example, a 412 Precondition Failed error may include additional information 
 | SourceTenants | []string                                                   | `[]string`                    |          |         |             |         |
 | interval      | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
 
+### <span id="gettable-silences"></span> GettableSilences
+
+[][gettablesilence](#gettable-silence)
+
 ### <span id="gettable-status"></span> GettableStatus
 
 **Properties**
@@ -18047,10 +16776,11 @@ For example, a 412 Precondition Failed error may include additional information 
 
 **Properties**
 
-| Name                | Type                                                       | Go type                     | Required | Default | Description | Example |
-| ------------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| TemplateFiles       | map of string                                              | `map[string]string`         |          |         |             |         |
-| alertmanager_config | [GettableAPIAlertingConfig](#gettable-api-alerting-config) | `GettableAPIAlertingConfig` |          |         |             |         |
+| Name                    | Type                                                       | Go type                     | Required | Default | Description | Example |
+| ----------------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
+| TemplateFileProvenances | map of [Provenance](#provenance)                           | `map[string]Provenance`     |          |         |             |         |
+| TemplateFiles           | map of string                                              | `map[string]string`         |          |         |             |         |
+| alertmanager_config     | [GettableAPIAlertingConfig](#gettable-api-alerting-config) | `GettableAPIAlertingConfig` |          |         |             |         |
 
 ### <span id="global-config"></span> GlobalConfig
 
@@ -18218,30 +16948,37 @@ marshalled configuration when set to false. | |
 | target_match_re                                                  | [MatchRegexps](#match-regexps) | `MatchRegexps`      |          |         |                                                                  |         |
 | target_matchers                                                  | [Matchers](#matchers)          | `Matchers`          |          |         |                                                                  |         |
 
+### <span id="inspect-type"></span> InspectType
+
+| Name        | Type                      | Go type | Default | Description | Example |
+| ----------- | ------------------------- | ------- | ------- | ----------- | ------- |
+| InspectType | int64 (formatted integer) | int64   |         |             |         |
+
 ### <span id="item-d-t-o"></span> ItemDTO
 
 **Properties**
 
-| Name        | Type                      | Go type    | Required | Default | Description | Example |
-| ----------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| alertId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| alertName   | string                    | `string`   |          |         |             |         |
-| avatarUrl   | string                    | `string`   |          |         |             |         |
-| created     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| dashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
-| data        | [JSON](#json)             | `JSON`     |          |         |             |         |
-| email       | string                    | `string`   |          |         |             |         |
-| id          | int64 (formatted integer) | `int64`    |          |         |             |         |
-| login       | string                    | `string`   |          |         |             |         |
-| newState    | string                    | `string`   |          |         |             |         |
-| panelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| prevState   | string                    | `string`   |          |         |             |         |
-| tags        | []string                  | `[]string` |          |         |             |         |
-| text        | string                    | `string`   |          |         |             |         |
-| time        | int64 (formatted integer) | `int64`    |          |         |             |         |
-| timeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| updated     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| userId      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| Name         | Type                      | Go type    | Required | Default | Description | Example |
+| ------------ | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
+| alertId      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| alertName    | string                    | `string`   |          |         |             |         |
+| avatarUrl    | string                    | `string`   |          |         |             |         |
+| created      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| dashboardId  | int64 (formatted integer) | `int64`    |          |         |             |         |
+| dashboardUID | string                    | `string`   |          |         |             |         |
+| data         | [JSON](#json)             | `JSON`     |          |         |             |         |
+| email        | string                    | `string`   |          |         |             |         |
+| id           | int64 (formatted integer) | `int64`    |          |         |             |         |
+| login        | string                    | `string`   |          |         |             |         |
+| newState     | string                    | `string`   |          |         |             |         |
+| panelId      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| prevState    | string                    | `string`   |          |         |             |         |
+| tags         | []string                  | `[]string` |          |         |             |         |
+| text         | string                    | `string`   |          |         |             |         |
+| time         | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| updated      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| userId       | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="json"></span> Json
 
@@ -18327,6 +17064,7 @@ marshalled configuration when set to false. | |
 | ----------- | ---------------------------------------------------- | ----------------------- | :------: | ------- | ----------- | ------- |
 | description | string                                               | `string`                |          |         |             |         |
 | folderId    | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
+| folderUid   | string                                               | `string`                |          |         |             |         |
 | id          | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
 | kind        | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
 | meta        | [LibraryElementDTOMeta](#library-element-d-t-o-meta) | `LibraryElementDTOMeta` |          |         |             |         |
@@ -18392,11 +17130,12 @@ marshalled configuration when set to false. | |
 
 **Properties**
 
-| Name         | Type                      | Go type | Required | Default | Description | Example |
-| ------------ | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| annotationId | int64 (formatted integer) | `int64` |          |         |             |         |
-| dashboardId  | int64 (formatted integer) | `int64` |          |         |             |         |
-| panelId      | int64 (formatted integer) | `int64` |          |         |             |         |
+| Name         | Type                      | Go type  | Required | Default | Description | Example |
+| ------------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| annotationId | int64 (formatted integer) | `int64`  |          |         |             |         |
+| dashboardId  | int64 (formatted integer) | `int64`  |          |         |             |         |
+| dashboardUID | string                    | `string` |          |         |             |         |
+| panelId      | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="match-regexps"></span> MatchRegexps
 
@@ -18407,16 +17146,6 @@ marshalled configuration when set to false. | |
 | Name      | Type                      | Go type | Default | Description | Example |
 | --------- | ------------------------- | ------- | ------- | ----------- | ------- |
 | MatchType | int64 (formatted integer) | int64   |         |             |         |
-
-### <span id="matcher"></span> Matcher
-
-**Properties**
-
-| Name  | Type                     | Go type     | Required | Default | Description | Example |
-| ----- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
-| Name  | string                   | `string`    |          |         |             |         |
-| Type  | [MatchType](#match-type) | `MatchType` |          |         |             |         |
-| Value | string                   | `string`    |          |         |             |         |
 
 ### <span id="matcher"></span> Matcher
 
@@ -18431,6 +17160,22 @@ marshalled configuration when set to false. | |
 | Name    | string  | `string` |    ✓     |         | name        |         |
 | Value   | string  | `string` |    ✓     |         | value       |         |
 
+### <span id="matcher"></span> Matcher
+
+**Properties**
+
+| Name  | Type                     | Go type     | Required | Default | Description | Example |
+| ----- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
+| Name  | string                   | `string`    |          |         |             |         |
+| Type  | [MatchType](#match-type) | `MatchType` |          |         |             |         |
+| Value | string                   | `string`    |          |         |             |         |
+
+### <span id="matchers"></span> Matchers
+
+> Matchers matchers
+
+[][matcher](#matcher)
+
 ### <span id="matchers"></span> Matchers
 
 > Matchers is a slice of Matchers that is sortable, implements Stringer, and
@@ -18439,11 +17184,27 @@ marshalled configuration when set to false. | |
 
 [][matcher](#matcher)
 
-### <span id="matchers"></span> Matchers
+### <span id="message-template"></span> MessageTemplate
 
-> Matchers matchers
+**Properties**
 
-[][matcher](#matcher)
+| Name       | Type                      | Go type      | Required | Default | Description | Example |
+| ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
+| Name       | string                    | `string`     |          |         |             |         |
+| Template   | string                    | `string`     |          |         |             |         |
+| provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
+
+### <span id="message-template-content"></span> MessageTemplateContent
+
+**Properties**
+
+| Name     | Type   | Go type  | Required | Default | Description | Example |
+| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Template | string | `string` |          |         |             |         |
+
+### <span id="message-templates"></span> MessageTemplates
+
+[][messagetemplate](#message-template)
 
 ### <span id="metadata"></span> Metadata
 
@@ -18489,6 +17250,10 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 | Name          | string                           | `string`          |          |         |             |         |
 | TimeIntervals | [][timeinterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
 
+### <span id="mute-timings"></span> MuteTimings
+
+[][mutetimeinterval](#mute-time-interval)
+
 ### <span id="namespace-config-response"></span> NamespaceConfigResponse
 
 [GettableRuleGroupConfig](#gettable-rule-group-config)
@@ -18521,6 +17286,28 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 | id   | int64 (formatted integer) | `int64`  |          |         |             |         |
 | key  | string                    | `string` |          |         |             |         |
 | name | string                    | `string` |          |         |             |         |
+
+### <span id="not-found"></span> NotFound
+
+[interface{}](#interface)
+
+### <span id="notice"></span> Notice
+
+**Properties**
+
+| Name                                                   | Type                               | Go type          | Required | Default | Description                                                              | Example |
+| ------------------------------------------------------ | ---------------------------------- | ---------------- | :------: | ------- | ------------------------------------------------------------------------ | ------- |
+| inspect                                                | [InspectType](#inspect-type)       | `InspectType`    |          |         |                                                                          |         |
+| link                                                   | string                             | `string`         |          |         | Link is an optional link for display in the user interface and can be an |
+| absolute URL or a path relative to Grafana's root url. |                                    |
+| severity                                               | [NoticeSeverity](#notice-severity) | `NoticeSeverity` |          |         |                                                                          |         |
+| text                                                   | string                             | `string`         |          |         | Text is freeform descriptive text for the notice.                        |         |
+
+### <span id="notice-severity"></span> NoticeSeverity
+
+| Name           | Type                      | Go type | Default | Description | Example |
+| -------------- | ------------------------- | ------- | ------- | ----------- | ------- |
+| NoticeSeverity | int64 (formatted integer) | int64   |         |             |         |
 
 ### <span id="notification-test-command"></span> NotificationTestCommand
 
@@ -18698,10 +17485,11 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 **Properties**
 
-| Name     | Type                      | Go type | Required | Default | Description                                                     | Example |
-| -------- | ------------------------- | ------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| folderId | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
-| kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
+| Name      | Type                      | Go type  | Required | Default | Description                                                     | Example |
+| --------- | ------------------------- | -------- | :------: | ------- | --------------------------------------------------------------- | ------- |
+| folderId  | int64 (formatted integer) | `int64`  |          |         | ID of the folder where the library element is stored.           |         |
+| folderUid | string                    | `string` |          |         | UID of the folder where the library element is stored.          |         |
+| kind      | int64 (formatted integer) | `int64`  |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
 
 Description:
 1 - library panels
@@ -18715,14 +17503,15 @@ Description:
 
 **Properties**
 
-| Name            | Type                                                | Go type                  | Required | Default | Description                                | Example |
-| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
-| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
-| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
-| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
-| theme           | string                                              | `string`                 |          |         |                                            |         |
-| timezone        | string                                              | `string`                 |          |         |                                            |         |
-| weekStart       | string                                              | `string`                 |          |         |                                            |         |
+| Name             | Type                                                | Go type                  | Required | Default | Description                                | Example |
+| ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
+| homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
+| homeDashboardUID | string                                              | `string`                 |          |         |                                            |         |
+| navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
+| queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
+| theme            | string                                              | `string`                 |          |         |                                            |         |
+| timezone         | string                                              | `string`                 |          |         |                                            |         |
+| weekStart        | string                                              | `string`                 |          |         |                                            |         |
 
 ### <span id="pause-alert-command"></span> PauseAlertCommand
 
@@ -18786,15 +17575,16 @@ Description:
 
 **Properties**
 
-| Name        | Type                      | Go type    | Required | Default | Description | Example |
-| ----------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| dashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
-| data        | [JSON](#json)             | `JSON`     |          |         |             |         |
-| panelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| tags        | []string                  | `[]string` |          |         |             |         |
-| text        | string                    | `string`   |          |         |             |         |
-| time        | int64 (formatted integer) | `int64`    |          |         |             |         |
-| timeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| Name         | Type                      | Go type    | Required | Default | Description | Example |
+| ------------ | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
+| dashboardId  | int64 (formatted integer) | `int64`    |          |         |             |         |
+| dashboardUID | string                    | `string`   |          |         |             |         |
+| data         | [JSON](#json)             | `JSON`     |          |         |             |         |
+| panelId      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| tags         | []string                  | `[]string` |          |         |             |         |
+| text         | string                    | `string`   |          |         |             |         |
+| time         | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd      | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="post-graphite-annotations-cmd"></span> PostGraphiteAnnotationsCmd
 
@@ -18941,14 +17731,15 @@ Description:
 
 **Properties**
 
-| Name            | Type                                                | Go type                  | Required | Default | Description | Example |
-| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ----------- | ------- |
-| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         |             |         |
-| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |             |         |
-| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |             |         |
-| theme           | string                                              | `string`                 |          |         |             |         |
-| timezone        | string                                              | `string`                 |          |         |             |         |
-| weekStart       | string                                              | `string`                 |          |         |             |         |
+| Name             | Type                                                | Go type                  | Required | Default | Description | Example |
+| ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ----------- | ------- |
+| homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         |             |         |
+| homeDashboardUID | string                                              | `string`                 |          |         |             |         |
+| navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |             |         |
+| queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |             |         |
+| theme            | string                                              | `string`                 |          |         |             |         |
+| timezone         | string                                              | `string`                 |          |         |             |         |
+| weekStart        | string                                              | `string`                 |          |         |             |         |
 
 ### <span id="prometheus-remote-write-target-json"></span> PrometheusRemoteWriteTargetJSON
 
@@ -19003,6 +17794,51 @@ Description:
 | Name    | Type   | Go type  | Required | Default | Description | Example |
 | ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | homeTab | string | `string` |          |         |             |         |
+
+### <span id="query-stat"></span> QueryStat
+
+> The embedded FieldConfig's display name must be set.
+> It corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).
+
+**Properties**
+
+| Name                                                                               | Type                       | Go type                  | Required | Default | Description                                                                                                 | Example |
+| ---------------------------------------------------------------------------------- | -------------------------- | ------------------------ | :------: | ------- | ----------------------------------------------------------------------------------------------------------- | ------- |
+| color                                                                              | map of any                 | `map[string]interface{}` |          |         | Map values to a display color                                                                               |
+| NOTE: this interface is under development in the frontend... so simple map for now |                            |
+| custom                                                                             | map of any                 | `map[string]interface{}` |          |         | Panel Specific Values                                                                                       |         |
+| decimals                                                                           | uint16 (formatted integer) | `uint16`                 |          |         |                                                                                                             |         |
+| description                                                                        | string                     | `string`                 |          |         | Description is human readable field metadata                                                                |         |
+| displayName                                                                        | string                     | `string`                 |          |         | DisplayName overrides Grafana default naming, should not be used from a data source                         |         |
+| displayNameFromDS                                                                  | string                     | `string`                 |          |         | DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily. |         |
+| filterable                                                                         | boolean                    | `bool`                   |          |         | Filterable indicates if the Field's data can be filtered by additional calls.                               |         |
+| interval                                                                           | double (formatted number)  | `float64`                |          |         | Interval indicates the expected regular step between values in the series.                                  |
+
+When an interval exists, consumers can identify "missing" values when the expected value is not present.
+The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+The interval uses the same units as the values. For time.Time, this is defined in milliseconds. | |
+| links | [][datalink](#data-link)| `[]*DataLink` | | | The behavior when clicking on a result | |
+| mappings | [ValueMappings](#value-mappings)| `ValueMappings` | | | | |
+| max | [ConfFloat64](#conf-float64)| `ConfFloat64` | | | | |
+| min | [ConfFloat64](#conf-float64)| `ConfFloat64` | | | | |
+| noValue | string| `string` | | | Alternative to empty string | |
+| path | string| `string` | | | Path is an explicit path to the field in the datasource. When the frame meta includes a path,
+this will default to `${frame.meta.path}/${field.name}
+
+When defined, this value can be used as an identifier within the datasource scope, and
+may be used as an identifier to update values in a subsequent request | |
+| thresholds | [ThresholdsConfig](#thresholds-config)| `ThresholdsConfig` | | | | |
+| unit | string| `string` | | | Numeric Options | |
+| value | double (formatted number)| `float64` | | | | |
+| writeable | boolean| `bool` | | | Writeable indicates that the datasource knows how to update this value | |
+
+### <span id="receiver"></span> Receiver
+
+**Properties**
+
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |    ✓     |         | name        |         |
 
 ### <span id="receiver"></span> Receiver
 
@@ -19096,6 +17932,14 @@ Description:
 
 [Responses](#responses)
 
+### <span id="restore-dashboard-version-command"></span> RestoreDashboardVersionCommand
+
+**Properties**
+
+| Name    | Type                      | Go type | Required | Default | Description | Example |
+| ------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
+| version | int64 (formatted integer) | `int64` |          |         |             |         |
+
 ### <span id="revoke-auth-token-cmd"></span> RevokeAuthTokenCmd
 
 **Properties**
@@ -19121,12 +17965,6 @@ Description:
 | uid         | string                       | `string`          |          |         |             |         |
 | updated     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 | version     | int64 (formatted integer)    | `int64`           |          |         |             |         |
-
-### <span id="role-type"></span> RoleType
-
-| Name     | Type   | Go type | Default | Description | Example |
-| -------- | ------ | ------- | ------- | ----------- | ------- |
-| RoleType | string | string  |         |             |         |
 
 ### <span id="route"></span> Route
 
@@ -19577,7 +18415,7 @@ same array. | |
 | invitedByName  | string                              | `string`          |          |         |             |         |
 | name           | string                              | `string`          |          |         |             |         |
 | orgId          | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| role           | [RoleType](#role-type)              | `RoleType`        |          |         |             |         |
+| role           | string                              | `string`          |          |         |             |         |
 | status         | [TempUserStatus](#temp-user-status) | `TempUserStatus`  |          |         |             |         |
 | url            | string                              | `string`          |          |         |             |         |
 
@@ -19653,6 +18491,37 @@ same array. | |
 | alerts                  | [Vector](#vector)                                   | `Vector`                 |          |         |             |         |
 | grafana_alert_instances | [AlertInstancesResponse](#alert-instances-response) | `AlertInstancesResponse` |          |         |             |         |
 
+### <span id="threshold"></span> Threshold
+
+> Threshold a single step on the threshold list
+
+**Properties**
+
+| Name  | Type                         | Go type       | Required | Default | Description | Example |
+| ----- | ---------------------------- | ------------- | :------: | ------- | ----------- | ------- |
+| color | string                       | `string`      |          |         |             |         |
+| state | string                       | `string`      |          |         |             |         |
+| value | [ConfFloat64](#conf-float64) | `ConfFloat64` |          |         |             |         |
+
+### <span id="thresholds-config"></span> ThresholdsConfig
+
+> ThresholdsConfig setup thresholds
+
+**Properties**
+
+| Name  | Type                               | Go type          | Required | Default | Description                                                | Example |
+| ----- | ---------------------------------- | ---------------- | :------: | ------- | ---------------------------------------------------------- | ------- |
+| mode  | [ThresholdsMode](#thresholds-mode) | `ThresholdsMode` |          |         |                                                            |         |
+| steps | [][threshold](#threshold)          | `[]*Threshold`   |          |         | Must be sorted by 'value', first value is always -Infinity |         |
+
+### <span id="thresholds-mode"></span> ThresholdsMode
+
+> ThresholdsMode absolute or percentage
+
+| Name           | Type   | Go type | Default | Description                           | Example |
+| -------------- | ------ | ------- | ------- | ------------------------------------- | ------- |
+| ThresholdsMode | string | string  |         | ThresholdsMode absolute or percentage |         |
+
 ### <span id="time-interval"></span> TimeInterval
 
 > TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained
@@ -19699,9 +18568,7 @@ same array. | |
 | details_url                  | string                       | `string`      |          |         |             |         |
 | exp                          | int64 (formatted integer)    | `int64`       |          |         |             |         |
 | iat                          | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| included_admins              | int64 (formatted integer)    | `int64`       |          |         |             |         |
 | included_users               | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| included_viewers             | int64 (formatted integer)    | `int64`       |          |         |             |         |
 | iss                          | string                       | `string`      |          |         |             |         |
 | jti                          | string                       | `string`      |          |         |             |         |
 | lexp                         | int64 (formatted integer)    | `int64`       |          |         |             |         |
@@ -19743,6 +18610,12 @@ same array. | |
 | --------- | ------------- | ------- | :------: | ------- | ----------- | ------- |
 | dashboard | [JSON](#json) | `JSON`  |          |         |             |         |
 | meta      | [JSON](#json) | `JSON`  |          |         |             |         |
+
+### <span id="type"></span> Type
+
+| Name | Type   | Go type | Default | Description | Example |
+| ---- | ------ | ------- | ------- | ----------- | ------- |
+| Type | string | string  |         |             |         |
 
 ### <span id="url"></span> URL
 
@@ -19884,22 +18757,23 @@ same array. | |
 
 **Properties**
 
-| Name | Type                   | Go type    | Required | Default | Description | Example |
-| ---- | ---------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| role | [RoleType](#role-type) | `RoleType` |          |         |             |         |
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| role | string | `string` |          |         |             |         |
 
 ### <span id="update-prefs-cmd"></span> UpdatePrefsCmd
 
 **Properties**
 
-| Name            | Type                                                | Go type                  | Required | Default | Description                                | Example |
-| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
-| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
-| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
-| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
-| theme           | string                                              | `string`                 |          |         |                                            |         |
-| timezone        | string                                              | `string`                 |          |         |                                            |         |
-| weekStart       | string                                              | `string`                 |          |         |                                            |         |
+| Name             | Type                                                | Go type                  | Required | Default | Description                                | Example |
+| ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
+| homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
+| homeDashboardUID | string                                              | `string`                 |          |         |                                            |         |
+| navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
+| queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
+| theme            | string                                              | `string`                 |          |         |                                            |         |
+| timezone         | string                                              | `string`                 |          |         |                                            |         |
+| weekStart        | string                                              | `string`                 |          |         |                                            |         |
 
 ### <span id="update-role-command"></span> UpdateRoleCommand
 
@@ -19977,11 +18851,11 @@ same array. | |
 
 **Properties**
 
-| Name  | Type                      | Go type    | Required | Default | Description | Example |
-| ----- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| name  | string                    | `string`   |          |         |             |         |
-| orgId | int64 (formatted integer) | `int64`    |          |         |             |         |
-| role  | [RoleType](#role-type)    | `RoleType` |          |         |             |         |
+| Name  | Type                      | Go type  | Required | Default | Description | Example |
+| ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| name  | string                    | `string` |          |         |             |         |
+| orgId | int64 (formatted integer) | `int64`  |          |         |             |         |
+| role  | string                    | `string` |          |         |             |         |
 
 ### <span id="user-profile-d-t-o"></span> UserProfileDTO
 
@@ -20071,6 +18945,16 @@ same array. | |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | Msg  | string | `string` |          |         |             |         |
 
+### <span id="value-mapping"></span> ValueMapping
+
+> ValueMapping allows mapping input values to text and color
+
+[interface{}](#interface)
+
+### <span id="value-mappings"></span> ValueMappings
+
+[][valuemapping](#value-mapping)
+
 ### <span id="vector"></span> Vector
 
 > Vector is basically only an alias for model.Samples, but the
@@ -20110,6 +18994,12 @@ same array. | |
 | api_key_file      | [Secret](#secret)                       | `Secret`            |          |         |             |         |
 | api_url           | [URL](#url)                             | `URL`               |          |         |             |         |
 | http_config       | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig`  |          |         |             |         |
+
+### <span id="vis-type"></span> VisType
+
+| Name    | Type   | Go type | Default | Description | Example |
+| ------- | ------ | ------- | ------- | ----------- | ------- |
+| VisType | string | string  |         |             |         |
 
 ### <span id="webhook-config"></span> WebhookConfig
 
@@ -20192,6 +19082,12 @@ allows an unlimited number of alerts. | |
 | labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
 | status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
 
+### <span id="gettable-alerts"></span> gettableAlerts
+
+> GettableAlerts gettable alerts
+
+[][gettablealert](#gettable-alert)
+
 ### <span id="gettable-silence"></span> gettableSilence
 
 > GettableSilence gettable silence
@@ -20208,12 +19104,6 @@ allows an unlimited number of alerts. | |
 | UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
 | matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
 | status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
-
-### <span id="gettable-silences"></span> gettableSilences
-
-> GettableSilences gettable silences
-
-[][gettablesilence](#gettable-silence)
 
 ### <span id="override-labels"></span> overrideLabels
 
@@ -20235,13 +19125,3 @@ allows an unlimited number of alerts. | |
 | ID        | string                       | `string`          |          |         | id          |         |
 | StartsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
 | matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
-
-### <span id="receiver"></span> receiver
-
-> Receiver receiver
-
-**Properties**
-
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |

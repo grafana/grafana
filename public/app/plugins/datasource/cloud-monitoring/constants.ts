@@ -1,5 +1,6 @@
-import { MetricKind, QueryType, ValueTypes } from './types';
 import { GoogleAuthType } from '@grafana/google-sdk';
+
+import { MetricKind, QueryType, ValueTypes } from './types';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
@@ -12,6 +13,20 @@ export const AUTH_TYPES = [
 ];
 
 export const ALIGNMENTS = [
+  {
+    text: 'none',
+    value: 'ALIGN_NONE',
+    valueTypes: [
+      ValueTypes.INT64,
+      ValueTypes.DOUBLE,
+      ValueTypes.MONEY,
+      ValueTypes.DISTRIBUTION,
+      ValueTypes.STRING,
+      ValueTypes.VALUE_TYPE_UNSPECIFIED,
+      ValueTypes.BOOL,
+    ],
+    metricKinds: [MetricKind.GAUGE],
+  },
   {
     text: 'delta',
     value: 'ALIGN_DELTA',
@@ -225,7 +240,13 @@ export const AGGREGATIONS = [
   },
 ];
 
-export const ALIGNMENT_PERIODS = [
+export type periodOption = {
+  text: string;
+  value: string;
+  hidden?: boolean;
+};
+
+export const ALIGNMENT_PERIODS: periodOption[] = [
   { text: 'grafana auto', value: 'grafana-auto' },
   { text: 'stackdriver auto', value: 'stackdriver-auto', hidden: true },
   { text: 'cloud monitoring auto', value: 'cloud-monitoring-auto' },
@@ -240,6 +261,21 @@ export const ALIGNMENT_PERIODS = [
   { text: '1d', value: '+86400s' },
   { text: '3d', value: '+259200s' },
   { text: '1w', value: '+604800s' },
+];
+
+export const GRAPH_PERIODS: periodOption[] = [
+  { text: 'auto', value: 'auto' },
+  { text: '1m', value: '1m' },
+  { text: '2m', value: '2m' },
+  { text: '5m', value: '5m' },
+  { text: '10m', value: '10m' },
+  { text: '30m', value: '30m' },
+  { text: '1h', value: '1h' },
+  { text: '3h', value: '3h' },
+  { text: '6h', value: '6h' },
+  { text: '1d', value: '1d' },
+  { text: '3d', value: '3d' },
+  { text: '1w', value: '1w' },
 ];
 
 export const SYSTEM_LABELS = [

@@ -1,19 +1,26 @@
-+++
-title = "LDAP Authentication"
-description = "Grafana LDAP Authentication Guide "
-keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
-aliases = ["/docs/grafana/latest/installation/ldap/"]
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/ldap/
+  - /docs/grafana/latest/installation/ldap/
+description: 'Grafana LDAP Authentication Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - ldap
+  - active directory
+title: LDAP Authentication
+weight: 300
+---
 
 # LDAP Authentication
 
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-> [Enhanced LDAP authentication]({{< relref "../enterprise/enhanced_ldap.md" >}}) is available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> [Enhanced LDAP authentication]({{< relref "../enterprise/enhanced_ldap.md" >}}) is available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
-> Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+> Refer to [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 

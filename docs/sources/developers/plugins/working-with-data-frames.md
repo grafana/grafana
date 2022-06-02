@@ -1,6 +1,8 @@
-+++
-title = "Working with data frames"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/working-with-data-frames/
+title: Working with data frames
+---
 
 # Working with data frames
 

@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import { FolderInfo, PermissionLevelString } from 'app/types';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -47,7 +47,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear folders"
@@ -56,7 +56,6 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         </Button>
       )}
       <AsyncMultiSelect
-        menuShouldPortal
         {...selectOptions}
         isLoading={loading}
         loadOptions={debouncedLoadOptions}

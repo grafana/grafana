@@ -1,11 +1,14 @@
 import React from 'react';
+
 import {
   getValueFromDimension,
   getColumnFromDimension,
   formattedValueToString,
   getFieldDisplayName,
 } from '@grafana/data';
+
 import { SeriesTable } from '../../VizTooltip';
+
 import { GraphTooltipContentProps } from './types';
 
 export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({

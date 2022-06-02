@@ -34,12 +34,12 @@ Panel: {
                     colWidth?: number
                     mergeValues?: bool | *true
                     alignValue?: TimelineValueAlignment | *"left"
-                }
+                } @cuetsy(kind="interface")
                 PanelFieldConfig: {
                     ui.HideableFieldConfig
                     lineWidth?: number | *0
                     fillOpacity?: number | *70
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

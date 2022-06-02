@@ -1,13 +1,14 @@
-import { ReducerID } from '../fieldReducer';
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe/processDataFrame';
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
-import { transformDataFrame } from '../transformDataFrame';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { ArrayVector } from '../../vector';
-import { notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrameView } from '../../dataframe';
+import { toDataFrame } from '../../dataframe/processDataFrame';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { ReducerID } from '../fieldReducer';
+import { notTimeFieldMatcher } from '../matchers/predicates';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
