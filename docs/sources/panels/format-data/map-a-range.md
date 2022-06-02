@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/format-data/map-a-range/", "/docs/sources/panels/format-data/map-a-range/"]
-title = "Map a range"
-weight = 30
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/format-data/map-a-range/
+  - /docs/sources/panels/format-data/map-a-range/
+title: Map a range
+weight: 30
+---
 
 # Map a range
 
@@ -10,7 +12,7 @@ Map a range of values when you want to format multiple, continuous values.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a range**:
 

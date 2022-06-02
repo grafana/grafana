@@ -9,7 +9,7 @@ import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unifie
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, Rule } from 'app/types/unified-alerting';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { isAlertingRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
@@ -79,7 +79,7 @@ function filterAlerts(
   }
   if (alertInstanceState) {
     filteredAlerts = filteredAlerts.filter((alert) => {
-      return alert.state === alertInstanceState;
+      return mapStateWithReasonToBaseState(alert.state) === alertInstanceState;
     });
   }
 

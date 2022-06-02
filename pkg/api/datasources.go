@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -275,7 +276,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 }
 
 // PUT /api/datasources/:id
-func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateDataSourceByID(c *models.ReqContext) response.Response {
 	cmd := models.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -297,12 +298,38 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
 
+// PUT /api/datasources/:uid
+func (hs *HTTPServer) UpdateDataSourceByUID(c *models.ReqContext) response.Response {
+	cmd := models.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
+	cmd.OrgId = c.OrgId
+	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
+		return resp
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+	}
+	cmd.Id = ds.Id
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+func (hs *HTTPServer) updateDataSourceByID(c *models.ReqContext, ds *models.DataSource, cmd models.UpdateDataSourceCommand) response.Response {
 	if ds.ReadOnly {
 		return response.Error(403, "Cannot update read-only data source", nil)
 	}
 
-	err = hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
+	err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
@@ -542,6 +569,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 			PluginID:                   plugin.ID,
 			DataSourceInstanceSettings: dsInstanceSettings,
 		},
+		Headers: map[string]string{},
 	}
 
 	var dsURL string
@@ -552,6 +580,21 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
+	}
+
+	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
+			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Headers["X-ID-Token"] = idToken
+			}
+		}
+	}
+
+	proxyutil.ClearCookieHeader(c.Req, ds.AllowedCookies())
+	if cookieStr := c.Req.Header.Get("Cookie"); cookieStr != "" {
+		req.Headers["Cookie"] = cookieStr
 	}
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package filestorage
 
 import (
@@ -172,7 +169,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	}
 }
 
-func TestFsStorage(t *testing.T) {
+func TestIntegrationFsStorage(t *testing.T) {
 	//skipTest := true
 	emptyContents := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)

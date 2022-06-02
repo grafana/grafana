@@ -190,7 +190,6 @@ export { InputControl } from './InputControl';
 export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { getFormStyles } from './Forms/getFormStyles';
 export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
@@ -215,8 +214,10 @@ export * from './Select/types';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
+export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
@@ -268,3 +269,4 @@ export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
+export { PanelContainer } from './PanelContainer/PanelContainer';

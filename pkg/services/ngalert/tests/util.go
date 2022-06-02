@@ -66,13 +66,14 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{},
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
-		SQLStore:     ng.SQLStore,
-		BaseInterval: baseInterval * time.Second,
-		Logger:       log.New("ngalert-test"),
+		SQLStore:         ng.SQLStore,
+		BaseInterval:     baseInterval * time.Second,
+		Logger:           log.New("ngalert-test"),
+		DashboardService: dashboardService,
 	}
 }
 
@@ -83,7 +84,7 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 
 func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.InsertAlertRules(ctx, []models.AlertRule{
+	_, err := dbstore.InsertAlertRules(ctx, []models.AlertRule{
 		{
 
 			ID:        0,

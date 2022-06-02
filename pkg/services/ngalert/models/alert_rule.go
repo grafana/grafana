@@ -81,6 +81,10 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+
+	// This isn't a hard-coded secret token, hence the nolint.
+	//nolint:gosec
+	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
 )
 
 var (
@@ -89,7 +93,11 @@ var (
 		RuleUIDLabel:      {},
 		NamespaceUIDLabel: {},
 	}
-	InternalAnnotationNameSet = map[string]struct{}{}
+	InternalAnnotationNameSet = map[string]struct{}{
+		DashboardUIDAnnotation:    {},
+		PanelIDAnnotation:         {},
+		ScreenshotTokenAnnotation: {},
+	}
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -256,6 +264,14 @@ type GetAlertRuleByUIDQuery struct {
 	OrgID int64
 
 	Result *AlertRule
+}
+
+// GetAlertRulesGroupByRuleUIDQuery is the query for retrieving a group of alerts by UID of a rule that belongs to that group
+type GetAlertRulesGroupByRuleUIDQuery struct {
+	UID   string
+	OrgID int64
+
+	Result []*AlertRule
 }
 
 // ListAlertRulesQuery is the query for listing alert rules

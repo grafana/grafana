@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -14,8 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserDataAccess(t *testing.T) {
-
+func TestIntegrationUserDataAccess(t *testing.T) {
 	ss := InitTestDB(t)
 	user := &models.SignedInUser{
 		OrgId:       1,
@@ -261,7 +257,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, query1.Result, 1)
 
 		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
+		err = getDashboardAclInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -335,7 +331,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, query2.Result, 1)
 
 		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = ss.GetDashboardAclInfoList(context.Background(), permQuery)
+		err = getDashboardAclInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -364,7 +360,6 @@ func TestUserDataAccess(t *testing.T) {
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
-
 		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -452,7 +447,6 @@ func TestUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
-
 		ss = InitTestDB(t)
 
 		createUserCmd := models.CreateUserCommand{

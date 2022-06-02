@@ -15,6 +15,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
+  RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
@@ -80,7 +81,7 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
   return await getRichHistoryStorage().getRichHistory(filters);
 }
 
@@ -130,12 +131,17 @@ export enum LocalStorageMigrationStatus {
   NotNeeded = 'not-needed',
 }
 
-export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationStatus> {
+export interface LocalStorageMigrationResult {
+  status: LocalStorageMigrationStatus;
+  error?: Error;
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
   const richHistoryLocalStorage = new RichHistoryLocalStorage();
   const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
   try {
-    const richHistory: RichHistoryQuery[] = await richHistoryLocalStorage.getRichHistory({
+    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
       datasourceFilters: [],
       from: 0,
       search: '',
@@ -144,14 +150,14 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
       to: 14,
     });
     if (richHistory.length === 0) {
-      return LocalStorageMigrationStatus.NotNeeded;
+      return { status: LocalStorageMigrationStatus.NotNeeded };
     }
     await richHistoryRemoteStorage.migrate(richHistory);
     dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
-    return LocalStorageMigrationStatus.Successful;
+    return { status: LocalStorageMigrationStatus.Successful };
   } catch (error) {
     dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));
-    return LocalStorageMigrationStatus.Failed;
+    return { status: LocalStorageMigrationStatus.Failed, error };
   }
 }
 

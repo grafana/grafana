@@ -1,14 +1,23 @@
-+++
-aliases = ["/docs/grafana/latest/basics/timeseries-dimensions/", "/docs/grafana/latest/getting-started/timeseries-dimensions/", "/docs/grafana/latest/guides/timeseries-dimensions/"]
-description = "time series dimensions"
-keywords = ["grafana", "intro", "guide", "concepts", "timeseries", "labels"]
-title = "Time series dimensions"
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/timeseries-dimensions/
+  - /docs/grafana/latest/getting-started/timeseries-dimensions/
+  - /docs/grafana/latest/guides/timeseries-dimensions/
+description: time series dimensions
+keywords:
+  - grafana
+  - intro
+  - guide
+  - concepts
+  - timeseries
+  - labels
+title: Time series dimensions
+weight: 600
+---
 
 # Time series dimensions
 
-In [Introduction to time series]({{< relref "timeseries.md#time-series-databases" >}}), the concept of _labels_, also called _tags_, is introduced:
+In [Introduction to time series]({{< relref "timeseries/#time-series-databases" >}}), the concept of _labels_, also called _tags_, is introduced:
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken.
 
@@ -76,10 +85,10 @@ In this case the labels that represent the dimensions will have two keys based o
 
 > **Note:** More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
 
-> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../alerting/alerting-rules/create-grafana-managed-rule.md#single-and-multi-dimensional-rule" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).
 
 ### Multiple values
 
 In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
-Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames.md#data-frames-as-time-series" >}}).
+Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames/#data-frames-as-time-series" >}}).

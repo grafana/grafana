@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -16,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func TestApiKeyDataAccess(t *testing.T) {
+func TestIntegrationApiKeyDataAccess(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -34,6 +31,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
+			})
+
+			t.Run("Should be able to get key by hash", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+
+				assert.Nil(t, err)
+				assert.NotNil(t, key)
 			})
 		})
 
@@ -130,7 +134,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 	})
 }
 
-func TestApiKeyErrors(t *testing.T) {
+func TestIntegrationApiKeyErrors(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -166,7 +170,7 @@ type getApiKeysTestCase struct {
 	expectedNumKeys int
 }
 
-func TestSQLStore_GetAPIKeys(t *testing.T) {
+func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",

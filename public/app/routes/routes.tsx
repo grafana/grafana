@@ -16,6 +16,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
+import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -387,12 +388,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/search',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SearchPage"*/ 'app/features/search/page/SearchPage')
-      ),
-    },
-    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
@@ -435,6 +430,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
     ...extraRoutes,
+    ...getPublicDashboardRoutes(),
     {
       path: '/*',
       component: ErrorPage,

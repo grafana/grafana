@@ -18,7 +18,12 @@ import (
 )
 
 func TestTicker(t *testing.T) {
-	readChanOrFail := func(t *testing.T, ctx context.Context, c chan time.Time) time.Time {
+	readChanOrFail := func(t *testing.T, c chan time.Time) time.Time {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		t.Cleanup(func() {
+			cancel()
+		})
+
 		t.Helper()
 		select {
 		case tick := <-c:
@@ -76,11 +81,8 @@ func TestTicker(t *testing.T) {
 				break
 			}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		t.Cleanup(func() {
-			cancel()
-		})
-		actual := readChanOrFail(t, ctx, ticker.C)
+
+		actual := readChanOrFail(t, ticker.C)
 		require.Equal(t, expectedTick, actual)
 	})
 
@@ -97,18 +99,13 @@ func TestTicker(t *testing.T) {
 		clk.Add(interval) // advance the clock by the interval to make the ticker tick the first time.
 		clk.Add(interval) // advance the clock by the interval to make the ticker tick the second time.
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		t.Cleanup(func() {
-			cancel()
-		})
-
 		// Irregardless of wall time, the first tick should be initial clock + interval.
-		actual1 := readChanOrFail(t, ctx, ticker.C)
+		actual1 := readChanOrFail(t, ticker.C)
 		require.Equal(t, expectedTick, actual1)
 
 		var actual2 time.Time
 		require.Eventually(t, func() bool {
-			actual2 = readChanOrFail(t, ctx, ticker.C)
+			actual2 = readChanOrFail(t, ticker.C)
 			return true
 		}, time.Second, 10*time.Millisecond)
 
@@ -147,11 +144,7 @@ func TestTicker(t *testing.T) {
 		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
 
 		clk.Add(interval)
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		t.Cleanup(func() {
-			cancel()
-		})
-		actual := readChanOrFail(t, ctx, ticker.C)
+		actual := readChanOrFail(t, ticker.C)
 
 		expectedMetric = fmt.Sprintf(expectedMetricFmt, interval.Seconds(), float64(actual.UnixNano())/1e9, float64(expectedTick.Add(interval).UnixNano())/1e9)
 
@@ -162,5 +155,36 @@ func TestTicker(t *testing.T) {
 			}
 			return err == nil
 		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
+	})
+
+	t.Run("should stop", func(t *testing.T) {
+		t.Run("when it waits for the next tick", func(t *testing.T) {
+			clk := clock.NewMock()
+			interval := time.Duration(rand.Int63n(9)+1) * time.Second
+			ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
+			clk.Add(interval)
+			readChanOrFail(t, ticker.C)
+			ticker.Stop()
+			clk.Add(interval)
+			require.Empty(t, ticker.C)
+		})
+
+		t.Run("when it waits for the tick to be consumed", func(t *testing.T) {
+			clk := clock.NewMock()
+			interval := time.Duration(rand.Int63n(9)+1) * time.Second
+			ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
+			clk.Add(interval)
+			ticker.Stop()
+			require.Empty(t, ticker.C)
+		})
+
+		t.Run("multiple times", func(t *testing.T) {
+			clk := clock.NewMock()
+			interval := time.Duration(rand.Int63n(9)+1) * time.Second
+			ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
+			ticker.Stop()
+			ticker.Stop()
+			ticker.Stop()
+		})
 	})
 }

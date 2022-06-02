@@ -24,7 +24,10 @@ interface Props {
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
+  getSortOptions: () => Promise<SelectableValue[]>;
   onDatasourceChange: (ds?: string) => void;
+  includePanels: boolean;
+  setIncludePanels: (v: boolean) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
@@ -52,10 +55,13 @@ export const ActionRow: FC<Props> = ({
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
+  getSortOptions,
   onDatasourceChange,
   query,
   showStarredFilter,
   hideLayout,
+  includePanels,
+  setIncludePanels,
 }) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(query);
@@ -75,7 +81,7 @@ export const ActionRow: FC<Props> = ({
               value={layout}
             />
           )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">
@@ -89,6 +95,10 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
+        {layout !== SearchLayout.Folders && (
+          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
+        )}
+
         <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>
@@ -102,11 +112,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.v1.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.v1.spacing.lg} 0;
+        padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
     `,

@@ -1,7 +1,7 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataQuery, HistoryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, logError } from '@grafana/runtime';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 import store from 'app/core/store';
 import {
@@ -60,7 +60,13 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
         .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
         // or remove
         .filter((query) => query.id !== deletedId);
-      dispatch(richHistoryUpdatedAction({ richHistory: newRichHistory, exploreId }));
+      const deletedItems = item.richHistory.length - newRichHistory.length;
+      dispatch(
+        richHistoryUpdatedAction({
+          richHistoryResults: { richHistory: newRichHistory, total: item.richHistoryTotal! - deletedItems },
+          exploreId,
+        })
+      );
     });
   };
 };
@@ -118,8 +124,12 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 export const deleteRichHistory = (): ThunkResult<void> => {
   return async (dispatch) => {
     await deleteAllFromRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId: ExploreId.left }));
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId: ExploreId.right }));
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.left })
+    );
+    dispatch(
+      richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: ExploreId.right })
+    );
   };
 };
 
@@ -127,8 +137,24 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const filters = getState().explore![exploreId]?.richHistorySearchFilters;
     if (filters) {
-      const richHistory = await getRichHistory(filters);
-      dispatch(richHistoryUpdatedAction({ richHistory, exploreId }));
+      const richHistoryResults = await getRichHistory(filters);
+      dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
+    }
+  };
+};
+
+export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    if (currentFilters && currentRichHistory) {
+      const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
+      const moreRichHistory = await getRichHistory(nextFilters);
+      const richHistory = [...currentRichHistory, ...moreRichHistory.richHistory];
+      dispatch(richHistorySearchFiltersUpdatedAction({ filters: nextFilters, exploreId }));
+      dispatch(
+        richHistoryUpdatedAction({ richHistoryResults: { richHistory, total: moreRichHistory.total }, exploreId })
+      );
     }
   };
 };
@@ -136,7 +162,7 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 export const clearRichHistoryResults = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch) => {
     dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined, exploreId }));
-    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId }));
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
   };
 };
 
@@ -153,9 +179,10 @@ export const initRichHistory = (): ThunkResult<void> => {
     // the migration attempt happens only once per session, and the user is informed about the failure
     // in a way that can help with potential investigation.
     if (config.queryHistoryEnabled && !queriesMigrated && !migrationFailedDuringThisSession) {
-      const migrationStatus = await migrateQueryHistoryFromLocalStorage();
-      if (migrationStatus === LocalStorageMigrationStatus.Failed) {
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      if (migrationResult.status === LocalStorageMigrationStatus.Failed) {
         dispatch(richHistoryMigrationFailedAction());
+        logError(migrationResult.error!, { explore: { event: 'QueryHistoryMigrationFailed' } });
       } else {
         store.set(RICH_HISTORY_SETTING_KEYS.migrated, true);
       }
