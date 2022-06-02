@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,6 +20,7 @@ import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
+import { reportDashboardListViewed } from './reporting';
 
 type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
@@ -78,6 +79,21 @@ export const SearchView = ({
     }
     return q;
   }, [query, queryText, folderDTO, includePanels]);
+
+  // Search usage reporting
+  useDebounce(
+    () => {
+      reportDashboardListViewed(folderDTO ? 'manage_dashboards' : 'dashboard_search', {
+        layout: query.layout,
+        starred: query.starred,
+        sortValue: query.sort?.value,
+        query: query.query,
+        tagCount: query.tag?.length,
+      });
+    },
+    1000,
+    [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
+  );
 
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
