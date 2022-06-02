@@ -47,6 +47,9 @@ func ProvideDashboardService(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store))
+
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
