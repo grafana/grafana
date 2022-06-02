@@ -219,43 +219,49 @@ export function prepConfig(opts: PrepConfigOpts) {
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
     log: opts.yAxisLog ?? 2,
-    range: shouldUseLogScale
-      ? (u, dataMin, dataMax) => {
-          let yExp = u.scales['y'].log!;
+    range:
+      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
+      heatmapType === DataFrameType.HeatmapSparse
+        ? undefined
+        : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
+          (u, dataMin, dataMax) => {
+            // logarithmic expansion
+            if (opts.yAxisLog) {
+              let yExp = u.scales['y'].log!;
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
-            dataMin /= yExp;
-          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-            dataMax *= yExp;
-          } else {
-            dataMin /= yExp / 2;
-            dataMax *= yExp / 2;
-          }
-
-          return [dataMin, dataMax];
-        }
-      : (u, dataMin, dataMax) => {
-          let bucketSize = dataRef.current?.yBucketSize;
-
-          if (bucketSize === 0) {
-            bucketSize = 1;
-          }
-
-          if (bucketSize) {
-            if (dataRef.current?.yLayout === BucketLayout.le) {
-              dataMin -= bucketSize!;
-            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-              dataMax += bucketSize!;
-            } else {
-              dataMin -= bucketSize! / 2;
-              dataMax += bucketSize! / 2;
+              if (dataRef.current?.yLayout === BucketLayout.le) {
+                dataMin /= yExp;
+              } else if (dataRef.current?.yLayout === BucketLayout.ge) {
+                dataMax *= yExp;
+              } else {
+                dataMin /= yExp / 2;
+                dataMax *= yExp / 2;
+              }
             }
-          } else {
-            // how to expand scale range if inferred non-regular or log buckets?
-          }
+            // linear expansion
+            else {
+              let bucketSize = dataRef.current?.yBucketSize;
 
-          return [dataMin, dataMax];
-        },
+              if (bucketSize === 0) {
+                bucketSize = 1;
+              }
+
+              if (bucketSize) {
+                if (dataRef.current?.yLayout === BucketLayout.le) {
+                  dataMin -= bucketSize!;
+                } else if (dataRef.current?.yLayout === BucketLayout.ge) {
+                  dataMax += bucketSize!;
+                } else {
+                  dataMin -= bucketSize! / 2;
+                  dataMax += bucketSize! / 2;
+                }
+              } else {
+                // how to expand scale range if inferred non-regular or log buckets?
+              }
+            }
+
+            return [dataMin, dataMax];
+          },
   });
 
   const hasLabeledY = dataRef.current?.yAxisValues != null;
