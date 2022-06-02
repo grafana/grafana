@@ -270,10 +270,10 @@ Name | Description
     {{- end }}
   {{- end }}
 
-| Method  | URI     | Name   | Summary |
-|---------|---------|--------|---------|
+| Method  | URI     | Summary |
+|---------|---------|---------|
   {{- range .Operations }}
-| {{ upper .Method }} | {{ joinPath .BasePath .Path }} | [{{ .Name }}](#{{ dasherize .Name }}) | {{ .Summary }} |
+| {{ upper .Method }} | [{{ joinPath .BasePath .Path }}](#{{ dasherize .Name }}) | {{ .Summary }} |
   {{- end }}
   {{ printf "\n" }}
 {{- end }}

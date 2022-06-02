@@ -38,148 +38,148 @@ The API can be used to create, update, get and list roles, and create or remove 
 This only available in Grafana Enterprise.
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic auth.
 
-| Method | URI                                                             | Name                                                       | Summary                            |
-| ------ | --------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------- |
-| POST   | /api/access-control/builtin-roles                               | [addBuiltinRole](#add-builtin-role)                        | Create a built-in role assignment. |
-| POST   | /api/access-control/teams/{teamId}/roles                        | [addTeamRole](#add-team-role)                              | Add team role.                     |
-| POST   | /api/access-control/users/{user_id}/roles                       | [addUserRole](#add-user-role)                              | Add a user role assignment.        |
-| POST   | /api/access-control/roles                                       | [createRoleWithPermissions](#create-role-with-permissions) | Create a new custom role.          |
-| DELETE | /api/access-control/roles/{roleUID}                             | [deleteCustomRole](#delete-custom-role)                    | Delete a custom role.              |
-| GET    | /api/access-control/status                                      | [getAccessControlStatus](#get-access-control-status)       | Get status.                        |
-| GET    | /api/access-control/roles                                       | [getAllRoles](#get-all-roles)                              | Get all roles.                     |
-| GET    | /api/access-control/roles/{roleUID}                             | [getRole](#get-role)                                       | Get a role.                        |
-| GET    | /api/access-control/builtin-roles                               | [listBuiltinRoles](#list-builtin-roles)                    | Get all built-in role assignments. |
-| GET    | /api/access-control/teams/{teamId}/roles                        | [listTeamRoles](#list-team-roles)                          | Get team roles.                    |
-| GET    | /api/access-control/users/{user_id}/roles                       | [listUserRoles](#list-user-roles)                          | List roles assigned to a user.     |
-| DELETE | /api/access-control/builtin-roles/{builtinRole}/roles/{roleUID} | [removeBuiltinRole](#remove-builtin-role)                  | Remove a built-in role assignment. |
-| DELETE | /api/access-control/teams/{teamId}/roles/{roleUID}              | [removeTeamRole](#remove-team-role)                        | Remove team role.                  |
-| DELETE | /api/access-control/users/{user_id}/roles/{roleUID}             | [removeUserRole](#remove-user-role)                        | Remove a user role assignment.     |
-| PUT    | /api/access-control/teams/{teamId}/roles                        | [setTeamRoles](#set-team-roles)                            | Update team role.                  |
-| PUT    | /api/access-control/users/{user_id}/roles                       | [setUserRoles](#set-user-roles)                            | Set user role assignments.         |
-| PUT    | /api/access-control/roles/{roleUID}                             | [updateRoleWithPermissions](#update-role-with-permissions) | Update a custom role.              |
+| Method | URI                                                                                     | Summary                            |
+| ------ | --------------------------------------------------------------------------------------- | ---------------------------------- |
+| POST   | [/api/access-control/builtin-roles](#add-builtin-role)                                  | Create a built-in role assignment. |
+| POST   | [/api/access-control/teams/{teamId}/roles](#add-team-role)                              | Add team role.                     |
+| POST   | [/api/access-control/users/{user_id}/roles](#add-user-role)                             | Add a user role assignment.        |
+| POST   | [/api/access-control/roles](#create-role-with-permissions)                              | Create a new custom role.          |
+| DELETE | [/api/access-control/roles/{roleUID}](#delete-custom-role)                              | Delete a custom role.              |
+| GET    | [/api/access-control/status](#get-access-control-status)                                | Get status.                        |
+| GET    | [/api/access-control/roles](#get-all-roles)                                             | Get all roles.                     |
+| GET    | [/api/access-control/roles/{roleUID}](#get-role)                                        | Get a role.                        |
+| GET    | [/api/access-control/builtin-roles](#list-builtin-roles)                                | Get all built-in role assignments. |
+| GET    | [/api/access-control/teams/{teamId}/roles](#list-team-roles)                            | Get team roles.                    |
+| GET    | [/api/access-control/users/{user_id}/roles](#list-user-roles)                           | List roles assigned to a user.     |
+| DELETE | [/api/access-control/builtin-roles/{builtinRole}/roles/{roleUID}](#remove-builtin-role) | Remove a built-in role assignment. |
+| DELETE | [/api/access-control/teams/{teamId}/roles/{roleUID}](#remove-team-role)                 | Remove team role.                  |
+| DELETE | [/api/access-control/users/{user_id}/roles/{roleUID}](#remove-user-role)                | Remove a user role assignment.     |
+| PUT    | [/api/access-control/teams/{teamId}/roles](#set-team-roles)                             | Update team role.                  |
+| PUT    | [/api/access-control/users/{user_id}/roles](#set-user-roles)                            | Set user role assignments.         |
+| PUT    | [/api/access-control/roles/{roleUID}](#update-role-with-permissions)                    | Update a custom role.              |
 
 ### access_control_provisioning
 
-| Method | URI                                           | Name                                                                              | Summary                                                                                                  |
-| ------ | --------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| POST   | /api/admin/provisioning/access-control/reload | [adminProvisioningReloadAccessControl](#admin-provisioning-reload-access-control) | You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`. |
+| Method | URI                                                                                        | Summary                                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| POST   | [/api/admin/provisioning/access-control/reload](#admin-provisioning-reload-access-control) | You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`. |
 
 ### admin
 
 The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)
 
-| Method | URI                         | Name                                | Summary                            |
-| ------ | --------------------------- | ----------------------------------- | ---------------------------------- |
-| GET    | /api/admin/settings         | [getSettings](#get-settings)        | Fetch settings.                    |
-| GET    | /api/admin/stats            | [getStats](#get-stats)              | Fetch Grafana Stats.               |
-| POST   | /api/admin/pause-all-alerts | [pauseAllAlerts](#pause-all-alerts) | Pause/unpause all (legacy) alerts. |
+| Method | URI                                              | Summary                            |
+| ------ | ------------------------------------------------ | ---------------------------------- |
+| GET    | [/api/admin/settings](#get-settings)             | Fetch settings.                    |
+| GET    | [/api/admin/stats](#get-stats)                   | Fetch Grafana Stats.               |
+| POST   | [/api/admin/pause-all-alerts](#pause-all-alerts) | Pause/unpause all (legacy) alerts. |
 
 ### admin_ldap
 
-| Method | URI                            | Name                                 | Summary                                                                                                                          |
-| ------ | ------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api/admin/ldap/status         | [getLDAPStatus](#get-l-d-a-p-status) | Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.             |
-| GET    | /api/admin/ldap/{user_name}    | [getLDAPUser](#get-l-d-a-p-user)     | Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. |
-| POST   | /api/admin/ldap/reload         | [reloadLDAP](#reload-l-d-a-p)        | Reloads the LDAP configuration.                                                                                                  |
-| POST   | /api/admin/ldap/sync/{user_id} | [syncLDAPUser](#sync-l-d-a-p-user)   | Enables a single Grafana user to be synchronized against LDAP.                                                                   |
+| Method | URI                                                  | Summary                                                                                                                          |
+| ------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | [/api/admin/ldap/status](#get-l-d-a-p-status)        | Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.             |
+| GET    | [/api/admin/ldap/{user_name}](#get-l-d-a-p-user)     | Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced. |
+| POST   | [/api/admin/ldap/reload](#reload-l-d-a-p)            | Reloads the LDAP configuration.                                                                                                  |
+| POST   | [/api/admin/ldap/sync/{user_id}](#sync-l-d-a-p-user) | Enables a single Grafana user to be synchronized against LDAP.                                                                   |
 
 ### admin_provisioning
 
-| Method | URI                                          | Name                                                                   | Summary                                                   |
-| ------ | -------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------- |
-| POST   | /api/admin/provisioning/accesscontrol/reload | [reloadProvisionedAccessControl](#reload-provisioned-access-control)   | Reload access control provisioning configurations.        |
-| POST   | /api/admin/provisioning/notifications/reload | [reloadProvisionedAlertNotifiers](#reload-provisioned-alert-notifiers) | Reload legacy alert notifier provisioning configurations. |
-| POST   | /api/admin/provisioning/dashboards/reload    | [reloadProvisionedDashboards](#reload-provisioned-dashboards)          | Reload dashboard provisioning configurations.             |
-| POST   | /api/admin/provisioning/datasources/reload   | [reloadProvisionedDatasources](#reload-provisioned-datasources)        | Reload datasource provisioning configurations.            |
-| POST   | /api/admin/provisioning/plugins/reload       | [reloadProvisionedPlugins](#reload-provisioned-plugins)                | Reload plugin provisioning configurations.                |
+| Method | URI                                                                                 | Summary                                                   |
+| ------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| POST   | [/api/admin/provisioning/accesscontrol/reload](#reload-provisioned-access-control)  | Reload access control provisioning configurations.        |
+| POST   | [/api/admin/provisioning/notifications/reload](#reload-provisioned-alert-notifiers) | Reload legacy alert notifier provisioning configurations. |
+| POST   | [/api/admin/provisioning/dashboards/reload](#reload-provisioned-dashboards)         | Reload dashboard provisioning configurations.             |
+| POST   | [/api/admin/provisioning/datasources/reload](#reload-provisioned-datasources)       | Reload datasource provisioning configurations.            |
+| POST   | [/api/admin/provisioning/plugins/reload](#reload-provisioned-plugins)               | Reload plugin provisioning configurations.                |
 
 ### admin_users
 
-| Method | URI                                              | Name                                  | Summary                                                                                                                                                                                     |
-| ------ | ------------------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | /api/admin/users                                 | [createUser](#create-user)            | Create new user.                                                                                                                                                                            |
-| DELETE | /api/admin/users/{user_id}                       | [deleteUser](#delete-user)            | Delete global User.                                                                                                                                                                         |
-| POST   | /api/admin/users/{user_id}/disable               | [disableUser](#disable-user)          | Disable user.                                                                                                                                                                               |
-| POST   | /api/admin/users/{user_id}/enable                | [enableUser](#enable-user)            | Enable user.                                                                                                                                                                                |
-| GET    | /api/admin/users/{user_id}/auth-tokens           | [getAuthTokens](#get-auth-tokens)     | Return a list of all auth tokens (devices) that the user currently have logged in from.                                                                                                     |
-| GET    | /api/admin/users/{user_id}/quotas                | [getUserQuota](#get-user-quota)       | Fetch user quota.                                                                                                                                                                           |
-| POST   | /api/admin/users/{user_id}/logout                | [logoutUser](#logout-user)            | Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. |
-| POST   | /api/admin/users/{user_id}/revoke-auth-token     | [revokeAuthToken](#revoke-auth-token) | Revoke auth token for user.                                                                                                                                                                 |
-| PUT    | /api/admin/users/{user_id}/password              | [setPassword](#set-password)          | Set password for user.                                                                                                                                                                      |
-| PUT    | /api/admin/users/{user_id}/permissions           | [setPermissions](#set-permissions)    | Set permissions for user.                                                                                                                                                                   |
-| PUT    | /api/admin/users/{user_id}/quotas/{quota_target} | [updateUserQuota](#update-user-quota) | Update user quota.                                                                                                                                                                          |
+| Method | URI                                                                    | Summary                                                                                                                                                                                     |
+| ------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | [/api/admin/users](#create-user)                                       | Create new user.                                                                                                                                                                            |
+| DELETE | [/api/admin/users/{user_id}](#delete-user)                             | Delete global User.                                                                                                                                                                         |
+| POST   | [/api/admin/users/{user_id}/disable](#disable-user)                    | Disable user.                                                                                                                                                                               |
+| POST   | [/api/admin/users/{user_id}/enable](#enable-user)                      | Enable user.                                                                                                                                                                                |
+| GET    | [/api/admin/users/{user_id}/auth-tokens](#get-auth-tokens)             | Return a list of all auth tokens (devices) that the user currently have logged in from.                                                                                                     |
+| GET    | [/api/admin/users/{user_id}/quotas](#get-user-quota)                   | Fetch user quota.                                                                                                                                                                           |
+| POST   | [/api/admin/users/{user_id}/logout](#logout-user)                      | Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity. |
+| POST   | [/api/admin/users/{user_id}/revoke-auth-token](#revoke-auth-token)     | Revoke auth token for user.                                                                                                                                                                 |
+| PUT    | [/api/admin/users/{user_id}/password](#set-password)                   | Set password for user.                                                                                                                                                                      |
+| PUT    | [/api/admin/users/{user_id}/permissions](#set-permissions)             | Set permissions for user.                                                                                                                                                                   |
+| PUT    | [/api/admin/users/{user_id}/quotas/{quota_target}](#update-user-quota) | Update user quota.                                                                                                                                                                          |
 
 ### annotations
 
 Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-| Method | URI                              | Name                                                    | Summary                               |
-| ------ | -------------------------------- | ------------------------------------------------------- | ------------------------------------- |
-| POST   | /api/annotations                 | [createAnnotation](#create-annotation)                  | Create Annotation.                    |
-| POST   | /api/annotations/graphite        | [createGraphiteAnnotation](#create-graphite-annotation) | Create Annotation in Graphite format. |
-| DELETE | /api/annotations/{annotation_id} | [deleteAnnotation](#delete-annotation)                  | Delete Annotation By ID.              |
-| GET    | /api/annotations/{annotation_id} | [getAnnotation](#get-annotation)                        | Get Annotation by Id.                 |
-| GET    | /api/annotations/tags            | [getAnnotationTags](#get-annotation-tags)               | Find Annotations Tags.                |
-| GET    | /api/annotations                 | [getAnnotations](#get-annotations)                      | Find Annotations.                     |
-| POST   | /api/annotations/mass-delete     | [massDeleteAnnotations](#mass-delete-annotations)       | Delete multiple annotations.          |
-| PATCH  | /api/annotations/{annotation_id} | [patchAnnotation](#patch-annotation)                    | Patch Annotation                      |
-| PUT    | /api/annotations/{annotation_id} | [updateAnnotation](#update-annotation)                  | Update Annotation.                    |
+| Method | URI                                                      | Summary                               |
+| ------ | -------------------------------------------------------- | ------------------------------------- |
+| POST   | [/api/annotations](#create-annotation)                   | Create Annotation.                    |
+| POST   | [/api/annotations/graphite](#create-graphite-annotation) | Create Annotation in Graphite format. |
+| DELETE | [/api/annotations/{annotation_id}](#delete-annotation)   | Delete Annotation By ID.              |
+| GET    | [/api/annotations/{annotation_id}](#get-annotation)      | Get Annotation by Id.                 |
+| GET    | [/api/annotations/tags](#get-annotation-tags)            | Find Annotations Tags.                |
+| GET    | [/api/annotations](#get-annotations)                     | Find Annotations.                     |
+| POST   | [/api/annotations/mass-delete](#mass-delete-annotations) | Delete multiple annotations.          |
+| PATCH  | [/api/annotations/{annotation_id}](#patch-annotation)    | Patch Annotation                      |
+| PUT    | [/api/annotations/{annotation_id}](#update-annotation)   | Update Annotation.                    |
 
 ### api_keys
 
-| Method | URI                 | Name                             | Summary             |
-| ------ | ------------------- | -------------------------------- | ------------------- |
-| POST   | /api/auth/keys      | [addAPIkey](#add-a-p-ikey)       | Creates an API key. |
-| DELETE | /api/auth/keys/{id} | [deleteAPIkey](#delete-a-p-ikey) | Delete API key.     |
-| GET    | /api/auth/keys      | [getAPIkeys](#get-a-p-ikeys)     | Get auth keys.      |
+| Method | URI                                     | Summary             |
+| ------ | --------------------------------------- | ------------------- |
+| POST   | [/api/auth/keys](#add-a-p-ikey)         | Creates an API key. |
+| DELETE | [/api/auth/keys/{id}](#delete-a-p-ikey) | Delete API key.     |
+| GET    | [/api/auth/keys](#get-a-p-ikeys)        | Get auth keys.      |
 
 ### current_org_details
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                      | Name                                    | Summary                                                |
-| ------ | ------------------------ | --------------------------------------- | ------------------------------------------------------ |
-| POST   | /api/org/users           | [addOrgUser](#add-org-user)             | Add a new user to the current organization             |
-| DELETE | /api/org/users/{user_id} | [deleteOrgUser](#delete-org-user)       | Delete user in current organization                    |
-| GET    | /api/org                 | [getOrg](#get-org)                      |                                                        |
-| GET    | /api/org/users           | [getOrgUsers](#get-org-users)           | Get all users within the current organization.         |
-| GET    | /api/org/users/lookup    | [lookupOrgUsers](#lookup-org-users)     | Get all users within the current organization (lookup) |
-| PUT    | /api/org                 | [updateOrg](#update-org)                | Update current Organization.                           |
-| PUT    | /api/org/address         | [updateOrgAddress](#update-org-address) | Update current Organization's address.                 |
-| PATCH  | /api/org/users/{user_id} | [updateOrgUser](#update-org-user)       | Updates the given user                                 |
+| Method | URI                                          | Summary                                                |
+| ------ | -------------------------------------------- | ------------------------------------------------------ |
+| POST   | [/api/org/users](#add-org-user)              | Add a new user to the current organization             |
+| DELETE | [/api/org/users/{user_id}](#delete-org-user) | Delete user in current organization                    |
+| GET    | [/api/org](#get-org)                         |                                                        |
+| GET    | [/api/org/users](#get-org-users)             | Get all users within the current organization.         |
+| GET    | [/api/org/users/lookup](#lookup-org-users)   | Get all users within the current organization (lookup) |
+| PUT    | [/api/org](#update-org)                      | Update current Organization.                           |
+| PUT    | [/api/org/address](#update-org-address)      | Update current Organization's address.                 |
+| PATCH  | [/api/org/users/{user_id}](#update-org-user) | Updates the given user                                 |
 
 ### dashboard_permissions
 
-| Method | URI                                          | Name                                                                    | Summary                                                |
-| ------ | -------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------ |
-| GET    | /api/dashboards/id/{DashboardID}/permissions | [getDashboardPermissions](#get-dashboard-permissions)                   | Gets all existing permissions for the given dashboard. |
-| GET    | /api/dashboards/uid/{uid}/permissions        | [getDashboardPermissionsWithUid](#get-dashboard-permissions-with-uid)   | Gets all existing permissions for the given dashboard. |
-| POST   | /api/dashboards/id/{DashboardID}/permissions | [postDashboardPermissions](#post-dashboard-permissions)                 | Updates permissions for a dashboard.                   |
-| POST   | /api/dashboards/uid/{uid}/permissions        | [postDashboardPermissionsWithUid](#post-dashboard-permissions-with-uid) | Updates permissions for a dashboard.                   |
+| Method | URI                                                                           | Summary                                                |
+| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------ |
+| GET    | [/api/dashboards/id/{DashboardID}/permissions](#get-dashboard-permissions)    | Gets all existing permissions for the given dashboard. |
+| GET    | [/api/dashboards/uid/{uid}/permissions](#get-dashboard-permissions-with-uid)  | Gets all existing permissions for the given dashboard. |
+| POST   | [/api/dashboards/id/{DashboardID}/permissions](#post-dashboard-permissions)   | Updates permissions for a dashboard.                   |
+| POST   | [/api/dashboards/uid/{uid}/permissions](#post-dashboard-permissions-with-uid) | Updates permissions for a dashboard.                   |
 
 ### dashboard_versions
 
-| Method | URI                                                            | Name                                                              | Summary                                                     |
-| ------ | -------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------- |
-| GET    | /api/dashboards/id/{DashboardID}/versions/{DashboardVersionID} | [getDashboardVersion](#get-dashboard-version)                     | Get a specific dashboard version.                           |
-| GET    | /api/dashboards/uid/{uid}/versions/{DashboardVersionID}        | [getDashboardVersionByUID](#get-dashboard-version-by-uid)         | Get a specific dashboard version using UID.                 |
-| GET    | /api/dashboards/id/{DashboardID}/versions                      | [getDashboardVersions](#get-dashboard-versions)                   | Gets all existing versions for the dashboard.               |
-| GET    | /api/dashboards/uid/{uid}/versions                             | [getDashboardVersionsByUID](#get-dashboard-versions-by-uid)       | Gets all existing versions for the dashboard using UID.     |
-| POST   | /api/dashboards/id/{DashboardID}/restore                       | [restoreDashboardVersion](#restore-dashboard-version)             | Restore a dashboard to a given dashboard version.           |
-| POST   | /api/dashboards/uid/{uid}/restore                              | [restoreDashboardVersionByUID](#restore-dashboard-version-by-uid) | Restore a dashboard to a given dashboard version using UID. |
+| Method | URI                                                                                      | Summary                                                     |
+| ------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| GET    | [/api/dashboards/id/{DashboardID}/versions/{DashboardVersionID}](#get-dashboard-version) | Get a specific dashboard version.                           |
+| GET    | [/api/dashboards/uid/{uid}/versions/{DashboardVersionID}](#get-dashboard-version-by-uid) | Get a specific dashboard version using UID.                 |
+| GET    | [/api/dashboards/id/{DashboardID}/versions](#get-dashboard-versions)                     | Gets all existing versions for the dashboard.               |
+| GET    | [/api/dashboards/uid/{uid}/versions](#get-dashboard-versions-by-uid)                     | Gets all existing versions for the dashboard using UID.     |
+| POST   | [/api/dashboards/id/{DashboardID}/restore](#restore-dashboard-version)                   | Restore a dashboard to a given dashboard version.           |
+| POST   | [/api/dashboards/uid/{uid}/restore](#restore-dashboard-version-by-uid)                   | Restore a dashboard to a given dashboard version using UID. |
 
 ### dashboards
 
-| Method | URI                            | Name                                             | Summary                                     |
-| ------ | ------------------------------ | ------------------------------------------------ | ------------------------------------------- |
-| POST   | /api/dashboards/calculate-diff | [calcDashboardDiff](#calc-dashboard-diff)        | Perform diff on two dashboards.             |
-| DELETE | /api/dashboards/uid/{uid}      | [deleteDashboardByUID](#delete-dashboard-by-uid) | Delete dashboard by uid.                    |
-| GET    | /api/dashboards/uid/{uid}      | [getDashboardByUID](#get-dashboard-by-uid)       | Get dashboard by uid.                       |
-| GET    | /api/dashboards/tags           | [getDashboardTags](#get-dashboard-tags)          | Get all dashboards tags of an organisation. |
-| GET    | /api/dashboards/home           | [getHomeDashboard](#get-home-dashboard)          | Get home dashboard.                         |
-| POST   | /api/dashboards/import         | [importDashboard](#import-dashboard)             | Import dashboard.                           |
-| POST   | /api/dashboards/db             | [postDashboard](#post-dashboard)                 | Create / Update dashboard                   |
-| POST   | /api/dashboards/trim           | [trimDashboard](#trim-dashboard)                 | Trim defaults from dashboard.               |
+| Method | URI                                                    | Summary                                     |
+| ------ | ------------------------------------------------------ | ------------------------------------------- |
+| POST   | [/api/dashboards/calculate-diff](#calc-dashboard-diff) | Perform diff on two dashboards.             |
+| DELETE | [/api/dashboards/uid/{uid}](#delete-dashboard-by-uid)  | Delete dashboard by uid.                    |
+| GET    | [/api/dashboards/uid/{uid}](#get-dashboard-by-uid)     | Get dashboard by uid.                       |
+| GET    | [/api/dashboards/tags](#get-dashboard-tags)            | Get all dashboards tags of an organisation. |
+| GET    | [/api/dashboards/home](#get-home-dashboard)            | Get home dashboard.                         |
+| POST   | [/api/dashboards/import](#import-dashboard)            | Import dashboard.                           |
+| POST   | [/api/dashboards/db](#post-dashboard)                  | Create / Update dashboard                   |
+| POST   | [/api/dashboards/trim](#trim-dashboard)                | Trim defaults from dashboard.               |
 
 ### datasource_permissions
 
@@ -188,55 +188,55 @@ Permissions can be set for a user or a team. Permissions cannot be set for Admin
 This is only available in Grafana Enterprise
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                        | Name                                       | Summary                                |
-| ------ | ---------------------------------------------------------- | ------------------------------------------ | -------------------------------------- |
-| DELETE | /api/datasources/{datasourceId}/permissions/{permissionId} | [deletePermissions](#delete-permissions)   | Remove permission for a data source.   |
-| POST   | /api/datasources/{datasourceId}/disable-permissions        | [disablePermissions](#disable-permissions) | Disable permissions for a data source. |
-| POST   | /api/datasources/{datasourceId}/enable-permissions         | [enablePermissions](#enable-permissions)   | Enable permissions for a data source.  |
-| GET    | /api/datasources/{datasourceId}/permissions                | [getPermissions](#get-permissions)         | Get permissions for a data source.     |
+| Method | URI                                                                               | Summary                                |
+| ------ | --------------------------------------------------------------------------------- | -------------------------------------- |
+| DELETE | [/api/datasources/{datasourceId}/permissions/{permissionId}](#delete-permissions) | Remove permission for a data source.   |
+| POST   | [/api/datasources/{datasourceId}/disable-permissions](#disable-permissions)       | Disable permissions for a data source. |
+| POST   | [/api/datasources/{datasourceId}/enable-permissions](#enable-permissions)         | Enable permissions for a data source.  |
+| GET    | [/api/datasources/{datasourceId}/permissions](#get-permissions)                   | Get permissions for a data source.     |
 
 ### datasources
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                           | Name                                                                          | Summary                                              |
-| ------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
-| POST   | /api/datasources                                              | [addDatasource](#add-datasource)                                              | Create a data source.                                |
-| GET    | /api/datasources/uid/{uid}/health                             | [checkDatasourceHealth](#check-datasource-health)                             | Check data source health by Id.                      |
-| GET    | /api/datasources/{id}/health                                  | [checkDatasourceHealthByID](#check-datasource-health-by-id)                   | Check data source health by Id.                      |
-| DELETE | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyDELETEByUIDcalls](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.                      |
-| DELETE | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyDELETEcalls](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.                      |
-| GET    | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyGETByUIDcalls](#datasource-proxy-g-e-t-by-ui-dcalls)          | Data source proxy GET calls.                         |
-| GET    | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyGETcalls](#datasource-proxy-g-e-tcalls)                       | Data source proxy GET calls.                         |
-| POST   | /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}     | [datasourceProxyPOSTByUIDcalls](#datasource-proxy-p-o-s-t-by-ui-dcalls)       | Data source proxy POST calls.                        |
-| POST   | /api/datasources/proxy/{id}/{datasource_proxy_route}          | [datasourceProxyPOSTcalls](#datasource-proxy-p-o-s-tcalls)                    | Data source proxy POST calls.                        |
-| DELETE | /api/datasources/{id}                                         | [deleteDatasourceByID](#delete-datasource-by-id)                              | Delete an existing data source by id.                |
-| DELETE | /api/datasources/name/{name}                                  | [deleteDatasourceByName](#delete-datasource-by-name)                          | Delete an existing data source by name.              |
-| DELETE | /api/datasources/uid/{uid}                                    | [deleteDatasourceByUID](#delete-datasource-by-uid)                            | Delete an existing data source by UID.               |
-| GET    | /api/datasources/uid/{uid}/resources/{datasource_proxy_route} | [fetchDatasourceResources](#fetch-datasource-resources)                       | Fetch data source resources.                         |
-| GET    | /api/datasources/{id}/resources/{datasource_proxy_route}      | [fetchDatasourceResourcesByID](#fetch-datasource-resources-by-id)             | Fetch data source resources by Id.                   |
-| GET    | /api/datasources/{id}                                         | [getDatasourceByID](#get-datasource-by-id)                                    | Get a single data source by Id.                      |
-| GET    | /api/datasources/name/{name}                                  | [getDatasourceByName](#get-datasource-by-name)                                | Get a single data source by Name.                    |
-| GET    | /api/datasources/uid/{uid}                                    | [getDatasourceByUID](#get-datasource-by-uid)                                  | Get a single data source by UID.                     |
-| GET    | /api/datasources/id/{name}                                    | [getDatasourceIdByName](#get-datasource-id-by-name)                           | Get data source Id by Name.                          |
-| GET    | /api/datasources                                              | [getDatasources](#get-datasources)                                            | Get all data sources.                                |
-| PUT    | /api/datasources/{id}                                         | [updateDatasourceByID](#update-datasource-by-id)                              | Update an existing data source by its sequential ID. |
-| PUT    | /api/datasources/uid/{uid}                                    | [updateDatasourceByUID](#update-datasource-by-uid)                            | Update an existing data source.                      |
+| Method | URI                                                                                                     | Summary                                              |
+| ------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| POST   | [/api/datasources](#add-datasource)                                                                     | Create a data source.                                |
+| GET    | [/api/datasources/uid/{uid}/health](#check-datasource-health)                                           | Check data source health by Id.                      |
+| GET    | [/api/datasources/{id}/health](#check-datasource-health-by-id)                                          | Check data source health by Id.                      |
+| DELETE | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.                      |
+| DELETE | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.                      |
+| GET    | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-g-e-t-by-ui-dcalls)       | Data source proxy GET calls.                         |
+| GET    | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-g-e-tcalls)                    | Data source proxy GET calls.                         |
+| POST   | [/api/datasources/proxy/uid/{uid}/{datasource_proxy_route}](#datasource-proxy-p-o-s-t-by-ui-dcalls)     | Data source proxy POST calls.                        |
+| POST   | [/api/datasources/proxy/{id}/{datasource_proxy_route}](#datasource-proxy-p-o-s-tcalls)                  | Data source proxy POST calls.                        |
+| DELETE | [/api/datasources/{id}](#delete-datasource-by-id)                                                       | Delete an existing data source by id.                |
+| DELETE | [/api/datasources/name/{name}](#delete-datasource-by-name)                                              | Delete an existing data source by name.              |
+| DELETE | [/api/datasources/uid/{uid}](#delete-datasource-by-uid)                                                 | Delete an existing data source by UID.               |
+| GET    | [/api/datasources/uid/{uid}/resources/{datasource_proxy_route}](#fetch-datasource-resources)            | Fetch data source resources.                         |
+| GET    | [/api/datasources/{id}/resources/{datasource_proxy_route}](#fetch-datasource-resources-by-id)           | Fetch data source resources by Id.                   |
+| GET    | [/api/datasources/{id}](#get-datasource-by-id)                                                          | Get a single data source by Id.                      |
+| GET    | [/api/datasources/name/{name}](#get-datasource-by-name)                                                 | Get a single data source by Name.                    |
+| GET    | [/api/datasources/uid/{uid}](#get-datasource-by-uid)                                                    | Get a single data source by UID.                     |
+| GET    | [/api/datasources/id/{name}](#get-datasource-id-by-name)                                                | Get data source Id by Name.                          |
+| GET    | [/api/datasources](#get-datasources)                                                                    | Get all data sources.                                |
+| PUT    | [/api/datasources/{id}](#update-datasource-by-id)                                                       | Update an existing data source by its sequential ID. |
+| PUT    | [/api/datasources/uid/{uid}](#update-datasource-by-uid)                                                 | Update an existing data source.                      |
 
 ### ds
 
-| Method | URI           | Name                                                           | Summary                        |
-| ------ | ------------- | -------------------------------------------------------------- | ------------------------------ |
-| POST   | /api/ds/query | [queryMetricsWithExpressions](#query-metrics-with-expressions) | Query metrics with expressions |
+| Method | URI                                              | Summary                        |
+| ------ | ------------------------------------------------ | ------------------------------ |
+| POST   | [/api/ds/query](#query-metrics-with-expressions) | Query metrics with expressions |
 
 ### folder_permissions
 
 Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
 
-| Method | URI                                   | Name                                                  | Summary                                                                                                                   |
-| ------ | ------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api/folders/{folder_uid}/permissions | [getFolderPermissions](#get-folder-permissions)       | Gets all existing permissions for the folder with the given `uid`.                                                        |
-| POST   | /api/folders/{folder_uid}/permissions | [updateFolderPermissions](#update-folder-permissions) | Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request. |
+| Method | URI                                                                 | Summary                                                                                                                   |
+| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| GET    | [/api/folders/{folder_uid}/permissions](#get-folder-permissions)    | Gets all existing permissions for the folder with the given `uid`.                                                        |
+| POST   | [/api/folders/{folder_uid}/permissions](#update-folder-permissions) | Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request. |
 
 ### folders
 
@@ -247,20 +247,20 @@ The uid can have a maximum length of 40 characters.
 
 The General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.
 
-| Method | URI                         | Name                                 | Summary            |
-| ------ | --------------------------- | ------------------------------------ | ------------------ |
-| POST   | /api/folders                | [createFolder](#create-folder)       | Create folder.     |
-| DELETE | /api/folders/{folder_uid}   | [deleteFolder](#delete-folder)       | Delete folder.     |
-| GET    | /api/folders/id/{folder_id} | [getFolderByID](#get-folder-by-id)   | Get folder by id.  |
-| GET    | /api/folders/{folder_uid}   | [getFolderByUID](#get-folder-by-uid) | Get folder by uid. |
-| GET    | /api/folders                | [getFolders](#get-folders)           | Get all folders.   |
-| PUT    | /api/folders/{folder_uid}   | [updateFolder](#update-folder)       | Update folder.     |
+| Method | URI                                              | Summary            |
+| ------ | ------------------------------------------------ | ------------------ |
+| POST   | [/api/folders](#create-folder)                   | Create folder.     |
+| DELETE | [/api/folders/{folder_uid}](#delete-folder)      | Delete folder.     |
+| GET    | [/api/folders/id/{folder_id}](#get-folder-by-id) | Get folder by id.  |
+| GET    | [/api/folders/{folder_uid}](#get-folder-by-uid)  | Get folder by uid. |
+| GET    | [/api/folders](#get-folders)                     | Get all folders.   |
+| PUT    | [/api/folders/{folder_uid}](#update-folder)      | Update folder.     |
 
 ### ldap_debug
 
-| Method | URI                         | Name                                          | Summary                      |
-| ------ | --------------------------- | --------------------------------------------- | ---------------------------- |
-| GET    | /api/admin/ldap-sync-status | [getLDAPSyncStatus](#get-l-d-a-p-sync-status) | Available to grafana admins. |
+| Method | URI                                                     | Summary                      |
+| ------ | ------------------------------------------------------- | ---------------------------- |
+| GET    | [/api/admin/ldap-sync-status](#get-l-d-a-p-sync-status) | Available to grafana admins. |
 
 ### legacy_alerts
 
@@ -268,13 +268,13 @@ You can use the Alerting API to get information about legacy dashboard alerts an
 This topic is relevant for the legacy dashboard alerts only.
 You can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).
 
-| Method | URI                              | Name                                        | Summary                           |
-| ------ | -------------------------------- | ------------------------------------------- | --------------------------------- |
-| GET    | /api/alerts/{alert_id}           | [getAlertByID](#get-alert-by-id)            | Get alert by ID.                  |
-| GET    | /api/alerts                      | [getAlerts](#get-alerts)                    | Get legacy alerts.                |
-| GET    | /api/alerts/states-for-dashboard | [getDashboardStates](#get-dashboard-states) | Get alert states for a dashboard. |
-| POST   | /api/alerts/{alert_id}/pause     | [pauseAlert](#pause-alert)                  | Pause/unpause alert by id.        |
-| POST   | /api/alerts/test                 | [testAlert](#test-alert)                    | Test alert.                       |
+| Method | URI                                                       | Summary                           |
+| ------ | --------------------------------------------------------- | --------------------------------- |
+| GET    | [/api/alerts/{alert_id}](#get-alert-by-id)                | Get alert by ID.                  |
+| GET    | [/api/alerts](#get-alerts)                                | Get legacy alerts.                |
+| GET    | [/api/alerts/states-for-dashboard](#get-dashboard-states) | Get alert states for a dashboard. |
+| POST   | [/api/alerts/{alert_id}/pause](#pause-alert)              | Pause/unpause alert by id.        |
+| POST   | [/api/alerts/test](#test-alert)                           | Test alert.                       |
 
 ### legacy_alerts_notification_channels
 
@@ -282,18 +282,18 @@ The identifier (id) of a notification channel is an auto-incrementing numeric va
 The unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.
 The uid can have a maximum length of 40 characters.
 
-| Method | URI                                                     | Name                                                                              | Summary                                |
-| ------ | ------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------- |
-| POST   | /api/alert-notifications                                | [createAlertNotificationChannel](#create-alert-notification-channel)              | Create notification channel.           |
-| DELETE | /api/alert-notifications/{notification_channel_id}      | [deleteAlertNotificationChannel](#delete-alert-notification-channel)              | Delete alert notification by ID.       |
-| DELETE | /api/alert-notifications/uid/{notification_channel_uid} | [deleteAlertNotificationChannelByUID](#delete-alert-notification-channel-by-uid)  | Delete alert notification by UID.      |
-| GET    | /api/alert-notifications/{notification_channel_id}      | [getAlertNotificationChannelByID](#get-alert-notification-channel-by-id)          | Get notification channel by ID.        |
-| GET    | /api/alert-notifications/uid/{notification_channel_uid} | [getAlertNotificationChannelByUID](#get-alert-notification-channel-by-uid)        | Get notification channel by UID        |
-| GET    | /api/alert-notifications                                | [getAlertNotificationChannels](#get-alert-notification-channels)                  | Get all notification channels.         |
-| GET    | /api/alert-notifications/lookup                         | [lookupAlertNotificationChannels](#lookup-alert-notification-channels)            | Get all notification channels (lookup) |
-| POST   | /api/alert-notifications/test                           | [notificationChannelTest](#notification-channel-test)                             | Test notification channel.             |
-| PUT    | /api/alert-notifications/{notification_channel_id}      | [updateAlertNotificationChannel](#update-alert-notification-channel)              | Update notification channel by ID.     |
-| PUT    | /api/alert-notifications/uid/{notification_channel_uid} | [updateAlertNotificationChannelBYUID](#update-alert-notification-channel-b-y-uid) | Update notification channel by UID.    |
+| Method | URI                                                                                                   | Summary                                |
+| ------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| POST   | [/api/alert-notifications](#create-alert-notification-channel)                                        | Create notification channel.           |
+| DELETE | [/api/alert-notifications/{notification_channel_id}](#delete-alert-notification-channel)              | Delete alert notification by ID.       |
+| DELETE | [/api/alert-notifications/uid/{notification_channel_uid}](#delete-alert-notification-channel-by-uid)  | Delete alert notification by UID.      |
+| GET    | [/api/alert-notifications/{notification_channel_id}](#get-alert-notification-channel-by-id)           | Get notification channel by ID.        |
+| GET    | [/api/alert-notifications/uid/{notification_channel_uid}](#get-alert-notification-channel-by-uid)     | Get notification channel by UID        |
+| GET    | [/api/alert-notifications](#get-alert-notification-channels)                                          | Get all notification channels.         |
+| GET    | [/api/alert-notifications/lookup](#lookup-alert-notification-channels)                                | Get all notification channels (lookup) |
+| POST   | [/api/alert-notifications/test](#notification-channel-test)                                           | Test notification channel.             |
+| PUT    | [/api/alert-notifications/{notification_channel_id}](#update-alert-notification-channel)              | Update notification channel by ID.     |
+| PUT    | [/api/alert-notifications/uid/{notification_channel_uid}](#update-alert-notification-channel-b-y-uid) | Update notification channel by UID.    |
 
 ### library_elements
 
@@ -301,80 +301,80 @@ The identifier (ID) of a library element is an auto-incrementing numeric value t
 The unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.
 The maximum length of a UID is 40 characters.
 
-| Method | URI                                                     | Name                                                             | Summary                          |
-| ------ | ------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------- |
-| POST   | /api/library-elements                                   | [createLibraryElement](#create-library-element)                  | Create library element.          |
-| DELETE | /api/library-elements/{library_element_uid}             | [deleteLibraryElementByUID](#delete-library-element-by-uid)      | Delete library element.          |
-| GET    | /api/library-elements/name/{library_element_name}       | [getLibraryElementByName](#get-library-element-by-name)          | Get library element by name.     |
-| GET    | /api/library-elements/{library_element_uid}             | [getLibraryElementByUID](#get-library-element-by-uid)            | Get library element by UID.      |
-| GET    | /api/library-elements/{library_element_uid}/connections | [getLibraryElementConnections](#get-library-element-connections) | Get library element connections. |
-| GET    | /api/library-elements                                   | [getLibraryElements](#get-library-elements)                      | Get all library elements.        |
-| PATCH  | /api/library-elements/{library_element_uid}             | [updateLibraryElement](#update-library-element)                  | Update library element.          |
+| Method | URI                                                                                         | Summary                          |
+| ------ | ------------------------------------------------------------------------------------------- | -------------------------------- |
+| POST   | [/api/library-elements](#create-library-element)                                            | Create library element.          |
+| DELETE | [/api/library-elements/{library_element_uid}](#delete-library-element-by-uid)               | Delete library element.          |
+| GET    | [/api/library-elements/name/{library_element_name}](#get-library-element-by-name)           | Get library element by name.     |
+| GET    | [/api/library-elements/{library_element_uid}](#get-library-element-by-uid)                  | Get library element by UID.      |
+| GET    | [/api/library-elements/{library_element_uid}/connections](#get-library-element-connections) | Get library element connections. |
+| GET    | [/api/library-elements](#get-library-elements)                                              | Get all library elements.        |
+| PATCH  | [/api/library-elements/{library_element_uid}](#update-library-element)                      | Update library element.          |
 
 ### licensing
 
 Licensing is only available in Grafana Enterprise. Read more about Grafana Enterprise.
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                   | Name                                                         | Summary                                      |
-| ------ | ------------------------------------- | ------------------------------------------------------------ | -------------------------------------------- |
-| DELETE | /api/licensing/token                  | [deleteLicenseToken](#delete-license-token)                  | Remove license from database.                |
-| GET    | /api/licensing/custom-permissions-csv | [getCustomPermissionsCSV](#get-custom-permissions-c-s-v)     | Get custom permissions report in CSV format. |
-| GET    | /api/licensing/custom-permissions     | [getCustomPermissionsReport](#get-custom-permissions-report) | Get custom permissions report.               |
-| GET    | /api/licensing/check                  | [getLicenseStatus](#get-license-status)                      | Check license availability.                  |
-| GET    | /api/licensing/token                  | [getLicenseToken](#get-license-token)                        | Get license token.                           |
-| POST   | /api/licensing/token                  | [postLicenseToken](#post-license-token)                      | Create license token.                        |
-| POST   | /api/licensing/token/renew            | [postRenewLicenseToken](#post-renew-license-token)           | Manually force license refresh.              |
-| GET    | /api/licensing/refresh-stats          | [refreshLicenseStats](#refresh-license-stats)                | Refresh license stats.                       |
+| Method | URI                                                                    | Summary                                      |
+| ------ | ---------------------------------------------------------------------- | -------------------------------------------- |
+| DELETE | [/api/licensing/token](#delete-license-token)                          | Remove license from database.                |
+| GET    | [/api/licensing/custom-permissions-csv](#get-custom-permissions-c-s-v) | Get custom permissions report in CSV format. |
+| GET    | [/api/licensing/custom-permissions](#get-custom-permissions-report)    | Get custom permissions report.               |
+| GET    | [/api/licensing/check](#get-license-status)                            | Check license availability.                  |
+| GET    | [/api/licensing/token](#get-license-token)                             | Get license token.                           |
+| POST   | [/api/licensing/token](#post-license-token)                            | Create license token.                        |
+| POST   | [/api/licensing/token/renew](#post-renew-license-token)                | Manually force license refresh.              |
+| GET    | [/api/licensing/refresh-stats](#refresh-license-stats)                 | Refresh license stats.                       |
 
 ### org_invites
 
-| Method | URI                                | Name                           | Summary              |
-| ------ | ---------------------------------- | ------------------------------ | -------------------- |
-| POST   | /api/org/invites                   | [addInvite](#add-invite)       | Add invite.          |
-| GET    | /api/org/invites                   | [getInvites](#get-invites)     | Get pending invites. |
-| DELETE | /api/org/{invitation_code}/invites | [revokeInvite](#revoke-invite) | Revoke invite.       |
+| Method | URI                                                  | Summary              |
+| ------ | ---------------------------------------------------- | -------------------- |
+| POST   | [/api/org/invites](#add-invite)                      | Add invite.          |
+| GET    | [/api/org/invites](#get-invites)                     | Get pending invites. |
+| DELETE | [/api/org/{invitation_code}/invites](#revoke-invite) | Revoke invite.       |
 
 ### org_preferences
 
-| Method | URI                  | Name                                            | Summary                   |
-| ------ | -------------------- | ----------------------------------------------- | ------------------------- |
-| GET    | /api/org/preferences | [getOrgPreferences](#get-org-preferences)       | Get Current Org Prefs.    |
-| PATCH  | /api/org/preferences | [patchOrgPreferences](#patch-org-preferences)   | Patch Current Org Prefs.  |
-| PUT    | /api/org/preferences | [updateOrgPreferences](#update-org-preferences) | Update Current Org Prefs. |
+| Method | URI                                             | Summary                   |
+| ------ | ----------------------------------------------- | ------------------------- |
+| GET    | [/api/org/preferences](#get-org-preferences)    | Get Current Org Prefs.    |
+| PATCH  | [/api/org/preferences](#patch-org-preferences)  | Patch Current Org Prefs.  |
+| PUT    | [/api/org/preferences](#update-org-preferences) | Update Current Org Prefs. |
 
 ### orgs
 
 The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user is called `admin` and has permission to use this API).
 
-| Method | URI                                      | Name                                               | Summary                                    |
-| ------ | ---------------------------------------- | -------------------------------------------------- | ------------------------------------------ |
-| POST   | /api/orgs/{org_id}/users                 | [adminAddOrgUser](#admin-add-org-user)             | Add a new user to the current organization |
-| DELETE | /api/orgs/{org_id}                       | [adminDeleteOrg](#admin-delete-org)                | Delete Organization.                       |
-| DELETE | /api/orgs/{org_id}/users/{user_id}       | [adminDeleteOrgUser](#admin-delete-org-user)       | Delete user in current organization        |
-| GET    | /api/orgs/{org_id}/users                 | [adminGetOrgUsers](#admin-get-org-users)           | Get Users in Organization.                 |
-| PUT    | /api/orgs/{org_id}                       | [adminUpdateOrg](#admin-update-org)                | Update Organization.                       |
-| PUT    | /api/orgs/{org_id}/address               | [adminUpdateOrgAddress](#admin-update-org-address) | Update Organization's address.             |
-| PATCH  | /api/orgs/{org_id}/users/{user_id}       | [adminUpdateOrgUser](#admin-update-org-user)       | Update Users in Organization.              |
-| POST   | /api/orgs                                | [createOrg](#create-org)                           | Create Organization.                       |
-| GET    | /api/orgs/{org_id}                       | [getOrgByID](#get-org-by-id)                       | Get Organization by ID.                    |
-| GET    | /api/orgs/name/{org_name}                | [getOrgByName](#get-org-by-name)                   | Get Organization by ID.                    |
-| GET    | /api/orgs/{org_id}/quotas                | [getOrgQuota](#get-org-quota)                      | Fetch Organization quota.                  |
-| GET    | /api/orgs                                | [searchOrg](#search-org)                           |                                            |
-| PUT    | /api/orgs/{org_id}/quotas/{quota_target} | [updateOrgQuota](#update-org-quota)                | Update user quota.                         |
+| Method | URI                                                           | Summary                                    |
+| ------ | ------------------------------------------------------------- | ------------------------------------------ |
+| POST   | [/api/orgs/{org_id}/users](#admin-add-org-user)               | Add a new user to the current organization |
+| DELETE | [/api/orgs/{org_id}](#admin-delete-org)                       | Delete Organization.                       |
+| DELETE | [/api/orgs/{org_id}/users/{user_id}](#admin-delete-org-user)  | Delete user in current organization        |
+| GET    | [/api/orgs/{org_id}/users](#admin-get-org-users)              | Get Users in Organization.                 |
+| PUT    | [/api/orgs/{org_id}](#admin-update-org)                       | Update Organization.                       |
+| PUT    | [/api/orgs/{org_id}/address](#admin-update-org-address)       | Update Organization's address.             |
+| PATCH  | [/api/orgs/{org_id}/users/{user_id}](#admin-update-org-user)  | Update Users in Organization.              |
+| POST   | [/api/orgs](#create-org)                                      | Create Organization.                       |
+| GET    | [/api/orgs/{org_id}](#get-org-by-id)                          | Get Organization by ID.                    |
+| GET    | [/api/orgs/name/{org_name}](#get-org-by-name)                 | Get Organization by ID.                    |
+| GET    | [/api/orgs/{org_id}/quotas](#get-org-quota)                   | Fetch Organization quota.                  |
+| GET    | [/api/orgs](#search-org)                                      |                                            |
+| PUT    | [/api/orgs/{org_id}/quotas/{quota_target}](#update-org-quota) | Update user quota.                         |
 
 ### recording_rules
 
-| Method | URI                                    | Name                                                                  | Summary                      |
-| ------ | -------------------------------------- | --------------------------------------------------------------------- | ---------------------------- |
-| POST   | /api/recording-rules                   | [createRecordingRule](#create-recording-rule)                         | Create a new recording rule. |
-| POST   | /api/recording-rules/writer            | [createRecordingRuleWriteTarget](#create-recording-rule-write-target) | Create a new write target.   |
-| DELETE | /api/recording-rules/{recordingRuleID} | [deleteRecordingRule](#delete-recording-rule)                         | Delete a recording rule.     |
-| DELETE | /api/recording-rules/writer            | [deleteRecordingRuleWriteTarget](#delete-recording-rule-write-target) | Delete the write target.     |
-| GET    | /api/recording-rules/writer            | [getRecordingRuleWriteTarget](#get-recording-rule-write-target)       | Get the write target.        |
-| GET    | /api/recording-rules                   | [listRecordingRules](#list-recording-rules)                           | Get all recording rules.     |
-| POST   | /api/recording-rules/test              | [testCreateRecordingRule](#test-create-recording-rule)                | Test a recording rule.       |
-| PUT    | /api/recording-rules                   | [updateRecordingRule](#update-recording-rule)                         | Update a recording rule.     |
+| Method | URI                                                                | Summary                      |
+| ------ | ------------------------------------------------------------------ | ---------------------------- |
+| POST   | [/api/recording-rules](#create-recording-rule)                     | Create a new recording rule. |
+| POST   | [/api/recording-rules/writer](#create-recording-rule-write-target) | Create a new write target.   |
+| DELETE | [/api/recording-rules/{recordingRuleID}](#delete-recording-rule)   | Delete a recording rule.     |
+| DELETE | [/api/recording-rules/writer](#delete-recording-rule-write-target) | Delete the write target.     |
+| GET    | [/api/recording-rules/writer](#get-recording-rule-write-target)    | Get the write target.        |
+| GET    | [/api/recording-rules](#list-recording-rules)                      | Get all recording rules.     |
+| POST   | [/api/recording-rules/test](#test-create-recording-rule)           | Test a recording rule.       |
+| PUT    | [/api/recording-rules](#update-recording-rule)                     | Update a recording rule.     |
 
 ### reports
 
@@ -382,111 +382,111 @@ This API allows you to interact programmatically with the Reporting feature.
 Reporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.
 If you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                   | Name                                        | Summary                                |
-| ------ | ------------------------------------- | ------------------------------------------- | -------------------------------------- |
-| POST   | /api/reports                          | [createReport](#create-report)              | Create a report.                       |
-| DELETE | /api/reports/{reportID}               | [deleteReport](#delete-report)              | Delete a report.                       |
-| GET    | /api/reports/{reportID}               | [getReport](#get-report)                    | Get a report.                          |
-| GET    | /api/reports/settings                 | [getReportSettings](#get-report-settings)   | Get settings.                          |
-| GET    | /api/reports                          | [getReports](#get-reports)                  | List reports.                          |
-| GET    | /api/reports/render/pdf/{DashboardID} | [renderReportPDF](#render-report-p-d-f)     | Render report for dashboard.           |
-| GET    | /api/reports/render/pdfs              | [renderReportPDFs](#render-report-p-d-fs)   | Render report for multiple dashboards. |
-| POST   | /api/reports/settings                 | [saveReportSettings](#save-report-settings) | Save settings.                         |
-| POST   | /api/reports/email                    | [sendReport](#send-report)                  | Send a report.                         |
-| POST   | /api/reports/test-email               | [sendTestEmail](#send-test-email)           | Send test report via email.            |
-| PUT    | /api/reports/{reportID}               | [updateReport](#update-report)              | Update a report.                       |
+| Method | URI                                                           | Summary                                |
+| ------ | ------------------------------------------------------------- | -------------------------------------- |
+| POST   | [/api/reports](#create-report)                                | Create a report.                       |
+| DELETE | [/api/reports/{reportID}](#delete-report)                     | Delete a report.                       |
+| GET    | [/api/reports/{reportID}](#get-report)                        | Get a report.                          |
+| GET    | [/api/reports/settings](#get-report-settings)                 | Get settings.                          |
+| GET    | [/api/reports](#get-reports)                                  | List reports.                          |
+| GET    | [/api/reports/render/pdf/{DashboardID}](#render-report-p-d-f) | Render report for dashboard.           |
+| GET    | [/api/reports/render/pdfs](#render-report-p-d-fs)             | Render report for multiple dashboards. |
+| POST   | [/api/reports/settings](#save-report-settings)                | Save settings.                         |
+| POST   | [/api/reports/email](#send-report)                            | Send a report.                         |
+| POST   | [/api/reports/test-email](#send-test-email)                   | Send test report via email.            |
+| PUT    | [/api/reports/{reportID}](#update-report)                     | Update a report.                       |
 
 ### saml
 
-| Method | URI                | Name                                     | Summary                                                           |
-| ------ | ------------------ | ---------------------------------------- | ----------------------------------------------------------------- |
-| GET    | /api/login/saml    | [getSAMLLogin](#get-s-a-m-l-login)       | It initiates the login flow by redirecting the user to the IdP.   |
-| GET    | /api/logout/saml   | [getSAMLLogout](#get-s-a-m-l-logout)     | GetLogout initiates single logout process.                        |
-| GET    | /api/saml/metadata | [getSAMLMetadata](#get-s-a-m-l-metadata) | It exposes the SP (Grafana's) metadata for the IdP's consumption. |
-| POST   | /api/saml/acs      | [postACS](#post-a-c-s)                   | It performs assertion Consumer Service (ACS).                     |
-| POST   | /api/saml/slo      | [postSLO](#post-s-l-o)                   | It performs Single Logout (SLO) callback.                         |
+| Method | URI                                         | Summary                                                           |
+| ------ | ------------------------------------------- | ----------------------------------------------------------------- |
+| GET    | [/api/login/saml](#get-s-a-m-l-login)       | It initiates the login flow by redirecting the user to the IdP.   |
+| GET    | [/api/logout/saml](#get-s-a-m-l-logout)     | GetLogout initiates single logout process.                        |
+| GET    | [/api/saml/metadata](#get-s-a-m-l-metadata) | It exposes the SP (Grafana's) metadata for the IdP's consumption. |
+| POST   | [/api/saml/acs](#post-a-c-s)                | It performs assertion Consumer Service (ACS).                     |
+| POST   | [/api/saml/slo](#post-s-l-o)                | It performs Single Logout (SLO) callback.                         |
 
 ### search
 
-| Method | URI                 | Name                             | Summary |
-| ------ | ------------------- | -------------------------------- | ------- |
-| GET    | /api/search         | [search](#search)                |         |
-| GET    | /api/search/sorting | [searchSorting](#search-sorting) |         |
+| Method | URI                                    | Summary |
+| ------ | -------------------------------------- | ------- |
+| GET    | [/api/search](#search)                 |         |
+| GET    | [/api/search/sorting](#search-sorting) |         |
 
 ### signed_in_user
 
-| Method | URI                                      | Name                                                            | Summary                                  |
-| ------ | ---------------------------------------- | --------------------------------------------------------------- | ---------------------------------------- |
-| PUT    | /api/user/password                       | [changeUserPassword](#change-user-password)                     | Change Password.                         |
-| GET    | /api/user/helpflags/clear                | [clearHelpFlags](#clear-help-flags)                             | Clear user help flag.                    |
-| GET    | /api/user                                | [getSignedInUser](#get-signed-in-user)                          | Get signed in User.                      |
-| GET    | /api/user/auth-tokens                    | [getSignedInUserAuthTokens](#get-signed-in-user-auth-tokens)    | Auth tokens of the actual User.          |
-| GET    | /api/user/orgs                           | [getSignedInUserOrgList](#get-signed-in-user-org-list)          | Organizations of the actual User.        |
-| GET    | /api/user/teams                          | [getSignedInUserTeamList](#get-signed-in-user-team-list)        | Teams that the actual User is member of. |
-| GET    | /api/user/quotas                         | [getUserQuotas](#get-user-quotas)                               | Fetch user quota.                        |
-| POST   | /api/user/revoke-auth-token              | [revokeSignedINAuthTokenCmd](#revoke-signed-i-n-auth-token-cmd) | Revoke an auth token of the actual User. |
-| PUT    | /api/user/helpflags/{flag_id}            | [setHelpFlag](#set-help-flag)                                   | Set user help flag.                      |
-| POST   | /api/user/stars/dashboard/{dashboard_id} | [starDashboard](#star-dashboard)                                | Star a dashboard.                        |
-| DELETE | /api/user/stars/dashboard/{dashboard_id} | [unstarDashboard](#unstar-dashboard)                            | Unstar a dashboard.                      |
-| PUT    | /api/user                                | [updateSignedInUser](#update-signed-in-user)                    | Update signed in User.                   |
-| POST   | /api/user/using/{org_id}                 | [userSetUsingOrg](#user-set-using-org)                          | Switch user context for signed in user.  |
+| Method | URI                                                              | Summary                                  |
+| ------ | ---------------------------------------------------------------- | ---------------------------------------- |
+| PUT    | [/api/user/password](#change-user-password)                      | Change Password.                         |
+| GET    | [/api/user/helpflags/clear](#clear-help-flags)                   | Clear user help flag.                    |
+| GET    | [/api/user](#get-signed-in-user)                                 | Get signed in User.                      |
+| GET    | [/api/user/auth-tokens](#get-signed-in-user-auth-tokens)         | Auth tokens of the actual User.          |
+| GET    | [/api/user/orgs](#get-signed-in-user-org-list)                   | Organizations of the actual User.        |
+| GET    | [/api/user/teams](#get-signed-in-user-team-list)                 | Teams that the actual User is member of. |
+| GET    | [/api/user/quotas](#get-user-quotas)                             | Fetch user quota.                        |
+| POST   | [/api/user/revoke-auth-token](#revoke-signed-i-n-auth-token-cmd) | Revoke an auth token of the actual User. |
+| PUT    | [/api/user/helpflags/{flag_id}](#set-help-flag)                  | Set user help flag.                      |
+| POST   | [/api/user/stars/dashboard/{dashboard_id}](#star-dashboard)      | Star a dashboard.                        |
+| DELETE | [/api/user/stars/dashboard/{dashboard_id}](#unstar-dashboard)    | Unstar a dashboard.                      |
+| PUT    | [/api/user](#update-signed-in-user)                              | Update signed in User.                   |
+| POST   | [/api/user/using/{org_id}](#user-set-using-org)                  | Switch user context for signed in user.  |
 
 ### snapshots
 
-| Method | URI                               | Name                                                        | Summary                                                                                                                                                           |
-| ------ | --------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | /api/snapshots                    | [createSnapshot](#create-snapshot)                          | When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. |
-| GET    | /api/snapshots-delete/{deleteKey} | [deleteSnapshotByDeleteKey](#delete-snapshot-by-delete-key) | Delete Snapshot by deleteKey.                                                                                                                                     |
-| DELETE | /api/snapshots/{key}              | [deleteSnapshotByKey](#delete-snapshot-by-key)              | Delete Snapshot by Key.                                                                                                                                           |
-| GET    | /api/snapshots/{key}              | [getSnapshotByKey](#get-snapshot-by-key)                    | Get Snapshot by Key.                                                                                                                                              |
-| GET    | /api/snapshot/shared-options      | [getSnapshotSharingOptions](#get-snapshot-sharing-options)  | Get snapshot sharing settings.                                                                                                                                    |
-| GET    | /api/dashboard/snapshots          | [getSnapshots](#get-snapshots)                              | List snapshots.                                                                                                                                                   |
+| Method | URI                                                                 | Summary                                                                                                                                                           |
+| ------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | [/api/snapshots](#create-snapshot)                                  | When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI. |
+| GET    | [/api/snapshots-delete/{deleteKey}](#delete-snapshot-by-delete-key) | Delete Snapshot by deleteKey.                                                                                                                                     |
+| DELETE | [/api/snapshots/{key}](#delete-snapshot-by-key)                     | Delete Snapshot by Key.                                                                                                                                           |
+| GET    | [/api/snapshots/{key}](#get-snapshot-by-key)                        | Get Snapshot by Key.                                                                                                                                              |
+| GET    | [/api/snapshot/shared-options](#get-snapshot-sharing-options)       | Get snapshot sharing settings.                                                                                                                                    |
+| GET    | [/api/dashboard/snapshots](#get-snapshots)                          | List snapshots.                                                                                                                                                   |
 
 ### sync_team_groups
 
-| Method | URI                                  | Name                                         | Summary                |
-| ------ | ------------------------------------ | -------------------------------------------- | ---------------------- |
-| POST   | /api/teams/{teamId}/groups           | [addTeamGroupApi](#add-team-group-api)       | Add External Group.    |
-| GET    | /api/teams/{teamId}/groups           | [getTeamGroupsApi](#get-team-groups-api)     | Get External Groups.   |
-| DELETE | /api/teams/{teamId}/groups/{groupId} | [removeTeamGroupApi](#remove-team-group-api) | Remove External Group. |
+| Method | URI                                                            | Summary                |
+| ------ | -------------------------------------------------------------- | ---------------------- |
+| POST   | [/api/teams/{teamId}/groups](#add-team-group-api)              | Add External Group.    |
+| GET    | [/api/teams/{teamId}/groups](#get-team-groups-api)             | Get External Groups.   |
+| DELETE | [/api/teams/{teamId}/groups/{groupId}](#remove-team-group-api) | Remove External Group. |
 
 ### teams
 
 This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.
 
-| Method | URI                                    | Name                                              | Summary                  |
-| ------ | -------------------------------------- | ------------------------------------------------- | ------------------------ |
-| POST   | /api/teams/{team_id}/members           | [addTeamMember](#add-team-member)                 | Add Team Member.         |
-| POST   | /api/teams                             | [createTeam](#create-team)                        | Add Team.                |
-| DELETE | /api/teams/{team_id}                   | [deleteTeamByID](#delete-team-by-id)              | Delete Team By ID.       |
-| GET    | /api/teams/{team_id}                   | [getTeam](#get-team)                              | Get Team By ID.          |
-| GET    | /api/teams/{team_id}/members           | [getTeamMembers](#get-team-members)               | Get Team Members.        |
-| GET    | /api/teams/{team_id}/preferences       | [getTeamPreferences](#get-team-preferences)       | Get Team Preferences.    |
-| DELETE | /api/teams/{team_id}/members/{user_id} | [removeTeamMember](#remove-team-member)           | Remove Member From Team. |
-| GET    | /api/teams/search                      | [searchTeams](#search-teams)                      | Team Search With Paging. |
-| PUT    | /api/teams/{team_id}                   | [updateTeam](#update-team)                        | Update Team.             |
-| PUT    | /api/teams/{team_id}/members/{user_id} | [updateTeamMember](#update-team-member)           | Update Team Member.      |
-| PUT    | /api/teams/{team_id}/preferences       | [updateTeamPreferences](#update-team-preferences) | Update Team Preferences. |
+| Method | URI                                                           | Summary                  |
+| ------ | ------------------------------------------------------------- | ------------------------ |
+| POST   | [/api/teams/{team_id}/members](#add-team-member)              | Add Team Member.         |
+| POST   | [/api/teams](#create-team)                                    | Add Team.                |
+| DELETE | [/api/teams/{team_id}](#delete-team-by-id)                    | Delete Team By ID.       |
+| GET    | [/api/teams/{team_id}](#get-team)                             | Get Team By ID.          |
+| GET    | [/api/teams/{team_id}/members](#get-team-members)             | Get Team Members.        |
+| GET    | [/api/teams/{team_id}/preferences](#get-team-preferences)     | Get Team Preferences.    |
+| DELETE | [/api/teams/{team_id}/members/{user_id}](#remove-team-member) | Remove Member From Team. |
+| GET    | [/api/teams/search](#search-teams)                            | Team Search With Paging. |
+| PUT    | [/api/teams/{team_id}](#update-team)                          | Update Team.             |
+| PUT    | [/api/teams/{team_id}/members/{user_id}](#update-team-member) | Update Team Member.      |
+| PUT    | [/api/teams/{team_id}/preferences](#update-team-preferences)  | Update Team Preferences. |
 
 ### user_preferences
 
-| Method | URI                   | Name                                              | Summary                  |
-| ------ | --------------------- | ------------------------------------------------- | ------------------------ |
-| GET    | /api/user/preferences | [getUserPreferences](#get-user-preferences)       | Get user preferences.    |
-| PATCH  | /api/user/preferences | [patchUserPreferences](#patch-user-preferences)   | Patch user preferences.  |
-| PUT    | /api/user/preferences | [updateUserPreferences](#update-user-preferences) | Update user preferences. |
+| Method | URI                                               | Summary                  |
+| ------ | ------------------------------------------------- | ------------------------ |
+| GET    | [/api/user/preferences](#get-user-preferences)    | Get user preferences.    |
+| PATCH  | [/api/user/preferences](#patch-user-preferences)  | Patch user preferences.  |
+| PUT    | [/api/user/preferences](#update-user-preferences) | Update user preferences. |
 
 ### users
 
-| Method | URI                        | Name                                                 | Summary                     |
-| ------ | -------------------------- | ---------------------------------------------------- | --------------------------- |
-| GET    | /api/users/{user_id}       | [getUserByID](#get-user-by-id)                       | Get user by id.             |
-| GET    | /api/users/lookup          | [getUserByLoginOrEmail](#get-user-by-login-or-email) | Get user by login or email. |
-| GET    | /api/users/{user_id}/orgs  | [getUserOrgList](#get-user-org-list)                 | Get organizations for user. |
-| GET    | /api/users/{user_id}/teams | [getUserTeams](#get-user-teams)                      | Get teams for user.         |
-| GET    | /api/users                 | [searchUsers](#search-users)                         | Get users.                  |
-| GET    | /api/users/search          | [searchUsersWithPaging](#search-users-with-paging)   | Get users with paging.      |
-| PUT    | /api/users/{user_id}       | [updateUser](#update-user)                           | Update user.                |
+| Method | URI                                              | Summary                     |
+| ------ | ------------------------------------------------ | --------------------------- |
+| GET    | [/api/users/{user_id}](#get-user-by-id)          | Get user by id.             |
+| GET    | [/api/users/lookup](#get-user-by-login-or-email) | Get user by login or email. |
+| GET    | [/api/users/{user_id}/orgs](#get-user-org-list)  | Get organizations for user. |
+| GET    | [/api/users/{user_id}/teams](#get-user-teams)    | Get teams for user.         |
+| GET    | [/api/users](#search-users)                      | Get users.                  |
+| GET    | [/api/users/search](#search-users-with-paging)   | Get users with paging.      |
+| PUT    | [/api/users/{user_id}](#update-user)             | Update user.                |
 
 ## Paths
 
@@ -17172,15 +17172,15 @@ marshalled configuration when set to false. | |
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers matchers
+> Matchers is a slice of Matchers that is sortable, implements Stringer, and
+> provides a Matches method to match a LabelSet against all Matchers in the
+> slice. Note that some users of Matchers might require it to be sorted.
 
 [][matcher](#matcher)
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers is a slice of Matchers that is sortable, implements Stringer, and
-> provides a Matches method to match a LabelSet against all Matchers in the
-> slice. Note that some users of Matchers might require it to be sorted.
+> Matchers matchers
 
 [][matcher](#matcher)
 
@@ -17836,14 +17836,6 @@ may be used as an identifier to update values in a subsequent request | |
 
 **Properties**
 
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |
-
-### <span id="receiver"></span> Receiver
-
-**Properties**
-
 | Name             | Type                                    | Go type              | Required | Default | Description                            | Example |
 | ---------------- | --------------------------------------- | -------------------- | :------: | ------- | -------------------------------------- | ------- |
 | EmailConfigs     | [][emailconfig](#email-config)          | `[]*EmailConfig`     |          |         |                                        |         |
@@ -17856,6 +17848,14 @@ may be used as an identifier to update values in a subsequent request | |
 | VictorOpsConfigs | [][victoropsconfig](#victor-ops-config) | `[]*VictorOpsConfig` |          |         |                                        |         |
 | WebhookConfigs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
 | WechatConfigs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
+
+### <span id="receiver"></span> Receiver
+
+**Properties**
+
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |    ✓     |         | name        |         |
 
 ### <span id="recording-rule-json"></span> RecordingRuleJSON
 
