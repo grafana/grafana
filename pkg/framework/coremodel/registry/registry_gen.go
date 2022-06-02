@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/thema"
 )
 
-// CoremodelSet contains all of the wire-style providers from coremodels.
+// CoremodelSet contains all of the wire-style providers related to coremodels.
 var CoremodelSet = wire.NewSet(
 	ProvideStatic,
 	ProvideGeneric,
