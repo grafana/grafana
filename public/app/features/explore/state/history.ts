@@ -60,9 +60,10 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
         .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
         // or remove
         .filter((query) => query.id !== deletedId);
+      const deletedItems = item.richHistory.length - newRichHistory.length;
       dispatch(
         richHistoryUpdatedAction({
-          richHistoryResults: { richHistory: newRichHistory, total: item.richHistoryTotal },
+          richHistoryResults: { richHistory: newRichHistory, total: item.richHistoryTotal! - deletedItems },
           exploreId,
         })
       );
