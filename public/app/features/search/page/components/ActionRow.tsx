@@ -26,6 +26,8 @@ interface Props {
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   onDatasourceChange: (ds?: string) => void;
+  includePanels: boolean;
+  setIncludePanels: (v: boolean) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
@@ -58,6 +60,8 @@ export const ActionRow: FC<Props> = ({
   query,
   showStarredFilter,
   hideLayout,
+  includePanels,
+  setIncludePanels,
 }) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(query);
@@ -91,6 +95,10 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
+        {layout !== SearchLayout.Folders && (
+          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
+        )}
+
         <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>
