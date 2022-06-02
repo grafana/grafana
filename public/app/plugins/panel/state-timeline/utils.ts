@@ -401,6 +401,11 @@ export function prepareTimelineFields(
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
 
+    // Mark the field state as having a null threhold applied
+    if (frame.fields[0].state !== null && frame.fields[0].state !== undefined) {
+      frame.fields[0].state.nullThresholdApplied = true;
+    }
+
     const fields: Field[] = [];
     for (let field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
