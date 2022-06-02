@@ -23,12 +23,12 @@ var (
 func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(nil, errShortURLBadRequest.Errorf("bad request data: %w", err))
+		return response.Err(errShortURLBadRequest.Errorf("bad request data: %w", err))
 	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return response.Err(hs.log, err)
+		return response.Err(err)
 	}
 
 	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
