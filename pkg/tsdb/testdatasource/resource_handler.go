@@ -23,6 +23,8 @@ func (s *Service) registerRoutes() *http.ServeMux {
 	mux.Handle("/test", createJSONHandler(s.logger))
 	mux.Handle("/test/json", createJSONHandler(s.logger))
 	mux.HandleFunc("/boom", s.testPanicHandler)
+	mux.HandleFunc("/sims", s.sims.GetSimulationHandler)
+	mux.HandleFunc("/sim/", s.sims.GetSimulationHandler)
 	return mux
 }
 

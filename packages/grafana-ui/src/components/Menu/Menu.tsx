@@ -1,7 +1,10 @@
-import React, { useImperativeHandle, useRef } from 'react';
 import { css } from '@emotion/css';
+import React, { useImperativeHandle, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+
 import { useMenuFocus } from './hooks';
 
 /** @internal */

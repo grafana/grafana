@@ -1,12 +1,14 @@
 import React from 'react';
-import { MetricEditor } from './MetricEditor';
+
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { metricAggregationConfig } from './utils';
-import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
-import { MetricAggregation } from './aggregations';
+import { IconButton } from '../../IconButton';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
-import { IconButton } from '../../IconButton';
+
+import { MetricEditor } from './MetricEditor';
+import { MetricAggregation } from './aggregations';
+import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
+import { metricAggregationConfig } from './utils';
 
 interface Props {
   nextId: MetricAggregation['id'];

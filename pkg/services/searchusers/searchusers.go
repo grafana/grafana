@@ -1,6 +1,8 @@
 package searchusers
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -27,7 +29,7 @@ func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
-	return response.JSON(200, query.Result.Users)
+	return response.JSON(http.StatusOK, query.Result.Users)
 }
 
 func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Response {
@@ -36,7 +38,7 @@ func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
@@ -59,7 +61,14 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 		}
 	}
 
-	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
+	query := &models.SearchUsersQuery{
+		// added SignedInUser to the query, as to only list the users that the user has permission to read
+		SignedInUser: c.SignedInUser,
+		Query:        searchQuery,
+		Filters:      filters,
+		Page:         page,
+		Limit:        perPage,
+	}
 	if err := s.sqlStore.SearchUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}

@@ -1,10 +1,12 @@
-import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { List } from '../index';
+
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { List } from '../index';
 
 interface DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;

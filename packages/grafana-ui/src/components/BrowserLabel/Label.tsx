@@ -1,11 +1,13 @@
-import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 import { cx, css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '../../themes';
+import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
 import { HighlightPart } from '../../types';
+import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
 
 type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
@@ -137,8 +139,8 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
   `,
   matchHighLight: css`
     background: inherit;
-    color: ${theme.colors.primary.text};
-    background-color: ${theme.colors.primary.transparent};
+    color: ${theme.components.textHighlight.text};
+    background-color: ${theme.components.textHighlight.background};
   `,
   hidden: css`
     opacity: 0.6;

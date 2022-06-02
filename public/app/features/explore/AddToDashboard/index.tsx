@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { ExploreId } from 'app/types';
-import { AddToDashboardModal } from './AddToDashboardModal';
-import { ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'react-redux';
+
+import { ToolbarButton } from '@grafana/ui';
+import { ExploreId } from 'app/types';
+
 import { getExploreItemSelector } from '../state/selectors';
+
+import { AddToDashboardModal } from './AddToDashboardModal';
 
 interface Props {
   exploreId: ExploreId;

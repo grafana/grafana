@@ -2,6 +2,7 @@ import $ from 'jquery';
 import { partition, each } from 'lodash';
 //@ts-ignore
 import Drop from 'tether-drop';
+
 import { CreatePlotOverlay } from '@grafana/data';
 import { getLegacyAngularInjector } from '@grafana/runtime';
 

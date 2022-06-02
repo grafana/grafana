@@ -1,4 +1,5 @@
 import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {

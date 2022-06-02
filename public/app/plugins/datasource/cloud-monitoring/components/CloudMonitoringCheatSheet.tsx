@@ -1,6 +1,8 @@
-import React, { PureComponent } from 'react';
-import { QueryEditorHelpProps } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
+import { QueryEditorHelpProps } from '@grafana/data';
+
 import { CloudMonitoringQuery } from '../types';
 
 export default class CloudMonitoringCheatSheet extends PureComponent<

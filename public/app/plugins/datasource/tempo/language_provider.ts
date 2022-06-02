@@ -1,6 +1,8 @@
+import { Value } from 'slate';
+
 import { HistoryItem, LanguageProvider, SelectableValue } from '@grafana/data';
 import { CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
-import { Value } from 'slate';
+
 import { TempoDatasource } from './datasource';
 
 export default class TempoLanguageProvider extends LanguageProvider {

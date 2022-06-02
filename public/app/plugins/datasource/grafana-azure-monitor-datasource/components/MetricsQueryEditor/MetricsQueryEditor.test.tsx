@@ -1,11 +1,13 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+
 import { selectOptionInTest } from '@grafana/ui';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
-
-import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
+import createMockPanelData from '../../__mocks__/panelData';
+import createMockQuery from '../../__mocks__/query';
+
+import MetricsQueryEditor from './MetricsQueryEditor';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -13,10 +15,12 @@ const variableOptionGroup = {
 };
 
 describe('Azure Monitor QueryEditor', () => {
+  const mockPanelData = createMockPanelData();
   it('should render', async () => {
     const mockDatasource = createMockDatasource();
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -46,6 +50,7 @@ describe('Azure Monitor QueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={mockQuery}
         datasource={mockDatasource}
@@ -75,11 +80,131 @@ describe('Azure Monitor QueryEditor', () => {
     });
   });
 
+  it('should change the resource group when selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    mockDatasource.getResourceGroups = jest.fn().mockResolvedValue([
+      { text: 'grafanastaging', value: 'grafanastaging' },
+      { text: 'Grafana Prod', value: 'grafanaprod' },
+    ]);
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        subscriptionId="123"
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const resourceGroup = await screen.findByLabelText('Resource group');
+    await selectOptionInTest(resourceGroup, 'Grafana Prod');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        resourceUri: '',
+        resourceGroup: 'grafanaprod',
+        metricDefinition: undefined,
+        metricNamespace: undefined,
+        resourceName: undefined,
+        metricName: undefined,
+        aggregation: undefined,
+        timeGrain: '',
+        dimensionFilters: [],
+      },
+    });
+  });
+
+  it('should change the resource type when selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    mockDatasource.getMetricDefinitions = jest.fn().mockResolvedValue([
+      { text: 'Virtual Machine', value: 'azure/vm' },
+      { text: 'Database', value: 'azure/db' },
+    ]);
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        subscriptionId="123"
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const resourceGroup = await screen.findByLabelText('Resource type');
+    await selectOptionInTest(resourceGroup, 'Virtual Machine');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        resourceUri: '',
+        metricDefinition: 'azure/vm',
+        resourceName: undefined,
+        metricNamespace: undefined,
+        metricName: undefined,
+        aggregation: undefined,
+        timeGrain: '',
+        dimensionFilters: [],
+      },
+    });
+  });
+
+  it('should change the resource name when selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    mockDatasource.getResourceNames = jest.fn().mockResolvedValue([
+      { text: 'ResourceName1', value: 'resource-name-1' },
+      { text: 'ResourceName2', value: 'resource-name-2' },
+    ]);
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        subscriptionId="123"
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const resourceGroup = await screen.findByLabelText('Resource name');
+    await selectOptionInTest(resourceGroup, 'ResourceName1');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        resourceUri: '',
+        resourceName: 'resource-name-1',
+        metricNamespace: undefined,
+        metricName: undefined,
+        aggregation: undefined,
+        timeGrain: '',
+        dimensionFilters: [],
+      },
+    });
+  });
+
   it('should change the metric name when selected', async () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
+    mockDatasource.azureMonitorDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',
@@ -91,6 +216,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -121,6 +247,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockQuery = createMockQuery();
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}

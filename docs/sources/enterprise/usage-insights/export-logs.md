@@ -1,14 +1,19 @@
-+++
-title = "Export logs of usage insights"
-description = "Export logs of usage insights"
-keywords = ["grafana", "export", "usage-insights", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/usage-insights/export-logs.md"]
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/usage-insights/export-logs/
+description: Export logs of usage insights
+keywords:
+  - grafana
+  - export
+  - usage-insights
+  - enterprise
+title: Export logs of usage insights
+weight: 500
+---
 
 # Export logs of usage insights
 
-> **Note:** Available in Grafana Enterprise v7.4+.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
@@ -45,6 +50,8 @@ Logs of usage insights contain the following fields, where the fields followed b
 | `tokenId`\* | number | ID of the user’s authentication token. |
 | `username`\* | string | Name of the Grafana user that made the request. |
 | `userId`\* | number | ID of the Grafana user that made the request. |
+| `totalQueries`\* | number | Number of queries executed for the data request. |
+| `cachedQueries`\* | number | Number of fetched queries that came from the cache. |
 
 ## Configuration
 

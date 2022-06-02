@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getColorByKey, clear } from './color-generator';
 import { createTheme } from '@grafana/data';
+
+import { getColorByKey, clear } from './color-generator';
 
 it('gives the same color for the same key', () => {
   clear();

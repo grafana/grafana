@@ -27,6 +27,10 @@ export function interceptLinkClicks(e: MouseEvent) {
         if (href.indexOf('://') > 0 || href.indexOf('mailto:') === 0) {
           window.location.href = href;
           return;
+        } else if (href.indexOf('#') === 0) {
+          // If it is a hash click, update the hash instead of trying to update the history
+          window.location.hash = href;
+          return;
         } else {
           href = `/${href}`;
         }

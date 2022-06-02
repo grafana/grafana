@@ -58,7 +58,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 		Id:      user.Id,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Response {

@@ -1,12 +1,13 @@
 import React from 'react';
-import { EditorRow, EditorField } from '@grafana/experimental';
+
 import { SelectableValue } from '@grafana/data';
-import { RadioButtonGroup, Select } from '@grafana/ui';
-import { LokiQuery, LokiQueryType } from '../../types';
+import { EditorRow, EditorField } from '@grafana/experimental';
+import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
+
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
 import { isMetricsQuery } from '../../datasource';
+import { LokiQuery, LokiQueryType } from '../../types';
 
 export interface Props {
   query: LokiQuery;
@@ -58,12 +59,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
           />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup
-            id="options.query.type"
-            options={queryTypeOptions}
-            value={queryType}
-            onChange={onQueryTypeChange}
-          />
+          <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
         </EditorField>
         {showMaxLines && (
           <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
@@ -84,7 +80,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
             options={RESOLUTION_OPTIONS}
             value={query.resolution || 1}
             aria-label="Select resolution"
-            menuShouldPortal
           />
         </EditorField>
       </QueryOptionGroup>

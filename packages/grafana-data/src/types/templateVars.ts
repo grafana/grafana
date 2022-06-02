@@ -3,5 +3,5 @@ export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'inte
 export interface VariableModel {
   type: VariableType;
   name: string;
-  label: string | null;
+  label?: string;
 }

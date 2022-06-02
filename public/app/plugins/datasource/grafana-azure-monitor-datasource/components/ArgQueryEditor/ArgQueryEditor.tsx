@@ -1,11 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
-import Datasource from '../../datasource';
+
+import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { InlineFieldRow } from '@grafana/ui';
+
+import Datasource from '../../datasource';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import SubscriptionField from '../SubscriptionField';
+
 import QueryField from './QueryField';
 
-interface LogsQueryEditorProps {
+interface ArgQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
@@ -15,7 +20,7 @@ interface LogsQueryEditorProps {
 }
 
 const ERROR_SOURCE = 'arg-subscriptions';
-const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
+const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   query,
   datasource,
   subscriptionId,
@@ -49,12 +54,26 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [datasource, onChange, query, setError]);
 
-  return (
-    <div data-testid="azure-monitor-logs-query-editor">
-      <InlineFieldRow>
-        <SubscriptionField
-          multiSelect
-          subscriptions={subscriptions}
+  if (config.featureToggles.azureMonitorExperimentalUI) {
+    return (
+      <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
+        <EditorRows>
+          <EditorRow>
+            <EditorFieldGroup>
+              <SubscriptionField
+                multiSelect
+                subscriptions={subscriptions}
+                query={query}
+                datasource={datasource}
+                subscriptionId={subscriptionId}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+              />
+            </EditorFieldGroup>
+          </EditorRow>
+        </EditorRows>
+        <QueryField
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -62,18 +81,35 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
           onQueryChange={onChange}
           setError={setError}
         />
-      </InlineFieldRow>
+      </span>
+    );
+  } else {
+    return (
+      <div data-testid="azure-monitor-arg-query-editor">
+        <InlineFieldRow>
+          <SubscriptionField
+            multiSelect
+            subscriptions={subscriptions}
+            query={query}
+            datasource={datasource}
+            subscriptionId={subscriptionId}
+            variableOptionGroup={variableOptionGroup}
+            onQueryChange={onChange}
+            setError={setError}
+          />
+        </InlineFieldRow>
 
-      <QueryField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-        setError={setError}
-      />
-    </div>
-  );
+        <QueryField
+          query={query}
+          datasource={datasource}
+          subscriptionId={subscriptionId}
+          variableOptionGroup={variableOptionGroup}
+          onQueryChange={onChange}
+          setError={setError}
+        />
+      </div>
+    );
+  }
 };
 
 export default ArgQueryEditor;

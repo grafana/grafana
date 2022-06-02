@@ -1,5 +1,7 @@
 import { css, CSSObject } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { getScrollbarWidth } from '../../utils';
 
 export const getTableStyles = (theme: GrafanaTheme2) => {
@@ -184,6 +186,9 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       div:not(:only-child):first-child {
         flex-grow: 0.6;
       }
+      position: absolute;
+      bottom: 0;
+      left: 0;
     `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
@@ -191,11 +196,16 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       margin-left: auto;
     `,
 
-    tableContentWrapper: (totalColumnsWidth: number) => css`
-      width: ${totalColumnsWidth ?? '100%'};
-      display: flex;
-      flex-direction: column;
-    `,
+    tableContentWrapper: (totalColumnsWidth: number) => {
+      const width = totalColumnsWidth !== undefined ? `${totalColumnsWidth}px` : '100%';
+
+      return css`
+        label: tableContentWrapper;
+        width: ${width};
+        display: flex;
+        flex-direction: column;
+      `;
+    },
     row: css`
       label: row;
       border-bottom: 1px solid ${borderColor};

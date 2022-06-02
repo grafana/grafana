@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import memoizeOne from 'memoize-one';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
 

@@ -1,4 +1,6 @@
+import { css } from '@emotion/css';
 import React, { CSSProperties, FC } from 'react';
+
 import {
   FieldConfigEditorProps,
   FieldColorModeId,
@@ -11,12 +13,13 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
-import { Select } from '../Select/Select';
-import { ColorValueEditor } from './color';
+
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { css } from '@emotion/css';
 import { Field } from '../Forms/Field';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Select } from '../Select/Select';
+
+import { ColorValueEditor } from './color';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
   value,
@@ -76,7 +79,6 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     return (
       <div className={styles.group}>
         <Select
-          menuShouldPortal
           minMenuHeight={200}
           options={options}
           value={mode}
@@ -99,14 +101,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
-          <Select
-            menuShouldPortal
-            minMenuHeight={200}
-            options={options}
-            value={mode}
-            onChange={onModeChange}
-            inputId={id}
-          />
+          <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
         <Field label="Color series by">
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
@@ -115,9 +110,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     );
   }
 
-  return (
-    <Select menuShouldPortal minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
-  );
+  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />;
 };
 
 interface ModeProps {

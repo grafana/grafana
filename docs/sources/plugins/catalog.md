@@ -1,8 +1,9 @@
-+++
-title = "Plugin catalog"
-aliases = ["/docs/grafana/latest/plugins/catalog/"]
-weight = 1
-+++
+---
+aliases:
+  - /docs/grafana/latest/plugins/catalog/
+title: Plugin catalog
+weight: 1
+---
 
 # Plugin catalog
 

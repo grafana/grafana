@@ -15,20 +15,22 @@ import (
 
 // GetAPIKeys returns a list of API keys
 func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
-	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
+	query := models.GetApiKeysQuery{OrgId: c.OrgId, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := hs.SQLStore.GetAPIKeys(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
-	result := make([]*models.ApiKeyDTO, len(query.Result))
+	ids := map[string]bool{}
+	result := make([]*dtos.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
+		ids[strconv.FormatInt(t.Id, 10)] = true
 		var expiration *time.Time = nil
 		if t.Expires != nil {
 			v := time.Unix(*t.Expires, 0)
 			expiration = &v
 		}
-		result[i] = &models.ApiKeyDTO{
+		result[i] = &dtos.ApiKeyDTO{
 			Id:         t.Id,
 			Name:       t.Name,
 			Role:       t.Role,
@@ -36,7 +38,14 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, result)
+	metadata := hs.getMultiAccessControlMetadata(c, c.OrgId, "apikeys:id", ids)
+	if len(metadata) > 0 {
+		for _, key := range result {
+			key.AccessControl = metadata[strconv.FormatInt(key.Id, 10)]
+		}
+	}
+
+	return response.JSON(http.StatusOK, result)
 }
 
 // DeleteAPIKey deletes an API key
@@ -107,5 +116,5 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }

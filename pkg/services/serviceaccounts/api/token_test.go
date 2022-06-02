@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -148,6 +149,14 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 				assert.Equal(t, sa.Id, *query.Result.ServiceAccountId)
 				assert.Equal(t, sa.OrgId, query.Result.OrgId)
+				assert.True(t, strings.HasPrefix(actualBody["key"].(string), "glsa"))
+
+				keyInfo, err := apikeygenprefix.Decode(actualBody["key"].(string))
+				assert.NoError(t, err)
+
+				hash, err := keyInfo.Hash()
+				require.NoError(t, err)
+				require.Equal(t, query.Result.Key, hash)
 			}
 		})
 	}

@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a built-in role assignment.",
         "operationId": "addBuiltinRole",
@@ -71,7 +71,7 @@
     },
     "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
       "delete": {
-        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
+        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a built-in role assignment.",
         "operationId": "removeBuiltinRole",
@@ -136,7 +136,7 @@
         }
       },
       "post": {
-        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRoleWithPermissions",
@@ -195,7 +195,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRoleWithPermissions",
@@ -236,7 +236,7 @@
         }
       },
       "delete": {
-        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
@@ -319,7 +319,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.",
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
@@ -352,7 +352,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
@@ -396,7 +396,7 @@
     },
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
-        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
@@ -468,7 +468,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
@@ -501,7 +501,7 @@
         }
       },
       "post": {
-        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
@@ -542,7 +542,7 @@
     },
     "/access-control/users/{user_id}/roles/{roleUID}": {
       "delete": {
-        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
@@ -1025,7 +1025,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Delete global User.",
         "operationId": "deleteUser",
@@ -1065,7 +1065,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Return a list of all auth tokens (devices) that the user currently have logged in from.",
         "operationId": "getAuthTokens",
@@ -1102,7 +1102,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Disable user.",
         "operationId": "disableUser",
@@ -1142,7 +1142,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Enable user.",
         "operationId": "enableUser",
@@ -1182,7 +1182,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.",
         "operationId": "logoutUser",
@@ -1225,7 +1225,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Set password for user.",
         "operationId": "setPassword",
@@ -1269,7 +1269,7 @@
     },
     "/admin/users/{user_id}/permissions": {
       "put": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global:users:*`.",
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Set permissions for user.",
         "operationId": "setPermissions",
@@ -1318,7 +1318,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Fetch user quota.",
         "operationId": "getUserQuota",
@@ -1358,7 +1358,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Update user quota.",
         "operationId": "updateUserQuota",
@@ -1414,7 +1414,7 @@
             "basic": []
           }
         ],
-        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.",
+        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Revoke auth token for user.",
         "operationId": "revokeAuthToken",
@@ -2200,7 +2200,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/DeleteAnnotationsCmd"
+              "$ref": "#/definitions/MassDeleteAnnotationsCmd"
             }
           }
         ],
@@ -2254,6 +2254,31 @@
       }
     },
     "/annotations/{annotation_id}": {
+      "get": {
+        "tags": ["annotations"],
+        "summary": "Get Annotation by Id.",
+        "operationId": "getAnnotation",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AnnotationID",
+            "name": "annotation_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAnnotationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "put": {
         "description": "Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the Patch Annotation operation.",
         "tags": ["annotations"],
@@ -2614,9 +2639,11 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2645,10 +2672,11 @@
         }
       },
       "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -2690,9 +2718,11 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2700,6 +2730,14 @@
             "name": "DashboardID",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
           }
         ],
         "responses": {
@@ -2723,9 +2761,11 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2774,9 +2814,11 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2961,6 +3003,214 @@
         }
       }
     },
+    "/dashboards/uid/{uid}/permissions": {
+      "get": {
+        "tags": ["dashboard_permissions"],
+        "summary": "Gets all existing permissions for the given dashboard.",
+        "operationId": "getDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "tags": ["dashboard_permissions"],
+        "summary": "Updates permissions for a dashboard.",
+        "operationId": "postDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/restore": {
+      "post": {
+        "tags": ["dashboard_versions"],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDashboardVersionCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Gets all existing versions for the dashboard using UID.",
+        "operationId": "getDashboardVersionsByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Limit",
+            "description": "Maximum number of results to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 0,
+            "x-go-name": "Start",
+            "description": "Version to start from when returning queries",
+            "name": "start",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
+      "get": {
+        "tags": ["dashboard_versions"],
+        "summary": "Get a specific dashboard version using UID.",
+        "operationId": "getDashboardVersionByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardVersionResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
@@ -3016,7 +3266,7 @@
         }
       }
     },
-    "/datasources/id/{datasource_name}": {
+    "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -3026,7 +3276,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3050,7 +3300,7 @@
         }
       }
     },
-    "/datasources/name/{datasource_name}": {
+    "/datasources/name/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "tags": ["datasources"],
@@ -3060,7 +3310,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3089,7 +3339,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceName",
-            "name": "datasource_name",
+            "name": "name",
             "in": "path",
             "required": true
           }
@@ -3113,17 +3363,17 @@
         }
       }
     },
-    "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
+    "/datasources/proxy/uid/{uid}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": ["datasources"],
         "summary": "Data source proxy GET calls.",
-        "operationId": "datasourceProxyGETcalls",
+        "operationId": "datasourceProxyGETByUIDcalls",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3160,12 +3410,145 @@
         "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
         "tags": ["datasources"],
         "summary": "Data source proxy POST calls.",
-        "operationId": "datasourceProxyPOSTcalls",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/proxy/{id}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTcalls",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3210,15 +3593,16 @@
         }
       },
       "delete": {
-        "description": "Proxies all calls to the actual data source.",
+        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
         "tags": ["datasources"],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEcalls",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "id",
             "in": "path",
             "required": true
           },
@@ -3252,7 +3636,7 @@
         }
       }
     },
-    "/datasources/uid/{datasource_uid}": {
+    "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
@@ -3262,76 +3646,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Delete an existing data source by UID.",
-        "operationId": "deleteDatasourceByUID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasource_id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
-        "tags": ["datasources"],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDatasourceByID",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3358,15 +3673,15 @@
         }
       },
       "put": {
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Update an existing data source.",
-        "operationId": "updateDatasource",
+        "operationId": "updateDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
             "in": "path",
             "required": true
           },
@@ -3395,15 +3710,15 @@
         }
       },
       "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
         "tags": ["datasources"],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDatasourceByID",
+        "summary": "Delete an existing data source by UID.",
+        "operationId": "deleteDatasourceByUID",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3427,7 +3742,83 @@
         }
       }
     },
-    "/datasources/{datasource_id}/disable-permissions": {
+    "/datasources/uid/{uid}/health": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
+      "get": {
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources.",
+        "operationId": "fetchDatasourceResources",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasourceId}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3437,7 +3828,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3464,7 +3855,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/enable-permissions": {
+    "/datasources/{datasourceId}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3474,7 +3865,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3501,7 +3892,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions": {
+    "/datasources/{datasourceId}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3511,7 +3902,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3535,7 +3926,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions/{permissionId}": {
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3544,15 +3935,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -3560,6 +3951,195 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Get a single data source by Id.",
+        "operationId": "getDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Update an existing data source by its sequential ID.",
+        "operationId": "updateDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDataSourceCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDatasourceByUID) instead",
+        "tags": ["datasources"],
+        "summary": "Delete an existing data source by id.",
+        "operationId": "deleteDatasourceByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/health": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealth) instead",
+        "tags": ["datasources"],
+        "summary": "Check data source health by Id.",
+        "operationId": "checkDatasourceHealthByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{id}/resources/{datasource_proxy_route}": {
+      "get": {
+        "description": "Please refer to [updated API](#/datasources/fetchDatasourceResources) instead",
+        "tags": ["datasources"],
+        "summary": "Fetch data source resources by Id.",
+        "operationId": "fetchDatasourceResourcesByID",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -3595,6 +4175,9 @@
         ],
         "responses": {
           "200": {
+            "$ref": "#/responses/queryDataResponse"
+          },
+          "207": {
             "$ref": "#/responses/queryDataResponse"
           },
           "400": {
@@ -5750,11 +6333,12 @@
     },
     "/reports/render/pdf/{DashboardID}": {
       "get": {
-        "description": "Available to all users and with a valid license.",
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": ["application/pdf"],
         "tags": ["reports", "enterprise"],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5764,6 +6348,29 @@
             "required": true
           }
         ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for multiple dashboards.",
+        "operationId": "renderReportPDFs",
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
@@ -6866,45 +7473,6 @@
         }
       }
     },
-    "/tsdb/query": {
-      "post": {
-        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
-        "tags": ["datasources"],
-        "summary": "Query metrics.",
-        "operationId": "queryDatasource",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MetricRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/queryDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/user": {
       "get": {
         "tags": ["signed_in_user"],
@@ -7666,7 +8234,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "secondsToLive": {
           "type": "integer",
@@ -7776,7 +8347,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "sendEmail": {
           "type": "boolean",
@@ -7793,7 +8367,10 @@
           "x-go-name": "LoginOrEmail"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -8374,9 +8951,42 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "AnnotationActions": {
+      "type": "object",
+      "properties": {
+        "canAdd": {
+          "type": "boolean",
+          "x-go-name": "CanAdd"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
+        "canEdit": {
+          "type": "boolean",
+          "x-go-name": "CanEdit"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AnnotationPermission": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/AnnotationActions"
+        },
+        "organization": {
+          "$ref": "#/definitions/AnnotationActions"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -8392,10 +9002,13 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "BrandingOptionsDTO": {
       "type": "object",
@@ -8421,7 +9034,7 @@
           "x-go-name": "ReportLogo"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CalculateDiffTarget": {
       "type": "object",
@@ -8456,6 +9069,12 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "ConfFloat64": {
+      "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+      "type": "number",
+      "format": "double",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "ConfigDTO": {
       "description": "ConfigDTO is model representation in transfer",
       "type": "object",
@@ -8478,6 +9097,13 @@
           "type": "string",
           "x-go-name": "DashboardUID"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
+        },
         "enableCsv": {
           "type": "boolean",
           "x-go-name": "EnableCSV"
@@ -8485,6 +9111,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "id": {
           "type": "integer",
@@ -8537,7 +9170,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -8648,6 +9281,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -8684,6 +9322,13 @@
           "type": "string",
           "x-go-name": "DashboardUID"
         },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          },
+          "x-go-name": "Dashboards"
+        },
         "enableCsv": {
           "type": "boolean",
           "x-go-name": "EnableCSV"
@@ -8691,6 +9336,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "message": {
           "type": "string",
@@ -8723,7 +9375,7 @@
           "x-go-name": "TemplateVars"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CreateOrgCommand": {
       "type": "object",
@@ -8886,7 +9538,10 @@
           "x-go-name": "PermissionName"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "slug": {
           "type": "string",
@@ -8953,7 +9608,10 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "teamId": {
           "type": "integer",
@@ -8967,6 +9625,22 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object",
+          "x-go-name": "ReportVariables"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "DashboardFullWithMeta": {
       "type": "object",
@@ -8983,6 +9657,9 @@
     "DashboardMeta": {
       "type": "object",
       "properties": {
+        "annotationsPermissions": {
+          "$ref": "#/definitions/AnnotationPermission"
+        },
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
@@ -9046,6 +9723,10 @@
           "type": "boolean",
           "x-go-name": "IsHome"
         },
+        "isPublic": {
+          "type": "boolean",
+          "x-go-name": "IsPublic"
+        },
         "isSnapshot": {
           "type": "boolean",
           "x-go-name": "IsSnapshot"
@@ -9100,6 +9781,25 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardReportDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "DashboardSnapshot": {
       "description": "DashboardSnapshot model",
@@ -9246,6 +9946,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUid": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -9313,6 +10017,10 @@
           "format": "int64",
           "x-go-name": "RestoredFrom"
         },
+        "uid": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "version": {
           "type": "integer",
           "format": "int64",
@@ -9321,67 +10029,39 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "DataFrames": {
-      "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
-      "type": "object",
-      "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataQueryResult": {
-      "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
+    "DataLink": {
+      "description": "DataLink define what",
       "type": "object",
       "properties": {
-        "dataframes": {
-          "$ref": "#/definitions/DataFrames"
+        "targetBlank": {
+          "type": "boolean",
+          "x-go-name": "TargetBlank"
         },
-        "error": {
+        "title": {
           "type": "string",
-          "x-go-name": "ErrorString"
+          "x-go-name": "Title"
         },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        },
-        "refId": {
+        "url": {
           "type": "string",
-          "x-go-name": "RefID"
-        },
-        "series": {
-          "$ref": "#/definitions/DataTimeSeriesSlice"
-        },
-        "tables": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTable"
-          },
-          "x-go-name": "Tables"
+          "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "DataResponse": {
-      "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
+      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "message": {
-          "type": "string",
-          "x-go-name": "Message"
+        "Error": {
+          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "type": "string"
         },
-        "results": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/DataQueryResult"
-          },
-          "x-go-name": "Results"
+        "Frames": {
+          "$ref": "#/definitions/Frames"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataRowValues": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
     },
     "DataSource": {
       "type": "object",
@@ -9553,104 +10233,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
-    "DataTable": {
-      "type": "object",
-      "properties": {
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTableColumn"
-          },
-          "x-go-name": "Columns"
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataRowValues"
-          },
-          "x-go-name": "Rows"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTableColumn": {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string",
-          "x-go-name": "Text"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimePoint": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Float"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeries": {
-      "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "points": {
-          "$ref": "#/definitions/DataTimeSeriesPoints"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Tags"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesPoints": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimePoint"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesSlice": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimeSeries"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DeleteAnnotationsCmd": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "AlertId"
-        },
-        "annotationId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "AnnotationId"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "PanelId"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -9731,6 +10313,119 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/ldapsync"
+    },
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/Labels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "FindTagsResult": {
       "type": "object",
@@ -9846,6 +10541,101 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string",
+          "x-go-name": "Channel"
+        },
+        "custom": {
+          "description": "Custom datasource specific values.",
+          "type": "object",
+          "x-go-name": "Custom"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string",
+          "x-go-name": "ExecutedQueryString"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          },
+          "x-go-name": "Notices"
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "type": "string",
+          "x-go-name": "PathSeparator"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          },
+          "x-go-name": "Stats"
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.",
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -9952,18 +10742,18 @@
           "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "HitList": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Hit"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "HitType": {
       "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "ImportDashboardInput": {
       "type": "object",
@@ -10093,6 +10883,12 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/dashboardimport"
     },
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -10118,6 +10914,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -10186,6 +10986,14 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
     },
+    "Labels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "LibraryElementConnectionDTO": {
       "type": "object",
       "title": "LibraryElementConnectionDTO is the frontend DTO for element connections.",
@@ -10247,6 +11055,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "FolderID"
+        },
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUID"
         },
         "id": {
           "type": "integer",
@@ -10395,6 +11207,31 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
+    "MassDeleteAnnotationsCmd": {
+      "type": "object",
+      "properties": {
+        "annotationId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AnnotationId"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PanelId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -10451,7 +11288,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "target": {
           "type": "string",
@@ -10466,7 +11303,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NavbarPreference": {
       "type": "object",
@@ -10479,7 +11316,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -10499,6 +11336,35 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Notice": {
+      "type": "object",
+      "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+      "properties": {
+        "inspect": {
+          "$ref": "#/definitions/InspectType"
+        },
+        "link": {
+          "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+          "type": "string",
+          "x-go-name": "Link"
+        },
+        "severity": {
+          "$ref": "#/definitions/NoticeSeverity"
+        },
+        "text": {
+          "description": "Text is freeform descriptive text for the notice.",
+          "type": "string",
+          "x-go-name": "Text"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "NoticeSeverity": {
+      "type": "integer",
+      "format": "int64",
+      "title": "NoticeSeverity is a type for the Severity property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -10668,6 +11534,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUid": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -10708,8 +11579,15 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -10791,6 +11669,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -10854,8 +11736,15 @@
           "format": "int64",
           "x-go-name": "HomeDashboardID"
         },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -10900,6 +11789,116 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
+    "QueryHistoryPreference": {
+      "type": "object",
+      "properties": {
+        "homeTab": {
+          "type": "string",
+          "x-go-name": "HomeTab"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+    },
+    "QueryStat": {
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+      "type": "object",
+      "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "value": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Value"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
@@ -10984,7 +11983,7 @@
           "x-go-name": "UseEmailsFromReport"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "ReportOptionsDTO": {
       "type": "object",
@@ -11001,7 +12000,7 @@
           "$ref": "#/definitions/TimeRangeDTO"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "Responses": {
       "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataRespones' frames based on these RefIDs.",
@@ -11011,6 +12010,17 @@
         "$ref": "#/definitions/DataResponse"
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
+    "RestoreDashboardVersionCommand": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "RevokeAuthTokenCmd": {
       "type": "object",
@@ -11078,10 +12088,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
-    },
-    "RoleType": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "SaveDashboardCommand": {
       "type": "object",
@@ -11175,7 +12181,7 @@
           "x-go-name": "WorkdaysOnly"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "SearchTeamQueryResult": {
       "type": "object",
@@ -11286,7 +12292,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "Status": {
       "type": "object",
@@ -11534,7 +12540,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -11550,6 +12559,47 @@
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "Threshold": {
+      "description": "Threshold a single step on the threshold list",
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "x-go-name": "Color"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "value": {
+          "$ref": "#/definitions/ConfFloat64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsConfig": {
+      "description": "ThresholdsConfig setup thresholds",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/ThresholdsMode"
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Steps"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsMode": {
+      "description": "ThresholdsMode absolute or percentage",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "TimeRangeDTO": {
       "type": "object",
       "properties": {
@@ -11562,7 +12612,7 @@
           "x-go-name": "To"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "Token": {
       "type": "object",
@@ -11577,7 +12627,7 @@
         },
         "details_url": {
           "type": "string",
-          "x-go-name": "DetailsUrl"
+          "x-go-name": "DetailsURL"
         },
         "exp": {
           "type": "integer",
@@ -11589,20 +12639,10 @@
           "format": "int64",
           "x-go-name": "Issued"
         },
-        "included_admins": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedAdmins"
-        },
         "included_users": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "IncludedUsers"
-        },
-        "included_viewers": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedViewers"
         },
         "iss": {
           "type": "string",
@@ -11610,7 +12650,7 @@
         },
         "jti": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "lexp": {
           "type": "integer",
@@ -11624,7 +12664,7 @@
         },
         "lid": {
           "type": "string",
-          "x-go-name": "LicenseId"
+          "x-go-name": "LicenseID"
         },
         "limit_by": {
           "type": "string",
@@ -11662,6 +12702,15 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "TokenExpiresWarnDays"
+        },
+        "trial": {
+          "type": "boolean",
+          "x-go-name": "Trial"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TrialExpires"
         },
         "update_days": {
           "type": "integer",
@@ -11703,6 +12752,10 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Type": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/models"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -11997,7 +13050,10 @@
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -12012,8 +13068,15 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -12183,7 +13246,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -12388,6 +13454,23 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "ValueMapping": {
+      "description": "ValueMapping allows mapping input values to text and color",
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ValueMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ValueMapping"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "VisType": {
+      "type": "string",
+      "title": "VisType is used to indicate how the data should be visualized in explore.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     }
   },
   "responses": {
@@ -12791,6 +13874,12 @@
         "items": {
           "$ref": "#/definitions/RoleDTO"
         }
+      }
+    },
+    "getAnnotationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ItemDTO"
       }
     },
     "getAnnotationTagsResponse": {
@@ -13267,12 +14356,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
-      }
-    },
-    "queryDatasourceResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataResponse"
       }
     },
     "recordingRuleResponse": {

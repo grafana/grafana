@@ -1,4 +1,5 @@
 import React, { FC, useCallback } from 'react';
+
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DashboardPicker as BasePicker, DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 

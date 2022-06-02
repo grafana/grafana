@@ -1,7 +1,9 @@
-+++
-title = "Enable diagnostics"
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/troubleshooting/diagnostics/
+title: Enable diagnostics
+weight: 200
+---
 
 # Enable diagnostics
 

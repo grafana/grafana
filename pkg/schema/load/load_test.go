@@ -19,6 +19,7 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	cuejson "cuelang.org/go/pkg/encoding/json"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
@@ -48,7 +49,6 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, f
 			b, err := os.Open(path)
 			require.NoError(t, err, "failed to open dashboard file")
 
-			// Only try to validate dashboards with schemaVersion >= 30
 			jtree := make(map[string]interface{})
 			byt, err := io.ReadAll(b)
 			if err != nil {
@@ -59,9 +59,9 @@ var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, f
 				t.Logf("no schemaVersion in %s", path)
 				return nil
 			} else {
-				if !(oldschemav.(float64) > 32) {
+				if !(oldschemav.(float64) > dashboard.HandoffSchemaVersion-1) {
 					if testing.Verbose() {
-						t.Logf("schemaVersion is %v, older than 33, skipping %s", oldschemav, path)
+						t.Logf("schemaVersion is %v, older than %v, skipping %s", oldschemav, dashboard.HandoffSchemaVersion-1, path)
 					}
 					return nil
 				}

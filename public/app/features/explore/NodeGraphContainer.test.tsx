@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
+import React from 'react';
+
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
+
 import { ExploreId } from '../../types';
+
+import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {

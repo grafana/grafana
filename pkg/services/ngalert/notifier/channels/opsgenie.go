@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -40,6 +41,7 @@ type OpsgenieNotifier struct {
 	tmpl             *template.Template
 	log              log.Logger
 	ns               notifications.WebhookSender
+	images           ImageStore
 }
 
 type OpsgenieConfig struct {
@@ -59,7 +61,7 @@ func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.Template, fc.DecryptFunc), nil
+	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template, fc.DecryptFunc), nil
 }
 
 func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*OpsgenieConfig, error) {
@@ -84,7 +86,7 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
+func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
 	return &OpsgenieNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -101,6 +103,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		tmpl:             t,
 		log:              log.New("alerting.notifier." + config.Name),
 		ns:               ns,
+		images:           images,
 	}
 }
 
@@ -207,6 +210,21 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	if on.sendDetails() {
 		for k, v := range lbls {
 			details.Set(k, v)
+		}
+
+		images := []string{}
+		_ = withStoredImages(ctx, on.log, on.images,
+			func(index int, image *ngmodels.Image) error {
+				if image == nil || len(image.URL) == 0 {
+					return nil
+				}
+				images = append(images, image.URL)
+				return nil
+			},
+			as...)
+
+		if len(images) != 0 {
+			details.Set("image_urls", images)
 		}
 	}
 

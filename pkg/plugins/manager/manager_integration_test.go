@@ -73,7 +73,7 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(cfg, hcp, tracer)
-	cw := cloudwatch.ProvideService(cfg, hcp)
+	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp)
 	grap := graphite.ProvideService(hcp, tracer)
@@ -86,7 +86,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(sqlstore.InitTestDB(t))
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil)
 	graf := grafanads.ProvideService(cfg, sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
@@ -126,6 +126,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"candlestick":    {},
 		"news":           {},
 		"nodeGraph":      {},
+		"traces":         {},
 		"piechart":       {},
 		"stat":           {},
 		"state-timeline": {},

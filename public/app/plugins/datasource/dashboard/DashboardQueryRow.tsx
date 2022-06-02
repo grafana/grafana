@@ -1,7 +1,8 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { Icon, useStyles } from '@grafana/ui';
+import React, { ReactElement } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { Icon, useStyles } from '@grafana/ui';
 
 import { ResultInfo } from './types';
 

@@ -489,7 +489,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		query.Result = make([]*models.UserOrgDTO, 0)
 		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
-		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
 		sess.Where(notServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
@@ -577,7 +577,20 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			user.ExternalAuthId = ""
 		}
 
-		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+		// tempUser is used to retrieve the teams for the signed in user for internal use.
+		tempUser := &models.SignedInUser{
+			OrgId: user.OrgId,
+			Permissions: map[int64]map[string][]string{
+				user.OrgId: {
+					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+				},
+			},
+		}
+		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+			OrgId:        user.OrgId,
+			UserId:       user.UserId,
+			SignedInUser: tempUser,
+		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 		if err != nil {
 			return err
@@ -618,6 +631,16 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		if query.OrgId > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
 			whereParams = append(whereParams, query.OrgId)
+		}
+
+		// user only sees the users for which it has read permissions
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "u.id", "global.users:id:", ac.ActionUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
 		}
 
 		if query.Query != "" {

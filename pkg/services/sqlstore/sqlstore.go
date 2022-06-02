@@ -32,7 +32,6 @@ import (
 )
 
 var (
-	x       *xorm.Engine
 	dialect migrator.Dialect
 
 	sqlog log.Logger = log.New("sqlstore")
@@ -101,13 +100,11 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
-	// temporarily still set global var
-	x = ss.engine
 	dialect = ss.Dialect
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner"), sqlstore: ss})
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -155,6 +152,11 @@ func (ss *SQLStore) Reset() error {
 // Quote quotes the value in the used SQL dialect
 func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
+}
+
+// GetDialect return the dialect
+func (ss *SQLStore) GetDialect() migrator.Dialect {
+	return ss.Dialect
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
@@ -441,6 +443,7 @@ type InitTestDBOpt struct {
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
+	featuremgmt.FlagPanelTitleSearch,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -489,6 +492,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
+		cfg.RBACEnabled = true
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
 			for _, enabledFeature := range features {
 				if enabledFeature == key {

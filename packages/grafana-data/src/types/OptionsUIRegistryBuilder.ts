@@ -1,11 +1,13 @@
 import { ComponentType } from 'react';
-import { RegistryItem, Registry } from '../utils/Registry';
+
 import {
   NumberFieldConfigSettings,
   SliderFieldConfigSettings,
   SelectFieldConfigSettings,
   StringFieldConfigSettings,
 } from '../field';
+import { RegistryItem, Registry } from '../utils/Registry';
+
 import { OptionEditorConfig } from './options';
 
 /**

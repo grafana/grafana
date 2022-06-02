@@ -67,6 +67,7 @@ type API struct {
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -78,6 +79,9 @@ type API struct {
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
+	MuteTimings          *provisioning.MuteTimingService
+	AlertRules           *provisioning.AlertRuleService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -91,7 +95,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger, ac: api.AccessControl},
+		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
@@ -108,6 +112,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			QuotaService:    api.QuotaService,
 			scheduleService: api.Schedule,
 			store:           api.RuleStore,
+			provenanceStore: api.ProvenanceStore,
 			xactManager:     api.TransactionManager,
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,
@@ -136,6 +141,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                 logger,
 			policies:            api.Policies,
 			contactPointService: api.ContactPointService,
+			templates:           api.Templates,
+			muteTimings:         api.MuteTimings,
+			alertRules:          api.AlertRules,
 		}), m)
 	}
 }

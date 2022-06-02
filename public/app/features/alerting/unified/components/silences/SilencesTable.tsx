@@ -1,25 +1,28 @@
-import React, { FC, useMemo } from 'react';
-import { GrafanaTheme2, dateMath } from '@grafana/data';
-import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { NoSilencesSplash } from './NoSilencesCTA';
-import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
-import { contextSrv } from 'app/core/services/context_srv';
+import React, { FC, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+
+import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { SilencesFilter } from './SilencesFilter';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
+
+import { expireSilenceAction } from '../../state/actions';
+import { getInstancesPermissions } from '../../utils/access-control';
 import { parseMatchers } from '../../utils/alertmanager';
+import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
+import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { SilenceStateTag } from './SilenceStateTag';
-import { Matchers } from './Matchers';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
-import { useDispatch } from 'react-redux';
-import { expireSilenceAction } from '../../state/actions';
+
+import { Matchers } from './Matchers';
+import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
-import { Stack } from '@grafana/experimental';
-import { Authorize } from '../Authorize';
-import { getInstancesPermissions } from '../../utils/access-control';
+import { SilenceStateTag } from './SilenceStateTag';
+import { SilencesFilter } from './SilencesFilter';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[];

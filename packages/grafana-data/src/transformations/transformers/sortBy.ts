@@ -1,10 +1,11 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame } from '../../types';
-import { getFieldDisplayName } from '../../field';
 import { sortDataFrame } from '../../dataframe';
+import { getFieldDisplayName } from '../../field';
+import { DataFrame } from '../../types';
+import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 export interface SortByField {
   field: string;

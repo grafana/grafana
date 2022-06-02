@@ -1,4 +1,5 @@
 import { PanelModel } from '@grafana/data';
+
 import { AlertListOptions, ShowOption, SortOrder } from './types';
 
 export const alertListPanelMigrationHandler = (

@@ -41,6 +41,7 @@ load(
     'upload_cdn_step',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
 )
@@ -82,7 +83,7 @@ def retrieve_npm_packages_step():
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'yarn-install',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -183,6 +184,7 @@ def get_steps(edition, ver_mode):
         build_plugins_step(edition=edition, sign=True),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
+        verify_gen_cue_step(),
     ]
 
     integration_test_steps = [
@@ -224,7 +226,7 @@ def get_steps(edition, ver_mode):
         build_steps.append(build_storybook)
 
     if include_enterprise2:
-      integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
+      integration_test_steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
 
     if should_upload:
         publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
@@ -402,18 +404,25 @@ def publish_packages_pipeline():
         'event': ['promote'],
         'target': ['public'],
     }
-    steps = [
+    oss_steps = [
         download_grabpl_step(),
         store_packages_step(edition='oss', ver_mode='release'),
+    ]
+
+    enterprise_steps = [
+        download_grabpl_step(),
         store_packages_step(edition='enterprise', ver_mode='release'),
+    ]
+    deps = [
+        'publish-artifacts-public',
+        'publish-docker-oss-public',
+        'publish-docker-enterprise-public'
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=[
-            'publish-artifacts-public',
-            'publish-docker-oss-public',
-            'publish-docker-enterprise-public'
-        ]
+        name='publish-packages-oss', trigger=trigger, steps=oss_steps, edition="all", depends_on=deps
+    ), pipeline(
+        name='publish-packages-enterprise', trigger=trigger, steps=enterprise_steps, edition="all", depends_on=deps
     )]
 
 def publish_npm_pipelines(mode):
@@ -423,6 +432,7 @@ def publish_npm_pipelines(mode):
     }
     steps = [
         download_grabpl_step(),
+        yarn_install_step(),
         retrieve_npm_packages_step(),
         release_npm_packages_step()
     ]
@@ -431,9 +441,8 @@ def publish_npm_pipelines(mode):
         name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
     )]
 
-def release_pipelines(ver_mode='release', trigger=None, environment=None):
+def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services
-    services = integration_test_services(edition='enterprise')
     if not trigger:
         trigger = {
             'event': {
@@ -447,8 +456,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
             },
         }
 
-    should_publish = ver_mode == 'release'
-
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
     # in OSS release builds, we simplify the UX for the release engineer.
@@ -456,13 +463,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
     enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
 
     pipelines = oss_pipelines + enterprise_pipelines
-
-    # if ver_mode == 'release':
-    #   pipelines.append(publish_artifacts_pipelines())
-    #pipelines.append(notify_pipeline(
-    #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-    #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    #))
 
     return pipelines
 

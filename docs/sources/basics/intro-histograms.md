@@ -1,10 +1,17 @@
-+++
-title = "Histograms and heatmaps"
-description = "An introduction to histograms and heatmaps"
-keywords = ["grafana", "heatmap", "panel", "documentation", "histogram"]
-aliases = ["/docs/grafana/latest/getting-started/intro-histograms"]
-weight = 700
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/intro-histograms/
+  - /docs/grafana/latest/getting-started/intro-histograms/
+description: An introduction to histograms and heatmaps
+keywords:
+  - grafana
+  - heatmap
+  - panel
+  - documentation
+  - histogram
+title: Histograms and heatmaps
+weight: 700
+---
 
 # Introduction to histograms and heatmaps
 

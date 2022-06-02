@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -17,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardSnapshotDBAccess(t *testing.T) {
+func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	sqlstore := InitTestDB(t)
 
 	origSecret := setting.SecretKey
@@ -47,7 +44,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
 			query := models.GetDashboardSnapshotQuery{Key: "hej"}
-			err := sqlstore.GetDashboardSnapshot(&query)
+			err := sqlstore.GetDashboardSnapshot(context.Background(), &query)
 			require.NoError(t, err)
 
 			assert.NotNil(t, query.Result)
@@ -69,7 +66,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 			}
-			err := sqlstore.SearchDashboardSnapshots(&query)
+			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
@@ -83,7 +80,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 1000},
 			}
-			err := sqlstore.SearchDashboardSnapshots(&query)
+			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
@@ -97,7 +94,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 2},
 			}
-			err := sqlstore.SearchDashboardSnapshots(&query)
+			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
@@ -124,7 +121,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 					OrgId:        1,
 					SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, IsAnonymous: true, UserId: 0},
 				}
-				err := sqlstore.SearchDashboardSnapshots(&query)
+				err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 				require.NoError(t, err)
 
 				require.NotNil(t, query.Result)
@@ -144,7 +141,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	})
 }
 
-func TestDeleteExpiredSnapshots(t *testing.T) {
+func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	sqlstore := InitTestDB(t)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
@@ -161,7 +158,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = sqlstore.SearchDashboardSnapshots(&query)
+		err = sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
 		assert.Len(t, query.Result, 1)
@@ -174,7 +171,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = sqlstore.SearchDashboardSnapshots(&query)
+		err = sqlstore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Len(t, query.Result, 1)

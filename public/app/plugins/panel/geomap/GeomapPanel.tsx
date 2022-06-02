@@ -1,43 +1,44 @@
-import React, { Component, ReactNode } from 'react';
-import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
+import { cloneDeep } from 'lodash';
 import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
+import { FeatureLike } from 'ol/Feature';
 import Attribution from 'ol/control/Attribution';
-import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
+import Zoom from 'ol/control/Zoom';
+import { Coordinate } from 'ol/coordinate';
 import { createEmpty, extend, isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
+import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import BaseLayer from 'ol/layer/Base';
 import VectorLayer from 'ol/layer/Vector';
-import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import React, { Component, ReactNode } from 'react';
+import { Subject, Subscription } from 'rxjs';
 
 import {
-  PanelData,
-  MapLayerOptions,
-  PanelProps,
-  GrafanaTheme,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataFrame,
   FrameGeometrySourceMode,
+  GrafanaTheme,
+  MapLayerOptions,
+  PanelData,
+  PanelProps,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { PanelEditExitedEvent } from 'app/types/events';
 
+import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
+import { GeomapTooltip } from './GeomapTooltip';
+import { DebugOverlay } from './components/DebugOverlay';
+import { GeomapHoverPayload, GeomapLayerHover } from './event';
+import { getGlobalStyles } from './globalStyles';
+import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { Coordinate } from 'ol/coordinate';
-import { css } from '@emotion/css';
-import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
-import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
-import { DebugOverlay } from './components/DebugOverlay';
-import { getGlobalStyles } from './globalStyles';
-import { Global } from '@emotion/react';
-import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
-import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
-import { cloneDeep } from 'lodash';
-import { GeomapTooltip } from './GeomapTooltip';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -313,7 +314,7 @@ export class GeomapPanel extends Component<Props, State> {
       this.props.eventBus.publish(new DataHoverClearEvent());
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -371,6 +372,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.forEachFeatureAtPixel(
       pixel,
       (feature, layer, geo) => {
+        const s: MapLayerState = (layer as any).__state;
         //match hover layer to layer in layers
         //check if the layer show tooltip is enabled
         //then also pass the list of tooltip fields if exists
@@ -382,9 +384,12 @@ export class GeomapPanel extends Component<Props, State> {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
           }
+
+          if (s?.mouseEvents) {
+            s.mouseEvents.next(feature);
+          }
         }
 
-        const s: MapLayerState = (layer as any).__state;
         if (s) {
           let h = layerLookup.get(s);
           if (!h) {
@@ -406,6 +411,14 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     this.setState({ ttip: { ...hoverPayload } });
+
+    if (!layers.length) {
+      // clear mouse events
+      this.layers.forEach((layer) => {
+        layer.mouseEvents.next(undefined);
+      });
+    }
+
     return layers.length ? true : false;
   };
 
@@ -508,6 +521,7 @@ export class GeomapPanel extends Component<Props, State> {
       options,
       layer,
       handler,
+      mouseEvents: new Subject<FeatureLike | undefined>(),
 
       getName: () => UID,
 
@@ -631,13 +645,14 @@ export class GeomapPanel extends Component<Props, State> {
 
   render() {
     const { ttip, ttipOpen, topRight, legends } = this.state;
+    const showScale = this.props.options.controls.showScale;
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

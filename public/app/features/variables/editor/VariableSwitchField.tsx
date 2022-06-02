@@ -1,4 +1,5 @@
 import React, { ChangeEvent, PropsWithChildren, ReactElement } from 'react';
+
 import { InlineField, InlineSwitch } from '@grafana/ui';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 interface VariableSwitchFieldProps {

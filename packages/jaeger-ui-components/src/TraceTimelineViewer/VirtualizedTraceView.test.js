@@ -11,17 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import React from 'react';
 import { shallow, mount } from 'enzyme';
+import React from 'react';
+
+import traceGenerator from '../demo/trace-generators';
+import transformTraceData from '../model/transform-trace-data';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
-import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
-import traceGenerator from '../demo/trace-generators';
-import transformTraceData from '../model/transform-trace-data';
 import SpanTreeOffset from './SpanTreeOffset';
+import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
 
@@ -30,6 +31,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   let instance;
 
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
+  const topOfExploreViewRef = jest.fn();
   const props = {
     childrenHiddenIDs: new Set(),
     childrenToggle: jest.fn(),
@@ -50,6 +52,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     spanNameColumnWidth: 0.5,
     trace,
     uiFind: 'uiFind',
+    topOfExploreViewRef,
   };
 
   function expandRow(rowIndex) {
@@ -106,6 +109,10 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
   it('renders a ListView', () => {
     expect(wrapper.find(ListView)).toBeDefined();
+  });
+
+  it('renders scrollToTopButton', () => {
+    expect(wrapper.find({ title: 'Scroll to top' }).exists()).toBeTruthy();
   });
 
   it('sets the trace for global state.traceTimeline', () => {

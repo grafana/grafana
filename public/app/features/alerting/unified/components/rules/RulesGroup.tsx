@@ -1,23 +1,26 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import kbn from 'app/core/utils/kbn';
-import { AccessControlAction } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
+import { RuleLocation } from '../RuleLocation';
+
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditCloudGroupModal';
-import { RulesTable } from './RulesTable';
 import { RuleStats } from './RuleStats';
+import { RulesTable } from './RulesTable';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -34,7 +37,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
-  const canEditCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const { canEditRules } = useRulesAccess();
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
@@ -92,7 +95,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         );
       }
     }
-  } else if (canEditCloudRules && hasRuler(rulesSource)) {
+  } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon
@@ -118,7 +121,13 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   }
 
-  const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+  // ungrouped rules are rules that are in the "default" group name
+  const isUngrouped = group.name === 'default';
+  const groupName = isUngrouped ? (
+    <RuleLocation namespace={namespace.name} />
+  ) : (
+    <RuleLocation namespace={namespace.name} group={group.name} />
+  );
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">

@@ -15,13 +15,14 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { Scenario, TestDataQuery } from './types';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { queryMetricTree } from './metricTree';
-import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
-import { TestDataVariableSupport } from './variables';
+
+import { queryMetricTree } from './metricTree';
 import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
+import { runStream } from './runStreams';
+import { Scenario, TestDataQuery } from './types';
+import { TestDataVariableSupport } from './variables';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   scenariosCache?: Promise<Scenario[]>;

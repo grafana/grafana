@@ -1,9 +1,12 @@
 import { parse, SearchParserResult } from 'search-query-parser';
-import { IconName } from '@grafana/ui';
+
 import { UrlQueryMap } from '@grafana/data';
-import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
-import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
+import { IconName } from '@grafana/ui';
+
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
+
+import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
+import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 
 /**
  * Check if folder has id. Only Recent and Starred folders are the ones without

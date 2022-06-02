@@ -1,12 +1,14 @@
-import React from 'react';
 import { render, screen, fireEvent, getByText } from '@testing-library/react';
-import { RichHistoryCard, Props } from './RichHistoryCard';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import React from 'react';
+
 import { DataSourceApi, DataQuery } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import appEvents from 'app/core/app_events';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+
+import { RichHistoryCard, Props } from './RichHistoryCard';
 
 const starRichHistoryMock = jest.fn();
 const deleteRichHistoryMock = jest.fn();
@@ -15,6 +17,11 @@ const mockDS = mockDataSource({
   name: 'CloudManager',
   type: DataSourceType.Alertmanager,
 });
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {

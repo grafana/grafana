@@ -1,9 +1,11 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import { TableCellProps, TableFieldOptions } from './types';
-import { CellActions } from './CellActions';
+import React from 'react';
+
 import { getCellLinks } from '../../utils';
+
+import { CellActions } from './CellActions';
+import { TableCellProps, TableFieldOptions } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;

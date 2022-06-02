@@ -32,7 +32,7 @@ func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) resp
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
@@ -76,7 +76,7 @@ func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get org quotas", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {

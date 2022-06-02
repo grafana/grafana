@@ -1,4 +1,5 @@
 import $ from 'jquery';
+
 import coreModule from './core_module';
 
 function getBlockNodes(nodes: any[]) {

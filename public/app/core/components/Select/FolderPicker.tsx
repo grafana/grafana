@@ -1,13 +1,17 @@
-import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { AsyncSelect } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-
-import appEvents from '../../app_events';
+import { AsyncSelect } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { DashboardSearchHit } from 'app/features/search/types';
+
 import { AccessControlAction, PermissionLevelString } from '../../../types';
+import appEvents from '../../app_events';
+
+export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -18,8 +22,10 @@ export interface Props {
   initialTitle?: string;
   initialFolderId?: number;
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
+  filter?: FolderPickerFilter;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  accessControlMetadata?: boolean;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -76,11 +82,19 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle, permissionLevel, initialFolderId, showRoot } = this.props;
+    const {
+      rootName,
+      enableReset,
+      initialTitle,
+      permissionLevel,
+      filter,
+      accessControlMetadata,
+      initialFolderId,
+      showRoot,
+    } = this.props;
 
-    const searchHits = await searchFolders(query, permissionLevel);
-
-    const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
+    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
 
     const hasAccess =
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -191,11 +205,15 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
-          menuShouldPortal
         />
       </div>
     );
   }
+}
+
+function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
+  const filteredHits = filter ? filter(hits) : hits;
+  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
 }
 
 interface Args {

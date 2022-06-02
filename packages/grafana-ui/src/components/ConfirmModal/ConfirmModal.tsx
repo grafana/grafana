@@ -1,13 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Modal } from '../Modal/Modal';
+import { HorizontalGroup, Input } from '..';
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
-import { useStyles2 } from '../../themes';
-import { HorizontalGroup, Input } from '..';
+import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
   /** Toggle modal's open/closed state */

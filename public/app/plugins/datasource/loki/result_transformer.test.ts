@@ -1,4 +1,8 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
+import * as ResultTransformer from './result_transformer';
 import {
   LokiStreamResult,
   LokiTailResponse,
@@ -7,9 +11,6 @@ import {
   TransformerOptions,
   LokiMatrixResult,
 } from './types';
-import * as ResultTransformer from './result_transformer';
-import { setTemplateSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const streamResult: LokiStreamResult[] = [
   {
@@ -112,7 +113,7 @@ describe('loki result transformer', () => {
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
-      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, false, 'B');
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, 'B');
       expect(data.fields[4].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
       expect(data.fields[4].values.get(1)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });
@@ -121,7 +122,7 @@ describe('loki result transformer', () => {
   describe('lokiStreamsToDataFrames', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B', expr: '' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
@@ -241,7 +242,7 @@ describe('loki result transformer', () => {
 
 describe('enhanceDataFrame', () => {
   it('adds links to fields', () => {
-    const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
+    const df = new MutableDataFrame({ fields: [{ name: 'Line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     ResultTransformer.enhanceDataFrame(df, {
       derivedFields: [
         {

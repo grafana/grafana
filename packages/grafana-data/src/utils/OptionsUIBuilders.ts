@@ -1,6 +1,3 @@
-import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
-import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
   selectOverrideProcessor,
@@ -19,6 +16,9 @@ import {
   StandardEditorContext,
 } from '../field';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
+import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
+import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 
 /**
  * Fluent API for declarative creation of field config option editors

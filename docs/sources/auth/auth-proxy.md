@@ -1,10 +1,16 @@
-+++
-title = "Auth Proxy"
-description = "Grafana Auth Proxy Guide "
-keywords = ["grafana", "configuration", "documentation", "proxy"]
-aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/auth/auth-proxy/
+  - /docs/grafana/latest/tutorials/authproxy/
+description: 'Grafana Auth Proxy Guide '
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - proxy
+title: Auth Proxy
+weight: 200
+---
 
 # Auth Proxy Authentication
 
@@ -300,5 +306,5 @@ With `enable_login_token` set to `true` Grafana will, after successful auth prox
 a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
 Requests via other routes will be authenticated using the cookie.
 
-Use settings `login_maximum_inactive_lifetime_days` and `login_maximum_lifetime_days` under `[auth]` to control session
+Use settings `login_maximum_inactive_lifetime_duration` and `login_maximum_lifetime_duration` under `[auth]` to control session
 lifetime. [Read more about login tokens]({{< relref "overview/#login-and-short-lived-tokens" >}})

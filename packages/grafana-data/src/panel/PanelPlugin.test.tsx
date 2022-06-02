@@ -1,8 +1,10 @@
 import React from 'react';
-import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
-import { PanelPlugin } from './PanelPlugin';
-import { FieldConfigProperty } from '../types';
+
 import { PanelOptionsEditorBuilder } from '..';
+import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
+import { FieldConfigProperty } from '../types';
+
+import { PanelPlugin } from './PanelPlugin';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
