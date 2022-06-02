@@ -400,7 +400,7 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 	if dashboardLocation != "" {
 		panelLocation = dashboardLocation + "/" + dashboardUID
 	}
-	panelIDs, err := getDashboardPanelIDs(reader, panelLocation)
+	panelIDs, err := getDocsIDsByLocationPrefix(reader, []entityKind{entityKindPanel}, panelLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -420,32 +420,19 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 }
 
 func (i *dashboardIndex) removeFolder(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, folderUID string) (*bluge.Reader, error) {
-	var panelIDs []string
-	dashboardIDs, err := getFolderDashboardIDs(reader, folderUID)
+	ids, err := getDocsIDsByLocationPrefix(reader, []entityKind{entityKindDashboard, entityKindPanel}, folderUID)
 	if err != nil {
 		return nil, err
 	}
-	for _, dashboardID := range dashboardIDs {
-		additionalPanelIDs, err := getDashboardPanelIDs(reader, folderUID+"/"+dashboardID)
-		if err != nil {
-			return nil, err
-		}
-		panelIDs = append(panelIDs, additionalPanelIDs...)
-	}
 	batch := bluge.NewBatch()
 	batch.Delete(bluge.NewDocument(folderUID).ID())
-	for _, panelID := range panelIDs {
-		batch.Delete(bluge.NewDocument(panelID).ID())
+	for _, id := range ids {
+		batch.Delete(bluge.NewDocument(id).ID())
 	}
-	for _, dashboardID := range dashboardIDs {
-		batch.Delete(bluge.NewDocument(dashboardID).ID())
-	}
-
 	err = writer.Batch(batch)
 	if err != nil {
 		return nil, err
 	}
-
 	return writer.Reader()
 }
 
@@ -499,7 +486,7 @@ func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, write
 			batch.Update(panelDoc.ID(), panelDoc)
 		}
 
-		indexedPanelIDs, err := getDashboardPanelIDs(reader, dash.uid)
+		indexedPanelIDs, err := getDashboardPanelIDs(reader, location)
 		if err != nil {
 			return nil, err
 		}

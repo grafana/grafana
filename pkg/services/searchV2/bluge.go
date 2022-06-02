@@ -293,6 +293,38 @@ func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string,
 	return panelIDs, err
 }
 
+func getDocsIDsByLocationPrefix(reader *bluge.Reader, kinds []entityKind, prefix string) ([]string, error) {
+	var ids []string
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
+	bq := bluge.NewBooleanQuery()
+	for _, k := range kinds {
+		bq.AddShould(bluge.NewTermQuery(string(k)).SetField(documentFieldKind))
+	}
+	fullQuery.AddMust(bq)
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				ids = append(ids, string(value))
+			}
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return ids, err
+}
+
 func getFolderDashboardIDs(reader *bluge.Reader, folderUID string) ([]string, error) {
 	var dashboardIDs []string
 	fullQuery := bluge.NewBooleanQuery()
