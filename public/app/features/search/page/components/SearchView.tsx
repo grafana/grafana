@@ -4,7 +4,6 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
@@ -96,10 +95,6 @@ export const SearchView = ({
     },
     [searchSelection]
   );
-
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
 
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
@@ -196,10 +191,6 @@ export const SearchView = ({
       </div>
     );
   };
-
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
 
   return (
     <>
