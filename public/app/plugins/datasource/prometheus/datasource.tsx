@@ -63,8 +63,7 @@ import {
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const POST_METADATA_ENDPOINTS = ['/api/v1/series', '/api/v1/labels'];
-const GET_METADATA_ENDPOINTS = ['/api/v1/query_exemplars', '/api/v1/rules', '/api/v1/metadata', '/api/v1/label/'];
+const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -166,8 +165,14 @@ export class PrometheusDatasource
       }
     }
 
+    let queryUrl = this.url + url;
+    if (url.startsWith(`/api/datasources/${this.id}`)) {
+      // This url is meant to be a replacement for the whole URL. Replace the entire URL
+      queryUrl = url;
+    }
+
     const options: BackendSrvRequest = defaults(overrides, {
-      url: this.url + url,
+      url: queryUrl,
       method: this.httpMethod,
       headers: {},
     });
@@ -207,30 +212,32 @@ export class PrometheusDatasource
 
   // Use this for tab completion features, wont publish response to other components
   async metadataRequest<T = any>(url: string, params = {}) {
-    const qs: Record<string, any> = params;
-    for (const [key, value] of this.customQueryParameters) {
-      if (qs[key] == null) {
-        qs[key] = value;
-        if (!isNaN(parseFloat(value)) && isFinite(value)) {
-          qs[key] = parseInt(value, 10);
+    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
+    if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      try {
+        return await lastValueFrom(
+          this._request<T>(`/api/datasources/${this.id}/resources/${url}`, params, {
+            method: this.httpMethod,
+            hideFromInspector: true,
+            showErrorAlert: false,
+          })
+        );
+      } catch (err) {
+        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
+        if (this.httpMethod === 'POST' && (err.status === 405 || err.status === 400)) {
+          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
+        } else {
+          throw err;
         }
       }
     }
-    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
-    if (
-      (this.httpMethod === 'POST' || POST_METADATA_ENDPOINTS.some((endpoint) => url.startsWith(endpoint))) &&
-      !GET_METADATA_ENDPOINTS.some((endpoint) => url.startsWith(endpoint))
-    ) {
-      const res = await this.postResource(url, qs);
-      return {
-        data: res,
-      };
-    }
 
-    const res = await this.getResource(url, qs);
-    return {
-      data: res,
-    };
+    return await lastValueFrom(
+      this._request<T>(`/api/datasources/${this.id}/resources/${url}`, params, {
+        method: 'GET',
+        hideFromInspector: true,
+      })
+    ); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -1005,7 +1012,11 @@ export class PrometheusDatasource
 
   async areExemplarsAvailable() {
     try {
-      const res = await this.metadataRequest('/api/v1/query_exemplars', { query: 'test' });
+      const res = await this.getResource('/api/v1/query_exemplars', {
+        query: 'test',
+        start: dateTime().subtract(30, 'minutes').valueOf(),
+        end: dateTime().valueOf(),
+      });
       if (res.data.status === 'success') {
         return true;
       }

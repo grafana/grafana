@@ -109,17 +109,16 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	statusCode, bytes, err := i.resource.Execute(ctx, req)
 	if statusCode >= 300 {
-		safeErr := errors.New("no error specified")
-		if err != nil {
-			safeErr = err
-		}
-		return sender.Send(&backend.CallResourceResponse{
+		resp := backend.CallResourceResponse{
 			Status: statusCode,
 			Headers: map[string][]string{
 				"content-type": {"application/json"},
 			},
-			Body: []byte(safeErr.Error()),
-		})
+		}
+		if err != nil {
+			resp.Body = []byte(err.Error())
+		}
+		return sender.Send(&resp)
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
