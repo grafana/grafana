@@ -82,8 +82,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     console.log('TODO, deaccumulate the values');
   }
 
-  const scanlinesFrame = bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap });
-  return getHeatmapData(scanlinesFrame, exemplars, theme);
+  return getHeatmapData(bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap }), exemplars, theme);
 }
 
 const getSparseHeatmapData = (
