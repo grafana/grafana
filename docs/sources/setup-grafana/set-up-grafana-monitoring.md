@@ -20,13 +20,13 @@ Grafana can emit Jaeger traces for its HTTP API endpoints and propagate Jaeger t
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration]({{< relref "configuration.md#tracing-jaeger" >}}) for information about enabling Jaeger tracing.
+Refer to [Configuration]({{< relref "configure-grafana/#tracingjaeger" >}}) for information about enabling Jaeger tracing.
 
 ## View Grafana internal metrics
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "../../administration/configuration/#metrics" >}}) and [metrics.graphite]({{< relref "../../administration/configuration/#metrics-graphite" >}}) in [Configuration]({{< relref "../configuration.md" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "configure-grafana/#metrics" >}}) and [metrics.graphite]({{< relref "configure-grafana/#metricsgraphite" >}}) in [Configuration]({{< relref "configure-grafana/" >}}).
 
 ### Available metrics
 
@@ -111,7 +111,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin]({{< relref "../../developers/plugins/backend/_index.md" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin]({{< relref "../developers/plugins/backend/" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 

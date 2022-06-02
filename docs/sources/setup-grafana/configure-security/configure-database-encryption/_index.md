@@ -10,24 +10,24 @@ weight: 200
 
 Grafana’s database contains secrets, which are used to query data sources, send alert notifications and perform other functions within Grafana.
 
-Grafana encrypts these secrets before they are written to the database, by using a symmetric-key encryption algorithm called Advanced Encryption Standard (AES), and using a [secret key]({{< relref "../administration/configuration/#secret_key" >}}) that you can change when you configure a new Grafana instance.
+Grafana encrypts these secrets before they are written to the database, by using a symmetric-key encryption algorithm called Advanced Encryption Standard (AES), and using a [secret key]({{< relref "../../configure-grafana/#secret_key" >}}) that you can change when you configure a new Grafana instance.
 
 Since Grafana v9.0, it uses [envelope encryption](#envelope-encryption) by default, which adds a layer of indirection to the
 encryption process that represents an [**implicit breaking change**](#implicit-breaking-change) for older versions of Grafana.
 
-For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work](#operational work) section below.
+For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work]({{< relref "./#operational-work" >}}) section below.
 
-> **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "../enterprise/enterprise-encryption/#changing-your-encryption-mode-to-aes-gcm" >}}) instead of AES-CFB.
+> **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "#changing-your-encryption-mode-to-aes-gcm" >}}) instead of AES-CFB.
 
 # Envelope encryption
 
 > **Note:** Since Grafana v9.0, you can turn it off by adding the term `disableEnvelopeEncryption` to the list of
-> feature toggles in your [Grafana configuration]({{< relref "../administration/configuration/#feature_toggles" >}}).
+> feature toggles in your [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
 
 Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to
 encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured
 through the `secret_key` attribute in your
-[Grafana configuration]({{< relref "../administration/configuration/#secret_key" >}}) or with a
+[Grafana configuration]({{< relref "../../configure-grafana/#secret_key" >}}) or with a
 [KMS integration](#kms-integration).
 
 ## Implicit breaking change
@@ -43,7 +43,7 @@ Grafana administrators will be able to downgrade up to Grafana v8.3 and enable e
 
 > **Note:** In Grafana releases between v8.3 and v8.5, you can turn envelope encryption on by adding the term
 > `envelopeEncryption` to the list of feature toggles in your
-> [Grafana configuration]({{< relref "../administration/configuration/#feature_toggles" >}}).
+> [Grafana configuration]({{< relref "../../configure-grafana/#feature_toggles" >}}).
 
 # Operational work
 
@@ -95,7 +95,7 @@ New data keys for encryption operations are generated on-demand.
 > those secrets still encrypted with it. Look at [secrets re-encryption](#re-encrypt-secrets) to completely stop using
 > rotated data keys for both encryption and decryption.
 
-> **Note:** This operation is available through Grafana [Admin API]({{< relref "../developers/http_api/admin/#rotate-data-encryption-keys" >}}).
+> **Note:** This operation is available through Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#rotate-data-encryption-keys" >}}).
 > It's safe to run more than once.
 
 ## Encrypting your database with a key from a Key Management System (KMS)
@@ -106,12 +106,10 @@ You can choose to encrypt secrets stored in the Grafana database using a key fro
 
 Grafana integrates with the following key management systems:
 
-- [AWS KMS]({{< relref "using-aws-kms-to-encrypt-database-secrets.md" >}})
-- [Azure Key Vault]({{< relref "using-azure-key-vault-to-encrypt-database-secrets.md" >}})
-- [Google Cloud KMS]({{< relref "using-google-cloud-kms-to-encrypt-database-secrets.md" >}})
-- [Hashicorp Key Vault]({{< relref "using-hashicorp-key-vault-to-encrypt-database-secrets.md" >}})
-
-Refer to [Database encryption]({{< relref "../../administration/database-encryption.md" >}}) to learn more about how Grafana encrypts secrets in the database.
+- [AWS KMS]({{< relref "encrypt-secrets-using-aws-kms/" >}})
+- [Azure Key Vault]({{< relref "encrypt-secrets-using-azure-key-vault/" >}})
+- [Google Cloud KMS]({{< relref "encrypt-secrets-using-google-cloud-kms/" >}})
+- [Hashicorp Key Vault]({{< relref "encrypt-secrets-using-hashicorp-key-vault/" >}})
 
 ## Changing your encryption mode to AES-GCM
 
@@ -122,4 +120,4 @@ in order to maintain consistency with other services.
 
 To change your encryption mode, update the `algorithm` value in the
 `[security.encryption]` section of your Grafana configuration file.
-For details, refer to [Enterprise configuration]({{< relref "../enterprise-configuration.md#securityencryption" >}}).
+For details, refer to [Enterprise configuration]({{< relref "../../configure-grafana/enterprise-configuration/#securityencryption" >}}).
