@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React, { FC } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,7 @@ import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
-import { RuleFolderPicker, Folder } from './RuleFolderPicker';
+import { RuleFolderPicker, Folder, RuleFolderPickerProps } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
@@ -22,7 +22,11 @@ const recordingRuleNameValidationPattern = {
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 };
 
-export const DetailsStep: FC = () => {
+interface DetailsStepProps {
+  folderPermissions: RuleFolderPickerProps['folderPermissions'];
+}
+
+export const DetailsStep = ({ folderPermissions }: DetailsStepProps) => {
   const {
     register,
     watch,
@@ -103,7 +107,13 @@ export const DetailsStep: FC = () => {
           >
             <InputControl
               render={({ field: { ref, ...field } }) => (
-                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
+                <RuleFolderPicker
+                  inputId="folder"
+                  {...field}
+                  enableCreateNew={true}
+                  enableReset={true}
+                  folderPermissions={folderPermissions}
+                />
               )}
               name="folder"
               rules={{
