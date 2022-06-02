@@ -8,33 +8,35 @@ import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ElementState } from '../../../../features/canvas/runtime/element';
 import { FrameState } from '../../../../features/canvas/runtime/frame';
+import { FlatElement } from '../tree';
 import { doSelect } from '../utils';
 
 import { TreeViewEditorProps } from './treeViewEditor';
 
 type Props = {
-  node: ElementState | FrameState;
+  node: FlatElement;
+  parent: FlatElement;
   selection: string[];
   settings: TreeViewEditorProps;
   index: number;
 };
 
-export const TreeNode = ({ node, selection, settings, index }: Props) => {
-  const [isChildVisible, setIsChildVisible] = useState(false);
+export const TreeView = ({ node, selection, settings, index, parent }: Props) => {
+  const [isChildVisible, setIsChildVisible] = useState({});
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const UID = node.node.UID;
 
-  const hasChildren = node instanceof FrameState;
-  const isSelected = Boolean(selection?.includes(node.getName()));
-  const elements = hasChildren ? node.elements : [];
+  const hasChildren = node.node instanceof FrameState;
+  const isSelected = Boolean(selection?.includes(node.node.getName()));
 
-  const getRowStyle = (isSelected: boolean) => {
+  const getSelectedClass = (isSelected: boolean) => {
     return isSelected ? `${styles.treeNodeHeader} ${styles.selected}` : styles.treeNodeHeader;
   };
 
   const getSvgPath = () => {
-    const id = node.item.id;
+    const id = node.node.item.id;
     let path = '';
 
     switch (id) {
@@ -42,7 +44,7 @@ export const TreeNode = ({ node, selection, settings, index }: Props) => {
         path = `public/img/icons/custom/group.svg`;
         break;
       case 'icon':
-        path = node.data.path;
+        path = node.node.data.path;
         break;
       default:
         path = `public/img/icons/unicons/shape.svg`;
@@ -52,53 +54,44 @@ export const TreeNode = ({ node, selection, settings, index }: Props) => {
     return path;
   };
 
+  let childStyle = { paddingLeft: (node.depth - 1) * 20 };
+
   const onSelectNode = (e: React.MouseEvent<HTMLDivElement>, element: ElementState | FrameState) => {
     e.stopPropagation();
     doSelect(settings, element);
   };
 
+  const onToggleParent = () => {
+    setIsChildVisible((prevState) => ({
+      ...prevState,
+      [UID]: !prevState[UID],
+    }));
+  };
+
   return (
-    <Draggable key={node.UID} draggableId={node.UID.toString()} index={index}>
+    <Draggable key={UID} draggableId={UID.toString()} index={index}>
       {(provided, snapshot) => (
-        <li
-          key={node.UID}
-          className={getRowStyle(isSelected)}
+        <div
+          key={UID}
+          className={getSelectedClass(isSelected)}
           style={{ paddingLeft: !hasChildren ? '24px' : '' }}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <div onClick={() => setIsChildVisible((v) => !v)} className={styles.flex}>
-            {hasChildren && <div>{isChildVisible ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
-            <div onClick={(e) => onSelectNode(e, node)} className={styles.nodeIcon}>
+          <div onClick={onToggleParent} className={styles.flex} style={childStyle}>
+            {hasChildren && <div>{isChildVisible[UID] ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
+            <div onClick={(e) => onSelectNode(e, node.node)} className={styles.nodeIcon}>
               <SVG
                 src={getSvgPath()}
                 className={styles.nodeIconSvg}
                 title={'Node Icon'}
                 style={{ fill: theme.colors.text.primary }}
               />
-              {node.getName()}
+              {node.node.getName()}
             </div>
           </div>
-
-          {hasChildren && isChildVisible && (
-            <div>
-              <ul className={styles.treeContainer}>
-                {elements.map((element: ElementState | FrameState, mapIndex: number) => {
-                  return (
-                    <TreeNode
-                      key={element.UID}
-                      node={element}
-                      selection={selection}
-                      settings={settings}
-                      index={mapIndex}
-                    />
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-        </li>
+        </div>
       )}
     </Draggable>
   );
