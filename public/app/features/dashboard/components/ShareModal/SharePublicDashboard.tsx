@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 
 import { Button, Field, Switch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 
 import {
-  dashboardCanBePublic,
+  dashboardHasTemplateVariables,
   getPublicDashboardConfig,
   savePublicDashboardConfig,
-  getDashboard,
   PublicDashboardConfig,
 } from './SharePublicDashboardUtils';
 import { ShareModalTabProps } from './types';
@@ -20,34 +18,32 @@ interface Props extends ShareModalTabProps {}
 
 export const SharePublicDashboard = (props: Props) => {
   const dashboardUid = props.dashboard.uid;
-  const orgId = contextSrv.user.orgId;
   const [publicDashboardConfig, setPublicDashboardConfig] = useState<PublicDashboardConfig>({
     isPublic: false,
-    publicDashboard: { uid: '', dashboardUid, orgId },
+    publicDashboard: { uid: '', dashboardUid },
   });
 
-  const [dashboard, setDashboard] = useState<DashboardModel>({} as DashboardModel);
+  const [dashboardVariables, setDashboardVariables] = useState<VariableModel[]>([]);
 
   useEffect(() => {
-    // dashboard model may be stale, get a fresh copy
-    getDashboard(dashboardUid, setDashboard).catch();
+    setDashboardVariables(props.dashboard.getVariables());
     getPublicDashboardConfig(dashboardUid, setPublicDashboardConfig).catch();
-  }, [dashboardUid]);
+  }, [props, dashboardUid]);
 
   const onSavePublicConfig = () => {
-    if (!dashboardCanBePublic(dashboard)) {
+    if (dashboardHasTemplateVariables(dashboardVariables)) {
       dispatch(
         notifyApp(createErrorNotification('This dashboard cannot be made public because it has template variables'))
       );
       return;
     }
 
-    savePublicDashboardConfig(dashboard.uid, publicDashboardConfig, setPublicDashboardConfig).catch();
+    savePublicDashboardConfig(props.dashboard.uid, publicDashboardConfig, setPublicDashboardConfig).catch();
   };
 
   return (
     <>
-      {!dashboardCanBePublic(dashboard) && (
+      {dashboardHasTemplateVariables(dashboardVariables) && (
         <Alert severity="warning" title="dashboard cannot be public">
           This dashboard cannot be made public because it has template variables
         </Alert>
@@ -58,7 +54,7 @@ export const SharePublicDashboard = (props: Props) => {
       <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
         <Switch
           id="share-current-time-range"
-          disabled={!dashboardCanBePublic(dashboard)}
+          disabled={dashboardHasTemplateVariables(dashboardVariables)}
           value={publicDashboardConfig?.isPublic}
           onChange={() =>
             setPublicDashboardConfig((state) => {
