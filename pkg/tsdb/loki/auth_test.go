@@ -36,32 +36,32 @@ func (s *mockedCallResourceResponseSenderForOauth) Send(resp *backend.CallResour
 	return nil
 }
 
-func makeMockedDsInfoForOauth(oauthPassThru bool, body []byte, requestCallback func(req *http.Request)) datasourceInfo {
+func makeMockedDsInfoForOauth(body []byte, requestCallback func(req *http.Request)) datasourceInfo {
 	client := http.Client{
 		Transport: &mockedRoundTripperForOauth{requestCallback: requestCallback, body: body},
 	}
 
 	return datasourceInfo{
-		HTTPClient:    &client,
-		OauthPassThru: oauthPassThru,
+		HTTPClient: &client,
 	}
 }
 
 func TestOauthForwardIdentity(t *testing.T) {
 	tt := []struct {
-		name          string
-		oauthPassThru bool
-		headerGiven   bool
-		headerSent    bool
+		name   string
+		auth   bool
+		cookie bool
 	}{
-		{name: "when enabled and headers exist => add headers", oauthPassThru: true, headerGiven: true, headerSent: true},
-		{name: "when disabled and headers exist => do not add headers", oauthPassThru: false, headerGiven: true, headerSent: false},
-		{name: "when enabled and no headers exist => do not add headers", oauthPassThru: true, headerGiven: false, headerSent: false},
-		{name: "when disabled and no headers exist => do not add headers", oauthPassThru: false, headerGiven: false, headerSent: false},
+		{name: "when auth header exists => add auth header", auth: true, cookie: false},
+		{name: "when cookie header exists => add cookie header", auth: false, cookie: true},
+		{name: "when cookie&auth headers exist => add cookie&auth headers", auth: true, cookie: true},
+		{name: "when no header exists => do not add headers", auth: false, cookie: false},
 	}
 
 	authName := "Authorization"
 	authValue := "auth"
+	cookieName := "Cookie"
+	cookieValue := "a=1"
 
 	for _, test := range tt {
 		t.Run("QueryData: "+test.name, func(t *testing.T) {
@@ -83,12 +83,22 @@ func TestOauthForwardIdentity(t *testing.T) {
 			`)
 
 			clientUsed := false
-			dsInfo := makeMockedDsInfoForOauth(test.oauthPassThru, response, func(req *http.Request) {
+			dsInfo := makeMockedDsInfoForOauth(response, func(req *http.Request) {
 				clientUsed = true
-				if test.headerSent {
-					require.Equal(t, authValue, req.Header.Get(authName))
+				// we need to check for "header does not exist",
+				// and the only way i can find is to get the values
+				// as an array
+				authValues := req.Header.Values(authName)
+				cookieValues := req.Header.Values(cookieName)
+				if test.auth {
+					require.Equal(t, []string{authValue}, authValues)
 				} else {
-					require.Equal(t, "", req.Header.Get(authName))
+					require.Len(t, authValues, 0)
+				}
+				if test.cookie {
+					require.Equal(t, []string{cookieValue}, cookieValues)
+				} else {
+					require.Len(t, cookieValues, 0)
 				}
 			})
 
@@ -102,8 +112,12 @@ func TestOauthForwardIdentity(t *testing.T) {
 				},
 			}
 
-			if test.headerGiven {
+			if test.auth {
 				req.Headers[authName] = authValue
+			}
+
+			if test.cookie {
+				req.Headers[cookieName] = cookieValue
 			}
 
 			tracer, err := tracing.InitializeTracerForTest()
@@ -128,12 +142,22 @@ func TestOauthForwardIdentity(t *testing.T) {
 			response := []byte("mocked resource response")
 
 			clientUsed := false
-			dsInfo := makeMockedDsInfoForOauth(test.oauthPassThru, response, func(req *http.Request) {
+			dsInfo := makeMockedDsInfoForOauth(response, func(req *http.Request) {
 				clientUsed = true
-				if test.headerSent {
-					require.Equal(t, authValue, req.Header.Get(authName))
+				authValues := req.Header.Values(authName)
+				cookieValues := req.Header.Values(cookieName)
+				// we need to check for "header does not exist",
+				// and the only way i can find is to get the values
+				// as an array
+				if test.auth {
+					require.Equal(t, []string{authValue}, authValues)
 				} else {
-					require.Equal(t, "", req.Header.Get(authName))
+					require.Len(t, authValues, 0)
+				}
+				if test.cookie {
+					require.Equal(t, []string{cookieValue}, cookieValues)
+				} else {
+					require.Len(t, cookieValues, 0)
 				}
 			})
 
@@ -143,8 +167,11 @@ func TestOauthForwardIdentity(t *testing.T) {
 				URL:     "labels?",
 			}
 
-			if test.headerGiven {
+			if test.auth {
 				req.Headers[authName] = []string{authValue}
+			}
+			if test.cookie {
+				req.Headers[cookieName] = []string{cookieValue}
 			}
 
 			sender := &mockedCallResourceResponseSenderForOauth{}

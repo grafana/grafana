@@ -1,33 +1,39 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { memo } from 'react';
 
-import { OrgRole } from '@grafana/data';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Button, HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
+import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
-
-import { OrgRolePicker } from '../admin/OrgRolePicker';
-
-import { getStyles } from './ServiceAccountsListPage';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
-  onSetToRemove: (serviceAccount: ServiceAccountDTO) => void;
+  onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void;
+  onDisable: (serviceAccount: ServiceAccountDTO) => void;
+  onEnable: (serviceAccount: ServiceAccountDTO) => void;
+  onAddTokenClick: (serviceAccount: ServiceAccountDTO) => void;
 };
 
 const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
-const getServiceAccountsEnabledStatus = (disabled: boolean) => {
-  return disabled ? 'Disabled' : 'Enabled';
-};
 
 const ServiceAccountListItem = memo(
-  ({ serviceAccount, onRoleChange, roleOptions, builtInRoles, onSetToRemove }: ServiceAccountListItemProps) => {
+  ({
+    serviceAccount,
+    onRoleChange,
+    roleOptions,
+    builtInRoles,
+    onRemoveButtonClick,
+    onDisable,
+    onEnable,
+    onAddTokenClick,
+  }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
@@ -37,7 +43,7 @@ const ServiceAccountListItem = memo(
     const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate) && canUpdateRole;
 
     return (
-      <tr key={serviceAccount.id}>
+      <tr key={serviceAccount.id} className={cx({ [styles.disabled]: serviceAccount.isDisabled })}>
         <td className="width-4 text-center link-td">
           <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}>
             <img
@@ -59,7 +65,7 @@ const ServiceAccountListItem = memo(
         </td>
         <td className="link-td max-width-10">
           <a
-            className="ellipsis"
+            className={styles.accountId}
             href={editUrl}
             title={serviceAccount.login}
             aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
@@ -68,7 +74,7 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         {contextSrv.licensedAccessControlEnabled() ? (
-          <td className={cx('link-td', styles.iconRow)}>
+          <td>
             {displayRolePicker && (
               <UserRolePicker
                 userId={serviceAccount.id}
@@ -77,16 +83,16 @@ const ServiceAccountListItem = memo(
                 onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 builtInRoles={builtInRoles}
-                disabled={!enableRolePicker}
+                disabled={!enableRolePicker || serviceAccount.isDisabled}
               />
             )}
           </td>
         ) : (
-          <td className={cx('link-td', styles.iconRow)}>
+          <td>
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={!canUpdateRole}
+              disabled={!canUpdateRole || serviceAccount.isDisabled}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
           </td>
@@ -95,43 +101,81 @@ const ServiceAccountListItem = memo(
           <a
             className="ellipsis"
             href={editUrl}
-            title={getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
-            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
-          >
-            {getServiceAccountsEnabledStatus(serviceAccount.isDisabled)}
-          </a>
-        </td>
-        <td className="link-td max-width-10">
-          <a
-            className="ellipsis"
-            href={editUrl}
             title="Tokens"
             aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
           >
-            <span>
-              <Icon name={'key-skeleton-alt'}></Icon>
-            </span>
-            &nbsp;
-            {serviceAccount.tokens}
+            <div className={cx(styles.tokensInfo, { [styles.tokensInfoSecondary]: !serviceAccount.tokens })}>
+              <span>
+                <Icon name="key-skeleton-alt"></Icon>
+              </span>
+              {serviceAccount.tokens || 'No tokens'}
+            </div>
           </a>
         </td>
-        {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
-          <td>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => {
-                onSetToRemove(serviceAccount);
-              }}
-              icon="times"
-              aria-label="Delete service account"
-            />
-          </td>
-        )}
+        <td>
+          <HorizontalGroup justify="flex-end">
+            {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
+              <Button onClick={() => onAddTokenClick(serviceAccount)} disabled={serviceAccount.isDisabled}>
+                Add token
+              </Button>
+            )}
+            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount) &&
+              (serviceAccount.isDisabled ? (
+                <Button variant="primary" onClick={() => onEnable(serviceAccount)}>
+                  Enable
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => onDisable(serviceAccount)}>
+                  Disable
+                </Button>
+              ))}
+            {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+              <IconButton
+                className={styles.deleteButton}
+                name="trash-alt"
+                size="md"
+                onClick={() => onRemoveButtonClick(serviceAccount)}
+                aria-label={`Delete service account ${serviceAccount.name}`}
+              />
+            )}
+          </HorizontalGroup>
+        </td>
       </tr>
     );
   }
 );
 ServiceAccountListItem.displayName = 'ServiceAccountListItem';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    iconRow: css`
+      svg {
+        margin-left: ${theme.spacing(0.5)};
+      }
+    `,
+    accountId: cx(
+      'ellipsis',
+      css`
+        color: ${theme.colors.text.secondary};
+      `
+    ),
+    deleteButton: css`
+      color: ${theme.colors.text.secondary};
+    `,
+    tokensInfo: css`
+      span {
+        margin-right: ${theme.spacing(1)};
+      }
+    `,
+    tokensInfoSecondary: css`
+      color: ${theme.colors.text.secondary};
+    `,
+    disabled: css`
+      td a {
+        color: ${theme.colors.text.secondary};
+      }
+    `,
+  };
+};
 
 export default ServiceAccountListItem;
