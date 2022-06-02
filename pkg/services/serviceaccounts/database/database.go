@@ -86,35 +86,35 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 	})
 }
 
-func (s *ServiceAccountsStoreImpl) GetServiceAccountsUpgradeStatus(ctx context.Context, orgID int64) (status *serviceaccounts.ServiceAccountsUpgradeStatus, err error) {
-	upgraded, exists, err := s.kvStore.Get(ctx, orgID, "serviceaccounts", "upgradeStatus")
+func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
+	migrationStatus, exists, err := s.kvStore.Get(ctx, kvstore.AllOrganizations, "serviceaccounts", "migrationStatus")
 	if err != nil {
 		return nil, err
 	}
-	if exists && upgraded != "" {
-		return &serviceaccounts.ServiceAccountsUpgradeStatus{
-			Upgraded: true,
+	if exists && migrationStatus == "1" {
+		return &serviceaccounts.APIKeysMigrationStatus{
+			Migrated: true,
 		}, nil
 	} else {
-		return &serviceaccounts.ServiceAccountsUpgradeStatus{
-			Upgraded: false,
+		return &serviceaccounts.APIKeysMigrationStatus{
+			Migrated: false,
 		}, nil
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
+func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context) error {
 	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) > 0 {
-		return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			for _, key := range basicKeys {
-				err := s.CreateServiceAccountFromApikey(ctx, key)
-				if err != nil {
-					s.log.Error("migating to service accounts failed with error", err)
-					return err
-				}
+		for _, key := range basicKeys {
+			err := s.CreateServiceAccountFromApikey(ctx, key)
+			if err != nil {
+				s.log.Error("migating to service accounts failed with error", err)
+				return err
 			}
-			return nil
-		})
+		}
+	}
+	if err := s.kvStore.Set(ctx, kvstore.AllOrganizations, "serviceaccounts", "migrationStatus", "1"); err != nil {
+		s.log.Error("Failed to write API keys migration status", err)
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
 	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) == 0 {
-		return nil
+		return fmt.Errorf("No API keys to convert found")
 	}
 	for _, key := range basicKeys {
 		if contains(keys, key.Id) {

@@ -16,7 +16,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: false,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const keyCount = getApiKeysCount(mockState);
       expect(keyCount).toBe(5);
@@ -29,7 +29,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: true,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const keyCount = getApiKeysCount(mockState);
       expect(keyCount).toBe(8);
@@ -45,7 +45,7 @@ describe('API Keys selectors', () => {
           searchQuery: '',
           hasFetched: true,
           includeExpired: false,
-          serviceAccountsUpgraded: false,
+          apiKeysMigrated: false,
         };
         const keys = getApiKeys(mockState);
         expect(keys).toEqual(mockKeys);
@@ -58,7 +58,7 @@ describe('API Keys selectors', () => {
           searchQuery: '5',
           hasFetched: true,
           includeExpired: false,
-          serviceAccountsUpgraded: false,
+          apiKeysMigrated: false,
         };
         const keys = getApiKeys(mockState);
         expect(keys.length).toEqual(1);
@@ -73,7 +73,7 @@ describe('API Keys selectors', () => {
           searchQuery: '',
           hasFetched: true,
           includeExpired: true,
-          serviceAccountsUpgraded: false,
+          apiKeysMigrated: false,
         };
         const keys = getApiKeys(mockState);
         expect(keys).toEqual(mockKeysIncludingExpired);
@@ -86,7 +86,7 @@ describe('API Keys selectors', () => {
           searchQuery: '5',
           hasFetched: true,
           includeExpired: true,
-          serviceAccountsUpgraded: false,
+          apiKeysMigrated: false,
         };
         const keys = getApiKeys(mockState);
         expect(keys.length).toEqual(1);
@@ -102,7 +102,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: true,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const includeExpired = getIncludeExpired(mockState);
       expect(includeExpired).toBe(true);
@@ -115,7 +115,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: false,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const includeExpired = getIncludeExpired(mockState);
       expect(includeExpired).toBe(false);
@@ -130,7 +130,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: true,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const includeExpiredDisabled = getIncludeExpiredDisabled(mockState);
       expect(includeExpiredDisabled).toBe(true);
@@ -143,7 +143,7 @@ describe('API Keys selectors', () => {
         searchQuery: '',
         hasFetched: true,
         includeExpired: false,
-        serviceAccountsUpgraded: false,
+        apiKeysMigrated: false,
       };
       const includeExpiredDisabled = getIncludeExpired(mockState);
       expect(includeExpiredDisabled).toBe(false);

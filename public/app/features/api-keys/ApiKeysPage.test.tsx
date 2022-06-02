@@ -27,6 +27,7 @@ const setup = (propOverrides: Partial<Props>) => {
   const deleteApiKeyMock = jest.fn();
   const migrateApiKeyMock = jest.fn();
   const addApiKeyMock = jest.fn();
+  const migrateAllMock = jest.fn();
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
   const getServiceAccountsUpgradeStatusMock = jest.fn();
@@ -48,13 +49,14 @@ const setup = (propOverrides: Partial<Props>) => {
     addApiKey: addApiKeyMock,
     getServiceAccountsUpgradeStatus: getServiceAccountsUpgradeStatusMock,
     migrateApiKey: migrateApiKeyMock,
+    migrateAll: migrateAllMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
     canCreate: true,
-    serviceAccountsUpgraded: false,
+    apiKeysMigrated: false,
   };
 
   Object.assign(props, propOverrides);

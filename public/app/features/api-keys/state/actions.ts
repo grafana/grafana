@@ -48,12 +48,23 @@ export function migrateApiKey(id: number): ThunkResult<void> {
   };
 }
 
+export function migrateAll(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      await getBackendSrv().post('/api/serviceaccounts/migrate');
+    } finally {
+      dispatch(getServiceAccountsUpgradeStatus());
+      dispatch(loadApiKeys());
+    }
+  };
+}
+
 export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: remove when service account enabled by default (or use another way to detect if it's enabled)
     if (config.featureToggles.serviceAccounts) {
-      const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
-      dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
+      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+      dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.migrated));
     }
   };
 }

@@ -14,6 +14,7 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { APIKeysMigratedCard } from './APIKeysMigratedCard';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
@@ -24,6 +25,7 @@ import {
   addApiKey,
   deleteApiKey,
   migrateApiKey,
+  migrateAll,
   loadApiKeys,
   toggleIncludeExpired,
   getServiceAccountsUpgradeStatus,
@@ -44,7 +46,7 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
-    serviceAccountsUpgraded: state.apiKeys.serviceAccountsUpgraded,
+    apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
 
@@ -52,6 +54,7 @@ const mapDispatchToProps = {
   loadApiKeys,
   deleteApiKey,
   migrateApiKey,
+  migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
@@ -84,6 +87,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onDeleteApiKey = (key: ApiKey) => {
     this.props.deleteApiKey(key.id!);
+  };
+
+  onMigrateAll = () => {
+    this.props.migrateAll();
   };
 
   onMigrateApiKey = (key: ApiKey) => {
@@ -143,7 +150,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
-      serviceAccountsUpgraded,
+      apiKeysMigrated,
     } = this.props;
 
     if (!hasFetched) {
@@ -159,14 +166,15 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
         <Page.Contents isLoading={false}>
           <ApiKeysController>
             {({ isAdding, toggleIsAdding }) => {
-              const showCTA = !isAdding && apiKeysCount === 0;
+              const showCTA = !isAdding && apiKeysCount === 0 && !apiKeysMigrated;
               const showTable = apiKeysCount > 0;
               return (
                 <>
                   {/* TODO: remove feature flag check before GA */}
-                  {config.featureToggles.serviceAccounts && !serviceAccountsUpgraded && (
-                    <MigrateToServiceAccountsCard onMigrate={() => {}} />
+                  {config.featureToggles.serviceAccounts && !apiKeysMigrated && (
+                    <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />
                   )}
+                  {config.featureToggles.serviceAccounts && apiKeysMigrated && <APIKeysMigratedCard />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

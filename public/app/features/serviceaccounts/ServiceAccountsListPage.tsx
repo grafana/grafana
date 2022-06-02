@@ -57,7 +57,7 @@ export const ServiceAccountsListPageUnconnected = ({
   builtInRoles,
   query,
   serviceAccountStateFilter,
-  serviceAccountsUpgraded,
+  apiKeysMigrated,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -163,7 +163,7 @@ export const ServiceAccountsListPageUnconnected = ({
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        {serviceAccountsUpgraded && (
+        {apiKeysMigrated && (
           <Alert
             title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
           accounts. Learn more."

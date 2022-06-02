@@ -51,7 +51,7 @@ export const initialStateList: ServiceAccountsState = {
   totalPages: 1,
   showPaging: false,
   serviceAccountStateFilter: ServiceAccountStateFilter.All,
-  serviceAccountsUpgraded: false,
+  apiKeysMigrated: false,
 };
 
 interface ServiceAccountsFetched {
@@ -91,7 +91,7 @@ const serviceAccountsSlice = createSlice({
       return { ...state, builtInRoles: action.payload };
     },
     serviceAccountsUpgradeStatusLoaded: (state, action): ServiceAccountsState => {
-      return { ...state, serviceAccountsUpgraded: action.payload };
+      return { ...state, apiKeysMigrated: action.payload };
     },
     queryChanged: (state, action: PayloadAction<string>) => {
       return {

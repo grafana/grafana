@@ -42,7 +42,7 @@ const setup = (propOverrides: Partial<Props>) => {
     showPaging: false,
     totalPages: 1,
     serviceAccounts: [],
-    serviceAccountsUpgraded: false,
+    apiKeysMigrated: false,
     changeQuery: changeQueryMock,
     fetchACOptions: fetchACOptionsMock,
     fetchServiceAccounts: fetchServiceAccountsMock,

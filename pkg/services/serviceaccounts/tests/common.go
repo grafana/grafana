@@ -75,8 +75,8 @@ type Calls struct {
 	CreateServiceAccount            []interface{}
 	RetrieveServiceAccount          []interface{}
 	DeleteServiceAccount            []interface{}
-	GetServiceAccountsUpgradeStatus []interface{}
-	UpgradeServiceAccounts          []interface{}
+	GetAPIKeysMigrationStatus       []interface{}
+	MigrateApiKeysToServiceAccounts []interface{}
 	ConvertServiceAccounts          []interface{}
 	ListTokens                      []interface{}
 	DeleteServiceAccountToken       []interface{}
@@ -107,13 +107,13 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) GetServiceAccountsUpgradeStatus(ctx context.Context, orgID int64) (*serviceaccounts.ServiceAccountsUpgradeStatus, error) {
-	s.Calls.UpgradeServiceAccounts = append(s.Calls.GetServiceAccountsUpgradeStatus, []interface{}{ctx})
+func (s *ServiceAccountsStoreMock) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error) {
+	s.Calls.GetAPIKeysMigrationStatus = append(s.Calls.GetAPIKeysMigrationStatus, []interface{}{ctx})
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+func (s *ServiceAccountsStoreMock) MigrateApiKeysToServiceAccounts(ctx context.Context) error {
+	s.Calls.MigrateApiKeysToServiceAccounts = append(s.Calls.MigrateApiKeysToServiceAccounts, []interface{}{ctx})
 	return nil
 }
 

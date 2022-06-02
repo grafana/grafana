@@ -73,8 +73,8 @@ type ServiceAccountProfileDTO struct {
 
 type ServiceAccountFilter string // used for filtering
 
-type ServiceAccountsUpgradeStatus struct {
-	Upgraded bool `json:"upgraded"`
+type APIKeysMigrationStatus struct {
+	Migrated bool `json:"migrated"`
 }
 
 const (

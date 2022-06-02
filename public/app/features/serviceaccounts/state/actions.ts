@@ -44,8 +44,8 @@ export function fetchACOptions(): ThunkResult<void> {
 
 export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
   return async (dispatch) => {
-    const result = await getBackendSrv().get('/api/serviceaccounts/upgradestatus');
-    dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.upgraded));
+    const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+    dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.migrated));
   };
 }
 

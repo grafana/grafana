@@ -25,5 +25,5 @@ export interface ApiKeysState {
   keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
-  serviceAccountsUpgraded: boolean;
+  apiKeysMigrated: boolean;
 }
