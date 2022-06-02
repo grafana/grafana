@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
