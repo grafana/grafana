@@ -49,13 +49,20 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
 
+export interface HeatmapScanlinesCustomMeta {
+  /** This provides the lookup values */
+  yOrdinalDisplay: string[];
+  yOrdinalLabel?: string[];
+  yMatchWithLabel?: string;
+}
+
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
 export function bucketsToScanlines(frame: DataFrame): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
   const xField = frame.fields[0];
   const xValues = xField.values.toArray();
-  const yField = frame.fields[1];
+  const yFields = frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
   // similar to initBins() below
   const len = xValues.length * (frame.fields.length - 1);
@@ -63,7 +70,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
   const ys = new Array(len);
   const counts2 = new Array(len);
 
-  const counts = frame.fields.slice(1).map((field) => field.values.toArray().slice());
+  const counts = yFields.map((field) => field.values.toArray().slice());
 
   // transpose
   counts.forEach((bucketCounts, bi) => {
@@ -85,10 +92,23 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
     xs[i] = xValues[xi];
   }
 
+  // this name determines whether cells are drawn above, below, or centered on the values
+  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
+  // TODO -- settings
+
+  const custom: HeatmapScanlinesCustomMeta = {
+    yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, frame)),
+    yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
+  };
+  if (custom.yMatchWithLabel) {
+    custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
+  }
   return {
     length: xs.length,
+    refId: frame.refId,
     meta: {
       type: DataFrameType.HeatmapScanlines,
+      custom,
     },
     fields: [
       {
@@ -98,19 +118,19 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
         config: xField.config,
       },
       {
-        // this name determines whether cells are drawn above, below, or centered on the values
-        name: yField.labels?.le != null ? 'yMax' : 'y',
+        name: ordinalFieldName,
         type: FieldType.number,
         values: new ArrayVector(ys),
-        config: yField.config,
+        config: {
+          unit: 'short', // ordinal lookup
+        },
       },
       {
         name: 'count',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: {
-          unit: 'short',
-        },
+        config: yFields[0].config,
+        display: yFields[0].display,
       },
     ],
   };
