@@ -18,6 +18,7 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
+	"github.com/grafana/grafana/pkg/framework/coremodel/staticregistry"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -158,6 +159,7 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	starService                  star.Service
 	CoremodelRegistry            *coremodel.Registry
+	CoremodelStaticRegistry      staticregistry.ExplicitRegistry
 }
 
 type ServerOptions struct {
@@ -192,7 +194,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, coremodelRegistry *coremodel.Registry,
+	starService star.Service, coremodelRegistry *coremodel.Registry, coremodelStaticRegistry staticregistry.ExplicitRegistry,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -272,6 +274,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
 		CoremodelRegistry:            coremodelRegistry,
+		CoremodelStaticRegistry:      coremodelStaticRegistry,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
