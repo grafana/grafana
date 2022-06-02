@@ -39,12 +39,13 @@ type DashboardServiceImpl struct {
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
+	ac                   accesscontrol.AccessControl
 }
 
 func ProvideDashboardService(
 	cfg *setting.Cfg, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -54,6 +55,7 @@ func ProvideDashboardService(
 		features:             features,
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
+		ac:                   ac,
 	}
 }
 

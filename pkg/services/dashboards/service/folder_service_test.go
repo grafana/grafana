@@ -28,10 +28,10 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
+		ac := acmock.New()
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
-		ac := acmock.New()
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, ac)
 
 		ProvideFolderService(
 			cfg, dashboardService, store, nil, features, folderPermissions, ac,
@@ -49,7 +49,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
 		service := FolderServiceImpl{
 			cfg:              cfg,

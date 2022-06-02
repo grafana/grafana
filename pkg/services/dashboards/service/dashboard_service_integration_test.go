@@ -872,6 +872,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -889,6 +890,7 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
 	return err
@@ -922,7 +924,9 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -957,7 +961,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
