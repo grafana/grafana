@@ -58,6 +58,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
   isBaseMap: true,
+  showOpacity: true,
 
   create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {
     const cfg = { ...options.config };

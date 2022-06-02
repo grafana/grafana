@@ -8,6 +8,7 @@ export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
   name: 'Open Street Map',
   isBaseMap: true,
+  showOpacity: true,
 
   /**
    * Function that configures transformation and returns a transformer
