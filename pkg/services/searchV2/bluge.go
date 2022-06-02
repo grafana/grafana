@@ -190,6 +190,8 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		purl := url
 		if panel.Type != "row" {
 			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		} else {
+			continue // for now, we are excluding rows from the search index
 		}
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
