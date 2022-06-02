@@ -10,7 +10,7 @@ keywords:
   - plugin
   - troubleshooting
 title: Troubleshooting
-weight: 115
+weight: 200
 ---
 
 # Troubleshoot image rendering

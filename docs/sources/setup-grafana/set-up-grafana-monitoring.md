@@ -10,7 +10,7 @@ keywords:
   - jaeger
   - tracing
 title: Set up Grafana monitoring
-weight: 700
+weight: 800
 ---
 
 # Set up Grafana monitoring

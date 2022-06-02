@@ -12,7 +12,7 @@ aliases:
 description: Learn how to configure SAML authentication in Grafana.
 menuTitle: Configure SAML authentication
 title: Configure SAML authentication in Grafana
-weight: 160
+weight: 1100
 ---
 
 # Configure SAML authentication in Grafana

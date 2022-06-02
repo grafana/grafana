@@ -7,7 +7,7 @@ aliases:
 description: Learn how to use Team Sync to synchronize between your authentication
   provider teams and Grafana teams.
 title: Configure Team Sync
-weight: 1200
+weight: 1000
 ---
 
 # Configure Team Sync
@@ -22,8 +22,6 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 > Currently the synchronization only happens when a user logs in, unless LDAP is used with the active background synchronization that was added in Grafana 6.3.
 
 <div class="clearfix"></div>
-
-> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
 ## Supported providers
 

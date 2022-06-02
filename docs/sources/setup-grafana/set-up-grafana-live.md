@@ -11,7 +11,7 @@ description: Grafana Live is a real-time messaging engine that pushes event data
   a frontend when an event occurs.
 menuTitle: Set up Grafana Live
 title: Set up Grafana Live
-weight: 1000
+weight: 1100
 ---
 
 # Set up Grafana Live

@@ -8,7 +8,7 @@ keywords:
   - usage-insights
   - enterprise
 title: Export logs of usage insights
-weight: 500
+weight: 900
 ---
 
 # Export logs of usage insights

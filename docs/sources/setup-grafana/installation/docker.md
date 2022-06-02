@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/setup-grafana/installation/docker/
 description: Guide for running Grafana using Docker
 title: Run Grafana Docker image
-weight: 100
+weight: 200
 ---
 
 # Run Grafana Docker image

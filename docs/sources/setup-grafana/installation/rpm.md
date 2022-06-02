@@ -6,7 +6,7 @@ aliases:
 description: Grafana Installation guide for RPM-based Linux, such as Centos, Fedora,
   OpenSuse, and Red Hat.
 title: Install on RPM-based Linux
-weight: 200
+weight: 400
 ---
 
 # Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)

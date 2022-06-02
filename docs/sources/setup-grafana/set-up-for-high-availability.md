@@ -9,7 +9,7 @@ keywords:
   - HA
   - high availability
 title: Set up Grafana for high availability
-weight: 800
+weight: 900
 ---
 
 # Set up Grafana for high availability

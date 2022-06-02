@@ -6,7 +6,7 @@ aliases:
 description: If you have a Grafana Enterprise license, you can integrate with a variety
   of key management system providers.
 title: Configure database encryption
-weight: 200
+weight: 700
 ---
 
 # Configure database encryption

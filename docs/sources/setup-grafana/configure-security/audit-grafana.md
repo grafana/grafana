@@ -9,7 +9,7 @@ keywords:
   - audit
   - logs
 title: Audit a Grafana instance
-weight: 1100
+weight: 800
 ---
 
 # Audit a Grafana instance

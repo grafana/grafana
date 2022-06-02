@@ -10,7 +10,7 @@ keywords:
   - rendering
   - plugin
 title: Set up image rendering
-weight: 900
+weight: 1000
 ---
 
 # Set up image rendering

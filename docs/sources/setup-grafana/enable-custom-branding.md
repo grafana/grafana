@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/setup-grafana/enable-custom-branding/
 description: Change the look of Grafana to match your corporate brand.
 title: Enable custom branding
-weight: 1200
+weight: 1300
 ---
 
 # Enable custom branding
