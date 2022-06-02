@@ -2,12 +2,17 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 const (
 	maxPrefixParts = 2
 )
+
+func ParseScopeID(scope string) (int64, error) {
+	return strconv.ParseInt(scope[len(ScopePrefix(scope)):], 10, 64)
+}
 
 func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)
