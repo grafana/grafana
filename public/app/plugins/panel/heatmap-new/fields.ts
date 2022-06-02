@@ -1,10 +1,8 @@
 import {
   DataFrame,
   DataFrameType,
-  FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
   outerJoinDataFrames,
@@ -19,10 +17,6 @@ export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
   exemplars?: DataFrame; // optionally linked exemplars
   exemplarColor?: string;
-
-  yAxisValues?: Array<number | string | null>;
-  yLabelValues?: string[]; // matched ordinally to yAxisValues
-  matchByLabel?: string; // e.g. le, pod, etc.
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -88,16 +82,8 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     console.log('TODO, deaccumulate the values');
   }
 
-  const yFields = bucketHeatmap.fields.filter((f) => f.type === FieldType.number);
-  const matchByLabel = Object.keys(yFields[0].labels ?? {})[0];
-
   const scanlinesFrame = bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap });
-  return {
-    matchByLabel,
-    yLabelValues: matchByLabel ? yFields.map((f) => f.labels?.[matchByLabel] ?? '') : undefined,
-    yAxisValues: yFields.map((f) => getFieldDisplayName(f, bucketHeatmap, frames)),
-    ...getHeatmapData(scanlinesFrame, exemplars, theme),
-  };
+  return getHeatmapData(scanlinesFrame, exemplars, theme);
 }
 
 const getSparseHeatmapData = (

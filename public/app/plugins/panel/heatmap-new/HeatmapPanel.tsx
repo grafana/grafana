@@ -6,6 +6,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -46,24 +47,25 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    if (info.exemplars && info.matchByLabel) {
+    const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
+    if (info.exemplars && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
-      const hasLabeledY = info.yLabelValues != null;
+      const hasLabeledY = meta.yOrdinalDisplay != null;
 
       if (hasLabeledY) {
         let matchExemplarsBy = info.exemplars?.fields
-          .find((field) => field.name === info.matchByLabel)!
+          .find((field) => field.name === meta.yMatchWithLabel)!
           .values.toArray();
-        exemplarsyFacet = matchExemplarsBy.map((label) => info.yLabelValues?.indexOf(label)) as number[];
+        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
       } else {
         exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
       }
     }
 
     return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
-  }, [info.heatmap, info.exemplars, info.yLabelValues, info.matchByLabel]);
+  }, [info.heatmap, info.exemplars]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 

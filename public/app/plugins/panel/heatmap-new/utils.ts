@@ -4,7 +4,7 @@ import uPlot from 'uplot';
 import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { HeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -267,7 +267,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           },
   });
 
-  const hasLabeledY = dataRef.current?.yAxisValues != null;
+  const hasLabeledY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   builder.addAxis({
     scaleKey: 'y',
@@ -294,8 +294,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
     values: hasLabeledY
       ? () => {
-          const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
-          const meta = (dataRef.current?.heatmap?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
+          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          const yAxisValues = meta.yOrdinalDisplay?.slice()!;
           const isFromBuckets = meta.yOrdinalDisplay?.length && !('le' === meta.yMatchWithLabel);
 
           if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {

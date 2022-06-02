@@ -54,8 +54,11 @@ export interface HeatmapScanlinesCustomMeta {
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
+}
 
-  // axis align (le/ge/unknown)
+/** simple utility to get heatmap metadata from a frame */
+export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanlinesCustomMeta {
+  return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
 }
 
 export interface BucketsOptions {
