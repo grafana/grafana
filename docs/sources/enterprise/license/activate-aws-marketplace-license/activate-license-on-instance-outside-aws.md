@@ -31,7 +31,7 @@ To activate a Grafana Enterprise license from AWS on a Grafana Enterprise instan
 
 To install Grafana, refer to the documentation specific to your implementation.
 
-- [Install Grafana]({{< relref "../../../installation/" >}}).
+- [Install Grafana]({{< relref "../../../setup-grafana/installation" >}}).
 - [Run Grafana Docker image]({{< relref "../../../setup-grafana/installation/docker/" >}}).
 - [Deploy Grafana on Kubernetes]({{< relref "../../../setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes" >}}).
 

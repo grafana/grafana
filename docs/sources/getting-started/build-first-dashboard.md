@@ -17,7 +17,7 @@ This topic helps you get started with Grafana and build your first dashboard. To
 
 #### Install Grafana
 
-Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/" >}}).
+Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../setup-grafana/installation/" >}}).
 
 #### Sign in to Grafana
 

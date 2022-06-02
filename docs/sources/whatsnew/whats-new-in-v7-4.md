@@ -205,7 +205,7 @@ Refer to [Licensing restrictions]({{< relref "../enterprise/license/license-rest
 
 You can now export usage insights logs to Loki and query them from Grafana. Usage insights logs include dashboard visits, data source views, queries and errors, and more.
 
-For more information, refer to [Export logs of usage insights]({{< relref "../enterprise/usage-insights/export-logs/" >}}).
+For more information, refer to [Export logs of usage insights]({{< relref "../setup-grafana/configure-security/export-logs/" >}}).
 
 ### New audit log events
 

@@ -28,4 +28,4 @@ These aggregated data give you access to several features:
 - [Presence indicator]({{< relref "presence-indicator/" >}})
 - [Sort dashboards by using insights data]({{< relref "improved-search/" >}})
 
-This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights]({{< relref "export-logs/" >}}).
+This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}).
