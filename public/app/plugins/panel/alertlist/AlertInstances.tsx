@@ -49,7 +49,7 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
         <div className={uncollapsible ? styles.clickable : ''} onClick={() => toggleShowInstances()}>
           {uncollapsible && <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />}
           <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
-          {hiddenInstances > 0 && <span>, {`${hiddenInstances} not shown`}</span>}
+          {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </div>
       )}
       {displayInstances && <AlertInstancesTable instances={filteredAlerts} />}
