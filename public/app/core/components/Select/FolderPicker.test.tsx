@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
+import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 import * as api from 'app/features/manage-dashboards/state/actions';
@@ -32,8 +34,8 @@ describe('FolderPicker', () => {
 
     render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.id !== 2)} />);
 
-    const pickerInput = await screen.findByLabelText(selectors.components.FolderPicker.input);
-    fireEvent.click(pickerInput);
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
 
