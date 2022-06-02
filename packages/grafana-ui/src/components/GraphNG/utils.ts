@@ -9,8 +9,8 @@ import {
 
 import { FIXED_UNIT } from './GraphNG';
 import { applyNullInsertThreshold } from './nullInsertThreshold';
+import { nullToFormattedValue } from './nullToFormattedValue';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
-import { nullToValue } from './nullToValue';
 import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
@@ -53,12 +53,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
       refFieldPseudoMin: timeRange?.from.valueOf(),
       refFieldPseudoMax: timeRange?.to.valueOf(),
     });
-
-    f = nullToValue(f);
-
-    console.log(f);
-
-    return f;
+    return nullToFormattedValue(f);
   });
 
   let numBarSeries = 0;
