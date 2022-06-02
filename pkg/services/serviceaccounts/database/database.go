@@ -105,15 +105,16 @@ func (s *ServiceAccountsStoreImpl) GetServiceAccountsUpgradeStatus(ctx context.C
 func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
 	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) > 0 {
-		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
-		go func() {
+		return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			for _, key := range basicKeys {
 				err := s.CreateServiceAccountFromApikey(ctx, key)
 				if err != nil {
 					s.log.Error("migating to service accounts failed with error", err)
+					return err
 				}
 			}
-		}()
+			return nil
+		})
 	}
 	return nil
 }
@@ -150,7 +151,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
 
-		if errUpdateKey := s.assignApiKeyToServiceAccount(ctx, key.Id, newSA.Id); errUpdateKey != nil {
+		if errUpdateKey := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.Id); errUpdateKey != nil {
 			return fmt.Errorf(
 				"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
 				key.Id, newSA.Id, errUpdateKey,
