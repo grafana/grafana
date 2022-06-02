@@ -565,19 +565,20 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		return dashboardGuardianResponse(err)
 	}
 
-	query := models.GetDashboardVersionsQuery{
-		OrgId:        c.OrgId,
-		DashboardId:  dashID,
+	query := dashver.ListDashboardVersionsQuery{
+		OrgID:        c.OrgId,
+		DashboardID:  dashID,
 		DashboardUID: dashUID,
 		Limit:        c.QueryInt("limit"),
 		Start:        c.QueryInt("start"),
 	}
 
-	if err := hs.SQLStore.GetDashboardVersions(c.Req.Context(), &query); err != nil {
+	res, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
-	for _, version := range query.Result {
+	for _, version := range res {
 		if version.RestoredFrom == version.Version {
 			version.Message = "Initial save (created by migration)"
 			continue
@@ -593,7 +594,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		}
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, res)
 }
 
 // GetDashboardVersion returns the dashboard version with the given ID.
