@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -69,8 +68,8 @@ func (i *Implementation) Middleware(logger log.Logger) func(http.Handler) http.H
 				}
 			}
 			// Skip CSRF checks for "safe" endpoints
-			for endpoint := range i.safeEndpoints {
-				if r.URL.Path == endpoint {
+			for safeEndpoint := range i.safeEndpoints {
+				if r.URL.Path == safeEndpoint {
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -127,8 +126,5 @@ func (i *Implementation) AddOriginHeader(headerName string) {
 
 // AddSafeEndpoint is used for endpoints requests to skip CSRF check
 func (i *Implementation) AddSafeEndpoint(endpoint string) {
-	// TODO: force trimprefix or add prefix.
-	// unclear when we have one or the other
-	endpoint = strings.TrimPrefix(endpoint, "/")
 	i.safeEndpoints[endpoint] = struct{}{}
 }
