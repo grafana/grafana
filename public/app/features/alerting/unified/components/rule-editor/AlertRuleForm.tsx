@@ -158,7 +158,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
                   <DetailsStep
                     folderPermissions={[
-                      existing ? AccessControlAction.AlertingRuleUpdate : AccessControlAction.AlertingRuleCreate,
+                      existing ? AccessControlAction.AlertingRuleCreate : AccessControlAction.AlertingRuleCreate,
                     ]}
                   />
                   <NotificationsStep />
