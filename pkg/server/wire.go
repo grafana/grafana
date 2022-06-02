@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
-	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/staticregistry"
+	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"

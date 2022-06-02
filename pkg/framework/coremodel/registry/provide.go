@@ -1,4 +1,4 @@
-package staticregistry
+package registry
 
 import (
 	"github.com/grafana/grafana/pkg/framework/coremodel"

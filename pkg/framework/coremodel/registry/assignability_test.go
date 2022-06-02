@@ -1,14 +1,14 @@
-package staticregistry_test
+package registry_test
 
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/framework/coremodel/staticregistry"
+	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/thema"
 )
 
 func TestSchemaAssignability(t *testing.T) {
-	reg, err := staticregistry.ProvideRegistry()
+	reg, err := registry.ProvideRegistry()
 	if err != nil {
 		t.Fatal(err)
 	}

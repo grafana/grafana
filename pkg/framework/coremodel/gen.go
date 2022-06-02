@@ -77,7 +77,7 @@ func main() {
 		wd.Merge(wdt)
 	}
 
-	wdr, err := gcgen.GenerateCoremodelRegistry(filepath.Join(groot, "pkg", "framework", "coremodel", "staticregistry", "registry_gen.go"), lins)
+	wdr, err := gcgen.GenerateCoremodelRegistry(filepath.Join(groot, "pkg", "framework", "coremodel", "registry", "registry_gen.go"), lins)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to generate coremodel registry: %s\n", err)
 		os.Exit(1)
