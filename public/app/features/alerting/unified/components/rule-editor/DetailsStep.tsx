@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -75,7 +76,7 @@ export const DetailsStep: FC = () => {
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
-        <div className={styles.flexRow}>
+        <div className={classNames([styles.flexRow, styles.alignBaseline])}>
           <Field
             label={
               <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
@@ -137,6 +138,9 @@ export const DetailsStep: FC = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  alignBaseline: css`
+    align-items: baseline;
+  `,
   formInput: css`
     width: 330px;
     & + & {
