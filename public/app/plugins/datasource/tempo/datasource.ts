@@ -411,7 +411,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
-          makeTempoLink('Tempo search', `\${__data.fields[0]}`, tempoDatasourceUid),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, tempoDatasourceUid),
         ],
       };
 
