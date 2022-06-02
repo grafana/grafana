@@ -717,6 +717,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
+	if c.IsPublicDashboardView {
+		settings["isPublicDashboardView"] = true
+	}
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserId,

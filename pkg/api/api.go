@@ -89,6 +89,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 	r.Get("/a/:id", reqSignedIn, hs.Index)
 
+	//pubdash
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		r.Get("/public-dashboards/:uid", middleware.SetPublicDashboardFlag(), hs.Index)
+	}
+
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)

@@ -964,8 +964,10 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
 	}
 
-	if len(query.DashboardIds) > 0 {
-		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
 	}
 
 	if query.IsStarred {
