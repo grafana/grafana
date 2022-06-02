@@ -9,16 +9,24 @@ const INSERT_MODES = {
   plusone: (prev: number, next: number, threshold: number) => prev + 1,
 };
 
-export function applyNullInsertThreshold(
-  frame: DataFrame,
-  refFieldName?: string | null,
-  refFieldPseudoMin: number | null = null,
-  refFieldPseudoMax: number | null = null,
-  insertMode: InsertMode = INSERT_MODES.threshold,
-  thorough = true
-): DataFrame {
-  if (frame.length === 0) {
-    return frame;
+interface NullInsertOptions {
+  frame: DataFrame;
+  refFieldName?: string | null;
+  refFieldPseudoMax?: number;
+  refFieldPseudoMin?: number;
+  insertMode?: InsertMode;
+}
+
+export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
+  if (opts.frame.length === 0) {
+    return opts.frame;
+  }
+
+  let thorough = true;
+  let { frame, refFieldName, refFieldPseudoMax, refFieldPseudoMin, insertMode } = opts;
+
+  if (!insertMode) {
+    insertMode = INSERT_MODES.threshold;
   }
 
   const refField = frame.fields.find((field) => {

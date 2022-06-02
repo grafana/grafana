@@ -10,6 +10,7 @@ import {
 import { FIXED_UNIT } from './GraphNG';
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { nullToValue } from './nullToValue';
 import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
@@ -44,7 +45,21 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
-  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
+  // and change null values to configured values
+  frames = frames.map((frame) => {
+    let f = applyNullInsertThreshold({
+      frame,
+      refFieldName: null,
+      refFieldPseudoMin: timeRange?.from.valueOf(),
+      refFieldPseudoMax: timeRange?.to.valueOf(),
+    });
+
+    f = nullToValue(f);
+
+    console.log(f);
+
+    return f;
+  });
 
   let numBarSeries = 0;
 
