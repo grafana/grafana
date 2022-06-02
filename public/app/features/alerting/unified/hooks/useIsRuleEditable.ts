@@ -27,6 +27,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
 
   // Grafana rules can be edited if user can edit the folder they're in
   // When RBAC is disabled access to a folder is the only requirement for managing rules
+  // When RBAC is enabled the appropriate alerting permissions need to be met
   if (isGrafanaRulerRule(rule)) {
     if (!folderUID) {
       throw new Error(
