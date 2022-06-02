@@ -39,7 +39,10 @@ func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	val.Raw = interpolated.raw
 	val.value, err = strconv.Atoi(interpolated.value)
-	return fmt.Errorf("%v: %w", "cannot convert value int", err)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "cannot convert value int", err)
+	}
+	return err
 }
 
 // Value returns the wrapped int value
