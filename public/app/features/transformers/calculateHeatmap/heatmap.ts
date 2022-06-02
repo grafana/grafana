@@ -223,10 +223,6 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'X axis only supports linear buckets';
   }
 
-  if (yAxisCfg.scale?.type === ScaleDistribution.Log) {
-    throw 'log scale calculaitons not yet supported';
-  }
-
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
@@ -234,6 +230,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xSize: +(xAxisCfg.value ?? 0),
     yMode: yAxisCfg.mode,
     ySize: +(yAxisCfg.value ?? 0),
+    yLog: options.yAxis?.scale?.type === ScaleDistribution.Log ? (options.yAxis?.scale?.log as any) : undefined,
   });
 
   const frame = {
@@ -326,6 +323,12 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     }
   }
 
+  let yExp = opts?.yLog;
+
+  if (yExp && (minY <= 0 || maxY <= 0)) {
+    throw 'Log Y axes cannot have values <= 0';
+  }
+
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
   //let scaleY = opts?.yLog === 10 ? Math.log10 : opts?.yLog === 2 ? Math.log2 : (v: number) => v;
 
@@ -370,6 +373,12 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, xBinIncr) : (v: number) => incrRoundDn(v, xBinIncr);
   let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, yBinIncr) : (v: number) => incrRoundDn(v, yBinIncr);
 
+  if (yExp) {
+    yBinIncr = 1; // "split" reciprocal
+    let yLog = yExp === 2 ? Math.log2 : Math.log10;
+    binY = opts?.yCeil ? (v: number) => incrRoundUp(yLog(v), yBinIncr) : (v: number) => incrRoundDn(yLog(v), yBinIncr);
+  }
+
   let minXBin = binX(minX);
   let maxXBin = binX(maxX);
   let minYBin = binY(minY);
@@ -378,7 +387,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let xBinQty = Math.round((maxXBin - minXBin) / xBinIncr) + 1;
   let yBinQty = Math.round((maxYBin - minYBin) / yBinIncr) + 1;
 
-  let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
+  let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr, yExp);
 
   for (let i = 0; i < len; i++) {
     const xi = (binX(xs[i]) - minXBin) / xBinIncr;
@@ -395,7 +404,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   };
 }
 
-function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number) {
+function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number, yExp?: number) {
   const len = xQty * yQty;
   const xs = new Array<number>(len);
   const ys = new Array<number>(len);
@@ -403,7 +412,12 @@ function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin:
 
   for (let i = 0, yi = 0, x = xMin; i < len; yi = ++i % yQty) {
     counts[i] = 0;
-    ys[i] = yMin + yi * yIncr;
+
+    if (yExp) {
+      ys[i] = yExp ** (yMin + yi * yIncr);
+    } else {
+      ys[i] = yMin + yi * yIncr;
+    }
 
     if (yi === 0 && i >= yQty) {
       x += xIncr;
