@@ -27,8 +27,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoSearch?: boolean;
-  tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   tempoApmTable?: boolean;
   lokiBackendMode?: boolean;
@@ -37,7 +35,6 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
-  disable_http_request_histogram?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;

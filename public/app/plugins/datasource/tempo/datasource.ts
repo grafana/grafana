@@ -16,7 +16,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
@@ -174,9 +173,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           search: targets.nativeSearch[0].search ?? '',
         });
 
-        const timeRange = config.featureToggles.tempoBackendSearch
-          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
-          : undefined;
+        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(

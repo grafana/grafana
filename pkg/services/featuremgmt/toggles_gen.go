@@ -51,14 +51,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoSearch
-	// Enable searching in tempo datasources
-	FlagTempoSearch = "tempoSearch"
-
-	// FlagTempoBackendSearch
-	// Use backend for tempo search
-	FlagTempoBackendSearch = "tempoBackendSearch"
-
 	// FlagTempoServiceGraph
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
@@ -90,10 +82,6 @@ const (
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
-
-	// FlagDisableHttpRequestHistogram
-	// Do not create histograms for http requests
-	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
 
 	// FlagPublicDashboards
 	// enables public access to dashboards
