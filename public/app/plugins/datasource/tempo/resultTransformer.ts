@@ -169,7 +169,7 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
   return '';
 }
 
-function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.v1.Resource | undefined) {
+function resourceToResource(resource: collectorTypes.opentelemetryProto.resource.v1.Resource | undefined) {
   const serviceTags: TraceKeyValuePair[] = [];
   let serviceName = 'OTLPResourceNoServiceName';
   if (!resource) {
@@ -295,7 +295,7 @@ export function transformFromOTLP(
   });
   try {
     for (const data of traceData) {
-      const { serviceName, serviceTags } = resourceToProcess(data.resource);
+      const { serviceName, serviceTags } = resourceToResource(data.resource);
       for (const librarySpan of data.instrumentationLibrarySpans) {
         for (const span of librarySpan.spans) {
           frame.add({

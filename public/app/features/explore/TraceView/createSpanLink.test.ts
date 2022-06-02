@@ -70,7 +70,7 @@ describe('createSpanLinkFactory', () => {
       );
     });
 
-    it('from tags and process tags as well', () => {
+    it('from tags and resource tags as well', () => {
       const createLink = setupSpanLinkFactory({
         tags: ['ip', 'host'],
       });
@@ -587,7 +587,7 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
   return {
     spanID: '6605c7b08e715d6c',
     traceID: '7946b05c2e2e4e5a',
-    processID: 'processId',
+    resourceID: 'resourceId',
     operationName: 'operation',
     logs: [],
     startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,

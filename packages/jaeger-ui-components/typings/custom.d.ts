@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // For inlined envvars
-declare const process: {
+declare const resource: {
   env: {
     NODE_ENV: string;
     REACT_APP_GA_DEBUG?: string;

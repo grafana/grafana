@@ -14,18 +14,18 @@
 
 import traceGenerator from '../demo/trace-generators';
 
-import * as processSelectors from './process';
+import * as selectors from './resource';
 
 const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
 
-it('getProcessServiceName() should return the serviceName of the process', () => {
-  const proc = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
+it('getResourceServiceName() should return the serviceName of the resource', () => {
+  const proc = generatedTrace.resources[Object.keys(generatedTrace.resources)[0]];
 
-  expect(processSelectors.getProcessServiceName(proc)).toBe(proc.serviceName);
+  expect(selectors.getResourceServiceName(proc)).toBe(proc.serviceName);
 });
 
-it('getProcessTags() should return the tags on the process', () => {
-  const proc = generatedTrace.processes[Object.keys(generatedTrace.processes)[0]];
+it('getResourceTags() should return the tags on the resource', () => {
+  const proc = generatedTrace.resources[Object.keys(generatedTrace.resources)[0]];
 
-  expect(processSelectors.getProcessTags(proc)).toBe(proc.tags);
+  expect(selectors.getResourceTags(proc)).toBe(proc.tags);
 });

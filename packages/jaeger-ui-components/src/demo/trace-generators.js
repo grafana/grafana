@@ -94,7 +94,7 @@ export default chance.mixin({
       Math.ceil(chance.integer({ min: 3, max: 10 })),
       Math.ceil(chance.normal({ mean: 45, dev: 15 })) + 1,
     ]),
-    numberOfProcesses = chance.integer({ min: 1, max: 10 }),
+    numberOfResources = chance.integer({ min: 1, max: 10 }),
     maxDepth = chance.integer({ min: 1, max: 10 }),
     spansPerLevel = null,
   }) {
@@ -102,12 +102,12 @@ export default chance.mixin({
     const duration = chance.integer({ min: 10000, max: 5000000 });
     const timestamp = (new Date().getTime() - chance.integer({ min: 0, max: 1000 }) * 1000) * 1000;
 
-    const processArray = chance.processes({ numberOfProcesses });
-    const processes = processArray.reduce((pMap, p) => ({ ...pMap, [p.processID]: p }), {});
+    const resourceArray = chance.resources({ numberOfResources });
+    const resources = resourceArray.reduce((pMap, p) => ({ ...pMap, [p.resourceID]: p }), {});
 
     let spans = chance.n(chance.span, numberOfSpans, {
       traceID,
-      processes,
+      resources,
       traceStartTime: timestamp,
       traceEndTime: timestamp + duration,
     });
@@ -119,7 +119,7 @@ export default chance.mixin({
     return {
       traceID,
       spans,
-      processes,
+      resources,
     };
   },
   tag() {
@@ -131,7 +131,7 @@ export default chance.mixin({
   },
   span({
     traceID = chance.guid(),
-    processes = {},
+    resources = {},
     traceStartTime = chance.timestamp() * 1000 * 1000,
     traceEndTime = traceStartTime + 100000,
     operations = OPERATIONS_LIST,
@@ -145,7 +145,7 @@ export default chance.mixin({
 
     return {
       traceID,
-      processID: chance.pickone(Object.keys(processes)),
+      resourceID: chance.pickone(Object.keys(resources)),
       spanID: chance.guid(),
       flags: 0,
       operationName: chance.pickone(operations),
@@ -156,9 +156,9 @@ export default chance.mixin({
       logs: [],
     };
   },
-  process({ services = SERVICE_LIST }) {
+  resource({ services = SERVICE_LIST }) {
     return {
-      processID: chance.guid(),
+      resourceID: chance.guid(),
       serviceName: chance.pickone(services),
       tags: chance.tags(),
     };
@@ -169,7 +169,7 @@ export default chance.mixin({
   tags() {
     return chance.n(chance.tag, chance.integer({ min: 1, max: 10 }), {});
   },
-  processes({ numberOfProcesses = chance.integer({ min: 1, max: 25 }) }) {
-    return chance.n(chance.process, numberOfProcesses, {});
+  resources({ numberOfResources = chance.integer({ min: 1, max: 25 }) }) {
+    return chance.n(chance.resource, numberOfResources, {});
   },
 });

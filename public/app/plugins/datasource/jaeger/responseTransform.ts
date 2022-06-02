@@ -43,7 +43,7 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
   return frame;
 }
 
-function toSpanRow(span: Span, processes: Record<string, TraceResource>): TraceSpanRow {
+function toSpanRow(span: Span, resources: Record<string, TraceResource>): TraceSpanRow {
   return {
     spanID: span.spanID,
     traceID: span.traceID,
@@ -59,8 +59,8 @@ function toSpanRow(span: Span, processes: Record<string, TraceResource>): TraceS
     tags: span.tags,
     warnings: span.warnings ?? undefined,
     stackTraces: span.stackTraces,
-    serviceName: processes[span.processID].serviceName,
-    serviceTags: processes[span.processID].tags,
+    serviceName: resources[span.resourceID].serviceName,
+    serviceTags: resources[span.resourceID].tags,
   };
 }
 
@@ -137,7 +137,7 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
       traceResponse.traceID = span.traceID;
     }
 
-    // Create process if doesn't exist
+    // Create resource if doesn't exist
     if (!resources.find((p) => p === span.serviceName)) {
       resources.push(span.serviceName);
       traceResponse.resources[`p${resources.length}`] = {
@@ -166,7 +166,7 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
         timestamp: l.timestamp * 1000,
       })),
       operationName: span.operationName,
-      processID:
+      resourceID:
         Object.keys(traceResponse.resources).find(
           (key) => traceResponse.resources[key].serviceName === span.serviceName
         ) || '',

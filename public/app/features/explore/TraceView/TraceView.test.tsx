@@ -111,28 +111,28 @@ describe('TraceView', () => {
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
   });
 
-  it('correctly shows processes for each span', async () => {
+  it('correctly shows resources for each span', async () => {
     renderTraceView();
     let table: HTMLElement;
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(screen.getByText(/Resource/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    await userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(screen.getByText(/Resource/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
-    await userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(screen.getByText(/Resource/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
@@ -141,11 +141,11 @@ describe('TraceView', () => {
     const { rerender } = render(getTraceView([frameOld]));
     const span = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(span);
-    //Process is in detail view
-    expect(screen.getByText(/Process/)).toBeInTheDocument();
+    //Resource is in detail view
+    expect(screen.getByText(/Resource/)).toBeInTheDocument();
 
     rerender(getTraceView([frameNew]));
-    expect(screen.queryByText(/Process/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
   });
 });
 
@@ -190,7 +190,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
           ],
         },
       ],
-      processID: '1ed38015486087ca',
+      resourceID: '1ed38015486087ca',
       warnings: null as any,
     },
     {
@@ -207,7 +207,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
       logs: [],
-      processID: '3fb050342773d333',
+      resourceID: '3fb050342773d333',
       warnings: null,
     },
     {
@@ -224,7 +224,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
       logs: [] as any,
-      processID: '35118c298fc91f68',
+      resourceID: '35118c298fc91f68',
       warnings: null as any,
     },
   ],

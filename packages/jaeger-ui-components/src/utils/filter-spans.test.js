@@ -24,12 +24,12 @@ describe('filterSpans', () => {
       serviceName: 'serviceName0',
       tags: [
         {
-          key: 'processTagKey0',
-          value: 'processTagValue0',
+          key: 'resourceTagKey0',
+          value: 'resourceTagValue0',
         },
         {
-          key: 'processTagKey1',
-          value: 'processTagValue1',
+          key: 'resourceTagKey1',
+          value: 'resourceTagValue1',
         },
       ],
     },
@@ -68,12 +68,12 @@ describe('filterSpans', () => {
       serviceName: 'serviceName2',
       tags: [
         {
-          key: 'processTagKey2',
-          value: 'processTagValue1',
+          key: 'resourceTagKey2',
+          value: 'resourceTagValue1',
         },
         {
-          key: 'processTagKey1',
-          value: 'processTagValue2',
+          key: 'resourceTagKey1',
+          value: 'resourceTagValue2',
         },
       ],
     },
@@ -160,26 +160,26 @@ describe('filterSpans', () => {
     expect(filterSpans('logFieldValue1 -logFieldKey1', spans)).toEqual(new Set([spanID2]));
   });
 
-  it("should return spans whose process.tags' kv.key match a filter", () => {
-    expect(filterSpans('processTagKey1', spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans('processTagKey0', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('processTagKey2', spans)).toEqual(new Set([spanID2]));
+  it("should return spans whose resource.tags' kv.key match a filter", () => {
+    expect(filterSpans('resourceTagKey1', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('resourceTagKey0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('resourceTagKey2', spans)).toEqual(new Set([spanID2]));
   });
 
-  it("should return spans whose process.processTags' kv.value match a filter", () => {
-    expect(filterSpans('processTagValue1', spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans('processTagValue0', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('processTagValue2', spans)).toEqual(new Set([spanID2]));
+  it("should return spans whose resource.resourceTags' kv.value match a filter", () => {
+    expect(filterSpans('resourceTagValue1', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('resourceTagValue0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('resourceTagValue2', spans)).toEqual(new Set([spanID2]));
   });
 
-  it("should exclude span whose process.processTags' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
-    expect(filterSpans('processTagValue1 -processTagKey2', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('processTagValue1 -processTagKey1', spans)).toEqual(new Set([spanID2]));
+  it("should exclude span whose resource.resourceTags' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
+    expect(filterSpans('resourceTagValue1 -resourceTagKey2', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('resourceTagValue1 -resourceTagKey1', spans)).toEqual(new Set([spanID2]));
   });
 
   // This test may false positive if other tests are failing
   it('should return an empty set if no spans match the filter', () => {
-    expect(filterSpans('-processTagKey1', spans)).toEqual(new Set());
+    expect(filterSpans('-resourceTagKey1', spans)).toEqual(new Set());
   });
 
   it('should return no spans when logs is null', () => {

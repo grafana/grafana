@@ -50,7 +50,7 @@ export type TraceSpanReference = {
 export type TraceSpanData = {
   spanID: string;
   traceID: string;
-  processID: string;
+  resourceID: string;
   operationName: string;
   // Times are in microseconds
   startTime: number;

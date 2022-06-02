@@ -34,7 +34,7 @@
             }
           ],
           "logs": [],
-          "processID": "p1",
+          "resourceID": "p1",
           "warnings": null
         },
         {
@@ -64,11 +64,11 @@
             }
           ],
           "logs": [],
-          "processID": "p1",
+          "resourceID": "p1",
           "warnings": null
         }
       ],
-      "processes": {
+      "resources": {
         "p1": {
           "serviceName": "loki-all",
           "tags": [

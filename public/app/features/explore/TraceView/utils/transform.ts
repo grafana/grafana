@@ -41,7 +41,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
         ...s,
         duration: s.duration * 1000,
         startTime: s.startTime * 1000,
-        processID: s.spanID,
+        resourceID: s.spanID,
         flags: 0,
         references,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],

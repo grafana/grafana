@@ -78,30 +78,30 @@ it('getSpanParentId() should return null if no CHILD_OF reference exists', () =>
   expect(spanSelectors.getSpanParentId(generatedTrace.spans[0])).toBe(null);
 });
 
-it('getSpanProcessId() should return the processID of the span', () => {
+it('getSpanResourceId() should return the resourceID of the span', () => {
   const span = generatedTrace.spans[0];
 
-  expect(spanSelectors.getSpanProcessId(span)).toBe(span.processID);
+  expect(spanSelectors.getSpanResourceId(span)).toBe(span.resourceID);
 });
 
-it('getSpanProcess() should return the process of the span', () => {
+it('getSpanResource() should return the resource of the span', () => {
   const span = {
     ...generatedTrace.spans[0],
-    process: {},
+    resource: {},
   };
 
-  expect(spanSelectors.getSpanProcess(span)).toBe(span.process);
+  expect(spanSelectors.getSpanResource(span)).toBe(span.resource);
 });
 
-it('getSpanProcess() should throw if no process exists', () => {
-  expect(() => spanSelectors.getSpanProcess(generatedTrace.spans[0])).toThrow();
+it('getSpanResource() should throw if no resource exists', () => {
+  expect(() => spanSelectors.getSpanResource(generatedTrace.spans[0])).toThrow();
 });
 
 it('getSpanServiceName() should return the service name of the span', () => {
   const serviceName = 'bagel';
   const span = {
     ...generatedTrace.spans[0],
-    process: { serviceName },
+    resource: { serviceName },
   };
 
   expect(spanSelectors.getSpanServiceName(span)).toBe(serviceName);
@@ -161,21 +161,21 @@ it('filterSpansForText() should return a filtered list of spans between the time
   const spans = [
     {
       operationName: 'GET /mything',
-      process: {
+      resource: {
         serviceName: 'alpha',
       },
       id: 'start-time-1',
     },
     {
       operationName: 'GET /another',
-      process: {
+      resource: {
         serviceName: 'beta',
       },
       id: 'start-time-1',
     },
     {
       operationName: 'POST /mything',
-      process: {
+      resource: {
         serviceName: 'alpha',
       },
       id: 'start-time-1',

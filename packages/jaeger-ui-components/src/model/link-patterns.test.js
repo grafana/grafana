@@ -270,7 +270,7 @@ describe('getParameterInAncestor()', () => {
     expect(getParameterInAncestor('a', spans[0])).toEqual({ key: 'a', value: 'a6' });
   });
 
-  it('uses current span process tags', () => {
+  it('uses current span resource tags', () => {
     expect(getParameterInAncestor('b', spans[3])).toEqual({ key: 'b', value: 'b1' });
     expect(getParameterInAncestor('d', spans[2])).toEqual({ key: 'd', value: 'd3' });
     expect(getParameterInAncestor('f', spans[1])).toEqual({ key: 'f', value: 'f5' });
@@ -285,7 +285,7 @@ describe('getParameterInAncestor()', () => {
     expect(getParameterInAncestor('g', spans[1])).toEqual({ key: 'g', value: 'g6' });
   });
 
-  it('uses parent span process tags', () => {
+  it('uses parent span resource tags', () => {
     expect(getParameterInAncestor('d', spans[3])).toEqual({ key: 'd', value: 'd3' });
     expect(getParameterInAncestor('h', spans[2])).toEqual({ key: 'h', value: 'h7' });
     expect(getParameterInAncestor('h', spans[1])).toEqual({ key: 'h', value: 'h7' });
@@ -297,7 +297,7 @@ describe('getParameterInAncestor()', () => {
     expect(getParameterInAncestor('g', spans[3])).toEqual({ key: 'g', value: 'g6' });
   });
 
-  it('uses grand-parent process tags', () => {
+  it('uses grand-parent resource tags', () => {
     expect(getParameterInAncestor('h', spans[3])).toEqual({ key: 'h', value: 'h7' });
   });
 
@@ -331,7 +331,7 @@ describe('computeTraceLink()', () => {
   ].map(processLinkPattern);
 
   const trace = {
-    processes: [],
+    resources: [],
     traceID: 'trc1',
     spans: [],
     startTime: 1000,

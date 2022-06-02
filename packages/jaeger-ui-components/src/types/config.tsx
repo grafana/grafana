@@ -31,7 +31,7 @@ export type TScript = {
 };
 
 export type LinkPatternsConfig = {
-  type: 'process' | 'tags' | 'logs' | 'traces';
+  type: 'resource' | 'tags' | 'logs' | 'traces';
   key?: string;
   url: string;
   text: string;

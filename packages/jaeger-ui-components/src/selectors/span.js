@@ -15,13 +15,13 @@
 import fuzzy from 'fuzzy';
 import { createSelector } from 'reselect';
 
-import { getProcessServiceName } from './process';
+import { getResourceServiceName } from './resource';
 
 export const getSpanId = (span) => span.spanID;
 export const getSpanName = (span) => span.operationName;
 export const getSpanDuration = (span) => span.duration;
 export const getSpanTimestamp = (span) => span.startTime;
-export const getSpanProcessId = (span) => span.processID;
+export const getSpanResourceId = (span) => span.resourceID;
 export const getSpanReferences = (span) => span.references || [];
 export const getSpanReferenceByType = createSelector(
   createSelector(({ span }) => span, getSpanReferences),
@@ -33,20 +33,20 @@ export const getSpanParentId = createSelector(
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (span) => {
-  if (!span.process) {
+export const getSpanResource = (span) => {
+  if (!span.resource) {
     throw new Error(
       `
-      you must hydrate the spans with the processes, perhaps
-      using hydrateSpansWithProcesses(), before accessing a span's process
+      you must hydrate the spans with the resources, perhaps
+      using hydrateSpansWithResources(), before accessing a span's resource
     `
     );
   }
 
-  return span.process;
+  return span.resource;
 };
 
-export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
+export const getSpanServiceName = createSelector(getSpanResource, getResourceServiceName);
 
 export const filterSpansForTimestamps = createSelector(
   ({ spans }) => spans,

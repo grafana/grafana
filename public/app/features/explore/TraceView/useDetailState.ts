@@ -79,7 +79,7 @@ export function useDetailState(frame: DataFrame) {
       [detailStates]
     ),
     detailProcessToggle: useCallback(
-      (spanID: string) => makeDetailSubsectionToggle('process', detailStates, setDetailStates)(spanID),
+      (spanID: string) => makeDetailSubsectionToggle('resource', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
     detailTagsToggle: useCallback(
@@ -90,7 +90,7 @@ export function useDetailState(frame: DataFrame) {
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
+  subSection: 'tags' | 'resource' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -102,7 +102,7 @@ function makeDetailSubsectionToggle(
     let detailState;
     if (subSection === 'tags') {
       detailState = old.toggleTags();
-    } else if (subSection === 'process') {
+    } else if (subSection === 'resource') {
       detailState = old.toggleProcess();
     } else if (subSection === 'warnings') {
       detailState = old.toggleWarnings();

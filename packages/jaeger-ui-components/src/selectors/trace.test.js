@@ -21,8 +21,8 @@ import {
   getSpanId,
   getSpanName,
   getSpanParentId,
-  getSpanProcess,
-  getSpanProcessId,
+  getSpanResource,
+  getSpanResourceId,
   getSpanServiceName,
   getSpanTimestamp,
 } from './span';
@@ -35,11 +35,11 @@ it('getTraceId() should return the traceID', () => {
   expect(traceSelectors.getTraceId(generatedTrace)).toBe(generatedTrace.traceID);
 });
 
-it('hydrateSpansWithProcesses() should return the trace with processes on each span', () => {
-  const hydratedTrace = traceSelectors.hydrateSpansWithProcesses(generatedTrace);
+it('hydrateSpansWithResources() should return the trace with resources on each span', () => {
+  const hydratedTrace = traceSelectors.hydrateSpansWithResources(generatedTrace);
 
   hydratedTrace.spans.forEach((span) =>
-    expect(getSpanProcess(span)).toBe(generatedTrace.processes[getSpanProcessId(span)])
+    expect(getSpanResource(span)).toBe(generatedTrace.resources[getSpanResourceId(span)])
   );
 });
 
@@ -104,7 +104,7 @@ it('getParentSpan() should return the first span if there are multiple parents',
 });
 
 it('getTraceName() should return a formatted name for the first span', () => {
-  const hydratedTrace = traceSelectors.hydrateSpansWithProcesses(generatedTrace);
+  const hydratedTrace = traceSelectors.hydrateSpansWithResources(generatedTrace);
   const parentSpan = traceSelectors.getParentSpan(hydratedTrace);
 
   expect(traceSelectors.getTraceName(hydratedTrace)).toBe(
@@ -160,14 +160,14 @@ it('getSpanDepthForTrace() should determine the depth of a given span in the par
 
 it('getTraceServices() should return an unique array of all services in the trace', () => {
   const svcs = [...traceSelectors.getTraceServices(generatedTrace)].sort();
-  const set = new Set(_values(generatedTrace.processes).map((v) => v.serviceName));
+  const set = new Set(_values(generatedTrace.resources).map((v) => v.serviceName));
   const setSvcs = [...set.values()].sort();
   expect(svcs).toEqual(setSvcs);
 });
 
 it('getTraceServiceCount() should return the length of the service list', () => {
   expect(traceSelectors.getTraceServiceCount(generatedTrace)).toBe(
-    Object.values(generatedTrace.processes).reduce((results, process) => results.add(process.serviceName), new Set())
+    Object.values(generatedTrace.resources).reduce((results, resource) => results.add(resource.serviceName), new Set())
       .size
   );
 });
@@ -279,7 +279,7 @@ it('getTreeSizeForTraceSpan() should return -1 for an absent span', () => {
 });
 
 it('getTraceName() should return the trace name based on the parentSpan', () => {
-  const serviceName = generatedTrace.processes[generatedTrace.spans[0].processID].serviceName;
+  const serviceName = generatedTrace.resources[generatedTrace.spans[0].resourceID].serviceName;
   const operationName = generatedTrace.spans[0].operationName;
 
   expect(traceSelectors.getTraceName(generatedTrace)).toBe(`${serviceName}: ${operationName}`);

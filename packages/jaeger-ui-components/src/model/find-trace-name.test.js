@@ -34,7 +34,7 @@ describe('getTraceName', () => {
       spanID: firstSpanId,
       traceID: currentTraceId,
       startTime: t + 200,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: secondSpanId,
@@ -46,7 +46,7 @@ describe('getTraceName', () => {
       spanID: secondSpanId,
       traceID: currentTraceId,
       startTime: t + 100,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: thirdSpanId,
@@ -58,7 +58,7 @@ describe('getTraceName', () => {
       spanID: thirdSpanId,
       traceID: currentTraceId,
       startTime: t,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: firstSpanId,
@@ -72,7 +72,7 @@ describe('getTraceName', () => {
       spanID: firstSpanId,
       traceID: currentTraceId,
       startTime: t + 200,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: thirdSpanId,
@@ -84,7 +84,7 @@ describe('getTraceName', () => {
       spanID: secondSpanId, // may be a root span
       traceID: currentTraceId,
       startTime: t + 100,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: missingSpanId,
@@ -97,7 +97,7 @@ describe('getTraceName', () => {
       traceID: currentTraceId,
       startTime: t,
       operationName,
-      process: {
+      resource: {
         serviceName,
       },
       references: [
@@ -113,7 +113,7 @@ describe('getTraceName', () => {
       spanID: firstSpanId,
       traceID: currentTraceId,
       startTime: t + 200,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: thirdSpanId,
@@ -126,7 +126,7 @@ describe('getTraceName', () => {
       traceID: currentTraceId,
       startTime: t + 100,
       operationName,
-      process: {
+      resource: {
         serviceName,
       },
     },
@@ -134,7 +134,7 @@ describe('getTraceName', () => {
       spanID: thirdSpanId, // may be a root span
       traceID: currentTraceId,
       startTime: t,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: missingSpanId,
@@ -148,7 +148,7 @@ describe('getTraceName', () => {
       spanID: firstSpanId,
       traceID: currentTraceId,
       startTime: t + 200,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: secondSpanId,
@@ -160,7 +160,7 @@ describe('getTraceName', () => {
       spanID: secondSpanId,
       traceID: currentTraceId,
       startTime: t + 100,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: thirdSpanId,
@@ -173,7 +173,7 @@ describe('getTraceName', () => {
       traceID: currentTraceId,
       startTime: t,
       operationName,
-      process: {
+      resource: {
         serviceName,
       },
       references: [
@@ -189,7 +189,7 @@ describe('getTraceName', () => {
       spanID: firstSpanId,
       traceID: currentTraceId,
       startTime: t + 200,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: thirdSpanId,
@@ -202,7 +202,7 @@ describe('getTraceName', () => {
       traceID: currentTraceId,
       startTime: t + 100,
       operationName,
-      process: {
+      resource: {
         serviceName,
       },
     },
@@ -210,7 +210,7 @@ describe('getTraceName', () => {
       spanID: thirdSpanId,
       traceID: currentTraceId,
       startTime: t,
-      process: {},
+      resource: {},
       references: [
         {
           spanID: secondSpanId,

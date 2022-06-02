@@ -182,9 +182,9 @@ export function computeLinks(
 ) {
   const item = items[itemIndex];
   let type = 'logs';
-  const processTags = span.resource.tags === items;
-  if (processTags) {
-    type = 'process';
+  const resourceTags = span.resource.tags === items;
+  if (resourceTags) {
+    type = 'resource';
   }
   const spanTags = span.tags === items;
   if (spanTags) {
@@ -196,8 +196,8 @@ export function computeLinks(
       const parameterValues: Record<string, any> = {};
       const allParameters = pattern.parameters.every((parameter) => {
         let entry = getParameterInArray(parameter, items);
-        if (!entry && !processTags) {
-          // do not look in ancestors for process tags because the same object may appear in different places in the hierarchy
+        if (!entry && !resourceTags) {
+          // do not look in ancestors for resource tags because the same object may appear in different places in the hierarchy
           // and the cache in getLinks uses that object as a key
           entry = getParameterInAncestor(parameter, span);
         }

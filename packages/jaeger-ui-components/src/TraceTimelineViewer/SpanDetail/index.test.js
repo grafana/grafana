@@ -76,7 +76,7 @@ describe('<SpanDetail>', () => {
         spanID: 'span2',
         traceID: 'trace1',
         operationName: 'op1',
-        process: {
+        resource: {
           serviceName: 'service1',
         },
       },
@@ -89,7 +89,7 @@ describe('<SpanDetail>', () => {
         spanID: 'span3',
         traceID: 'trace1',
         operationName: 'op2',
-        process: {
+        resource: {
           serviceName: 'service2',
         },
       },
@@ -102,7 +102,7 @@ describe('<SpanDetail>', () => {
         spanID: 'span6',
         traceID: 'trace2',
         operationName: 'op2',
-        process: {
+        resource: {
           serviceName: 'service2',
         },
       },
@@ -146,10 +146,10 @@ describe('<SpanDetail>', () => {
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
-  it('renders the process tags', () => {
-    const target = <AccordianKeyValues data={span.process.tags} label="Process" isOpen={detailState.isProcessOpen} />;
+  it('renders the resource tags', () => {
+    const target = <AccordianKeyValues data={span.resource.tags} label="Resource" isOpen={detailState.isProcessOpen} />;
     expect(wrapper.containsMatchingElement(target)).toBe(true);
-    wrapper.find({ data: span.process.tags }).simulate('toggle');
+    wrapper.find({ data: span.resource.tags }).simulate('toggle');
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 

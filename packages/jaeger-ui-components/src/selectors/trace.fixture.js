@@ -15,7 +15,7 @@
 // See https://github.com/jaegertracing/jaeger-ui/issues/115 for details.
 
 export const followsFromRef = {
-  processes: {
+  resources: {
     p1: {
       serviceName: 'issue115',
       tags: [],
@@ -27,7 +27,7 @@ export const followsFromRef = {
       flags: 1,
       logs: [],
       operationName: 'thread',
-      processID: 'p1',
+      resourceID: 'p1',
       references: [
         {
           refType: 'FOLLOWS_FROM',
@@ -46,7 +46,7 @@ export const followsFromRef = {
       flags: 1,
       logs: [],
       operationName: 'demo',
-      processID: 'p1',
+      resourceID: 'p1',
       references: [],
       spanID: 'ea7cfaca83f0724b',
       startTime: 1509533706470949,

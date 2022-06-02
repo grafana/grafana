@@ -103,7 +103,7 @@ describe('<References>', () => {
       const serviceName = refLink.find('span.span-svc-name').text();
       if (span && span.traceID === traceID) {
         const endpointName = refLink.find('small.endpoint-name').text();
-        expect(serviceName).toBe(span.process.serviceName);
+        expect(serviceName).toBe(span.resource.serviceName);
         expect(endpointName).toBe(span.operationName);
       } else {
         expect(serviceName).toBe('View Linked Span ');

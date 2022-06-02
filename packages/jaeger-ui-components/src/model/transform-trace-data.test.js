@@ -77,7 +77,7 @@ describe('transformTraceData()', () => {
       startTime,
       duration,
       tags: [],
-      processID: 'p1',
+      resourceID: 'p1',
     },
     {
       traceID,
@@ -93,7 +93,7 @@ describe('transformTraceData()', () => {
       startTime: startTime + 100,
       duration,
       tags: [],
-      processID: 'p1',
+      resourceID: 'p1',
     },
   ];
 
@@ -111,7 +111,7 @@ describe('transformTraceData()', () => {
     startTime: startTime + 50,
     duration,
     tags: [],
-    processID: 'p1',
+    resourceID: 'p1',
   };
 
   const rootSpanWithoutRefs = {
@@ -121,7 +121,7 @@ describe('transformTraceData()', () => {
     startTime: startTime + 50,
     duration,
     tags: [],
-    processID: 'p1',
+    resourceID: 'p1',
   };
 
   const resources = {

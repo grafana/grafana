@@ -90,7 +90,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
     const span: TraceSpan = data.spans[i] as TraceSpan;
-    const { startTime, duration, processID } = span;
+    const { startTime, duration, resourceID } = span;
     //
     let spanID = span.spanID;
     // check for start / end time for the trace
@@ -115,7 +115,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     } else {
       spanIdCounts.set(spanID, 1);
     }
-    span.resource = data.resources[processID];
+    span.resource = data.resources[resourceID];
     spanMap.set(spanID, span);
   }
   // tree is necessary to sort the spans, so children follow parents, and

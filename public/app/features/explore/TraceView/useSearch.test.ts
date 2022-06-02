@@ -11,7 +11,7 @@ describe('useSearch', () => {
         {
           spanID: 'span1',
           operationName: 'operation1',
-          process: {
+          resource: {
             serviceName: 'service1',
             tags: [],
           },
@@ -22,7 +22,7 @@ describe('useSearch', () => {
         {
           spanID: 'span2',
           operationName: 'operation2',
-          process: {
+          resource: {
             serviceName: 'service2',
             tags: [],
           },

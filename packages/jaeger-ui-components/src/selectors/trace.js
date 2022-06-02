@@ -18,28 +18,28 @@ import TreeNode from '../utils/TreeNode';
 import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
 import { numberSortComparator } from '../utils/sort';
 
-import { getProcessServiceName } from './process';
+import { getResourceServiceName } from './resource';
 import {
   getSpanId,
   getSpanName,
   getSpanServiceName,
   getSpanTimestamp,
   getSpanDuration,
-  getSpanProcessId,
+  getSpanResourceId,
 } from './span';
 
 export const getTraceId = (trace) => trace.traceID;
 
 export const getTraceSpans = (trace) => trace.spans;
 
-const getTraceProcesses = (trace) => trace.processes;
+const getTraceResources = (trace) => trace.resources;
 
-const getSpanWithProcess = createSelector(
+const getSpanWithResource = createSelector(
   (state) => state.span,
-  (state) => state.processes,
-  (span, processes) => ({
+  (state) => state.resources,
+  (span, resources) => ({
     ...span,
-    process: processes[getSpanProcessId(span)],
+    resource: resources[getSpanResourceId(span)],
   })
 );
 
@@ -96,14 +96,14 @@ export function getTraceSpanIdsAsTree(trace) {
   return root;
 }
 
-// attach "process" as an object to each span.
-export const hydrateSpansWithProcesses = (trace) => {
+// attach "resource" as an object to each span.
+export const hydrateSpansWithResources = (trace) => {
   const spans = getTraceSpans(trace);
-  const processes = getTraceProcesses(trace);
+  const resources = getTraceResources(trace);
 
   return {
     ...trace,
-    spans: spans.map((span) => getSpanWithProcess({ span, processes })),
+    spans: spans.map((span) => getSpanWithResource({ span, resources })),
   };
 };
 
@@ -149,9 +149,9 @@ export const getSpanDepthForTrace = createSelector(
   (node, spanID) => node.getPath(spanID).length - 1
 );
 
-export const getTraceServices = createSelector(getTraceProcesses, (processes) =>
-  Object.keys(processes).reduce(
-    (services, processID) => services.add(getProcessServiceName(processes[processID])),
+export const getTraceServices = createSelector(getTraceResources, (resources) =>
+  Object.keys(resources).reduce(
+    (services, resourceID) => services.add(getResourceServiceName(resources[resourceID])),
     new Set()
   )
 );
@@ -216,7 +216,7 @@ export const getSpanHierarchySortPositionForTrace = createSelector(
 
 export const getTraceName = createSelector(
   createSelector(
-    createSelector(hydrateSpansWithProcesses, getParentSpan),
+    createSelector(hydrateSpansWithResources, getParentSpan),
     createStructuredSelector({
       name: getSpanName,
       serviceName: getSpanServiceName,
