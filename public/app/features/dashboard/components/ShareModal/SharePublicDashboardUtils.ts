@@ -1,5 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboardConfig {
@@ -8,30 +11,37 @@ export interface PublicDashboardConfig {
     uid: string;
     dashboardUid: string;
     orgId: number;
-    timeVariables?: object;
+    timeSettings?: object;
   };
+}
+export interface DashboardResponse {
+  dashboard: DashboardDataDTO;
+  meta: DashboardMeta;
 }
 
 export const dashboardCanBePublic = (dashboard: DashboardModel): boolean => {
   return dashboard?.templating?.list.length === 0;
 };
 
-export const getDashboard = async (dashboardUid: string) => {
+export const getDashboard = async (dashboardUid: string, setDashboard: Function) => {
   const url = `/api/dashboards/uid/${dashboardUid}`;
-  return getBackendSrv().get(url);
+  const dashResp: DashboardResponse = await getBackendSrv().get(url);
+  setDashboard(new DashboardModel(dashResp.dashboard, dashResp.meta));
 };
 
-export const getPublicDashboardConfig = async (dashboardUid: string) => {
+export const getPublicDashboardConfig = async (dashboardUid: string, setPublicDashboardConfig: Function) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  return getBackendSrv().get(url);
+  const pdResp: PublicDashboardConfig = await getBackendSrv().get(url);
+  setPublicDashboardConfig(pdResp);
 };
 
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
-}
-
-export const savePublicDashboardConfig = async (dashboardUid: string, publicDashboardConfig: PublicDashboardConfig) => {
+export const savePublicDashboardConfig = async (
+  dashboardUid: string,
+  publicDashboardConfig: PublicDashboardConfig,
+  setPublicDashboardConfig: Function
+) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  return getBackendSrv().post(url, publicDashboardConfig);
+  const pdResp: PublicDashboardConfig = await getBackendSrv().post(url, publicDashboardConfig);
+  dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+  setPublicDashboardConfig(pdResp);
 };

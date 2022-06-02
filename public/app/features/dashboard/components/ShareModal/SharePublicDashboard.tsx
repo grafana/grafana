@@ -13,7 +13,6 @@ import {
   savePublicDashboardConfig,
   getDashboard,
   PublicDashboardConfig,
-  DashboardResponse,
 } from './SharePublicDashboardUtils';
 import { ShareModalTabProps } from './types';
 
@@ -30,40 +29,20 @@ export const SharePublicDashboard = (props: Props) => {
   const [dashboard, setDashboard] = useState<DashboardModel>({} as DashboardModel);
 
   useEffect(() => {
-    // dashboard model may be stale, so load it ourselves
-    getDashboard(dashboardUid)
-      .then((dashboardResponse: DashboardResponse) => {
-        setDashboard(new DashboardModel(dashboardResponse.dashboard, dashboardResponse.meta));
-      })
-      .catch((err) => {
-        dispatch(notifyApp(createErrorNotification('Failed to retrieve dashboard', err)));
-      });
-
-    // load config
-    getPublicDashboardConfig(dashboardUid)
-      .then((pdc: PublicDashboardConfig) => {
-        setPublicDashboardConfig(pdc);
-      })
-      .catch((err) => {
-        dispatch(notifyApp(createErrorNotification('Failed to retrieve public dashboard config', err)));
-      });
+    // dashboard model may be stale, get a fresh copy
+    getDashboard(dashboardUid, setDashboard).catch();
+    getPublicDashboardConfig(dashboardUid, setPublicDashboardConfig).catch();
   }, [dashboardUid]);
 
   const onSavePublicConfig = () => {
     if (!dashboardCanBePublic(dashboard)) {
-      dispatch(notifyApp(createErrorNotification('This dashboard cannot be made public')));
+      dispatch(
+        notifyApp(createErrorNotification('This dashboard cannot be made public because it has template variables'))
+      );
       return;
     }
 
-    savePublicDashboardConfig(props.dashboard.uid, publicDashboardConfig)
-      .then((pdc: PublicDashboardConfig) => {
-        setPublicDashboardConfig(pdc);
-        dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
-      })
-      .catch((err) => {
-        console.error('Error while making dashboard public', err);
-        dispatch(notifyApp(createErrorNotification('Error making dashboard public')));
-      });
+    savePublicDashboardConfig(dashboard.uid, publicDashboardConfig, setPublicDashboardConfig).catch();
   };
 
   return (
