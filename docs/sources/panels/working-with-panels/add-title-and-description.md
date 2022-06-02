@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/add-title-and-description/", "/docs/sources/panels/working-with-panels/add-title-and-description/"]
-title = "Add a title and description to a panel"
-weight = 30
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
+  - /docs/sources/panels/working-with-panels/add-title-and-description/
+title: Add a title and description to a panel
+weight: 30
+---
 
 # Add a title and description to a panel
 
@@ -10,7 +12,7 @@ Add a title and description to a panel to share with users any important informa
 
 ## Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
 
 **To add a title and description to a panel**:
 

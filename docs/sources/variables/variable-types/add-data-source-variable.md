@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/variables/add-data-source-variable/", "/docs/grafana/latest/variables/variable-types/add-data-source-variable/"]
-title = "Add a data source variable"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/add-data-source-variable/
+  - /docs/grafana/latest/variables/variable-types/add-data-source-variable/
+title: Add a data source variable
+weight: 500
+---
 
 # Add a data source variable
 

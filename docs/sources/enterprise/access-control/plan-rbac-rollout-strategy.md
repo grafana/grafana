@@ -27,8 +27,8 @@ As a first step in determining your permissions rollout strategy, we recommend t
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
-- [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}})
-- [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}})
+- [Basic role definitions]({{< relref "rbac-fixed-basic-role-definitions/#basic-role-assignments" >}})
+- [Fixed role definitions]({{< relref "rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}})
 
 ## User and team considerations
 
@@ -173,7 +173,6 @@ roles:
 
 | action         | scope                       |
 | -------------- | --------------------------- |
-| `roles:list`   | `roles:*`                   |
 | `roles:read`   | `roles:*`                   |
 | `roles:write`  | `permissions:type:delegate` |
 | `roles:delete` | `permissions:type:delegate` |
@@ -200,16 +199,16 @@ roles:
         global: true
 ```
 
-> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
 
 - Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
 
-| Action                 | Scope                           |
-| ---------------------- | ------------------------------- |
-| `reports.admin:create` | n/a                             |
-| `reports.admin:write`  | `reports:*` <br> `reports:id:*` |
-| `reports:read`         | `reports:*`                     |
-| `reports:send`         | `reports:*`                     |
+| Action           | Scope                           |
+| ---------------- | ------------------------------- |
+| `reports:create` | n/a                             |
+| `reports:write`  | `reports:*` <br> `reports:id:*` |
+| `reports:read`   | `reports:*`                     |
+| `reports:send`   | `reports:*`                     |
 
 ### Prevent a Grafana Admin from creating and inviting users
 

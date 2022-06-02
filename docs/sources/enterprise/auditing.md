@@ -1,16 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/auditing/"]
-description = "Auditing"
-keywords = ["grafana", "auditing", "audit", "logs"]
-title = "Auditing"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/auditing/
+description: Auditing
+keywords:
+  - grafana
+  - auditing
+  - audit
+  - logs
+title: Auditing
+weight: 1100
+---
 
 # Auditing
 
-> **Note:** Only available in Grafana Enterprise v7.3+.
-
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.3 and later, and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 ## Audit logs
 
@@ -123,7 +128,7 @@ pattern of the `requestUri` field is given.
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./saml/configure-saml.md#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "configure-saml.md#single-logout" >}}).
 
 #### User management
 
@@ -331,7 +336,7 @@ max_file_size_mb = 256
 
 Audit logs are sent to a [Loki](/oss/loki/) service, through HTTP or gRPC.
 
-> The HTTP option for the Loki exporter is only available in Grafana Enterprise v7.4+.
+> **Note:** The HTTP option for the Loki exporter is available only in Grafana Enterprise version 7.4 and later.
 
 ```ini
 [auditing.logs.loki]

@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -74,6 +76,288 @@ func TestMuteTimingService(t *testing.T) {
 			require.ErrorContains(t, err, "no alertmanager configuration")
 		})
 	})
+
+	t.Run("creating mute timings", func(t *testing.T) {
+		t.Run("rejects mute timings that fail validation", func(t *testing.T) {
+			sut := createMuteTimingSvcSut()
+			timing := definitions.MuteTimeInterval{
+				MuteTimeInterval: config.MuteTimeInterval{
+					Name: "",
+				},
+			}
+
+			_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+			require.ErrorIs(t, err, ErrValidation)
+		})
+
+		t.Run("propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed"))
+
+				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+				require.Error(t, err)
+			})
+
+			t.Run("when config is invalid", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: brokenConfig,
+					})
+
+				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to deserialize")
+			})
+
+			t.Run("when no AM config in current org", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
+
+				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "no alertmanager configuration")
+			})
+
+			t.Run("when provenance fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save provenance"))
+
+				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to save provenance")
+			})
+
+			t.Run("when AM config fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save config"))
+				sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to save config")
+			})
+		})
+	})
+
+	t.Run("updating mute timings", func(t *testing.T) {
+		t.Run("rejects mute timings that fail validation", func(t *testing.T) {
+			sut := createMuteTimingSvcSut()
+			timing := definitions.MuteTimeInterval{
+				MuteTimeInterval: config.MuteTimeInterval{
+					Name: "",
+				},
+			}
+
+			_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+			require.ErrorIs(t, err, ErrValidation)
+		})
+
+		t.Run("returns nil if timing does not exist", func(t *testing.T) {
+			sut := createMuteTimingSvcSut()
+			timing := createMuteTiming()
+			timing.Name = "does not exist"
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithMuteTimings,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			updated, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+			require.NoError(t, err)
+			require.Nil(t, updated)
+		})
+
+		t.Run("propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				timing.Name = "asdf"
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed"))
+
+				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+				require.Error(t, err)
+			})
+
+			t.Run("when config is invalid", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				timing.Name = "asdf"
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: brokenConfig,
+					})
+
+				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to deserialize")
+			})
+
+			t.Run("when no AM config in current org", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				timing.Name = "asdf"
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
+
+				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "no alertmanager configuration")
+			})
+
+			t.Run("when provenance fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				timing.Name = "asdf"
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save provenance"))
+
+				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to save provenance")
+			})
+
+			t.Run("when AM config fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				timing := createMuteTiming()
+				timing.Name = "asdf"
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save config"))
+				sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
+
+				require.ErrorContains(t, err, "failed to save config")
+			})
+		})
+	})
+
+	t.Run("deleting mute timings", func(t *testing.T) {
+		t.Run("returns nil if timing does not exist", func(t *testing.T) {
+			sut := createMuteTimingSvcSut()
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithMuteTimings,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			err := sut.DeleteMuteTiming(context.Background(), "does not exist", 1)
+
+			require.NoError(t, err)
+		})
+
+		t.Run("propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed"))
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.Error(t, err)
+			})
+
+			t.Run("when config is invalid", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: brokenConfig,
+					})
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.ErrorContains(t, err, "failed to deserialize")
+			})
+
+			t.Run("when no AM config in current org", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.ErrorContains(t, err, "no alertmanager configuration")
+			})
+
+			t.Run("when provenance fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save provenance"))
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.ErrorContains(t, err, "failed to save provenance")
+			})
+
+			t.Run("when AM config fails to save", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimings,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save config"))
+				sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.ErrorContains(t, err, "failed to save config")
+			})
+		})
+	})
 }
 
 func createMuteTimingSvcSut() *MuteTimingService {
@@ -82,6 +366,14 @@ func createMuteTimingSvcSut() *MuteTimingService {
 		prov:   &MockProvisioningStore{},
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
+	}
+}
+
+func createMuteTiming() definitions.MuteTimeInterval {
+	return definitions.MuteTimeInterval{
+		MuteTimeInterval: config.MuteTimeInterval{
+			Name: "interval",
+		},
 	}
 }
 

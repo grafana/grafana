@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/administration/configuration/", "/docs/grafana/latest/installation/configuration/"]
-description = "Configuration documentation"
-keywords = ["grafana", "configuration", "documentation"]
-title = "Configuration"
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/configuration/
+  - /docs/grafana/latest/installation/configuration/
+description: Configuration documentation
+keywords:
+  - grafana
+  - configuration
+  - documentation
+title: Configuration
+weight: 150
+---
 
 # Configuration
 
@@ -122,7 +127,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 <hr />
 
@@ -429,12 +434,6 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
-### max_idle_connections_per_host
-
-[Deprecated - use max_idle_connections instead]
-
-The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
-
 ### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
@@ -668,7 +667,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 
@@ -810,7 +809,7 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 
@@ -1446,6 +1445,8 @@ Default is https://grafana.com.
 
 ## [tracing.jaeger]
 
+[Deprecated - use tracing.opentelemetry.jaeger or tracing.opentelemetry.otlp instead]
+
 Configure Grafana's Jaeger client for distributed tracing.
 
 You can also use the standard `JAEGER_*` environment variables to configure
@@ -1506,6 +1507,34 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+<hr>
+
+## [tracing.opentelemetry.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`)
+
+### propagation
+
+The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+
+<hr>
+
+## [tracing.opentelemetry.otlp]
+
+Configure Grafana's otlp client for distributed tracing.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:4317`)
+
+### propagation
+
+The propagation specifies the text map propagation format.(ex: jaeger, w3c)
 
 <hr>
 

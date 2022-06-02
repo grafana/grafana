@@ -10,10 +10,13 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -38,6 +41,73 @@ var (
 	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
 
+// For each alert, attempts to load the models.Image for an image token
+// associated with the alert, then calls forEachFunc with the index of the
+// alert and the retrieved image struct. If there is no image token, or the
+// image does not exist, forEachFunc will be called with a nil value for the
+// image. If forEachFunc returns an error, withStoredImages will return
+// immediately. If there is a runtime error retrieving images from the image
+// store, withStoredImages will attempt to continue executing, after logging
+// a warning.
+func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc func(index int, image *models.Image) error, alerts ...*types.Alert) error {
+	for i := range alerts {
+		err := withStoredImage(ctx, l, imageStore, forEachFunc, i, alerts...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, imageFunc func(index int, image *models.Image) error, index int, alerts ...*types.Alert) error {
+	imgToken := getTokenFromAnnotations(alerts[index].Annotations)
+	if len(imgToken) == 0 {
+		err := imageFunc(index, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
+	img, err := imageStore.GetImage(timeoutCtx, imgToken)
+	cancel()
+
+	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
+		err := imageFunc(index, nil)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
+		l.Warn("failed to retrieve image url from store", "error", err)
+	}
+
+	err = imageFunc(index, img)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// The path argument here comes from reading internal image storage, not user
+// input, so we ignore the security check here.
+//nolint:gosec
+func openImage(path string) (io.ReadCloser, error) {
+	fp := filepath.Clean(path)
+	_, err := os.Stat(fp)
+	if os.IsNotExist(err) || os.IsPermission(err) {
+		return nil, models.ErrImageNotFound
+	}
+
+	f, err := os.Open(fp)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 func getTokenFromAnnotations(annotations model.LabelSet) string {
 	if value, ok := annotations[models.ScreenshotTokenAnnotation]; ok {
 		return string(value)
@@ -47,15 +117,8 @@ func getTokenFromAnnotations(annotations model.LabelSet) string {
 
 type UnavailableImageStore struct{}
 
-func (n *UnavailableImageStore) GetURL(ctx context.Context, token string) (string, error) {
-	return "", ErrImagesUnavailable
-}
-
-func (n *UnavailableImageStore) GetFilepath(ctx context.Context, token string) (string, error) {
-	return "", ErrImagesUnavailable
-}
-
-func (n *UnavailableImageStore) GetData(ctx context.Context, token string) (io.ReadCloser, error) {
+// Get returns the image with the corresponding token, or ErrImageNotFound.
+func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
 	return nil, ErrImagesUnavailable
 }
 

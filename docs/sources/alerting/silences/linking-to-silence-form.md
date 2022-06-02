@@ -1,10 +1,16 @@
-+++
-title = "Create URL to link to silence form"
-description = "Linking to a silence form"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 451
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/silences/linking-to-silence-form/
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Linking to a silence form
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Create URL to link to silence form
+weight: 451
+---
 
 # Create a URL to link to a silence form
 

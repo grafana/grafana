@@ -1,10 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/installation/installation/rpm/", "/docs/grafana/latest/installation/rpm/"]
-description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
-keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-title = "Install on RPM-based Linux"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/installation/rpm/
+  - /docs/grafana/latest/installation/rpm/
+description: Grafana Installation guide for RPM-based Linux, such as Centos, Fedora,
+  OpenSuse, and Red Hat.
+keywords:
+  - grafana
+  - installation
+  - documentation
+  - centos
+  - fedora
+  - opensuse
+  - redhat
+title: Install on RPM-based Linux
+weight: 300
+---
 
 # Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)
 

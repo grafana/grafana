@@ -141,6 +141,21 @@ Object {
           },
         ],
       },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
     ],
   },
   "options": Object {
@@ -192,6 +207,21 @@ Object {
             "id": "color",
             "value": Object {
               "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byRegexp",
+          "options": "/.*Status: 2[0-9]+.*/i",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
               "mode": "fixed",
             },
           },
