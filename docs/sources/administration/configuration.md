@@ -1445,11 +1445,21 @@ Default is https://grafana.com.
 
 ## [tracing.jaeger]
 
+[Deprecated - use tracing.opentelemetry.jaeger or tracing.opentelemetry.otlp instead]
+
 Configure Grafana's Jaeger client for distributed tracing.
 
 You can also use the standard `JAEGER_*` environment variables to configure
 Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
 for the full list. Environment variables will override any settings provided here.
+
+## [tracing.opentelemetry.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+## [tracing.opentelemetry.otlp]
+
+Configure Grafana's otlp client for distributed tracing.
 
 ### address
 
