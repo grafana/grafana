@@ -26,6 +26,7 @@ import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
+import { TopOfViewRefType } from './VirtualizedTraceView';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -93,6 +94,7 @@ type SpanDetailRowProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -128,6 +130,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
+      topOfViewRefType,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -170,6 +173,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
+              topOfViewRefType={topOfViewRefType}
             />
           </div>
         </TimelineRow.Cell>

@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -87,7 +87,13 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 				r.body = bytes.NewBuffer(b)
 			}
 		}
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
+
+		logger := ctx.Logger.Error
+		var gfErr *errutil.Error
+		if errors.As(r.err, &gfErr) {
+			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
+		}
+		logger(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
@@ -220,24 +226,15 @@ func Error(status int, message string, err error) *NormalResponse {
 }
 
 // Err creates an error response based on an errutil.Error error.
-func Err(log log.Logger, err error) *NormalResponse {
+func Err(err error) *NormalResponse {
 	grafanaErr := &errutil.Error{}
 	if !errors.As(err, grafanaErr) {
-		log.Error(
-			"unexpected error type",
-			"err", err,
-			"type", reflect.TypeOf(err),
-		)
-		return Error(http.StatusInternalServerError, "", err)
+		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
-
-	grafanaErr.Log(log)
 
 	resp := JSON(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public())
-	if grafanaErr.Underlying != nil {
-		resp.errMessage = grafanaErr.MessageID
-		resp.err = grafanaErr.Underlying
-	}
+	resp.errMessage = string(grafanaErr.Reason.Status())
+	resp.err = grafanaErr
 
 	return resp
 }

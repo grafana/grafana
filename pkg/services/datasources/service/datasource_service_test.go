@@ -198,7 +198,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
@@ -232,7 +232,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:             1,
@@ -280,7 +280,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -325,7 +325,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -367,7 +367,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -399,7 +399,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -465,7 +465,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -499,7 +499,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
@@ -535,7 +535,7 @@ func TestService_getTimeout(t *testing.T) {
 
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	for _, tc := range testCases {
 		ds := &models.DataSource{
@@ -561,7 +561,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 	t.Run("Azure authentication", func(t *testing.T) {
 		t.Run("given feature flag enabled", func(t *testing.T) {
-			features := featuremgmt.WithFeatures(featuremgmt.FlagHttpclientproviderAzureAuth)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagPrometheusAzureAuth)
 
 			t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 				t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
@@ -571,12 +571,11 @@ func TestService_HTTPClientOptions(t *testing.T) {
 					"azureCredentials": map[string]interface{}{
 						"authType": "msi",
 					},
-					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 				})
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
@@ -594,7 +593,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
@@ -614,7 +613,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				_, err := dsService.httpClientOptions(context.Background(), &ds)
 				assert.Error(t, err)
@@ -633,7 +632,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
@@ -652,7 +651,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
@@ -675,7 +674,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService())
 
 				_, err := dsService.httpClientOptions(context.Background(), &ds)
 				assert.Error(t, err)
@@ -696,7 +695,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 				secretsStore := kvstore.SetupTestService(t)
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 				opts, err := dsService.httpClientOptions(context.Background(), &ds)
 				require.NoError(t, err)
@@ -719,7 +718,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		jsonData := map[string]string{
 			"password": "securePassword",
@@ -744,7 +743,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 		jsonData := map[string]string{
 			"password": "securePassword",

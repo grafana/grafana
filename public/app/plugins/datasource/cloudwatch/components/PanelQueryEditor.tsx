@@ -6,8 +6,8 @@ import { CloudWatchDatasource } from '../datasource';
 import { isCloudWatchMetricsQuery } from '../guards';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 
+import { MetricsQueryEditor } from '././MetricsQueryEditor/MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
-import { MetricsQueryEditor } from './MetricsQueryEditor';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 

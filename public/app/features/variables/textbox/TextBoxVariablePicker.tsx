@@ -70,7 +70,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
-      id={variable.id}
+      id={`var-${variable.id}`}
     />
   );
 }

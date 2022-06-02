@@ -1,8 +1,13 @@
-+++
-title = "Query management"
-keywords = ["explore", "loki", "logs"]
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/query-management/
+keywords:
+  - explore
+  - loki
+  - logs
+title: Query management
+weight: 10
+---
 
 # Query management in Explore
 

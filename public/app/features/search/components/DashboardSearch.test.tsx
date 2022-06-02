@@ -11,7 +11,7 @@ import * as SearchSrv from 'app/core/services/search_srv';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
 
-import { DashboardSearch, Props } from './DashboardSearch';
+import { DashboardSearchOLD as DashboardSearch, Props } from './DashboardSearch';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS

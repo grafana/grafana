@@ -11,7 +11,7 @@ import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { getQueryWithDefaults } from '../state';
+import { changeEditorMode, getQueryWithDefaults, useRawQuery } from '../state';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -24,11 +24,13 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const [dataIsStale, setDataIsStale] = useState(false);
 
   const query = getQueryWithDefaults(props.query);
+  const [rawQuery, setRawQuery] = useRawQuery();
+  // This should be filled in from the defaults by now.
+  const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
-    (newMetricEditorMode: QueryEditorMode) => {
-      const change = { ...query, editorMode: newMetricEditorMode };
-      if (newMetricEditorMode === QueryEditorMode.Builder) {
+    (newEditorMode: QueryEditorMode) => {
+      if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
         if (result.errors.length) {
@@ -36,7 +38,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           return;
         }
       }
-      onChange(change);
+      changeEditorMode(query, newEditorMode, onChange);
     },
     [onChange, query]
   );
@@ -52,11 +54,9 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, rawQuery: isEnabled });
+    setRawQuery(isEnabled);
   };
 
-  // If no expr (ie new query) then default to builder
-  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   return (
     <>
       <ConfirmModal
@@ -87,7 +87,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
               }}
               options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
-            <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
           </>
         )}
         <FlexItem grow={1} />
@@ -104,13 +104,14 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <LokiQueryCodeEditor {...props} onChange={onChangeInternal} />}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
             datasource={props.datasource}
             query={query}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
+            showRawQuery={rawQuery}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}

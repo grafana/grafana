@@ -9,8 +9,9 @@ import (
 // Template is an extended Base for when using templating to construct
 // error messages.
 type Template struct {
-	Base     Base
-	template *template.Template
+	Base           Base
+	logTemplate    *template.Template
+	publicTemplate *template.Template
 }
 
 // TemplateData contains data for constructing an Error based on a
@@ -24,24 +25,34 @@ type TemplateData struct {
 // Template provides templating for converting Base to Error.
 // This is useful where the public payload is populated with fields that
 // should be present in the internal error representation.
-func (b Base) Template(t string) (Template, error) {
-	tmpl, err := template.New(b.MessageID).Parse(t)
+func (b Base) Template(pattern string, opts ...TemplateOpt) (Template, error) {
+	tmpl, err := template.New(b.messageID + "~private").Parse(pattern)
 	if err != nil {
 		return Template{}, err
 	}
 
-	return Template{
-		Base:     b,
-		template: tmpl,
-	}, nil
+	t := Template{
+		Base:        b,
+		logTemplate: tmpl,
+	}
+
+	for _, o := range opts {
+		t, err = o(t)
+		if err != nil {
+			return Template{}, err
+		}
+	}
+
+	return t, nil
 }
 
-// MustTemplate panics if the template cannot be compiled.
+type TemplateOpt func(Template) (Template, error)
+
+// MustTemplate panics if the template for Template cannot be compiled.
 //
-// Only useful for global or package level initialization of error
-// Template:s.
-func (b Base) MustTemplate(t string) Template {
-	res, err := b.Template(t)
+// Only useful for global or package level initialization of Template:s.
+func (b Base) MustTemplate(pattern string, opts ...TemplateOpt) Template {
+	res, err := b.Template(pattern, opts...)
 	if err != nil {
 		panic(err)
 	}
@@ -49,28 +60,58 @@ func (b Base) MustTemplate(t string) Template {
 	return res
 }
 
+// WithPublic provides templating for the user facing error message based
+// on only the fields available in TemplateData.Public.
+//
+// Used as a functional option to Base.Template.
+func WithPublic(pattern string) TemplateOpt {
+	return func(t Template) (Template, error) {
+		var err error
+		t.publicTemplate, err = template.New(t.Base.messageID + "~public").Parse(pattern)
+		return t, err
+	}
+}
+
+// WithPublicFromLog copies over the template for the log message to be
+// used for the user facing error message.
+// TemplateData.Error and TemplateData.Private will not be populated
+// when rendering the public message.
+//
+// Used as a functional option to Base.Template.
+func WithPublicFromLog() TemplateOpt {
+	return func(t Template) (Template, error) {
+		t.publicTemplate = t.logTemplate
+		return t, nil
+	}
+}
+
 // Build returns a new Error based on the base Template and the provided
-// TemplateData, embedding the error in TemplateData.Error if set.
+// TemplateData, wrapping the error in TemplateData.Error if set.
 //
 // Build can fail and return an error that is not of type Error.
 func (t Template) Build(data TemplateData) error {
-	if t.template == nil {
+	if t.logTemplate == nil {
 		return fmt.Errorf("cannot initialize error using missing template")
 	}
 
 	buf := bytes.Buffer{}
-
-	err := t.template.Execute(&buf, data)
+	err := t.logTemplate.Execute(&buf, data)
 	if err != nil {
 		return err
 	}
 
-	return Error{
-		Reason:        t.Base.Reason,
-		MessageID:     t.Base.MessageID,
-		LogLevel:      t.Base.LogLevel,
-		LogMessage:    buf.String(),
-		Underlying:    data.Error,
-		PublicPayload: data.Public,
+	pubBuf := bytes.Buffer{}
+	if t.publicTemplate != nil {
+		err := t.publicTemplate.Execute(&pubBuf, TemplateData{Public: data.Public})
+		if err != nil {
+			return err
+		}
 	}
+
+	e := t.Base.Errorf("%s", buf.String())
+	e.PublicMessage = pubBuf.String()
+	e.PublicPayload = data.Public
+	e.Underlying = data.Error
+
+	return e
 }

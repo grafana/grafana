@@ -2,8 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorField } from '@grafana/experimental';
-import { RadioButtonGroup, Select } from '@grafana/ui';
-import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
@@ -81,7 +80,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
             options={RESOLUTION_OPTIONS}
             value={query.resolution || 1}
             aria-label="Select resolution"
-            menuShouldPortal
           />
         </EditorField>
       </QueryOptionGroup>

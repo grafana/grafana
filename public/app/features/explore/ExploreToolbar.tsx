@@ -11,7 +11,9 @@ import {
   ToolbarButton,
   ToolbarButtonRow,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { AccessControlAction } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
@@ -36,7 +38,7 @@ const AddToDashboard = lazy(() =>
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef: RefObject<HTMLDivElement>;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -114,14 +116,18 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       containerWidth,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      topOfExploreViewRef,
+      topOfViewRef,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showExploreToDashboard =
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
     return (
-      <div ref={topOfExploreViewRef}>
+      <div ref={topOfViewRef}>
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
@@ -158,7 +164,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
-            {config.featureToggles.explore2Dashboard && (
+            {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
               <Suspense fallback={null}>
                 <AddToDashboard exploreId={exploreId} />
               </Suspense>

@@ -220,6 +220,50 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with with unwrap and error filter', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap duration | __error__="" [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['duration'] },
+          { id: '__label_filter_no_errors', params: [] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with with unwrap and label filter', () => {
+    expect(
+      buildVisualQueryFromString('sum_over_time({app="frontend"} | logfmt | unwrap duration | label="value" [1m])')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: 'logfmt', params: [] },
+          { id: 'unwrap', params: ['duration'] },
+          { id: '__label_filter', params: ['label', '=', 'value'] },
+          { id: 'sum_over_time', params: ['1m'] },
+        ],
+      })
+    );
+  });
+
   it('returns error for query with unwrap and conversion operation', () => {
     const context = buildVisualQueryFromString(
       'sum_over_time({app="frontend"} | logfmt | unwrap duration(label) [5m])'

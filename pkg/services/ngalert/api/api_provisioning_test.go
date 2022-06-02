@@ -26,24 +26,24 @@ func TestProvisioningApi(t *testing.T) {
 		require.Equal(t, 200, response.Status())
 	})
 
-	t.Run("successful POST policies returns 202", func(t *testing.T) {
+	t.Run("successful PUT policies returns 202", func(t *testing.T) {
 		sut := createProvisioningSrvSut()
 		rc := createTestRequestCtx()
 		tree := apimodels.Route{}
 
-		response := sut.RoutePostPolicyTree(&rc, tree)
+		response := sut.RoutePutPolicyTree(&rc, tree)
 
 		require.Equal(t, 202, response.Status())
 	})
 
 	t.Run("when new policy tree is invalid", func(t *testing.T) {
-		t.Run("POST policies returns 400", func(t *testing.T) {
+		t.Run("PUT policies returns 400", func(t *testing.T) {
 			sut := createProvisioningSrvSut()
 			sut.policies = &fakeRejectingNotificationPolicyService{}
 			rc := createTestRequestCtx()
 			tree := apimodels.Route{}
 
-			response := sut.RoutePostPolicyTree(&rc, tree)
+			response := sut.RoutePutPolicyTree(&rc, tree)
 
 			require.Equal(t, 400, response.Status())
 			expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
@@ -86,13 +86,13 @@ func TestProvisioningApi(t *testing.T) {
 			require.Contains(t, string(response.Body()), "something went wrong")
 		})
 
-		t.Run("POST policies returns 500", func(t *testing.T) {
+		t.Run("PUT policies returns 500", func(t *testing.T) {
 			sut := createProvisioningSrvSut()
 			sut.policies = &fakeFailingNotificationPolicyService{}
 			rc := createTestRequestCtx()
 			tree := apimodels.Route{}
 
-			response := sut.RoutePostPolicyTree(&rc, tree)
+			response := sut.RoutePutPolicyTree(&rc, tree)
 
 			require.Equal(t, 500, response.Status())
 			require.NotEmpty(t, response.Body())

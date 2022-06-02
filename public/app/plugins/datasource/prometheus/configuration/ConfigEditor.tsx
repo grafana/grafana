@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -17,7 +18,7 @@ export const ConfigEditor = (props: Props) => {
   const alertmanagers = getAllAlertmanagerDataSources();
 
   const azureAuthSettings = {
-    azureAuthSupported: config.featureToggles['prometheus_azure_auth'] ?? false,
+    azureAuthSupported: !!config.featureToggles.prometheus_azure_auth,
     getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
     setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
@@ -39,6 +40,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         azureAuthSettings={azureAuthSettings}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
       <AlertingSettings<PromOptions>
