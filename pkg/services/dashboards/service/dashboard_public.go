@@ -47,6 +47,10 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 		PublicDashboardConfig: *dto.PublicDashboardConfig,
 	}
 
+	// Eventually we want this to propagate to array of public dashboards
+	cmd.PublicDashboardConfig.PublicDashboard.OrgId = dto.OrgId
+	cmd.PublicDashboardConfig.PublicDashboard.DashboardUid = dto.DashboardUid
+
 	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
 	if err != nil {
 		return nil, err

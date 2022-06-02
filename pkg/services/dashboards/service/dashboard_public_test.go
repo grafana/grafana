@@ -4,9 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -75,4 +78,57 @@ func TestGetPublicDashboard(t *testing.T) {
 			assert.Equal(t, test.dashResp, dashboard)
 		})
 	}
+}
+
+func TestSavePublicDashboard(t *testing.T) {
+	t.Run("gets PublicDashboard.orgId and PublicDashboard.DashboardUid set from SavePublicDashboardConfigDTO", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+
+		service := &DashboardServiceImpl{
+			log:            log.New("test.logger"),
+			dashboardStore: dashboardStore,
+		}
+
+		dto := &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			PublicDashboardConfig: &models.PublicDashboardConfig{
+				IsPublic: true,
+				PublicDashboard: models.PublicDashboard{
+					DashboardUid: "NOTTHESAME",
+					OrgId:        9999999,
+				},
+			},
+		}
+
+		pdc, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		assert.Equal(t, dashboard.Uid, pdc.PublicDashboard.DashboardUid)
+		assert.Equal(t, dashboard.OrgId, pdc.PublicDashboard.OrgId)
+
+	})
+}
+
+func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+	return dash
 }
