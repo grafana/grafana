@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,14 +37,15 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
-	user   *models.SignedInUser
-	dashId int64
-	orgId  int64
-	acl    []*models.DashboardAclInfoDTO
-	teams  []*models.TeamDTO
-	log    log.Logger
-	ctx    context.Context
-	store  sqlstore.Store
+	user             *models.SignedInUser
+	dashId           int64
+	orgId            int64
+	acl              []*models.DashboardAclInfoDTO
+	teams            []*models.TeamDTO
+	log              log.Logger
+	ctx              context.Context
+	store            sqlstore.Store
+	dashboardService dashboards.DashboardService
 }
 
 // New factory for creating a new dashboard guardian instance
@@ -52,14 +54,15 @@ var New = func(ctx context.Context, dashId int64, orgId int64, user *models.Sign
 	panic("no guardian factory implementation provided")
 }
 
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser, store sqlstore.Store) *dashboardGuardianImpl {
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser, store sqlstore.Store, dashSvc dashboards.DashboardService) *dashboardGuardianImpl {
 	return &dashboardGuardianImpl{
-		user:   user,
-		dashId: dashId,
-		orgId:  orgId,
-		log:    log.New("dashboard.permissions"),
-		ctx:    ctx,
-		store:  store,
+		user:             user,
+		dashId:           dashId,
+		orgId:            orgId,
+		log:              log.New("dashboard.permissions"),
+		ctx:              ctx,
+		store:            store,
+		dashboardService: dashSvc,
 	}
 }
 
@@ -222,7 +225,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	}
 
 	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := g.store.GetDashboardAclInfoList(g.ctx, &query); err != nil {
+	if err := g.dashboardService.GetDashboardAclInfoList(g.ctx, &query); err != nil {
 		return nil, err
 	}
 	g.acl = query.Result

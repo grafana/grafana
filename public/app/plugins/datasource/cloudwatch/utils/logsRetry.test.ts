@@ -13,20 +13,22 @@ describe('runWithRetry', () => {
   const timeoutFail = () => true;
   it('returns results if no retry is needed', async () => {
     const queryFunc = jest.fn();
-    queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
+    const mockFrames = [createResponseFrame('A')];
+    queryFunc.mockReturnValueOnce(of(mockFrames));
     const targets = [targetA];
     const values = await lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     expect(queryFunc).toBeCalledTimes(1);
     expect(queryFunc).toBeCalledWith(targets);
-    expect(values).toEqual([{ frames: [createResponseFrame('A')] }]);
+    expect(values).toEqual([{ frames: mockFrames }]);
   });
 
   it('retries if error', async () => {
     jest.useFakeTimers();
     const targets = [targetA];
     const queryFunc = jest.fn();
+    const mockFrames = [createResponseFrame('A')];
     queryFunc.mockReturnValueOnce(throwError(() => createErrorResponse(targets)));
-    queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
+    queryFunc.mockReturnValueOnce(of(mockFrames));
 
     const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     jest.runAllTimers();
@@ -35,7 +37,7 @@ describe('runWithRetry', () => {
     expect(queryFunc).toBeCalledTimes(2);
     expect(queryFunc).nthCalledWith(1, targets);
     expect(queryFunc).nthCalledWith(2, targets);
-    expect(values).toEqual([{ frames: [createResponseFrame('A')] }]);
+    expect(values).toEqual([{ frames: mockFrames }]);
   });
 
   it('fails if reaching timeout and no data was retrieved', async () => {
@@ -82,13 +84,14 @@ describe('runWithRetry', () => {
   it('works with multiple queries if there is no error', async () => {
     const targets = [targetA, targetB];
     const queryFunc = jest.fn();
-    queryFunc.mockReturnValueOnce(of([createResponseFrame('A'), createResponseFrame('B')]));
+    const mockFrames = [createResponseFrame('A'), createResponseFrame('B')];
+    queryFunc.mockReturnValueOnce(of(mockFrames));
 
     const values = await lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
 
     expect(queryFunc).toBeCalledTimes(1);
     expect(queryFunc).nthCalledWith(1, targets);
-    expect(values).toEqual([{ frames: [createResponseFrame('A'), createResponseFrame('B')] }]);
+    expect(values).toEqual([{ frames: mockFrames }]);
   });
 
   it('works with multiple queries only one errors out', async () => {

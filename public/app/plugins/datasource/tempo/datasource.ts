@@ -14,10 +14,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
+  reportInteraction,
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
@@ -159,9 +159,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const timeRange = config.featureToggles.tempoBackendSearch
-          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
-          : undefined;
+        reportInteraction('grafana_traces_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          serviceName: targets.nativeSearch[0].serviceName ?? '',
+          spanName: targets.nativeSearch[0].spanName ?? '',
+          limit: targets.nativeSearch[0].limit ?? '',
+          search: targets.nativeSearch[0].search ?? '',
+        });
+
+        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
@@ -199,6 +206,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (targets.traceId?.length > 0) {
+      reportInteraction('grafana_traces_traceID_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        query: targets.traceId[0].query ?? '',
+      });
+
       subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 

@@ -1804,63 +1804,41 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       traceFormat: 'otlp',
     },
   },
-  creator: jest.fn(),
   fields: [
     {
       name: 'traceID',
       type: 'string',
       config: {},
-      labels: undefined,
       values: ['60ba2abb44f13eae'],
-      state: {
-        displayName: 'traceID',
-      },
     },
     {
       name: 'spanID',
       type: 'string',
       config: {},
-      labels: undefined,
       values: ['726b5e30102fc0d0'],
-      state: {
-        displayName: 'spanID',
-      },
     },
     {
       name: 'parentSpanID',
       type: 'string',
       config: {},
-      labels: undefined,
       values: ['398f0f21a3db99ae'],
-      state: {
-        displayName: 'parentSpanID',
-      },
     },
     {
       name: 'operationName',
       type: 'string',
       config: {},
-      labels: undefined,
       values: ['HTTP GET - root'],
-      state: {
-        displayName: 'operationName',
-      },
     },
     {
       name: 'serviceName',
       type: 'string',
       config: {},
-      labels: undefined,
       values: ['db'],
-      state: {
-        displayName: 'serviceName',
-      },
     },
     {
       name: 'serviceTags',
       type: 'other',
       config: {},
-      labels: undefined,
       values: [
         [
           {
@@ -1889,45 +1867,29 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
           },
         ],
       ],
-      state: {
-        displayName: 'serviceTags',
-      },
     },
     {
       name: 'startTime',
       type: 'number',
       config: {},
-      labels: undefined,
       values: [1627471657255.809],
-      state: {
-        displayName: 'startTime',
-      },
     },
     {
       name: 'duration',
       type: 'number',
       config: {},
-      labels: undefined,
       values: [0.459008],
-      state: {
-        displayName: 'duration',
-      },
     },
     {
       name: 'logs',
       type: 'other',
       config: {},
-      labels: undefined,
       values: [[]],
-      state: {
-        displayName: 'logs',
-      },
     },
     {
       name: 'references',
       type: 'other',
       config: {},
-      labels: undefined,
       values: [
         [
           {
@@ -1945,15 +1907,11 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
           },
         ],
       ],
-      state: {
-        displayName: 'references',
-      },
     },
     {
       name: 'tags',
       type: 'other',
       config: {},
-      labels: undefined,
       values: [
         [
           {
@@ -1978,9 +1936,6 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
           },
         ],
       ],
-      state: {
-        displayName: 'tags',
-      },
     },
   ],
   length: 1,

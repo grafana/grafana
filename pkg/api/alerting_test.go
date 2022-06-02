@@ -7,14 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -46,9 +49,13 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitLegacyGuardian(store)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+		q.Result = aclMockResp
+	}).Return(nil)
+	guardian.InitLegacyGuardian(store, dashSvc)
 	return hs
 }
 

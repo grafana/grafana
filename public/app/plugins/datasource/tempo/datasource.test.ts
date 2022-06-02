@@ -16,6 +16,13 @@ import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceS
 import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 describe('Tempo data source', () => {
   // Mock the console error so that running the test suite doesnt throw the error
   const origError = console.error;
