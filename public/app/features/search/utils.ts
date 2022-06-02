@@ -1,52 +1,43 @@
-import { parse, SearchParserResult } from 'search-query-parser';
-
 import { UrlQueryMap } from '@grafana/data';
 
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 
 import { SECTION_STORAGE_KEY } from './constants';
+import { SearchQuery } from './service';
 import { DashboardQuery } from './types';
 
-export const parseQuery = (query: string) => {
-  const parsedQuery = parse(query, {
-    keywords: ['folder'],
-  });
-
-  if (typeof parsedQuery === 'string') {
-    return {
-      text: parsedQuery,
-    } as SearchParserResult;
-  }
-
-  return parsedQuery;
-};
-
-/**
- * When search is done within a dashboard folder, add folder id to the search query
- * to narrow down the results to the folder
- * @param query
- * @param queryParsing
- */
-export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
-  const parsedQuery = { ...query, sort: query.sort?.value };
-  if (!queryParsing) {
-    return parsedQuery;
-  }
-
-  let folderIds: number[] = [];
-
-  if (parseQuery(query.query).folder === 'current') {
-    try {
-      const dash = getDashboardSrv().getCurrent();
-      if (dash?.meta.folderId) {
-        folderIds = [dash?.meta.folderId];
-      }
-    } catch (e) {
-      console.error(e);
+export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
+  if (query.query && query.query.indexOf('folder:current') >= 0) {
+    query = {
+      ...query,
+      location: await getCurrentFolderUID(),
+      query: query.query.replace('folder:current', '').trim(),
+    };
+    if (!query.query?.length) {
+      query.query = '*';
     }
   }
-  return { ...parsedQuery, query: parseQuery(query.query).text as string, folderIds };
-};
+  return Promise.resolve(query);
+}
+
+/** utility function to parse the folder from URL */
+async function getCurrentFolderUID(): Promise<string | undefined> {
+  try {
+    let dash = getDashboardSrv().getCurrent();
+    if (!dash) {
+      await delay(500); // may not be loaded yet
+      dash = getDashboardSrv().getCurrent();
+    }
+    return Promise.resolve(dash?.meta?.folderUid);
+  } catch (e) {
+    console.error(e);
+  }
+  return undefined;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Check if search query has filters enabled. Excludes folderId

@@ -4,6 +4,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from '../types';
+import { replaceCurrentFolderQuery } from '../utils';
 
 import { LocationInfo } from './types';
 
@@ -46,6 +47,7 @@ export class SQLSearcher implements GrafanaSearcher {
       sort: query.sort,
     };
 
+    query = await replaceCurrentFolderQuery(query);
     if (query.query === '*') {
       if (query.kind?.length === 1 && query.kind[0] === 'folder') {
         q.type = 'dash-folder';

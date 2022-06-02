@@ -12,6 +12,7 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
+import { reportDashboardListViewed } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -20,7 +21,6 @@ import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
-import { reportDashboardListViewed } from './reporting';
 
 type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
