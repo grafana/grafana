@@ -11,6 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
+import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
@@ -347,6 +348,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
+    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
@@ -375,6 +377,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
                 //TODO:unification
                 addQueryRowButtonHidden={false}
+                richHistoryRowButtonHidden={richHistoryRowButtonHidden}
                 richHistoryButtonActive={showRichHistory}
                 queryInspectorButtonActive={showQueryInspector}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}

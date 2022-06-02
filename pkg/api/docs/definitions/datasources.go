@@ -334,7 +334,6 @@ import (
 // 500: internalServerError
 
 // swagger:parameters updateDatasourceByID deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
-// swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
 	// in:path
