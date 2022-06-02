@@ -598,3 +598,7 @@ func (dr *DashboardServiceImpl) HasAdminPermissionInFolders(ctx context.Context,
 func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
 }
+
+func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return dr.dashboardStore.GetDashboardTags(ctx, query)
+}

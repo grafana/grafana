@@ -1009,3 +1009,21 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 
 	return res, nil
 }
+
+func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := `SELECT
+					  COUNT(*) as count,
+						term
+					FROM dashboard
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
+					WHERE dashboard.org_id=?
+					GROUP BY term
+					ORDER BY term`
+
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
+}
