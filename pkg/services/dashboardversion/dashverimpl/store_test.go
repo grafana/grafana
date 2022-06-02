@@ -30,8 +30,8 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 
 		res, err := dashVerStore.Get(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, query.DashboardID, savedDash.Id)
-		require.Equal(t, query.Version, savedDash.Version)
+		assert.Equal(t, query.DashboardID, savedDash.Id)
+		assert.Equal(t, query.Version, savedDash.Version)
 
 		dashCmd := &models.Dashboard{
 			Id:    res.ID,
@@ -41,8 +41,8 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 		err = getDashboard(t, ss, dashCmd)
 		require.Nil(t, err)
 
-		require.EqualValues(t, dashCmd.Data.Get("uid"), res.Data.Get("uid"))
-		require.EqualValues(t, dashCmd.Data.Get("orgId"), res.Data.Get("orgId"))
+		assert.EqualValues(t, dashCmd.Data.Get("uid"), res.Data.Get("uid"))
+		assert.EqualValues(t, dashCmd.Data.Get("orgId"), res.Data.Get("orgId"))
 	})
 
 	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 
 		_, err := dashVerStore.Get(context.Background(), &query)
 		require.Error(t, err)
-		require.Equal(t, models.ErrDashboardVersionNotFound, err)
+		assert.Equal(t, models.ErrDashboardVersionNotFound, err)
 	})
 }
 
@@ -93,7 +93,7 @@ func TestIntegrationListDashboardVersions(t *testing.T) {
 
 		res, err := dashVerStore.List(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, 1, len(res))
+		assert.Equal(t, 1, len(res))
 	})
 
 	t.Run("Attempt to get the versions for a non-existent Dashboard ID", func(t *testing.T) {
@@ -101,8 +101,8 @@ func TestIntegrationListDashboardVersions(t *testing.T) {
 
 		res, err := dashVerStore.List(context.Background(), &query)
 		require.Error(t, err)
-		require.Equal(t, dashver.ErrNoVersionsForDashboardID, err)
-		require.Equal(t, 0, len(res))
+		assert.ErrorIs(t, dashver.ErrNoVersionsForDashboardID, err)
+		assert.Equal(t, 0, len(res))
 	})
 
 	t.Run("Get all versions for an updated dashboard", func(t *testing.T) {
@@ -113,7 +113,7 @@ func TestIntegrationListDashboardVersions(t *testing.T) {
 		res, err := dashVerStore.List(context.Background(), &query)
 
 		require.Nil(t, err)
-		require.Equal(t, 2, len(res))
+		assert.Equal(t, 2, len(res))
 	})
 }
 
