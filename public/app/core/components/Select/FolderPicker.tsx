@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AsyncSelect } from '@grafana/ui';
+import { ActionMeta, AsyncSelect } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 
@@ -21,6 +21,7 @@ export interface Props {
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  onClear?: () => void;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -103,9 +104,14 @@ export class FolderPicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onFolderChange = (newFolder: SelectableValue<number>) => {
+  onFolderChange = (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
     if (!newFolder) {
       newFolder = { value: 0, label: this.props.rootName };
+    }
+
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
     }
 
     this.setState(
@@ -117,13 +123,17 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   createNewFolder = async (folderName: string) => {
-    // @ts-ignore
     const newFolder = await createFolder({ title: folderName });
     let folder = { value: -1, label: 'Not created' };
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       folder = { value: newFolder.id, label: newFolder.title };
-      await this.onFolderChange(folder);
+      this.setState(
+        {
+          folder: newFolder,
+        },
+        () => this.props.onChange({ id: newFolder.value!, title: newFolder.label! })
+      );
     } else {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
     }
@@ -177,7 +187,8 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew, inputId } = this.props;
+    const { enableCreateNew, inputId, onClear } = this.props;
+    const isClearable = typeof onClear === 'function';
 
     return (
       <div data-testid={selectors.components.FolderPicker.containerV2}>
@@ -192,6 +203,7 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          isClearable={isClearable}
         />
       </div>
     );
