@@ -3,6 +3,7 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -71,11 +72,14 @@ func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
 	err := session.Find(&rows)
 
 	if err != nil {
-		return 0, errutil.Wrapf(err, "failed to select column: %s", column)
+		return 0, fmt.Errorf("failed to select column: %s: %w", column, err)
 	}
 
 	rowsUpdated, err := updateRows(session, rows, column)
-	return rowsUpdated, errutil.Wrapf(err, "failed to update column: %s", column)
+	if err != nil {
+		return rowsUpdated, fmt.Errorf("failed to update column: %s: %w", column, err)
+	}
+	return rowsUpdated, err
 }
 
 func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordFieldName string) (int, error) {
