@@ -13,7 +13,23 @@ jobs:
         with:
           fetch-depth: 0
           ref: fusebit-v1.0.0-v8.3.3
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.17.2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_PROFILE_321_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PROFILE_321_SECRET_ACCESS_KEY_ID }}
+          aws-region: us-west-2
       - name: Publish Tags
         run: |
           git tag $(cat .fusebit.version.json | jq -r .version) || true
           git push --tags || true
+      - name: Load dependencies
+        run: make deps
+      - name: Build docker container
+        run: docker build --tag fusebit/grafana:$(cat .fusebit.version.json | jq -r .version) .
+      - name: Publish docker image
+        run: ./tools/publish_to_ecr.sh $(cat .fusebit.version.json | jq -r .version)
