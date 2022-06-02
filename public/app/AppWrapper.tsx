@@ -95,6 +95,14 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       });
     };
 
+    const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
+
+    const renderNavBar = () => {
+      return !config.isPublicDashboardView && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>;
+    };
+
+    const searchBarEnabled = () => !config.isPublicDashboardView;
+
     return (
       <Provider store={store}>
         <I18nProvider>
@@ -107,12 +115,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {!config.isPublicDashboardView && config.featureToggles.commandPalette && <CommandPalette />}
+                    {commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {!config.isPublicDashboardView && ready && (
-                          <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>
-                        )}
+                        {renderNavBar()}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
@@ -120,7 +126,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                           <AngularRoot />
                           <AppNotificationList />
-                          {!config.isPublicDashboardView && <SearchWrapper />}
+                          {searchBarEnabled() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
