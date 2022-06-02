@@ -6,7 +6,6 @@ import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { FlatElement, reorder } from '../../../plugins/panel/canvas/tree';
 import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -66,8 +65,12 @@ export class FrameState extends ElementState {
   }
 
   // used in the layer editor
-  reorder(src: FlatElement, dest: FlatElement) {
-    this.elements = reorder(src, dest, this.elements);
+  reorder(startIndex: number, endIndex: number) {
+    const result = Array.from(this.elements);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    this.elements = result;
+
     this.reinitializeMoveable();
   }
 
