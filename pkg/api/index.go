@@ -642,7 +642,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 	baseUrl := hs.Cfg.AppSubURL + "/" + baseId
 
 	children = append(children, &dtos.NavLink{
-		Id:          "datasources",
+		Id:          baseId + "-datasources",
 		Text:        "Data sources",
 		Icon:        "database",
 		Description: "Add and configure data sources",
@@ -650,7 +650,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 	})
 
 	children = append(children, &dtos.NavLink{
-		Id:          "plugins",
+		Id:          baseId + "-plugins",
 		Text:        "Plugins",
 		Icon:        "plug",
 		Description: "Manage plugins",
@@ -658,7 +658,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 	})
 
 	children = append(children, &dtos.NavLink{
-		Id:          "cloud-integrations",
+		Id:          baseId + "-cloud-integrations",
 		Text:        "Cloud integrations",
 		Icon:        "bolt",
 		Description: "Manage your cloud integrations",
@@ -666,7 +666,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 	})
 
 	children = append(children, &dtos.NavLink{
-		Id:          "recorded-queries",
+		Id:          baseId + "-recorded-queries",
 		Text:        "Recorded queries",
 		Icon:        "record-audio",
 		Description: "Manage your recorded queries",
