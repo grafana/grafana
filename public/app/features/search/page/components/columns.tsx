@@ -77,7 +77,7 @@ export const generateColumns = (
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
-          <div {...p.cellProps} className={p.cellStyle}>
+          <div {...p.cellProps}>
             <div className={styles.checkbox}>
               <Checkbox
                 disabled={!hasUID}
@@ -99,7 +99,7 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let classNames = cx(styles.nameCellStyle);
       let name = access.name.values.get(p.row.index);
       if (!name?.length) {
         name = 'Missing title'; // normal for panels
@@ -113,7 +113,9 @@ export const generateColumns = (
     },
     id: `column-name`,
     field: access.name!,
-    Header: 'Name',
+    Header: () => {
+      return <div className={styles.headerNameStyle}>Name</div>;
+    },
     width,
   });
   availableWidth -= width;
@@ -148,7 +150,7 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
+          <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (
@@ -223,7 +225,7 @@ function makeDataSourceColumn(
         return null;
       }
       return (
-        <div {...p.cellProps} className={cx(p.cellStyle, datasourceItemClass)}>
+        <div {...p.cellProps} className={cx(datasourceItemClass)}>
           {dslist.map((v, i) => {
             const settings = srv.getInstanceSettings(v);
             const icon = settings?.meta?.info?.logos?.small;
@@ -333,7 +335,7 @@ function makeTagsColumn(
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
       return tags ? (
-        <div {...p.cellProps} className={p.cellStyle}>
+        <div {...p.cellProps}>
           <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
         </div>
       ) : null;
