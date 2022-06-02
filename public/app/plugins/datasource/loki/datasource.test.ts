@@ -25,7 +25,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
+import { LokiQuery, LokiQueryType, LokiResponse, LokiResultType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -369,7 +369,7 @@ describe('LokiDatasource', () => {
         const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
 
-        expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+        expect(fieldCache.getFieldByName('Line')?.values.get(0)).toBe('hello');
         expect(dataFrame.meta?.limit).toBe(20);
         expect(dataFrame.meta?.searchWords).toEqual(['foo']);
       });
@@ -997,12 +997,21 @@ describe('LokiDatasource', () => {
 
       expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
     });
+
+    it('does not create provider if there is only an instant logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value', refId: 'A', queryType: LokiQueryType.Instant }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
+    });
   });
 
   describe('importing queries', () => {
     it('keeps all labels when no labels are loaded', async () => {
       const ds = createLokiDSForTests();
-      ds.getResource = () => Promise.resolve({ data: [] });
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -1017,9 +1026,7 @@ describe('LokiDatasource', () => {
 
     it('filters out non existing labels', async () => {
       const ds = createLokiDSForTests();
-      ds.getResource = () => {
-        return Promise.resolve({ data: ['foo'] });
-      };
+      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',

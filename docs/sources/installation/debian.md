@@ -1,10 +1,15 @@
-+++
-title = "Install on Debian/Ubuntu"
-description = "Install guide for Grafana on Debian or Ubuntu"
-keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/latest/installation/installation/debian"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/installation/debian/
+  - /docs/grafana/latest/installation/installation/debian/
+description: Install guide for Grafana on Debian or Ubuntu
+keywords:
+  - grafana
+  - installation
+  - documentation
+title: Install on Debian/Ubuntu
+weight: 200
+---
 
 # Install on Debian or Ubuntu
 
@@ -179,7 +184,7 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 

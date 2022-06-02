@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -10,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnstarQueryInQueryHistory(t *testing.T) {
+func TestIntegrationUnstarQueryInQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "When users tries to unstar query in query history that does not exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.starHandler(sc.reqContext)

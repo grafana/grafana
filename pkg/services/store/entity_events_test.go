@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store
 
 import (
@@ -13,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEntityEventsService(t *testing.T) {
+func TestIntegrationEntityEventsService(t *testing.T) {
 	var ctx context.Context
 	var service EntityEventsService
 
@@ -78,6 +75,7 @@ func TestEntityEventsService(t *testing.T) {
 		})
 		require.NoError(t, err)
 		firstEv, err := service.GetLastEvent(ctx)
+		require.NoError(t, err)
 		firstEvId := firstEv.Id
 
 		err = service.SaveEvent(ctx, SaveEventCmd{
@@ -136,7 +134,7 @@ func TestEntityEventsService(t *testing.T) {
 	})
 }
 
-func TestCreateDatabaseEntityId(t *testing.T) {
+func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
 	tests := []struct {
 		name       string
 		entityType EntityType

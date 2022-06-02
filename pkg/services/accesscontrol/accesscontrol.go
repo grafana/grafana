@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Options struct {
@@ -19,11 +20,8 @@ type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
-	// GetUserPermissions returns user permissions.
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
-
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
 
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
@@ -37,15 +35,31 @@ type AccessControl interface {
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
-type PermissionsProvider interface {
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
+}
+
+type PermissionsStore interface {
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type PermissionsServices interface {
-	GetTeamService() PermissionsService
-	GetFolderService() PermissionsService
-	GetDashboardService() PermissionsService
-	GetDataSourceService() PermissionsService
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
 }
 
 type PermissionsService interface {
@@ -115,6 +129,11 @@ var ReqSignedIn = func(c *models.ReqContext) bool {
 
 var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
+}
+
+// ReqViewer returns true if the current user has models.ROLE_VIEWER. Note: this can be anonymous user as well
+var ReqViewer = func(c *models.ReqContext) bool {
+	return c.OrgRole.Includes(models.ROLE_VIEWER)
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
@@ -201,6 +220,20 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 	return result
 }
 
+// MergeMeta will merge actions matching prefix of second metadata into first
+func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
+	if first == nil {
+		first = Metadata{}
+	}
+
+	for key := range second {
+		if strings.HasPrefix(key, prefix) {
+			first[key] = true
+		}
+	}
+	return first
+}
+
 func ManagedUserRoleName(userID int64) string {
 	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
@@ -221,4 +254,8 @@ func extractPrefixes(prefix string) (string, string, bool) {
 	rootPrefix := parts[0] + ":"
 	attributePrefix := rootPrefix + parts[1] + ":"
 	return rootPrefix, attributePrefix, true
+}
+
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.RBACEnabled
 }

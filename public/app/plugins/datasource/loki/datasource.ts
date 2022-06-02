@@ -105,6 +105,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  useBackendMode: boolean;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -116,6 +117,7 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    this.useBackendMode = config.featureToggles.lokiBackendMode ?? false;
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -137,22 +139,28 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
+    const isQuerySuitable = (query: LokiQuery) => {
+      const normalized = getNormalizedLokiQuery(query);
+      const { expr } = normalized;
+      // it has to be a logs-producing range-query
+      return expr && !isMetricsQuery(expr) && normalized.queryType === LokiQueryType.Range;
+    };
+
+    const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
+
     if (!isLogsVolumeAvailable) {
       return undefined;
     }
 
     const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets
-      .filter((target) => target.expr && !isMetricsQuery(target.expr))
-      .map((target) => {
-        return {
-          ...target,
-          instant: false,
-          volumeQuery: true,
-          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-        };
-      });
+    logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
+      return {
+        ...target,
+        instant: false,
+        volumeQuery: true,
+        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+      };
+    });
 
     return queryLogsVolume(this, logsVolumeRequest, {
       extractLevel,
@@ -168,19 +176,37 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    if (config.featureToggles.lokiBackendMode) {
-      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+    if (this.useBackendMode) {
+      const queries = request.targets
+        .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
+        .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
+
       const fixedRequest = {
         ...request,
-        targets: request.targets.map(getNormalizedLokiQuery),
+        targets: queries,
       };
+
+      const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
+      if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+        // this is still an in-development feature,
+        // we do not support mixing stream-queries with normal-queries for now.
+        const streamRequest = {
+          ...fixedRequest,
+          targets: streamQueries,
+        };
+        return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      }
 
       if (fixedRequest.liveStreaming) {
         return this.runLiveQueryThroughBackend(fixedRequest);
       } else {
         return super
           .query(fixedRequest)
-          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+          .pipe(
+            map((response) =>
+              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+            )
+          );
       }
     }
 
@@ -445,8 +471,15 @@ export class LokiDatasource
     if (url.startsWith('/')) {
       throw new Error(`invalid metadata request url: ${url}`);
     }
-    const res = await this.getResource(url, params);
-    return res.data || [];
+
+    if (this.useBackendMode) {
+      const res = await this.getResource(url, params);
+      return res.data || [];
+    } else {
+      const lokiURL = `${LOKI_ENDPOINT}/${url}`;
+      const res = await lastValueFrom(this._request(lokiURL, params, { hideFromInspector: true }));
+      return res.data.data || [];
+    }
   }
 
   async metricFindQuery(query: string) {
@@ -746,7 +779,7 @@ export class LokiDatasource
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const view = new DataFrameView<{ ts: string; line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
 
       view.forEach((row) => {
         const { labels } = row;
@@ -772,9 +805,9 @@ export class LokiDatasource
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
         annotations.push({
-          time: new Date(row.ts).valueOf(),
+          time: new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.line,
+          text: renderLegendFormat(textFormat, labels) || row.Line,
           tags,
         });
       });

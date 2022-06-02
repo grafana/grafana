@@ -1,4 +1,4 @@
-import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { WithAccessControlMetadata } from '@grafana/data';
 
 import { ApiKey, OrgRole, Role } from '.';
 
@@ -38,18 +38,33 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   role: OrgRole;
 }
 
+export interface ServiceAccountCreateApiResponse {
+  avatarUrl?: string;
+  id: number;
+  isDisabled: boolean;
+  login: string;
+  name: string;
+  orgId: number;
+  role: OrgRole;
+  tokens: number;
+}
+
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
   isLoading: boolean;
   tokens: ApiKey[];
 }
 
-export type ServiceAccountFilter = Record<string, string | boolean | SelectableValue[]>;
+export enum ServiceAccountStateFilter {
+  All = 'All',
+  WithExpiredTokens = 'WithExpiredTokens',
+  Disabled = 'Disabled',
+}
+
 export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
   roleOptions: Role[];
-  serviceAccountToRemove: ServiceAccountDTO | null;
   builtInRoles: Record<string, Role[]>;
 
   // search / filtering
@@ -58,5 +73,5 @@ export interface ServiceAccountsState {
   page: number;
   totalPages: number;
   showPaging: boolean;
-  filters: ServiceAccountFilter[];
+  serviceAccountStateFilter: ServiceAccountStateFilter;
 }

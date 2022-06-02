@@ -22,9 +22,11 @@ Panel: {
             {
                 PanelOptions: {
                     ui.SingleStatBaseOptions
-                    displayMode: ui.BarGaugeDisplayMode
-                    showUnfilled: bool
-                }
+                    displayMode: ui.BarGaugeDisplayMode | *"gradient"
+                    showUnfilled: bool | *true
+                    minVizWidth: uint32 | *0
+                    minVizHeight: uint32 | *10
+                } @cuetsy(kind="interface")
             }
         ]
     ]

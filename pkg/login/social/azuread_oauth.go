@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -213,9 +214,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
+			logger.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
+		} else {
+			body, _ := io.ReadAll(res.Body)
+			logger.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
-		return nil, errors.New("error fetching groups")
+		return []string{}, nil
 	}
 
 	var body getAzureGroupResponse

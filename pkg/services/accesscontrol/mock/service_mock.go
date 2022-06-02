@@ -11,6 +11,10 @@ import (
 
 var _ accesscontrol.PermissionsService = new(MockPermissionsService)
 
+func NewMockedPermissionsService() *MockPermissionsService {
+	return &MockPermissionsService{}
+}
+
 type MockPermissionsService struct {
 	mock.Mock
 }

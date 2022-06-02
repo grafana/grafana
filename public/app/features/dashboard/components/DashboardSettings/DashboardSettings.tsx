@@ -49,7 +49,13 @@ const MakeEditable = (props: { onMakeEditable: () => any }) => (
 
 export function DashboardSettings({ dashboard, editview }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps } = useOverlay({}, ref);
+  const { overlayProps } = useOverlay(
+    {
+      isOpen: true,
+      onClose,
+    },
+    ref
+  );
   const { dialogProps } = useDialog(
     {
       'aria-label': 'Dashboard settings',
@@ -117,7 +123,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
     }
 
     if (dashboard.id && dashboard.meta.canAdmin) {
-      if (!config.featureToggles['accesscontrol']) {
+      if (!config.rbacEnabled) {
         pages.push({
           title: 'Permissions',
           id: 'permissions',

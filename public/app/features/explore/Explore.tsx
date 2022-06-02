@@ -8,7 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
+import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
@@ -57,6 +57,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: unset !important;
       display: unset !important;
       padding: ${theme.spacing(1)};
+    `,
+    exploreContainer: css`
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      padding: ${theme.spacing(2)};
+      padding-top: 0;
     `,
   };
 };
@@ -208,9 +215,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   };
 
-  renderEmptyState() {
+  renderEmptyState(exploreContainerStyles: string) {
     return (
-      <div className="explore-container">
+      <div className={cx(exploreContainerStyles)}>
         <NoDataSourceCallToAction />
       </div>
     );
@@ -358,10 +365,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
-        {datasourceMissing ? this.renderEmptyState() : null}
+        {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div className="explore-container">
-            <div className={cx('panel-container', styles.queryContainer)}>
+          <div className={cx(styles.exploreContainer)}>
+            <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
@@ -375,7 +382,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
               <ResponseErrorContainer exploreId={exploreId} />
-            </div>
+            </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
