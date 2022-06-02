@@ -64,6 +64,7 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0))
 		require.NoError(t, err)
 
+		require.Equal(t, groupKey, changes.GroupKey)
 		require.Empty(t, changes.New)
 		require.Empty(t, changes.Update)
 		require.Len(t, changes.Delete, len(inDatabaseMap))
@@ -72,6 +73,8 @@ func TestCalculateChanges(t *testing.T) {
 			db := inDatabaseMap[toDelete.UID]
 			require.Equal(t, db, toDelete)
 		}
+		require.Contains(t, changes.AffectedGroups, groupKey)
+		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
@@ -85,6 +88,7 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
+		require.Equal(t, groupKey, changes.GroupKey)
 		require.Len(t, changes.Update, len(inDatabase))
 		for _, upsert := range changes.Update {
 			require.NotNil(t, upsert.Existing)
@@ -95,6 +99,9 @@ func TestCalculateChanges(t *testing.T) {
 		}
 		require.Empty(t, changes.Delete)
 		require.Empty(t, changes.New)
+
+		require.Contains(t, changes.AffectedGroups, groupKey)
+		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
@@ -187,7 +194,8 @@ func TestCalculateChanges(t *testing.T) {
 	})
 
 	t.Run("should be able to find alerts by UID in other group/namespace", func(t *testing.T) {
-		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(10)+10, models.AlertRuleGen(withOrgID(orgId)))
+		sourceGroupKey := models.GenerateGroupKey(orgId)
+		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(10)+10, models.AlertRuleGen(withGroupKey(sourceGroupKey)))
 
 		fakeStore := store.NewFakeRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
@@ -206,6 +214,7 @@ func TestCalculateChanges(t *testing.T) {
 		changes, err := calculateChanges(context.Background(), fakeStore, groupKey, submitted)
 		require.NoError(t, err)
 
+		require.Equal(t, groupKey, changes.GroupKey)
 		require.Empty(t, changes.Delete)
 		require.Empty(t, changes.New)
 		require.Len(t, changes.Update, len(submitted))
@@ -216,6 +225,11 @@ func TestCalculateChanges(t *testing.T) {
 			require.Equal(t, submittedMap[update.Existing.UID], update.New)
 			require.NotEmpty(t, update.Diff)
 		}
+
+		require.Contains(t, changes.AffectedGroups, sourceGroupKey)
+		require.NotContains(t, changes.AffectedGroups, groupKey) // because there is no such group in database yet
+
+		require.Len(t, changes.AffectedGroups[sourceGroupKey], len(inDatabase))
 	})
 
 	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
@@ -251,7 +265,7 @@ func TestCalculateChanges(t *testing.T) {
 		expectedErr := errors.New("TEST ERROR")
 		fakeStore.Hook = func(cmd interface{}) error {
 			switch cmd.(type) {
-			case models.GetAlertRuleByUIDQuery:
+			case models.GetAlertRulesGroupByRuleUIDQuery:
 				return expectedErr
 			}
 			return nil
@@ -261,7 +275,7 @@ func TestCalculateChanges(t *testing.T) {
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 
 		_, err := calculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
-		require.Error(t, err, expectedErr)
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 

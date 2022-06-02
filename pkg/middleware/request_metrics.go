@@ -65,31 +65,22 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 		}
 
 		status := rw.Status()
-
 		code := sanitizeCode(status)
-		method := sanitizeMethod(req.Method)
 
-		// enable histogram and disable summaries + counters for http requests.
-		if features.IsEnabled(featuremgmt.FlagDisableHttpRequestHistogram) {
-			duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-			metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
-			metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
-		} else {
-			// avoiding the sanitize functions for in the new instrumentation
-			// since they dont make much sense. We should remove them later.
-			histogram := httpRequestDurationHistogram.
-				WithLabelValues(handler, code, req.Method)
-			if traceID := tracing.TraceIDFromContext(c.Req.Context(), true); traceID != "" {
-				// Need to type-convert the Observer to an
-				// ExemplarObserver. This will always work for a
-				// HistogramVec.
-				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
-				)
-				return
-			}
-			histogram.Observe(time.Since(now).Seconds())
+		// avoiding the sanitize functions for in the new instrumentation
+		// since they dont make much sense. We should remove them later.
+		histogram := httpRequestDurationHistogram.
+			WithLabelValues(handler, code, req.Method)
+		if traceID := tracing.TraceIDFromContext(c.Req.Context(), true); traceID != "" {
+			// Need to type-convert the Observer to an
+			// ExemplarObserver. This will always work for a
+			// HistogramVec.
+			histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+				time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+			)
+			return
 		}
+		histogram.Observe(time.Since(now).Seconds())
 
 		switch {
 		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
@@ -139,10 +130,6 @@ func countProxyRequests(status int) {
 	default:
 		metrics.MProxyStatus.WithLabelValues("unknown").Inc()
 	}
-}
-
-func sanitizeMethod(m string) string {
-	return strings.ToLower(m)
 }
 
 // If the wrapped http.Handler has not set a status code, i.e. the value is

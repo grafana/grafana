@@ -31,7 +31,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
     eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
     return () => eventSubs.unsubscribe();
-  }, [panel, forceUpdate]);
+  }, [panel, dashboard, forceUpdate]);
 
   const activeTab = tabs.find((item) => item.active)!;
 

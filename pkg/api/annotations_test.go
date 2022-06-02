@@ -1000,15 +1000,18 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 func setUpACL() {
 	viewerRole := models.ROLE_VIEWER
 	editorRole := models.ROLE_EDITOR
-
-	aclMockResp := []*models.DashboardAclInfoDTO{
-		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-	}
 	store := mockstore.NewSQLStoreMock()
-	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitLegacyGuardian(store)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+		q.Result = []*models.DashboardAclInfoDTO{
+			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+		}
+	}).Return(nil)
+
+	guardian.InitLegacyGuardian(store, dashSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {
