@@ -12,7 +12,7 @@ Map a regular expression when you want to format the text and color of a regular
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a regular expression**:
 

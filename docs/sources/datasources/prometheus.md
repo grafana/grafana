@@ -13,7 +13,7 @@ weight: 1300
 
 # Prometheus data source
 
-Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 > **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
@@ -67,7 +67,7 @@ For more information about Prometheus query language, refer to the [Prometheus d
 
 Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
 
-In [Explore]({{< relref "../explore/_index.md" >}}) use `shift + enter` to run the query.
+In [Explore]({{< relref "../explore/" >}}) use `shift + enter` to run the query.
 
 #### Metrics browser
 
@@ -161,7 +161,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -183,7 +183,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
+You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -228,12 +228,12 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ### Ad hoc filters variable
 
-Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters.md" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters/" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
 applied to all your Prometheus queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.
@@ -247,7 +247,7 @@ The step option is useful to limit the number of events returned from your query
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../setup-grafana/set-up-grafana-monitoring/" >}}).
 
 ## Prometheus API
 

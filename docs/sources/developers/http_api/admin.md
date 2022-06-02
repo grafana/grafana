@@ -358,7 +358,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../administration/configuration.md#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
 
 **Example Response**:
 
