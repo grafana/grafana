@@ -16,8 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const namePathParam = ":name"
-const idPathParam = ":ID"
+const (
+	namePathParam      = ":name"
+	idPathParam        = ":ID"
+	uidPathParam       = ":UID"
+	groupPathParam     = ":Group"
+	folderUIDPathParam = ":FolderUID"
+)
 
 type ProvisioningSrv struct {
 	log                 log.Logger
@@ -233,7 +238,7 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":UID"]
+	uid := pathParam(c, uidPathParam)
 	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgId, uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -262,7 +267,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":UID"]
+	uid := pathParam(c, uidPathParam)
 	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgId, uid, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -271,8 +276,8 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
-	rulegroup := web.Params(c.Req)[":Group"]
-	folderUID := web.Params(c.Req)[":FolderUID"]
+	rulegroup := pathParam(c, groupPathParam)
+	folderUID := pathParam(c, folderUIDPathParam)
 	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
