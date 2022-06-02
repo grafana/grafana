@@ -174,4 +174,8 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagRedshiftExperimentalUI
+	// Use grafana-experimental UI in the Redshift plugin
+	FlagRedshiftExperimentalUI = "redshiftExperimentalUI"
 )

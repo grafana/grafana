@@ -238,5 +238,12 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:            "redshiftExperimentalUI",
+			Description:     "Use grafana-experimental UI in the Redshift plugin",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
+		},
 	}
 )

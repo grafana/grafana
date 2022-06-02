@@ -58,4 +58,5 @@ export interface FeatureToggles {
   validateDashboardsOnSave?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  redshiftExperimentalUI?: boolean;
 }
