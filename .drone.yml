@@ -137,7 +137,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -815,7 +815,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -1911,7 +1911,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -3707,7 +3707,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -4725,6 +4725,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f4586777ea98ff85fec51ae5bf344bf549871f73aab2b6ff6611ce979b5bbfa1
+hmac: 766806dc9d5e5585e86671ded45d0048cab66c5dc9aaacb5ecb79b8e6754db18
 
 ...

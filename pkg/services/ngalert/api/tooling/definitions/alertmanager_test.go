@@ -939,6 +939,107 @@ func Test_ReceiverMatchesBackend(t *testing.T) {
 	}
 }
 
+func TestObjectMatchers_UnmarshalJSON(t *testing.T) {
+	j := `{
+		"receiver": "autogen-contact-point-default",
+		"routes": [{
+			"receiver": "autogen-contact-point-1",
+			"object_matchers": [
+				[
+					"a",
+					"=",
+					"MFR3Gxrnk"
+				],
+				[
+					"b",
+					"=",
+					"\"MFR3Gxrnk\""
+				],
+				[
+					"c",
+					"=~",
+					"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"
+				],
+				[
+					"d",
+					"=~",
+					"\"^[a-z0-9-]{1}[a-z0-9-]{0,30}$\""
+				]
+			],
+			"group_interval": "3s",
+			"repeat_interval": "10s"
+		}]
+}`
+	var r Route
+	if err := json.Unmarshal([]byte(j), &r); err != nil {
+		require.NoError(t, err)
+	}
+
+	matchers := r.Routes[0].ObjectMatchers
+
+	// Without quotes.
+	require.Equal(t, matchers[0].Name, "a")
+	require.Equal(t, matchers[0].Value, "MFR3Gxrnk")
+
+	// With double quotes.
+	require.Equal(t, matchers[1].Name, "b")
+	require.Equal(t, matchers[1].Value, "MFR3Gxrnk")
+
+	// Regexp without quotes.
+	require.Equal(t, matchers[2].Name, "c")
+	require.Equal(t, matchers[2].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+
+	// Regexp with quotes.
+	require.Equal(t, matchers[3].Name, "d")
+	require.Equal(t, matchers[3].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+}
+
+func TestObjectMatchers_UnmarshalYAML(t *testing.T) {
+	y := `---
+receiver: autogen-contact-point-default
+routes:
+- receiver: autogen-contact-point-1
+  object_matchers:
+  - - a
+    - "="
+    - MFR3Gxrnk
+  - - b
+    - "="
+    - '"MFR3Gxrnk"'
+  - - c
+    - "=~"
+    - "^[a-z0-9-]{1}[a-z0-9-]{0,30}$"
+  - - d
+    - "=~"
+    - '"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"'
+  group_interval: 3s
+  repeat_interval: 10s
+`
+
+	var r Route
+	if err := yaml.Unmarshal([]byte(y), &r); err != nil {
+		require.NoError(t, err)
+	}
+
+	matchers := r.Routes[0].ObjectMatchers
+
+	// Without quotes.
+	require.Equal(t, matchers[0].Name, "a")
+	require.Equal(t, matchers[0].Value, "MFR3Gxrnk")
+
+	// With double quotes.
+	require.Equal(t, matchers[1].Name, "b")
+	require.Equal(t, matchers[1].Value, "MFR3Gxrnk")
+
+	// Regexp without quotes.
+	require.Equal(t, matchers[2].Name, "c")
+	require.Equal(t, matchers[2].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+
+	// Regexp with quotes.
+	require.Equal(t, matchers[3].Name, "d")
+	require.Equal(t, matchers[3].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+}
+
 func Test_Marshaling_Validation(t *testing.T) {
 	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
