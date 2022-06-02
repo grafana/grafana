@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/go-openapi/loads"
@@ -29,6 +30,26 @@ func mergeVectors(a, b []string) []string {
 		}
 	}
 	return a
+}
+
+func sortParametersInPaths(paths *spec.Paths) {
+	if paths != nil {
+		for _, pi := range paths.Paths {
+			sortParameters(pi.Get)
+			sortParameters(pi.Post)
+			sortParameters(pi.Put)
+			sortParameters(pi.Patch)
+			sortParameters(pi.Delete)
+		}
+	}
+}
+
+func sortParameters(op *spec.Operation) {
+	if op != nil && len(op.Parameters) > 0 {
+		sort.Slice(op.Parameters, func(i, j int) bool {
+			return op.Parameters[i].Name < op.Parameters[j].Name
+		})
+	}
 }
 
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
@@ -102,6 +123,8 @@ func mergeSpecs(output string, sources ...string) error {
 				specOSS.SwaggerProps.Paths.Paths[kk] = pi
 			}
 		}
+
+		sortParametersInPaths(specOSS.SwaggerProps.Paths)
 
 		specOSS.SwaggerProps.Tags = append(specOSS.SwaggerProps.Tags, additionalSpec.OrigSpec().SwaggerProps.Tags...)
 	}
