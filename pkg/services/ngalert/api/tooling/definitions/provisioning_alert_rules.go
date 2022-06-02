@@ -8,7 +8,7 @@ import (
 
 // swagger:route GET /api/provisioning/alert-rules/{UID} provisioning RouteGetAlertRule
 //
-// Get all the contact points.
+// Get a specific alert rule by UID.
 //
 //     Responses:
 //       200: AlertRule
@@ -16,29 +16,26 @@ import (
 
 // swagger:route POST /api/provisioning/alert-rules provisioning RoutePostAlertRule
 //
-// Get all the contact points.
+// Create a new alert rule.
 //
 //     Responses:
-//       202: AlertRule
+//       201: AlertRule
 //       400: ValidationError
 
 // swagger:route PUT /api/provisioning/alert-rules/{UID} provisioning RoutePutAlertRule
 //
-// Create a contact point.
+// Update an existing alert rule.
 //
 //     Consumes:
 //     - application/json
 //
 //     Responses:
-//       202: AlertRule
+//       200: AlertRule
 //       400: ValidationError
 
 // swagger:route DELETE /api/provisioning/alert-rules/{UID} provisioning RouteDeleteAlertRule
 //
-// Update an existing contact point.
-//
-//     Consumes:
-//     - application/json
+// Delete a specific alert rule by UID.
 //
 //     Responses:
 //       204: Ack
@@ -115,7 +112,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 
 // swagger:route PUT /api/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning RoutePutAlertRuleGroup
 //
-// Update the interval of an rulegroup
+// Update the interval of an rule group.
 //
 //     Consumes:
 //     - application/json
@@ -125,10 +122,22 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //       400: ValidationError
 
 // swagger:parameters RoutePutAlertRuleGroup
+type FolderUIDPathParam struct {
+    // in:path
+    FolderUID string `json:"FolderUID"`
+}
+// swagger:parameters RoutePutAlertRuleGroup
+type RuleGroupPathParam struct {
+    // in:path
+    Group string `json:"Group"`
+}
+
+// swagger:parameters RoutePutAlertRuleGroup
 type AlertRuleGroupPayload struct {
 	// in:body
 	Body AlertRuleGroup
 }
+
 type AlertRuleGroup struct {
 	Interval int64 `json:"interval"`
 }

@@ -3016,6 +3016,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3048,9 +3049,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "x-go-package": "net/url"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3272,11 +3273,12 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3459,12 +3461,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
    "properties": {
@@ -3523,12 +3524,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3657,7 +3657,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3697,7 +3696,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "properties": {
@@ -4944,7 +4945,7 @@
      }
     ],
     "responses": {
-     "202": {
+     "201": {
       "description": "AlertRule",
       "schema": {
        "$ref": "#/definitions/AlertRule"
@@ -4957,7 +4958,7 @@
       }
      }
     },
-    "summary": "Get all the contact points.",
+    "summary": "Create a new alert rule.",
     "tags": [
      "provisioning"
     ]
@@ -4991,7 +4992,7 @@
       }
      }
     },
-    "summary": "Update an existing contact point.",
+    "summary": "Delete a specific alert rule by UID.",
     "tags": [
      "provisioning"
     ]
@@ -5020,7 +5021,7 @@
       }
      }
     },
-    "summary": "Get all the contact points.",
+    "summary": "Get a specific alert rule by UID.",
     "tags": [
      "provisioning"
     ]
@@ -5046,7 +5047,7 @@
      }
     ],
     "responses": {
-     "202": {
+     "200": {
       "description": "AlertRule",
       "schema": {
        "$ref": "#/definitions/AlertRule"
@@ -5059,7 +5060,7 @@
       }
      }
     },
-    "summary": "Create a contact point.",
+    "summary": "Update an existing alert rule.",
     "tags": [
      "provisioning"
     ]
