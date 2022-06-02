@@ -27,6 +27,7 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
 		kvStore:  kvStore,
+		log:      log.New("serviceaccounts.store"),
 	}
 }
 
@@ -122,47 +123,44 @@ func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context,
 	if len(basicKeys) == 0 {
 		return nil
 	}
-	if len(basicKeys) != len(keys) {
-		return fmt.Errorf("one of the keys already has a serviceaccount")
-	}
 	for _, key := range basicKeys {
-		if !contains(keys, key.Id) {
-			s.log.Error("convert service accounts stopped for keyId %d as it is not part of the query to convert or already has a service account", key.Id)
-			continue
-		}
-		err := s.CreateServiceAccountFromApikey(ctx, key)
-		if err != nil {
-			s.log.Error("converting to service accounts failed with error", err)
+		if contains(keys, key.Id) {
+			err := s.CreateServiceAccountFromApikey(ctx, key)
+			if err != nil {
+				s.log.Error("converting to service account failed with error", "keyId", key.Id, "error", err)
+			}
 		}
 	}
 	return nil
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
-	prefix := "sa-autogen-"
+	prefix := "sa-autogen"
 	cmd := models.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
-		Name:             prefix + key.Name,
+		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
 		OrgId:            key.OrgId,
 		DefaultOrgRole:   string(key.Role),
 		IsServiceAccount: true,
 	}
 
-	newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
-	if errCreateSA != nil {
-		return fmt.Errorf("failed to create service account: %w", errCreateSA)
-	}
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
+		if errCreateSA != nil {
+			return fmt.Errorf("failed to create service account: %w", errCreateSA)
+		}
 
-	if errUpdateKey := s.assignApiKeyToServiceAccount(ctx, key.Id, newSA.Id); errUpdateKey != nil {
-		return fmt.Errorf(
-			"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
-			key.Id, newSA.Id, errUpdateKey,
-		)
-	}
+		if errUpdateKey := s.assignApiKeyToServiceAccount(ctx, key.Id, newSA.Id); errUpdateKey != nil {
+			return fmt.Errorf(
+				"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
+				key.Id, newSA.Id, errUpdateKey,
+			)
+		}
 
-	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", newSA.Id)
+		s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", newSA.Id)
 
-	return nil
+		return nil
+	})
 }
 
 //nolint:gosimple

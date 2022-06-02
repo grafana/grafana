@@ -25,6 +25,7 @@ jest.mock('app/core/core', () => {
 const setup = (propOverrides: Partial<Props>) => {
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
+  const migrateApiKeyMock = jest.fn();
   const addApiKeyMock = jest.fn();
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
@@ -46,6 +47,7 @@ const setup = (propOverrides: Partial<Props>) => {
     setSearchQuery: setSearchQueryMock,
     addApiKey: addApiKeyMock,
     getServiceAccountsUpgradeStatus: getServiceAccountsUpgradeStatusMock,
+    migrateApiKey: migrateApiKeyMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,

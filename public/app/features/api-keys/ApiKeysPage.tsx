@@ -23,6 +23,7 @@ import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
 import {
   addApiKey,
   deleteApiKey,
+  migrateApiKey,
   loadApiKeys,
   toggleIncludeExpired,
   getServiceAccountsUpgradeStatus,
@@ -50,6 +51,7 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadApiKeys,
   deleteApiKey,
+  migrateApiKey,
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
@@ -82,6 +84,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onDeleteApiKey = (key: ApiKey) => {
     this.props.deleteApiKey(key.id!);
+  };
+
+  onMigrateApiKey = (key: ApiKey) => {
+    this.props.migrateApiKey(key.id!);
   };
 
   onSearchQueryChange = (value: string) => {
@@ -157,11 +163,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {!serviceAccountsUpgraded && (
-                    <MigrateToServiceAccountsCard
-                      onMigrate={() => {}}
-                      disabled={!config.featureToggles.serviceAccounts}
-                    />
+                  {/* TODO: remove feature flag check before GA */}
+                  {config.featureToggles.serviceAccounts && !serviceAccountsUpgraded && (
+                    <MigrateToServiceAccountsCard onMigrate={() => {}} />
                   )}
                   {showCTA ? (
                     <EmptyListCTA
@@ -192,7 +196,12 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
-                      <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
+                      <ApiKeysTable
+                        apiKeys={apiKeys}
+                        timeZone={timeZone}
+                        onMigrate={this.onMigrateApiKey}
+                        onDelete={this.onDeleteApiKey}
+                      />
                     </VerticalGroup>
                   ) : null}
                 </>

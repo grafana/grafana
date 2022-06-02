@@ -38,6 +38,16 @@ export function deleteApiKey(id: number): ThunkResult<void> {
   };
 }
 
+export function migrateApiKey(id: number): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      await getBackendSrv().post(`/api/serviceaccounts/convert/${id}`);
+    } finally {
+      dispatch(loadApiKeys());
+    }
+  };
+}
+
 export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: remove when service account enabled by default (or use another way to detect if it's enabled)

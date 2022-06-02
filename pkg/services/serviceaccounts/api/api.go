@@ -71,8 +71,8 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.GetServiceAccountsUpgradeStatus))
 		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
-		// serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
-		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
