@@ -66,3 +66,35 @@ func (f *ForkedProvisioningApi) forkRouteGetMuteTiming(ctx *models.ReqContext) r
 func (f *ForkedProvisioningApi) forkRouteGetMuteTimings(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteGetMuteTimings(ctx)
 }
+
+func (f *ForkedProvisioningApi) forkRoutePostMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return f.svc.RoutePostMuteTiming(ctx, mt)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutMuteTiming(ctx *models.ReqContext, mt apimodels.MuteTimeInterval) response.Response {
+	return f.svc.RoutePutMuteTiming(ctx, mt)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteDeleteMuteTiming(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRouteGetAlertRule(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteRouteGetAlertRule(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePostAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+	return f.svc.RoutePostAlertRule(ctx, ar)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutAlertRule(ctx *models.ReqContext, ar apimodels.AlertRule) response.Response {
+	return f.svc.RoutePutAlertRule(ctx, ar)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteDeleteAlertRule(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
+	return f.svc.RoutePutAlertRuleGroup(ctx, ag)
+}

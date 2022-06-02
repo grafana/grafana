@@ -2,6 +2,7 @@ package dist
 
 import (
     "github.com/grafana/grafana/packages/grafana-schema/src/scuemata/dashboard"
+    pannolist "github.com/grafana/grafana/public/app/plugins/panel/annolist:grafanaschema"
     pbarchart "github.com/grafana/grafana/public/app/plugins/panel/barchart:grafanaschema"
     pbargauge "github.com/grafana/grafana/public/app/plugins/panel/bargauge:grafanaschema"
     pcanvas "github.com/grafana/grafana/public/app/plugins/panel/canvas:grafanaschema"
@@ -27,6 +28,7 @@ import (
 Family: dashboard.Family & {
     compose: Panel: {
         // TODO do this with a loop once we include the panel type/plugin id in the model
+        annolist: pannolist.Panel
         barchart: pbarchart.Panel
         bargauge: pbargauge.Panel
         canvas: pcanvas.Panel

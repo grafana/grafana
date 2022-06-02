@@ -22,8 +22,8 @@ Panel: {
             {
                 PanelOptions: {
                     ui.SingleStatBaseOptions
-                    showThresholdLabels: bool
-                    showThresholdMarkers: bool
+                    showThresholdLabels: bool | *false
+                    showThresholdMarkers: bool | *true
                 } @cuetsy(kind="interface")
             }
         ]

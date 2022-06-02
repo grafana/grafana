@@ -1,13 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-4/", "/docs/grafana/latest/whatsnew/whats-new-in-v5-4/"]
-description = "Feature and improvement highlights for Grafana v5.4"
-keywords = ["grafana", "new", "documentation", "5.4", "release notes"]
-title = "What's new in Grafana v5.4"
-weight = -18
-
-[_build]
-  list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v5-4/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v5-4/
+description: Feature and improvement highlights for Grafana v5.4
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '5.4'
+  - release notes
+title: What's new in Grafana v5.4
+weight: -18
+---
 
 # What's new in Grafana v5.4
 
@@ -46,9 +52,9 @@ Stackdriver is the first data source which has support for a custom templating q
 create their very own templating query editor.
 
 Additionally, if Grafana is running on a Google Compute Engine (GCE) virtual machine, it is now possible for Grafana to automatically retrieve default credentials from the metadata server.
-This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. [Learn more]({{< relref "../datasources/google-cloud-monitoring/_index.md/#using-gce-default-service-account" >}}).
+This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. [Learn more]({{< relref "../datasources/google-cloud-monitoring/#using-gce-default-service-account" >}}).
 
-Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md/" >}}) for more detailed information on how to get started and use it.
+Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/" >}}) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 

@@ -23,7 +23,7 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 
 	createConcurrentTokens(t, sqlStore)
 
-	stats, err := s.collect(context.Background())
+	stats, err := s.collectConcurrentUsers(context.Background())
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stats["stats.auth_token_per_user_le_3"])

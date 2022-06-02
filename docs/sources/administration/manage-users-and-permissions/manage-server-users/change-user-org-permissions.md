@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/change-user-org-permissions/"]
-title = "Change a user's organization permissions"
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/change-user-org-permissions/
+title: Change a user's organization permissions
+weight: 50
+---
 
 # Change a user's organization permissions
 
@@ -10,7 +11,7 @@ Update organization permissions when you want to enhance or restrict a user's ac
 
 ## Before you begin
 
-- [Add a user to an organization]({{< relref "./add-remove-user-to-org.md" >}})
+- [Add a user to an organization]({{< relref "add-remove-user-to-org/" >}})
 - Ensure you have Grafana server administrator privileges
 
 **To change a user's organization permissions**:

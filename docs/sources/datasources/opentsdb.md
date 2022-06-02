@@ -1,14 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/opentsdb/", "/docs/grafana/latest/features/datasources/opentsdb/", "/docs/grafana/latest/features/opentsdb/"]
-description = "Guide for using OpenTSDB in Grafana"
-keywords = ["grafana", "opentsdb", "guide"]
-title = "OpenTSDB"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/opentsdb/
+  - /docs/grafana/latest/features/datasources/opentsdb/
+  - /docs/grafana/latest/features/opentsdb/
+description: Guide for using OpenTSDB in Grafana
+keywords:
+  - grafana
+  - opentsdb
+  - guide
+title: OpenTSDB
+weight: 1100
+---
 
 # Using OpenTSDB in Grafana
 
-Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the OpenTSDB data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the OpenTSDB data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## OpenTSDB settings
 
@@ -45,7 +51,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable

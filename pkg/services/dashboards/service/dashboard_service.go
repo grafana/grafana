@@ -559,3 +559,19 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 		}
 	}
 }
+
+func (dr *DashboardServiceImpl) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	return dr.dashboardStore.GetDashboardAclInfoList(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return dr.dashboardStore.HasAdminPermissionInFolders(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return dr.dashboardStore.GetDashboardTags(ctx, query)
+}

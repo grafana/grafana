@@ -1,9 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/administration/preferences/change-grafana-name/"]
-keywords = ["grafana", "configuration", "documentation", "home"]
-title = "Change name and email"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/preferences/change-grafana-name/
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change name and email
+weight: 100
+---
 
 # Change Grafana name and email
 
@@ -54,4 +59,4 @@ To change the team name or email, follow these steps:
 
 ## Change user name or email
 
-To learn how to edit your user information, refer to [Edit your profile]({{< relref "../manage-user-preferences/_index.md#edit-your-profile" >}}).
+To learn how to edit your user information, refer to [Edit your profile]({{< relref "../manage-user-preferences/#edit-your-profile" >}}).

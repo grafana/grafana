@@ -2,8 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow, EditorField } from '@grafana/experimental';
-import { RadioButtonGroup, Select } from '@grafana/ui';
-import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
