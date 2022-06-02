@@ -91,6 +91,7 @@ func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 		if !strings.HasPrefix(scope, prefix) {
 			return nil, ac.ErrInvalidScope
 		}
+
 		id, err := ac.ParseScopeID(scope)
 		if err != nil {
 			return nil, ac.ErrInvalidScope
@@ -101,20 +102,46 @@ func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, err
 		}
 
-		var folderUID string
-		if dashboard.FolderId == 0 {
-			folderUID = ac.GeneralFolderUID
-		} else {
-			folder, err := db.GetFolderByID(ctx, orgID, dashboard.FolderId)
-			if err != nil {
-				return nil, err
-			}
-			folderUID = folder.Uid
+		return resolveDashboardScope(ctx, db, orgID, dashboard)
+	})
+}
+
+// NewDashboardUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:uid:"
+// into uid based scopes for both dashboard and folder
+func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
+	prefix := ScopeDashboardsProvider.GetResourceScopeUID("")
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+		if !strings.HasPrefix(scope, prefix) {
+			return nil, ac.ErrInvalidScope
 		}
 
-		return []string{
-			ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid),
-			ScopeFoldersProvider.GetResourceScopeUID(folderUID),
-		}, nil
+		uid, err := ac.ParseScopeUID(scope)
+		if err != nil {
+			return nil, ac.ErrInvalidScope
+		}
+
+		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Uid: uid, OrgId: orgID})
+		if err != nil {
+			return nil, err
+		}
+
+		return resolveDashboardScope(ctx, db, orgID, dashboard)
 	})
+}
+
+func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard *models.Dashboard) ([]string, error) {
+	var folderUID string
+	if dashboard.FolderId == 0 {
+		folderUID = ac.GeneralFolderUID
+	} else {
+		folder, err := db.GetFolderByID(ctx, orgID, dashboard.FolderId)
+		if err != nil {
+			return nil, err
+		}
+		folderUID = folder.Uid
+	}
+	return []string{
+		ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid),
+		ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+	}, nil
 }
