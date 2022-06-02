@@ -35,6 +35,7 @@ type OpsgenieNotifier struct {
 	*Base
 	APIKey           string
 	APIUrl           string
+	Description      string
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
@@ -48,6 +49,7 @@ type OpsgenieConfig struct {
 	*NotificationChannelConfig
 	APIKey           string
 	APIUrl           string
+	Description      string
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
@@ -81,6 +83,7 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		APIUrl:                    config.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
 		AutoClose:                 config.Settings.Get("autoClose").MustBool(true),
 		OverridePriority:          config.Settings.Get("overridePriority").MustBool(true),
+		Description:               config.Settings.Get("description").MustString(`{{ template "default.message" . }}`),
 		SendTagsAs:                sendTagsAs,
 	}, nil
 }
@@ -97,6 +100,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		}),
 		APIKey:           config.APIKey,
 		APIUrl:           config.APIUrl,
+		Description:      config.Description,
 		AutoClose:        config.AutoClose,
 		OverridePriority: config.OverridePriority,
 		SendTagsAs:       config.SendTagsAs,
@@ -184,7 +188,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		"%s\n%s\n\n%s",
 		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
-		tmpl(`{{ template "default.message" . }}`),
+		tmpl(on.Description),
 	)
 
 	var priority string
@@ -199,6 +203,12 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 				priority = v
 			}
 		}
+	}
+
+	// Check for templating errors
+	if tmplErr != nil {
+		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		tmplErr = nil
 	}
 
 	bodyJSON.Set("message", title)
@@ -243,9 +253,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	bodyJSON.Set("tags", tags)
 	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.APIUrl)
-
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie URL", "err", tmplErr.Error(), "fallback", on.APIUrl)
+		apiURL = on.APIUrl
 	}
 
 	return bodyJSON, apiURL, nil

@@ -864,6 +864,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "description",
+				},
+				{
 					Label:        "Auto close incidents",
 					Element:      alerting.ElementTypeCheckbox,
 					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
