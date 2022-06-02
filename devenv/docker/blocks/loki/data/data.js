@@ -66,16 +66,51 @@ async function lokiSendLogLine(timestampMs, line, tags) {
   await jsonRequest(data, 'POST', url, 204);
 }
 
-function getRandomLogLine(counter) {
+function getRandomLogItem(counter) {
   const randomText = `${Math.trunc(Math.random() * 1000 * 1000 * 1000)}`;
   const maybeAnsiText = Math.random() < 0.5 ? 'with ANSI \u001b[31mpart of the text\u001b[0m' : '';
-  return JSON.stringify({
+  return {
     _entry: `log text ${maybeAnsiText} [${randomText}]`,
     counter: counter.toString(),
-    float: Math.random() > 0.2 ? (100 * Math.random()).toString() : 'NaN',
+    float: Math.random() > 0.2 ? (Math.trunc(100000 * Math.random())/1000).toString() : 'NaN',
     label: chooseRandomElement(['val1', 'val2', 'val3']),
-    level: chooseRandomElement(['info', 'info', 'error']),
+    level: chooseRandomElement(['debug','info', 'info', 'info', 'info', 'warning', 'error', 'error']),
+  };
+}
+
+function getRandomJSONLogLine(counter) {
+  const item = getRandomLogItem(counter)
+  return JSON.stringify(item)
+}
+
+const logFmtProblemRe = /[="\n]/;
+
+// we are not really escaping things, we just check
+// that we don't need to escape :-)
+function escapeLogFmtKey(key) {
+  if (logFmtProblemRe.test(key)) {
+    throw new Error(`invalid logfmt-key: ${key}`)
+  }
+  return key;
+}
+
+function escapeLogFmtValue(value) {
+  if (logFmtProblemRe.test(value)) {
+    throw new Error(`invalid logfmt-value: ${key}`)
+  }
+
+  // we must handle the space-character because we have values with spaces :-(
+  return value.indexOf(' ') === -1 ? value : `"${value}"`
+}
+
+function logFmtLine(item) {
+  const parts = Object.entries(item).map(([k,v]) => {
+    const key = escapeLogFmtKey(k.toString());
+    const value = escapeLogFmtValue(v.toString());
+    return `${key}=${value}`;
   });
+
+  return parts.join(' ');
 }
 
 const SLEEP_ANGLE_STEP = Math.PI / 200;
@@ -86,15 +121,12 @@ function getNextSineWaveSleepDuration() {
 }
 
 async function main() {
-  const tags = {
-    place: 'moon',
-  };
-
   for (let step = 0; step < 300; step++) {
     await sleep(getNextSineWaveSleepDuration());
     const timestampMs = new Date().getTime();
-    const line = getRandomLogLine(step + 1);
-    lokiSendLogLine(timestampMs, line, tags);
+    const item = getRandomLogItem(step + 1)
+    lokiSendLogLine(timestampMs, JSON.stringify(item), {place:'moon'});
+    lokiSendLogLine(timestampMs, logFmtLine(item), {place:'luna'});
   }
 }
 
