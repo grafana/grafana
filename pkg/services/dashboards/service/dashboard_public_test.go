@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	m "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -61,7 +61,7 @@ func TestGetPublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			fakeStore := m.FakeDashboardStore{}
+			fakeStore := dashboards.FakeDashboardStore{}
 			service := &DashboardServiceImpl{
 				log:            log.New("test.logger"),
 				dashboardStore: &fakeStore,
