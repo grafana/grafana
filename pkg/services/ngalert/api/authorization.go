@@ -53,7 +53,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingRuleUpdate, scope),
+			ac.EvalPermission(ac.ActionAlertingRuleWrite, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
@@ -99,14 +99,14 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Silences. Grafana Paths
 	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceUpdate) // delete endpoint actually expires silence
+		eval = ac.EvalPermission(ac.ActionAlertingInstanceWrite) // delete endpoint actually expires silence
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silences":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodPost + "/api/alertmanager/grafana/api/v2/silences":
 		// additional authorization is done in the request handler
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceWrite))
 
 	// Alert Instances. Grafana Paths
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts/groups":
@@ -114,7 +114,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
+		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceWrite))
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":
@@ -298,7 +298,7 @@ func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator
 				}
 			}
 		} else if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
-			updateAuthorized = evaluator(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope))
+			updateAuthorized = evaluator(ac.EvalPermission(ac.ActionAlertingRuleWrite, namespaceScope))
 			if !updateAuthorized {
 				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
 			}

@@ -24,7 +24,7 @@ describe('useIsRuleEditable', () => {
     enableRBAC();
     describe('Grafana rules', () => {
       it('Should allow editing when the user has the alert rule update permission and folder permissions', () => {
-        mockPermissions([AccessControlAction.AlertingRuleUpdate]);
+        mockPermissions([AccessControlAction.AlertingRuleWrite]);
         mockUseFolder({ canSave: true });
         const wrapper = getProviderWrapper();
 
@@ -68,7 +68,7 @@ describe('useIsRuleEditable', () => {
       });
 
       it('Should forbid editing and deleting when the user has aler rule permissions but does not have folder permissions', () => {
-        mockPermissions([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleDelete]);
+        mockPermissions([AccessControlAction.AlertingRuleWrite, AccessControlAction.AlertingRuleDelete]);
         mockUseFolder({ canSave: false });
         const wrapper = getProviderWrapper();
 

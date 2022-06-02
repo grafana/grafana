@@ -415,7 +415,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence: silenceGen(),
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithPermissions([]*accesscontrol.Permission{
-					{Action: accesscontrol.ActionAlertingInstanceUpdate},
+					{Action: accesscontrol.ActionAlertingInstanceWrite},
 				})
 			},
 			expectedStatus: http.StatusAccepted,

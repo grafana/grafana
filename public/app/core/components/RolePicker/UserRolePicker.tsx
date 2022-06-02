@@ -41,7 +41,7 @@ export const UserRolePicker: FC<Props> = ({
           return pendingRoles;
         }
       }
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesRead)) {
         return await fetchUserRoles(userId, orgId);
       }
     } catch (e) {

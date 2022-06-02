@@ -62,7 +62,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 		return errResp
 	}
 
-	action := accesscontrol.ActionAlertingInstanceUpdate
+	action := accesscontrol.ActionAlertingInstanceWrite
 	if postableSilence.ID == "" {
 		action = accesscontrol.ActionAlertingInstanceCreate
 	}

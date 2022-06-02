@@ -19,11 +19,11 @@ export const instancesPermissions = {
     external: AccessControlAction.AlertingInstancesExternalWrite,
   },
   update: {
-    grafana: AccessControlAction.AlertingInstanceUpdate,
+    grafana: AccessControlAction.AlertingInstanceWrite,
     external: AccessControlAction.AlertingInstancesExternalWrite,
   },
   delete: {
-    grafana: AccessControlAction.AlertingInstanceUpdate,
+    grafana: AccessControlAction.AlertingInstanceWrite,
     external: AccessControlAction.AlertingInstancesExternalWrite,
   },
 };
@@ -57,7 +57,7 @@ const rulesPermissions = {
     external: AccessControlAction.AlertingRuleExternalWrite,
   },
   update: {
-    grafana: AccessControlAction.AlertingRuleUpdate,
+    grafana: AccessControlAction.AlertingRuleWrite,
     external: AccessControlAction.AlertingRuleExternalWrite,
   },
   delete: {

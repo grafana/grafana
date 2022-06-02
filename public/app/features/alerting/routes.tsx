@@ -153,7 +153,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/silence/:id/edit',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingInstanceUpdate, AccessControlAction.AlertingInstancesExternalWrite],
+      [AccessControlAction.AlertingInstanceWrite, AccessControlAction.AlertingInstancesExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -245,7 +245,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     path: '/alerting/:id/edit',
     pageClass: 'page-alerting',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite],
+      [AccessControlAction.AlertingRuleWrite, AccessControlAction.AlertingRuleExternalWrite],
       [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin] // Needs to include viewer because there may be Viewers with Edit permissions in folders
     ),
     component: SafeDynamicImport(

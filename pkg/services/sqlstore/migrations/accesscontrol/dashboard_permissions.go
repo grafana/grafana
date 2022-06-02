@@ -369,7 +369,7 @@ func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrato
 						Updated: now,
 						Created: now,
 						Scope:   scope,
-						Action:  ac.ActionAlertingRuleUpdate,
+						Action:  ac.ActionAlertingRuleWrite,
 					},
 				)
 			}

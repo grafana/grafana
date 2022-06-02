@@ -148,7 +148,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 
   componentDidMount() {
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
         fetchRoleOptions(this.props.org.orgId)
           .then((roles) => this.setState({ roleOptions: roles }))
           .catch((e) => console.error(e));
@@ -309,7 +309,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const userOrg = this.props.userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
     this.setState({ selectedOrg: org.value!, role: userOrg?.role || OrgRole.Viewer });
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
         fetchRoleOptions(org.value?.id)
           .then((roles) => this.setState({ roleOptions: roles }))
           .catch((e) => console.error(e));

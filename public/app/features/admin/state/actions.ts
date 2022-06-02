@@ -139,7 +139,7 @@ export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> 
 
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
+    if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenRead)) {
       return;
     }
 

@@ -38,8 +38,8 @@ const ServiceAccountListItem = memo(
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
     const displayRolePicker =
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
+      contextSrv.hasPermission(AccessControlAction.ActionRolesRead) &&
+      contextSrv.hasPermission(AccessControlAction.ActionUserRolesRead);
     const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite) && canUpdateRole;
 
     return (

@@ -105,7 +105,7 @@ export class UserAdminPage extends PureComponent<Props> {
   render() {
     const { navModel, user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
-    const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
+    const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenRead);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
 
     return (

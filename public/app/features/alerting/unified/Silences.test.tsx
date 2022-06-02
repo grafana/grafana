@@ -102,7 +102,7 @@ const resetMocks = () => {
     const permissions = [
       AccessControlAction.AlertingInstanceRead,
       AccessControlAction.AlertingInstanceCreate,
-      AccessControlAction.AlertingInstanceUpdate,
+      AccessControlAction.AlertingInstanceWrite,
       AccessControlAction.AlertingInstancesExternalRead,
       AccessControlAction.AlertingInstancesExternalWrite,
     ];

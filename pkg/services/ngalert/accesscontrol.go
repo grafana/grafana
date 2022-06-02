@@ -43,7 +43,7 @@ var (
 					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
-					Action: accesscontrol.ActionAlertingRuleUpdate,
+					Action: accesscontrol.ActionAlertingRuleWrite,
 					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
@@ -90,7 +90,7 @@ var (
 					Action: accesscontrol.ActionAlertingInstanceCreate,
 				},
 				{
-					Action: accesscontrol.ActionAlertingInstanceUpdate,
+					Action: accesscontrol.ActionAlertingInstanceWrite,
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalWrite,

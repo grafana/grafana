@@ -221,7 +221,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					return update.New
 				})...))
 				return map[string][]string{
-					ac.ActionAlertingRuleUpdate: {
+					ac.ActionAlertingRuleWrite: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
@@ -350,7 +350,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 
 				return map[string][]string{
-					ac.ActionAlertingRuleUpdate: {
+					ac.ActionAlertingRuleWrite: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,

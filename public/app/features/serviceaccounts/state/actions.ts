@@ -23,7 +23,7 @@ const BASE_URL = `/api/serviceaccounts`;
 export function fetchACOptions(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+      if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
         const options = await fetchRoleOptions();
         dispatch(acOptionsLoaded(options));
       }

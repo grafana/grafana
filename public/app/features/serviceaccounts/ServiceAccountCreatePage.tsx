@@ -49,7 +49,7 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
   useEffect(() => {
     async function fetchOptions() {
       try {
-        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
           let options = await fetchRoleOptions(currentOrgId);
           setRoleOptions(options);
         }

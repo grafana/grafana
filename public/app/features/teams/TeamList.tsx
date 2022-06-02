@@ -46,7 +46,7 @@ export class TeamList extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchTeams();
-    if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+    if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
       this.fetchRoleOptions();
     }
   }
@@ -75,14 +75,14 @@ export class TeamList extends PureComponent<Props, State> {
     const isTeamAdmin = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
     const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
     const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
-    const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
+    const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesRead, team, false);
     const canUpdateTeamRoles =
       contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesAdd, false) ||
       contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesRemove, false);
     const displayRolePicker =
       contextSrv.licensedAccessControlEnabled() &&
-      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRead) &&
+      contextSrv.hasPermission(AccessControlAction.ActionRolesRead);
 
     return (
       <tr key={team.id}>
@@ -162,8 +162,8 @@ export class TeamList extends PureComponent<Props, State> {
     const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
     const displayRolePicker =
       contextSrv.licensedAccessControlEnabled() &&
-      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRead) &&
+      contextSrv.hasPermission(AccessControlAction.ActionRolesRead);
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);

@@ -28,7 +28,7 @@ export function UserPermissions({ isGrafanaAdmin, onGrafanaAdminChange }: Props)
 
   const handleGrafanaAdminChange = () => onGrafanaAdminChange(currentAdminOption);
 
-  const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate);
+  const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsWrite);
 
   return (
     <>

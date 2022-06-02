@@ -117,11 +117,11 @@ var (
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
-				Action: ActionUsersAuthTokenList,
+				Action: ActionUsersAuthTokenRead,
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
-				Action: ActionUsersQuotasList,
+				Action: ActionUsersQuotasRead,
 				Scope:  ScopeGlobalUsersAll,
 			},
 		},
@@ -135,7 +135,7 @@ var (
 		Version:     5,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
-				Action: ActionUsersPasswordUpdate,
+				Action: ActionUsersPasswordWrite,
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
@@ -158,7 +158,7 @@ var (
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
-				Action: ActionUsersPermissionsUpdate,
+				Action: ActionUsersPermissionsWrite,
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
@@ -166,11 +166,11 @@ var (
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
-				Action: ActionUsersAuthTokenUpdate,
+				Action: ActionUsersAuthTokenWrite,
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
-				Action: ActionUsersQuotasUpdate,
+				Action: ActionUsersQuotasWrite,
 				Scope:  ScopeGlobalUsersAll,
 			},
 		}),

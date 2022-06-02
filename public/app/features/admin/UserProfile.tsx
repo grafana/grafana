@@ -77,7 +77,7 @@ export function UserProfile({
 
   const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
   const passwordChangeLocked =
-    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
+    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordWrite, user);
   const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDelete, user);
   const canDisable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDisable, user);
   const canEnable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersEnable, user);

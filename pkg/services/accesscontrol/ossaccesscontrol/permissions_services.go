@@ -181,7 +181,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 	dashboards.ActionFoldersDelete,
 	dashboards.ActionDashboardsCreate,
 	accesscontrol.ActionAlertingRuleCreate,
-	accesscontrol.ActionAlertingRuleUpdate,
+	accesscontrol.ActionAlertingRuleWrite,
 	accesscontrol.ActionAlertingRuleDelete,
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)

@@ -25,7 +25,7 @@ const UsersTable: FC<Props> = (props) => {
   useEffect(() => {
     async function fetchOptions() {
       try {
-        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesRead)) {
           let options = await fetchRoleOptions(orgId);
           setRoleOptions(options);
         }

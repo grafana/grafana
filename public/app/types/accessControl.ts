@@ -10,17 +10,17 @@ export type UserPermission = Record<string, boolean>;
 export enum AccessControlAction {
   UsersRead = 'users:read',
   UsersWrite = 'users:write',
-  UsersAuthTokenList = 'users.authtoken:read',
-  UsersAuthTokenUpdate = 'users.authtoken:write',
-  UsersPasswordUpdate = 'users.password:write',
+  UsersAuthTokenRead = 'users.authtoken:read',
+  UsersAuthTokenWrite = 'users.authtoken:write',
+  UsersPasswordWrite = 'users.password:write',
   UsersDelete = 'users:delete',
   UsersCreate = 'users:create',
   UsersEnable = 'users:enable',
   UsersDisable = 'users:disable',
-  UsersPermissionsUpdate = 'users.permissions:write',
+  UsersPermissionsWrite = 'users.permissions:write',
   UsersLogout = 'users:logout',
-  UsersQuotasList = 'users.quotas:read',
-  UsersQuotasUpdate = 'users.quotas:write',
+  UsersQuotasRead = 'users.quotas:read',
+  UsersQuotasWrite = 'users.quotas:write',
 
   ServiceAccountsRead = 'serviceaccounts:read',
   ServiceAccountsCreate = 'serviceaccounts:create',
@@ -58,12 +58,12 @@ export enum AccessControlAction {
   ActionTeamsPermissionsRead = 'teams.permissions:read',
   ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
-  ActionRolesList = 'roles:read',
+  ActionRolesRead = 'roles:read',
   ActionBuiltinRolesList = 'roles.builtin:list',
-  ActionTeamsRolesList = 'teams.roles:read',
+  ActionTeamsRolesRead = 'teams.roles:read',
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
-  ActionUserRolesList = 'users.roles:read',
+  ActionUserRolesRead = 'users.roles:read',
 
   DashboardsRead = 'dashboards:read',
   DashboardsWrite = 'dashboards:write',
@@ -82,12 +82,12 @@ export enum AccessControlAction {
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
   AlertingRuleRead = 'alert.rules:read',
-  AlertingRuleUpdate = 'alert.rules:write',
+  AlertingRuleWrite = 'alert.rules:write',
   AlertingRuleDelete = 'alert.rules:delete',
 
   // Alerting instances (+silences)
   AlertingInstanceCreate = 'alert.instances:create',
-  AlertingInstanceUpdate = 'alert.instances:write',
+  AlertingInstanceWrite = 'alert.instances:write',
   AlertingInstanceRead = 'alert.instances:read',
 
   // Alerting Notification policies
