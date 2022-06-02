@@ -196,20 +196,20 @@ Click on the service to see a context menu with additional links for quick navig
 
 ## APM table
 
-The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
+The APM (Application Performance Management) table enables you to view several APM metrics out of the box.
 
 To display the APM table:
 
-- Enable the tempoApmTable feature flag in your ini file
-- Link a Prometheus datasource in the Tempo datasource settings
-- Navigate to [Explore]({{< relref "../explore/_index.md" >}})
-- Select the Tempo datasource
-- Select the **Service Graph** query type and run the query
-- Optionally, filter your results
+1. Enable the tempoApmTable feature flag in your ini file
+1. Link a Prometheus datasource in the Tempo datasource settings
+1. Navigate to [Explore]({{< relref "../explore/_index.md" >}})
+1. Select the Tempo datasource
+1. Select the **Service Graph** query type and run the query
+1. (Optional): filter your results
 
 Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_duration_seconds_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
 
-Clicking on any row in the rate, error rate or duration columns will open up a query in Prometheus with that rows span name automatically set in the query. Cicking on a row in the links column will open up a query in Tempo with that rows span name automatically set in the query.
+Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
 
 {{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
 
