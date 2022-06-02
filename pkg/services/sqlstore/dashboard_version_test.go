@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -106,22 +103,5 @@ func TestIntegrationGetDashboardVersions(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(query.Result))
-	})
-}
-
-func getDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard) error {
-	t.Helper()
-	return sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		has, err := sess.Get(dashboard)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
-		}
-
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
-		return nil
 	})
 }

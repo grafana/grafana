@@ -90,6 +90,20 @@ func (_m *FakeDashboardService) GetDashboard(ctx context.Context, query *models.
 	return r0
 }
 
+// GetDashboardAclInfoList provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardAclInfoListQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDashboardUIDById provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardService) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	ret := _m.Called(ctx, query)
@@ -139,6 +153,34 @@ func (_m *FakeDashboardService) GetPublicDashboardConfig(ctx context.Context, or
 	}
 
 	return r0, r1
+}
+
+// HasAdminPermissionInFolders provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.HasAdminPermissionInFoldersQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// HasEditPermissionInFolders provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.HasEditPermissionInFoldersQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // ImportDashboard provides a mock function with given fields: ctx, dto

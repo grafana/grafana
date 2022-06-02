@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store
 
 import (
@@ -78,6 +75,7 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 		})
 		require.NoError(t, err)
 		firstEv, err := service.GetLastEvent(ctx)
+		require.NoError(t, err)
 		firstEvId := firstEv.Id
 
 		err = service.SaveEvent(ctx, SaveEventCmd{
