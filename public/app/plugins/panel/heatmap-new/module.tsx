@@ -3,7 +3,7 @@ import React from 'react';
 import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
-import { ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
+import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
@@ -38,6 +38,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         process: identityOverrideProcessor,
         hideFromDefaults: true,
       });
+      addHideFrom(builder); // for tooltip etc
     },
   })
   .setPanelChangeHandler(heatmapChangedHandler)
@@ -82,8 +83,8 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           options: [
             { label: 'Auto', value: HeatmapBucketLayout.auto },
             { label: 'Middle', value: HeatmapBucketLayout.unknown },
-            { label: 'Lower (GE)', value: HeatmapBucketLayout.ge },
-            { label: 'Upper (LE)', value: HeatmapBucketLayout.le },
+            { label: 'Lower (LE)', value: HeatmapBucketLayout.le },
+            { label: 'Upper (GE)', value: HeatmapBucketLayout.ge },
           ],
         },
       });
