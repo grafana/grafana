@@ -37,10 +37,8 @@ export default function ReferenceLink(props: ReferenceLinkProps) {
       onClick={
         link.onClick
           ? (event) => {
-              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                event.preventDefault();
-                link.onClick(event);
-              }
+              event.preventDefault();
+              link.onClick!(event);
             }
           : undefined
       }

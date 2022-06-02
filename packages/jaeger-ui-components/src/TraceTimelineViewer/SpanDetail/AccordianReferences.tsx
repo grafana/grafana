@@ -138,7 +138,7 @@ export function References(props: ReferenceItemProps) {
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
-        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={reference.spanID}>
+        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
           <div className={styles.item} key={`${reference.spanID}`}>
             <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
               <span className={styles.itemContent}>

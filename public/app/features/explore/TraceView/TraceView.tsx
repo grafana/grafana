@@ -253,10 +253,11 @@ function useFocusSpanLink(options: {
       scopedVars: {},
       range: {} as any,
       field: {} as Field,
-      onClickFn: () =>
-        sameTrace
-          ? setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
-          : options.splitOpenFn({
+      onClickFn: sameTrace
+        ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
+        : options.splitOpenFn
+        ? () =>
+            options.splitOpenFn({
               datasourceUid: options.datasource?.uid!,
               query: {
                 ...query!,
@@ -267,7 +268,8 @@ function useFocusSpanLink(options: {
                   spanId,
                 },
               },
-            }),
+            })
+        : undefined,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
     });
   };
