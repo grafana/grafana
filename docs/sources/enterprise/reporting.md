@@ -34,7 +34,7 @@ When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to h
 
 Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
 
-1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports. The report form has a multistep layout. The steps do not need to be filled in succession and can be skipped over by clicking a step name.
+1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports. The report form has a multistep layout. The steps do not need to be filled in succession and can be skipped over by clicking on a step name.
 2. Select report dashboard.
    - **Source dashboard -** Select the dashboard to generate the report from.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
@@ -55,7 +55,11 @@ Only organization admins can create reports by default. You can customize who ca
    - **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 6. Preview and Save the report.
 
-{{< figure src="/static/img/docs/enterprise/reports_create_new_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports/select-dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports/format-report.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports/schedule.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports/share.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports/confirm.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Choose template variables
 
@@ -160,6 +164,12 @@ You can pause sending of reports from the report list view by clicking the pause
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 You can add more than one dashboard to the report, which will be rendered in the same PDF file or image. It is currently not possible to add the same dashboard more than once to the report.
+
+### Embed dashboard as an image into report
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+
+You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
 ## Send report via the API
 
