@@ -238,7 +238,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Resp
 	groupRules := make([]*ngmodels.AlertRule, 0, len(q.Result))
 	for _, r := range q.Result {
 		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
+			return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 		}
 		groupRules = append(groupRules, r)
 	}
@@ -297,9 +297,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 	configs := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
 		groupKey := r.GetGroupKey()
 		group := configs[groupKey]
 		group = append(group, r)
@@ -310,6 +307,9 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
 			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", groupKey.NamespaceUID)
+			continue
+		}
+		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
 		namespace := folder.Title
@@ -358,20 +358,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return nil
 		}
 
-		authorizedChanges := groupChanges // if RBAC is disabled the permission are limited to folder access that is done upstream
+		// if RBAC is disabled the permission are limited to folder access that is done upstream
 		if !srv.ac.IsDisabled() {
-			authorizedChanges, err = authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+			err = authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 				return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 			})
 			if err != nil {
 				return err
-			}
-			if authorizedChanges.isEmpty() {
-				logger.Info("no authorized changes detected in the request. Do nothing", "not_authorized_add", len(groupChanges.New), "not_authorized_update", len(groupChanges.Update), "not_authorized_delete", len(groupChanges.Delete))
-				return nil
-			}
-			if len(groupChanges.Delete) > len(authorizedChanges.Delete) {
-				logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
 			}
 		}
 
@@ -382,13 +375,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		// New rules don't need to be checked for provenance, just copy the whole slice.
 		finalChanges = &changes{}
-		finalChanges.New = authorizedChanges.New
-		for _, rule := range authorizedChanges.Update {
+		finalChanges.New = groupChanges.New
+		for _, rule := range groupChanges.Update {
 			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
 				finalChanges.Update = append(finalChanges.Update, rule)
 			}
 		}
-		for _, rule := range authorizedChanges.Delete {
+		for _, rule := range groupChanges.Delete {
 			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
 				finalChanges.Delete = append(finalChanges.Delete, rule)
 			}
@@ -396,22 +389,22 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		if finalChanges.isEmpty() {
 			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
-				"provenance_invalid_add", len(authorizedChanges.New),
-				"provenance_invalid_update", len(authorizedChanges.Update),
-				"provenance_invalid_delete", len(authorizedChanges.Delete))
+				"provenance_invalid_add", len(groupChanges.New),
+				"provenance_invalid_update", len(groupChanges.Update),
+				"provenance_invalid_delete", len(groupChanges.Delete))
 			return nil
 		}
 
-		if len(authorizedChanges.Delete) > len(finalChanges.Delete) {
+		if len(groupChanges.Delete) > len(finalChanges.Delete) {
 			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
-				"expected", len(authorizedChanges.Delete),
-				"allowed", len(authorizedChanges.Delete))
+				"expected", len(groupChanges.Delete),
+				"allowed", len(groupChanges.Delete))
 		}
 
-		if len(authorizedChanges.Update) > len(finalChanges.Update) {
+		if len(groupChanges.Update) > len(finalChanges.Update) {
 			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
-				"expected", len(authorizedChanges.Update),
-				"allowed", len(authorizedChanges.Update))
+				"expected", len(groupChanges.Update),
+				"allowed", len(groupChanges.Update))
 		}
 
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
@@ -564,10 +557,11 @@ type ruleUpdate struct {
 }
 
 type changes struct {
-	GroupKey ngmodels.AlertRuleGroupKey
-	New      []*ngmodels.AlertRule
-	Update   []ruleUpdate
-	Delete   []*ngmodels.AlertRule
+	GroupKey       ngmodels.AlertRuleGroupKey
+	AffectedGroups map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule
+	New            []*ngmodels.AlertRule
+	Update         []ruleUpdate
+	Delete         []*ngmodels.AlertRule
 }
 
 func (c *changes) isEmpty() bool {
@@ -577,6 +571,7 @@ func (c *changes) isEmpty() bool {
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
 func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRule) (*changes, error) {
+	affectedGroups := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	q := &ngmodels.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
@@ -586,6 +581,9 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
 	}
 	existingGroupRules := q.Result
+	if len(existingGroupRules) > 0 {
+		affectedGroups[groupKey] = existingGroupRules
+	}
 
 	existingGroupRulesUIDs := make(map[string]*ngmodels.AlertRule, len(existingGroupRules))
 	for _, r := range existingGroupRules {
@@ -594,25 +592,30 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 
 	var toAdd, toDelete []*ngmodels.AlertRule
 	var toUpdate []ruleUpdate
+	loadedRulesByUID := map[string]*ngmodels.AlertRule{} // auxiliary cache to avoid unnecessary queries if there are multiple moves from the same group
 	for _, r := range submittedRules {
 		var existing *ngmodels.AlertRule = nil
-
 		if r.UID != "" {
 			if existingGroupRule, ok := existingGroupRulesUIDs[r.UID]; ok {
 				existing = existingGroupRule
 				// remove the rule from existingGroupRulesUIDs
 				delete(existingGroupRulesUIDs, r.UID)
-			} else {
+			} else if existing, ok = loadedRulesByUID[r.UID]; !ok { // check the "cache" and if there is no hit, query the database
 				// Rule can be from other group or namespace
-				q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
-				if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil || q.Result == nil {
-					// if rule has UID then it is considered an update. Therefore, fail if there is no rule to update
-					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) || q.Result == nil && err == nil {
-						return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
-					}
-					return nil, fmt.Errorf("failed to query database for an alert rule with UID %s: %w", r.UID, err)
+				q := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
+				if err := ruleStore.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
+					return nil, fmt.Errorf("failed to query database for a group of alert rules: %w", err)
 				}
-				existing = q.Result
+				for _, rule := range q.Result {
+					if rule.UID == r.UID {
+						existing = rule
+					}
+					loadedRulesByUID[rule.UID] = rule
+				}
+				if existing == nil {
+					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
+				}
+				affectedGroups[existing.GetGroupKey()] = q.Result
 			}
 		}
 
@@ -641,10 +644,11 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 	}
 
 	return &changes{
-		GroupKey: groupKey,
-		New:      toAdd,
-		Delete:   toDelete,
-		Update:   toUpdate,
+		GroupKey:       groupKey,
+		AffectedGroups: affectedGroups,
+		New:            toAdd,
+		Delete:         toDelete,
+		Update:         toUpdate,
 	}, nil
 }
 
