@@ -104,7 +104,7 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/QueryOperationRow/QueryOperationAction.test.tsx:3032694716": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:2026575657": [
+    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:3743889097": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
     "public/app/core/components/Select/MetricSelect.test.tsx:3351544014": [
