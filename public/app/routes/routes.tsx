@@ -425,6 +425,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
+    {
+      path: '/data-connections',
+      exact: false,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DataConnectionsPage"*/ 'app/features/data-connections/DataConnectionsPage')
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
