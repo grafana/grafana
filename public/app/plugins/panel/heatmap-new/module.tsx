@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AxisPlacement, GraphFieldConfig } from '@grafana/schema';
+import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
@@ -24,6 +25,20 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       FieldConfigProperty.Mappings,
       FieldConfigProperty.NoValue,
     ],
+    useCustomConfig: (builder) => {
+      builder.addCustomEditor<void, ScaleDistributionConfig>({
+        id: 'scaleDistribution',
+        path: 'scaleDistribution',
+        name: 'Y axis scale',
+        category: ['Heatmap'],
+        editor: ScaleDistributionEditor as any,
+        override: ScaleDistributionEditor as any,
+        defaultValue: { type: ScaleDistribution.Linear },
+        shouldApply: (f) => f.type === FieldType.number,
+        process: identityOverrideProcessor,
+        hideFromDefaults: true,
+      });
+    },
   })
   .setPanelChangeHandler(heatmapChangedHandler)
   .setMigrationHandler(heatmapMigrationHandler)

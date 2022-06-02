@@ -241,6 +241,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'X axis only supports linear buckets';
   }
 
+  const scaleDistribution = options.yAxis?.scale ?? {
+    type: ScaleDistribution.Linear,
+  };
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
@@ -248,7 +251,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xSize: +(xAxisCfg.value ?? 0),
     yMode: yAxisCfg.mode,
     ySize: +(yAxisCfg.value ?? 0),
-    yLog: options.yAxis?.scale?.type === ScaleDistribution.Log ? (options.yAxis?.scale?.log as any) : undefined,
+    yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
   });
 
   const frame = {
@@ -268,10 +271,15 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(heat2d.y),
-        config: yField.config, // keep units from the original source
+        config: {
+          ...yField.config, // keep units from the original source
+          custom: {
+            scaleDistribution,
+          },
+        },
       },
       {
-        name: 'count',
+        name: 'Count',
         type: FieldType.number,
         values: new ArrayVector(heat2d.count),
         config: {

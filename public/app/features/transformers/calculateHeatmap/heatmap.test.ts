@@ -27,6 +27,11 @@ describe('Heatmap transformer', () => {
         },
         Object {
           "config": Object {
+            "custom": Object {
+              "scaleDistribution": Object {
+                "type": "linear",
+              },
+            },
             "unit": "m2",
           },
           "name": "yMin",
@@ -36,7 +41,7 @@ describe('Heatmap transformer', () => {
           "config": Object {
             "unit": "short",
           },
-          "name": "count",
+          "name": "Count",
           "type": "number",
         },
       ]

@@ -9,7 +9,7 @@ import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { YAxisConfig } from './models.gen';
+import { PanelFieldConfig, YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -55,7 +55,6 @@ interface PrepConfigOpts {
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
   yAxisConfig: YAxisConfig;
-  yAxisLog?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -208,8 +207,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
+  const yFieldConfig = dataRef.current?.heatmap?.fields[1]?.config?.custom as PanelFieldConfig | undefined;
+  const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
-  const shouldUseLogScale = opts.yAxisLog || heatmapType === DataFrameType.HeatmapSparse;
+  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
 
   builder.addScale({
     scaleKey: 'y',
@@ -219,7 +220,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: opts.yAxisLog ?? 2,
+    log: yScale.log ?? 2,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
       heatmapType === DataFrameType.HeatmapSparse
@@ -227,7 +228,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
             // logarithmic expansion
-            if (opts.yAxisLog) {
+            if (shouldUseLogScale) {
               let yExp = u.scales['y'].log!;
 
               if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {

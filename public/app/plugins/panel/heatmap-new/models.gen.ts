@@ -3,7 +3,7 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { AxisConfig, AxisPlacement, HideableFieldConfig, VisibilityMode } from '@grafana/schema';
+import { AxisConfig, AxisPlacement, HideableFieldConfig, ScaleDistributionConfig, VisibilityMode } from '@grafana/schema';
 import { HeatmapBucketLayout, HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
@@ -117,9 +117,7 @@ export const defaultPanelOptions: PanelOptions = {
 };
 
 export interface PanelFieldConfig extends HideableFieldConfig {
-  // TODO points vs lines etc
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
-export const defaultPanelFieldConfig: PanelFieldConfig = {
-  // default to points?
-};
+export const defaultPanelFieldConfig: PanelFieldConfig = {};
