@@ -65,6 +65,7 @@ async function fetchDashboard(
         // Make sure new endpoint to fetch dashboard DTO sets these as false
         dashDTO.meta.canEdit = false;
         dashDTO.meta.canMakeEditable = false;
+        dashDTO.meta.isPublic = true;
 
         return dashDTO;
       }
