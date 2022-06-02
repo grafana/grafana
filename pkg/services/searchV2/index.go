@@ -400,7 +400,7 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 	if dashboardLocation != "" {
 		panelLocation = dashboardLocation + "/" + dashboardUID
 	}
-	panelIDs, err := getDocsIDsByLocationPrefix(reader, []entityKind{entityKindPanel}, panelLocation)
+	panelIDs, err := getDocsIDsByLocationPrefix(reader, panelLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 }
 
 func (i *dashboardIndex) removeFolder(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, folderUID string) (*bluge.Reader, error) {
-	ids, err := getDocsIDsByLocationPrefix(reader, []entityKind{entityKindDashboard, entityKindPanel}, folderUID)
+	ids, err := getDocsIDsByLocationPrefix(reader, folderUID)
 	if err != nil {
 		return nil, err
 	}
