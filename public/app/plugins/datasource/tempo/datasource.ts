@@ -16,6 +16,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
+  config,
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
