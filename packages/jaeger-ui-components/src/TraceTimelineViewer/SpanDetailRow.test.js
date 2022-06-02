@@ -35,7 +35,7 @@ describe('<SpanDetailRow>', () => {
     isFilteredOut: false,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
-    processToggle: jest.fn(),
+    resourceToggle: jest.fn(),
     span: { spanID, depth: 3 },
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
@@ -49,7 +49,7 @@ describe('<SpanDetailRow>', () => {
     props.linksGetter.mockReset();
     props.logItemToggle.mockReset();
     props.logsToggle.mockReset();
-    props.processToggle.mockReset();
+    props.resourceToggle.mockReset();
     props.tagsToggle.mockReset();
     wrapper = shallow(<UnthemedSpanDetailRow {...props} />);
   });
@@ -77,7 +77,7 @@ describe('<SpanDetailRow>', () => {
         linksGetter={wrapper.instance()._linksGetter}
         logItemToggle={props.logItemToggle}
         logsToggle={props.logsToggle}
-        processToggle={props.processToggle}
+        resourceToggle={props.resourceToggle}
         span={props.span}
         tagsToggle={props.tagsToggle}
         traceStartTime={props.traceStartTime}

@@ -72,7 +72,7 @@ export function TraceView(props: Props) {
     toggleDetail,
     detailLogItemToggle,
     detailLogsToggle,
-    detailProcessToggle,
+    detailResourceToggle,
     detailReferencesToggle,
     detailReferenceItemToggle,
     detailTagsToggle,
@@ -177,7 +177,7 @@ export function TraceView(props: Props) {
             detailStackTracesToggle={detailStackTracesToggle}
             detailReferencesToggle={detailReferencesToggle}
             detailReferenceItemToggle={detailReferenceItemToggle}
-            detailProcessToggle={detailProcessToggle}
+            detailResourceToggle={detailResourceToggle}
             detailTagsToggle={detailTagsToggle}
             detailToggle={toggleDetail}
             setTrace={noop}

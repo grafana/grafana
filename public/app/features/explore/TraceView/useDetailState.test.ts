@@ -49,11 +49,11 @@ describe('useDetailState', () => {
     expect(result.current.detailStates.get('span1')?.references.isOpen).toBe(true);
   });
 
-  it('toggles processes', async () => {
+  it('toggles resources', async () => {
     const { result } = renderHook(() => useDetailState(sampleFrame));
     act(() => result.current.toggleDetail('span1'));
-    act(() => result.current.detailProcessToggle('span1'));
-    expect(result.current.detailStates.get('span1')?.isProcessOpen).toBe(true);
+    act(() => result.current.detailResourceToggle('span1'));
+    expect(result.current.detailStates.get('span1')?.isResourceOpen).toBe(true);
   });
 
   it('toggles tags', async () => {

@@ -108,7 +108,7 @@ type SpanDetailProps = {
   linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
-  processToggle: (spanID: string) => void;
+  resourceToggle: (spanID: string) => void;
   span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
@@ -129,7 +129,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     linksGetter,
     logItemToggle,
     logsToggle,
-    processToggle,
+    resourceToggle,
     span,
     tagsToggle,
     traceStartTime,
@@ -144,7 +144,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   } = props;
   const {
     isTagsOpen,
-    isProcessOpen,
+    isResourceOpen,
     logs: logsState,
     isWarningsOpen,
     references: referencesState,
@@ -223,8 +223,8 @@ export default function SpanDetail(props: SpanDetailProps) {
               data={resource.tags}
               label="Resource"
               linksGetter={linksGetter}
-              isOpen={isProcessOpen}
-              onToggle={() => processToggle(spanID)}
+              isOpen={isResourceOpen}
+              onToggle={() => resourceToggle(spanID)}
             />
           )}
         </div>

@@ -78,7 +78,7 @@ export function useDetailState(frame: DataFrame) {
       (spanID: string) => makeDetailSubsectionToggle('references', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
-    detailProcessToggle: useCallback(
+    detailResourceToggle: useCallback(
       (spanID: string) => makeDetailSubsectionToggle('resource', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
@@ -103,7 +103,7 @@ function makeDetailSubsectionToggle(
     if (subSection === 'tags') {
       detailState = old.toggleTags();
     } else if (subSection === 'resource') {
-      detailState = old.toggleProcess();
+      detailState = old.toggleResource();
     } else if (subSection === 'warnings') {
       detailState = old.toggleWarnings();
     } else if (subSection === 'references') {

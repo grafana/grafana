@@ -33,7 +33,7 @@ describe('<SpanDetail>', () => {
 
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
-  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
+  const detailState = new DetailState().toggleLogs().toggleResource().toggleReferences().toggleTags();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
   const props = {
@@ -43,7 +43,7 @@ describe('<SpanDetail>', () => {
     topOfExploreViewRef,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
-    processToggle: jest.fn(),
+    resourceToggle: jest.fn(),
     tagsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
@@ -114,7 +114,7 @@ describe('<SpanDetail>', () => {
   beforeEach(() => {
     formatDuration.mockReset();
     props.tagsToggle.mockReset();
-    props.processToggle.mockReset();
+    props.resourceToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
     wrapper = shallow(<SpanDetail {...props} />);
@@ -147,10 +147,12 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the resource tags', () => {
-    const target = <AccordianKeyValues data={span.resource.tags} label="Resource" isOpen={detailState.isProcessOpen} />;
+    const target = (
+      <AccordianKeyValues data={span.resource.tags} label="Resource" isOpen={detailState.isResourceOpen} />
+    );
     expect(wrapper.containsMatchingElement(target)).toBe(true);
     wrapper.find({ data: span.resource.tags }).simulate('toggle');
-    expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+    expect(props.resourceToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the logs', () => {

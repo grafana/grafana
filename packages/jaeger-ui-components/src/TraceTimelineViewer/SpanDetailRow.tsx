@@ -78,7 +78,7 @@ type SpanDetailRowProps = {
   linksGetter: (span: TraceSpan, links: TraceKeyValuePair[], index: number) => TraceLink[];
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
-  processToggle: (spanID: string) => void;
+  resourceToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
   warningsToggle: (spanID: string) => void;
@@ -114,7 +114,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       detailState,
       logItemToggle,
       logsToggle,
-      processToggle,
+      resourceToggle,
       referenceItemToggle,
       referencesToggle,
       warningsToggle,
@@ -161,7 +161,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               linksGetter={this._linksGetter}
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
-              processToggle={processToggle}
+              resourceToggle={resourceToggle}
               referenceItemToggle={referenceItemToggle}
               referencesToggle={referencesToggle}
               warningsToggle={warningsToggle}

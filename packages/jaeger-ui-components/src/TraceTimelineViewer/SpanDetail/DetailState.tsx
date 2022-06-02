@@ -19,7 +19,7 @@ import { TraceLog, TraceSpanReference } from '../../types/trace';
  */
 export default class DetailState {
   isTagsOpen: boolean;
-  isProcessOpen: boolean;
+  isResourceOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   references: { isOpen: boolean; openedItems: Set<TraceSpanReference> };
   isWarningsOpen: boolean;
@@ -29,7 +29,7 @@ export default class DetailState {
   constructor(oldState?: DetailState) {
     const {
       isTagsOpen,
-      isProcessOpen,
+      isResourceOpen,
       isReferencesOpen,
       isWarningsOpen,
       isStackTracesOpen,
@@ -37,7 +37,7 @@ export default class DetailState {
       references,
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
-    this.isProcessOpen = Boolean(isProcessOpen);
+    this.isResourceOpen = Boolean(isResourceOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
     this.isStackTracesOpen = Boolean(isStackTracesOpen);
@@ -57,9 +57,9 @@ export default class DetailState {
     return next;
   }
 
-  toggleProcess() {
+  toggleResource() {
     const next = new DetailState(this);
-    next.isProcessOpen = !this.isProcessOpen;
+    next.isResourceOpen = !this.isResourceOpen;
     return next;
   }
 

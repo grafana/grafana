@@ -39,7 +39,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     currentViewRangeTime: [0.25, 0.75],
     detailLogItemToggle: jest.fn(),
     detailLogsToggle: jest.fn(),
-    detailProcessToggle: jest.fn(),
+    detailResourceToggle: jest.fn(),
     detailStates: new Map(),
     detailTagsToggle: jest.fn(),
     detailToggle: jest.fn(),
@@ -350,7 +350,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
             detailState={detailState}
             logItemToggle={props.detailLogItemToggle}
             logsToggle={props.detailLogsToggle}
-            processToggle={props.detailProcessToggle}
+            resourceToggle={props.detailResourceToggle}
             span={span}
             tagsToggle={props.detailTagsToggle}
           />
