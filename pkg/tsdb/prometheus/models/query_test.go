@@ -1,6 +1,9 @@
 package models_test
 
 import (
+	"fmt"
+	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -447,5 +450,28 @@ func queryContext(json string, timeRange backend.TimeRange) backend.DataQuery {
 		JSON:      []byte(json),
 		TimeRange: timeRange,
 		RefID:     "A",
+	}
+}
+
+func TestAlignTimeRange(t *testing.T) {
+	type args struct {
+		t      time.Time
+		step   time.Duration
+		offset int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want time.Time
+	}{
+		{name: "align to second", args: args{t: time.Unix(0, int64(float64(1654086511.809)*float64(time.Second))), step: 15 * time.Second, offset: 0}, want: time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := models.AlignTimeRange(tt.args.t, tt.args.step, tt.args.offset); !reflect.DeepEqual(got, tt.want) {
+				alignedTs := fmt.Sprintf("%.0f", math.Floor(float64(tt.args.t.Unix())/tt.args.step.Seconds())*tt.args.step.Seconds())
+				t.Errorf("AlignTimeRange() = %v, want %v - %s", got.Unix(), tt.want.Unix(), alignedTs)
+			}
+		})
 	}
 }

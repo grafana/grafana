@@ -22,7 +22,7 @@ import (
 
 var update = true
 
-func TestResponses(t *testing.T) {
+func TestRangeResponses(t *testing.T) {
 	tt := []struct {
 		name     string
 		filepath string
@@ -31,7 +31,6 @@ func TestResponses(t *testing.T) {
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
 		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
 		{name: "parse a matrix response with NaN", filepath: "range_nan"},
-		{name: "parse an exemplar response", filepath: "exemplar"},
 	}
 
 	for _, test := range tt {
@@ -42,6 +41,25 @@ func TestResponses(t *testing.T) {
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
 		goldenFileName = filepath.Join("../testdata", test.filepath+".result.streaming-wide.golden")
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+	}
+}
+
+func TestExemplarResponses(t *testing.T) {
+	tt := []struct {
+		name     string
+		filepath string
+	}{
+		{name: "parse an exemplar response", filepath: "exemplar"},
+	}
+
+	for _, test := range tt {
+		enableWideSeries := false
+		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
+		goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+		enableWideSeries = true
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 	}
 }
@@ -83,12 +101,13 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
-	RefId      string
-	RangeQuery bool
-	Start      int64
-	End        int64
-	Step       int64
-	Expr       string
+	RefId         string
+	RangeQuery    bool
+	ExemplarQuery bool
+	Start         int64
+	End           int64
+	Step          int64
+	Expr          string
 }
 
 func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
@@ -105,10 +124,11 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		RangeQuery: sq.RangeQuery,
-		Expr:       sq.Expr,
-		Interval:   fmt.Sprintf("%ds", sq.Step),
-		IntervalMS: sq.Step * 1000,
+		RangeQuery:    sq.RangeQuery,
+		ExemplarQuery: sq.ExemplarQuery,
+		Expr:          sq.Expr,
+		Interval:      fmt.Sprintf("%ds", sq.Step),
+		IntervalMS:    sq.Step * 1000,
 	}
 
 	data, err := json.Marshal(&qm)

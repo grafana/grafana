@@ -21,7 +21,7 @@
             }
           },
           {
-            "name": "1 / 0",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

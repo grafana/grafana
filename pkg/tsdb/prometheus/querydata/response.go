@@ -36,9 +36,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			addMetadataToWideFrame(q, frame)
 		} else {
 			addMetadataToMultiFrame(q, frame)
+
 		}
 	}
 
+	r = processExemplars(q, r)
 	return r, nil
 }
 
@@ -67,7 +69,7 @@ func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	for _, f := range frame.Fields {
-		if f.Name != data.TimeSeriesTimeFieldName {
+		if f.Type() == data.FieldTypeFloat64 {
 			f.Name = getName(q, f)
 		}
 	}

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -108,12 +110,13 @@ func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
-	RefId      string
-	RangeQuery bool
-	Start      int64
-	End        int64
-	Step       int64
-	Expr       string
+	RefId         string
+	ExemplarQuery bool
+	RangeQuery    bool
+	Start         int64
+	End           int64
+	Step          int64
+	Expr          string
 }
 
 func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
@@ -130,12 +133,13 @@ func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
 	}
 
 	return PrometheusQuery{
-		RefId:      query.RefId,
-		RangeQuery: query.RangeQuery,
-		Start:      time.Unix(query.Start, 0),
-		End:        time.Unix(query.End, 0),
-		Step:       time.Second * time.Duration(query.Step),
-		Expr:       query.Expr,
+		RefId:         query.RefId,
+		RangeQuery:    query.RangeQuery,
+		ExemplarQuery: query.ExemplarQuery,
+		Start:         time.Unix(query.Start, 0),
+		End:           time.Unix(query.End, 0),
+		Step:          time.Second * time.Duration(query.Step),
+		Expr:          query.Expr,
 	}, nil
 }
 
@@ -153,7 +157,7 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 	s := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
-		TimeInterval:       "15s",
+		TimeInterval:       fmt.Sprintf("%ds", int(math.Floor(query.Step.Seconds()))),
 		log:                &fakeLogger{},
 	}
 	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})

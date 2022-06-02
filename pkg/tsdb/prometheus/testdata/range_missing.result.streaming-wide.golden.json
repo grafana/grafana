@@ -21,7 +21,7 @@
             }
           },
           {
-            "name": "go_goroutines{job=\"prometheus\"}",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
