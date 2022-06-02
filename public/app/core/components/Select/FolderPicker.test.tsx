@@ -1,5 +1,6 @@
 import { shallow } from 'enzyme';
 import React from 'react';
+import selectEvent from 'react-select-event';
 
 import * as api from 'app/features/manage-dashboards/state/actions';
 
@@ -17,6 +18,27 @@ describe('FolderPicker', () => {
       ]);
     const wrapper = shallow(<FolderPicker onChange={jest.fn()} />);
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it('Should apply filter to the folders search results', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+        { title: 'Dash 3', id: 3 } as DashboardSearchHit,
+      ]);
+
+    render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.id !== 2)} />);
+
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions).toHaveLength(2);
+    expect(pickerOptions[0]).toHaveTextContent('Dash 1');
+    expect(pickerOptions[1]).toHaveTextContent('Dash 3');
   });
 });
 
