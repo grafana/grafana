@@ -14,6 +14,10 @@ func ParseScopeID(scope string) (int64, error) {
 	return strconv.ParseInt(scope[len(ScopePrefix(scope)):], 10, 64)
 }
 
+func ParseScopeUID(scope string) (string, error) {
+	return scope[len(ScopePrefix(scope)):], nil
+}
+
 func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)
 }
