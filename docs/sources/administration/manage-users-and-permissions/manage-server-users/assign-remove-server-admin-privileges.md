@@ -13,7 +13,7 @@ Grafana server administrators are responsible for creating users, organizations,
 
 ## Before you begin
 
-- [Add a user]({{< relref "./add-user.md" >}})
+- [Add a user]({{< relref "add-user.md" >}})
 - Ensure you have Grafana server administrator privileges
 
 **To assign or remove Grafana administrator privileges**:

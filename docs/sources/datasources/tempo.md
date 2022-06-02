@@ -34,7 +34,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -96,15 +96,11 @@ Tempo search is an experimental feature behind a feature toggle. Use this to sea
 
 #### Search recent traces
 
-Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle.
-
-You must also configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
+Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data. You must configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
 
 #### Search backend datastore
 
-Tempo includes the ability to search the entire backend datastore. You can enable this capability by setting the `tempoSearch` and `tempoBackendSearch` feature toggles.
-
-You must also configure your Tempo data source to use this feature.Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
+Tempo includes the ability to search the entire backend datastore. You must configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
 
 ### Loki search
 

@@ -510,18 +510,30 @@ def test_backend_step(edition):
         ],
     }
 
-
 def test_backend_integration_step(edition):
-    return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'oss':
+        return {
+            'name': 'test-backend-integration',
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend-integration' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                './bin/grabpl integration-tests --edition {}'.format(edition),
+            ],
+        }
+
 
 
 def test_frontend_step():

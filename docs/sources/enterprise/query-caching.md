@@ -17,7 +17,7 @@ When query caching is enabled, Grafana temporarily stores the results of data so
 
 Query caching works for all backend data sources, and queries sent through the data source proxy. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 The following cache backends are available: in-memory, Redis, and Memcached.
 
@@ -67,7 +67,7 @@ By default, data source queries are not cached. To enable query caching for a si
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
-To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "enterprise-configuration.md#caching" >}}).
 
 ## Disable query caching
 
@@ -77,7 +77,7 @@ To disable query caching for a single data source:
 1. In the data source list, click the data source that you want to turn off caching for.
 1. In the Cache tab, click Disable.
 
-To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "enterprise-configuration.md#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
 ## Clear cache
 

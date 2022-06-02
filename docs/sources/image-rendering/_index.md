@@ -143,7 +143,7 @@ RENDERING_MODE=reusable
 
 #### Optimize the performance, CPU and memory usage of the image renderer
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "./monitoring/" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "monitoring/" >}}).
 
 With no concurrent requests, the different modes show very similar performance and CPU / memory usage.
 

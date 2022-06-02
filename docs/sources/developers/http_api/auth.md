@@ -15,7 +15,7 @@ title: 'Authentication HTTP API '
 
 # Authentication API
 
-> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Tokens
 
@@ -49,7 +49,7 @@ standard basic auth. Basic auth will also authenticate LDAP users.
 curl example:
 
 ```bash
-?curl http://admin:admin@localhost:3000/api/org
+curl http://admin:admin@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
 ```
 
@@ -76,7 +76,7 @@ The API Token can also be passed as a Basic authorization password with the spec
 curl example:
 
 ```bash
-?curl http://api_key:eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk@localhost:3000/api/org
+curl http://api_key:eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
 ```
 

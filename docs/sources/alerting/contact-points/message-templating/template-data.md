@@ -10,11 +10,12 @@ keywords:
   - contact point
   - templating
 title: Template data
+weight: 120
 ---
 
 # Template data
 
-Template data is passed on to [message templates]({{< relref "./_index.md" >}}) as well as sent as payload to webhook pushes.
+Template data is passed on to [message templates]({{< relref "_index.md" >}}) as well as sent as payload to webhook pushes.
 
 | Name              | Type     | Notes                                                                                                                |
 | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |

@@ -340,7 +340,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{\n    "reason": "all shards failed"\n}',
         message: 'all shards failed',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 
@@ -357,8 +357,8 @@ describe('ElasticDatasource', function (this: any) {
           message: 'Authentication to data source failed',
         },
         status: 400,
-        url: 'http://localhost:3000/api/tsdb/query',
-        config: { url: 'http://localhost:3000/api/tsdb/query' },
+        url: 'http://localhost:3000/api/ds/query',
+        config: { url: 'http://localhost:3000/api/ds/query' },
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
@@ -401,7 +401,7 @@ describe('ElasticDatasource', function (this: any) {
         data: '{}',
         message: 'Unknown elastic error response',
         config: {
-          url: 'http://localhost:3000/api/tsdb/query',
+          url: 'http://localhost:3000/api/ds/query',
         },
       };
 

@@ -24,6 +24,7 @@ type EmailNotifier struct {
 	Addresses   []string
 	SingleEmail bool
 	Message     string
+	Subject     string
 	log         log.Logger
 	ns          notifications.EmailSender
 	images      ImageStore
@@ -35,6 +36,7 @@ type EmailConfig struct {
 	SingleEmail bool
 	Addresses   []string
 	Message     string
+	Subject     string
 }
 
 func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -59,6 +61,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 		NotificationChannelConfig: config,
 		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
 		Message:                   config.Settings.Get("message").MustString(),
+		Subject:                   config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
 		Addresses:                 addresses,
 	}, nil
 }
@@ -77,6 +80,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images 
 		Addresses:   config.Addresses,
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,
+		Subject:     config.Subject,
 		log:         log.New("alerting.notifier.email"),
 		ns:          ns,
 		images:      images,
@@ -89,7 +93,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
-	title := tmpl(DefaultMessageTitleEmbed)
+	subject := tmpl(en.Subject)
 
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
@@ -106,9 +110,9 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
-			Subject: title,
+			Subject: subject,
 			Data: map[string]interface{}{
-				"Title":             title,
+				"Title":             subject,
 				"Message":           tmpl(en.Message),
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,

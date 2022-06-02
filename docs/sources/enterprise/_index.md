@@ -26,7 +26,7 @@ To learn more about Grafana Enterprise, refer to [our product page](https://graf
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud]({{< relref "/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< relref "/grafana-cloud/reference/enterprise-features" >}}).
+Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< ref "/docs/grafana-cloud/reference/enterprise-features" >}}).
 
 ## Authentication
 
@@ -44,7 +44,7 @@ Supported auth providers:
 - [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "./saml/configure-saml.md#configure-team-sync" >}})
+- [SAML]({{< relref "configure-saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -52,7 +52,7 @@ With [enhanced LDAP integration]({{< relref "enhanced_ldap.md" >}}), you can set
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "./saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+[SAML authentication]({{< relref "./configure-saml" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ## Enterprise features
 

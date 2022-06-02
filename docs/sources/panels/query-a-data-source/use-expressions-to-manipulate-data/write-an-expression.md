@@ -10,7 +10,7 @@ weight: 20
 
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
 
-For more information about expressions, refer to [About expressions]({{< relref "./about-expressions.md" >}}).
+For more information about expressions, refer to [About expressions]({{< relref "about-expressions.md" >}}).
 
 ## Before you begin
 
@@ -22,7 +22,7 @@ For more information about expressions, refer to [About expressions]({{< relref 
 1. Below the query, click **Expression**.
 1. In the **Operation** field, select the type of expression you want to write.
 
-   For more information about expression operations, refer to [About expressions]({{< relref "./about-expressions.md" >}}).
+   For more information about expression operations, refer to [About expressions]({{< relref "about-expressions.md" >}}).
 
 1. Write the expression.
 1. Click **Apply**.

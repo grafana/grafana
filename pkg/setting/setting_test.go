@@ -252,39 +252,6 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, 2, cfg.AuthProxySyncTTL)
 	})
 
-	t.Run("Only ldap_sync_ttl should return the value ldap_sync_ttl", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, 5, cfg.AuthProxySyncTTL)
-	})
-
-	t.Run("ldap_sync should override ldap_sync_ttl that is default value", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, 5, cfg.AuthProxySyncTTL)
-	})
-
-	t.Run("ldap_sync should not override ldap_sync_ttl that is different from default value", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, 12, cfg.AuthProxySyncTTL)
-	})
-
 	t.Run("Test reading string values from .ini file", func(t *testing.T) {
 		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
 		require.Nil(t, err)
@@ -334,9 +301,7 @@ func TestAuthDurationSettings(t *testing.T) {
 	cfg := NewCfg()
 	sec, err := f.NewSection("auth")
 	require.NoError(t, err)
-	_, err = sec.NewKey("login_maximum_inactive_lifetime_days", "10")
-	require.NoError(t, err)
-	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "10d")
 	require.NoError(t, err)
 	err = readAuthSettings(f, cfg)
 	require.NoError(t, err)
@@ -356,9 +321,7 @@ func TestAuthDurationSettings(t *testing.T) {
 	f = ini.Empty()
 	sec, err = f.NewSection("auth")
 	require.NoError(t, err)
-	_, err = sec.NewKey("login_maximum_lifetime_days", "24")
-	require.NoError(t, err)
-	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "24d")
 	require.NoError(t, err)
 	maxLifetimeDaysTest, err := time.ParseDuration("576h")
 	require.NoError(t, err)
@@ -379,8 +342,6 @@ func TestAuthDurationSettings(t *testing.T) {
 
 	f = ini.Empty()
 	sec, err = f.NewSection("auth")
-	require.NoError(t, err)
-	_, err = sec.NewKey("login_maximum_lifetime_days", "")
 	require.NoError(t, err)
 	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
 	require.NoError(t, err)
@@ -539,9 +500,10 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
 				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.Equal(t, false, *AlertingEnabled)
 			},
 		},
 		{
@@ -557,9 +519,9 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, true, *cfg.UnifiedAlerting.Enabled)
 				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.Equal(t, false, *AlertingEnabled)
 			},
 		},
 		{
@@ -593,7 +555,7 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
 				assert.NotNil(t, AlertingEnabled)
 				assert.Equal(t, *AlertingEnabled, false)
 			},
@@ -610,7 +572,8 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.True(t, *cfg.UnifiedAlerting.Enabled)
 				assert.Nil(t, AlertingEnabled)
 			},
 		},
@@ -627,9 +590,8 @@ func TestAlertingEnabled(t *testing.T) {
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
-				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
-				assert.NotNil(t, AlertingEnabled)
-				assert.Equal(t, *AlertingEnabled, true)
+				assert.True(t, *cfg.UnifiedAlerting.Enabled)
+				assert.Nil(t, AlertingEnabled)
 			},
 		},
 		{
