@@ -104,6 +104,20 @@ func (_m *FakeDashboardService) GetDashboardAclInfoList(ctx context.Context, que
 	return r0
 }
 
+// GetDashboardTags provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardTagsQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDashboardUIDById provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardService) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	ret := _m.Called(ctx, query)
