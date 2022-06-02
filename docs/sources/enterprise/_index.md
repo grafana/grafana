@@ -44,7 +44,7 @@ Supported auth providers:
 - [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "configure-saml/#configure-team-sync" >}})
+- [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -52,7 +52,7 @@ With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security
 
 ### SAML authentication
 
-[SAML authentication]({{< relref "configure-saml/" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
+[SAML authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
 ## Enterprise features
 

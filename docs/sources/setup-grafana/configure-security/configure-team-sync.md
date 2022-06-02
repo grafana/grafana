@@ -23,7 +23,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 <div class="clearfix"></div>
 
-> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync.md" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Team Sync is available in both Grafana Enterprise and Grafana Cloud Advanced. For more information, refer to [Team sync]({{< relref "../enterprise/team-sync/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
 ## Supported providers
 
@@ -33,7 +33,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 - [GitLab OAuth]({{< relref "configure-authentication/gitlab/#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "configure-authentication/enhanced_ldap/#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "configure-authentication/okta/#team-sync-enterprise-only" >}})
-- [SAML]({{< relref "../../enterprise/configure-saml/#configure-team-sync" >}})
+- [SAML]({{< relref "configure-authentication/saml/#configure-team-sync" >}})
 
 ## Synchronize a Grafana team with an external group
 

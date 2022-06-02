@@ -129,7 +129,7 @@ pattern of the `requestUri` field is given.
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "../../enterprise/configure-saml/#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "configure-authentication/saml/#single-logout" >}}).
 
 #### User management
 
