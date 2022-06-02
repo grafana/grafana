@@ -53,7 +53,7 @@ function convertTraceToGraph(data: TraceResponse): { nodes: Node[]; edges: Edge[
   });
 
   for (const span of data.spans) {
-    const process = data.processes[span.processID];
+    const process = data.resources[span.processID];
 
     const ranges: Array<[number, number]> = spanMap[span.spanID].children.map((c) => {
       const span = spanMap[c].span;

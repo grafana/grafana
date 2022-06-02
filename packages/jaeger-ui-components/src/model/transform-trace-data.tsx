@@ -115,7 +115,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     } else {
       spanIdCounts.set(spanID, 1);
     }
-    span.resource = data.processes[processID];
+    span.resource = data.resources[processID];
     spanMap.set(spanID, span);
   }
   // tree is necessary to sort the spans, so children follow parents, and
@@ -175,7 +175,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     // can't use spread operator for intersection types
     // repl: https://goo.gl/4Z23MJ
     // issue: https://github.com/facebook/flow/issues/1511
-    processes: data.processes,
+    resources: data.resources,
     duration: traceEndTime - traceStartTime,
     startTime: traceStartTime,
     endTime: traceEndTime,

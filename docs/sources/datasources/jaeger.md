@@ -119,7 +119,7 @@ Here is an example JSON:
           "warnings": null
         }
       ],
-      "processes": {
+      "resources": {
         "p1": {
           "serviceName": "loki-all",
           "tags": [

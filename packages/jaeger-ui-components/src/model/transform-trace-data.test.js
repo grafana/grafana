@@ -124,7 +124,7 @@ describe('transformTraceData()', () => {
     processID: 'p1',
   };
 
-  const processes = {
+  const resources = {
     p1: {
       serviceName,
       tags: [],
@@ -134,7 +134,7 @@ describe('transformTraceData()', () => {
   it('should return null for trace without traceID', () => {
     const traceData = {
       traceID: undefined,
-      processes,
+      resources,
       spans,
     };
 
@@ -144,7 +144,7 @@ describe('transformTraceData()', () => {
   it('should return trace data with correct traceName based on root span with missing ref', () => {
     const traceData = {
       traceID,
-      processes,
+      resources,
       spans: [...spans, rootSpanWithMissingRef],
     };
 
@@ -154,7 +154,7 @@ describe('transformTraceData()', () => {
   it('should return trace data with correct traceName based on root span without any refs', () => {
     const traceData = {
       traceID,
-      processes,
+      resources,
       spans: [...spans, rootSpanWithoutRefs],
     };
 

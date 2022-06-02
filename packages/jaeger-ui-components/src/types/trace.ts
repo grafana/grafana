@@ -78,7 +78,7 @@ export type TraceSpan = TraceSpanData & {
 };
 
 export type TraceData = {
-  processes: Record<string, TraceResource>;
+  resources: Record<string, TraceResource>;
   traceID: string;
   warnings?: string[] | null;
 };

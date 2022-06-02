@@ -228,7 +228,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       warnings: null as any,
     },
   ],
-  processes: {
+  resources: {
     '1ed38015486087ca': {
       serviceName: 'loki-all',
       tags: [

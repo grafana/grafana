@@ -60,7 +60,7 @@ export const singleSpanResponse: TraceResponse = {
       flags: 0,
     },
   ],
-  processes: {
+  resources: {
     p1: {
       serviceName: 'tempo-querier',
       tags: [
@@ -108,7 +108,7 @@ export const missingSpanResponse: TraceResponse = {
       flags: 0,
     },
   ],
-  processes: {
+  resources: {
     p1: {
       serviceName: 'tempo-querier',
       tags: [

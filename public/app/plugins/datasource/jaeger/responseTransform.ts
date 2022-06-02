@@ -11,7 +11,7 @@ import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
 import { JaegerResponse, Span, TraceResource, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
-  const spans = data.spans.map((s) => toSpanRow(s, data.processes));
+  const spans = data.spans.map((s) => toSpanRow(s, data.resources));
 
   const frame = new MutableDataFrame({
     fields: [
@@ -124,10 +124,10 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
   let traceResponse: TraceResponse = {
     traceID: '',
     spans: [],
-    processes: {},
+    resources: {},
     warnings: null,
   };
-  let processes: string[] = [];
+  let resources: string[] = [];
 
   for (let i = 0; i < data.length; i++) {
     const span = data.get(i);
@@ -138,9 +138,9 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
     }
 
     // Create process if doesn't exist
-    if (!processes.find((p) => p === span.serviceName)) {
-      processes.push(span.serviceName);
-      traceResponse.processes[`p${processes.length}`] = {
+    if (!resources.find((p) => p === span.serviceName)) {
+      resources.push(span.serviceName);
+      traceResponse.resources[`p${resources.length}`] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
@@ -167,8 +167,8 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
       })),
       operationName: span.operationName,
       processID:
-        Object.keys(traceResponse.processes).find(
-          (key) => traceResponse.processes[key].serviceName === span.serviceName
+        Object.keys(traceResponse.resources).find(
+          (key) => traceResponse.resources[key].serviceName === span.serviceName
         ) || '',
       startTime: span.startTime * 1000,
       tags: span.tags,

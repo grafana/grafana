@@ -15,11 +15,11 @@ export function transformDataFrames(frame?: DataFrame): Trace | null {
 
 function transformTraceDataFrame(frame: DataFrame): TraceResponse {
   const view = new DataFrameView<TraceSpanRow>(frame);
-  const processes: Record<string, TraceResource> = {};
+  const resources: Record<string, TraceResource> = {};
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
-    if (!processes[span.spanID]) {
-      processes[span.spanID] = {
+    if (!resources[span.spanID]) {
+      resources[span.spanID] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
@@ -28,7 +28,7 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
 
   return {
     traceID: view.get(0).traceID,
-    processes,
+    resources,
     spans: view.toArray().map((s, index) => {
       const references = [];
       if (s.parentSpanID) {

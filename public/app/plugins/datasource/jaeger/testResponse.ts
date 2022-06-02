@@ -38,7 +38,7 @@ export const testResponse: TraceResponse = {
       flags: 0,
     },
   ],
-  processes: {
+  resources: {
     p1: {
       serviceName: 'tempo-querier',
       tags: [

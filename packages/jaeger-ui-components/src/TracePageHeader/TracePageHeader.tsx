@@ -176,7 +176,7 @@ export const HEADER_ITEMS = [
   {
     key: 'service-count',
     label: 'Services:',
-    renderer: (trace: Trace) => new Set(_values(trace.processes).map((p) => p.serviceName)).size,
+    renderer: (trace: Trace) => new Set(_values(trace.resources).map((p) => p.serviceName)).size,
   },
   {
     key: 'depth',
