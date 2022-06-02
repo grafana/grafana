@@ -55,9 +55,13 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    - pkg/**
+    - packaging/**
+    - go.sum
+    - go.mod
+    include: []
 type: docker
 volumes:
 - host:
@@ -133,7 +137,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -143,9 +147,15 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
 type: docker
 volumes:
 - host:
@@ -805,7 +815,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -1901,7 +1911,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -3697,7 +3707,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.4
@@ -4715,6 +4725,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fb64e50c271012ad1cc9b7ad7e7bd037736d6e3471d24f73774e8fd61472600c
+hmac: 766806dc9d5e5585e86671ded45d0048cab66c5dc9aaacb5ecb79b8e6754db18
 
 ...

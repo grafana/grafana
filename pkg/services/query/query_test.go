@@ -61,6 +61,43 @@ func TestQueryData(t *testing.T) {
 		}
 		require.Equal(t, expected, tc.pluginContext.req.Headers)
 	})
+
+	t.Run("it doesn't add cookie header to the request when keepCookies configured and no cookies provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Empty(t, tc.pluginContext.req.Headers)
+	})
+
+	t.Run("it adds cookie header to the request when keepCookies configured and cookie provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		httpReq.AddCookie(&http.Cookie{Name: "a"})
+		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
+		httpReq.AddCookie(&http.Cookie{Name: "b"})
+		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
+		httpReq.AddCookie(&http.Cookie{Name: "c"})
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
+	})
 }
 
 func setup(t *testing.T) *testContext {

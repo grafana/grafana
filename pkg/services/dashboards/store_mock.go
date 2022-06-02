@@ -81,6 +81,20 @@ func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *models.Ge
 	return r0
 }
 
+// GetDashboardAclInfoList provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardAclInfoListQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDashboardUIDById provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	ret := _m.Called(ctx, query)
@@ -284,6 +298,34 @@ func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid
 	return r0, r1
 }
 
+// HasAdminPermissionInFolders provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.HasAdminPermissionInFoldersQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// HasEditPermissionInFolders provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	ret := _m.Called(ctx, query)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.HasEditPermissionInFoldersQuery) error); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SaveAlerts provides a mock function with given fields: ctx, dashID, alerts
 func (_m *FakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	ret := _m.Called(ctx, dashID, alerts)
@@ -365,20 +407,6 @@ func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDas
 	}
 
 	return r0, r1
-}
-
-// SearchDashboards provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
-	ret := _m.Called(ctx, query)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.FindPersistedDashboardsQuery) error); ok {
-		r0 = rf(ctx, query)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // UnprovisionDashboard provides a mock function with given fields: ctx, id

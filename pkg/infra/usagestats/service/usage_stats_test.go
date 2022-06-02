@@ -178,6 +178,7 @@ func TestRegisterMetrics(t *testing.T) {
 
 	uss.gatherMetrics(context.Background(), metrics)
 	assert.Equal(t, 1, metrics[goodMetricName])
+	metricsCount := len(metrics)
 
 	t.Run("do not add metrics that return an error when fetched", func(t *testing.T) {
 		const badMetricName = "stats.test_external_metric_error.count"
@@ -192,7 +193,8 @@ func TestRegisterMetrics(t *testing.T) {
 
 		require.Nil(t, extErrorMetric, "Invalid metric should not be added")
 		assert.Equal(t, 1, extMetric)
-		assert.Len(t, metrics, 3, "Expected only one available metric")
+		assert.Len(t, metrics, metricsCount, "Expected same number of metrics before and after collecting bad metric")
+		assert.EqualValues(t, 1, metrics["stats.usagestats.debug.collect.error.count"])
 	})
 }
 
