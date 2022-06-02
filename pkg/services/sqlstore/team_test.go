@@ -219,7 +219,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
-				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
+				query := &models.GetTeamsByUserQuery{
+					OrgId:  testOrgID,
+					UserId: userIds[0],
+					SignedInUser: &models.SignedInUser{
+						OrgId:       testOrgID,
+						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+					},
+				}
 				err = sqlStore.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
