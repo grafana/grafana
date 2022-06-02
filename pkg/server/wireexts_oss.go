@@ -74,7 +74,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
 	wire.Bind(new(resourcepermissions.Store), new(*acdb.AccessControlStore)),
-	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.PermissionsStore), new(*acdb.AccessControlStore)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,

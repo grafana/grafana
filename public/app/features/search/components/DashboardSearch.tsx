@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { FC, memo, useState } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
@@ -22,14 +23,19 @@ export interface Props {
 export default function DashboardSearch({ onCloseSearch }: Props) {
   if (config.featureToggles.panelTitleSearch) {
     // TODO: "folder:current" ????
-    return <DashbaordSearchNEW onCloseSearch={onCloseSearch} />;
+    return <DashboardSearchNew onCloseSearch={onCloseSearch} />;
   }
   return <DashboardSearchOLD onCloseSearch={onCloseSearch} />;
 }
 
-function DashbaordSearchNEW({ onCloseSearch }: Props) {
+function DashboardSearchNew({ onCloseSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange } = useSearchQuery({});
+
+  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
+  if (!config.featureToggles.panelTitleSearch) {
+    includePanels = false;
+  }
 
   const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +51,7 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           <div>
             <input
               type="text"
-              placeholder="Search dashboards by name"
+              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
               tabIndex={0}
@@ -60,7 +66,12 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView showManage={false} queryText={query.query} />
+          <SearchView
+            showManage={false}
+            queryText={query.query}
+            includePanels={includePanels!}
+            setIncludePanels={setIncludePanels}
+          />
         </div>
       </div>
     </div>
@@ -137,6 +148,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     container: css`
+      display: flex;
+      flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
       padding: ${theme.spacing(2)};
@@ -162,6 +175,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     search: css`
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       height: 100%;
       padding: ${theme.spacing(2, 0, 3, 0)};
     `,
