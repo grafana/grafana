@@ -5,6 +5,13 @@ export enum HeatmapCalculationMode {
   Count = 'count',
 }
 
+export const enum HeatmapBucketLayout {
+  le = 'le',
+  ge = 'ge',
+  unknown = 'unknown', // unknown
+  auto = 'auto', // becomes unknown
+}
+
 export interface HeatmapCalculationAxisConfig {
   mode?: HeatmapCalculationMode;
   value?: string; // number or interval string ie 10s

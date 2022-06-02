@@ -5,17 +5,11 @@ import { config } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/schema';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
-import {
-  PanelOptions,
-  defaultPanelOptions,
-  HeatmapMode,
-  HeatmapColorMode,
-  HeatmapColorScale,
-  AlignAxis,
-} from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapMode, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
@@ -54,6 +48,30 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.mode === HeatmapMode.Calculate) {
       addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
+    } else if (opts.mode === HeatmapMode.Aggregated) {
+      builder.addTextInput({
+        path: 'bucket.name',
+        name: 'Cell value name',
+        defaultValue: defaultPanelOptions.bucket?.name,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+      builder.addRadio({
+        path: 'bucket.layout',
+        name: 'Layout',
+        defaultValue: defaultPanelOptions.bucket?.layout ?? HeatmapBucketLayout.auto,
+        category,
+        settings: {
+          options: [
+            { label: 'Auto', value: HeatmapBucketLayout.auto },
+            { label: 'Middle', value: HeatmapBucketLayout.unknown },
+            { label: 'Lower (GE)', value: HeatmapBucketLayout.ge },
+            { label: 'Upper (LE)', value: HeatmapBucketLayout.le },
+          ],
+        },
+      });
     }
 
     category = ['Y Axis'];
@@ -70,23 +88,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         ],
       },
     });
-
-    if (opts.mode === HeatmapMode.Aggregated) {
-      builder.addRadio({
-        path: 'yAxis.align',
-        name: 'Alignment',
-        defaultValue: defaultPanelOptions.yAxis.align ?? AlignAxis.Auto,
-        category,
-        settings: {
-          options: [
-            { label: 'Auto', value: AlignAxis.Auto },
-            { label: 'Middle', value: AlignAxis.Middle },
-            { label: 'Upper', value: AlignAxis.Upper },
-            { label: 'Lower', value: AlignAxis.Lower },
-          ],
-        },
-      });
-    }
 
     builder
       .addNumberInput({

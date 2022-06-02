@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
-import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
+import { HeatmapBucketLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
@@ -54,18 +54,26 @@ export interface HeatmapScanlinesCustomMeta {
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
+
+  // axis align (le/ge/unknown)
+}
+
+export interface BucketsOptions {
+  frame: DataFrame;
+  name?: string;
+  layout?: HeatmapBucketLayout;
 }
 
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
-export function bucketsToScanlines(frame: DataFrame): DataFrame {
+export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
-  const xField = frame.fields[0];
+  const xField = opts.frame.fields[0];
   const xValues = xField.values.toArray();
-  const yFields = frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
+  const yFields = opts.frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
   // similar to initBins() below
-  const len = xValues.length * (frame.fields.length - 1);
+  const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
@@ -79,7 +87,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
     }
   });
 
-  const bucketBounds = Array.from({ length: frame.fields.length - 1 }, (v, i) => i);
+  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
 
   // fill flat/repeating array
   for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
@@ -94,10 +102,20 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
 
   // this name determines whether cells are drawn above, below, or centered on the values
   let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
-  // TODO -- settings
+  switch (opts.layout) {
+    case HeatmapBucketLayout.le:
+      ordinalFieldName = 'yMax';
+      break;
+    case HeatmapBucketLayout.ge:
+      ordinalFieldName = 'yMin';
+      break;
+    case HeatmapBucketLayout.unknown:
+      ordinalFieldName = 'y';
+      break;
+  }
 
   const custom: HeatmapScanlinesCustomMeta = {
-    yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, frame)),
+    yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
   if (custom.yMatchWithLabel) {
@@ -105,7 +123,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
   }
   return {
     length: xs.length,
-    refId: frame.refId,
+    refId: opts.frame.refId,
     meta: {
       type: DataFrameType.HeatmapScanlines,
       custom,
@@ -126,7 +144,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
         },
       },
       {
-        name: 'count',
+        name: opts.name?.length ? opts.name : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
         config: yFields[0].config,

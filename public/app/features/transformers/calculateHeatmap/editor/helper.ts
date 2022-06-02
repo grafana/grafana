@@ -15,7 +15,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'xAxis',
     path: `${prefix}xAxis`,
-    name: 'X Axis',
+    name: 'X Buckets',
     editor: AxisEditor,
     category,
     defaultValue: {
@@ -26,7 +26,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'yAxis-scale',
     path: `${prefix}yAxis.scale`,
-    name: 'Y Axis',
+    name: 'Y Buckets',
     category,
     editor: ScaleDistributionEditor,
     defaultValue: { type: ScaleDistribution.Linear },

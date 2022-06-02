@@ -11,14 +11,9 @@ import {
   PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapMode, PanelOptions } from './models.gen';
-
-export const enum BucketLayout {
-  le = 'le',
-  ge = 'ge',
-  unknown = 'unknown', // unknown
-}
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
@@ -35,8 +30,8 @@ export interface HeatmapData {
   xBucketCount?: number;
   yBucketCount?: number;
 
-  xLayout?: BucketLayout;
-  yLayout?: BucketLayout;
+  xLayout?: HeatmapBucketLayout;
+  yLayout?: HeatmapBucketLayout;
 
   // Print a heatmap cell value
   display?: (v: number) => string;
@@ -96,7 +91,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   const yFields = bucketHeatmap.fields.filter((f) => f.type === FieldType.number);
   const matchByLabel = Object.keys(yFields[0].labels ?? {})[0];
 
-  const scanlinesFrame = bucketsToScanlines(bucketHeatmap);
+  const scanlinesFrame = bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap });
   return {
     matchByLabel,
     yLabelValues: matchByLabel ? yFields.map((f) => f.labels?.[matchByLabel] ?? '') : undefined,
@@ -173,8 +168,18 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     yBucketCount: yBinQty,
 
     // TODO: improve heuristic
-    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unknown,
-    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unknown,
+    xLayout:
+      xName === 'xMax'
+        ? HeatmapBucketLayout.le
+        : xName === 'xMin'
+        ? HeatmapBucketLayout.ge
+        : HeatmapBucketLayout.unknown,
+    yLayout:
+      yName === 'yMax'
+        ? HeatmapBucketLayout.le
+        : yName === 'yMin'
+        ? HeatmapBucketLayout.ge
+        : HeatmapBucketLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };

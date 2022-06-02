@@ -4,10 +4,11 @@ import uPlot from 'uplot';
 import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
-import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapData } from './fields';
 import { YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
@@ -223,9 +224,9 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? (u, dataMin, dataMax) => {
           let yExp = u.scales['y'].log!;
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
+          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
             dataMin /= yExp;
-          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
+          } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
             dataMax *= yExp;
           } else {
             dataMin /= yExp / 2;
@@ -242,9 +243,9 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
 
           if (bucketSize) {
-            if (dataRef.current?.yLayout === BucketLayout.le) {
+            if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
               dataMin -= bucketSize!;
-            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
+            } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
               dataMax += bucketSize!;
             } else {
               dataMin -= bucketSize! / 2;
@@ -274,7 +275,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
           const bucketSize = dataRef.current?.yBucketSize!;
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
+          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
             splits.unshift(ys[0] - bucketSize);
           } else {
             splits.push(ys[ys.length - 1] + bucketSize);
@@ -287,9 +288,9 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? () => {
           const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
+          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
             yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
+          } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
             yAxisValues.push('+Inf');
           }
 
@@ -326,10 +327,15 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       gap: cellGap,
       hideThreshold,
-      xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
-      yAlign: ((dataRef.current?.yLayout === BucketLayout.le
+      xAlign:
+        dataRef.current?.xLayout === HeatmapBucketLayout.le
+          ? -1
+          : dataRef.current?.xLayout === HeatmapBucketLayout.ge
+          ? 1
+          : 0,
+      yAlign: ((dataRef.current?.yLayout === HeatmapBucketLayout.le
         ? -1
-        : dataRef.current?.yLayout === BucketLayout.ge
+        : dataRef.current?.yLayout === HeatmapBucketLayout.ge
         ? 1
         : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       disp: {

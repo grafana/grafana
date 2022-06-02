@@ -4,7 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { AxisConfig, AxisPlacement, HideableFieldConfig, VisibilityMode } from '@grafana/schema';
-import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapBucketLayout, HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
 
@@ -24,13 +24,6 @@ export enum HeatmapColorScale {
   Exponential = 'exponential',
 }
 
-export enum AlignAxis {
-  Auto = 'auto',
-  Upper = 'upper',
-  Middle = 'middle',
-  Lower = 'lower',
-};
-
 export interface HeatmapColorOptions {
   mode: HeatmapColorMode;
   scheme: string; // when in scheme mode -- the d3 scheme name
@@ -47,7 +40,6 @@ export interface YAxisConfig extends AxisConfig {
   unit?: string;
   reverse?: boolean; 
   decimals?: number;
-  align: AlignAxis;
 }
 
 export interface FilterValueRange {
@@ -67,12 +59,18 @@ export interface ExemplarConfig {
   color: string;
 }
 
+export interface BucketOptions {
+  name?: string;
+  layout?: HeatmapBucketLayout;
+}
+
 export interface PanelOptions {
   mode: HeatmapMode;
 
   color: HeatmapColorOptions;
   filterValues?: FilterValueRange; // was hideZeroBuckets
   calculate?: HeatmapCalculationOptions;
+  bucket?: BucketOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
@@ -95,9 +93,11 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
+  bucket: {
+    layout: HeatmapBucketLayout.auto,
+  },
   yAxis: {
     axisPlacement: AxisPlacement.Left,
-    align: AlignAxis.Auto,
   },
   showValue: VisibilityMode.Auto,
   tooltip: {

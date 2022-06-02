@@ -44,7 +44,7 @@ describe('Heatmap transformer', () => {
   });
 
   it('convert heatmap buckets to scanlines', async () => {
-    const data = toDataFrame({
+    const frame = toDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [1, 2, 3] },
         { name: 'A', type: FieldType.number, config: { unit: 'm2' }, values: [1.1, 1.2, 1.3] },
@@ -53,7 +53,7 @@ describe('Heatmap transformer', () => {
       ],
     });
 
-    const heatmap = bucketsToScanlines(data);
+    const heatmap = bucketsToScanlines({ frame, name: 'Speed' });
     expect(heatmap.fields.map((f) => ({ name: f.name, type: f.type, config: f.config }))).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -63,16 +63,16 @@ describe('Heatmap transformer', () => {
         },
         Object {
           "config": Object {
-            "unit": "m2",
+            "unit": "short",
           },
           "name": "y",
           "type": "number",
         },
         Object {
           "config": Object {
-            "unit": "short",
+            "unit": "m2",
           },
-          "name": "count",
+          "name": "Speed",
           "type": "number",
         },
       ]
@@ -80,13 +80,12 @@ describe('Heatmap transformer', () => {
     expect(heatmap.meta).toMatchInlineSnapshot(`
       Object {
         "custom": Object {
-          "matchByLabel": undefined,
-          "yAxisNames": Array [
+          "yMatchWithLabel": undefined,
+          "yOrdinalDisplay": Array [
             "A",
             "B",
             "C",
           ],
-          "yLabelValues": undefined,
         },
         "type": "heatmap-scanlines",
       }
