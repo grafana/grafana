@@ -104,7 +104,7 @@ export function LogsVolumePanel(props: Props) {
   }
 
   return (
-    <Collapse label="Log volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
+    <Collapse label="" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
