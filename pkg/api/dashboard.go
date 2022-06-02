@@ -255,27 +255,6 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 	return hs.deleteDashboard(c)
 }
 
-func dashboardPath(dashboardUID string, folderUID string) string {
-	path := folderUID
-	if path != "" {
-		path += "/"
-	}
-	path += dashboardUID
-	return path
-}
-
-func (hs *HTTPServer) loadFolderUID(c *models.ReqContext, dash *models.Dashboard) (string, error) {
-	var folderUID string
-	if dash.FolderId > 0 {
-		folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, dash.FolderId, c.OrgId)
-		if err != nil {
-			return "", err
-		}
-		folderUID = folder.Uid
-	}
-	return folderUID, nil
-}
-
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, web.Params(c.Req)[":uid"])
 	if rsp != nil {
@@ -292,12 +271,6 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
 
-	folderUID, err := hs.loadFolderUID(c, dash)
-	if err != nil {
-		hs.log.Error("Failed to load dashboard folder", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
-		return response.Error(500, "Failed to load dashboard folder", err)
-	}
-
 	err = hs.dashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
@@ -311,9 +284,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 
 	if hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			EntityId: store.CreateDatabaseEntityId(
-				dashboardPath(dash.Uid, folderUID), dash.OrgId, store.EntityTypeDashboard,
-			),
+			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeDashboard),
 			EventType: store.EntityEventTypeDelete,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dash.Uid, "error", err)
@@ -368,7 +339,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-	var folderUID string
 	if cmd.FolderUid != "" {
 		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgId, cmd.FolderUid)
 		if err != nil {
@@ -378,7 +348,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			return response.Error(500, "Error while checking folder ID", err)
 		}
 		cmd.FolderId = folder.Id
-		folderUID = folder.Uid
 	}
 
 	dash := cmd.GetDashboardModel()
@@ -431,7 +400,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if dashboard != nil && hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
-			EntityId:  store.CreateDatabaseEntityId(dashboardPath(dashboard.Uid, folderUID), dashboard.OrgId, store.EntityTypeDashboard),
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
 			EventType: store.EntityEventTypeUpdate,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)

@@ -265,10 +265,10 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(reader *bluge.Reader, path string) ([]string, error) {
+func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string, error) {
 	var panelIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewPrefixQuery(path).SetField(documentFieldLocation))
+	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
@@ -293,10 +293,10 @@ func getDashboardPanelIDs(reader *bluge.Reader, path string) ([]string, error) {
 	return panelIDs, err
 }
 
-func getFolderDashboardIDs(reader *bluge.Reader, path string) ([]string, error) {
+func getFolderDashboardIDs(reader *bluge.Reader, folderUID string) ([]string, error) {
 	var dashboardIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewPrefixQuery(path).SetField(documentFieldLocation))
+	fullQuery.AddMust(bluge.NewTermQuery(folderUID).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
@@ -319,6 +319,37 @@ func getFolderDashboardIDs(reader *bluge.Reader, path string) ([]string, error) 
 		match, err = documentMatchIterator.Next()
 	}
 	return dashboardIDs, err
+}
+
+func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bool, error) {
+	var dashboardLocation string
+	var found bool
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return "", false, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldLocation {
+				dashboardLocation = string(value)
+				found = true
+				return false
+			}
+			return true
+		})
+		if err != nil {
+			return "", false, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return dashboardLocation, found, err
 }
 
 //nolint: gocyclo
