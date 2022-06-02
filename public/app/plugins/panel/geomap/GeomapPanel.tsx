@@ -21,6 +21,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   FrameGeometrySourceMode,
+  getFrameMatchers,
   GrafanaTheme,
   MapLayerOptions,
   PanelData,
@@ -253,14 +254,12 @@ export class GeomapPanel extends Component<Props, State> {
     for (const state of this.layers) {
       if (state.handler.update) {
         let panelData = this.props.data;
-        if (state.options.dataquery) {
-          const frame = this.findFrameToRender(this.props.data, state.options);
-          if (frame) {
-            panelData = {
-              ...panelData,
-              series: [frame],
-            };
-          }
+        if (state.options.filterData) {
+          const matcherFunc = getFrameMatchers(state.options.filterData);
+          panelData = {
+            ...panelData,
+            series: panelData.series.filter(matcherFunc),
+          };
         }
         state.handler.update(panelData);
       }
@@ -480,14 +479,12 @@ export class GeomapPanel extends Component<Props, State> {
       // initialize with new data
       if (info.handler.update) {
         let panelData = this.props.data;
-        if (newOptions.dataquery) {
-          const frame = this.findFrameToRender(this.props.data, newOptions);
-          if (frame) {
-            panelData = {
-              ...panelData,
-              series: [frame],
-            };
-          }
+        if (newOptions.filterData) {
+          const matcherFunc = getFrameMatchers(newOptions.filterData);
+          panelData = {
+            ...panelData,
+            series: panelData.series.filter(matcherFunc),
+          };
         }
         info.handler.update(panelData);
       }
@@ -552,14 +549,12 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (handler.update) {
       let panelData = this.props.data;
-      if (options.dataquery) {
-        const frame = this.findFrameToRender(this.props.data, options);
-        if (frame) {
-          panelData = {
-            ...panelData,
-            series: [frame],
-          };
-        }
+      if (options.filterData) {
+        const matcherFunc = getFrameMatchers(options.filterData);
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
       }
       handler.update(panelData);
     }
@@ -661,38 +656,6 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     this.setState({ topRight });
-  }
-
-  findFrameToRender(data: PanelData, options: MapLayerOptions): DataFrame | undefined {
-    const frame = data.series?.find((frame) => {
-      return options.dataquery === frame.refId;
-    });
-    if (frame) {
-      return frame;
-    }
-    // It's possible that the series name changed, try to find it and recover
-    // Check if the value we had selected is missing from the new list
-    let updatedVal = data.series.find((val) => {
-      return val.refId === options.dataquery;
-    });
-    if (!updatedVal) {
-      // Previously selected value is missing from the new list.
-      // Find the value that is in the new list but isn't in the old list
-      let changedTo = data.series.find((val) => {
-        return !this.props.data.series.some((val2) => {
-          return val2.refId === val.refId;
-        });
-      });
-      if (changedTo) {
-        // Found the new value, we assume the old value changed to this one, so we'll use it
-        const newOpts = {
-          ...options,
-          dataquery: changedTo.refId,
-        };
-        this.updateLayer(options.name, newOpts);
-      }
-    }
-    return;
   }
 
   getLegends() {

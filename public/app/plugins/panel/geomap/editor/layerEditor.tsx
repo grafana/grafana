@@ -13,6 +13,7 @@ import { hasAlphaPanels } from 'app/core/config';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
+import { FrameSelectionEditor } from '../layers/data/FrameSelectionEditor';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { MapLayerState } from '../types';
@@ -85,21 +86,28 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
 
       // Show data filter if the layer type can do something with the data query results
       if (handler.update) {
-        builder.addSelect({
-          path: 'dataquery',
-          name: 'Query',
-          settings: {
-            options: [],
-            getOptions: async (context) => {
-              return context.data.map((value) => {
-                return {
-                  value: value.refId,
-                  label: value.refId,
-                } as SelectableValue<DataFrame>;
-              });
-            },
-          },
+        builder.addCustomEditor({
+          id: 'filterData',
+          path: 'filterData',
+          name: 'Data',
+          editor: FrameSelectionEditor,
+          defaultValue: undefined,
         });
+        // builder.addSelect({
+        //   path: 'filterData.options',
+        //   name: 'Query',
+        //   settings: {
+        //     options: [],
+        //     getOptions: async (context) => {
+        //       return context.data.map((value) => {
+        //         return {
+        //           value: value.refId,
+        //           label: value.refId,
+        //         } as SelectableValue<DataFrame>;
+        //       });
+        //     },
+        //   },
+        // });
       }
 
       if (!layer) {
