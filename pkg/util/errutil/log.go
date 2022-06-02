@@ -23,15 +23,15 @@ type LogInterface interface {
 
 func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface{}) {
 	switch l {
+	case LevelNever:
+		return func(_ string, _ ...interface{}) {}
 	case LevelDebug:
 		return logger.Debug
 	case LevelInfo:
 		return logger.Info
 	case LevelWarn:
 		return logger.Warn
-	case LevelError:
+	default: // LevelUnknown and LevelError
 		return logger.Error
-	default:
-		return func(_ string, _ ...interface{}) {}
 	}
 }
