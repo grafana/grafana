@@ -7,6 +7,7 @@ import { MapLayerRegistryItem, MapLayerOptions } from '@grafana/data';
 export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
   name: 'Open Street Map',
+  description: 'Add map from a collaborative free geographic world database',
   isBaseMap: true,
   showOpacity: true,
 

@@ -20,6 +20,7 @@ export const defaultXYZConfig: XYZConfig = {
 export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
+  description: 'Add map from custom source',
   isBaseMap: true,
   showOpacity: true,
 

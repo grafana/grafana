@@ -25,6 +25,7 @@ export const defaultCartoConfig: CartoConfig = {
 export const carto: MapLayerRegistryItem<CartoConfig> = {
   id: 'carto',
   name: 'CARTO reference map',
+  description: 'Add map from CARTO database',
   isBaseMap: true,
   defaultOptions: defaultCartoConfig,
   showOpacity: true,
