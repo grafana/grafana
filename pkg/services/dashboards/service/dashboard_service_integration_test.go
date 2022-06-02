@@ -817,6 +817,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			featuremgmt.WithFeatures(),
 			accesscontrolmock.NewMockedPermissionsService(),
 			accesscontrolmock.NewMockedPermissionsService(),
+			accesscontrolmock.New(),
 		)
 		guardian.InitLegacyGuardian(sqlStore, service)
 
