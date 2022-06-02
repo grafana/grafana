@@ -249,8 +249,12 @@ describe('VariableEditor', () => {
       };
       render(<VariableQueryEditor {...props} />);
 
-      const rendered = await waitFor(() => screen.queryByLabelText('Log group prefix'));
-      expect(rendered).toBeInTheDocument();
+      await waitFor(() => {
+        screen.getByLabelText('Log group prefix');
+        screen.getByLabelText('Region');
+      });
+
+      expect(screen.queryByLabelText('Namespace')).not.toBeInTheDocument();
     });
   });
 });
