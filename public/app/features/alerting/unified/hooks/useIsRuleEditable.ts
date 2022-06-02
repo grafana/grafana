@@ -34,18 +34,25 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
         `Rule ${rule.grafana_alert.title} does not have a folder uid, cannot determine if it is editable.`
       );
     }
+
+    const canEditGrafanaRules = contextSrv.hasAccess(rulePermission.update, folder?.canSave ?? false);
+    const canRemoveGrafanaRules = contextSrv.hasAccess(rulePermission.delete, folder?.canSave ?? false);
+
     return {
-      isEditable: contextSrv.hasAccess(rulePermission.update, folder?.canSave ?? false),
-      isRemovable: contextSrv.hasAccess(rulePermission.delete, folder?.canSave ?? false),
+      isEditable: canEditGrafanaRules,
+      isRemovable: canRemoveGrafanaRules,
       loading,
     };
   }
 
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   const isRulerAvailable = Boolean(dataSources[rulesSourceName]?.result?.rulerConfig);
+  const canEditCloudRules = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
+  const canRemoveCloudRules = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
+
   return {
-    isEditable: contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor) && isRulerAvailable,
-    isRemovable: contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor) && isRulerAvailable,
+    isEditable: canEditCloudRules && isRulerAvailable,
+    isRemovable: canRemoveCloudRules && isRulerAvailable,
     loading: dataSources[rulesSourceName]?.loading,
   };
 }

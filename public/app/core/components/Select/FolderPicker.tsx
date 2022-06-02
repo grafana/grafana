@@ -196,7 +196,6 @@ export class FolderPicker extends PureComponent<Props, State> {
       <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
           inputId={inputId}
-          isOpen={true}
           aria-label={selectors.components.FolderPicker.input}
           loadingMessage="Loading folders..."
           defaultOptions
