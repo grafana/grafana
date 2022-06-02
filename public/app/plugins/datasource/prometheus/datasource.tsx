@@ -64,7 +64,7 @@ import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const POST_METADATA_ENDPOINTS = ['/api/v1/series', '/api/v1/labels'];
-const GET_METADATA_ENDPOINTS = ['/api/v1/rules', '/api/v1/metadata', '/api/v1/label/'];
+const GET_METADATA_ENDPOINTS = ['/api/v1/query_exemplars', '/api/v1/rules', '/api/v1/metadata', '/api/v1/label/'];
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
