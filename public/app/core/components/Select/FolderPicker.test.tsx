@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,6 +19,27 @@ describe('FolderPicker', () => {
 
     render(<FolderPicker onChange={jest.fn()} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+  });
+
+  it('Should apply filter to the folders search results', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+        { title: 'Dash 3', id: 3 } as DashboardSearchHit,
+      ]);
+
+    render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.id !== 2)} />);
+
+    const pickerInput = await screen.findByLabelText(selectors.components.FolderPicker.input);
+    fireEvent.click(pickerInput);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions).toHaveLength(2);
+    expect(pickerOptions[0]).toHaveTextContent('Dash 1');
+    expect(pickerOptions[1]).toHaveTextContent('Dash 3');
   });
 });
 

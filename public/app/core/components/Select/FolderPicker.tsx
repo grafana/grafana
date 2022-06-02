@@ -94,7 +94,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     } = this.props;
 
     const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-    const options: Array<SelectableValue<number>> = mapSearchHitsToOptinos(searchHits, filter);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
 
     const hasAccess =
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -196,6 +196,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
           inputId={inputId}
+          isOpen={true}
           aria-label={selectors.components.FolderPicker.input}
           loadingMessage="Loading folders..."
           defaultOptions
@@ -211,7 +212,7 @@ export class FolderPicker extends PureComponent<Props, State> {
   }
 }
 
-function mapSearchHitsToOptinos(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
+function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
   return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
 }
