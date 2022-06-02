@@ -34,7 +34,7 @@ type ChannelRule struct {
 }
 
 type ConverterConfig struct {
-	Type                      string                     `json:"type" ts_type:"Omit<keyof ConverterConfig, 'type'>"`
+	Type                      string                     `json:"type" ts_type:"Exclude<keyof ConverterConfig, 'type'>"`
 	AutoJsonConverterConfig   *AutoJsonConverterConfig   `json:"jsonAuto,omitempty"`
 	ExactJsonConverterConfig  *ExactJsonConverterConfig  `json:"jsonExact,omitempty"`
 	AutoInfluxConverterConfig *AutoInfluxConverterConfig `json:"influxAuto,omitempty"`
@@ -50,7 +50,7 @@ type KeepFieldsFrameProcessorConfig struct {
 }
 
 type FrameProcessorConfig struct {
-	Type                      string                          `json:"type" ts_type:"Omit<keyof FrameProcessorConfig, 'type'>"`
+	Type                      string                          `json:"type" ts_type:"Exclude<keyof FrameProcessorConfig, 'type'>"`
 	DropFieldsProcessorConfig *DropFieldsFrameProcessorConfig `json:"dropFields,omitempty"`
 	KeepFieldsProcessorConfig *KeepFieldsFrameProcessorConfig `json:"keepFields,omitempty"`
 	MultipleProcessorConfig   *MultipleFrameProcessorConfig   `json:"multiple,omitempty"`
@@ -83,7 +83,7 @@ type MultipleSubscriberConfig struct {
 }
 
 type SubscriberConfig struct {
-	Type                     string                    `json:"type" ts_type:"Omit<keyof SubscriberConfig, 'type'>"`
+	Type                     string                    `json:"type" ts_type:"Exclude<keyof SubscriberConfig, 'type'>"`
 	MultipleSubscriberConfig *MultipleSubscriberConfig `json:"multiple,omitempty"`
 }
 
@@ -93,13 +93,13 @@ type RedirectDataOutputConfig struct {
 }
 
 type DataOutputterConfig struct {
-	Type                     string                    `json:"type" ts_type:"Omit<keyof DataOutputterConfig, 'type'>"`
+	Type                     string                    `json:"type" ts_type:"Exclude<keyof DataOutputterConfig, 'type'>"`
 	RedirectDataOutputConfig *RedirectDataOutputConfig `json:"redirect,omitempty"`
 	LokiOutputConfig         *LokiOutputConfig         `json:"loki,omitempty"`
 }
 
 type FrameOutputterConfig struct {
-	Type                    string                     `json:"type" ts_type:"Omit<keyof FrameOutputterConfig, 'type'>"`
+	Type                    string                     `json:"type" ts_type:"Exclude<keyof FrameOutputterConfig, 'type'>"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
 	RedirectOutputConfig    *RedirectOutputConfig      `json:"redirect,omitempty"`
@@ -122,7 +122,7 @@ type NumberCompareFrameConditionConfig struct {
 }
 
 type FrameConditionCheckerConfig struct {
-	Type                           string                               `json:"type" ts_type:"Omit<keyof FrameConditionCheckerConfig, 'type'>"`
+	Type                           string                               `json:"type" ts_type:"Exclude<keyof FrameConditionCheckerConfig, 'type'>"`
 	MultipleConditionCheckerConfig *MultipleFrameConditionCheckerConfig `json:"multiple,omitempty"`
 	NumberCompareConditionConfig   *NumberCompareFrameConditionConfig   `json:"numberCompare,omitempty"`
 }
