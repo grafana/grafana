@@ -189,6 +189,25 @@ function legacyCreateSpanLinkFactory(
     }
 
     // Get trace links
+    // TODO: Remove before merging
+    if (span.references.length <= 1) {
+      span.references.push({
+        refType: 'FOLLOWS_FROM',
+        spanID: span.spanID,
+        traceID: '55cb11440892807e', // Replace with some other trace that exists locally for testing
+      });
+      span.references.push({
+        refType: 'FOLLOWS_FROM',
+        spanID: span.spanID,
+        traceID: span.traceID,
+        span: {
+          operationName: 'Same',
+          process: {
+            serviceName: 'Service',
+          },
+        } as any,
+      });
+    }
     if (span.references && createFocusSpanLink) {
       for (const reference of span.references) {
         // Ignore parent-child links
