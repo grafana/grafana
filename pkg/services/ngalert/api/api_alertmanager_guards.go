@@ -39,22 +39,25 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 
 func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	for name, template := range currentConfig.TemplateFiles {
-		found := false
 		provenance := ngmodels.ProvenanceNone
 		if prov, present := currentConfig.TemplateFileProvenances[name]; present {
 			provenance = prov
 		}
+		if provenance == ngmodels.ProvenanceNone {
+			continue // we are only interested in non none
+		}
+		found := false
 		for newName, newTemplate := range newConfig.TemplateFiles {
 			if name != newName {
 				continue
 			}
 			found = true
-			if template != newTemplate && provenance != ngmodels.ProvenanceNone {
+			if template != newTemplate {
 				return fmt.Errorf("cannot save provisioned template '%s'", name)
 			}
 			break // we found the template and we can proceed
 		}
-		if !found && provenance != ngmodels.ProvenanceNone {
+		if !found {
 			return fmt.Errorf("cannot delete provisioned template '%s'", name)
 		}
 	}
@@ -64,6 +67,9 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimodels.PostableApiReceiver) error {
 	for _, existingReceiver := range current {
 		for _, existingContactPoint := range existingReceiver.GrafanaManagedReceivers {
+			if existingContactPoint.Provenance == ngmodels.ProvenanceNone {
+				continue // we are only interested in non none
+			}
 			found, edited := false, false
 		outer:
 			for _, postedReceiver := range new {
@@ -106,13 +112,13 @@ func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimode
 							break // it's enough to know that something was edited
 						}
 					}
-					if edited && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
+					if edited {
 						return fmt.Errorf("cannot save provisioned contact point '%s'", existingContactPoint.Name)
 					}
 					break outer
 				}
 			}
-			if !found && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
+			if !found {
 				return fmt.Errorf("cannot delete provisioned contact point '%s'", existingContactPoint.Name)
 			}
 		}
@@ -122,11 +128,14 @@ func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimode
 
 func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	for _, muteTime := range currentConfig.AlertmanagerConfig.MuteTimeIntervals {
-		found := false
 		provenance := ngmodels.ProvenanceNone
 		if prov, present := currentConfig.AlertmanagerConfig.MuteTimeProvenances[muteTime.Name]; present {
 			provenance = prov
 		}
+		if provenance == ngmodels.ProvenanceNone {
+			continue // we are only interested in non none
+		}
+		found := false
 		for _, newMuteTime := range newConfig.AlertmanagerConfig.MuteTimeIntervals {
 			if newMuteTime.Name != muteTime.Name {
 				continue
@@ -135,12 +144,12 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 			reporter := cmputil.DiffReporter{}
 			ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
 			timesEqual := cmp.Equal(muteTime.TimeIntervals, newMuteTime.TimeIntervals, ops...)
-			if !timesEqual && provenance != ngmodels.ProvenanceNone {
+			if !timesEqual {
 				return fmt.Errorf("cannot save provisioned mute time '%s'", muteTime.Name)
 			}
 			break
 		}
-		if !found && provenance != ngmodels.ProvenanceNone {
+		if !found {
 			return fmt.Errorf("cannot delete provisioned mute time '%s'", muteTime.Name)
 		}
 	}
