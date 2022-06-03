@@ -95,7 +95,7 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
-        {layout !== SearchLayout.Folders && (
+        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
           <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
         )}
 
