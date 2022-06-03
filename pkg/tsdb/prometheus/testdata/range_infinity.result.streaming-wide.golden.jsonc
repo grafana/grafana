@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------+
-//  | Name: Time                    | Name: 1 / 0      |
+//  | Name: Time                    | Name: Value      |
 //  | Labels:                       | Labels:          |
 //  | Type: []time.Time             | Type: []*float64 |
 //  +-------------------------------+------------------+
@@ -18,6 +18,18 @@
 //  | 2022-01-11 08:25:31 +0000 UTC | +Inf             |
 //  | 2022-01-11 08:25:32 +0000 UTC | +Inf             |
 //  +-------------------------------+------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: 
+//  Dimensions: 2 Fields by 0 Rows
+//  +-------------------+-----------------+
+//  | Name: Time        | Name: Value     |
+//  | Labels:           | Labels:         |
+//  | Type: []time.Time | Type: []float64 |
+//  +-------------------+-----------------+
+//  +-------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -76,6 +88,32 @@
               2
             ]
           }
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
         ]
       }
     }

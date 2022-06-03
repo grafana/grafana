@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 3 Fields by 4 Rows
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: prometheus_http_requests_total{code="200", handler="/api/v1/query_range", job="prometheus"}      | Name: prometheus_http_requests_total{code="400", handler="/api/v1/query_range", job="prometheus"}      |
+//  | Name: Time                        | Name: Value                                                                                            | Name: Value                                                                                            |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=200, handler=/api/v1/query_range, job=prometheus | Labels: __name__=prometheus_http_requests_total, code=400, handler=/api/v1/query_range, job=prometheus |
 //  | Type: []time.Time                 | Type: []*float64                                                                                       | Type: []*float64                                                                                       |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
@@ -19,6 +19,18 @@
 //  | 2022-01-11 08:25:31.123 +0000 UTC | 32                                                                                                     | null                                                                                                   |
 //  | 2022-01-11 08:25:32.123 +0000 UTC | 43                                                                                                     | 76                                                                                                     |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: 
+//  Dimensions: 2 Fields by 0 Rows
+//  +-------------------+-----------------+
+//  | Name: Time        | Name: Value     |
+//  | Labels:           | Labels:         |
+//  | Type: []time.Time | Type: []float64 |
+//  +-------------------+-----------------+
+//  +-------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -45,7 +57,7 @@
             }
           },
           {
-            "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -59,7 +71,7 @@
             }
           },
           {
-            "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -94,6 +106,32 @@
             null,
             76
           ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
         ]
       }
     }

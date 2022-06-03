@@ -40,6 +40,18 @@
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
 //  
 //  
+//  
+//  Frame[2] 
+//  Name: 
+//  Dimensions: 2 Fields by 0 Rows
+//  +-------------------+-----------------+
+//  | Name: Time        | Name: Value     |
+//  | Labels:           | Labels:         |
+//  | Type: []time.Time | Type: []float64 |
+//  +-------------------+-----------------+
+//  +-------------------+-----------------+
+//  
+//  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
   "frames": [
@@ -146,6 +158,32 @@
             54,
             76
           ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
         ]
       }
     }

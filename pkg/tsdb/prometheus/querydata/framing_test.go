@@ -60,6 +60,7 @@ func TestExemplarResponses(t *testing.T) {
 		goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
+		goldenFileName = filepath.Join("../testdata", test.filepath+".result.streaming-wide.golden")
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 	}
 }

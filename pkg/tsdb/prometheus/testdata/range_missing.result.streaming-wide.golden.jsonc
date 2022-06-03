@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------------------------------------+
-//  | Name: Time                    | Name: go_goroutines{job="prometheus"}          |
+//  | Name: Time                    | Name: Value                                    |
 //  | Labels:                       | Labels: __name__=go_goroutines, job=prometheus |
 //  | Type: []time.Time             | Type: []*float64                               |
 //  +-------------------------------+------------------------------------------------+
@@ -18,6 +18,18 @@
 //  | 2022-01-11 08:25:34 +0000 UTC | 32                                             |
 //  | 2022-01-11 08:25:37 +0000 UTC | 43                                             |
 //  +-------------------------------+------------------------------------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: 
+//  Dimensions: 2 Fields by 0 Rows
+//  +-------------------+-----------------+
+//  | Name: Time        | Name: Value     |
+//  | Labels:           | Labels:         |
+//  | Type: []time.Time | Type: []float64 |
+//  +-------------------+-----------------+
+//  +-------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -44,7 +56,7 @@
             }
           },
           {
-            "name": "go_goroutines{job=\"prometheus\"}",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -69,6 +81,32 @@
             32,
             43
           ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [],
+          []
         ]
       }
     }
