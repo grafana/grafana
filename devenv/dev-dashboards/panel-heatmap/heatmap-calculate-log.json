@@ -134,8 +134,9 @@
       },
       "id": 4,
       "options": {
-        "calculate": {
-          "yAxis": {
+        "calculate": true,
+        "calculation": {
+          "yBuckets": {
             "scale": {
               "type": "linear"
             }
@@ -159,7 +160,6 @@
         "legend": {
           "show": true
         },
-        "mode": "calculate",
         "tooltip": {
           "show": true,
           "yHistogram": false
@@ -199,8 +199,9 @@
       },
       "id": 6,
       "options": {
-        "calculate": {
-          "yAxis": {
+        "calculate": true,
+        "calculation": {
+          "yBuckets": {
             "scale": {
               "log": 2,
               "type": "log"
@@ -225,7 +226,6 @@
         "legend": {
           "show": true
         },
-        "mode": "calculate",
         "tooltip": {
           "show": true,
           "yHistogram": false
@@ -265,8 +265,9 @@
       },
       "id": 5,
       "options": {
-        "calculate": {
-          "yAxis": {
+        "calculate": true,
+        "calculation": {
+          "yBuckets": {
             "scale": {
               "log": 10,
               "type": "log"
@@ -291,7 +292,6 @@
         "legend": {
           "show": true
         },
-        "mode": "calculate",
         "tooltip": {
           "show": true,
           "yHistogram": false
