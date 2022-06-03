@@ -3,6 +3,7 @@ package converter
 import (
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -52,6 +53,11 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
 		rsp := ReadPrometheusStyleResult(iter, opts)
+
+		if strings.Contains(name, "error") {
+			require.Error(t, rsp.Error)
+			return
+		}
 
 		fname := name + "-frame"
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
