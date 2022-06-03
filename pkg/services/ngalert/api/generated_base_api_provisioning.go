@@ -191,11 +191,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/v1/contact-points"),
-			api.authorize(http.MethodGet, "/api/provisioning/v1/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/v1/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),

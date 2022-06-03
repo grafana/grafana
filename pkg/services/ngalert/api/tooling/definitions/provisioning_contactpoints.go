@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-// swagger:route GET /api/provisioning/v1/contact-points provisioning RouteGetContactpoints
+// swagger:route GET /api/v1/provisioning/contact-points provisioning RouteGetContactpoints
 //
 // Get all the contact points.
 //
