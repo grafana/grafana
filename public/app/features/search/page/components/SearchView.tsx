@@ -209,7 +209,7 @@ export const SearchView = ({
     );
   };
 
-  if (folderDTO && !results.value?.totalRows && !queryText.length) {
+  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
