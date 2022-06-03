@@ -118,18 +118,12 @@ func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []
 	return sql, args
 }
 
-func (db *MySQLDialect) RenameColumn(table Table, oldName, newName string) string {
-	var colType string
-	for _, col := range table.Columns {
-		if col.Name == oldName {
-			colType = db.SQLType(col)
-			break
-		}
-	}
-
+func (db *MySQLDialect) RenameColumn(table Table, column *Column, newName string) string {
 	quote := db.dialect.Quote
-
-	return fmt.Sprintf("ALTER TABLE %s CHANGE %s %s %s", quote(table.Name), quote(oldName), quote(newName), colType)
+	return fmt.Sprintf(
+		"ALTER TABLE %s CHANGE %s %s %s",
+		quote(table.Name), quote(column.Name), quote(newName), db.SQLType(column),
+	)
 }
 
 func (db *MySQLDialect) CleanDB() error {
@@ -144,13 +138,13 @@ func (db *MySQLDialect) CleanDB() error {
 		switch table.Name {
 		default:
 			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
-				return errutil.Wrap("failed to disable foreign key checks", err)
+				return fmt.Errorf("%v: %w", "failed to disable foreign key checks", err)
 			}
 			if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
 				return fmt.Errorf("failed to delete table %q: %w", table.Name, err)
 			}
 			if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
-				return errutil.Wrap("failed to disable foreign key checks", err)
+				return fmt.Errorf("%v: %w", "failed to disable foreign key checks", err)
 			}
 		}
 	}

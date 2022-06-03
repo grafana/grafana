@@ -291,8 +291,15 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("unable to decrypt empty payload")
+	}
+
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+		if len(payload) > 0 && payload[0] == '#' {
+			return nil, fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
+		}
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -308,11 +315,6 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 			s.log.Error("Failed to decrypt secret", "error", err)
 		}
 	}()
-
-	if len(payload) == 0 {
-		err = fmt.Errorf("unable to decrypt empty payload")
-		return nil, err
-	}
 
 	var dataKey []byte
 

@@ -74,7 +74,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 
 	exists, err := mg.DBEngine.IsTableExist(new(MigrationLog))
 	if err != nil {
-		return nil, errutil.Wrap("failed to check table existence", err)
+		return nil, fmt.Errorf("%v: %w", "failed to check table existence", err)
 	}
 	if !exists {
 		return logMap, nil
@@ -169,7 +169,7 @@ func (mg *Migrator) run() (err error) {
 			return err
 		})
 		if err != nil {
-			return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
+			return fmt.Errorf("%v: %w", fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
 		}
 	}
 

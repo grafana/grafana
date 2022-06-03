@@ -186,11 +186,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 	for _, panel := range dash.info.Panels {
-		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
-		purl := url
-		if panel.Type != "row" {
-			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		if panel.Type == "row" {
+			continue // for now, we are excluding rows from the search index
 		}
+
+		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
+		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).

@@ -44,7 +44,7 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create secrets table", migrator.NewAddTableMigration(secretsV1))
 
 	mg.AddMigration("rename data_keys name column to id", migrator.NewRenameColumnMigration(
-		dataKeysV1, "name", "id",
+		dataKeysV1, dataKeysV1.Columns[0], "id",
 	))
 
 	mg.AddMigration("add name column into data_keys", migrator.NewAddColumnMigration(
