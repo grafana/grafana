@@ -3,12 +3,12 @@ package manager
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -32,7 +32,7 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to query data", err)
+		return nil, fmt.Errorf("%v: %w", "failed to query data", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -106,7 +106,7 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
 	}
 
 	return resp, nil
