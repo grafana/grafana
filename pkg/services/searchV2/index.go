@@ -60,6 +60,7 @@ type dashboardIndex struct {
 	buildSignals   chan int64
 	extender       DocumentExtender
 	folderIdLookup folderUIDLookup
+	syncCh         chan chan struct{}
 }
 
 func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *dashboardIndex {
@@ -72,6 +73,22 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender 
 		buildSignals:   make(chan int64),
 		extender:       extender,
 		folderIdLookup: folderIDs,
+		syncCh:         make(chan chan struct{}),
+	}
+}
+
+func (i *dashboardIndex) sync(ctx context.Context) error {
+	doneCh := make(chan struct{}, 1)
+	select {
+	case i.syncCh <- doneCh:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	select {
+	case <-doneCh:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
@@ -96,10 +113,13 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		return fmt.Errorf("can't build initial dashboard search index: %w", err)
 	}
 
-	i.eventStore.OnEvent(i.applyEventOnIndex)
+	//i.eventStore.OnEvent(i.applyEventOnIndex)
 
 	for {
 		select {
+		case doneCh := <-i.syncCh:
+			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+			close(doneCh)
 		case <-partialUpdateTicker.C:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
 		case orgID := <-i.buildSignals:
