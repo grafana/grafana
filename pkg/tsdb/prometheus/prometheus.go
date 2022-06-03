@@ -92,7 +92,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if !strings.HasPrefix(req.URL, "/api/v1") {
+	if !strings.HasPrefix(req.URL, "api/v1") {
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 404,
 			Headers: map[string][]string{
