@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -92,41 +90,23 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if !strings.HasPrefix(req.URL, "/api/v1") && !strings.HasPrefix(req.URL, "api/v1") {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 404,
-			Headers: map[string][]string{
-				"content-type": {"application/json"},
-			},
-			Body: []byte(fmt.Sprintf("%s: Not a valid prometheus URL", req.URL)),
-		})
-	}
-
 	i, err := s.getInstance(req.PluginContext)
 	if err != nil {
 		return err
 	}
 
 	statusCode, bytes, err := i.resource.Execute(ctx, req)
-	if statusCode >= 300 {
-		resp := backend.CallResourceResponse{
-			Status: statusCode,
-			Headers: map[string][]string{
-				"content-type": {"application/json"},
-			},
-		}
-		if err != nil {
-			resp.Body = []byte(err.Error())
-		}
-		return sender.Send(&resp)
+	body := bytes
+	if err != nil {
+		body = []byte(err.Error())
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
-		Status: http.StatusOK,
+		Status: statusCode,
 		Headers: map[string][]string{
 			"content-type": {"application/json"},
 		},
-		Body: bytes,
+		Body: body,
 	})
 }
 

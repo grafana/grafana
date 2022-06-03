@@ -58,7 +58,7 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 
 	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
 	if err != nil {
-		return 500, nil, err
+		return resp.StatusCode, nil, err
 	}
 
 	defer resp.Body.Close() //nolint (we don't care about the error being returned by resp.Body.Close())
