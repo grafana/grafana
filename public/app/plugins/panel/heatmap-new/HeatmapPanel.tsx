@@ -127,8 +127,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor:
-        options.mode === HeatmapMode.Calculate && options.calculate?.yAxis?.scale?.type === ScaleDistribution.Log
-          ? +(options.calculate?.yAxis?.value || 1)
+        options.mode === HeatmapMode.Calculate && options.calculate?.yBuckets?.scale?.type === ScaleDistribution.Log
+          ? +(options.calculate?.yBuckets?.value || 1)
           : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

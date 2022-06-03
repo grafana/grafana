@@ -12,14 +12,13 @@ export const enum HeatmapBucketLayout {
   auto = 'auto', // becomes unknown
 }
 
-export interface HeatmapCalculationAxisConfig {
+export interface HeatmapCalculationBucketConfig {
   mode?: HeatmapCalculationMode;
   value?: string; // number or interval string ie 10s
   scale?: ScaleDistributionConfig;
 }
 
 export interface HeatmapCalculationOptions {
-  xAxis?: HeatmapCalculationAxisConfig;
-  yAxis?: HeatmapCalculationAxisConfig;
-  xAxisField?: string; // name of the x field
+  xBuckets?: HeatmapCalculationBucketConfig;
+  yBuckets?: HeatmapCalculationBucketConfig;
 }

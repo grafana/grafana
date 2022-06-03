@@ -39,19 +39,19 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
 
   if (mode === HeatmapMode.Calculate) {
     if (angular.xBucketSize) {
-      calculate.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+      calculate.xBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+      calculate.xBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
     }
 
     if (angular.yBucketSize) {
-      calculate.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+      calculate.yBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+      calculate.yBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
     }
 
     if (oldYAxis.logBase > 1) {
-      calculate.yAxis = {
+      calculate.yBuckets = {
         mode: HeatmapCalculationMode.Count,
         value: +oldYAxis.splitFactor > 0 ? `${oldYAxis.splitFactor}` : undefined,
         scale: {

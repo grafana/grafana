@@ -237,23 +237,23 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'no values found';
   }
 
-  const xAxisCfg = options.xAxis ?? {};
-  const yAxisCfg = options.yAxis ?? {};
+  const xBucketsCfg = options.xBuckets ?? {};
+  const yBucketsCfg = options.yBuckets ?? {};
 
-  if (xAxisCfg.scale?.type === ScaleDistribution.Log) {
+  if (xBucketsCfg.scale?.type === ScaleDistribution.Log) {
     throw 'X axis only supports linear buckets';
   }
 
-  const scaleDistribution = options.yAxis?.scale ?? {
+  const scaleDistribution = options.yBuckets?.scale ?? {
     type: ScaleDistribution.Linear,
   };
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
-    xMode: xAxisCfg.mode,
-    xSize: xAxisCfg.value ? +xAxisCfg.value : undefined,
-    yMode: yAxisCfg.mode,
-    ySize: yAxisCfg.value ? +yAxisCfg.value : undefined,
+    xMode: xBucketsCfg.mode,
+    xSize: xBucketsCfg.value ? +xBucketsCfg.value : undefined,
+    yMode: yBucketsCfg.mode,
+    ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
   });
 

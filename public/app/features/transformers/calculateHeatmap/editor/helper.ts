@@ -13,8 +13,8 @@ export function addHeatmapCalculationOptions(
   category?: string[]
 ) {
   builder.addCustomEditor({
-    id: 'xAxis',
-    path: `${prefix}xAxis`,
+    id: 'xBuckets',
+    path: `${prefix}xBuckets`,
     name: 'X Buckets',
     editor: AxisEditor,
     category,
@@ -24,8 +24,8 @@ export function addHeatmapCalculationOptions(
   });
 
   builder.addCustomEditor({
-    id: 'yAxis-scale',
-    path: `${prefix}yAxis.scale`,
+    id: 'yBuckets-scale',
+    path: `${prefix}yBuckets.scale`,
     name: 'Y Buckets',
     category,
     editor: ScaleDistributionEditor,
@@ -33,8 +33,8 @@ export function addHeatmapCalculationOptions(
   });
 
   builder.addCustomEditor({
-    id: 'yAxis',
-    path: `${prefix}yAxis`,
+    id: 'yBuckets',
+    path: `${prefix}yBuckets`,
     name: '',
     editor: AxisEditor,
     category,

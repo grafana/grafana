@@ -3,7 +3,7 @@ import React from 'react';
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { HorizontalGroup, Input, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
 
-import { HeatmapCalculationAxisConfig, HeatmapCalculationMode } from '../models.gen';
+import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '../models.gen';
 
 const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   {
@@ -31,7 +31,7 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   },
 ];
 
-export const AxisEditor: React.FC<StandardEditorProps<HeatmapCalculationAxisConfig, any>> = ({
+export const AxisEditor: React.FC<StandardEditorProps<HeatmapCalculationBucketConfig, any>> = ({
   value,
   onChange,
   item,

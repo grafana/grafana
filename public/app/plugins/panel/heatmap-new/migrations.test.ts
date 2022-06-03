@@ -25,6 +25,9 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
+          "bucket": Object {
+            "layout": "auto",
+          },
           "calculate": Object {
             "xAxis": Object {
               "mode": "count",
@@ -67,7 +70,6 @@ describe('Heatmap Migrations', () => {
             "yHistogram": true,
           },
           "yAxis": Object {
-            "align": "auto",
             "axisPlacement": "left",
             "axisWidth": 400,
             "reverse": false,
