@@ -27,8 +27,8 @@ You can view dashboard previews only when the feature is enabled for your instan
 
 ## Enable dashboard previews
 
-1. Install the Image Renderer plugin or set up a remote rendering service. The minimum version of Image Renderer required for the dashboard preview feature `3.4.0`. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
-2. Modify the [configuration file]({{< relref "../administration/configuration.md#configuration-file-location" >}}) to enable the `dashboardPreviews` [feature toggle]({{< relref "../administration/configuration.md#feature_toggles" >}}).
+1. Install the Image Renderer plugin or set up a remote rendering service. The minimum version of Image Renderer required for the dashboard preview feature `3.4.0`. Refer to [Image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) for more information.
+2. Modify the [configuration file]({{< relref "../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `dashboardPreviews` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}).
 
 ```
 [feature_toggles]
@@ -44,7 +44,7 @@ Verify that your setup was successful in the dashboard search page. You should s
 
 The first crawler run should begin approximately five minutes after restarting the Grafana instance.
 
-In case you see any warnings after clicking on the toggle, check [Grafana server logs]({{< relref "../administration/configuration.md#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
+In case you see any warnings after clicking on the toggle, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
 
 {{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 
@@ -56,7 +56,7 @@ The dashboard previews crawler is a background process that:
 - [Visits and takes a screenshot of each dashboard](#rendering-previews)
 - [Saves the screenshots in persistent storage](#saving-previews)
 
-The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../administration/configuration.md#dashboard_previews" >}}) for more details.
+The crawler can be configured via the main config file. Check the [dashboard previews section]({{< relref "../setup-grafana/configure-grafana/#dashboard_previews" >}}) for more details.
 
 ### Preparing the dashboard list
 
@@ -74,7 +74,7 @@ Modifying a dashboard is the only way of refreshing that dashboard's preview; pr
 The crawler sends a render request to the Image Renderer for each dashboard in the list. The renderer is then instructed to open the dashboard in kiosk mode, take a screenshot, and scale it down to a small, 320 x 240px thumbnail. The following dashboard in Grafana Play is an example of kiosk mode: https://play.grafana.org/playlists/play/1?kiosk.
 
 Multiple render requests are issued concurrently to improve performance. The maximum number of concurrent requests can be configured via the `dashboard_previews.crawler.thread_count` config option.
-Use the new [contextPerRenderKey]({{< relref "../image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
+Use the new [contextPerRenderKey]({{< relref "../setup-grafana/image-rendering/#rendering-mode" >}}) clustering mode in Image Renderer to further optimize crawler's resource usage.
 
 ### Saving previews
 

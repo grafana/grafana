@@ -14,11 +14,11 @@ weight: 300
 
 # View Grafana server settings
 
-> Refer to [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with RBAC permissions.
+> Refer to [Role-based access control]({{< relref "../../enterprise/access-control/" >}}) in Grafana Enterprise to understand how you can control access with RBAC permissions.
 
-If you are a Grafana server administrator, use the Settings tab to view the settings that are applied to your Grafana server via the [Configuration]({{< relref "../configuration.md#config-file-locations" >}}) file and any environmental variables.
+If you are a Grafana server administrator, use the Settings tab to view the settings that are applied to your Grafana server via the [Configuration]({{< relref "../../setup-grafana/configure-grafana/#config-file-locations" >}}) file and any environmental variables.
 
-> **Note:** Only Grafana server administrators can access the **Server Admin** menu. For more information about about administrative permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md" >}}).
+> **Note:** Only Grafana server administrators can access the **Server Admin** menu. For more information about about administrative permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions/" >}}).
 
 ## View server settings
 
@@ -27,4 +27,4 @@ If you are a Grafana server administrator, use the Settings tab to view the sett
 
 ## Available settings
 
-For a full list of server settings, refer to [Configuration]({{< relref "../configuration.md" >}}).
+For a full list of server settings, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}).

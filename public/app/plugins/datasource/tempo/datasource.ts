@@ -14,7 +14,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
   DataSourceWithBackend,
   getBackendSrv,
@@ -169,9 +168,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           search: targets.nativeSearch[0].search ?? '',
         });
 
-        const timeRange = config.featureToggles.tempoBackendSearch
-          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
-          : undefined;
+        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
@@ -205,7 +202,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid, this.name));
     }
 
     if (targets.traceId?.length > 0) {
@@ -399,7 +396,7 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
@@ -427,6 +424,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, tempoDatasourceUid),
         ],
       };
 
@@ -448,6 +446,21 @@ function makePromLink(title: string, metric: string, datasourceUid: string) {
       } as PromQuery,
       datasourceUid,
       datasourceName: 'Prometheus',
+    },
+  };
+}
+
+function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: serviceName,
+      } as TempoQuery,
+      datasourceUid: datasourceUid,
+      datasourceName: 'Tempo',
     },
   };
 }

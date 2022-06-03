@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { FC, memo, useState } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
@@ -31,6 +32,11 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange } = useSearchQuery({});
 
+  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
+  if (!config.featureToggles.panelTitleSearch) {
+    includePanels = false;
+  }
+
   const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -45,7 +51,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           <div>
             <input
               type="text"
-              placeholder="Search dashboards by name"
+              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
               tabIndex={0}
@@ -60,7 +66,12 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView showManage={false} queryText={query.query} />
+          <SearchView
+            showManage={false}
+            queryText={query.query}
+            includePanels={includePanels!}
+            setIncludePanels={setIncludePanels}
+          />
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
+// swagger:route PUT /api/provisioning/contact-points/{UID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -37,7 +37,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/contact-points/{ID} provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/provisioning/contact-points/{UID} provisioning RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
@@ -52,7 +52,7 @@ import (
 type ContactPointUIDReference struct {
 	// ContactPointUID should be the contact point UID identifier
 	// in:path
-	ID string
+	UID string
 }
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint
