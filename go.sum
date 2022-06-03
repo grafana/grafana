@@ -881,7 +881,6 @@ github.com/elazarl/goproxy/ext v0.0.0-20220115173737-adb46da277ac/go.mod h1:gNh8
 github.com/ema/qdisc v0.0.0-20190904071900-b82c76788043/go.mod h1:ix4kG2zvdUd8kEKSW0ZTr1XLks0epFpI4j745DXxlNE=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful v2.9.5+incompatible/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
-github.com/emicklei/proto v1.6.15 h1:XbpwxmuOPrdES97FrSfpyy67SSCV/wBIKXqgJzh6hNw=
 github.com/emicklei/proto v1.6.15/go.mod h1:rn1FgRS/FANiZdD2djyH7TMA9jdRDcYQ9IEN9yvjX0A=
 github.com/emicklei/proto v1.10.0 h1:pDGyFRVV5RvV+nkBK9iy3q67FBy9Xa7vwrOTE+g5aGw=
 github.com/emicklei/proto v1.10.0/go.mod h1:rn1FgRS/FANiZdD2djyH7TMA9jdRDcYQ9IEN9yvjX0A=
@@ -1454,8 +1453,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.125.0/go.mod h1:9YiJ5GUxIsIEUC0qR9+BJVP5M7mCSP6uc6Ne62YKkgc=
 github.com/grafana/grafana-plugin-sdk-go v0.129.0/go.mod h1:4edtosZepfQF9jkQwRywJsNSJzXTHmzbmcVcAl8MEQc=
-github.com/grafana/grafana-plugin-sdk-go v0.135.0 h1:IQrwA/RCPr5IhE3lVxIpgEXwZohx7gp3rJ1KJa0KT5g=
-github.com/grafana/grafana-plugin-sdk-go v0.135.0/go.mod h1:jmrxelOJKrIK0yrsIzcotS8pbqPZozbmJgGy7k3hK1k=
+github.com/grafana/grafana-plugin-sdk-go v0.136.0 h1:DSw/RLUI8pr/zunJUhbTjHyaRzf0IoOZgu2PjLsJ6Wc=
+github.com/grafana/grafana-plugin-sdk-go v0.136.0/go.mod h1:jmrxelOJKrIK0yrsIzcotS8pbqPZozbmJgGy7k3hK1k=
 github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa h1:+pXjAxavVR2FKKNsuuCXGCWEj8XGc1Af6SPiyBpzU2A=
 github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa/go.mod h1:0O8o/juxNSKN/e+DzWDTRkl7Zm8CkZcz0NDqEdojlrk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
@@ -2392,7 +2391,6 @@ github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac/go.mod h1:
 github.com/prometheus/statsd_exporter v0.20.0/go.mod h1:YL3FWCG8JBBtaUSxAg4Gz2ZYu22bS84XM89ZQXXTWmQ=
 github.com/prometheus/statsd_exporter v0.21.0/go.mod h1:rbT83sZq2V+p73lHhPZfMc3MLCHmSHelCh9hSGYNLTQ=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
-github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc h1:gSVONBi2HWMFXCa9jFdYvYk7IwW/mTLxWOF7rXS4LO0=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc/go.mod h1:KbKfKPy2I6ecOIGA9apfheFv14+P3RSmmQvshofQyMY=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b h1:zd/2RNzIRkoGGMjE+YIsZ85CnDIz672JK2F3Zl4vux4=
 github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b/go.mod h1:KjY0wibdYKc4DYkerHSbguaf3JeIPGhNJBp2BNiFH78=
@@ -2608,14 +2606,10 @@ github.com/thanos-io/thanos v0.13.1-0.20210224074000-659446cab117/go.mod h1:kdqF
 github.com/thanos-io/thanos v0.13.1-0.20210226164558-03dace0a1aa1/go.mod h1:gMCy4oCteKTT7VuXVvXLTPGzzjovX1VPE5p+HgL1hyU=
 github.com/thanos-io/thanos v0.13.1-0.20210401085038-d7dff0c84d17/go.mod h1:zU8KqE+6A+HksK4wiep8e/3UvCZLm+Wrw9AqZGaAm9k=
 github.com/thanos-io/thanos v0.22.0/go.mod h1:SZDWz3phcUcBr4MYFoPFRvl+Z9Nbi45HlwQlwSZSt+Q=
-github.com/tidwall/gjson v1.6.0/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=
-github.com/tidwall/gjson v1.6.1/go.mod h1:BaHyNc5bjzYkPqgLq7mdVzeiRtULKULXLgZFKsxEHI0=
 github.com/tidwall/gjson v1.14.1/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/match v1.1.1/go.mod h1:eRSPERbgtNPcGhD8UCthc6PmLEQXEWd3PRB5JTxsfmM=
 github.com/tidwall/pretty v0.0.0-20180105212114-65a9db5fad51/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/tidwall/pretty v1.0.2 h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=
-github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.2.0 h1:RWIZEg2iJ8/g6fDDYzMpobmaoGh5OLl4AXtGUGPcqCs=
 github.com/tidwall/pretty v1.2.0/go.mod h1:ITEVvHYasfjBbM0u2Pg8T2nJnzm8xPwvNhhsoaGGjNU=
 github.com/tidwall/tinylru v1.0.2/go.mod h1:HDVL7TsWeezQ4g44Um84TOVBMFcq7Xa9giqNc805KJ8=
@@ -3130,8 +3124,6 @@ golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd/go.mod h1:CfG3xpIq0wQ8r1q4Su
 golang.org/x/net v0.0.0-20220225172249-27dd8689420f/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220325170049-de3da57026de/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220401154927-543a649e0bdd/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
-golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 h1:yssD99+7tqHWO5Gwh81phT+67hg+KttniBr6UnEXOY8=
-golang.org/x/net v0.0.0-20220421235706-1d1ef9303861/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 h1:HVyaeDAYux4pnY+D/SiwmLOR36ewZ4iGQIIrtnuCjFA=
 golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
