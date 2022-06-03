@@ -50,12 +50,12 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 			}
 			found = true
 			if template != newTemplate && provenance != ngmodels.ProvenanceNone {
-				return fmt.Errorf("template '%s' was provisioned and cannot be changed through the UI", name)
+				return fmt.Errorf("cannot save provisioned template '%s'", name)
 			}
 			break // we found the template and we can proceed
 		}
 		if !found && provenance != ngmodels.ProvenanceNone {
-			return fmt.Errorf("template '%s' was provisioned and cannot be changed through the UI", name)
+			return fmt.Errorf("cannot delete provisioned template '%s'", name)
 		}
 	}
 	return nil
@@ -107,13 +107,13 @@ func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimode
 						}
 					}
 					if edited && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
-						return fmt.Errorf("contact point '%s' was provisioned and cannot be changed through the UI", existingContactPoint.Name)
+						return fmt.Errorf("cannot save provisioned contact point '%s'", existingContactPoint.Name)
 					}
 					break outer
 				}
 			}
 			if !found && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
-				return fmt.Errorf("contact point '%s' was provisioned and cannot be changed through the UI", existingContactPoint.Name)
+				return fmt.Errorf("cannot delete provisioned contact point '%s'", existingContactPoint.Name)
 			}
 		}
 	}
@@ -136,12 +136,12 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 			ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
 			timesEqual := cmp.Equal(muteTime.TimeIntervals, newMuteTime.TimeIntervals, ops...)
 			if !timesEqual && provenance != ngmodels.ProvenanceNone {
-				return fmt.Errorf("mute time '%s' was provisioned and cannot be changed through the UI", muteTime.Name)
+				return fmt.Errorf("cannot save provisioned mute time '%s'", muteTime.Name)
 			}
 			break
 		}
 		if !found && provenance != ngmodels.ProvenanceNone {
-			return fmt.Errorf("mute time '%s' was provisioned and cannot be changed through the UI", muteTime.Name)
+			return fmt.Errorf("cannot delete provisioned mute time '%s'", muteTime.Name)
 		}
 	}
 	return nil
