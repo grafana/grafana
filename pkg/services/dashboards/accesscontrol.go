@@ -66,7 +66,7 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 
 		id, err := ac.ParseScopeID(scope)
 		if err != nil {
-			return nil, ac.ErrInvalidScope
+			return nil, err
 		}
 
 		if id == 0 {
@@ -93,7 +93,7 @@ func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 
 		id, err := ac.ParseScopeID(scope)
 		if err != nil {
-			return nil, ac.ErrInvalidScope
+			return nil, err
 		}
 
 		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Id: id, OrgId: orgID})
@@ -116,7 +116,7 @@ func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) 
 
 		uid, err := ac.ParseScopeUID(scope)
 		if err != nil {
-			return nil, ac.ErrInvalidScope
+			return nil, err
 		}
 
 		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Uid: uid, OrgId: orgID})
