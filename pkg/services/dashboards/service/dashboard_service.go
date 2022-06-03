@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -402,7 +401,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(dashboardId)
 		if err != nil {
-			return errutil.Wrap("failed to check if dashboard is provisioned", err)
+			return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
 		}
 
 		if provisionedData != nil {

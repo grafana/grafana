@@ -1,19 +1,23 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon } from '@grafana/ui';
+import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
+import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleForm, RuleFormType, RuleFormValues } from '../../types/rule-form';
 
 import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
-import { RuleFolderPicker, Folder, RuleFolderPickerProps } from './RuleFolderPicker';
+import { RuleFolderPicker, Folder } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
@@ -23,10 +27,10 @@ const recordingRuleNameValidationPattern = {
 };
 
 interface DetailsStepProps {
-  folderPermissions: RuleFolderPickerProps['folderPermissions'];
+  initialFolder: RuleForm | null;
 }
 
-export const DetailsStep = ({ folderPermissions }: DetailsStepProps) => {
+export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
   const {
     register,
     watch,
@@ -38,6 +42,8 @@ export const DetailsStep = ({ folderPermissions }: DetailsStepProps) => {
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
   const type = watch('type');
+
+  const folderFilter = useRuleFolderFilter(initialFolder);
 
   return (
     <RuleEditorSection
@@ -110,9 +116,9 @@ export const DetailsStep = ({ folderPermissions }: DetailsStepProps) => {
                 <RuleFolderPicker
                   inputId="folder"
                   {...field}
-                  enableCreateNew={true}
+                  enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
                   enableReset={true}
-                  folderPermissions={folderPermissions}
+                  filter={folderFilter}
                 />
               )}
               name="folder"
@@ -147,12 +153,40 @@ export const DetailsStep = ({ folderPermissions }: DetailsStepProps) => {
   );
 };
 
+const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
+  const isSearchHitAvailable = useCallback(
+    (hit: DashboardSearchHit) => {
+      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
+
+      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
+        AccessControlAction.AlertingRuleCreate,
+        hit,
+        rbacDisabledFallback
+      );
+
+      const canUpdateInCurrentFolder =
+        existingRuleForm &&
+        hit.folderId === existingRuleForm.id &&
+        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
+
+      return canCreateRuleInFolder || canUpdateInCurrentFolder;
+    },
+    [existingRuleForm]
+  );
+
+  return useCallback<FolderPickerFilter>(
+    (folderHits) => folderHits.filter(isSearchHitAvailable),
+    [isSearchHitAvailable]
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   alignBaseline: css`
     align-items: baseline;
   `,
   formInput: css`
     width: 330px;
+
     & + & {
       margin-left: ${theme.spacing(3)};
     }
