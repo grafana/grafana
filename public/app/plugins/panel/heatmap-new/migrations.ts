@@ -53,7 +53,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     calculate,
     color: {
       ...defaultPanelOptions.color,
-      steps: 256, // best match with existing colors
+      steps: 128, // best match with existing colors
     },
     cellGap: asNumber(angular.cards?.cardPadding),
     cellSize: asNumber(angular.cards?.cardRound),

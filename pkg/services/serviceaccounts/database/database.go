@@ -209,25 +209,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	// Get Teams of service account. Can be optimized by combining with the query above
-	// in refactor
-	getTeamQuery := models.GetTeamsByUserQuery{UserId: serviceAccountID, OrgId: orgID}
-	if err := s.sqlStore.GetTeamsByUser(ctx, &getTeamQuery); err != nil {
-		return nil, err
-	}
-	teams := make([]string, len(getTeamQuery.Result))
-
-	for i := range getTeamQuery.Result {
-		teams[i] = getTeamQuery.Result[i].Name
-	}
-
-	serviceAccount.Teams = teams
-
-	return serviceAccount, nil
+	return serviceAccount, err
 }
 
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
@@ -378,6 +360,11 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				whereConditions,
 				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
 			whereParams = append(whereParams, now)
+		case serviceaccounts.FilterOnlyDisabled:
+			whereConditions = append(
+				whereConditions,
+				"is_disabled = ?")
+			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
 		default:
 			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}

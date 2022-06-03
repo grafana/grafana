@@ -190,6 +190,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					PropertyName: "message",
 				},
+				{ // New in 9.0.
+					Label:        "Subject",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated subject of the email",
+					PropertyName: "subject",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
 			},
 		},
 		{

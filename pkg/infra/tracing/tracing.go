@@ -50,6 +50,7 @@ func parseSettings(cfg *setting.Cfg) (*Opentracing, *Opentelemetry, error) {
 		return ts, nil, err
 	}
 	if ts.enabled {
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'tracing.jaeger' is deprecated, please use 'tracing.opentelemetry.jaeger' instead")
 		return ts, nil, nil
 	}
 

@@ -186,11 +186,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 	for _, panel := range dash.info.Panels {
-		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
-		purl := url
-		if panel.Type != "row" {
-			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		if panel.Type == "row" {
+			continue // for now, we are excluding rows from the search index
 		}
+
+		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
+		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
@@ -291,7 +292,15 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
+func doSearchQuery(
+	ctx context.Context,
+	logger log.Logger,
+	reader *bluge.Reader,
+	filter ResourceFilter,
+	q DashboardQuery,
+	extender QueryExtender,
+	appSubUrl string,
+) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
 
@@ -473,7 +482,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldName:
 				name = string(value)
 			case documentFieldURL:
-				url = string(value)
+				url = appSubUrl + string(value)
 			case documentFieldLocation:
 				loc = string(value)
 			case documentFieldDSUID:

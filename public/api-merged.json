@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2258,6 +2258,15 @@
         "tags": ["annotations"],
         "summary": "Get Annotation by Id.",
         "operationId": "getAnnotation",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AnnotationID",
+            "name": "annotation_id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getAnnotationResponse"
@@ -3809,7 +3818,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/disable-permissions": {
+    "/datasources/{datasourceId}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3819,7 +3828,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3846,7 +3855,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/enable-permissions": {
+    "/datasources/{datasourceId}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3856,7 +3865,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3883,7 +3892,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions": {
+    "/datasources/{datasourceId}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3893,7 +3902,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -3917,7 +3926,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions/{permissionId}": {
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -3927,7 +3936,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           },
@@ -7464,45 +7473,6 @@
         }
       }
     },
-    "/tsdb/query": {
-      "post": {
-        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
-        "tags": ["datasources"],
-        "summary": "Query metrics.",
-        "operationId": "queryDatasource",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MetricRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/queryDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/user": {
       "get": {
         "tags": ["signed_in_user"],
@@ -9308,6 +9278,12 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "ConfFloat64": {
+      "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+      "type": "number",
+      "format": "double",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "Config": {
       "type": "object",
       "title": "Config is the top-level configuration for Alertmanager's config files.",
@@ -9378,6 +9354,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "id": {
           "type": "integer",
@@ -9596,6 +9579,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "message": {
           "type": "string",
@@ -10282,67 +10272,39 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "DataFrames": {
-      "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
-      "type": "object",
-      "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataQueryResult": {
-      "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
+    "DataLink": {
+      "description": "DataLink define what",
       "type": "object",
       "properties": {
-        "dataframes": {
-          "$ref": "#/definitions/DataFrames"
+        "targetBlank": {
+          "type": "boolean",
+          "x-go-name": "TargetBlank"
         },
-        "error": {
+        "title": {
           "type": "string",
-          "x-go-name": "ErrorString"
+          "x-go-name": "Title"
         },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        },
-        "refId": {
+        "url": {
           "type": "string",
-          "x-go-name": "RefID"
-        },
-        "series": {
-          "$ref": "#/definitions/DataTimeSeriesSlice"
-        },
-        "tables": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTable"
-          },
-          "x-go-name": "Tables"
+          "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "DataResponse": {
-      "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
+      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "message": {
-          "type": "string",
-          "x-go-name": "Message"
+        "Error": {
+          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "type": "string"
         },
-        "results": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/DataQueryResult"
-          },
-          "x-go-name": "Results"
+        "Frames": {
+          "$ref": "#/definitions/Frames"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataRowValues": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
     },
     "DataSource": {
       "type": "object",
@@ -10513,78 +10475,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
-    "DataTable": {
-      "type": "object",
-      "properties": {
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTableColumn"
-          },
-          "x-go-name": "Columns"
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataRowValues"
-          },
-          "x-go-name": "Rows"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTableColumn": {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string",
-          "x-go-name": "Text"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimePoint": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Float"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeries": {
-      "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "points": {
-          "$ref": "#/definitions/DataTimeSeriesPoints"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Tags"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesPoints": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimePoint"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesSlice": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimeSeries"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -10883,6 +10773,119 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/Labels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "FindTagsResult": {
       "type": "object",
       "title": "FindTagsResult is the result of a tags search.",
@@ -10996,6 +10999,101 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string",
+          "x-go-name": "Channel"
+        },
+        "custom": {
+          "description": "Custom datasource specific values.",
+          "type": "object",
+          "x-go-name": "Custom"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string",
+          "x-go-name": "ExecutedQueryString"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          },
+          "x-go-name": "Notices"
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "type": "string",
+          "x-go-name": "PathSeparator"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          },
+          "x-go-name": "Stats"
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.",
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "GetAnnotationTagsResponse": {
       "type": "object",
@@ -11813,6 +11911,12 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -12349,27 +12453,10 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "MuteTiming": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeInterval"
-          },
-          "x-go-name": "TimeIntervals"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-    },
     "MuteTimings": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/MuteTiming"
+        "$ref": "#/definitions/MuteTimeInterval"
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
@@ -12440,6 +12527,35 @@
     "NotFound": {
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "Notice": {
+      "type": "object",
+      "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+      "properties": {
+        "inspect": {
+          "$ref": "#/definitions/InspectType"
+        },
+        "link": {
+          "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+          "type": "string",
+          "x-go-name": "Link"
+        },
+        "severity": {
+          "$ref": "#/definitions/NoticeSeverity"
+        },
+        "text": {
+          "description": "Text is freeform descriptive text for the notice.",
+          "type": "string",
+          "x-go-name": "Text"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "NoticeSeverity": {
+      "type": "integer",
+      "format": "int64",
+      "title": "NoticeSeverity is a type for the Severity property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -13504,7 +13620,107 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+    },
+    "QueryStat": {
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+      "type": "object",
+      "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "value": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Value"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "Receiver": {
       "type": "object",
@@ -14912,6 +15128,47 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "Threshold": {
+      "description": "Threshold a single step on the threshold list",
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "x-go-name": "Color"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "value": {
+          "$ref": "#/definitions/ConfFloat64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsConfig": {
+      "description": "ThresholdsConfig setup thresholds",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/ThresholdsMode"
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Steps"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsMode": {
+      "description": "ThresholdsMode absolute or percentage",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "TimeInterval": {
       "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
@@ -14997,7 +15254,7 @@
         },
         "details_url": {
           "type": "string",
-          "x-go-name": "DetailsUrl"
+          "x-go-name": "DetailsURL"
         },
         "exp": {
           "type": "integer",
@@ -15009,20 +15266,10 @@
           "format": "int64",
           "x-go-name": "Issued"
         },
-        "included_admins": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedAdmins"
-        },
         "included_users": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "IncludedUsers"
-        },
-        "included_viewers": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedViewers"
         },
         "iss": {
           "type": "string",
@@ -15030,7 +15277,7 @@
         },
         "jti": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "lexp": {
           "type": "integer",
@@ -15044,7 +15291,7 @@
         },
         "lid": {
           "type": "string",
-          "x-go-name": "LicenseId"
+          "x-go-name": "LicenseID"
         },
         "limit_by": {
           "type": "string",
@@ -15132,6 +15379,10 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Type": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/models"
     },
     "URL": {
       "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
@@ -15884,6 +16135,18 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "ValueMapping": {
+      "description": "ValueMapping allows mapping input values to text and color",
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ValueMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ValueMapping"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "Vector": {
       "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
       "type": "array",
@@ -15941,6 +16204,11 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "VisType": {
+      "type": "string",
+      "title": "VisType is used to indicate how the data should be visualized in explore.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "WebhookConfig": {
       "type": "object",
@@ -16252,7 +16520,6 @@
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -16295,7 +16562,9 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilences": {
       "type": "array",
@@ -16423,6 +16692,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -16456,11 +16726,10 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16469,9 +16738,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",
@@ -17445,12 +17712,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
-      }
-    },
-    "queryDatasourceResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataResponse"
       }
     },
     "recordingRuleResponse": {
