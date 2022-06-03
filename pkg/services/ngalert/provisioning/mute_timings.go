@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 )
@@ -195,7 +194,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	})
 }
 
-func isMuteTimeInUse(name string, routes []*apimodels.Route) bool {
+func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
 	if len(routes) == 0 {
 		return false
 	}
