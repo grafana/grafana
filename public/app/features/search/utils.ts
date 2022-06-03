@@ -1,43 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 
-import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
-
 import { SECTION_STORAGE_KEY } from './constants';
-import { SearchQuery } from './service';
 import { DashboardQuery } from './types';
-
-export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
-  if (query.query && query.query.indexOf('folder:current') >= 0) {
-    query = {
-      ...query,
-      location: await getCurrentFolderUID(),
-      query: query.query.replace('folder:current', '').trim(),
-    };
-    if (!query.query?.length) {
-      query.query = '*';
-    }
-  }
-  return Promise.resolve(query);
-}
-
-/** utility function to parse the folder from URL */
-async function getCurrentFolderUID(): Promise<string | undefined> {
-  try {
-    let dash = getDashboardSrv().getCurrent();
-    if (!dash) {
-      await delay(500); // may not be loaded yet
-      dash = getDashboardSrv().getCurrent();
-    }
-    return Promise.resolve(dash?.meta?.folderUid);
-  } catch (e) {
-    console.error(e);
-  }
-  return undefined;
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Check if search query has filters enabled. Excludes folderId

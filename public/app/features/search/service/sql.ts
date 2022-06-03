@@ -4,9 +4,9 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit } from '../types';
-import { replaceCurrentFolderQuery } from '../utils';
 
 import { LocationInfo } from './types';
+import { replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 

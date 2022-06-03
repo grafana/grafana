@@ -2,8 +2,6 @@ import { Action } from 'redux';
 
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
-import { FolderInfo } from '../../types';
-
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
@@ -68,8 +66,6 @@ export interface DashboardQuery {
 }
 
 export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
-export type OnDeleteItems = (folders: string[], dashboards: string[]) => void;
-export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => void;
 
 export enum SearchLayout {
   List = 'list',
