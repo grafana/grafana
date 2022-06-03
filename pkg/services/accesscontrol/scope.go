@@ -11,11 +11,11 @@ const (
 )
 
 func ParseScopeID(scope string) (int64, error) {
-	return strconv.ParseInt(scope[len(ScopePrefix(scope)):], 10, 64)
+	return strconv.ParseInt(ScopeSuffix(scope), 10, 64)
 }
 
-func ParseScopeUID(scope string) (string, error) {
-	return scope[len(ScopePrefix(scope)):], nil
+func ScopeSuffix(scope string) string {
+	return scope[len(ScopePrefix(scope)):]
 }
 
 func GetResourceScope(resource string, resourceID string) string {
