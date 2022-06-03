@@ -344,33 +344,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	return dash, nil
 }
 
-// GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
-	if err != nil {
-		return nil, err
-	}
-
-	return pdc, nil
-}
-
-// SavePublicDashboardConfig is a helper method to persist the sharing config
-// to the database. It handles validations for sharing config and persistence
-func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	cmd := models.SavePublicDashboardConfigCommand{
-		Uid:                   dto.Uid,
-		OrgId:                 dto.OrgId,
-		PublicDashboardConfig: dto.PublicDashboardConfig,
-	}
-
-	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return pdc, nil
-}
-
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
