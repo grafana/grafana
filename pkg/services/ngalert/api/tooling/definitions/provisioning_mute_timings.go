@@ -1,5 +1,10 @@
 package definitions
 
+import (
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/alertmanager/config"
+)
+
 // swagger:route GET /api/v1/provisioning/mute-timings provisioning RouteGetMuteTimings
 //
 // Get all the mute timings.
@@ -61,4 +66,18 @@ type RouteGetMuteTimingParam struct {
 type MuteTimingPayload struct {
 	// in:body
 	Body MuteTimeInterval
+}
+
+// swagger:model
+type MuteTimeInterval struct {
+	config.MuteTimeInterval
+	Provenance models.Provenance `json:"provenance,omitempty"`
+}
+
+func (mt *MuteTimeInterval) ResourceType() string {
+	return "muteTimeInterval"
+}
+
+func (mt *MuteTimeInterval) ResourceID() string {
+	return mt.MuteTimeInterval.Name
 }
