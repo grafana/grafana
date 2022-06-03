@@ -441,7 +441,9 @@ func TestDashboardIndex_Folders(t *testing.T) {
 	t.Run("folders-dashboard-has-folder", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithFolders)
 		// TODO: golden file compare does not work here.
-		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter, DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}}, &NoopQueryExtender{})
+		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter,
+			DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}},
+			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
 		require.Equal(t, uint64(2), custom.Count)
 		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
@@ -460,7 +462,9 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithFolders)
 		newReader, err := index.removeFolder(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
-		resp := doSearchQuery(context.Background(), testLogger, newReader, testAllowAllFilter, DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}}, &NoopQueryExtender{})
+		resp := doSearchQuery(context.Background(), testLogger, newReader, testAllowAllFilter,
+			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
+			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
 		require.True(t, ok)
 		require.Equal(t, uint64(1), custom.Count) // 1 panel which does not belong to dashboards in removed folder.
@@ -491,7 +495,10 @@ func TestDashboardIndex_Panels(t *testing.T) {
 	t.Run("panels-indexed", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithPanels)
 		// TODO: golden file compare does not work here.
-		resp := doSearchQuery(context.Background(), testLogger, reader, testAllowAllFilter, DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}}, &NoopQueryExtender{})
+		resp := doSearchQuery(
+			context.Background(), testLogger, reader, testAllowAllFilter,
+			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
+			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
 		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
 		require.Equal(t, uint64(2), custom.Count)
