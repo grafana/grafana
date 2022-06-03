@@ -124,28 +124,10 @@ export const generateColumns = (
   columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
   availableWidth -= width;
 
-  // Show datasources if we have any
-  if (access.ds_uid && onDatasourceChange) {
-    width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(
-      makeDataSourceColumn(
-        access.ds_uid,
-        width,
-        styles.typeIcon,
-        styles.datasourceItem,
-        styles.invalidDatasourceItem,
-        onDatasourceChange
-      )
-    );
-    availableWidth -= width;
-  }
-
-  width = Math.max(availableWidth / 2.5, 200);
-  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
-  availableWidth -= width;
-
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
   if (meta?.locationInfo && availableWidth > 0) {
+    width = Math.max(availableWidth / 1.75, 300);
+    availableWidth -= width;
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
@@ -167,8 +149,28 @@ export const generateColumns = (
       id: `column-location`,
       field: access.location ?? access.url,
       Header: 'Location',
-      width: availableWidth,
+      width,
     });
+  }
+
+  // Show datasources if we have any
+  if (access.ds_uid && onDatasourceChange) {
+    width = DATASOURCE_COLUMN_WIDTH;
+    columns.push(
+      makeDataSourceColumn(
+        access.ds_uid,
+        width,
+        styles.typeIcon,
+        styles.datasourceItem,
+        styles.invalidDatasourceItem,
+        onDatasourceChange
+      )
+    );
+    availableWidth -= width;
+  }
+
+  if (availableWidth > 0) {
+    columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
   }
 
   if (sortField) {
