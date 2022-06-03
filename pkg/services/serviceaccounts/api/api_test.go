@@ -36,7 +36,11 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 
+	autoAssignOrg := store.Cfg.AutoAssignOrg
 	store.Cfg.AutoAssignOrg = true
+	defer func() {
+		store.Cfg.AutoAssignOrg = autoAssignOrg
+	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
 	err := store.CreateOrg(context.Background(), orgCmd)
@@ -149,8 +153,6 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
-
-	store.Cfg.AutoAssignOrg = false
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, nil)

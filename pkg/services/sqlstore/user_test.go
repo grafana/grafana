@@ -72,7 +72,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - create user assigned to other organization", func(t *testing.T) {
 		ss = InitTestDB(t)
+
+		autoAssignOrg := ss.Cfg.AutoAssignOrg
 		ss.Cfg.AutoAssignOrg = true
+		defer func() {
+			ss.Cfg.AutoAssignOrg = autoAssignOrg
+		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
 		err := ss.CreateOrg(context.Background(), orgCmd)

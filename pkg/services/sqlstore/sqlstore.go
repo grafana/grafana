@@ -179,10 +179,10 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
 			if _, err := ss.createUser(ctx, sess, models.CreateUserCommand{
-				Login:        ss.Cfg.AdminUser,
-				Email:        ss.Cfg.AdminUser + "@localhost",
-				Password:     ss.Cfg.AdminPassword,
-				IsAdmin:      true,
+				Login:    ss.Cfg.AdminUser,
+				Email:    ss.Cfg.AdminUser + "@localhost",
+				Password: ss.Cfg.AdminPassword,
+				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
