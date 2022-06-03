@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
@@ -207,6 +208,21 @@ export const SearchView = ({
       </div>
     );
   };
+
+  if (folderDTO && !results.value?.totalRows && !queryText.length) {
+    return (
+      <EmptyListCTA
+        title="This folder doesn't have any dashboards yet"
+        buttonIcon="plus"
+        buttonTitle="Create Dashboard"
+        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        proTip="Add/move dashboards to your folder at ->"
+        proTipLink="dashboards"
+        proTipLinkTitle="Manage dashboards"
+        proTipTarget=""
+      />
+    );
+  }
 
   return (
     <>
