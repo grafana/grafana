@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/alerting/contact-points/delete-contact-point/
   - /docs/grafana/latest/alerting/contact-points/message-templating/
   - /docs/grafana/latest/alerting/message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
@@ -23,4 +24,4 @@ To delete a contact point
 1. Find the contact point to delete, then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**.
 
-> **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "../notifications/_index.md" >}}) or update it to use another contact point.
+> **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the [notification policy]({{< relref "../notifications/" >}}) or update it to use another contact point.

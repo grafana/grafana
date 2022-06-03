@@ -40,7 +40,7 @@ const ServiceAccountListItem = memo(
     const displayRolePicker =
       contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
       contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-    const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate) && canUpdateRole;
+    const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite) && canUpdateRole;
 
     return (
       <tr key={serviceAccount.id} className={cx({ [styles.disabled]: serviceAccount.isDisabled })}>

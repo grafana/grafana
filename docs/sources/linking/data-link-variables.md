@@ -15,20 +15,20 @@ weight: 400
 
 # Data link variables
 
-You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
+You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links]({{< relref "data-links/" >}}).
 
 To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/_index.md" >}}) for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/" >}}) for more information on template variables.
 
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
 - `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
+- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables/#__from-and-__to" >}}).
 
 ## Series variables
 
