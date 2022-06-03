@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -235,6 +237,8 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 
 // `/public/dashboards/:uid/query`` endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
+	queryReturnsError := false
+
 	qds := query.ProvideService(
 		nil,
 		&fakeDatasources.FakeCacheService{
@@ -248,8 +252,19 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		&fakeDatasources.FakeDataSourceService{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				if queryReturnsError {
+					return nil, errors.New("error")
+				}
+
 				resp := backend.Responses{
-					"A": backend.DataResponse{},
+					"A": backend.DataResponse{
+						Frames: []*data.Frame{
+							{
+								RefID: "A",
+								Name:  "potato",
+							},
+						},
+					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
@@ -281,11 +296,23 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("Status code is 200 when feature toggle is enabled", func(t *testing.T) {
+	t.Run("Status code is 400 when the panel ID is invalid", func(t *testing.T) {
+		req := serverFeatureEnabled.NewPostRequest(
+			"/api/public/dashboards/abc123/panels/notanumber/query",
+			strings.NewReader("{}"),
+		)
+		resp, err := serverFeatureDisabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
-			mock.Anything,
+			"abc123",
+			int64(2),
 		).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.MustJson([]byte(`
@@ -309,8 +336,66 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		)
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		require.JSONEq(
+			t,
+			`{
+				"results": {
+					"A": {
+						"frames": [
+							{
+								"data": {
+									"values": []
+								},
+								"schema": {
+									"fields": [],
+									"refId": "A",
+									"name": "potato"
+								}
+							}
+						]
+					}
+				}
+			}`,
+			string(bodyBytes),
+		)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
+		fakeDashboardService.On(
+			"BuildPublicDashboardMetricRequest",
+			mock.Anything,
+			"abc123",
+			int64(2),
+		).Return(dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.MustJson([]byte(`
+					{
+					  "datasource": {
+						"type": "prometheus",
+						"uid": "promds"
+					  },
+					  "exemplar": true,
+					  "expr": "query_2_A",
+					  "interval": "",
+					  "legendFormat": "",
+					  "refId": "A"
+					}
+				`)),
+			},
+		}, nil)
+		req := serverFeatureEnabled.NewPostRequest(
+			"/api/public/dashboards/abc123/panels/2/query",
+			strings.NewReader("{}"),
+		)
+		queryReturnsError = true
+		resp, err := serverFeatureDisabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		queryReturnsError = false
 	})
 
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {

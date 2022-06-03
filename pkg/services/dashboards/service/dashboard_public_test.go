@@ -140,6 +140,68 @@ func TestSavePublicDashboard(t *testing.T) {
 	})
 }
 
+func TestBuildPublicDashboardMetricRequest(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+
+	service := &DashboardServiceImpl{
+		log:            log.New("test.logger"),
+		dashboardStore: dashboardStore,
+	}
+
+	dto := &dashboards.SavePublicDashboardConfigDTO{
+		DashboardUid: dashboard.Uid,
+		OrgId:        dashboard.OrgId,
+		PublicDashboardConfig: &models.PublicDashboardConfig{
+			IsPublic: true,
+			PublicDashboard: models.PublicDashboard{
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+				TimeSettings: `{"from": "FROM", "to": "TO"}`,
+			},
+		},
+	}
+
+	pdc, err := service.SavePublicDashboardConfig(context.Background(), dto)
+	require.NoError(t, err)
+
+	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
+		reqDTO, err := service.BuildPublicDashboardMetricRequest(
+			context.Background(),
+			pdc.PublicDashboard.Uid,
+			1,
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, "FROM", reqDTO.From)
+		require.Equal(t, "TO", reqDTO.To)
+		require.Len(t, reqDTO.Queries, 2)
+		require.Equal(
+			t,
+			simplejson.MustJson([]byte(`{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				},
+				"refId": "A"
+			}`)),
+			reqDTO.Queries[0],
+		)
+		require.Equal(
+			t,
+			simplejson.MustJson([]byte(`{
+				"datasource": {
+					"type": "prometheus",
+					"uid": "ds2"
+				},
+				"refId": "B"
+			}`)),
+			reqDTO.Queries[1],
+		)
+	})
+}
+
 func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
@@ -151,6 +213,39 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
+			"panels": []map[string]interface{}{
+				{
+					"id": 1,
+					"targets": []map[string]interface{}{
+						{
+							"datasource": map[string]string{
+								"type": "mysql",
+								"uid":  "ds1",
+							},
+							"refId": "A",
+						},
+						{
+							"datasource": map[string]string{
+								"type": "prometheus",
+								"uid":  "ds2",
+							},
+							"refId": "B",
+						},
+					},
+				},
+				{
+					"id": 2,
+					"targets": []map[string]interface{}{
+						{
+							"datasource": map[string]string{
+								"type": "mysql",
+								"uid":  "ds3",
+							},
+							"refId": "C",
+						},
+					},
+				},
+			},
 		}),
 	}
 	dash, err := dashboardStore.SaveDashboard(cmd)

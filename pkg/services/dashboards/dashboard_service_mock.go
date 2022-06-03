@@ -18,20 +18,20 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
-// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, publicDashboardUid
-func (_m *FakeDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string) (dtos.MetricRequest, error) {
-	ret := _m.Called(ctx, publicDashboardUid)
+// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, publicDashboardUid, panelId
+func (_m *FakeDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
+	ret := _m.Called(ctx, publicDashboardUid, panelId)
 
 	var r0 dtos.MetricRequest
-	if rf, ok := ret.Get(0).(func(context.Context, string) dtos.MetricRequest); ok {
-		r0 = rf(ctx, publicDashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) dtos.MetricRequest); ok {
+		r0 = rf(ctx, publicDashboardUid, panelId)
 	} else {
 		r0 = ret.Get(0).(dtos.MetricRequest)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, publicDashboardUid)
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, publicDashboardUid, panelId)
 	} else {
 		r1 = ret.Error(1)
 	}
