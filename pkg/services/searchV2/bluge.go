@@ -105,7 +105,10 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 
 		// Index each panel in dashboard.
-		location += "/" + dash.uid
+		if location != "" {
+			location += "/"
+		}
+		location += dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
@@ -194,7 +197,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
-			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
@@ -263,10 +265,10 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
+func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string, error) {
 	var panelIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
+	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
@@ -289,6 +291,64 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 		match, err = documentMatchIterator.Next()
 	}
 	return panelIDs, err
+}
+
+func getDocsIDsByLocationPrefix(reader *bluge.Reader, prefix string) ([]string, error) {
+	var ids []string
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				ids = append(ids, string(value))
+			}
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return ids, err
+}
+
+func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bool, error) {
+	var dashboardLocation string
+	var found bool
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return "", false, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldLocation {
+				dashboardLocation = string(value)
+				found = true
+				return false
+			}
+			return true
+		})
+		if err != nil {
+			return "", false, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return dashboardLocation, found, err
 }
 
 //nolint: gocyclo
