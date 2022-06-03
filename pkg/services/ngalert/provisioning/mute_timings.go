@@ -159,7 +159,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
 		return nil
 	}
-	if isMuteTimeInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
+	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
 		return fmt.Errorf("mute time '%s' is currently used by a notification policy", name)
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
