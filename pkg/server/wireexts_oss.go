@@ -5,9 +5,9 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/extensions/plugins/provider"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -52,8 +52,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
-	validations.ProvideValidator,
-	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
@@ -70,10 +68,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
-	signature.ProvideOSSAuthorizer,
-	wire.Bind(new(signature.Authorizer), new(*signature.UnsignedPluginAuthorizer)),
-	provider.ProvideService,
-	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
 	wire.Bind(new(resourcepermissions.Store), new(*acdb.AccessControlStore)),
 	wire.Bind(new(accesscontrol.PermissionsStore), new(*acdb.AccessControlStore)),
@@ -93,6 +87,12 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
 	manager.ProvideRunnerService,
 	wire.Bind(new(manager.Runner), new(*manager.NoopRunner)),
+	signature.ProvideOSSAuthorizer,
+	wire.Bind(new(signature.Authorizer), new(*signature.UnsignedPluginAuthorizer)),
+	provider.ProvideService,
+	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
+	validations.ProvideValidator,
+	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 )
 
 var wireExtsSet = wire.NewSet(
