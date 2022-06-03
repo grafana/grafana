@@ -151,11 +151,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/contact-points/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{ID}"),
+			toMacaronPath("/api/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contact-points/{ID}",
+				"/api/provisioning/contact-points/{UID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),
@@ -301,11 +301,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contact-points/{ID}"),
-			api.authorize(http.MethodPut, "/api/provisioning/contact-points/{ID}"),
+			toMacaronPath("/api/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodPut, "/api/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contact-points/{ID}",
+				"/api/provisioning/contact-points/{UID}",
 				srv.RoutePutContactpoint,
 				m,
 			),
