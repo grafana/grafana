@@ -6,7 +6,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
+import {
+  cleanUpDashboardAndVariables,
+  updateTimeZoneDashboard,
+  updateWeekStartDashboard,
+} from 'app/features/dashboard/state/actions';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -26,7 +30,12 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
+export function GeneralSettingsUnconnected({
+  dashboard,
+  updateTimeZone,
+  updateWeekStart,
+  cleanDashboard,
+}: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -153,7 +162,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       </CollapsableSection>
 
       <div className="gf-form-button-row">
-        {dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}
+        {dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} cleanDashboard={cleanDashboard} />}
       </div>
     </div>
   );
@@ -162,6 +171,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
 const mapDispatchToProps = {
   updateTimeZone: updateTimeZoneDashboard,
   updateWeekStart: updateWeekStartDashboard,
+  cleanDashboard: cleanUpDashboardAndVariables,
 };
 
 const connector = connect(null, mapDispatchToProps);

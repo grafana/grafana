@@ -12,12 +12,13 @@ import { useDashboardDelete } from './useDashboardDelete';
 
 type DeleteDashboardModalProps = {
   hideModal(): void;
+  cleanDashboard(): void;
   dashboard: DashboardModel;
 };
 
-export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hideModal, dashboard }) => {
+export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hideModal, cleanDashboard, dashboard }) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid);
+  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid, cleanDashboard);
 
   const [, onConfirm] = useAsyncFn(async () => {
     await onDeleteDashboard();
