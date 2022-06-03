@@ -97,7 +97,7 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pluginRegistry := registry.NewInMemory()
 	pm, err := ProvideService(cfg, pluginRegistry, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
+		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry), ProvideNoopRunner())
 	require.NoError(t, err)
 
 	ctx := context.Background()

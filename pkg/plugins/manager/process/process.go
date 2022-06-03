@@ -21,7 +21,7 @@ type Manager struct {
 	log log.Logger
 }
 
-func ProvideProcessManager(pluginRegistry registry.Service) *Manager {
+func NewManager(pluginRegistry registry.Service) *Manager {
 	return &Manager{
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),

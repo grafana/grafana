@@ -37,10 +37,8 @@ type PluginSource struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginInstaller installer.Service, processManager process.Service, runner Runner,
-) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
-		pluginInstaller, processManager, runner)
+	runner Runner) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader, runner)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -48,15 +46,14 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource,
-	pluginLoader loader.Service, pluginInstaller installer.Service, processManager process.Service,
-	runner Runner) *PluginManager {
+	pluginLoader loader.Service, runner Runner) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
-		processManager:  processManager,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
-		pluginInstaller: pluginInstaller,
+		processManager:  process.NewManager(pluginRegistry),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, installer.NewLogger("plugin.installer")),
 		runner:          runner,
 		log:             log.New("plugin.manager"),
 	}

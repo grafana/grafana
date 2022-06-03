@@ -8,14 +8,11 @@ import (
 
 type InfraLogWrapper struct {
 	l log.Logger
-
-	debugMode bool
 }
 
-func newLogger(name string, debugMode bool) (l *InfraLogWrapper) {
+func NewLogger(name string) (l *InfraLogWrapper) {
 	return &InfraLogWrapper{
-		debugMode: debugMode,
-		l:         log.New(name),
+		l: log.New(name),
 	}
 }
 
@@ -36,15 +33,11 @@ func (l *InfraLogWrapper) Infof(format string, args ...interface{}) {
 }
 
 func (l *InfraLogWrapper) Debug(args ...interface{}) {
-	if l.debugMode {
-		l.l.Debug(fmt.Sprint(args...))
-	}
+	l.l.Debug(fmt.Sprint(args...))
 }
 
 func (l *InfraLogWrapper) Debugf(format string, args ...interface{}) {
-	if l.debugMode {
-		l.l.Debug(fmt.Sprintf(format, args...))
-	}
+	l.l.Debug(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Warn(args ...interface{}) {

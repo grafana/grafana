@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Installer struct {
@@ -78,10 +77,6 @@ type ErrVersionNotFound struct {
 
 func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
-}
-
-func ProvideService(cfg *setting.Cfg) *Installer {
-	return New(false, cfg.BuildVersion, newLogger("plugin.installer", true))
 }
 
 func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {

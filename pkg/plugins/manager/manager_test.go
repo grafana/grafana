@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 )
@@ -31,7 +30,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, &fakePluginInstaller{}, newFakePluginProcessManager(), ProvideRunnerService())
+		}, loader, ProvideNoopRunner())
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -461,7 +460,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, p
 	t.Helper()
 
 	fakeRegistry := newFakePluginRegistry()
-	pm := New(&plugins.Cfg{}, fakeRegistry, nil, &fakeLoader{}, &fakePluginInstaller{}, process.ProvideProcessManager(fakeRegistry), ProvideRunnerService())
+	pm := New(&plugins.Cfg{}, fakeRegistry, nil, &fakeLoader{}, ProvideNoopRunner())
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -522,8 +521,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	pluginRegistry := registry.NewInMemory()
-	manager := New(cfg, pluginRegistry, nil, &fakeLoader{}, &fakePluginInstaller{},
-		process.ProvideProcessManager(pluginRegistry), ProvideRunnerService())
+	manager := New(cfg, pluginRegistry, nil, &fakeLoader{}, ProvideNoopRunner())
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}

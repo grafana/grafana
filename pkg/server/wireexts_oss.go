@@ -85,7 +85,7 @@ var wireExtsBasicSet = wire.NewSet(
 	// plugins
 	pluginRegistry.ProvideService,
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
-	manager.ProvideRunnerService,
+	manager.ProvideNoopRunner,
 	wire.Bind(new(manager.Runner), new(*manager.NoopRunner)),
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(signature.Authorizer), new(*signature.UnsignedPluginAuthorizer)),

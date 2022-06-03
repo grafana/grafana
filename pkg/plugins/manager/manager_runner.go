@@ -8,7 +8,7 @@ var _ Runner = (*NoopRunner)(nil)
 
 type NoopRunner struct{}
 
-func ProvideRunnerService() *NoopRunner {
+func ProvideNoopRunner() *NoopRunner {
 	return &NoopRunner{}
 }
 
