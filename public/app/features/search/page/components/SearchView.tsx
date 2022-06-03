@@ -50,6 +50,8 @@ export const SearchView = ({
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
+  const [listKey, setListKey] = useState(Date.now());
+
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
       query: queryText,
@@ -121,7 +123,8 @@ export const SearchView = ({
   // function to update items when dashboards or folders are moved or deleted
   const onChangeItemsList = async () => {
     // clean up search selection
-    setSearchSelection(newSearchSelection());
+    clearSelection();
+    setListKey(Date.now());
     // trigger again the search to the backend
     onQueryChange(query.query);
   };
@@ -169,11 +172,13 @@ export const SearchView = ({
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
             tags={query.tag}
+            key={listKey}
           />
         );
       }
       return (
         <FolderView
+          key={listKey}
           selection={selection}
           selectionToggle={toggleSelection}
           tags={query.tag}
