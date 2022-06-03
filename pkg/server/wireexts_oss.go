@@ -92,7 +92,7 @@ var wireExtsBasicSet = wire.NewSet(
 	pluginRegistry.ProvideService,
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
 	manager.ProvideRunnerService,
-	wire.Bind(new(plugins.ManagerRunner), new(*manager.Runner)),
+	wire.Bind(new(manager.Runner), new(*manager.NoopRunner)),
 )
 
 var wireExtsSet = wire.NewSet(

@@ -2,16 +2,16 @@ package manager
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type Runner struct{}
+var _ Runner = (*NoopRunner)(nil)
 
-func ProvideRunnerService() *Runner {
-	return &Runner{}
+type NoopRunner struct{}
+
+func ProvideRunnerService() *NoopRunner {
+	return &NoopRunner{}
 }
 
-func (r *Runner) Run(_ context.Context, _ plugins.Manager) error {
+func (r *NoopRunner) Run(_ context.Context, _ Service) error {
 	return nil
 }

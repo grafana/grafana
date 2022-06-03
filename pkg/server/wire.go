@@ -148,7 +148,7 @@ var wireBasicSet = wire.NewSet(
 
 	// plugins
 	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
+	wire.Bind(new(manager.Service), new(*manager.PluginManager)),
 
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
@@ -156,7 +156,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
 	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
-	wire.Bind(new(plugins.DashboardFileStore), new(*pluginDashboards.FileStoreManager)),
+	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(loader.ErrorResolver), new(*loader.Loader)),

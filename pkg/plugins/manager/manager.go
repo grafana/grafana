@@ -18,7 +18,7 @@ const (
 	grafanaComURL = "https://grafana.com/api/plugins"
 )
 
-var _ plugins.Manager = (*PluginManager)(nil)
+var _ Service = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
@@ -26,13 +26,18 @@ type PluginManager struct {
 	pluginRegistry  registry.Service
 	pluginInstaller installer.Service
 	pluginLoader    loader.Service
-	pluginSources   []plugins.PluginSource
-	runner          plugins.ManagerRunner
+	pluginSources   []PluginSource
+	runner          Runner
 	log             log.Logger
 }
 
+type PluginSource struct {
+	Class plugins.Class
+	Paths []string
+}
+
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginInstaller installer.Service, processManager process.Service, runner plugins.ManagerRunner,
+	pluginInstaller installer.Service, processManager process.Service, runner Runner,
 ) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
 		pluginInstaller, processManager, runner)
@@ -42,9 +47,9 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource,
 	pluginLoader loader.Service, pluginInstaller installer.Service, processManager process.Service,
-	runner plugins.ManagerRunner) *PluginManager {
+	runner Runner) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		processManager:  processManager,
@@ -71,7 +76,7 @@ func (m *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *PluginManager) sync(ctx context.Context, pluginSources ...plugins.PluginSource) error {
+func (m *PluginManager) sync(ctx context.Context, pluginSources ...PluginSource) error {
 	// TODO merge sources with existing
 
 	for _, ps := range pluginSources {
@@ -224,8 +229,8 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 	return m.processManager.Start(ctx, p.ID)
 }
 
-func pluginSources(cfg *setting.Cfg) []plugins.PluginSource {
-	return []plugins.PluginSource{
+func pluginSources(cfg *setting.Cfg) []PluginSource {
+	return []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(cfg)},
 		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},

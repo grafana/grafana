@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -108,7 +109,7 @@ type HTTPServer struct {
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       models.PluginRequestValidator
-	pluginManager                plugins.Manager
+	pluginManager                manager.Service
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginDashboardService       plugindashboards.Service
@@ -172,7 +173,7 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
-	pluginRequestValidator models.PluginRequestValidator, pluginManager plugins.Manager,
+	pluginRequestValidator models.PluginRequestValidator, pluginManager manager.Service,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver loader.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,

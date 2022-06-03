@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ plugins.DashboardFileStore = (*FileStoreManager)(nil)
+var _ FileStore = (*FileStoreManager)(nil)
 
 type FileStoreManager struct {
 	pluginRegistry registry.Service
@@ -31,7 +31,7 @@ var openDashboardFile = func(name string) (fs.File, error) {
 	return os.Open(filepath.Clean(name))
 }
 
-func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *plugins.ListPluginDashboardFilesArgs) (*plugins.ListPluginDashboardFilesResult, error) {
+func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error) {
 	if args == nil {
 		return nil, fmt.Errorf("args cannot be nil")
 	}
@@ -50,12 +50,12 @@ func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *p
 		references = append(references, include.Path)
 	}
 
-	return &plugins.ListPluginDashboardFilesResult{
+	return &ListPluginDashboardFilesResult{
 		FileReferences: references,
 	}, nil
 }
 
-func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, args *plugins.GetPluginDashboardFileContentsArgs) (*plugins.GetPluginDashboardFileContentsResult, error) {
+func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error) {
 	if args == nil {
 		return nil, fmt.Errorf("args cannot be nil")
 	}
@@ -97,7 +97,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, err
 	}
 
-	return &plugins.GetPluginDashboardFileContentsResult{
+	return &GetPluginDashboardFileContentsResult{
 		Content: file,
 	}, nil
 }
