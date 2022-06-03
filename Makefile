@@ -63,7 +63,7 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 --swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
-	swagger generate spec -m -w pkg/server -o public/api-spec.json \
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json

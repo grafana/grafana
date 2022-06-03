@@ -12,7 +12,7 @@ Map a range of values when you want to format multiple, continuous values.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a range**:
 

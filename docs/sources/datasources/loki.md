@@ -16,7 +16,7 @@ weight: 800
 
 Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. This topic explains options, variables, querying, and other options specific to this data source.
 
-Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore/" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore/" >}}). Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Hosted Loki
 
@@ -138,7 +138,7 @@ There are two types of LogQL queries:
 
 ### Log queries
 
-Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
 
 #### Log context
 
@@ -199,7 +199,7 @@ LogQL supports wrapping a log query with functions that allow for creating metri
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Query variable
 
@@ -218,7 +218,7 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
 
 ## Annotations
 

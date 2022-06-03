@@ -68,7 +68,7 @@ func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, fi
 
 func checkSearchResponseExtended(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
 	t.Helper()
-	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender)
+	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender, "/pfix")
 	goldenFile := filepath.Join("testdata", fileName)
 	err := experimental.CheckGoldenDataResponse(goldenFile, resp, true)
 	require.NoError(t, err)
