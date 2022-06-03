@@ -24,6 +24,7 @@ type EntityType string
 
 const (
 	EntityTypeDashboard EntityType = "dashboard"
+	EntityTypeFolder    EntityType = "folder"
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables

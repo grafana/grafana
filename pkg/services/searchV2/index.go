@@ -314,27 +314,24 @@ func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityE
 		i.logger.Warn("unknown storage", "entityId", e.EntityId)
 		return nil
 	}
-	parts := strings.Split(strings.TrimPrefix(e.EntityId, "database/"), "/")
+	// database/org/entityType/path*
+	parts := strings.SplitN(strings.TrimPrefix(e.EntityId, "database/"), "/", 3)
 	if len(parts) != 3 {
 		i.logger.Error("can't parse entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgIDStr := parts[0]
-	kind := parts[1]
-	dashboardUID := parts[2]
-	if kind != "dashboard" {
-		i.logger.Error("unknown kind in entityId", "entityId", e.EntityId)
-		return nil
-	}
-	orgID, err := strconv.Atoi(orgIDStr)
+	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
 	if err != nil {
 		i.logger.Error("can't extract org ID", "entityId", e.EntityId)
 		return nil
 	}
-	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)
+	kind := store.EntityType(parts[1])
+	uid := parts[2]
+	return i.applyEvent(ctx, orgID, kind, uid, e.EventType)
 }
 
-func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ store.EntityEventType) error {
+func (i *dashboardIndex) applyEvent(ctx context.Context, orgID int64, kind store.EntityType, uid string, _ store.EntityEventType) error {
 	i.mu.Lock()
 	_, ok := i.perOrgWriter[orgID]
 	if !ok {
@@ -344,7 +341,8 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 	i.mu.Unlock()
 
-	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardUID)
+	// Both dashboard and folder share same DB table.
+	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, uid)
 	if err != nil {
 		return err
 	}
@@ -368,7 +366,14 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 
 	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
-		newReader, err = i.removeDashboard(ctx, writer, reader, dashboardUID)
+		switch kind {
+		case store.EntityTypeDashboard:
+			newReader, err = i.removeDashboard(ctx, writer, reader, uid)
+		case store.EntityTypeFolder:
+			newReader, err = i.removeFolder(ctx, writer, reader, uid)
+		default:
+			return nil
+		}
 	} else {
 		newReader, err = i.updateDashboard(ctx, orgID, writer, reader, dbDashboards[0])
 	}
@@ -381,24 +386,23 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 }
 
 func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
+	dashboardLocation, ok, err := getDashboardLocation(reader, dashboardUID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		// No dashboard, nothing to remove.
+		return reader, nil
+	}
+
 	// Find all panel docs to remove with dashboard.
-	panelIDs, err := getDashboardPanelIDs(reader, dashboardUID)
+	panelLocation := dashboardUID
+	if dashboardLocation != "" {
+		panelLocation = dashboardLocation + "/" + dashboardUID
+	}
+	panelIDs, err := getDocsIDsByLocationPrefix(reader, panelLocation)
 	if err != nil {
 		return nil, err
-	}
-	// Find all dashboard docs to remove with folder.
-	// TODO: at this moment we can not distinguish whether dashboardUID represents folder or not,
-	// so some unnecessary work here when dashboard (not a folder) removed.
-	dashboardIDs, err := getFolderDashboardIDs(reader, dashboardUID)
-	if err != nil {
-		return nil, err
-	}
-	for _, dashboardID := range dashboardIDs {
-		additionalPanelIDs, err := getDashboardPanelIDs(reader, dashboardID)
-		if err != nil {
-			return nil, err
-		}
-		panelIDs = append(panelIDs, additionalPanelIDs...)
 	}
 
 	batch := bluge.NewBatch()
@@ -406,15 +410,29 @@ func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer
 	for _, panelID := range panelIDs {
 		batch.Delete(bluge.NewDocument(panelID).ID())
 	}
-	for _, dashboardID := range dashboardIDs {
-		batch.Delete(bluge.NewDocument(dashboardID).ID())
-	}
 
 	err = writer.Batch(batch)
 	if err != nil {
 		return nil, err
 	}
 
+	return writer.Reader()
+}
+
+func (i *dashboardIndex) removeFolder(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, folderUID string) (*bluge.Reader, error) {
+	ids, err := getDocsIDsByLocationPrefix(reader, folderUID)
+	if err != nil {
+		return nil, err
+	}
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(folderUID).ID())
+	for _, id := range ids {
+		batch.Delete(bluge.NewDocument(id).ID())
+	}
+	err = writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
 	return writer.Reader()
 }
 
@@ -451,21 +469,24 @@ func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, write
 		}
 
 		location := folderUID
-		doc = getNonFolderDashboardDoc(dash, folderUID, location)
+		doc = getNonFolderDashboardDoc(dash, location)
 		if err := extendDoc(dash.uid, doc); err != nil {
 			return nil, err
 		}
 
 		var actualPanelIDs []string
 
-		location += "/" + dash.uid
-		panelDocs := getDashboardPanelDocs(dash, dash.uid, location)
+		if location != "" {
+			location += "/"
+		}
+		location += dash.uid
+		panelDocs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range panelDocs {
 			actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
 			batch.Update(panelDoc.ID(), panelDoc)
 		}
 
-		indexedPanelIDs, err := getDashboardPanelIDs(reader, dash.uid)
+		indexedPanelIDs, err := getDashboardPanelIDs(reader, location)
 		if err != nil {
 			return nil, err
 		}
