@@ -1,13 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/user/", "/docs/grafana/latest/http_api/user/"]
-description = "Grafana User HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "user"]
-title = "User HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/user/
+  - /docs/grafana/latest/http_api/user/
+description: Grafana User HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - user
+title: 'User HTTP API '
+---
 
 # User API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Search Users
 
@@ -133,9 +140,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action     | Scope    |
-| ---------- | -------- |
-| users:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -234,9 +241,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action      | Scope    |
-| ----------- | -------- |
-| users:write | users:\* |
+| Action      | Scope           |
+| ----------- | --------------- |
+| users:write | global.users:\* |
 
 **Example Request**:
 
@@ -273,9 +280,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action     | Scope    |
-| ---------- | -------- |
-| users:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -311,9 +318,10 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action           | Scope    |
-| ---------------- | -------- |
-| users.teams:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
+| teams:read | teams:\*        |
 
 **Example Request**:
 

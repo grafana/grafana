@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/org/", "/docs/grafana/latest/http_api/org/", "/docs/grafana/latest/http_api/organization/"]
-description = "Grafana Organization HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "organization"]
-title = "Organization HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/org/
+  - /docs/grafana/latest/http_api/org/
+  - /docs/grafana/latest/http_api/organization/
+description: Grafana Organization HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - organization
+title: 'Organization HTTP API '
+---
 
 # Organization API
 
@@ -11,7 +19,7 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Current Organization API
 
@@ -141,9 +149,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
-| Action                | Scope    |
-| --------------------- | -------- |
-| org.users.role:update | users:\* |
+| Action          | Scope    |
+| --------------- | -------- |
+| org.users:write | users:\* |
 
 **Example Request**:
 
@@ -597,9 +605,9 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
 
-| Action                | Scope    |
-| --------------------- | -------- |
-| org.users.role:update | users:\* |
+| Action          | Scope    |
+| --------------- | -------- |
+| org.users:write | users:\* |
 
 **Example Request**:
 

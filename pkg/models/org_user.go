@@ -119,6 +119,8 @@ type GetOrgUsersQuery struct {
 	OrgId  int64
 	Query  string
 	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
 	User   *SignedInUser
 	Result []*OrgUserDTO

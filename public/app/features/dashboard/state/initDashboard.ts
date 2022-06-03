@@ -60,6 +60,15 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+      case DashboardRoutes.Public: {
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        // Make sure new endpoint to fetch dashboard DTO sets these as false
+        dashDTO.meta.canEdit = false;
+        dashDTO.meta.canMakeEditable = false;
+        dashDTO.meta.isPublic = true;
+
+        return dashDTO;
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 

@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -37,43 +36,33 @@ type RulerApiForkingService interface {
 func (f *ForkedRulerApi) RouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteGrafanaRuleGroupConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteNamespaceGrafanaRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteNamespaceRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteRuleGroupConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaRuleGroupConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetNamespaceGrafanaRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetNamespaceRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetRulegGroupConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetRulesConfig(ctx)
 }
-
 func (f *ForkedRulerApi) RoutePostNameGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -81,7 +70,6 @@ func (f *ForkedRulerApi) RoutePostNameGrafanaRulesConfig(ctx *models.ReqContext)
 	}
 	return f.forkRoutePostNameGrafanaRulesConfig(ctx, conf)
 }
-
 func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {

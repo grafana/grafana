@@ -6,11 +6,14 @@ import { setDataSourceSrv } from '@grafana/runtime';
 
 import {
   dimensionVariable,
+  expressionVariable,
   labelsVariable,
   limitVariable,
+  logGroupNamesVariable,
   metricVariable,
   namespaceVariable,
   setupMockedDataSource,
+  regionVariable,
 } from './__mocks__/CloudWatchDataSource';
 import {
   CloudWatchLogsQuery,
@@ -61,6 +64,32 @@ describe('datasource', () => {
       expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroupNames: ['/some/templatedGroup'],
+        region: 'templatedRegion',
+      });
+    });
+
+    it('should interpolate multi-value template variable for log group names in the query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({
+        variables: [expressionVariable, logGroupNamesVariable, regionVariable],
+        mockGetVariableName: false,
+      });
+      await lastValueFrom(
+        datasource
+          .query({
+            targets: [
+              {
+                queryMode: 'Logs',
+                region: '$region',
+                expression: 'fields $fields',
+                logGroupNames: ['$groups'],
+              },
+            ],
+          } as any)
+          .pipe(toArray())
+      );
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'fields templatedField',
+        logGroupNames: ['templatedGroup-1', 'templatedGroup-2'],
         region: 'templatedRegion',
       });
     });
@@ -440,6 +469,30 @@ describe('datasource', () => {
           }),
         })
       );
+    });
+  });
+
+  describe('interpolateMetricsQueryVariables', () => {
+    it('interpolates dimensions correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        dimensions: { InstanceId: '$dimension' },
+      };
+      const ds = setupMockedDataSource({ variables: [dimensionVariable], mockGetVariableName: false });
+      const result = ds.datasource.interpolateMetricsQueryVariables(testQuery, {
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toStrictEqual({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: '',
+        dimensions: { InstanceId: ['foo'] },
+      });
     });
   });
 

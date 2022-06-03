@@ -285,32 +285,31 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead     = "users:read"
-	ActionUsersWrite    = "users:write"
-	ActionUsersTeamRead = "users.teams:read"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenList = "users.authtoken:list"
+	ActionUsersAuthTokenList = "users.authtoken:read"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenUpdate = "users.authtoken:update"
+	ActionUsersAuthTokenUpdate = "users.authtoken:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersPasswordUpdate    = "users.password:update"
+	ActionUsersPasswordUpdate    = "users.password:write"
 	ActionUsersDelete            = "users:delete"
 	ActionUsersCreate            = "users:create"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
-	ActionUsersPermissionsUpdate = "users.permissions:update"
+	ActionUsersPermissionsUpdate = "users.permissions:write"
 	ActionUsersLogout            = "users:logout"
-	ActionUsersQuotasList        = "users.quotas:list"
-	ActionUsersQuotasUpdate      = "users.quotas:update"
+	ActionUsersQuotasList        = "users.quotas:read"
+	ActionUsersQuotasUpdate      = "users.quotas:write"
 
 	// Org actions
-	ActionOrgUsersRead       = "org.users:read"
-	ActionOrgUsersAdd        = "org.users:add"
-	ActionOrgUsersRemove     = "org.users:remove"
-	ActionOrgUsersRoleUpdate = "org.users.role:update"
+	ActionOrgUsersRead   = "org.users:read"
+	ActionOrgUsersAdd    = "org.users:add"
+	ActionOrgUsersRemove = "org.users:remove"
+	ActionOrgUsersWrite  = "org.users:write"
 
 	// LDAP actions
 	ActionLDAPUsersRead    = "ldap.user:read"
@@ -363,12 +362,12 @@ const (
 	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rules:create"
 	ActionAlertingRuleRead   = "alert.rules:read"
-	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleUpdate = "alert.rules:write"
 	ActionAlertingRuleDelete = "alert.rules:delete"
 
 	// Alerting instances (+silences) actions
 	ActionAlertingInstanceCreate = "alert.instances:create"
-	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions
