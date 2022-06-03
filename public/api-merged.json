@@ -7065,14 +7065,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7080,6 +7072,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7113,16 +7113,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -8282,10 +8282,6 @@
           "type": "boolean",
           "x-go-name": "BasicAuth"
         },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
-        },
         "basicAuthUser": {
           "type": "string",
           "x-go-name": "BasicAuthUser"
@@ -8304,10 +8300,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "secureJsonData": {
           "type": "object",
@@ -10319,10 +10311,6 @@
           "type": "boolean",
           "x-go-name": "BasicAuth"
         },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
-        },
         "basicAuthUser": {
           "type": "string",
           "x-go-name": "BasicAuthUser"
@@ -10351,10 +10339,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgId"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "readOnly": {
           "type": "boolean",
@@ -10440,10 +10424,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgId"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "readOnly": {
           "type": "boolean",
@@ -15571,10 +15551,6 @@
           "type": "boolean",
           "x-go-name": "BasicAuth"
         },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
-        },
         "basicAuthUser": {
           "type": "string",
           "x-go-name": "BasicAuthUser"
@@ -15593,10 +15569,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "secureJsonData": {
           "type": "object",
