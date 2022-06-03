@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -344,33 +343,6 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	return dash, nil
 }
 
-// GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
-	if err != nil {
-		return nil, err
-	}
-
-	return pdc, nil
-}
-
-// SavePublicDashboardConfig is a helper method to persist the sharing config
-// to the database. It handles validations for sharing config and persistence
-func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	cmd := models.SavePublicDashboardConfigCommand{
-		Uid:                   dto.Uid,
-		OrgId:                 dto.OrgId,
-		PublicDashboardConfig: dto.PublicDashboardConfig,
-	}
-
-	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return pdc, nil
-}
-
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
@@ -429,7 +401,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(dashboardId)
 		if err != nil {
-			return errutil.Wrap("failed to check if dashboard is provisioned", err)
+			return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
 		}
 
 		if provisionedData != nil {
@@ -585,4 +557,20 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
+}
+
+func (dr *DashboardServiceImpl) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	return dr.dashboardStore.GetDashboardAclInfoList(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return dr.dashboardStore.HasAdminPermissionInFolders(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }

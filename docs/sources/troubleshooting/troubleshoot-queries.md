@@ -1,10 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/troubleshooting/troubleshoot-queries/"]
-description = "Guide to troubleshooting Grafana queries"
-keywords = ["grafana", "troubleshooting", "documentation", "guide", "queries"]
-title = "Troubleshoot queries"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/troubleshooting/troubleshoot-queries/
+description: Guide to troubleshooting Grafana queries
+keywords:
+  - grafana
+  - troubleshooting
+  - documentation
+  - guide
+  - queries
+title: Troubleshoot queries
+weight: 400
+---
 
 # Troubleshoot queries
 
@@ -20,7 +26,7 @@ The most common problems are related to the query and response from your data so
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
 the data source response. Start by inspecting your panel query and response.
 
-For more information, refer to [Inspect request and response data]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data.md" >}}).
+For more information, refer to [Inspect request and response data]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data/" >}}).
 
 ## My query is slow
 

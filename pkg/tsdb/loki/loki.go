@@ -44,9 +44,8 @@ var (
 )
 
 type datasourceInfo struct {
-	HTTPClient    *http.Client
-	URL           string
-	OauthPassThru bool
+	HTTPClient *http.Client
+	URL        string
 
 	// open streams
 	streams   map[string]data.FrameJSONCache
@@ -63,10 +62,6 @@ type QueryJSONModel struct {
 	Resolution   int64  `json:"resolution"`
 	MaxLines     int    `json:"maxLines"`
 	VolumeQuery  bool   `json:"volumeQuery"`
-}
-
-type DataSourceJSONModel struct {
-	OauthPassThru bool `json:"oauthPassThru"`
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -87,42 +82,29 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		jsonModel := DataSourceJSONModel{}
-		err = json.Unmarshal(settings.JSONData, &jsonModel)
-		if err != nil {
-			return nil, err
-		}
-
 		model := &datasourceInfo{
-			HTTPClient:    client,
-			URL:           settings.URL,
-			OauthPassThru: jsonModel.OauthPassThru,
-			streams:       make(map[string]data.FrameJSONCache),
+			HTTPClient: client,
+			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
 		}
 		return model, nil
 	}
 }
 
-func getOauthTokenForQueryData(dsInfo *datasourceInfo, headers map[string]string) string {
-	if !dsInfo.OauthPassThru {
+// in the CallResource API, request-headers are in a map where the value is an array-of-strings,
+// so we need a helper function that can extract a single string-value from an array-of-strings.
+// i only deal with two cases:
+// - zero-length array
+// - first-item of the array
+// i do not handle the case where there are multiple items in the array, i do not know
+// if that can even happen ever, for the headers that we are interested in.
+func arrayHeaderFirstValue(values []string) string {
+	if len(values) == 0 {
 		return ""
 	}
 
-	return headers["Authorization"]
-}
-
-func getOauthTokenForCallResource(dsInfo *datasourceInfo, headers map[string][]string) string {
-	if !dsInfo.OauthPassThru {
-		return ""
-	}
-
-	accessValues := headers["Authorization"]
-
-	if len(accessValues) == 0 {
-		return ""
-	}
-
-	return accessValues[0]
+	// NOTE: we assume there never is a second item in the http-header-values-array
+	return values[0]
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -132,6 +114,20 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	return callResource(ctx, req, sender, dsInfo, s.plog)
+}
+
+func getAuthHeadersForCallResource(headers map[string][]string) map[string]string {
+	data := make(map[string]string)
+
+	if auth := arrayHeaderFirstValue(headers["Authorization"]); auth != "" {
+		data["Authorization"] = auth
+	}
+
+	if cookie := arrayHeaderFirstValue(headers["Cookie"]); cookie != "" {
+		data["Cookie"] = cookie
+	}
+
+	return data
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger) error {
@@ -148,7 +144,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getOauthTokenForCallResource(dsInfo, req.Headers))
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForCallResource(req.Headers))
 	bytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
@@ -174,10 +170,24 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return queryData(ctx, req, dsInfo, s.plog, s.tracer)
 }
 
+func getAuthHeadersForQueryData(headers map[string]string) map[string]string {
+	data := make(map[string]string)
+
+	if auth := headers["Authorization"]; auth != "" {
+		data["Authorization"] = auth
+	}
+
+	if cookie := headers["Cookie"]; cookie != "" {
+		data["Cookie"] = cookie
+	}
+
+	return data
+}
+
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getOauthTokenForQueryData(dsInfo, req.Headers))
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForQueryData(req.Headers))
 
 	queries, err := parseQuery(req)
 	if err != nil {

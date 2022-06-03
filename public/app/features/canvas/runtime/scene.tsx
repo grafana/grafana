@@ -106,7 +106,7 @@ export class Scene {
         this.currentLayer = this.root;
         this.selection.next([]);
       }
-    }, 100);
+    });
     return this.root;
   }
 
@@ -226,7 +226,7 @@ export class Scene {
         if (this.div) {
           this.initMoveable(true, this.isEditingEnabled);
         }
-      }, 100);
+      });
     }
   };
 

@@ -20,10 +20,11 @@ describe('SecondaryActions', () => {
     expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
 
-  it('should not render add row button if addQueryRowButtonHidden=true', () => {
+  it('should not render hidden elements', () => {
     render(
       <SecondaryActions
         addQueryRowButtonHidden={true}
+        richHistoryRowButtonHidden={true}
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
@@ -31,7 +32,7 @@ describe('SecondaryActions', () => {
     );
 
     expect(screen.queryByRole('button', { name: /Add row button/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Rich history button/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Rich history button/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
 

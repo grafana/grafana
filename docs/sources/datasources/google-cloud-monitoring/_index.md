@@ -1,14 +1,24 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/google-cloud-monitoring/", "/docs/grafana/latest/features/datasources/stackdriver/", "/docs/grafana/next/datasources/cloudmonitoring/", "/docs/grafana/next/features/datasources/cloudmonitoring/"]
-description = "Guide for using Google Cloud Monitoring in Grafana"
-keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-title = "Google Cloud Monitoring"
-weight = 350
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/google-cloud-monitoring/
+  - /docs/grafana/latest/features/datasources/stackdriver/
+  - /docs/grafana/next/datasources/cloudmonitoring/
+  - /docs/grafana/next/features/datasources/cloudmonitoring/
+description: Guide for using Google Cloud Monitoring in Grafana
+keywords:
+  - grafana
+  - stackdriver
+  - google
+  - guide
+  - cloud
+  - monitoring
+title: Google Cloud Monitoring
+weight: 350
+---
 
 # Using Google Cloud Monitoring in Grafana
 
-Grafana ships with built-in support for Google Cloud Monitoring. Add it as a data source to build dashboards for your Google Cloud Monitoring metrics. For instructions on how to add a data source, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+Grafana ships with built-in support for Google Cloud Monitoring. Add it as a data source to build dashboards for your Google Cloud Monitoring metrics. For instructions on how to add a data source, refer to [Add a data source]({{< relref "../add-a-data-source/" >}}). Only users with the organization admin role can add data sources.
 
 > **Note** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 
@@ -21,7 +31,7 @@ To access Google Cloud Monitoring settings, hover your mouse over the **Configur
 | `Name`    | The data source name. This is how you refer to the data source in panels and queries. |
 | `Default` | Default data source means that it is pre-selected for new panels.                     |
 
-For authentication options and configuration details, see the [Google authentication]({{< relref "google-authentication.md" >}}) documentation.
+For authentication options and configuration details, see the [Google authentication]({{< relref "google-authentication/" >}}) documentation.
 
 ### Google Cloud Monitoring specific data source configuration
 
@@ -119,7 +129,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable.md" >}}).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable/" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -241,7 +251,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -263,13 +273,13 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 ### Using variables in queries
 
-Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
+Refer to the [variable syntax documentation]({{< relref "../../variables/syntax/" >}}).
 
 ## Annotations
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
 
 With the query editor for annotations, you can select a metric and filters. The `Title` and `Text` fields support templating and can use data returned from the query. For example, the Title field could have the following text:

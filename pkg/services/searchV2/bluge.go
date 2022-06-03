@@ -186,11 +186,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 	for _, panel := range dash.info.Panels {
-		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
-		purl := url
-		if panel.Type != "row" {
-			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		if panel.Type == "row" {
+			continue // for now, we are excluding rows from the search index
 		}
+
+		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
+		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
 			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
@@ -291,30 +292,17 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 }
 
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
+func doSearchQuery(
+	ctx context.Context,
+	logger log.Logger,
+	reader *bluge.Reader,
+	filter ResourceFilter,
+	q DashboardQuery,
+	extender QueryExtender,
+	appSubUrl string,
+) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
-
-	// Folder listing structure.
-	idx := strings.Index(q.Query, ":")
-	if idx > 0 {
-		key := q.Query[0:idx]
-		val := q.Query[idx+1:]
-		if key == "list" {
-			q.Limit = 1000
-			q.Query = ""
-			q.Location = ""
-			q.Explain = false
-			q.SkipLocation = true
-			q.Facet = nil
-			if val == "root" || val == "" {
-				q.Kind = []string{string(entityKindFolder)}
-			} else {
-				q.Location = val
-				q.Kind = []string{string(entityKindDashboard)}
-			}
-		}
-	}
 
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
@@ -494,7 +482,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldName:
 				name = string(value)
 			case documentFieldURL:
-				url = string(value)
+				url = appSubUrl + string(value)
 			case documentFieldLocation:
 				loc = string(value)
 			case documentFieldDSUID:

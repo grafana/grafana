@@ -1,7 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/", "/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
-title = "Add authentication for data source plugins"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/
+  - /docs/grafana/latest/plugins/developing/auth-for-datasources/
+  - /docs/grafana/next/developers/plugins/authentication/
+title: Add authentication for data source plugins
+---
 
 # Add authentication for data source plugins
 
@@ -104,7 +107,7 @@ Once the user has saved the configuration for a data source, any secret data sou
 
 The Grafana server comes with a proxy that lets you define templates for your requests. We call them _proxy routes_. Grafana sends the proxy route to the server, decrypts the secrets along with other configuration, and adds them to the request before sending it off.
 
-> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../auth/auth-proxy.md" >}}). The data source proxy is used to authenticate a data source, while the auth proxy is used to log into Grafana itself.
+> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../setup-grafana/configure-security/configure-authentication/auth-proxy/" >}}). The data source proxy is used to authenticate a data source, while the auth proxy is used to log into Grafana itself.
 
 ### Add a proxy route to your plugin
 
@@ -265,7 +268,7 @@ While the data source proxy supports the most common authentication methods for 
 - Proxy routes only support HTTP or HTTPS
 - Proxy routes don't support custom token authentication
 
-If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "./backend/_index.md" >}}). Since backend plugins run on the server they can access decrypted secrets, which makes it easier to implement custom authentication methods.
+If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "backend/" >}}). Since backend plugins run on the server they can access decrypted secrets, which makes it easier to implement custom authentication methods.
 
 The decrypted secrets are available from the `DecryptedSecureJSONData` field in the instance settings.
 
@@ -283,13 +286,24 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 ## Forward OAuth identity for the logged-in user
 
-If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../auth/generic-oauth.md" >}}), your data source plugin can reuse the access token for the logged-in Grafana user.
+If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication/generic-oauth/" >}}), your data source plugin can reuse the access token for the logged-in Grafana user.
 
 To allow Grafana to pass the access token to the plugin, update the data source configuration and set the` jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) provides a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
 
 When configured, Grafana will pass the user's token to the plugin in an Authorization header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
 
 ```go
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	token := strings.Fields(req.Headers["Authorization"])
+	var (
+		tokenType   = token[0]
+		accessToken = token[1]
+	)
+
+	// ...
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+}
+
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
   token := strings.Fields(req.Headers["Authorization"])
 	var (
@@ -306,6 +320,13 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 In addition, if the user's token includes an ID token, Grafana will pass the user's ID token to the plugin in an `X-ID-Token` header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
 
 ```go
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	idToken := req.Headers["X-ID-Token"]
+
+	// ...
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+}
+
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
   idToken := req.Headers["X-ID-Token"]
 

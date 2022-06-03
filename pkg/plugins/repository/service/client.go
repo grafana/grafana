@@ -18,11 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/repository"
-
 	"github.com/grafana/grafana/pkg/plugins/logger"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
 type Client struct {
@@ -45,7 +42,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVers
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
-		return nil, errutil.Wrap("failed to create temporary file", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
@@ -60,7 +57,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVers
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
 		}
-		return nil, errutil.Wrap("failed to download plugin archive", err)
+		return nil, fmt.Errorf("%v: %w", "failed to download plugin archive", err)
 	}
 
 	rc, err := zip.OpenReader(tmpFile.Name())
@@ -82,7 +79,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 		// nolint:gosec
 		f, err := os.Open(pluginURL)
 		if err != nil {
-			return errutil.Wrap("Failed to read plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to read plugin archive", err)
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
@@ -91,7 +88,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 		}()
 		_, err = io.Copy(tmpFile, f)
 		if err != nil {
-			return errutil.Wrap("Failed to copy plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to copy plugin archive", err)
 		}
 		return nil
 	}
@@ -144,7 +141,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 	w := bufio.NewWriter(tmpFile)
 	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("failed to compute SHA256 checksum", err)
+		return fmt.Errorf("%v: %w", "failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)

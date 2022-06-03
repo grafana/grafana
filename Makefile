@@ -50,7 +50,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
@@ -67,7 +67,7 @@ ensure_go-swagger_mac:
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec
 
 validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \
@@ -82,6 +82,11 @@ clean-api-spec:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 ##@ Building
+
+gen-cue: ## Do all CUE/Thema code generation
+	@echo "generate code from .cue files"
+	go generate ./pkg/framework/coremodel
+	go generate ./public/app/plugins
 
 gen-go: $(WIRE)
 	@echo "generate go files"

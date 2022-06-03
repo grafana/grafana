@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -46,7 +45,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 
 	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
 
-	m.Get("/login/:name", routing.Wrap(hs.OAuthLogin))
+	m.Get("/login/:name", hs.OAuthLogin)
 	return m
 }
 

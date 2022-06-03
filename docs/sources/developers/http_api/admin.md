@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/admin/", "/docs/grafana/latest/http_api/admin/"]
-description = "Grafana Admin HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "admin"]
-title = "Admin HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/admin/
+  - /docs/grafana/latest/http_api/admin/
+description: Grafana Admin HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - admin
+title: 'Admin HTTP API '
+---
 
 # Admin API
 
@@ -11,7 +18,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Fetch settings
 
@@ -351,7 +358,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../administration/configuration.md#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
 
 **Example Response**:
 
@@ -373,9 +380,9 @@ Change password for a specific user.
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                | Scope           |
-| --------------------- | --------------- |
-| users.password:update | global.users:\* |
+| Action               | Scope           |
+| -------------------- | --------------- |
+| users.password:write | global.users:\* |
 
 **Example Request**:
 
@@ -406,9 +413,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                   | Scope           |
-| ------------------------ | --------------- |
-| users.permissions:update | global.users:\* |
+| Action                  | Scope           |
+| ----------------------- | --------------- |
+| users.permissions:write | global.users:\* |
 
 **Example Request**:
 
@@ -509,7 +516,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global.users:\* |
+| users.authtoken:read | global.users:\* |
 
 **Example Request**:
 
@@ -566,9 +573,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                 | Scope           |
-| ---------------------- | --------------- |
-| users.authtoken:update | global.users:\* |
+| Action                | Scope           |
+| --------------------- | --------------- |
+| users.authtoken:write | global.users:\* |
 
 **Example Request**:
 

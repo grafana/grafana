@@ -318,6 +318,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)

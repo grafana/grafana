@@ -1,12 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/message-templating/template-data/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/template-data/"]
-keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
-title = "Template data"
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/contact-points/message-templating/template-data/
+  - /docs/grafana/latest/alerting/message-templating/template-data/
+  - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-data/
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - contact point
+  - templating
+title: Template data
+weight: 120
+---
 
 # Template data
 
-Template data is passed on to [message templates]({{< relref "./_index.md" >}}) as well as sent as payload to webhook pushes.
+Template data is passed on to [message templates]({{< relref "_index.md" >}}) as well as sent as payload to webhook pushes.
 
 | Name              | Type     | Notes                                                                                                                |
 | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
