@@ -179,28 +179,28 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
-	case http.MethodGet + "/api/provisioning/policies",
-		http.MethodGet + "/api/provisioning/contact-points",
-		http.MethodGet + "/api/provisioning/templates",
-		http.MethodGet + "/api/provisioning/templates/{name}",
-		http.MethodGet + "/api/provisioning/mute-timings",
-		http.MethodGet + "/api/provisioning/mute-timings/{name}",
-		http.MethodGet + "/api/provisioning/alert-rules/{UID}":
+	case http.MethodGet + "/api/v1/provisioning/policies",
+		http.MethodGet + "/api/v1/provisioning/contact-points",
+		http.MethodGet + "/api/v1/provisioning/templates",
+		http.MethodGet + "/api/v1/provisioning/templates/{name}",
+		http.MethodGet + "/api/v1/provisioning/mute-timings",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
 		return middleware.ReqSignedIn
 
-	case http.MethodPut + "/api/provisioning/policies",
-		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points/{UID}",
-		http.MethodDelete + "/api/provisioning/contact-points/{UID}",
-		http.MethodPut + "/api/provisioning/templates/{name}",
-		http.MethodDelete + "/api/provisioning/templates/{name}",
-		http.MethodPost + "/api/provisioning/mute-timings",
-		http.MethodPut + "/api/provisioning/mute-timings/{name}",
-		http.MethodDelete + "/api/provisioning/mute-timings/{name}",
-		http.MethodPost + "/api/provisioning/alert-rules",
-		http.MethodPut + "/api/provisioning/alert-rules/{UID}",
-		http.MethodDelete + "/api/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+	case http.MethodPut + "/api/v1/provisioning/policies",
+		http.MethodPost + "/api/v1/provisioning/contact-points",
+		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
+		http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}",
+		http.MethodPut + "/api/v1/provisioning/templates/{name}",
+		http.MethodDelete + "/api/v1/provisioning/templates/{name}",
+		http.MethodPost + "/api/v1/provisioning/mute-timings",
+		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodPost + "/api/v1/provisioning/alert-rules",
+		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		return middleware.ReqEditorRole
 	}
 
