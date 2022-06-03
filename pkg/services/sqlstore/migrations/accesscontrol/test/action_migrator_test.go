@@ -2,9 +2,10 @@ package test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -19,14 +20,14 @@ func TestActionMigration(t *testing.T) {
 	x := setupTestDB(t)
 
 	type migrationTestCase struct {
-		desc          string
-		permissionSeed []*accesscontrol.Permission
+		desc            string
+		permissionSeed  []*accesscontrol.Permission
 		wantPermissions []*accesscontrol.Permission
 	}
 	testCases := []migrationTestCase{
 		{
-			desc:          "empty perms",
-			permissionSeed: []*accesscontrol.Permission{},
+			desc:            "empty perms",
+			permissionSeed:  []*accesscontrol.Permission{},
 			wantPermissions: []*accesscontrol.Permission{},
 		},
 		{
@@ -49,14 +50,14 @@ func TestActionMigration(t *testing.T) {
 			},
 			wantPermissions: []*accesscontrol.Permission{
 				{
-					RoleID:  1,
-					Action:  dashboards.ActionDashboardsRead,
-					Scope:   dashboards.ScopeDashboardsAll,
+					RoleID: 1,
+					Action: dashboards.ActionDashboardsRead,
+					Scope:  dashboards.ScopeDashboardsAll,
 				},
 				{
-					RoleID:  1,
-					Action:  accesscontrol.ActionTeamsCreate,
-					Scope:   accesscontrol.ScopeTeamsAll,
+					RoleID: 1,
+					Action: accesscontrol.ActionTeamsCreate,
+					Scope:  accesscontrol.ScopeTeamsAll,
 				},
 			},
 		},
@@ -87,19 +88,19 @@ func TestActionMigration(t *testing.T) {
 			},
 			wantPermissions: []*accesscontrol.Permission{
 				{
-					RoleID:  1,
-					Action:  accesscontrol.ActionOrgUsersWrite,
-					Scope:   accesscontrol.ScopeUsersAll,
+					RoleID: 1,
+					Action: accesscontrol.ActionOrgUsersWrite,
+					Scope:  accesscontrol.ScopeUsersAll,
 				},
 				{
-					RoleID:  2,
-					Action:  accesscontrol.ActionTeamsCreate,
-					Scope:   accesscontrol.ScopeTeamsAll,
+					RoleID: 2,
+					Action: accesscontrol.ActionTeamsCreate,
+					Scope:  accesscontrol.ScopeTeamsAll,
 				},
 				{
-					RoleID:  1,
-					Action:  "teams.roles:read",
-					Scope:   accesscontrol.ScopeTeamsAll,
+					RoleID: 1,
+					Action: "teams.roles:read",
+					Scope:  accesscontrol.ScopeTeamsAll,
 				},
 			},
 		},
@@ -123,9 +124,9 @@ func TestActionMigration(t *testing.T) {
 			},
 			wantPermissions: []*accesscontrol.Permission{
 				{
-					RoleID:  1,
-					Action:  accesscontrol.ActionOrgUsersWrite,
-					Scope:   accesscontrol.ScopeUsersAll,
+					RoleID: 1,
+					Action: accesscontrol.ActionOrgUsersWrite,
+					Scope:  accesscontrol.ScopeUsersAll,
 				},
 			},
 		},
@@ -149,14 +150,14 @@ func TestActionMigration(t *testing.T) {
 			},
 			wantPermissions: []*accesscontrol.Permission{
 				{
-					RoleID:  1,
-					Action:  accesscontrol.ActionOrgUsersWrite,
-					Scope:   accesscontrol.ScopeUsersAll,
+					RoleID: 1,
+					Action: accesscontrol.ActionOrgUsersWrite,
+					Scope:  accesscontrol.ScopeUsersAll,
 				},
 				{
-					RoleID:  2,
-					Action:  accesscontrol.ActionOrgUsersWrite,
-					Scope:   accesscontrol.ScopeUsersAll,
+					RoleID: 2,
+					Action: accesscontrol.ActionOrgUsersWrite,
+					Scope:  accesscontrol.ScopeUsersAll,
 				},
 			},
 		},
@@ -183,7 +184,7 @@ DELETE FROM permission`, acmig.ActionMigrationID)
 			errRunningMig := acmigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)
 
-			// Check permisisons
+			// Check permissions
 			resultingPermissions := []accesscontrol.Permission{}
 			err := x.Table("permission").Find(&resultingPermissions)
 			require.NoError(t, err)
