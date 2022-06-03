@@ -1,10 +1,27 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { BackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { ShareModal } from './ShareModal';
+import { PublicDashboardConfig } from './SharePublicDashboardUtils';
+
+// Mock api request
+const publicDashboardconfigResp: PublicDashboardConfig = {
+  isPublic: true,
+  publicDashboard: { uid: '', dashboardUid: '' },
+};
+
+const backendSrv = {
+  get: () => publicDashboardconfigResp,
+} as unknown as BackendSrv;
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 jest.mock('app/core/core', () => {
   return {
@@ -54,25 +71,23 @@ describe('SharePublic', () => {
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Public Dashboard');
   });
 
-  // FIXME getBackendSrv().get fails in testing. need to figure out how to mock so
-  // we can get this test running again.
-  //it('renders share panel when public dashboards feature is enabled', async () => {
-  //config.featureToggles.publicDashboards = true;
-  //const mockDashboard = new DashboardModel({
-  //uid: 'mockDashboardUid',
-  //});
-  //const mockPanel = new PanelModel({
-  //id: 'mockPanelId',
-  //});
+  it('renders share panel when public dashboards feature is enabled', async () => {
+    config.featureToggles.publicDashboards = true;
+    const mockDashboard = new DashboardModel({
+      uid: 'mockDashboardUid',
+    });
+    const mockPanel = new PanelModel({
+      id: 'mockPanelId',
+    });
 
-  //render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
+    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
-  //await waitFor(() => screen.getByText('Link'));
-  //expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-  //expect(screen.getByRole('tablist')).toHaveTextContent('Public Dashboard');
+    await waitFor(() => screen.getByText('Link'));
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Public Dashboard');
 
-  //fireEvent.click(screen.getByText('Public Dashboard'));
+    fireEvent.click(screen.getByText('Public Dashboard'));
 
-  //await waitFor(() => screen.getByText('Enabled'));
-  //});
+    await waitFor(() => screen.getByText('Enabled'));
+  });
 });
