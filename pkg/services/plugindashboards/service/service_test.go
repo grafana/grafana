@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/dashboard"
+	"github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/stretchr/testify/require"
 )
@@ -170,7 +170,7 @@ type pluginDashboardStoreMock struct {
 	pluginDashboardFiles map[string]map[string][]byte
 }
 
-func (m pluginDashboardStoreMock) ListPluginDashboardFiles(_ context.Context, args *dashboard.ListPluginDashboardFilesArgs) (*dashboard.ListPluginDashboardFilesResult, error) {
+func (m pluginDashboardStoreMock) ListPluginDashboardFiles(_ context.Context, args *dashboards.ListPluginDashboardFilesArgs) (*dashboards.ListPluginDashboardFilesResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		references := []string{}
 
@@ -180,7 +180,7 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(_ context.Context, ar
 
 		sort.Strings(references)
 
-		return &dashboard.ListPluginDashboardFilesResult{
+		return &dashboards.ListPluginDashboardFilesResult{
 			FileReferences: references,
 		}, nil
 	}
@@ -188,11 +188,11 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(_ context.Context, ar
 	return nil, plugins.NotFoundError{PluginID: args.PluginID}
 }
 
-func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(_ context.Context, args *dashboard.GetPluginDashboardFileContentsArgs) (*dashboard.GetPluginDashboardFileContentsResult, error) {
+func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(_ context.Context, args *dashboards.GetPluginDashboardFileContentsArgs) (*dashboards.GetPluginDashboardFileContentsResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
 			r := bytes.NewReader(content)
-			return &dashboard.GetPluginDashboardFileContentsResult{
+			return &dashboards.GetPluginDashboardFileContentsResult{
 				Content: io.NopCloser(r),
 			}, nil
 		}
