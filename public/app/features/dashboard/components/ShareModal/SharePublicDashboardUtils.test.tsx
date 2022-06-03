@@ -5,7 +5,7 @@ import { dashboardHasTemplateVariables } from './SharePublicDashboardUtils';
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {
     let variables: VariableModel[] = [];
-    expect(dashboardHasTemplateVariables(variables)).toBe(true);
+    expect(dashboardHasTemplateVariables(variables)).toBe(false);
   });
 
   it('true', () => {
