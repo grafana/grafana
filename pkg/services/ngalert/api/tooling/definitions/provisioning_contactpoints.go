@@ -15,7 +15,7 @@ import (
 //       200: Route
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/v1/contact-points provisioning RoutePostContactpoints
+// swagger:route POST /api/v1/provisioning/contact-points provisioning RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -26,7 +26,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/v1/contact-points/{UID} provisioning RoutePutContactpoint
+// swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -37,7 +37,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/v1/contact-points/{UID} provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/v1/provisioning/contact-points/{UID} provisioning RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
