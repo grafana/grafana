@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { of, throwError } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 
 import {
   CoreApp,
@@ -99,6 +99,24 @@ describe('PrometheusDatasource', () => {
         expect(response[0].data.length).not.toBe(0);
         expect(response[0].state).toBe(LoadingState.Done);
       });
+    });
+
+    it('throws if using direct access', async () => {
+      const instanceSettings = {
+        url: 'proxied',
+        directUrl: 'direct',
+        user: 'test',
+        password: 'mupp',
+        access: 'direct',
+        jsonData: {
+          customQueryParameters: '',
+        } as any,
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+      const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+
+      await expect(
+        lastValueFrom(directDs.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })))
+      ).rejects.toBeDefined();
     });
   });
 

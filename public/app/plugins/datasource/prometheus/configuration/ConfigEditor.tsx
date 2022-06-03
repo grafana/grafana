@@ -28,8 +28,8 @@ export const ConfigEditor = (props: Props) => {
   return (
     <>
       {options.access === 'direct' && (
-        <Alert title="Deprecation Notice" severity="warning">
-          Browser access mode in the Prometheus datasource is deprecated and will be removed in a future release.
+        <Alert title="Error" severity="error">
+          Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.
         </Alert>
       )}
 
