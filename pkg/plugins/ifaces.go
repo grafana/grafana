@@ -21,24 +21,6 @@ type Store interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-// Loader is responsible for loading plugins from the file system.
-type Loader interface {
-	// Load will return a list of plugins found in the provided file system paths.
-	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-	// Errors will return a list of error found during the plugin loading process
-	Errors(ctx context.Context) []Error
-}
-
-// Installer is responsible for managing plugins (add / remove) on the file system.
-type Installer interface {
-	// Install downloads the requested plugin in the provided file system location.
-	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
-	// Uninstall removes the requested plugin from the provided file system location.
-	Uninstall(ctx context.Context, pluginDir string) error
-	// GetUpdateInfo provides update information for the requested plugin.
-	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
-}
-
 type UpdateInfo struct {
 	PluginZipURL string
 }
@@ -68,6 +50,11 @@ type StaticRouteResolver interface {
 
 type ErrorResolver interface {
 	PluginErrors(ctx context.Context) []Error
+}
+
+type PluginLoaderAuthorizer interface {
+	// CanLoadPlugin confirms if a plugin is authorized to load
+	CanLoadPlugin(plugin *Plugin) bool
 }
 
 // ListPluginDashboardFilesArgs list plugin dashboard files argument model.

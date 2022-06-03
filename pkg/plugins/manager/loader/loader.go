@@ -32,7 +32,7 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
-var _ plugins.Loader = (*Loader)(nil)
+var _ Service = (*Loader)(nil)
 
 type Loader struct {
 	cfg                *config.Cfg
@@ -354,18 +354,6 @@ func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type)
 	}
 
 	return path.Join(baseURL, pathStr)
-}
-
-func (l *Loader) PluginErrors(_ context.Context) []*plugins.Error {
-	errs := make([]*plugins.Error, 0)
-	for _, err := range l.errs {
-		errs = append(errs, &plugins.Error{
-			PluginID:  err.PluginID,
-			ErrorCode: err.AsErrorCode(),
-		})
-	}
-
-	return errs
 }
 
 func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {

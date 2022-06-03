@@ -46,7 +46,7 @@ func TestLoader_Load(t *testing.T) {
 		pluginPaths     []string
 		existingPlugins map[string]struct{}
 		want            []*plugins.Plugin
-		pluginErrors    map[string]*plugins.Error
+		pluginErrors    map[string]plugins.Error
 	}{
 		{
 			name:  "Load a Core plugin",
@@ -266,7 +266,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]plugins.Error{
 				"test": {
 					PluginID:  "test",
 					ErrorCode: "signatureMissing",
@@ -321,7 +321,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]plugins.Error{
 				"test": {
 					PluginID:  "test",
 					ErrorCode: "signatureModified",
@@ -337,7 +337,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]plugins.Error{
 				"test": {
 					PluginID:  "test",
 					ErrorCode: "signatureModified",
@@ -404,7 +404,7 @@ func TestLoader_Load(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
 			}
 
-			pluginErrs := l.PluginErrors(context.Background())
+			pluginErrs := l.Errors(context.Background())
 			assert.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
 				assert.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -483,7 +483,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			appURL          string
 			existingPlugins map[string]struct{}
 			want            []*plugins.Plugin
-			pluginErrors    map[string]*plugins.Error
+			pluginErrors    map[string]plugins.Error
 		}{
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
@@ -531,7 +531,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						SignatureOrg:  "Will Browne",
 					},
 				},
-				pluginErrors: map[string]*plugins.Error{
+				pluginErrors: map[string]plugins.Error{
 					"test": {
 						PluginID:  "test",
 						ErrorCode: "signatureMissing",
