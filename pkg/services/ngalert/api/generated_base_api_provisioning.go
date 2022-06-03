@@ -141,201 +141,201 @@ func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) respons
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
-			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/alert-rules/{UID}"),
+			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/alert-rules/{UID}",
+				"/api/v1/provisioning/alert-rules/{UID}",
 				srv.RouteDeleteAlertRule,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/contact-points/{UID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{UID}"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contact-points/{UID}",
+				"/api/v1/provisioning/contact-points/{UID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/mute-timings/{name}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/mute-timings/{name}"),
+			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/mute-timings/{name}",
+				"/api/v1/provisioning/mute-timings/{name}",
 				srv.RouteDeleteMuteTiming,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/templates/{name}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/templates/{name}"),
+			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/templates/{name}",
+				"/api/v1/provisioning/templates/{name}",
 				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
-			api.authorize(http.MethodGet, "/api/provisioning/alert-rules/{UID}"),
+			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/alert-rules/{UID}",
+				"/api/v1/provisioning/alert-rules/{UID}",
 				srv.RouteGetAlertRule,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodGet, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/mute-timings/{name}"),
-			api.authorize(http.MethodGet, "/api/provisioning/mute-timings/{name}"),
+			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/mute-timings/{name}",
+				"/api/v1/provisioning/mute-timings/{name}",
 				srv.RouteGetMuteTiming,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/mute-timings"),
-			api.authorize(http.MethodGet, "/api/provisioning/mute-timings"),
+			toMacaronPath("/api/v1/provisioning/mute-timings"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/mute-timings",
+				"/api/v1/provisioning/mute-timings",
 				srv.RouteGetMuteTimings,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodGet, "/api/provisioning/policies"),
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/policies",
+				"/api/v1/provisioning/policies",
 				srv.RouteGetPolicyTree,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates/{name}"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates/{name}"),
+			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates/{name}",
+				"/api/v1/provisioning/templates/{name}",
 				srv.RouteGetTemplate,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates"),
+			toMacaronPath("/api/v1/provisioning/templates"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/templates"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates",
+				"/api/v1/provisioning/templates",
 				srv.RouteGetTemplates,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/alert-rules"),
-			api.authorize(http.MethodPost, "/api/provisioning/alert-rules"),
+			toMacaronPath("/api/v1/provisioning/alert-rules"),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/alert-rules"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/alert-rules",
+				"/api/v1/provisioning/alert-rules",
 				srv.RoutePostAlertRule,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPost, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/v1/provisioning/contact-points"),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/contact-points",
+				"/api/v1/provisioning/contact-points",
 				srv.RoutePostContactpoints,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/mute-timings"),
-			api.authorize(http.MethodPost, "/api/provisioning/mute-timings"),
+			toMacaronPath("/api/v1/provisioning/mute-timings"),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/mute-timings",
+				"/api/v1/provisioning/mute-timings",
 				srv.RoutePostMuteTiming,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/alert-rules/{UID}"),
-			api.authorize(http.MethodPut, "/api/provisioning/alert-rules/{UID}"),
+			toMacaronPath("/api/v1/provisioning/alert-rules/{UID}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/alert-rules/{UID}",
+				"/api/v1/provisioning/alert-rules/{UID}",
 				srv.RoutePutAlertRule,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
-			api.authorize(http.MethodPut, "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
 				srv.RoutePutAlertRuleGroup,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contact-points/{UID}"),
-			api.authorize(http.MethodPut, "/api/provisioning/contact-points/{UID}"),
+			toMacaronPath("/api/v1/provisioning/contact-points/{UID}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contact-points/{UID}",
+				"/api/v1/provisioning/contact-points/{UID}",
 				srv.RoutePutContactpoint,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/mute-timings/{name}"),
-			api.authorize(http.MethodPut, "/api/provisioning/mute-timings/{name}"),
+			toMacaronPath("/api/v1/provisioning/mute-timings/{name}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/mute-timings/{name}",
+				"/api/v1/provisioning/mute-timings/{name}",
 				srv.RoutePutMuteTiming,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodPut, "/api/provisioning/policies"),
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/policies",
+				"/api/v1/provisioning/policies",
 				srv.RoutePutPolicyTree,
 				m,
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/templates/{name}"),
-			api.authorize(http.MethodPut, "/api/provisioning/templates/{name}"),
+			toMacaronPath("/api/v1/provisioning/templates/{name}"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/templates/{name}",
+				"/api/v1/provisioning/templates/{name}",
 				srv.RoutePutTemplate,
 				m,
 			),

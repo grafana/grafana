@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
-import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
+import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -156,11 +155,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
-                  <DetailsStep
-                    folderPermissions={[
-                      existing ? AccessControlAction.AlertingRuleUpdate : AccessControlAction.AlertingRuleCreate,
-                    ]}
-                  />
+                  <DetailsStep initialFolder={defaultValues.folder} />
                   <NotificationsStep />
                 </>
               )}
