@@ -318,7 +318,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
-			Icon:        "keyhole-circle",
+			Icon:        "gf-service-account",
 			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
