@@ -71,6 +71,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
 - [FEATURE] Alert rules with associated panels will take screenshots. #49293 #49338 #49374 #49377 #49378 #49379 #49381 #49385 #49439 #49445
+- [FEATURE] Persistent order of alert rules in a group #50051
 - [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
 - [BUGFIX] Allow anonymous access to alerts #49203
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
