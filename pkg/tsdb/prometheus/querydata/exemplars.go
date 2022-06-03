@@ -42,6 +42,7 @@ func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, 
 			labels: labels,
 			ts:     ts,
 		}}
+		e.updateAggregations(val)
 		return
 	}
 
@@ -54,7 +55,7 @@ func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, 
 			ts:     ts,
 		})
 		sort.Slice(e.buckets[bucketTs], func(i, j int) bool {
-			return e.buckets[bucketTs][i].val < e.buckets[bucketTs][j].val
+			return e.buckets[bucketTs][i].val > e.buckets[bucketTs][j].val
 		})
 		e.updateAggregations(val)
 	}
@@ -65,14 +66,14 @@ func (e *exemplarSampler) updateAggregations(val float64) {
 	delta := val - e.mean
 	e.mean += delta / float64(e.count)
 	delta2 := val - e.mean
-	e.m2 += math.Pow(delta*delta2, 2)
+	e.m2 += delta * delta2
 }
 
 func (e *exemplarSampler) getStandardDeviation() float64 {
 	if e.count < 2 {
 		return 0
 	}
-	return e.m2 / float64(e.count-1)
+	return math.Sqrt(e.m2 / float64(e.count-1))
 }
 
 func (e *exemplarSampler) saveNewLabels(labels map[string]string) {
@@ -92,39 +93,52 @@ func (e *exemplarSampler) getLabelNames() []string {
 	return labelNames
 }
 
-func (e *exemplarSampler) getBucketTimestamps() []time.Time {
-	ts := make([]time.Time, 0, len(e.buckets))
-	for k := range e.buckets {
-		ts = append(ts, k)
+func (e *exemplarSampler) getExemplars() []exemplar {
+	exemplars := make([]exemplar, 0, len(e.buckets))
+	for _, b := range e.buckets {
+		for _, e := range b {
+			exemplars = append(exemplars, e)
+		}
 	}
-	sort.Slice(ts, func(i, j int) bool {
-		return ts[i].Before(ts[j])
+	sort.Slice(exemplars, func(i, j int) bool {
+		return exemplars[i].ts.Before(exemplars[j].ts)
 	})
-	return ts
+	return exemplars
 }
 
 func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	frames := []*data.Frame{}
 	sampler := newExemplarSampler()
+
+	// we are moving from a multi-frame response returned
+	// by the converter to a single exemplar frame,
+	// so we need to build a new frame array with the
+	// old exemplar frames filtered out
+	frames := []*data.Frame{}
+
+	// the new exemplar frame will be a single frame in long format
+	// with a timestamp, metric value, and one or more label fields
 	exemplarFrame := data.NewFrame("")
 
 	for _, frame := range dr.Frames {
+		// we don't need to process non-exemplar frames
+		// so they can be added to the response
 		if !isExemplarFrame(frame) {
 			frames = append(frames, frame)
 			continue
 		}
 
+		// copy the frame metadata to the new exemplar frame
 		exemplarFrame.Meta = frame.Meta
 		exemplarFrame.RefID = frame.RefID
 		exemplarFrame.Name = frame.Name
 
+		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
 		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
 			ts, val, ok := getTimeValuePair(frame, rowIdx)
-			labels := getLabels(frame, rowIdx)
-			step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
 			if !ok {
 				continue
 			}
+			labels := getLabels(frame, rowIdx)
 			sampler.update(step, ts, val, labels)
 		}
 	}
@@ -138,18 +152,16 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(sampler.buckets))))
 	}
 
-	for _, ts := range sampler.getBucketTimestamps() {
-		for _, b := range sampler.buckets[ts] {
-			timeField.Append(b.ts)
-			valueField.Append(b.val)
-			for i, labelName := range labelNames {
-				colIdx := i + 2 // +2 to skip time and value fields
-				labelValue, ok := b.labels[labelName]
-				if !ok {
-					labelValue = ""
-				}
-				exemplarFrame.Fields[colIdx].Append(labelValue)
+	for _, b := range sampler.getExemplars() {
+		timeField.Append(b.ts)
+		valueField.Append(b.val)
+		for i, labelName := range labelNames {
+			labelValue, ok := b.labels[labelName]
+			if !ok {
+				labelValue = ""
 			}
+			colIdx := i + 2 // +2 to skip time and value fields
+			exemplarFrame.Fields[colIdx].Append(labelValue)
 		}
 	}
 
@@ -169,10 +181,12 @@ func isExemplarFrame(frame *data.Frame) bool {
 func getLabels(frame *data.Frame, rowIdx int) map[string]string {
 	labels := map[string]string{}
 	for _, f := range frame.Fields {
+		// series labels are stored as field labels
 		for k, v := range f.Labels {
 			labels[k] = v
 		}
 
+		// exemplar labels (trace IDs) are stored in string columns
 		if f.Type() == data.FieldTypeString {
 			if v, ok := f.At(rowIdx).(string); ok {
 				labels[f.Name] = v
