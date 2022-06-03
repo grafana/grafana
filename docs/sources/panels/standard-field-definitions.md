@@ -27,11 +27,11 @@ To change this setting, type a number in the field and then click outside the fi
 
 Lets you control the URL to which a value or visualization link.
 
-For more information and instructions, refer to [Data links]({{< relref "../linking/data-links.md" >}}).
+For more information and instructions, refer to [Data links]({{< relref "../linking/data-links/" >}}).
 
 ## Display name
 
-Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/_index.md" >}}) in the field title.
+Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/" >}}) in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 
