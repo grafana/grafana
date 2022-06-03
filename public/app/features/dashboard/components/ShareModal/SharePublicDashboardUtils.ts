@@ -22,7 +22,10 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
   return variables.length > 0;
 };
 
-export const getPublicDashboardConfig = async (dashboardUid: string, setPublicDashboardConfig: Function) => {
+export const getPublicDashboardConfig = async (
+  dashboardUid: string,
+  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboardConfig>>
+) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
   const pdResp: PublicDashboardConfig = await getBackendSrv().get(url);
   setPublicDashboardConfig(pdResp);
