@@ -151,8 +151,8 @@ describe('VariableEditor', () => {
 
       await waitFor(() => {
         screen.getByLabelText('Log group prefix');
-        screen.getByLabelText('Region');
       });
+      screen.queryByRole('combobox', { name: 'Region' });
 
       expect(screen.queryByLabelText('Namespace')).not.toBeInTheDocument();
     });
