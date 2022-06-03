@@ -1,8 +1,6 @@
 package api
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,73 +8,65 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
-	"github.com/prometheus/prometheus/pkg/labels"
+	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
-	var reporter cmputil.DiffReporter
-	ops := make([]cmp.Option, 0, 4)
-	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
-	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
-		return string(in)
-	})
-	matcherComparer := cmp.Comparer(func(a, b labels.Matcher) bool {
-		if a.Name != b.Name {
-			return false
-		}
-		if a.Value != b.Value {
-			return false
-		}
-		if a.Type != b.Type {
-			return false
-		}
-		return true
-	})
-	ops = append(ops, cmp.Reporter(&reporter), matcherComparer, jsonCmp, cmpopts.EquateEmpty())
-	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, ops...)
-	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != ngmodels.ProvenanceNone {
-		srv.log.Debug("diff route", "equal", routesEqual)
-		for _, path := range reporter.Diffs.Paths() {
-			srv.log.Debug("diff paths", "path", path)
-		}
-		return errors.New("policies were provisioned and cannot be changed through the UI")
-	}
-	reporter = cmputil.DiffReporter{}
-	ops = make([]cmp.Option, 0, 4)
-	ops = append(ops, cmp.Reporter(&reporter), matcherComparer, jsonCmp, cmpopts.EquateEmpty())
-	templatesEqual := cmp.Equal(currentConfig.TemplateFiles, newConfig.TemplateFiles, ops...)
-	if !templatesEqual {
-		for _, path := range reporter.Diffs.Paths() {
-			if prov, ok := currentConfig.TemplateFileProvenances[path]; ok {
-				if prov != ngmodels.ProvenanceNone {
-					return errors.New("template '" + path + "' was provisioned and cannot be changed through the UI")
-				}
-			}
-		}
-	}
-	if err := validateContactPoints(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers); err != nil {
+	if err := checkRoutes(currentConfig, newConfig); err != nil {
 		return err
 	}
-	// reporter = cmputil.DiffReporter{}
-	// ops = make([]cmp.Option, 0, 4)
-	// ops = append(ops, cmp.Reporter(&reporter), matcherComparer, jsonCmp, cmpopts.EquateEmpty())
-	// contactPointsEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers, ops...)
-	// if !contactPointsEqual {
-	// 	for _, path := range reporter.Diffs.Paths() {
-	// 		srv.log.Debug("cp not equal", "path", path)
-	// 	}
-	// }
+	if err := checkTemplates(currentConfig, newConfig); err != nil {
+		return err
+	}
+	if err := checkContactPoints(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers); err != nil {
+		return err
+	}
+	if err := checkMuteTimes(currentConfig, newConfig); err != nil {
+		return err
+	}
 	return nil
 }
 
-func validateContactPoints(current []*apimodels.GettableApiReceiver, new []*apimodels.PostableApiReceiver) error {
-	// todo check if provisioned was deleted
+func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
+	reporter := cmputil.DiffReporter{}
+	ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
+	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, ops...)
+	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != ngmodels.ProvenanceNone {
+		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
+	}
+	return nil
+}
+
+func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
+	for name, template := range currentConfig.TemplateFiles {
+		found := false
+		provenance := ngmodels.ProvenanceNone
+		if prov, present := currentConfig.TemplateFileProvenances[name]; present {
+			provenance = prov
+		}
+		for newName, newTemplate := range newConfig.TemplateFiles {
+			if name != newName {
+				continue
+			}
+			found = true
+			if template != newTemplate && provenance != ngmodels.ProvenanceNone {
+				return fmt.Errorf("template '%s' was provisioned and cannot be changed through the UI", name)
+			}
+			break // we found the template and we can proceed
+		}
+		if !found && provenance != ngmodels.ProvenanceNone {
+			return fmt.Errorf("template '%s' was provisioned and cannot be changed through the UI", name)
+		}
+	}
+	return nil
+}
+
+func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimodels.PostableApiReceiver) error {
 	for _, existingReceiver := range current {
 		for _, existingContactPoint := range existingReceiver.GrafanaManagedReceivers {
 			found, edited := false, false
 		outer:
 			for _, postedReceiver := range new {
-				fmt.Printf("######## START (%s, %s) ##########\n", existingContactPoint.Name, existingContactPoint.Type)
 				for _, postedContactPoint := range postedReceiver.GrafanaManagedReceivers {
 					if existingContactPoint.UID != postedContactPoint.UID {
 						continue
@@ -85,22 +75,18 @@ func validateContactPoints(current []*apimodels.GettableApiReceiver, new []*apim
 					if existingContactPoint.DisableResolveMessage != postedContactPoint.DisableResolveMessage {
 						edited = true
 					}
-					fmt.Printf("######## (edited == %t) checked resolved \n", edited)
 					if existingContactPoint.Name != postedContactPoint.Name {
 						edited = true
 					}
-					fmt.Printf("######## (edited == %t) checked name \n", edited)
 					if existingContactPoint.Type != postedContactPoint.Type {
 						edited = true
 					}
-					fmt.Printf("######## (edited == %t) checked type \n", edited)
 					for key := range existingContactPoint.SecureFields {
 						if value, present := postedContactPoint.SecureSettings[key]; present && value != "" {
 							edited = true
 							break // it's enough to know that something was edited
 						}
 					}
-					fmt.Printf("######## (edited == %t) checked secure \n", edited)
 					existingSettings, err := existingContactPoint.Settings.Map()
 					if err != nil {
 						return err
@@ -120,18 +106,42 @@ func validateContactPoints(current []*apimodels.GettableApiReceiver, new []*apim
 							break // it's enough to know that something was edited
 						}
 					}
-					fmt.Printf("######## (edited == %t) checked settings \n", edited)
-					fmt.Printf("######## END (found:%t, edited:%t) ##########\n", found, edited)
 					if edited && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
-						return errors.New("contact point '" + existingContactPoint.Name + "' was provisioned and cannot be changed through the UI")
+						return fmt.Errorf("contact point '%s' was provisioned and cannot be changed through the UI", existingContactPoint.Name)
 					}
 					break outer
 				}
-				fmt.Printf("######## END (found:%t, edited:%t) ##########\n", found, edited)
 			}
 			if !found && existingContactPoint.Provenance != ngmodels.ProvenanceNone {
-				return errors.New("contact point '" + existingContactPoint.Name + "' was provisioned and cannot be changed through the UI")
+				return fmt.Errorf("contact point '%s' was provisioned and cannot be changed through the UI", existingContactPoint.Name)
 			}
+		}
+	}
+	return nil
+}
+
+func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
+	for _, muteTime := range currentConfig.AlertmanagerConfig.MuteTimeIntervals {
+		found := false
+		provenance := ngmodels.ProvenanceNone
+		if prov, present := currentConfig.AlertmanagerConfig.MuteTimeProvenances[muteTime.Name]; present {
+			provenance = prov
+		}
+		for _, newMuteTime := range newConfig.AlertmanagerConfig.MuteTimeIntervals {
+			if newMuteTime.Name != muteTime.Name {
+				continue
+			}
+			found = true
+			reporter := cmputil.DiffReporter{}
+			ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
+			timesEqual := cmp.Equal(muteTime.TimeIntervals, newMuteTime.TimeIntervals, ops...)
+			if !timesEqual && provenance != ngmodels.ProvenanceNone {
+				return fmt.Errorf("mute time '%s' was provisioned and cannot be changed through the UI", muteTime.Name)
+			}
+			break
+		}
+		if !found && provenance != ngmodels.ProvenanceNone {
+			return fmt.Errorf("mute time '%s' was provisioned and cannot be changed through the UI", muteTime.Name)
 		}
 	}
 	return nil
