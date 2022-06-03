@@ -29,11 +29,11 @@ describe('Heatmap Migrations', () => {
             "layout": "auto",
           },
           "calculate": Object {
-            "xAxis": Object {
+            "xBuckets": Object {
               "mode": "count",
               "value": "100",
             },
-            "yAxis": Object {
+            "yBuckets": Object {
               "mode": "count",
               "scale": Object {
                 "log": 2,
