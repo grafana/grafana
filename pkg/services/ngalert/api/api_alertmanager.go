@@ -217,7 +217,14 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	err := srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	if err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	if err := srv.provenanceGuard(currentConfig, body); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}
