@@ -16,7 +16,7 @@ For every dashboard and data source, you can access usage information.
 
 ## Dashboard insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 To see dashboard usage information, go to the top bar and click **Dashboard insights**.
 
@@ -31,7 +31,7 @@ Dashboard insights show the following information:
 
 ## Data source insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise" >}}) version 7.3 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.3 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 Data source insights give you information about how a data source has been used in the past 30 days, such as:
 

@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /api/provisioning/mute-timings provisioning RouteGetMuteTimings
+// swagger:route GET /api/v1/provisioning/mute-timings provisioning RouteGetMuteTimings
 //
 // Get all the mute timings.
 //
@@ -8,7 +8,7 @@ package definitions
 //       200: MuteTimings
 //       400: ValidationError
 
-// swagger:route GET /api/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
+// swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
 //
 // Get a mute timing.
 //
@@ -16,7 +16,7 @@ package definitions
 //       200: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/mute-timings provisioning RoutePostMuteTiming
+// swagger:route POST /api/v1/provisioning/mute-timings provisioning RoutePostMuteTiming
 //
 // Create a new mute timing.
 //
@@ -27,7 +27,7 @@ package definitions
 //       201: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/mute-timings/{name} provisioning RoutePutMuteTiming
+// swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning RoutePutMuteTiming
 //
 // Replace an existing mute timing.
 //
@@ -38,7 +38,7 @@ package definitions
 //       200: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/mute-timings/{name} provisioning RouteDeleteMuteTiming
+// swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning RouteDeleteMuteTiming
 //
 // Delete a mute timing.
 //

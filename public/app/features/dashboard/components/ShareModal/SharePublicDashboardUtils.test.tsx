@@ -1,17 +1,16 @@
-import { DashboardModel } from 'app/features/dashboard/state';
+import { VariableModel } from 'app/features/variables/types';
 
-import { dashboardCanBePublic } from './SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables } from './SharePublicDashboardUtils';
 
-describe('dashboardCanBePublic', () => {
-  it('can be public with no template variables', () => {
-    //@ts-ignore
-    const dashboard: DashboardModel = { templating: { list: [] } };
-    expect(dashboardCanBePublic(dashboard)).toBe(true);
+describe('dashboardHasTemplateVariables', () => {
+  it('false', () => {
+    let variables: VariableModel[] = [];
+    expect(dashboardHasTemplateVariables(variables)).toBe(false);
   });
 
-  it('cannot be public with template variables', () => {
+  it('true', () => {
     //@ts-ignore
-    const dashboard: DashboardModel = { templating: { list: [{}] } };
-    expect(dashboardCanBePublic(dashboard)).toBe(false);
+    let variables: VariableModel[] = ['a'];
+    expect(dashboardHasTemplateVariables(variables)).toBe(true);
   });
 });

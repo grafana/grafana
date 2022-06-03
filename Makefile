@@ -43,6 +43,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:/go \
 	-v $$(pwd):/grafana \
+	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	generate spec -m -o /grafana/public/api-spec.json \
 	-w /grafana/pkg/server \
@@ -62,7 +63,7 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 --swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
-	swagger generate spec -m -w pkg/server -o public/api-spec.json \
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json

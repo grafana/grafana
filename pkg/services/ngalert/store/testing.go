@@ -315,18 +315,41 @@ func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) erro
 	return nil
 }
 
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) error {
+func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
+	ids := make(map[string]int64, len(q))
 	if err := f.Hook(q); err != nil {
-		return err
+		return ids, err
 	}
-	return nil
+	return ids, nil
 }
 
 func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
+}
+
+func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			return rule.IntervalSeconds, nil
+		}
+	}
+	return 0, ErrAlertRuleGroupNotFound
+}
+
+func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			rule.IntervalSeconds = interval
+		}
+	}
+	return nil
 }
 
 type FakeInstanceStore struct {
