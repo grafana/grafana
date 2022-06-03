@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
@@ -57,7 +57,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return pCtx, exists, errutil.Wrap("Failed to convert datasource", err)
+		return pCtx, exists, fmt.Errorf("%v: %w", "Failed to convert datasource", err)
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
@@ -82,12 +82,12 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *mod
 		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return backend.PluginContext{}, false, errutil.Wrap("Failed to get plugin settings", err)
+			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
 		}
 	} else {
 		jsonData, err = json.Marshal(ps.JSONData)
 		if err != nil {
-			return backend.PluginContext{}, false, errutil.Wrap("Failed to unmarshal plugin json data", err)
+			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to unmarshal plugin json data", err)
 		}
 		decryptedSecureJSONData = p.pluginSettingsService.DecryptedValues(ps)
 		updated = ps.Updated

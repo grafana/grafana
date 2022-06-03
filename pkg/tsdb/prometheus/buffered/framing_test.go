@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"os"
@@ -43,7 +42,7 @@ func TestResponses(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden")
+			goldenFileName := test.filepath + ".result.golden"
 
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
@@ -57,21 +56,7 @@ func TestResponses(t *testing.T) {
 
 			dr, found := result.Responses["A"]
 			require.True(t, found)
-
-			actual, err := json.MarshalIndent(&dr, "", "  ")
-			require.NoError(t, err)
-
-			// nolint:gosec
-			// We can ignore the gosec G304 because this is a test with static defined paths
-			expected, err := ioutil.ReadFile(goldenFileName + ".json")
-			if err != nil || update {
-				err = os.WriteFile(goldenFileName+".json", actual, 0600)
-				require.NoError(t, err)
-			}
-
-			require.JSONEq(t, string(expected), string(actual))
-
-			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
+			experimental.CheckGoldenJSONResponse(t, "../testdata", goldenFileName, &dr, update)
 		})
 	}
 }
