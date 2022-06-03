@@ -23,8 +23,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     exploreActiveButton: css`
       box-shadow: ${theme.shadows.z1};
-      border: 1px solid ${theme.colors.info.text} !important;
-      color: ${theme.colors.info.text} !important;
+      border: 1px solid ${theme.colors.warning.text} !important;
+      color: ${theme.colors.warning.text} !important;
     `,
   };
 };
