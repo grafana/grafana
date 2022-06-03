@@ -57,7 +57,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
@@ -74,7 +74,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
@@ -91,11 +91,61 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, null, null, null, null, null, 'c']);
+  });
+
+  test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [4, 6, 13] },
+        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold({
+      frame: df,
+      refFieldName: null,
+      refFieldPseudoMin: 1,
+      refFieldPseudoMax: 13,
+    });
+
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([
+      null,
+      null,
+      null,
+      4,
+      null,
+      6,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      8,
+    ]);
+    expect(result.fields[2].values.toArray()).toStrictEqual([
+      null,
+      null,
+      null,
+      'a',
+      null,
+      'b',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'c',
+    ]);
   });
 
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
@@ -108,10 +158,24 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df, null, 13);
+    const result = applyNullInsertThreshold({ frame: df, refFieldName: null, refFieldPseudoMax: 13 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, null, null, null, null, null, 8, null]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([
+      4,
+      null,
+      6,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      8,
+      null,
+      null,
+      null,
+    ]);
     expect(result.fields[2].values.toArray()).toStrictEqual([
       'a',
       null,
@@ -123,6 +187,8 @@ describe('nullInsertThreshold Transformer', () => {
       null,
       null,
       'c',
+      null,
+      null,
       null,
     ]);
 
@@ -136,7 +202,9 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result2 = applyNullInsertThreshold(df2, null, 13);
+    // Max is 2 as opposed to the above 13 otherwise
+    // we get 12 nulls instead of the additional 1
+    const result2 = applyNullInsertThreshold({ frame: df2, refFieldName: null, refFieldPseudoMax: 2 });
 
     expect(result2.fields[0].values.toArray()).toStrictEqual([1, 2]);
     expect(result2.fields[1].values.toArray()).toStrictEqual([1, null]);
@@ -154,7 +222,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 6, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
@@ -170,7 +238,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -184,7 +252,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -198,7 +266,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -212,7 +280,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df);
+    const result = applyNullInsertThreshold({ frame: df });
 
     expect(result).toBe(df);
   });
@@ -226,7 +294,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = applyNullInsertThreshold(df, 'Time2');
+    const result = applyNullInsertThreshold({ frame: df, refFieldName: 'Time2' });
 
     expect(result).toBe(df);
   });
@@ -238,7 +306,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     // eslint-disable-next-line no-console
     console.time('insertValues-10x3k');
-    applyNullInsertThreshold(bigFrameA);
+    applyNullInsertThreshold({ frame: bigFrameA });
     // eslint-disable-next-line no-console
     console.timeEnd('insertValues-10x3k');
   });
