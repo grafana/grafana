@@ -432,7 +432,7 @@ var dashboardsWithFolders = []dashboard{
 func TestDashboardIndex_Folders(t *testing.T) {
 	t.Run("folders-indexed", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithFolders)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "My folder", Kind: []string{string(entityKindFolder)}},
 		)
 	})
@@ -452,7 +452,7 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		newReader, err := index.removeFolder(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
 		// In response we expect one dashboard which does not belong to removed folder.
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "dash", Kind: []string{string(entityKindDashboard)}},
 		)
 	})
@@ -506,7 +506,7 @@ func TestDashboardIndex_Panels(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithPanels)
 		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 		)
 	})
