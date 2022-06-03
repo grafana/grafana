@@ -495,7 +495,7 @@ const serviceGraphLinks = [
   },
   {
     url: '',
-    title: 'Tempo search',
+    title: 'View traces',
     internal: {
       query: {
         queryType: 'nativeSearch',
