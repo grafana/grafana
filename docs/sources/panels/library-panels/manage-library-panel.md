@@ -12,7 +12,7 @@ You can adjust library panel configuration at any time.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To view and manage a library panel**:
 

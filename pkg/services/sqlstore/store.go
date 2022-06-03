@@ -73,7 +73,6 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
 	GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error
@@ -92,7 +91,6 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
 	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error

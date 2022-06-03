@@ -71,9 +71,9 @@ Manually ask license issuer for a new token.
 
 See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
 
-| Action           | Scope |
-| ---------------- | ----- |
-| licensing:update | n/a   |
+| Action          | Scope |
+| --------------- | ----- |
+| licensing:write | n/a   |
 
 ### Examples
 
