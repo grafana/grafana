@@ -887,10 +887,12 @@ export class LokiDatasource
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
+    const exprWithAdHoc = this.addAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
     };
   }
 
