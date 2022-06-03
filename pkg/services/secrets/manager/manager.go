@@ -180,8 +180,15 @@ func (s *SecretsService) keyName(scope string) string {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("unable to decrypt empty payload")
+	}
+
+	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+		if len(payload) > 0 && payload[0] == '#' {
+			return nil, fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
+		}
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -193,11 +200,6 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 			"operation": OpDecrypt,
 		}).Inc()
 	}()
-
-	if len(payload) == 0 {
-		err = fmt.Errorf("unable to decrypt empty payload")
-		return nil, err
-	}
 
 	var dataKey []byte
 
