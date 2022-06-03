@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -57,4 +58,8 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	}
 
 	return pdc, nil
+}
+
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string) (dtos.MetricRequest, error) {
+	return dtos.MetricRequest{}, nil
 }

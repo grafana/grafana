@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -23,108 +24,6 @@ import (
 
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
-
-var queryPublicDashboardsInput = `{
-	"from": "",
-	"to": ""
-}`
-
-var queryPublicDashboard = `
-{
-  "panels": [
-    {
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds"
-          },
-          "exemplar": true,
-          "expr": "query_2_A",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-      "id": 3,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds"
-          },
-          "exemplar": true,
-          "expr": "query_3_A",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    }
-  ],
-  "schemaVersion": 35
-}`
-
-var queryPublicDashboardMultipleDatasources = `
-{
-  "panels": [
-    {
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds"
-          },
-          "exemplar": true,
-          "expr": "query_2_A",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-      "id": 3,
-      "targets": [
-        {
-          "datasource": {
-            "type": "mysql",
-            "uid": "mysqlds"
-          },
-          "exemplar": true,
-          "expr": "query_3_A",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "promds"
-          },
-          "exemplar": true,
-          "expr": "query_3_B",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    }
-  ],
-  "schemaVersion": 35
-}`
 
 func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
@@ -370,12 +269,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		&fakeOAuthTokenService{},
 	)
 
-	fakeDashboard, err := simplejson.NewJson([]byte(queryPublicDashboard))
-	require.NoError(t, err)
-
-	fakeDashboardMultipleDatasources, err := simplejson.NewJson([]byte(queryPublicDashboardMultipleDatasources))
-	require.NoError(t, err)
-
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -390,7 +283,10 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 404 when feature toggle is disabled", func(t *testing.T) {
-		req := serverFeatureDisabled.NewPostRequest("/api/public/dashboards/abc123/panels/2/query", strings.NewReader(queryPublicDashboardsInput))
+		req := serverFeatureDisabled.NewPostRequest(
+			"/api/public/dashboards/abc123/panels/2/query",
+			strings.NewReader("{}"),
+		)
 		resp, err := serverFeatureDisabled.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
@@ -398,10 +294,30 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 200 when feature toggle is enabled", func(t *testing.T) {
-		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(models.NewDashboardFromJson(fakeDashboard), nil)
+		fakeDashboardService.On(
+			"BuildPublicDashboardMetricRequest",
+			mock.Anything,
+			mock.Anything,
+		).Return(dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.MustJson([]byte(`
+					{
+					  "datasource": {
+						"type": "prometheus",
+						"uid": "promds"
+					  },
+					  "exemplar": true,
+					  "expr": "query_2_A",
+					  "interval": "",
+					  "legendFormat": "",
+					  "refId": "A"
+					}
+				`)),
+			},
+		}, nil)
 		req := serverFeatureEnabled.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
-			strings.NewReader(queryPublicDashboardsInput),
+			strings.NewReader("{}"),
 		)
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
@@ -411,10 +327,14 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
 		t.Skip("multiple datasources not yet supported")
-		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(models.NewDashboardFromJson(fakeDashboardMultipleDatasources), nil)
+		fakeDashboardService.On(
+			"BuildPublicDashboardMetricRequest",
+			mock.Anything,
+			mock.Anything,
+		).Return(dtos.MetricRequest{}, nil)
 		req := serverFeatureEnabled.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
-			strings.NewReader(queryPublicDashboardsInput),
+			strings.NewReader("{}"),
 		)
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
