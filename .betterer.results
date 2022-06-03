@@ -77,9 +77,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/Ticks.test.js:743308415": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineCollapser.test.js:4018342820": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -98,9 +95,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:381298544": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/common/UiFindInput.test.js:2207118020": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/url/ReferenceLink.test.js:3249503373": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
@@ -110,7 +104,7 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/QueryOperationRow/QueryOperationAction.test.tsx:3032694716": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:2026575657": [
+    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:3743889097": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
     "public/app/core/components/Select/MetricSelect.test.tsx:3351544014": [
@@ -179,8 +173,8 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:1224072551": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:2097436158": [
-      [1, 19, 13, "RegExp match", "2409514259"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:1501504663": [
+      [2, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:3481855642": [
       [0, 26, 13, "RegExp match", "2409514259"]

@@ -370,6 +370,27 @@ type ModelGraphPanel struct {
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelGraphPanelType string
 
+// DashboardGridPos defines model for dashboard.GridPos.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelGridPos struct {
+	// Panel
+	H int `json:"h"`
+
+	// true if fixed
+	Static *bool `json:"static,omitempty"`
+
+	// Panel
+	W int `json:"w"`
+
+	// Panel x
+	X int `json:"x"`
+
+	// Panel y
+	Y int `json:"y"`
+}
+
 // DashboardHeatmapPanel defines model for dashboard.HeatmapPanel.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
@@ -468,24 +489,7 @@ type ModelPanel struct {
 			} `json:"properties"`
 		} `json:"overrides"`
 	} `json:"fieldConfig"`
-
-	// Grid position.
-	GridPos *struct {
-		// Panel
-		H int `json:"h"`
-
-		// true if fixed
-		Static *bool `json:"static,omitempty"`
-
-		// Panel
-		W int `json:"w"`
-
-		// Panel x
-		X int `json:"x"`
-
-		// Panel y
-		Y int `json:"y"`
-	} `json:"gridPos,omitempty"`
+	GridPos *ModelGridPos `json:"gridPos,omitempty"`
 
 	// TODO docs
 	Id *int `json:"id,omitempty"`
@@ -521,7 +525,7 @@ type ModelPanel struct {
 	// TODO docs
 	Targets *[]ModelTarget `json:"targets,omitempty"`
 
-	// TODO docs
+	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds *[]interface{} `json:"thresholds,omitempty"`
 
 	// TODO docs
@@ -568,24 +572,9 @@ type ModelRowPanel struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
-	GridPos *struct {
-		// Panel
-		H int `json:"h"`
-
-		// true if fixed
-		Static *bool `json:"static,omitempty"`
-
-		// Panel
-		W int `json:"w"`
-
-		// Panel x
-		X int `json:"x"`
-
-		// Panel y
-		Y int `json:"y"`
-	} `json:"gridPos,omitempty"`
-	Id     int           `json:"id"`
-	Panels []interface{} `json:"panels"`
+	GridPos *ModelGridPos `json:"gridPos,omitempty"`
+	Id      int           `json:"id"`
+	Panels  []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
 	Repeat *string           `json:"repeat,omitempty"`

@@ -617,7 +617,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:            "viewer request should fail",
 			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:       http.StatusForbidden,
-			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:write, alert.rules:create, alert.rules:delete`,
 		},
 		{
 			desc:            "editor request should succeed",

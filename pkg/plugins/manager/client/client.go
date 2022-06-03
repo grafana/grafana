@@ -3,13 +3,13 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var _ plugins.Client = (*Service)(nil)
@@ -45,7 +45,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to query data", err)
+		return nil, fmt.Errorf("%v: %w", "failed to query data", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -118,7 +118,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
 	}
 
 	return resp, nil

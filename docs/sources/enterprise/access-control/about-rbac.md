@@ -67,33 +67,33 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../alerting/_index.md" >}})
-- [Annotations]({{< relref "../../dashboards/annotations.md" >}})
-- [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
-- [Dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
-- [Data sources]({{< relref "../../datasources/_index.md" >}})
-- [Explore]({{< relref "../../explore/_index.md" >}})
-- [Folders]({{< relref "../../dashboards/dashboard-folders.md" >}})
-- [LDAP]({{< relref "../../auth/ldap/_index.md" >}})
-- [Licenses]({{< relref "../license/_index.md" >}})
-- [Organizations]({{< relref "../../administration/manage-organizations/_index.md" >}})
-- [Provisioning]({{< relref "../../administration/provisioning/_index.md" >}})
-- [Reports]({{< relref "../reporting.md" >}})
-- [Roles]({{< relref "../../administration/manage-users-and-permissions/_index.md" >}})
-- [Settings]({{< relref "../settings-updates.md" >}})
-- [Service accounts]({{< relref "../../administration/service-accounts/_index.md" >}})
-- [Teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
-- [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
+- [Alerting]({{< relref "../../alerting/" >}})
+- [Annotations]({{< relref "../../dashboards/annotations/" >}})
+- [API keys]({{< relref "../../administration/api-keys/" >}})
+- [Dashboards and folders]({{< relref "../../dashboards/" >}})
+- [Data sources]({{< relref "../../datasources/" >}})
+- [Explore]({{< relref "../../explore/" >}})
+- [Folders]({{< relref "../../dashboards/dashboard-folders/" >}})
+- [LDAP]({{< relref "../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
+- [Licenses]({{< relref "../license/" >}})
+- [Organizations]({{< relref "../../administration/manage-organizations/" >}})
+- [Provisioning]({{< relref "../../administration/provisioning/" >}})
+- [Reports]({{< relref "../reporting/" >}})
+- [Roles]({{< relref "../../administration/manage-users-and-permissions/" >}})
+- [Settings]({{< relref "../settings-updates/" >}})
+- [Service accounts]({{< relref "../../administration/service-accounts/" >}})
+- [Teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/" >}})
+- [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/" >}})
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "rbac-fixed-basic-role-definitions.md" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "rbac-fixed-basic-role-definitions/" >}}).
 
 ## Custom roles
 
 If you are a Grafana Enterprise customer, you can create custom roles to manage user permissions in a way that meets your security requirements.
 
-Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action allows a user to see a list of roles associated with each team.
+Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:read` action allows a user to see a list of roles associated with each team.
 
-A scope describes where an action can be performed. For example, the `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
+A scope describes where an action can be performed. For example, the `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:read` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
 Consider creating a custom role when fixed roles do not meet your permissions requirements.
 
@@ -101,11 +101,11 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "assign-rbac-roles.md" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../developers/http_api/access_control.md" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "assign-rbac-roles/" >}}).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../developers/http_api/access_control/" >}}).
 
 ## Limitation
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.

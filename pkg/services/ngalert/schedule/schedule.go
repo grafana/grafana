@@ -156,6 +156,8 @@ func (sch *schedule) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	defer sch.ticker.Stop()
+
 	go func() {
 		defer wg.Done()
 		if err := sch.schedulePeriodic(ctx); err != nil {
@@ -652,6 +654,7 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
+	sch.ticker.Stop()
 	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
