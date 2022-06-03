@@ -18,7 +18,7 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
   }
 
   const enabledAlertmanagers: AlertmanagerConfig[] = [];
-  const droppedAlertmanagers: AlertmanagerConfig[] = discoveredAlertmanagers?.droppedAlertManagers.map((am) => ({
+  const droppedAlertmanagers: AlertmanagerConfig[] = discoveredAlertmanagers.droppedAlertManagers.map((am) => ({
     url: am.url.replace(SUFFIX_REGEX, ''),
     status: 'dropped',
     actualUrl: am.url,
@@ -32,24 +32,20 @@ export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
         actualUrl: '',
       });
     } else {
-      let found = false;
-      for (const activeAM of discoveredAlertmanagers.activeAlertManagers) {
-        if (activeAM.url === `${url}/api/v2/alerts`) {
-          found = true;
-          enabledAlertmanagers.push({
-            url: activeAM.url.replace(SUFFIX_REGEX, ''),
+      const matchingActiveAM = discoveredAlertmanagers.activeAlertManagers.find(
+        (am) => am.url === `${url}/api/v2/alerts`
+      );
+      matchingActiveAM
+        ? enabledAlertmanagers.push({
+            url: matchingActiveAM.url.replace(SUFFIX_REGEX, ''),
             status: 'active',
-            actualUrl: activeAM.url,
+            actualUrl: matchingActiveAM.url,
+          })
+        : enabledAlertmanagers.push({
+            url: url,
+            status: 'pending',
+            actualUrl: '',
           });
-        }
-      }
-      if (!found) {
-        enabledAlertmanagers.push({
-          url: url,
-          status: 'pending',
-          actualUrl: '',
-        });
-      }
     }
   }
 

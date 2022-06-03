@@ -10,6 +10,7 @@ interface Props {
   inputId?: string;
   onChange: (role: OrgRole) => void;
   autoFocus?: boolean;
+  width?: number | 'auto';
 }
 
 const options = Object.keys(OrgRole).map((key) => ({ label: key, value: key }));

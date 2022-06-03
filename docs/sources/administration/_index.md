@@ -11,8 +11,8 @@ weight: 40
 This section includes information for Grafana administrators, team administrators, and users performing administrative tasks:
 
 - [Change Preferences]({{< relref "preferences/" >}})
-- [Configuration]({{< relref "configuration/" >}})
+- [Configuration]({{< relref "../setup-grafana/configure-grafana/" >}})
 - [Configure Docker image]({{< relref "configure-docker/" >}})
-- [Security]({{< relref "security/" >}})
-- [Database encryption]({{< relref "database-encryption/" >}})
+- [Security]({{< relref "../setup-grafana/configure-security/" >}})
+- [Database encryption]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}})
 - [Service accounts]({{< relref "service-accounts/" >}})

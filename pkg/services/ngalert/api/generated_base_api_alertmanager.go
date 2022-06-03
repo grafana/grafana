@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -53,7 +52,6 @@ func (f *ForkedAlertmanagerApi) RouteCreateGrafanaSilence(ctx *models.ReqContext
 	}
 	return f.forkRouteCreateGrafanaSilence(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -61,71 +59,54 @@ func (f *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) respo
 	}
 	return f.forkRouteCreateSilence(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteAlertingConfig(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteGrafanaAlertingConfig(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteGrafanaSilence(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteSilence(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAMAlertGroups(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAMAlerts(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAMStatus(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAlertingConfig(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMAlertGroups(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAMAlertGroups(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAMAlerts(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMStatus(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAMStatus(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAlertingConfig(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaSilence(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaSilences(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetSilence(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetSilences(ctx)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -133,7 +114,6 @@ func (f *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) respon
 	}
 	return f.forkRoutePostAMAlerts(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -141,7 +121,6 @@ func (f *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) 
 	}
 	return f.forkRoutePostAlertingConfig(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -149,7 +128,6 @@ func (f *ForkedAlertmanagerApi) RoutePostGrafanaAMAlerts(ctx *models.ReqContext)
 	}
 	return f.forkRoutePostGrafanaAMAlerts(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -157,7 +135,6 @@ func (f *ForkedAlertmanagerApi) RoutePostGrafanaAlertingConfig(ctx *models.ReqCo
 	}
 	return f.forkRoutePostGrafanaAlertingConfig(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostTestGrafanaReceivers(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -165,7 +142,6 @@ func (f *ForkedAlertmanagerApi) RoutePostTestGrafanaReceivers(ctx *models.ReqCon
 	}
 	return f.forkRoutePostTestGrafanaReceivers(ctx, conf)
 }
-
 func (f *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {

@@ -3,6 +3,7 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -89,7 +90,7 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 
 		data, err := json.Marshal(newSecureJSONData)
 		if err != nil {
-			return 0, errutil.Wrap("marshaling newSecureJsonData failed", err)
+			return 0, fmt.Errorf("%v: %w", "marshaling newSecureJsonData failed", err)
 		}
 
 		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}

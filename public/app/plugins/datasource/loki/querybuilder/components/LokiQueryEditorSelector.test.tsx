@@ -10,6 +10,18 @@ import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
+jest.mock('app/core/store', () => {
+  return {
+    get() {
+      return undefined;
+    },
+    set() {},
+    getObject(key: string, defaultValue: any) {
+      return defaultValue;
+    },
+  };
+});
+
 const defaultQuery = {
   refId: 'A',
   expr: '{label1="foo", label2="bar"}',
@@ -86,23 +98,14 @@ describe('LokiQueryEditorSelector', () => {
   });
 
   it('Can enable raw query', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
-
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      queryType: 'range',
-      editorMode: QueryEditorMode.Builder,
-      rawQuery: true,
-    });
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
 
-  it('Should show raw query', async () => {
+  it('Should show raw query by default', async () => {
     renderWithProps({
-      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
     });

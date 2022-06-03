@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package alerting
 
 import (
@@ -81,7 +78,11 @@ func (handler *FakeCommonTimeoutHandler) Eval(evalContext *EvalContext) {
 	url := srv.URL + path
 	res, err := sendRequest(evalContext.Ctx, url, handler.TransportTimeoutDuration)
 	if res != nil {
-		defer res.Body.Close()
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				logger.Warn("Error", "err", err)
+			}
+		}()
 	}
 
 	if err != nil {
@@ -106,7 +107,11 @@ func (handler *FakeCommonTimeoutHandler) handle(evalContext *EvalContext) error 
 	url := srv.URL + path
 	res, err := sendRequest(evalContext.Ctx, url, handler.TransportTimeoutDuration)
 	if res != nil {
-		defer res.Body.Close()
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				logger.Warn("Error", "err", err)
+			}
+		}()
 	}
 
 	if err != nil {

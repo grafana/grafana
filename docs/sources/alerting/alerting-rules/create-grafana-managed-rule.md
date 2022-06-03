@@ -15,7 +15,7 @@ weight: 400
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting.md" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/_index.md" >}}) of Grafana alerting.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana alerting.
 
 ## Add Grafana managed rule
 
@@ -23,7 +23,7 @@ Grafana allows you to create alerting rules that query one or more data sources,
 1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add queries and expressions to evaluate, and then select the alert condition.
    - For queries, select a data source from the drop-down.
-   - Add one or more [queries]({{< relref "../../panels/query-a-data-source/add-a-query.md" >}}) or [expressions]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}).
+   - Add one or more [queries]({{< relref "../../panels/query-a-data-source/add-a-query/" >}}) or [expressions]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
@@ -38,11 +38,11 @@ Grafana allows you to create alerting rules that query one or more data sources,
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
    - From the **Folder** drop-down, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/_index.md" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/_index.md" >}}) for the rule.
+1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
 
 ### Single and multi dimensional rule
 
@@ -56,7 +56,7 @@ Use the classic condition expression to create a rule that triggers a single ale
 
 To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/evaluate-grafana-alerts.md#alerting-on-numeric-data-1" >}})).
+- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/evaluate-grafana-alerts/#alerting-on-numeric-data-1" >}})).
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 ![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
@@ -65,7 +65,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 #### Rule with classic condition
 
-For more information, see [expressions documentation]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions.md" >}}).
+For more information, see [expressions documentation]({{< relref "../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}).
 
 ### No data and error handling
 
