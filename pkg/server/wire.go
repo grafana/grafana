@@ -149,7 +149,6 @@ var wireBasicSet = wire.NewSet(
 	// plugins
 	manager.ProvideService,
 	wire.Bind(new(manager.Service), new(*manager.PluginManager)),
-
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
