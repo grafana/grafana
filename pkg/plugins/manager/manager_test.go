@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/filestore"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
@@ -31,7 +32,7 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, []PluginSource{
+		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -343,22 +344,22 @@ func TestPluginManager_Installer(t *testing.T) {
 
 func TestPluginManager_registeredPlugins(t *testing.T) {
 	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
-		pm := New(&plugins.Cfg{}, []PluginSource{}, &fakeLoader{}, &fakeFsManager{})
-
 		decommissionedPlugin, _ := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
 			p.Backend = true
 			err := p.Decommission()
 			require.NoError(t, err)
 		})
 
+		pm := New(&plugins.Cfg{}, &fakePluginRegistry{
+			store: map[string]*plugins.Plugin{
+				testPluginID: decommissionedPlugin,
+				"test-app":   {},
+			},
+		}, []PluginSource{}, &fakeLoader{}, &fakeFsManager{})
+
 		require.True(t, decommissionedPlugin.IsDecommissioned())
 
-		pm.store = map[string]*plugins.Plugin{
-			testPluginID: decommissionedPlugin,
-			"test-app":   {},
-		}
-
-		rps := pm.registeredPlugins()
+		rps := pm.registeredPlugins(context.Background())
 		require.Equal(t, 2, len(rps))
 		require.NotNil(t, rps[testPluginID])
 		require.NotNil(t, rps["test-app"])
@@ -375,13 +376,13 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 				require.Equal(t, testPluginID, ctx.plugin.ID)
 				require.Equal(t, 1, ctx.pluginClient.startCount)
 				testPlugin, exists := ctx.manager.Plugin(context.Background(), testPluginID)
-				assert.True(t, exists)
+				require.True(t, exists)
 				require.NotNil(t, testPlugin)
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
 					err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
-					require.Equal(t, 1, ctx.pluginClient.startCount)
 					require.Error(t, err)
+					require.Equal(t, 1, ctx.pluginClient.startCount)
 				})
 
 				t.Run("When manager runs should start and stop plugin", func(t *testing.T) {
@@ -522,7 +523,9 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
 				err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
 				require.NoError(t, err)
-				require.True(t, ctx.manager.isRegistered(testPluginID))
+				p, exists := ctx.manager.Plugin(context.Background(), testPluginID)
+				require.True(t, exists)
+				require.NotNil(t, p)
 				require.False(t, ctx.pluginClient.managed)
 
 				t.Run("When manager runs should not start plugin", func(t *testing.T) {
@@ -600,7 +603,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		DevMode: false,
 	}
 
-	pm := New(cfg, nil, &fakeLoader{}, &fakeFsManager{})
+	pm := New(cfg, newFakePluginRegistry(), nil, &fakeLoader{}, &fakeFsManager{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -620,7 +623,6 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg := &plugins.Cfg{}
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
-
 	cfg.Azure = &azsettings.AzureSettings{
 		ManagedIdentityEnabled:  true,
 		Cloud:                   "AzureCloud",
@@ -628,7 +630,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	loader := &fakeLoader{}
-	manager := New(cfg, nil, loader, &fakeFsManager{})
+	manager := New(cfg, registry.NewInMemory(), nil, loader, &fakeFsManager{})
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -811,6 +813,41 @@ type fakeSender struct {
 func (s *fakeSender) Send(crr *backend.CallResourceResponse) error {
 	s.resp = crr
 
+	return nil
+}
+
+type fakePluginRegistry struct {
+	store map[string]*plugins.Plugin
+}
+
+func newFakePluginRegistry() *fakePluginRegistry {
+	return &fakePluginRegistry{
+		store: make(map[string]*plugins.Plugin),
+	}
+}
+
+func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+	p, exists := f.store[id]
+	return p, exists
+}
+
+func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
+	var res []*plugins.Plugin
+
+	for _, p := range f.store {
+		res = append(res, p)
+	}
+
+	return res
+}
+
+func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
+	f.store[p.ID] = p
+	return nil
+}
+
+func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
+	delete(f.store, id)
 	return nil
 }
 

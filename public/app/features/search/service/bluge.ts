@@ -6,6 +6,8 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { replaceCurrentFolderQuery } from './utils';
+
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
 export class BlugeSearcher implements GrafanaSearcher {
@@ -65,6 +67,7 @@ const firstPageSize = 50;
 const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+  query = await replaceCurrentFolderQuery(query);
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
     ...query,
