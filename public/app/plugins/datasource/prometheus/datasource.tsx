@@ -216,7 +216,7 @@ export class PrometheusDatasource
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await lastValueFrom(
-          this._request<T>(`/api/datasources/${this.id}/resources/${url}`, params, {
+          this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
@@ -233,7 +233,7 @@ export class PrometheusDatasource
     }
 
     return await lastValueFrom(
-      this._request<T>(`/api/datasources/${this.id}/resources/${url}`, params, {
+      this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
       })

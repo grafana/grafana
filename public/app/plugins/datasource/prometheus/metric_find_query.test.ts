@@ -18,6 +18,7 @@ const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
 const instanceSettings = {
   url: 'proxied',
+  id: 1,
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
@@ -58,8 +59,6 @@ describe('PrometheusMetricFindQuery', () => {
 
   const setupMetricFindQuery = (data: any) => {
     fetchMock.mockImplementation(() => of({ status: 'success', data: data.response } as unknown as FetchResponse));
-    ds.getResource = jest.fn().mockImplementation(() => Promise.resolve(data.response));
-    ds.postResource = jest.fn().mockImplementation(() => Promise.resolve(data.response));
     return new PrometheusMetricFindQuery(ds, data.query);
   };
 
@@ -74,10 +73,13 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(ds.postResource).toHaveBeenCalledTimes(1);
-      expect(ds.postResource).toHaveBeenCalledWith('/api/v1/labels', {
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        showErrorAlert: false,
+        headers: {},
       });
     });
 
@@ -91,10 +93,12 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(ds.getResource).toHaveBeenCalledTimes(1);
-      expect(ds.getResource).toHaveBeenCalledWith('/api/v1/label/resource/values', {
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        headers: {},
       });
     });
 
@@ -112,11 +116,15 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(ds.postResource).toHaveBeenCalledTimes(1);
-      expect(ds.postResource).toHaveBeenCalledWith('/api/v1/series', {
-        'match[]': 'metric',
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
+          '[]'
+        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        showErrorAlert: false,
+        headers: {},
       });
     });
 
@@ -134,11 +142,13 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(ds.postResource).toHaveBeenCalledTimes(1);
-      expect(ds.postResource).toHaveBeenCalledWith('/api/v1/series', {
-        'match[]': 'metric{label1="foo", label2="bar", label3="baz"}',
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: '/api/datasources/1/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        hideFromInspector: true,
+        showErrorAlert: false,
+        headers: {},
       });
     });
 
@@ -158,11 +168,15 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(2);
       expect(results[0].text).toBe('value1');
       expect(results[1].text).toBe('value2');
-      expect(ds.postResource).toHaveBeenCalledTimes(1);
-      expect(ds.postResource).toHaveBeenCalledWith('/api/v1/series', {
-        'match[]': 'metric',
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent(
+          '[]'
+        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        showErrorAlert: false,
+        headers: {},
       });
     });
 
@@ -176,10 +190,12 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(ds.getResource).toHaveBeenCalledTimes(1);
-      expect(ds.getResource).toHaveBeenCalledWith('/api/v1/label/__name__/values', {
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        headers: {},
       });
     });
 
@@ -228,11 +244,15 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
       expect(results[1].text).toBe('up{instance="127.0.0.1:5678",job="job1"}');
       expect(results[2].text).toBe('up{instance="127.0.0.1:9102",job="job1"}');
-      expect(ds.postResource).toHaveBeenCalledTimes(1);
-      expect(ds.postResource).toHaveBeenCalledWith('/api/v1/series', {
-        'match[]': 'up{job="job1"}',
-        start: `${raw.from.unix()}`,
-        end: `${raw.to.unix()}`,
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/1/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
+          'up{job="job1"}'
+        )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        hideFromInspector: true,
+        showErrorAlert: false,
+        headers: {},
       });
     });
   });

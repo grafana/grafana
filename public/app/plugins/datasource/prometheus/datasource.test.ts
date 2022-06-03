@@ -55,17 +55,11 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const mockDatasource = (settings: any) => {
-  const ds = new PrometheusDatasource(settings, templateSrvStub as any, timeSrvStub as any);
-  ds.getResource = jest.fn();
-  ds.postResource = jest.fn();
-  return ds;
-};
-
 describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -75,7 +69,7 @@ describe('PrometheusDatasource', () => {
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
-    ds = mockDatasource(instanceSettings);
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   });
 
   describe('Query', () => {
@@ -112,24 +106,27 @@ describe('PrometheusDatasource', () => {
   describe('Datasource metadata requests', () => {
     it('should perform a GET request with the default config', () => {
       ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' });
-      expect(ds.getResource).toHaveBeenCalledTimes(1);
-      expect(ds.getResource).toHaveBeenCalledWith('/foo', { bar: 'baz baz', foo: 'foo' });
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][0].url).toContain('bar=baz%20baz&foo=foo');
     });
     it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
       const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
-      const promDs = mockDatasource(postSettings);
+      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
-      expect(promDs.postResource).toHaveBeenCalledTimes(1);
-      expect(promDs.postResource).toHaveBeenCalledWith('/foo', {});
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
     it('should try to perform a POST request with the DS HTTP method set to POST and POST-friendly endpoint', () => {
       const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
-      const promDs = mockDatasource(postSettings);
+      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('api/v1/series', { bar: 'baz baz', foo: 'foo' });
-      expect(promDs.postResource).toHaveBeenCalledTimes(1);
-      expect(promDs.postResource).toHaveBeenCalledWith('api/v1/series', { bar: 'baz baz', foo: 'foo' });
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('POST');
+      expect(fetchMock.mock.calls[0][0].url).not.toContain('bar=baz%20baz&foo=foo');
+      expect(fetchMock.mock.calls[0][0].data).toEqual({ bar: 'baz baz', foo: 'foo' });
     });
   });
 
@@ -144,20 +141,21 @@ describe('PrometheusDatasource', () => {
     }
 
     describe('with GET http method', () => {
-      const promDs = mockDatasource({
-        ...instanceSettings,
-        jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } as any,
-      });
+      const promDs = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } as any },
+        templateSrvStub as any,
+        timeSrvStub as any
+      );
 
       it('added to metadata request', () => {
         promDs.metadataRequest('/foo');
-        expect(promDs.getResource).toHaveBeenCalledTimes(1);
-        expect(promDs.getResource).toHaveBeenCalledWith('/foo', { customQuery: 123 });
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources//foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
         promDs.query(makeQuery(target));
-        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe(
           'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
         );
@@ -165,7 +163,7 @@ describe('PrometheusDatasource', () => {
       it('adds params to exemplars query', () => {
         promDs.query(makeQuery({ ...target, exemplar: true }));
         // We do also range query for single exemplars target
-        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(fetchMock.mock.calls.length).toBe(2);
         expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
         expect(fetchMock.mock.calls[1][0].url).toContain('&customQuery=123');
       });
@@ -178,21 +176,23 @@ describe('PrometheusDatasource', () => {
     });
 
     describe('with POST http method', () => {
-      const promDs = mockDatasource({
-        ...instanceSettings,
-        jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } as any,
-      });
+      const promDs = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } as any },
+        templateSrvStub as any,
+        timeSrvStub as any
+      );
 
       it('added to metadata request with non-POST endpoint', () => {
         promDs.metadataRequest('/foo');
-        expect(promDs.postResource).toHaveBeenCalledTimes(1);
-        expect(promDs.postResource).toHaveBeenCalledWith('/foo', { customQuery: 123 });
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources//foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');
-        expect(promDs.postResource).toHaveBeenCalledTimes(1);
-        expect(promDs.postResource).toHaveBeenCalledWith('/api/v1/labels', { customQuery: 123 });
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources//api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
 
       it('adds params to timeseries query', () => {
@@ -432,7 +432,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regular escaping', () => {
+  describe('Prometheus regular escaping', () => {
     it('should not escape non-string', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
@@ -458,7 +458,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regexes escaping', () => {
+  describe('Prometheus regexes escaping', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
