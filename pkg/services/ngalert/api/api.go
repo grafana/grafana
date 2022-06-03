@@ -143,5 +143,4 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
 	}), m)
-
 }
