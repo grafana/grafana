@@ -41,6 +41,8 @@ func TestReadPromFrames(t *testing.T) {
 
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
+		// Safe to disable, this is a test.
+		// nolint:gosec
 		f, err := os.Open(path.Join("testdata", name+".json"))
 		require.NoError(t, err)
 
