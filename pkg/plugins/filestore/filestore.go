@@ -18,9 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var (
-	reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-)
+var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
 type Service struct {
 	log logger.Logger
