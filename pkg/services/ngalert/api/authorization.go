@@ -190,8 +190,8 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	case http.MethodPut + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points/{ID}",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/contact-points/{UID}",
+		http.MethodDelete + "/api/provisioning/contact-points/{UID}",
 		http.MethodPut + "/api/provisioning/templates/{name}",
 		http.MethodDelete + "/api/provisioning/templates/{name}",
 		http.MethodPost + "/api/provisioning/mute-timings",
