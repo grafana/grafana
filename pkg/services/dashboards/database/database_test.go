@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
