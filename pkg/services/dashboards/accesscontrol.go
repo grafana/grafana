@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
