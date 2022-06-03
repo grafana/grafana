@@ -6,7 +6,7 @@ import {
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
 /**
@@ -30,28 +30,28 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
-  const mode = angular.dataFormat === 'tsbuckets' ? HeatmapMode.Aggregated : HeatmapMode.Calculate;
-  const calculate: HeatmapCalculationOptions = {
-    ...defaultPanelOptions.calculate,
+  const calculate = angular.dataFormat === 'tsbuckets' ? false : true;
+  const calculation: HeatmapCalculationOptions = {
+    ...defaultPanelOptions.calculation,
   };
 
   const oldYAxis = { logBase: 1, ...angular.yAxis };
 
-  if (mode === HeatmapMode.Calculate) {
+  if (calculate) {
     if (angular.xBucketSize) {
-      calculate.xBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+      calculation.xBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.xBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+      calculation.xBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
     }
 
     if (angular.yBucketSize) {
-      calculate.yBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+      calculation.yBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.yBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+      calculation.yBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
     }
 
     if (oldYAxis.logBase > 1) {
-      calculate.yBuckets = {
+      calculation.yBuckets = {
         mode: HeatmapCalculationMode.Count,
         value: +oldYAxis.splitFactor > 0 ? `${oldYAxis.splitFactor}` : undefined,
         scale: {
@@ -63,8 +63,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   }
 
   const options: PanelOptions = {
-    mode,
     calculate,
+    calculation,
     color: {
       ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors

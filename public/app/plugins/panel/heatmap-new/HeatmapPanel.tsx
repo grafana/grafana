@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   Portal,
   ScaleDistribution,
@@ -18,7 +19,7 @@ import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calcul
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
-import { HeatmapMode, PanelOptions } from './models.gen';
+import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
@@ -107,6 +108,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   dataRef.current = info;
 
   const builder = useMemo(() => {
+    const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
+      ?.scaleDistribution as ScaleDistributionConfig;
     return prepConfig({
       dataRef,
       theme,
@@ -126,10 +129,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       hideThreshold: options.filterValues?.min, // eventually a better range
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
-      ySizeDivisor:
-        options.mode === HeatmapMode.Calculate && options.calculate?.yBuckets?.scale?.type === ScaleDistribution.Log
-          ? +(options.calculate?.yBuckets?.value || 1)
-          : 1,
+      ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(scaleConfig.log || 1) : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);

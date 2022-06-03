@@ -10,7 +10,7 @@ import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions, HeatmapMode, HeatmapColorMode, HeatmapColorScale } from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 
@@ -49,22 +49,21 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     let category = ['Heatmap'];
 
     builder.addRadio({
-      path: 'mode',
-      name: 'Data',
-      defaultValue: defaultPanelOptions.mode,
+      path: 'calculate',
+      name: 'Calculate from data',
+      defaultValue: defaultPanelOptions.calculate,
       category,
       settings: {
         options: [
-          { label: 'Aggregated', value: HeatmapMode.Aggregated },
-          { label: 'Calculate', value: HeatmapMode.Calculate },
-          //  { label: 'Accumulated', value: HeatmapMode.Accumulated, description: 'The query response values are accumulated' },
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
         ],
       },
     });
 
-    if (opts.mode === HeatmapMode.Calculate) {
-      addHeatmapCalculationOptions('calculate.', builder, opts.calculate, category);
-    } else if (opts.mode === HeatmapMode.Aggregated) {
+    if (opts.calculate) {
+      addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
+    } else {
       builder.addTextInput({
         path: 'bucket.name',
         name: 'Cell value name',

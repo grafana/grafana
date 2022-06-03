@@ -8,12 +8,6 @@ import { HeatmapBucketLayout, HeatmapCalculationOptions } from 'app/features/tra
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export enum HeatmapMode {
-  Aggregated = 'agg',
-  Calculate = 'calculate',
-  Accumulated = 'acc', // accumulated
-}
-
 export enum HeatmapColorMode {
   Opacity = 'opacity',
   Scheme = 'scheme',
@@ -65,11 +59,11 @@ export interface BucketOptions {
 }
 
 export interface PanelOptions {
-  mode: HeatmapMode;
+  calculate?: boolean;
+  calculation?: HeatmapCalculationOptions;
 
   color: HeatmapColorOptions;
   filterValues?: FilterValueRange; // was hideZeroBuckets
-  calculate?: HeatmapCalculationOptions;
   bucket?: BucketOptions;
   showValue: VisibilityMode;
 
@@ -84,7 +78,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: PanelOptions = {
-  mode: HeatmapMode.Aggregated,
+  calculate: false,
   color: {
     mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',

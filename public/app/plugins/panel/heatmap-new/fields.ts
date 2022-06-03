@@ -11,7 +11,7 @@ import {
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapMode, PanelOptions } from './models.gen';
+import { PanelOptions } from './models.gen';
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
@@ -40,13 +40,11 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return {};
   }
 
-  const { mode } = options;
-
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  if (mode === HeatmapMode.Calculate) {
+  if (options.calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculate ?? {}), exemplars, theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, theme);
   }
 
   // Check for known heatmap types
@@ -75,11 +73,6 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     } else {
       bucketHeatmap = frames[0];
     }
-  }
-
-  // Some datasources return values in ascending order and require math to know the deltas
-  if (mode === HeatmapMode.Accumulated) {
-    console.log('TODO, deaccumulate the values');
   }
 
   return getHeatmapData(bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap }), exemplars, theme);

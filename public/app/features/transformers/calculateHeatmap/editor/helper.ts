@@ -15,7 +15,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'xBuckets',
     path: `${prefix}xBuckets`,
-    name: 'X Buckets',
+    name: 'X Bucket',
     editor: AxisEditor,
     category,
     defaultValue: {
@@ -26,7 +26,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'yBuckets-scale',
     path: `${prefix}yBuckets.scale`,
-    name: 'Y Buckets',
+    name: 'Y Bucket scale',
     category,
     editor: ScaleDistributionEditor,
     defaultValue: { type: ScaleDistribution.Linear },
@@ -35,7 +35,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'yBuckets',
     path: `${prefix}yBuckets`,
-    name: '',
+    name: 'Y Bucket',
     editor: AxisEditor,
     category,
     defaultValue: {
