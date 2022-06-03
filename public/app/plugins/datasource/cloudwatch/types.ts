@@ -378,6 +378,7 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
 }
 
 export interface VariableQuery extends DataQuery {
@@ -392,4 +393,5 @@ export interface VariableQuery extends DataQuery {
   attributeName: string;
   resourceType: string;
   tags: string;
+  logGroupPrefix?: string;
 }

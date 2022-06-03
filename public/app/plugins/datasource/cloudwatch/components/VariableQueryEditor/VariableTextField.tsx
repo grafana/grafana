@@ -7,10 +7,10 @@ const TEXT_WIDTH = 100;
 
 interface VariableTextFieldProps {
   onBlur: (value: string) => void;
-  placeholder: string;
   value: string;
   label: string;
   tooltip?: string;
+  placeholder?: string;
 }
 
 export const VariableTextField: FC<VariableTextFieldProps> = ({ label, onBlur, placeholder, value, tooltip }) => {
