@@ -108,7 +108,35 @@ func TestSavePublicDashboard(t *testing.T) {
 
 		assert.Equal(t, dashboard.Uid, pdc.PublicDashboard.DashboardUid)
 		assert.Equal(t, dashboard.OrgId, pdc.PublicDashboard.OrgId)
+	})
 
+	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {
+		//sqlStore := sqlstore.InitTestDB(t)
+		//dashboardStore := database.ProvideDashboardStore(sqlStore)
+		//dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+
+		//service := &DashboardServiceImpl{
+		//log:            log.New("test.logger"),
+		//dashboardStore: dashboardStore,
+		//}
+
+		//dto := &dashboards.SavePublicDashboardConfigDTO{
+		//DashboardUid: dashboard.Uid,
+		//OrgId:        dashboard.OrgId,
+		//PublicDashboardConfig: &models.PublicDashboardConfig{
+		//IsPublic: true,
+		//PublicDashboard: models.PublicDashboard{
+		//DashboardUid: "NOTTHESAME",
+		//OrgId:        9999999,
+		//},
+		//},
+		//}
+
+		//pdc, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		//require.NoError(t, err)
+
+		//assert.Equal(t, dashboard.Uid, pdc.PublicDashboard.DashboardUid)
+		//assert.Equal(t, dashboard.OrgId, pdc.PublicDashboard.OrgId)
 	})
 }
 
