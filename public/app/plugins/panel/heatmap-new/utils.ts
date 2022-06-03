@@ -1,7 +1,7 @@
 import { MutableRefObject, RefObject } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, incrRoundDn, incrRoundUp, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -18,6 +18,7 @@ interface PathbuilderOpts {
   hideThreshold?: number;
   xAlign?: -1 | 0 | 1;
   yAlign?: -1 | 0 | 1;
+  ySizeDivisor?: number;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -56,6 +57,7 @@ interface PrepConfigOpts {
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
   yAxisConfig: YAxisConfig;
+  ySizeDivisor?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -72,6 +74,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     cellGap,
     hideThreshold,
     yAxisConfig,
+    ySizeDivisor,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -232,10 +235,34 @@ export function prepConfig(opts: PrepConfigOpts) {
             if (shouldUseLogScale) {
               let yExp = u.scales['y'].log!;
 
+              let minExpanded = false;
+              let maxExpanded = false;
+
+              if (ySizeDivisor !== 1) {
+                let log = yExp === 2 ? Math.log2 : Math.log10;
+
+                let minLog = log(dataMin);
+                let maxLog = log(dataMax);
+
+                if (!Number.isInteger(minLog)) {
+                  dataMin = yExp ** incrRoundDn(minLog, 1);
+                  minExpanded = true;
+                }
+
+                if (!Number.isInteger(maxLog)) {
+                  dataMax = yExp ** incrRoundUp(maxLog, 1);
+                  maxExpanded = true;
+                }
+              }
+
               if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
-                dataMin /= yExp;
+                if (!minExpanded) {
+                  dataMin /= yExp;
+                }
               } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
-                dataMax *= yExp;
+                if (!maxExpanded) {
+                  dataMax *= yExp;
+                }
               } else {
                 dataMin /= yExp / 2;
                 dataMax *= yExp / 2;
@@ -348,6 +375,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         : dataRef.current?.yLayout === HeatmapBucketLayout.ge
         ? 1
         : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      ySizeDivisor,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
@@ -437,7 +465,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1 } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -490,15 +518,17 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let ySize: number;
 
         if (scaleX.distr === 3) {
-          xSize = Math.abs(valToPosX(xs[1], scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
+          xSize = Math.abs(valToPosX(xs[0] * scaleX.log!, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
         } else {
           xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
         }
 
         if (scaleY.distr === 3) {
-          ySize = Math.abs(valToPosY(ys[1], scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff));
+          ySize =
+            Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
+            ySizeDivisor;
         } else {
-          ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff));
+          ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
         }
 
         // clamp min tile size to 1px

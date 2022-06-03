@@ -3,14 +3,22 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
+import {
+  Portal,
+  ScaleDistribution,
+  UPlotChart,
+  useStyles2,
+  useTheme2,
+  VizLayout,
+  VizTooltipContainer,
+} from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
-import { PanelOptions } from './models.gen';
+import { HeatmapMode, PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
@@ -118,6 +126,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       hideThreshold: options.filterValues?.min, // eventually a better range
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
+      ySizeDivisor:
+        options.mode === HeatmapMode.Calculate && options.calculate?.yAxis?.scale?.type === ScaleDistribution.Log
+          ? +(options.calculate?.yAxis?.value || 1)
+          : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);

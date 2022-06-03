@@ -251,9 +251,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: xAxisCfg.mode,
-    xSize: +(xAxisCfg.value ?? 0),
+    xSize: xAxisCfg.value ? +xAxisCfg.value : undefined,
     yMode: yAxisCfg.mode,
-    ySize: +(yAxisCfg.value ?? 0),
+    ySize: yAxisCfg.value ? +yAxisCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
   });
 
@@ -403,7 +403,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, yBinIncr) : (v: number) => incrRoundDn(v, yBinIncr);
 
   if (yExp) {
-    yBinIncr = 1; // "split" reciprocal
+    yBinIncr = 1 / (opts?.ySize ?? 1); // sub-divides log exponents
     let yLog = yExp === 2 ? Math.log2 : Math.log10;
     binY = opts?.yCeil ? (v: number) => incrRoundUp(yLog(v), yBinIncr) : (v: number) => incrRoundDn(yLog(v), yBinIncr);
   }
