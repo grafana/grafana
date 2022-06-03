@@ -66,7 +66,7 @@ describe('VariableEditor', () => {
       render(<VariableQueryEditor {...props} />);
 
       await waitFor(() => {
-        const querySelect = screen.queryByRole('combobox', { name: 'Query Type' });
+        const querySelect = screen.queryByRole('combobox', { name: 'Query type' });
         expect(querySelect).toBeInTheDocument();
         expect(screen.queryByText('Regions')).toBeInTheDocument();
         // Should not render any fields besides Query Type
@@ -88,7 +88,7 @@ describe('VariableEditor', () => {
       render(<VariableQueryEditor {...props} />);
 
       await waitFor(() => {
-        const querySelect = screen.queryByRole('combobox', { name: 'Query Type' });
+        const querySelect = screen.queryByRole('combobox', { name: 'Query type' });
         expect(querySelect).toBeInTheDocument();
         expect(screen.queryByText('Metrics')).toBeInTheDocument();
         const regionSelect = screen.queryByRole('combobox', { name: 'Region' });
@@ -116,7 +116,7 @@ describe('VariableEditor', () => {
       };
       render(<VariableQueryEditor {...props} />);
 
-      const querySelect = screen.queryByLabelText('Query Type');
+      const querySelect = screen.queryByLabelText('Query type');
       expect(querySelect).toBeInTheDocument();
       expect(screen.queryByText('Dimension Values')).toBeInTheDocument();
       const regionSelect = screen.getByRole('combobox', { name: 'Region' });
@@ -138,6 +138,23 @@ describe('VariableEditor', () => {
         // dimensionKey s4 does not exist in the new region and should be removed
         dimensionKey: '',
       });
+    });
+  });
+  describe('LogGroups queryType is selected', () => {
+    it('should only render region and prefix', async () => {
+      const props = defaultProps;
+      props.query = {
+        ...defaultQuery,
+        queryType: VariableQueryType.LogGroups,
+      };
+      render(<VariableQueryEditor {...props} />);
+
+      await waitFor(() => {
+        screen.getByLabelText('Log group prefix');
+      });
+      screen.queryByRole('combobox', { name: 'Region' });
+
+      expect(screen.queryByLabelText('Namespace')).not.toBeInTheDocument();
     });
   });
 });

@@ -22,6 +22,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.EC2InstanceAttributes, label: 'EC2 Instance Attributes' },
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
+  { value: VariableQueryType.LogGroups, label: 'Log Groups' },
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -82,6 +83,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.EBSVolumeIDs,
     VariableQueryType.EC2InstanceAttributes,
     VariableQueryType.ResourceArns,
+    VariableQueryType.LogGroups,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
@@ -95,7 +97,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         value={parsedQuery.queryType}
         options={queryTypes}
         onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
-        label="Query Type"
+        label="Query type"
       />
       {hasRegionField && (
         <VariableQueryField
@@ -126,7 +128,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             value={dimensionKey || null}
             options={dimensionKeys}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
-            label="Dimension Key"
+            label="Dimension key"
           />
           <VariableTextField
             value={query.dimensionFilters}
@@ -149,9 +151,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableTextField
             value={parsedQuery.attributeName}
-            placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
-            label="Attribute Name"
+            label="Attribute name"
           />
           <VariableTextField
             value={parsedQuery.ec2Filters}
@@ -166,9 +167,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableTextField
             value={parsedQuery.resourceType}
-            placeholder="resource type"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
-            label="Resource Type"
+            label="Resource type"
           />
           <VariableTextField
             value={parsedQuery.tags}
@@ -177,6 +177,13 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             label="Tags"
           />
         </>
+      )}
+      {parsedQuery.queryType === VariableQueryType.LogGroups && (
+        <VariableTextField
+          value={query.logGroupPrefix ?? ''}
+          onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
+          label="Log group prefix"
+        />
       )}
     </>
   );
