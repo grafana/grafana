@@ -197,7 +197,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
-			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
