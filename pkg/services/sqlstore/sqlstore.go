@@ -183,7 +183,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 				Email:        ss.Cfg.AdminUser + "@localhost",
 				Password:     ss.Cfg.AdminPassword,
 				IsAdmin:      true,
-				SkipOrgSetup: true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}

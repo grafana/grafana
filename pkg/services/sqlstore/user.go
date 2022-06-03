@@ -67,7 +67,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 		Created:          time.Now(),
 		Updated:          time.Now(),
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: false,
+		IsServiceAccount: args.IsServiceAccount,
 	}
 
 	salt, err := util.GetRandomString(10)
