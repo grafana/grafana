@@ -79,7 +79,7 @@ Query Parameters:
 
 | Action     | Scope    |
 | ---------- | -------- |
-| roles:list | roles:\* |
+| roles:read | roles:\* |
 
 #### Example request
 
@@ -180,13 +180,13 @@ Content-Type: application/json; charset=UTF-8
             "created": "2021-11-19T10:48:00+01:00"
         },
         {
-            "action": "reports.admin:create",
+            "action": "reports:create",
             "scope": "",
             "updated": "2021-11-19T10:48:00+01:00",
             "created": "2021-11-19T10:48:00+01:00"
         },
         {
-            "action": "reports.admin:write",
+            "action": "reports:write",
             "scope": "reports:*",
             "updated": "2021-11-19T10:48:00+01:00",
             "created": "2021-11-19T10:48:00+01:00"
@@ -489,7 +489,7 @@ Query Parameters:
 
 | Action           | Scope                |
 | ---------------- | -------------------- |
-| users.roles:list | users:id:`<user ID>` |
+| users.roles:read | users:id:`<user ID>` |
 
 #### Example request
 
@@ -537,7 +537,7 @@ Lists the permissions that a given user has.
 
 | Action                 | Scope                |
 | ---------------------- | -------------------- |
-| users.permissions:list | users:id:`<user ID>` |
+| users.permissions:read | users:id:`<user ID>` |
 
 #### Example request
 
@@ -763,7 +763,7 @@ Query Parameters:
 
 | Action           | Scope                |
 | ---------------- | -------------------- |
-| teams.roles:list | teams:id:`<team ID>` |
+| teams.roles:read | teams:id:`<team ID>` |
 
 #### Example request
 

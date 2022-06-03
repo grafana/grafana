@@ -81,6 +81,7 @@ type API struct {
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
+	AlertRules           *provisioning.AlertRuleService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -142,6 +143,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			contactPointService: api.ContactPointService,
 			templates:           api.Templates,
 			muteTimings:         api.MuteTimings,
+			alertRules:          api.AlertRules,
 		}), m)
 	}
 }

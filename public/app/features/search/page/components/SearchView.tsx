@@ -27,9 +27,18 @@ type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
+  includePanels: boolean;
+  setIncludePanels: (v: boolean) => void;
 };
 
-export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders }: SearchViewProps) => {
+export const SearchView = ({
+  showManage,
+  folderDTO,
+  queryText,
+  hidePseudoFolders,
+  includePanels,
+  setIncludePanels,
+}: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
@@ -61,11 +70,15 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
       }
     }
 
+    if (!includePanels && !q.kind) {
+      q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
     if (q.query === '*' && !q.sort?.length) {
       q.sort = 'name_sort';
     }
     return q;
-  }, [query, queryText, folderDTO]);
+  }, [query, queryText, folderDTO, includePanels]);
 
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
@@ -208,6 +221,8 @@ export const SearchView = ({ showManage, folderDTO, queryText, hidePseudoFolders
           getSortOptions={getGrafanaSearcher().getSortOptions}
           onDatasourceChange={onDatasourceChange}
           query={query}
+          includePanels={includePanels!}
+          setIncludePanels={setIncludePanels}
         />
       )}
 
