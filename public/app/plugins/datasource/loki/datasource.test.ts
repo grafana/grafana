@@ -1058,6 +1058,15 @@ describe('isMetricsQuery', () => {
   });
 });
 
+describe('applyTemplateVariables', () => {
+  it('should add the adhoc filter to the query', () => {
+    const ds = createLokiDSForTests();
+    const spy = jest.spyOn(ds, 'addAdHocFilters');
+    ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
+    expect(spy).toHaveBeenCalledWith('{test}');
+  });
+});
+
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
   const lokiQuery: LokiQuery = { refId: 'A', expr: query };
   const result = ds.addAdHocFilters(lokiQuery.expr);
