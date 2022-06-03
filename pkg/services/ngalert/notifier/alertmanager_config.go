@@ -155,5 +155,12 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	}
 	config.TemplateFileProvenances = tmplProvs
 
+	mt := definitions.MuteTimeInterval{}
+	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, mt.ResourceType())
+	if err != nil {
+		return definitions.GettableUserConfig{}, nil
+	}
+	config.AlertmanagerConfig.MuteTimeProvenances = mtProvs
+
 	return config, nil
 }
