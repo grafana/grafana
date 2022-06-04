@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
+var zScoreDeviations = 3.0
+
 type exemplar struct {
 	labels map[string]string
 	val    float64
@@ -31,36 +33,39 @@ func newExemplarSampler() *exemplarSampler {
 	}
 }
 
-func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, labels map[string]string) {
+func (es *exemplarSampler) update(step time.Duration, ts time.Time, val float64, labels map[string]string) {
 	bucketTs := models.AlignTimeRange(ts, step, 0)
-	e.saveNewLabels(labels)
+	es.trackNewLabels(labels)
+	es.updateAggregations(val)
 
-	b, exists := e.buckets[bucketTs]
-	if !exists || len(b) == 0 {
-		e.buckets[bucketTs] = []exemplar{{
-			val:    val,
-			labels: labels,
-			ts:     ts,
-		}}
-		e.updateAggregations(val)
+	ex := exemplar{
+		val:    val,
+		ts:     ts,
+		labels: labels,
+	}
+
+	if _, exists := es.buckets[bucketTs]; !exists {
+		es.buckets[bucketTs] = []exemplar{ex}
 		return
 	}
 
-	stddev := e.getStandardDeviation()
-	previous := b[len(b)-1].val
-	if stddev != 0 && previous-val >= float64(2)*stddev {
-		e.buckets[bucketTs] = append(e.buckets[bucketTs], exemplar{
-			val:    val,
-			labels: labels,
-			ts:     ts,
-		})
-		sort.Slice(e.buckets[bucketTs], func(i, j int) bool {
-			return e.buckets[bucketTs][i].val > e.buckets[bucketTs][j].val
-		})
-		e.updateAggregations(val)
+	// only keep exemplars that have a z-score above the standard deviation threshold
+	// in the future it might be useful to make it configurable
+	if es.shouldSample(val, zScoreDeviations) {
+		es.buckets[bucketTs] = append(es.buckets[bucketTs], ex)
 	}
 }
 
+// shouldSample returns true if the given exemplar should be sampled
+func (e *exemplarSampler) shouldSample(val float64, deviations float64) bool {
+	if e.standardDeviation() == 0 {
+		return false
+	}
+	return e.zScore(val) >= deviations
+}
+
+// updateAggregations uses Welford's online algorithm for calculating the mean and variance
+// https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
 func (e *exemplarSampler) updateAggregations(val float64) {
 	e.count++
 	delta := val - e.mean
@@ -69,14 +74,24 @@ func (e *exemplarSampler) updateAggregations(val float64) {
 	e.m2 += delta * delta2
 }
 
-func (e *exemplarSampler) getStandardDeviation() float64 {
+// stadardDeviation calculates the amount of varation in the data
+// https://en.wikipedia.org/wiki/Standard_deviation
+func (e *exemplarSampler) standardDeviation() float64 {
 	if e.count < 2 {
 		return 0
 	}
 	return math.Sqrt(e.m2 / float64(e.count-1))
 }
 
-func (e *exemplarSampler) saveNewLabels(labels map[string]string) {
+// zScore calculates the number of standard deviations above or below the mean
+// https://en.wikipedia.org/wiki/Standard_score
+func (e *exemplarSampler) zScore(val float64) float64 {
+	return math.Abs(val-e.mean) / e.standardDeviation()
+}
+
+// trackNewLabels saves label names that haven't been seen before
+// so that they can be used to build the label fields in the exemplar frame
+func (e *exemplarSampler) trackNewLabels(labels map[string]string) {
 	for k := range labels {
 		if _, ok := e.labelSet[k]; !ok {
 			e.labelSet[k] = struct{}{}
@@ -84,15 +99,19 @@ func (e *exemplarSampler) saveNewLabels(labels map[string]string) {
 	}
 }
 
+// getLabelNames returns sorted unique label names
 func (e *exemplarSampler) getLabelNames() []string {
 	labelNames := make([]string, 0, len(e.labelSet))
 	for k := range e.labelSet {
 		labelNames = append(labelNames, k)
 	}
-	sort.Strings(labelNames)
+	sort.SliceStable(labelNames, func(i, j int) bool {
+		return labelNames[i] < labelNames[j]
+	})
 	return labelNames
 }
 
+// getExemplars returns the sampled exemplars sorted by timestamp
 func (e *exemplarSampler) getExemplars() []exemplar {
 	exemplars := make([]exemplar, 0, len(e.buckets))
 	for _, b := range e.buckets {
@@ -100,8 +119,8 @@ func (e *exemplarSampler) getExemplars() []exemplar {
 			exemplars = append(exemplars, e)
 		}
 	}
-	sort.Slice(exemplars, func(i, j int) bool {
-		return exemplars[i].ts.Before(exemplars[j].ts)
+	sort.SliceStable(exemplars, func(i, j int) bool {
+		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
 	})
 	return exemplars
 }
@@ -117,7 +136,7 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 
 	// the new exemplar frame will be a single frame in long format
 	// with a timestamp, metric value, and one or more label fields
-	exemplarFrame := data.NewFrame("")
+	exemplarFrame := data.NewFrame("exemplar")
 
 	for _, frame := range dr.Frames {
 		// we don't need to process non-exemplar frames
@@ -143,23 +162,27 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		}
 	}
 
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, len(sampler.buckets)))
-	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(sampler.buckets)))
-	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
+	exemplars := sampler.getExemplars()
 
-	labelNames := sampler.getLabelNames()
-	for _, labelName := range labelNames {
-		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(sampler.buckets))))
+	if len(exemplars) == 0 {
+		return dr
 	}
 
-	for _, b := range sampler.getExemplars() {
+	// init the fields for the new exemplar frame
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, len(exemplars)))
+	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(exemplars)))
+	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
+	labelNames := sampler.getLabelNames()
+	for _, labelName := range labelNames {
+		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(exemplars))))
+	}
+
+	// add the sampled exemplars to the new exemplar frame
+	for _, b := range exemplars {
 		timeField.Append(b.ts)
 		valueField.Append(b.val)
 		for i, labelName := range labelNames {
-			labelValue, ok := b.labels[labelName]
-			if !ok {
-				labelValue = ""
-			}
+			labelValue := b.labels[labelName]
 			colIdx := i + 2 // +2 to skip time and value fields
 			exemplarFrame.Fields[colIdx].Append(labelValue)
 		}

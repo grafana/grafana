@@ -513,7 +513,7 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 	}
 
 	// Calculate standard deviation
-	standardDeviation := Deviation(values)
+	standardDeviation := deviation(values)
 
 	// Create slice with all of the bucketed exemplars
 	sampledBuckets := make([]string, len(bucketedExemplars))
@@ -602,7 +602,7 @@ func sortedLabels(labelsVector map[string][]string) []string {
 	return allLabels
 }
 
-func Deviation(values []float64) float64 {
+func deviation(values []float64) float64 {
 	var sum, mean, sd float64
 	valuesLen := float64(len(values))
 	for _, value := range values {
