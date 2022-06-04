@@ -24,15 +24,6 @@ export function addHeatmapCalculationOptions(
   });
 
   builder.addCustomEditor({
-    id: 'yBuckets-scale',
-    path: `${prefix}yBuckets.scale`,
-    name: 'Y Bucket scale',
-    category,
-    editor: ScaleDistributionEditor,
-    defaultValue: { type: ScaleDistribution.Linear },
-  });
-
-  builder.addCustomEditor({
     id: 'yBuckets',
     path: `${prefix}yBuckets`,
     name: 'Y Bucket',
@@ -41,5 +32,14 @@ export function addHeatmapCalculationOptions(
     defaultValue: {
       mode: HeatmapCalculationMode.Size,
     },
+  });
+
+  builder.addCustomEditor({
+    id: 'yBuckets-scale',
+    path: `${prefix}yBuckets.scale`,
+    name: 'Y Bucket scale',
+    category,
+    editor: ScaleDistributionEditor,
+    defaultValue: { type: ScaleDistribution.Linear },
   });
 }

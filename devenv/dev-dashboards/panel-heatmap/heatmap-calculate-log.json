@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1313,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -118,7 +117,7 @@
           "startValue": 0.01
         }
       ],
-      "title": "Panel Title",
+      "title": "Time series",
       "type": "timeseries"
     },
     {
@@ -152,14 +151,7 @@
         "bucket": {
           "layout": "auto"
         },
-        "calculate": {
-          "yAxis": {
-            "scale": {
-              "log": 2,
-              "type": "log"
-            }
-          }
-        },
+        "calculate": true,
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -243,14 +235,7 @@
         "bucket": {
           "layout": "auto"
         },
-        "calculate": {
-          "yAxis": {
-            "scale": {
-              "log": 10,
-              "type": "log"
-            }
-          }
-        },
+        "calculate": true,
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -335,13 +320,7 @@
         "bucket": {
           "layout": "auto"
         },
-        "calculate": {
-          "yAxis": {
-            "scale": {
-              "type": "linear"
-            }
-          }
-        },
+        "calculate": true,
         "cellGap": 1,
         "color": {
           "exponent": 0.5,
@@ -417,14 +396,7 @@
         "bucket": {
           "layout": "auto"
         },
-        "calculate": {
-          "yAxis": {
-            "scale": {
-              "log": 10,
-              "type": "log"
-            }
-          }
-        },
+        "calculate": true,
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -508,14 +480,7 @@
         "bucket": {
           "layout": "auto"
         },
-        "calculate": {
-          "yAxis": {
-            "scale": {
-              "log": 10,
-              "type": "log"
-            }
-          }
-        },
+        "calculate": true,
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -584,6 +549,6 @@
   "timezone": "",
   "title": "Heatmap calculate (log)",
   "uid": "ZXYQTA97ZZ",
-  "version": 1,
+  "version": 4,
   "weekStart": ""
 }
