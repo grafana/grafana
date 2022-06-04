@@ -126,7 +126,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
-      hideThreshold: options.filterValues?.min, // eventually a better range
+      hideLE: options.filterValues?.min,
+      hideGE: options.filterValues?.max,
+      valueMin: options.color.min,
+      valueMax: options.color.max,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,

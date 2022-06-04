@@ -15,7 +15,8 @@ import { PanelFieldConfig, YAxisConfig } from './models.gen';
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
-  hideThreshold?: number;
+  hideLE?: number;
+  hideGE?: number;
   xAlign?: -1 | 0 | 1;
   yAlign?: -1 | 0 | 1;
   ySizeDivisor?: number;
@@ -55,7 +56,10 @@ interface PrepConfigOpts {
   palette: string[];
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
-  hideThreshold?: number;
+  hideLE?: number;
+  hideGE?: number;
+  valueMin?: number;
+  valueMax?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
 }
@@ -72,7 +76,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     getTimeRange,
     palette,
     cellGap,
-    hideThreshold,
+    hideLE,
+    hideGE,
+    valueMin,
+    valueMax,
     yAxisConfig,
     ySizeDivisor,
   } = opts;
@@ -363,7 +370,8 @@ export function prepConfig(opts: PrepConfigOpts) {
         });
       },
       gap: cellGap,
-      hideThreshold,
+      hideLE,
+      hideGE,
       xAlign:
         dataRef.current?.xLayout === HeatmapBucketLayout.le
           ? -1
@@ -380,7 +388,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         fill: {
           values: (u, seriesIdx) => {
             let countFacetIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
-            return countsToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette);
+            return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
           },
           index: palette,
         },
@@ -465,7 +473,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
+  const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -549,14 +557,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         );
 
         for (let i = 0; i < dlen; i++) {
-          // filter out 0 counts and out of view
-          if (
-            counts[i] > hideThreshold &&
-            xs[i] + xBinIncr >= scaleX.min! &&
-            xs[i] - xBinIncr <= scaleX.max! &&
-            ys[i] + yBinIncr >= scaleY.min! &&
-            ys[i] - yBinIncr <= scaleY.max!
-          ) {
+          if (counts[i] > hideLE && counts[i] < hideGE) {
             let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
 
@@ -646,7 +647,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
 export function heatmapPathsSparse(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0 } = opts;
+  const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -717,7 +718,7 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         let xSizeUniform = xOffs.get(xMaxs.find((v) => v !== xMaxs[0])) - xOffs.get(xMaxs[0]);
 
         for (let i = 0; i < dlen; i++) {
-          if (counts[i] <= hideThreshold) {
+          if (counts[i] <= hideLE || counts[i] >= hideGE) {
             continue;
           }
 
@@ -739,19 +740,11 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           let x = xMaxPx;
           let y = yMinPx;
 
-          // filter out 0 counts and out of view
-          // if (
-          //   xs[i] + xBinIncr >= scaleX.min! &&
-          //   xs[i] - xBinIncr <= scaleX.max! &&
-          //   ys[i] + yBinIncr >= scaleY.min! &&
-          //   ys[i] - yBinIncr <= scaleY.max!
-          // ) {
           let fillPath = fillPaths[fills[i]];
 
           rect(fillPath, x, y, xSize, ySize);
 
           each(u, 1, i, x, y, xSize, ySize);
-          //  }
         }
 
         u.ctx.save();
@@ -772,29 +765,36 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const countsToFills = (counts: number[], palette: string[]) => {
-  // TODO: integrate 1e-9 hideThreshold?
-  const hideThreshold = 0;
+export const valuesToFills = (values: number[], palette: string[], minValue?: number, maxValue?: number) => {
+  if (minValue == null) {
+    minValue = Infinity;
 
-  let minCount = Infinity;
-  let maxCount = -Infinity;
-
-  for (let i = 0; i < counts.length; i++) {
-    if (counts[i] > hideThreshold) {
-      minCount = Math.min(minCount, counts[i]);
-      maxCount = Math.max(maxCount, counts[i]);
+    for (let i = 0; i < values.length; i++) {
+      minValue = Math.min(minValue, values[i]);
     }
   }
 
-  let range = maxCount - minCount;
+  if (maxValue == null) {
+    maxValue = -Infinity;
+
+    for (let i = 0; i < values.length; i++) {
+      maxValue = Math.max(maxValue, values[i]);
+    }
+  }
+
+  let range = maxValue - minValue;
 
   let paletteSize = palette.length;
 
-  let indexedFills = Array(counts.length);
+  let indexedFills = Array(values.length);
 
-  for (let i = 0; i < counts.length; i++) {
+  for (let i = 0; i < values.length; i++) {
     indexedFills[i] =
-      counts[i] === 0 ? -1 : Math.min(paletteSize - 1, Math.floor((paletteSize * (counts[i] - minCount)) / range));
+      values[i] < minValue
+        ? 0
+        : values[i] > maxValue
+        ? paletteSize - 1
+        : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
   }
 
   return indexedFills;
