@@ -1,33 +1,22 @@
 import {
   DataFrame,
   DataFrameType,
-  FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
   outerJoinDataFrames,
   PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapMode, PanelOptions } from './models.gen';
-
-export const enum BucketLayout {
-  le = 'le',
-  ge = 'ge',
-  unknown = 'unknown', // unknown
-}
+import { PanelOptions } from './models.gen';
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
   exemplars?: DataFrame; // optionally linked exemplars
   exemplarColor?: string;
-
-  yAxisValues?: Array<number | string | null>;
-  yLabelValues?: string[]; // matched ordinally to yAxisValues
-  matchByLabel?: string; // e.g. le, pod, etc.
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -35,8 +24,8 @@ export interface HeatmapData {
   xBucketCount?: number;
   yBucketCount?: number;
 
-  xLayout?: BucketLayout;
-  yLayout?: BucketLayout;
+  xLayout?: HeatmapBucketLayout;
+  yLayout?: HeatmapBucketLayout;
 
   // Print a heatmap cell value
   display?: (v: number) => string;
@@ -51,13 +40,11 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return {};
   }
 
-  const { mode } = options;
-
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  if (mode === HeatmapMode.Calculate) {
+  if (options.calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculate ?? {}), exemplars, theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, theme);
   }
 
   // Check for known heatmap types
@@ -88,21 +75,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  // Some datasources return values in ascending order and require math to know the deltas
-  if (mode === HeatmapMode.Accumulated) {
-    console.log('TODO, deaccumulate the values');
-  }
-
-  const yFields = bucketHeatmap.fields.filter((f) => f.type === FieldType.number);
-  const matchByLabel = Object.keys(yFields[0].labels ?? {})[0];
-
-  const scanlinesFrame = bucketsToScanlines(bucketHeatmap);
-  return {
-    matchByLabel,
-    yLabelValues: matchByLabel ? yFields.map((f) => f.labels?.[matchByLabel] ?? '') : undefined,
-    yAxisValues: yFields.map((f) => getFieldDisplayName(f, bucketHeatmap, frames)),
-    ...getHeatmapData(scanlinesFrame, exemplars, theme),
-  };
+  return getHeatmapData(bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap }), exemplars, theme);
 }
 
 const getSparseHeatmapData = (
@@ -173,8 +146,18 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     yBucketCount: yBinQty,
 
     // TODO: improve heuristic
-    xLayout: xName === 'xMax' ? BucketLayout.le : xName === 'xMin' ? BucketLayout.ge : BucketLayout.unknown,
-    yLayout: yName === 'yMax' ? BucketLayout.le : yName === 'yMin' ? BucketLayout.ge : BucketLayout.unknown,
+    xLayout:
+      xName === 'xMax'
+        ? HeatmapBucketLayout.le
+        : xName === 'xMin'
+        ? HeatmapBucketLayout.ge
+        : HeatmapBucketLayout.unknown,
+    yLayout:
+      yName === 'yMax'
+        ? HeatmapBucketLayout.le
+        : yName === 'yMin'
+        ? HeatmapBucketLayout.ge
+        : HeatmapBucketLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };
