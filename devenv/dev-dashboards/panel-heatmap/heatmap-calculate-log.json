@@ -85,8 +85,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
-        "w": 12,
+        "h": 14,
+        "w": 8,
         "x": 0,
         "y": 0
       },
@@ -126,80 +126,40 @@
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
-      "gridPos": {
-        "h": 16,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "calculate": true,
-        "calculation": {
-          "yBuckets": {
-            "scale": {
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
               "type": "linear"
             }
           }
         },
-        "cellGap": 1,
-        "color": {
-          "exponent": 0.5,
-          "fill": "dark-orange",
-          "mode": "scheme",
-          "scale": "exponential",
-          "scheme": "Spectral",
-          "steps": 64
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "min": 1e-9
-        },
-        "legend": {
-          "show": true
-        },
-        "tooltip": {
-          "show": true,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "align": "auto",
-          "axisPlacement": "left",
-          "reverse": false
-        },
-        "yAxisLabels": "auto",
-        "yAxisReverse": false
-      },
-      "pluginVersion": "9.0.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 3,
-          "refId": "A"
-        }
-      ],
-      "title": "linear",
-      "type": "heatmap-new"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
+        "overrides": []
       },
       "gridPos": {
-        "h": 16,
-        "w": 12,
-        "x": 0,
-        "y": 16
+        "h": 14,
+        "w": 8,
+        "x": 8,
+        "y": 0
       },
       "id": 6,
       "options": {
-        "calculate": true,
+        "bucket": {
+          "layout": "auto"
+        },
+        "calculate": {
+          "yAxis": {
+            "scale": {
+              "log": 2,
+              "type": "log"
+            }
+          }
+        },
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -226,12 +186,12 @@
         "legend": {
           "show": true
         },
+        "mode": "calculate",
         "tooltip": {
           "show": true,
           "yHistogram": false
         },
         "yAxis": {
-          "align": "auto",
           "axisPlacement": "left",
           "reverse": false
         },
@@ -257,15 +217,214 @@
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "h": 16,
-        "w": 12,
-        "x": 12,
-        "y": 16
+        "h": 14,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "bucket": {
+          "layout": "auto"
+        },
+        "calculate": {
+          "yAxis": {
+            "scale": {
+              "log": 10,
+              "type": "log"
+            }
+          }
+        },
+        "calculation": {
+          "yBuckets": {
+            "scale": {
+              "log": 2,
+              "type": "log"
+            },
+            "value": "2"
+          }
+        },
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "scale": "exponential",
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "min": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "mode": "calculate",
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
+        },
+        "yAxisLabels": "auto",
+        "yAxisReverse": false
+      },
+      "pluginVersion": "9.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 3,
+          "refId": "A"
+        }
+      ],
+      "title": "log2 split 2",
+      "type": "heatmap-new"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "id": 4,
+      "options": {
+        "bucket": {
+          "layout": "auto"
+        },
+        "calculate": {
+          "yAxis": {
+            "scale": {
+              "type": "linear"
+            }
+          }
+        },
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "scale": "exponential",
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "min": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "mode": "calculate",
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
+        },
+        "yAxisLabels": "auto",
+        "yAxisReverse": false
+      },
+      "pluginVersion": "9.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 3,
+          "refId": "A"
+        }
+      ],
+      "title": "linear",
+      "type": "heatmap-new"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 8,
+        "x": 8,
+        "y": 14
       },
       "id": 5,
       "options": {
-        "calculate": true,
+        "bucket": {
+          "layout": "auto"
+        },
+        "calculate": {
+          "yAxis": {
+            "scale": {
+              "log": 10,
+              "type": "log"
+            }
+          }
+        },
         "calculation": {
           "yBuckets": {
             "scale": {
@@ -292,12 +451,12 @@
         "legend": {
           "show": true
         },
+        "mode": "calculate",
         "tooltip": {
           "show": true,
           "yHistogram": false
         },
         "yAxis": {
-          "align": "auto",
           "axisPlacement": "left",
           "reverse": false
         },
@@ -316,6 +475,98 @@
         }
       ],
       "title": "log10",
+      "type": "heatmap-new"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "id": 8,
+      "options": {
+        "bucket": {
+          "layout": "auto"
+        },
+        "calculate": {
+          "yAxis": {
+            "scale": {
+              "log": 10,
+              "type": "log"
+            }
+          }
+        },
+        "calculation": {
+          "yBuckets": {
+            "scale": {
+              "log": 10,
+              "type": "log"
+            },
+            "value": "2"
+          }
+        },
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "scale": "exponential",
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "min": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "mode": "calculate",
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false
+        },
+        "yAxisLabels": "auto",
+        "yAxisReverse": false
+      },
+      "pluginVersion": "9.0.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 3,
+          "refId": "A"
+        }
+      ],
+      "title": "log10 split 2",
       "type": "heatmap-new"
     }
   ],
