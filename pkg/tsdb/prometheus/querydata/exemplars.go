@@ -33,10 +33,10 @@ func newExemplarSampler() *exemplarSampler {
 	}
 }
 
-func (es *exemplarSampler) update(step time.Duration, ts time.Time, val float64, labels map[string]string) {
+func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, labels map[string]string) {
 	bucketTs := models.AlignTimeRange(ts, step, 0)
-	es.trackNewLabels(labels)
-	es.updateAggregations(val)
+	e.trackNewLabels(labels)
+	e.updateAggregations(val)
 
 	ex := exemplar{
 		val:    val,
@@ -44,15 +44,15 @@ func (es *exemplarSampler) update(step time.Duration, ts time.Time, val float64,
 		labels: labels,
 	}
 
-	if _, exists := es.buckets[bucketTs]; !exists {
-		es.buckets[bucketTs] = []exemplar{ex}
+	if _, exists := e.buckets[bucketTs]; !exists {
+		e.buckets[bucketTs] = []exemplar{ex}
 		return
 	}
 
 	// only keep exemplars that have a z-score above the standard deviation threshold
 	// in the future it might be useful to make it configurable
-	if es.shouldSample(val, zScoreDeviations) {
-		es.buckets[bucketTs] = append(es.buckets[bucketTs], ex)
+	if e.shouldSample(val, zScoreDeviations) {
+		e.buckets[bucketTs] = append(e.buckets[bucketTs], ex)
 	}
 }
 
@@ -115,9 +115,7 @@ func (e *exemplarSampler) getLabelNames() []string {
 func (e *exemplarSampler) getExemplars() []exemplar {
 	exemplars := make([]exemplar, 0, len(e.buckets))
 	for _, b := range e.buckets {
-		for _, e := range b {
-			exemplars = append(exemplars, e)
-		}
+		exemplars = append(exemplars, b...)
 	}
 	sort.SliceStable(exemplars, func(i, j int) bool {
 		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
@@ -163,7 +161,6 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 	}
 
 	exemplars := sampler.getExemplars()
-
 	if len(exemplars) == 0 {
 		return dr
 	}

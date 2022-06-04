@@ -36,7 +36,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			addMetadataToWideFrame(q, frame)
 		} else {
 			addMetadataToMultiFrame(q, frame)
-
 		}
 	}
 
