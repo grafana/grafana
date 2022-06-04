@@ -30,8 +30,8 @@ func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserC
 
 func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	reporter := cmputil.DiffReporter{}
-	ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
-	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, ops...)
+	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
+	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
 	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != ngmodels.ProvenanceNone {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
 	}
@@ -144,8 +144,8 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 			return fmt.Errorf("cannot delete provisioned mute time '%s'", name)
 		}
 		reporter := cmputil.DiffReporter{}
-		ops := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
-		timesEqual := cmp.Equal(muteTime.TimeIntervals, postedMT.TimeIntervals, ops...)
+		options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
+		timesEqual := cmp.Equal(muteTime.TimeIntervals, postedMT.TimeIntervals, options...)
 		if !timesEqual {
 			return fmt.Errorf("cannot save provisioned mute time '%s'", muteTime.Name)
 		}
