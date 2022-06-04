@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------+
-//  | Name: Time                    | Name: Value      |
+//  | Name: Time                    | Name: 1 / 0      |
 //  | Labels:                       | Labels:          |
 //  | Type: []time.Time             | Type: []*float64 |
 //  +-------------------------------+------------------+
@@ -44,7 +44,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "1 / 0",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

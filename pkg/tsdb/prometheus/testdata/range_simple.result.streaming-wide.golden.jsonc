@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 3 Fields by 4 Rows
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: Value                                                                                            | Name: Value                                                                                            |
+//  | Name: Time                        | Name: prometheus_http_requests_total{code="200", handler="/api/v1/query_range", job="prometheus"}      | Name: prometheus_http_requests_total{code="400", handler="/api/v1/query_range", job="prometheus"}      |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=200, handler=/api/v1/query_range, job=prometheus | Labels: __name__=prometheus_http_requests_total, code=400, handler=/api/v1/query_range, job=prometheus |
 //  | Type: []time.Time                 | Type: []*float64                                                                                       | Type: []*float64                                                                                       |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
@@ -45,7 +45,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
@@ -59,7 +59,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

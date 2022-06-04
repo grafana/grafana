@@ -10,7 +10,7 @@
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------------------------------------+
-//  | Name: Time                    | Name: Value                                    |
+//  | Name: Time                    | Name: go_goroutines{job="prometheus"}          |
 //  | Labels:                       | Labels: __name__=go_goroutines, job=prometheus |
 //  | Type: []time.Time             | Type: []*float64                               |
 //  +-------------------------------+------------------------------------------------+
@@ -44,7 +44,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "go_goroutines{job=\"prometheus\"}",
             "type": "number",
             "typeInfo": {
               "frame": "float64",

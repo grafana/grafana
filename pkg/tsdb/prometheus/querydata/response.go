@@ -68,7 +68,7 @@ func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	for _, f := range frame.Fields {
-		if f.Type() == data.FieldTypeFloat64 {
+		if f.Type() == data.FieldTypeFloat64 || f.Type() == data.FieldTypeNullableFloat64 {
 			f.Name = getName(q, f)
 		}
 	}
