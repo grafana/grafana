@@ -57,7 +57,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsyFacet: number[] = [];
 
     const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
-    if (info.exemplars && meta.yMatchWithLabel) {
+    if (info.exemplars?.length && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
