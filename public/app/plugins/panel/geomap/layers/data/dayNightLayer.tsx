@@ -6,9 +6,9 @@ import {
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
-import { Circle, Fill, Style } from 'ol/style';
+import { Fill, Style } from 'ol/style';
 
-import {DayNight} from 'ol-ext/source/DayNight';
+import DayNight from 'ol-ext/source/DayNight';
 
 export enum ShowTime {
   From = 'from',
@@ -24,7 +24,7 @@ const defaultConfig: DayNightConfig = {
   show: ShowTime.To,
 };
 
-export const DAY_NIGHT_LAYER_ID = 'markers';
+export const DAY_NIGHT_LAYER_ID = 'dayNight';
 
 // Used by default when nothing is configured
 export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
@@ -64,12 +64,12 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     const vectorLayer = new VectorLayer({
       source,
       style: new Style({
-        image: new Circle({
-          radius: 5,
-          fill: new Fill({ color: 'red' })
-        }),
+        // image: new Circle({
+        //   radius: 5,
+        //   fill: new Fill({ color: 'red' })
+        // }),
         fill: new Fill({
-          color: [0,0,50,.5]
+          color: [50,0,50,.5]
         })
       })
     });
@@ -77,10 +77,8 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        if (!data.series?.length) {
-          source.clear();
-          return; // ignore empty
-        }
+        const to = data.timeRange.to.valueOf();
+        source.setTime(new Date(to));
       },
 
       // Marker overlay options

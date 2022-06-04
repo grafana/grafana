@@ -7562,15 +7562,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@siedlerchr/types-ol-ext@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@siedlerchr/types-ol-ext@npm:2.0.0"
-  dependencies:
-    jspdf: ^2.5.1
-  checksum: f97642cbd3fbc6501d17bc8118931eb00c12cb8b92a89d055508fd24e62e0c37263da18144cada421d8dc342d74e8198179905184b32b8c260bf30e4f5d7e4cb
-  languageName: node
-  linkType: hard
-
 "@sinclair/typebox@npm:^0.23.3":
   version: 0.23.5
   resolution: "@sinclair/typebox@npm:0.23.5"
@@ -10365,6 +10356,15 @@ __metadata:
   version: 4.1.4
   resolution: "@types/npmlog@npm:4.1.4"
   checksum: 740f7431ccfc0e127aa8d162fe05c6ce8aa71290be020d179b2824806d19bd2c706c7e0c9a3c9963cefcdf2ceacb1dec6988c394c3694451387759dafe0aa927
+  languageName: node
+  linkType: hard
+
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@2.0.0":
+  version: 2.0.0
+  resolution: "@siedlerchr/types-ol-ext@npm:2.0.0"
+  dependencies:
+    jspdf: ^2.5.1
+  checksum: f97642cbd3fbc6501d17bc8118931eb00c12cb8b92a89d055508fd24e62e0c37263da18144cada421d8dc342d74e8198179905184b32b8c260bf30e4f5d7e4cb
   languageName: node
   linkType: hard
 
@@ -20381,7 +20381,6 @@ __metadata:
     "@sentry/browser": 6.19.7
     "@sentry/types": 6.19.7
     "@sentry/utils": 6.19.7
-    "@siedlerchr/types-ol-ext": ^2.0.0
     "@swc/core": 1.2.187
     "@swc/helpers": 0.3.13
     "@testing-library/dom": 8.13.0
@@ -20414,6 +20413,7 @@ __metadata:
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.36
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.0.0"
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
