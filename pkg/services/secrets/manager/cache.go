@@ -95,9 +95,9 @@ func (c *dataKeyCache) removeExpired() {
 		}
 	}
 
-	for name, entry := range c.byLabel {
+	for label, entry := range c.byLabel {
 		if entry.expired() {
-			delete(c.byLabel, name)
+			delete(c.byLabel, label)
 		}
 	}
 }

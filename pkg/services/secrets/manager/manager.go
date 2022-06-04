@@ -148,7 +148,9 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 	scope := opt()
 	label := secrets.KeyLabel(scope, s.currentProviderID)
 
-	id, dataKey, err := s.currentDataKey(ctx, label, scope, sess)
+	var id string
+	var dataKey []byte
+	id, dataKey, err = s.currentDataKey(ctx, label, scope, sess)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
 		return nil, err
