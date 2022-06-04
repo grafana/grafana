@@ -66,56 +66,52 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 }
 
 func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newReceivers []*apimodels.PostableApiReceiver) error {
-	currentCPs := make(map[string]*apimodels.GettableGrafanaReceiver)
 	newCPs := make(map[string]*apimodels.PostableGrafanaReceiver)
-	for _, existingReceiver := range currReceivers {
-		for _, existingContactPoint := range existingReceiver.GrafanaManagedReceivers {
-			if existingContactPoint.Provenance == ngmodels.ProvenanceNone {
-				continue // we are only interested in non none
-			}
-			currentCPs[existingContactPoint.UID] = existingContactPoint
-		}
-	}
 	for _, postedReceiver := range newReceivers {
 		for _, postedContactPoint := range postedReceiver.GrafanaManagedReceivers {
 			newCPs[postedContactPoint.UID] = postedContactPoint
 		}
 	}
-	for uid, contactPoint := range currentCPs {
-		postedContactPoint, present := newCPs[uid]
-		if !present {
-			return fmt.Errorf("cannot delete provisioned contact point '%s'", contactPoint.Name)
-		}
-		editErr := fmt.Errorf("cannot save provisioned contact point '%s'", contactPoint.Name)
-		if contactPoint.DisableResolveMessage != postedContactPoint.DisableResolveMessage {
-			return editErr
-		}
-		if contactPoint.Name != postedContactPoint.Name {
-			return editErr
-		}
-		if contactPoint.Type != postedContactPoint.Type {
-			return editErr
-		}
-		for key := range contactPoint.SecureFields {
-			if value, present := postedContactPoint.SecureSettings[key]; present && value != "" {
+	for _, existingReceiver := range currReceivers {
+		for _, contactPoint := range existingReceiver.GrafanaManagedReceivers {
+			if contactPoint.Provenance == ngmodels.ProvenanceNone {
+				continue // we are only interested in non none
+			}
+			postedContactPoint, present := newCPs[contactPoint.UID]
+			if !present {
+				return fmt.Errorf("cannot delete provisioned contact point '%s'", contactPoint.Name)
+			}
+			editErr := fmt.Errorf("cannot save provisioned contact point '%s'", contactPoint.Name)
+			if contactPoint.DisableResolveMessage != postedContactPoint.DisableResolveMessage {
 				return editErr
 			}
-		}
-		existingSettings, err := contactPoint.Settings.Map()
-		if err != nil {
-			return err
-		}
-		newSettings, err := postedContactPoint.Settings.Map()
-		if err != nil {
-			return err
-		}
-		for key, val := range existingSettings {
-			if newVal, present := newSettings[key]; present {
-				if val != newVal {
+			if contactPoint.Name != postedContactPoint.Name {
+				return editErr
+			}
+			if contactPoint.Type != postedContactPoint.Type {
+				return editErr
+			}
+			for key := range contactPoint.SecureFields {
+				if value, present := postedContactPoint.SecureSettings[key]; present && value != "" {
 					return editErr
 				}
-			} else {
-				return editErr
+			}
+			existingSettings, err := contactPoint.Settings.Map()
+			if err != nil {
+				return err
+			}
+			newSettings, err := postedContactPoint.Settings.Map()
+			if err != nil {
+				return err
+			}
+			for key, val := range existingSettings {
+				if newVal, present := newSettings[key]; present {
+					if val != newVal {
+						return editErr
+					}
+				} else {
+					return editErr
+				}
 			}
 		}
 	}
@@ -123,8 +119,10 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 }
 
 func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
-	currentMTs := make(map[string]amConfig.MuteTimeInterval)
 	newMTs := make(map[string]amConfig.MuteTimeInterval)
+	for _, newMuteTime := range newConfig.AlertmanagerConfig.MuteTimeIntervals {
+		newMTs[newMuteTime.Name] = newMuteTime
+	}
 	for _, muteTime := range currentConfig.AlertmanagerConfig.MuteTimeIntervals {
 		provenance := ngmodels.ProvenanceNone
 		if prov, present := currentConfig.AlertmanagerConfig.MuteTimeProvenances[muteTime.Name]; present {
@@ -133,15 +131,9 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 		if provenance == ngmodels.ProvenanceNone {
 			continue // we are only interested in non none
 		}
-		currentMTs[muteTime.Name] = muteTime
-	}
-	for _, newMuteTime := range newConfig.AlertmanagerConfig.MuteTimeIntervals {
-		newMTs[newMuteTime.Name] = newMuteTime
-	}
-	for name, muteTime := range currentMTs {
-		postedMT, present := newMTs[name]
+		postedMT, present := newMTs[muteTime.Name]
 		if !present {
-			return fmt.Errorf("cannot delete provisioned mute time '%s'", name)
+			return fmt.Errorf("cannot delete provisioned mute time '%s'", muteTime.Name)
 		}
 		reporter := cmputil.DiffReporter{}
 		options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
