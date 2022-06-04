@@ -61,4 +61,16 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	mg.AddMigration("copy data_keys id column values into name", migrator.NewRawSQLMigration(
 		fmt.Sprintf("UPDATE %s SET %s = %s", dataKeysV1.Name, "name", "id"),
 	))
+	// ------- This is done for backward compatibility with versions > v8.3.x
+	mg.AddMigration("rename data_keys name column to label", migrator.NewRenameColumnMigration(
+		dataKeysV1, dataKeysV1.Columns[0], "label",
+	))
+
+	mg.AddMigration("rename data_keys id column back to name", migrator.NewRenameColumnMigration(
+		dataKeysV1,
+		&migrator.Column{Name: "id", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+		"name",
+	))
+
+	// --------------------
 }

@@ -12,8 +12,9 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
+import { ScaleDistribution } from '@grafana/schema';
 
-import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
+import { HeatmapBucketLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
@@ -48,21 +49,39 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
 
+export interface HeatmapScanlinesCustomMeta {
+  /** This provides the lookup values */
+  yOrdinalDisplay: string[];
+  yOrdinalLabel?: string[];
+  yMatchWithLabel?: string;
+}
+
+/** simple utility to get heatmap metadata from a frame */
+export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanlinesCustomMeta {
+  return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
+}
+
+export interface BucketsOptions {
+  frame: DataFrame;
+  name?: string;
+  layout?: HeatmapBucketLayout;
+}
+
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
-export function bucketsToScanlines(frame: DataFrame): DataFrame {
+export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
-  const xField = frame.fields[0];
+  const xField = opts.frame.fields[0];
   const xValues = xField.values.toArray();
-  const yField = frame.fields[1];
+  const yFields = opts.frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
   // similar to initBins() below
-  const len = xValues.length * (frame.fields.length - 1);
+  const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
 
-  const counts = frame.fields.slice(1).map((field) => field.values.toArray().slice());
+  const counts = yFields.map((field) => field.values.toArray().slice());
 
   // transpose
   counts.forEach((bucketCounts, bi) => {
@@ -71,7 +90,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
     }
   });
 
-  const bucketBounds = Array.from({ length: frame.fields.length - 1 }, (v, i) => i);
+  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
 
   // fill flat/repeating array
   for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
@@ -84,10 +103,33 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
     xs[i] = xValues[xi];
   }
 
+  // this name determines whether cells are drawn above, below, or centered on the values
+  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
+  switch (opts.layout) {
+    case HeatmapBucketLayout.le:
+      ordinalFieldName = 'yMax';
+      break;
+    case HeatmapBucketLayout.ge:
+      ordinalFieldName = 'yMin';
+      break;
+    case HeatmapBucketLayout.unknown:
+      ordinalFieldName = 'y';
+      break;
+  }
+
+  const custom: HeatmapScanlinesCustomMeta = {
+    yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
+    yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
+  };
+  if (custom.yMatchWithLabel) {
+    custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
+  }
   return {
     length: xs.length,
+    refId: opts.frame.refId,
     meta: {
       type: DataFrameType.HeatmapScanlines,
+      custom,
     },
     fields: [
       {
@@ -97,19 +139,19 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
         config: xField.config,
       },
       {
-        // this name determines whether cells are drawn above, below, or centered on the values
-        name: yField.labels?.le != null ? 'yMax' : 'y',
+        name: ordinalFieldName,
         type: FieldType.number,
         values: new ArrayVector(ys),
-        config: yField.config,
+        config: {
+          unit: 'short', // ordinal lookup
+        },
       },
       {
-        name: 'count',
+        name: opts.name?.length ? opts.name : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: {
-          unit: 'short',
-        },
+        config: yFields[0].config,
+        display: yFields[0].display,
       },
     ],
   };
@@ -195,13 +237,24 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'no values found';
   }
 
+  const xBucketsCfg = options.xBuckets ?? {};
+  const yBucketsCfg = options.yBuckets ?? {};
+
+  if (xBucketsCfg.scale?.type === ScaleDistribution.Log) {
+    throw 'X axis only supports linear buckets';
+  }
+
+  const scaleDistribution = options.yBuckets?.scale ?? {
+    type: ScaleDistribution.Linear,
+  };
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
-    xMode: options.xAxis?.mode,
-    xSize: +(options.xAxis?.value ?? 0),
-    yMode: options.yAxis?.mode,
-    ySize: +(options.yAxis?.value ?? 0),
+    xMode: xBucketsCfg.mode,
+    xSize: xBucketsCfg.value ? +xBucketsCfg.value : undefined,
+    yMode: yBucketsCfg.mode,
+    ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
+    yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
   });
 
   const frame = {
@@ -221,10 +274,15 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(heat2d.y),
-        config: yField.config, // keep units from the original source
+        config: {
+          ...yField.config, // keep units from the original source
+          custom: {
+            scaleDistribution,
+          },
+        },
       },
       {
-        name: 'count',
+        name: 'Count',
         type: FieldType.number,
         values: new ArrayVector(heat2d.count),
         config: {
@@ -294,6 +352,12 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     }
   }
 
+  let yExp = opts?.yLog;
+
+  if (yExp && (minY <= 0 || maxY <= 0)) {
+    throw 'Log Y axes cannot have values <= 0';
+  }
+
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
   //let scaleY = opts?.yLog === 10 ? Math.log10 : opts?.yLog === 2 ? Math.log2 : (v: number) => v;
 
@@ -338,6 +402,12 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, xBinIncr) : (v: number) => incrRoundDn(v, xBinIncr);
   let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, yBinIncr) : (v: number) => incrRoundDn(v, yBinIncr);
 
+  if (yExp) {
+    yBinIncr = 1 / (opts?.ySize ?? 1); // sub-divides log exponents
+    let yLog = yExp === 2 ? Math.log2 : Math.log10;
+    binY = opts?.yCeil ? (v: number) => incrRoundUp(yLog(v), yBinIncr) : (v: number) => incrRoundDn(yLog(v), yBinIncr);
+  }
+
   let minXBin = binX(minX);
   let maxXBin = binX(maxX);
   let minYBin = binY(minY);
@@ -346,7 +416,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let xBinQty = Math.round((maxXBin - minXBin) / xBinIncr) + 1;
   let yBinQty = Math.round((maxYBin - minYBin) / yBinIncr) + 1;
 
-  let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
+  let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr, yExp);
 
   for (let i = 0; i < len; i++) {
     const xi = (binX(xs[i]) - minXBin) / xBinIncr;
@@ -363,7 +433,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   };
 }
 
-function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number) {
+function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number, yExp?: number) {
   const len = xQty * yQty;
   const xs = new Array<number>(len);
   const ys = new Array<number>(len);
@@ -371,7 +441,12 @@ function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin:
 
   for (let i = 0, yi = 0, x = xMin; i < len; yi = ++i % yQty) {
     counts[i] = 0;
-    ys[i] = yMin + yi * yIncr;
+
+    if (yExp) {
+      ys[i] = yExp ** (yMin + yi * yIncr);
+    } else {
+      ys[i] = yMin + yi * yIncr;
+    }
 
     if (yi === 0 && i >= yQty) {
       x += xIncr;
