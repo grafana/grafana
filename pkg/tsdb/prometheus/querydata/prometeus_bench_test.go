@@ -42,7 +42,6 @@ func BenchmarkExemplarJson(b *testing.B) {
 		_, err := tCtx.queryData.Execute(context.Background(), query)
 		require.NoError(b, err)
 	}
-
 }
 
 // when memory-profiling this benchmark, these commands are recommended:
