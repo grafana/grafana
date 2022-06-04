@@ -36,8 +36,8 @@ func TestReadPromFrames(t *testing.T) {
 	}
 
 	for _, name := range files {
-		t.Run(name, runScenario(name, Options{}))
-		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true}))
+		t.Run(name, runScenario(name, Options{Step: 10 * time.Second}))
+		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true, Step: 10 * time.Second}))
 	}
 }
 

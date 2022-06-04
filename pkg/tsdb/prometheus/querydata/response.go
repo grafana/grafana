@@ -23,6 +23,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
+		Step:             q.Step,
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
@@ -39,7 +40,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	r = processExemplars(q, r)
 	return r, nil
 }
 

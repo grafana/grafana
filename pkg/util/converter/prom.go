@@ -21,6 +21,7 @@ func logf(format string, a ...interface{}) {
 type Options struct {
 	MatrixWideSeries bool
 	VectorWideSeries bool
+	Step             time.Duration
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -94,7 +95,7 @@ func readWarnings(iter *jsoniter.Iterator) []data.Notice {
 func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
 	t := iter.WhatIsNext()
 	if t == jsoniter.ArrayValue {
-		return readArrayData(iter)
+		return readArrayData(iter, opt)
 	}
 
 	if t != jsoniter.ObjectValue {
@@ -161,13 +162,19 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) *backend.DataRespo
 }
 
 // will return strings or exemplars
-func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
-	lookup := make(map[string]*data.Field)
+func readArrayData(iter *jsoniter.Iterator, opts Options) *backend.DataResponse {
+	rsp := &backend.DataResponse{}
+	sampler := newExemplarSampler()
+	exemplarFrame := data.NewFrame("exemplar")
+	exemplarFrame.Meta = &data.FrameMeta{
+		Custom: resultTypeToCustomMeta("exemplar"),
+	}
 
 	var labelFrame *data.Frame
-	rsp := &backend.DataResponse{}
+	lookup := make(map[string]*data.Field)
 	stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	stringField.Name = "Value"
+
 	for iter.ReadArray() {
 		switch iter.WhatIsNext() {
 		case jsoniter.StringValue:
@@ -175,10 +182,8 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 
 		// Either label or exemplars
 		case jsoniter.ObjectValue:
-			exemplar, labelPairs := readLabelsOrExemplars(iter)
-			if exemplar != nil {
-				rsp.Frames = append(rsp.Frames, exemplar)
-			} else if labelPairs != nil {
+			labelPairs := readLabelsOrExemplars(iter, exemplarFrame, sampler, opts)
+			if labelPairs != nil {
 				max := 0
 				for _, pair := range labelPairs {
 					k := pair[0]
@@ -223,6 +228,33 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 		rsp.Frames = append(rsp.Frames, data.NewFrame("", stringField))
 	}
 
+	exemplars := sampler.getExemplars()
+	if len(exemplars) == 0 {
+		return rsp
+	}
+
+	// init the fields for the new exemplar frame
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, len(exemplars)))
+	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(exemplars)))
+	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
+	labelNames := sampler.getLabelNames()
+	for _, labelName := range labelNames {
+		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(exemplars))))
+	}
+
+	// add the sampled exemplars to the new exemplar frame
+	for _, b := range exemplars {
+		timeField.Append(b.ts)
+		valueField.Append(b.val)
+		for i, labelName := range labelNames {
+			labelValue := b.labels[labelName]
+			colIdx := i + 2 // +2 to skip time and value fields
+			exemplarFrame.Fields[colIdx].Append(labelValue)
+		}
+	}
+
+	rsp.Frames = append(rsp.Frames, exemplarFrame)
+
 	return rsp
 }
 
@@ -235,62 +267,37 @@ func readLabelsAsPairs(iter *jsoniter.Iterator) [][2]string {
 	return pairs
 }
 
-func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
+func readLabelsOrExemplars(iter *jsoniter.Iterator, frame *data.Frame, sampler *exemplarSampler, opts Options) [][2]string {
 	pairs := make([][2]string, 0, 10)
-	labels := data.Labels{}
-	var frame *data.Frame
+	seriesLabels := map[string]string{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
 		case "seriesLabels":
-			iter.ReadVal(&labels)
+			iter.ReadVal(&seriesLabels)
 		case "exemplars":
-			lookup := make(map[string]*data.Field)
-			timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-			timeField.Name = data.TimeSeriesTimeFieldName
-			valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-			valueField.Name = data.TimeSeriesValueFieldName
-			valueField.Labels = labels
-			frame = data.NewFrame("", timeField, valueField)
-			frame.Meta = &data.FrameMeta{
-				Custom: resultTypeToCustomMeta("exemplar"),
-			}
 			for iter.ReadArray() {
+				val := 0.0
+				ts := time.Time{}
+
+				labels := map[string]string{}
+				for k, v := range seriesLabels {
+					labels[k] = v
+				}
+
 				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
 					switch l2Field {
 					// nolint:goconst
 					case "value":
 						v, _ := strconv.ParseFloat(iter.ReadString(), 64)
-						valueField.Append(v)
-
+						val = v
 					case "timestamp":
-						ts := timeFromFloat(iter.ReadFloat64())
-						timeField.Append(ts)
-
+						ts = timeFromFloat(iter.ReadFloat64())
 					case "labels":
-						max := 0
 						for _, pair := range readLabelsAsPairs(iter) {
 							k := pair[0]
 							v := pair[1]
-							f, ok := lookup[k]
-							if !ok {
-								f = data.NewFieldFromFieldType(data.FieldTypeString, 0)
-								f.Name = k
-								lookup[k] = f
-								frame.Fields = append(frame.Fields, f)
-							}
-							f.Append(v)
-							if f.Len() > max {
-								max = f.Len()
-							}
-						}
-
-						// Make sure all fields have equal length
-						for _, f := range lookup {
-							diff := max - f.Len()
-							if diff > 0 {
-								f.Extend(diff)
-							}
+							labels[k] = v
 						}
 
 					default:
@@ -301,14 +308,16 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 						})
 					}
 				}
+				sampler.update(opts.Step, ts, val, labels)
 			}
 		default:
 			v := fmt.Sprintf("%v", iter.Read())
 			pairs = append(pairs, [2]string{l1Field, v})
 		}
+
 	}
 
-	return frame, pairs
+	return pairs
 }
 
 func readString(iter *jsoniter.Iterator) *backend.DataResponse {

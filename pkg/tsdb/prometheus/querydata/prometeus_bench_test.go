@@ -31,7 +31,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(b, err)
 
-	tCtx := setup(true)
+	tCtx := setup(false)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{

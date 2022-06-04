@@ -5,33 +5,17 @@
 //          "resultType": "exemplar"
 //      }
 //  }
-//  Name: 
-//  Dimensions: 4 Fields by 1 Rows
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+----------------+
-//  | Name: Time                        | Name: Value                                                                                       | Name: traceID    | Name: a        |
-//  | Labels:                           | Labels: __name__=test_exemplar_metric_total, instance=localhost:8090, job=prometheus, service=bar | Labels:          | Labels:        |
-//  | Type: []time.Time                 | Type: []float64                                                                                   | Type: []string   | Type: []string |
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+----------------+
-//  | 2020-09-14 15:22:25.479 +0000 UTC | 6                                                                                                 | EpTxMJ40fUus7aGY | not in next    |
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+----------------+
-//  
-//  
-//  
-//  Frame[1] {
-//      "custom": {
-//          "resultType": "exemplar"
-//      }
-//  }
-//  Name: 
-//  Dimensions: 3 Fields by 2 Rows
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+
-//  | Name: Time                        | Name: Value                                                                                       | Name: traceID    |
-//  | Labels:                           | Labels: __name__=test_exemplar_metric_total, instance=localhost:8090, job=prometheus, service=foo | Labels:          |
-//  | Type: []time.Time                 | Type: []float64                                                                                   | Type: []string   |
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+
-//  | 2020-09-14 15:22:35.479 +0000 UTC | 19                                                                                                | Olp9XHlq763ccsfa |
-//  | 2020-09-14 15:22:45.489 +0000 UTC | 20                                                                                                | hCtjygkIHwAN9vs4 |
-//  +-----------------------------------+---------------------------------------------------------------------------------------------------+------------------+
+//  Name: exemplar
+//  Dimensions: 8 Fields by 3 Rows
+//  +-----------------------------------+-----------------+----------------------------+----------------+----------------+----------------+----------------+------------------+
+//  | Name: Time                        | Name: Value     | Name: __name__             | Name: a        | Name: instance | Name: job      | Name: service  | Name: traceID    |
+//  | Labels:                           | Labels:         | Labels:                    | Labels:        | Labels:        | Labels:        | Labels:        | Labels:          |
+//  | Type: []time.Time                 | Type: []float64 | Type: []string             | Type: []string | Type: []string | Type: []string | Type: []string | Type: []string   |
+//  +-----------------------------------+-----------------+----------------------------+----------------+----------------+----------------+----------------+------------------+
+//  | 2020-09-14 15:22:25.479 +0000 UTC | 6               | test_exemplar_metric_total | not in next    | localhost:8090 | prometheus     | bar            | EpTxMJ40fUus7aGY |
+//  | 2020-09-14 15:22:35.479 +0000 UTC | 19              | test_exemplar_metric_total |                | localhost:8090 | prometheus     | foo            | Olp9XHlq763ccsfa |
+//  | 2020-09-14 15:22:45.489 +0000 UTC | 20              | test_exemplar_metric_total |                | localhost:8090 | prometheus     | foo            | hCtjygkIHwAN9vs4 |
+//  +-----------------------------------+-----------------+----------------------------+----------------+----------------+----------------+----------------+------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -39,6 +23,7 @@
   "frames": [
     {
       "schema": {
+        "name": "exemplar",
         "meta": {
           "custom": {
             "resultType": "exemplar"
@@ -57,16 +42,10 @@
             "type": "number",
             "typeInfo": {
               "frame": "float64"
-            },
-            "labels": {
-              "__name__": "test_exemplar_metric_total",
-              "instance": "localhost:8090",
-              "job": "prometheus",
-              "service": "bar"
             }
           },
           {
-            "name": "traceID",
+            "name": "__name__",
             "type": "string",
             "typeInfo": {
               "frame": "string"
@@ -78,52 +57,26 @@
             "typeInfo": {
               "frame": "string"
             }
-          }
-        ]
-      },
-      "data": {
-        "values": [
-          [
-            1600096945479
-          ],
-          [
-            6
-          ],
-          [
-            "EpTxMJ40fUus7aGY"
-          ],
-          [
-            "not in next"
-          ]
-        ]
-      }
-    },
-    {
-      "schema": {
-        "meta": {
-          "custom": {
-            "resultType": "exemplar"
-          }
-        },
-        "fields": [
+          },
           {
-            "name": "Time",
-            "type": "time",
+            "name": "instance",
+            "type": "string",
             "typeInfo": {
-              "frame": "time.Time"
+              "frame": "string"
             }
           },
           {
-            "name": "Value",
-            "type": "number",
+            "name": "job",
+            "type": "string",
             "typeInfo": {
-              "frame": "float64"
-            },
-            "labels": {
-              "__name__": "test_exemplar_metric_total",
-              "instance": "localhost:8090",
-              "job": "prometheus",
-              "service": "foo"
+              "frame": "string"
+            }
+          },
+          {
+            "name": "service",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
             }
           },
           {
@@ -138,14 +91,42 @@
       "data": {
         "values": [
           [
+            1600096945479,
             1600096955479,
             1600096965489
           ],
           [
+            6,
             19,
             20
           ],
           [
+            "test_exemplar_metric_total",
+            "test_exemplar_metric_total",
+            "test_exemplar_metric_total"
+          ],
+          [
+            "not in next",
+            "",
+            ""
+          ],
+          [
+            "localhost:8090",
+            "localhost:8090",
+            "localhost:8090"
+          ],
+          [
+            "prometheus",
+            "prometheus",
+            "prometheus"
+          ],
+          [
+            "bar",
+            "foo",
+            "foo"
+          ],
+          [
+            "EpTxMJ40fUus7aGY",
             "Olp9XHlq763ccsfa",
             "hCtjygkIHwAN9vs4"
           ]
