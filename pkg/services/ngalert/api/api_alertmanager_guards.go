@@ -64,15 +64,15 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 	return nil
 }
 
-func checkContactPoints(current []*apimodels.GettableApiReceiver, new []*apimodels.PostableApiReceiver) error {
-	for _, existingReceiver := range current {
+func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newReceivers []*apimodels.PostableApiReceiver) error {
+	for _, existingReceiver := range currReceivers {
 		for _, existingContactPoint := range existingReceiver.GrafanaManagedReceivers {
 			if existingContactPoint.Provenance == ngmodels.ProvenanceNone {
 				continue // we are only interested in non none
 			}
 			found, edited := false, false
 		outer:
-			for _, postedReceiver := range new {
+			for _, postedReceiver := range newReceivers {
 				for _, postedContactPoint := range postedReceiver.GrafanaManagedReceivers {
 					if existingContactPoint.UID != postedContactPoint.UID {
 						continue
