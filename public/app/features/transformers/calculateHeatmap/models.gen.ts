@@ -14,7 +14,7 @@ export const enum HeatmapBucketLayout {
 
 export interface HeatmapCalculationBucketConfig {
   mode?: HeatmapCalculationMode;
-  value?: string; // number or interval string ie 10s
+  value?: string; // number or interval string ie 10s, or log "split" divisor
   scale?: ScaleDistributionConfig;
 }
 
