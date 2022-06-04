@@ -6833,19 +6833,19 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6879,14 +6879,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -7993,9 +7993,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -8009,9 +8006,6 @@
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string"
-        },
-        "password": {
           "type": "string"
         },
         "secureJsonData": {
@@ -9455,9 +9449,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -9480,9 +9471,6 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
-        },
-        "password": {
-          "type": "string"
         },
         "readOnly": {
           "type": "boolean"
@@ -9551,9 +9539,6 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
-        },
-        "password": {
-          "type": "string"
         },
         "readOnly": {
           "type": "boolean"
@@ -11772,9 +11757,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -11788,9 +11770,6 @@
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string"
-        },
-        "password": {
           "type": "string"
         },
         "secureJsonData": {

@@ -3016,6 +3016,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3048,9 +3049,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "x-go-package": "net/url"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3459,13 +3460,15 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3517,9 +3520,7 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
@@ -3655,6 +3656,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3694,9 +3696,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "description": "Receiver receiver",
@@ -4929,645 +4929,6 @@
     ]
    }
   },
-  "/api/provisioning/alert-rules": {
-   "post": {
-    "operationId": "RoutePostAlertRule",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/AlertRule"
-      }
-     }
-    ],
-    "responses": {
-     "201": {
-      "description": "AlertRule",
-      "schema": {
-       "$ref": "#/definitions/AlertRule"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Create a new alert rule.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/alert-rules/{UID}": {
-   "delete": {
-    "operationId": "RouteDeleteAlertRule",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "204": {
-      "description": " The alert rule was deleted successfully."
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Delete a specific alert rule by UID.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "get": {
-    "operationId": "RouteGetAlertRule",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "AlertRule",
-      "schema": {
-       "$ref": "#/definitions/AlertRule"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get a specific alert rule by UID.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutAlertRule",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/AlertRule"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "AlertRule",
-      "schema": {
-       "$ref": "#/definitions/AlertRule"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Update an existing alert rule.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/contact-points": {
-   "get": {
-    "operationId": "RouteGetContactpoints",
-    "responses": {
-     "200": {
-      "description": "Route",
-      "schema": {
-       "$ref": "#/definitions/Route"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get all the contact points.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePostContactpoints",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/EmbeddedContactPoint"
-      }
-     }
-    ],
-    "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Create a contact point.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/contact-points/{UID}": {
-   "delete": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RouteDeleteContactpoints",
-    "parameters": [
-     {
-      "description": "ContactPointUID should be the contact point UID identifier",
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Delete a contact point.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutContactpoint",
-    "parameters": [
-     {
-      "description": "ContactPointUID should be the contact point UID identifier",
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/EmbeddedContactPoint"
-      }
-     }
-    ],
-    "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Update an existing contact point.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutAlertRuleGroup",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "FolderUID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "path",
-      "name": "Group",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "AlertRuleGroup",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Update the interval of a rule group.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/mute-timings": {
-   "get": {
-    "operationId": "RouteGetMuteTimings",
-    "responses": {
-     "200": {
-      "description": "MuteTimings",
-      "schema": {
-       "$ref": "#/definitions/MuteTimings"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get all the mute timings.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePostMuteTiming",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
-      }
-     }
-    ],
-    "responses": {
-     "201": {
-      "description": "MuteTimeInterval",
-      "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Create a new mute timing.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/mute-timings/{name}": {
-   "delete": {
-    "operationId": "RouteDeleteMuteTiming",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     }
-    ],
-    "responses": {
-     "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     }
-    },
-    "summary": "Delete a mute timing.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "get": {
-    "operationId": "RouteGetMuteTiming",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "MuteTimeInterval",
-      "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get a mute timing.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutMuteTiming",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "MuteTimeInterval",
-      "schema": {
-       "$ref": "#/definitions/MuteTimeInterval"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Replace an existing mute timing.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/policies": {
-   "get": {
-    "operationId": "RouteGetPolicyTree",
-    "responses": {
-     "200": {
-      "description": "Route",
-      "schema": {
-       "$ref": "#/definitions/Route"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get the notification policy tree.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutPolicyTree",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/Route"
-      }
-     }
-    ],
-    "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Sets the notification policy tree.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/templates": {
-   "get": {
-    "operationId": "RouteGetTemplates",
-    "responses": {
-     "200": {
-      "description": "MessageTemplate",
-      "schema": {
-       "$ref": "#/definitions/MessageTemplate"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Get all message templates.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/templates/{name}": {
-   "delete": {
-    "operationId": "RouteDeleteTemplate",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     }
-    ],
-    "responses": {
-     "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     }
-    },
-    "summary": "Delete a template.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "get": {
-    "operationId": "RouteGetTemplate",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "MessageTemplate",
-      "schema": {
-       "$ref": "#/definitions/MessageTemplate"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a message template.",
-    "tags": [
-     "provisioning"
-    ]
-   },
-   "put": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePutTemplate",
-    "parameters": [
-     {
-      "description": "Template Name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string",
-      "x-go-name": "Name"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/MessageTemplateContent"
-      }
-     }
-    ],
-    "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Updates an existing template.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
   "/api/ruler/grafana/api/v1/rules": {
    "get": {
     "description": "List rule groups",
@@ -6110,6 +5471,645 @@
     "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
     "tags": [
      "configuration"
+    ]
+   }
+  },
+  "/api/v1/provisioning/alert-rules": {
+   "post": {
+    "operationId": "RoutePostAlertRule",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a new alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/alert-rules/{UID}": {
+   "delete": {
+    "operationId": "RouteDeleteAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": " The alert rule was deleted successfully."
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a specific alert rule by UID.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get a specific alert rule by UID.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update an existing alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/contact-points": {
+   "get": {
+    "operationId": "RouteGetContactpoints",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the contact points.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/contact-points/{UID}": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteContactpoints",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutContactpoint",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update an existing contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update the interval of a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/mute-timings": {
+   "get": {
+    "operationId": "RouteGetMuteTimings",
+    "responses": {
+     "200": {
+      "description": "MuteTimings",
+      "schema": {
+       "$ref": "#/definitions/MuteTimings"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the mute timings.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostMuteTiming",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "MuteTimeInterval",
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a new mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/mute-timings/{name}": {
+   "delete": {
+    "operationId": "RouteDeleteMuteTiming",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Delete a mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetMuteTiming",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "MuteTimeInterval",
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get a mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutMuteTiming",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "MuteTimeInterval",
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Replace an existing mute timing.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/policies": {
+   "get": {
+    "operationId": "RouteGetPolicyTree",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutPolicyTree",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/templates": {
+   "get": {
+    "operationId": "RouteGetTemplates",
+    "responses": {
+     "200": {
+      "description": "MessageTemplate",
+      "schema": {
+       "$ref": "#/definitions/MessageTemplate"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all message templates.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/templates/{name}": {
+   "delete": {
+    "operationId": "RouteDeleteTemplate",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Delete a template.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetTemplate",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "MessageTemplate",
+      "schema": {
+       "$ref": "#/definitions/MessageTemplate"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Get a message template.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutTemplate",
+    "parameters": [
+     {
+      "description": "Template Name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string",
+      "x-go-name": "Name"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/MessageTemplateContent"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Updates an existing template.",
+    "tags": [
+     "provisioning"
     ]
    }
   },
