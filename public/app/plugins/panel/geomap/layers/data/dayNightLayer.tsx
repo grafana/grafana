@@ -6,9 +6,11 @@ import {
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
-import { Fill, Style } from 'ol/style';
+import { Fill, Stroke, Style } from 'ol/style';
+import {Group as LayerGroup} from 'ol/layer';
 
 import DayNight from 'ol-ext/source/DayNight';
+import { Vector } from 'ol/source';
 
 export enum ShowTime {
   From = 'from',
@@ -74,11 +76,37 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       })
     });
 
+    const lineLayer = new VectorLayer({
+      source: new Vector({ }),
+      style: new Style({
+        // image: new Circle({
+        //   radius: 5,
+        //   fill: new Fill({ color: 'red' })
+        // }),
+        stroke: new Stroke({
+          color: [50,0,0,.5],
+          width: 4,
+        })
+      })
+    });
+
+    const layer = new LayerGroup({
+      layers: [vectorLayer, lineLayer]
+    });
+
     return {
-      init: () => vectorLayer,
+      init: () => layer,
       update: (data: PanelData) => {
-        const to = data.timeRange.to.valueOf();
-        source.setTime(new Date(to));
+        const from = new Date(data.timeRange.from.valueOf());
+        const to = new Date(data.timeRange.to.valueOf());
+        source.setTime(to);
+
+        const src = lineLayer.getSource()!;
+        src.clear();
+
+        const points = source.getCoordinates(from as any) as unknown as Array<[number,number]>
+        console.log( 'COORDS', points.length, points );
+        //src.addFeature(new Feature(new LineString(points)));
       },
 
       // Marker overlay options
