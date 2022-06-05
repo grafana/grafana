@@ -54,8 +54,8 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
   }, [hoverValue, min, max]);
 
   return (
-    <div className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+    <div className={styles.scaleWrapper} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+      <div className={styles.scaleGradient}>
         {display && (scaleHover.isShown || hoverValue !== undefined) && (
           <div className={styles.followerContainer}>
             <div className={styles.follower} style={{ left: `${percent}%` }} />
@@ -144,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   `,
   hoverValue: css`
     position: absolute;
-    padding-top: 5px;
+    padding-top: 4px;
   `,
   followerContainer: css`
     position: relative;
