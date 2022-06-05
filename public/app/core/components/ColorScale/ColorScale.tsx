@@ -26,7 +26,7 @@ const GRADIENT_STOPS = 10;
 export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
-  const [percent, setPercent] = useState<number | null>(null);
+  const [percent, setPercent] = useState<number | null>(null); // 0-100 for CSS percentage
 
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
@@ -50,17 +50,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
   };
 
   useEffect(() => {
-    if (hoverValue == null) {
-      setPercent(null);
-    } else {
-      let percent = hoverValue / (max - min);
-      if (percent < 0) {
-        percent = 0;
-      } else if (percent > 1) {
-        percent = 1;
-      }
-      setPercent(percent * 100);
-    }
+    setPercent(hoverValue == null ? null : clampPercent100((hoverValue - min) / (max - min)));
   }, [hoverValue, min, max]);
 
   return (
@@ -127,6 +117,16 @@ const getGradientStops = ({
 
   return [...gradientStops];
 };
+
+function clampPercent100(v: number) {
+  if (v > 1) {
+    return 100;
+  }
+  if (v < 0) {
+    return 0;
+  }
+  return v * 100;
+}
 
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
