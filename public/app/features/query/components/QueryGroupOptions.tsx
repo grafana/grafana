@@ -276,9 +276,11 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
       return undefined;
     }
 
-    let mdDesc = options.maxDataPoints ?? '';
+    let mdDesc = String(options.maxDataPoints ?? '');
     if (mdDesc === '' && data.request) {
       mdDesc = `auto = ${data.request.maxDataPoints}`;
+    } else if (mdDesc.endsWith('%') && data.request) {
+      mdDesc = `${mdDesc} = ${data.request.maxDataPoints}`;
     }
 
     let intervalDesc = options.minInterval;
