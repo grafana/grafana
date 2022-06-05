@@ -311,9 +311,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     splits: hasLabeledY
-      ? () => {
+      ? (self: uPlot) => {
           const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-          const splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+          let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
 
           const bucketSize = dataRef.current?.yBucketSize!;
 
@@ -323,11 +323,15 @@ export function prepConfig(opts: PrepConfigOpts) {
             splits.push(ys[ys.length - 1] + bucketSize);
           }
 
+          // Skip labels when the height is too small
+          while (splits.length > 5 && self.height / splits.length < 10) {
+            splits = splits.filter((v, idx) => idx % 2 === 0); // remove half the items
+          }
           return splits;
         }
       : undefined,
     values: hasLabeledY
-      ? () => {
+      ? (self: uPlot, splits) => {
           const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
           const yAxisValues = meta.yOrdinalDisplay?.slice()!;
           const isFromBuckets = meta.yOrdinalDisplay?.length && !('le' === meta.yMatchWithLabel);
@@ -338,7 +342,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             yAxisValues.push(isFromBuckets ? '' : '+Inf');
           }
 
-          return yAxisValues;
+          return splits.map((v) => yAxisValues[v]);
         }
       : undefined,
   });
