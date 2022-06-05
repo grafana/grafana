@@ -133,7 +133,7 @@
     "@types/mock-raf": "1.0.3",
     "@types/node": "16.11.36",
     "@types/prismjs": "1.26.0",
-    "@types/react": "17.0.42",
+    "@types/react": "18.0.12",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-calendar": "3.5.1",
     "@types/react-color": "3.0.6",
