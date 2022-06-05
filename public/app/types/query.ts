@@ -3,7 +3,7 @@ import { DataQuery, DataSourceRef } from '@grafana/data';
 export interface QueryGroupOptions {
   queries: DataQuery[];
   dataSource: QueryGroupDataSource;
-  maxDataPoints?: number | null;
+  maxDataPoints?: number | string /* must be 'x%' */ | null /* auto */;
   minInterval?: string | null;
   cacheTimeout?: string | null;
   timeRange?: {

@@ -190,6 +190,17 @@ class MetricsPanelCtrl extends PanelCtrl {
     const panel = this.panel as PanelModel;
     const queryRunner = panel.getQueryRunner();
 
+    let evaluatedMaxDataPoints = Math.floor(this.width);
+    if (typeof panel.maxDataPoints === 'number') {
+      evaluatedMaxDataPoints = panel.maxDataPoints;
+    } else if (typeof panel.maxDataPoints === 'string' && panel.maxDataPoints.endsWith('%')) {
+      const percent = panel.maxDataPoints.substring(0, panel.maxDataPoints.length - 1);
+      evaluatedMaxDataPoints = Math.floor((parseFloat(percent) / 100) * this.width);
+    }
+    if (Number.isNaN(evaluatedMaxDataPoints)) {
+      evaluatedMaxDataPoints = Math.floor(this.width);
+    }
+
     return queryRunner.run({
       datasource: panel.datasource,
       queries: panel.targets,
@@ -198,7 +209,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       timezone: this.dashboard.getTimezone(),
       timeInfo: this.timeInfo,
       timeRange: this.range,
-      maxDataPoints: panel.maxDataPoints || this.width,
+      maxDataPoints: evaluatedMaxDataPoints,
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,

@@ -113,13 +113,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
 
   onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
-
-    let maxDataPoints: number | null = parseInt(event.target.value as string, 10);
-
-    if (isNaN(maxDataPoints) || maxDataPoints === 0) {
-      maxDataPoints = null;
-    }
-
+    const maxDataPoints = parseMaxDataPointsInput(event.target.value as string);
     if (maxDataPoints !== options.maxDataPoints) {
       onChange({
         ...options,
@@ -171,8 +165,9 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
   renderMaxDataPointsOption() {
     const { data, options } = this.props;
     const realMd = data.request?.maxDataPoints;
-    const value = options.maxDataPoints ?? '';
+    const value = String(options.maxDataPoints ?? '');
     const isAuto = value === '';
+    const isPercentage = value.endsWith('%');
 
     return (
       <div className="gf-form-inline">
@@ -189,7 +184,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             Max data points
           </InlineFormLabel>
           <Input
-            type="number"
             className="width-6"
             placeholder={`${realMd}`}
             spellCheck={false}
@@ -199,6 +193,12 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           {isAuto && (
             <>
               <div className="gf-form-label query-segment-operator">=</div>
+              <div className="gf-form-label">Width of panel</div>
+            </>
+          )}
+          {isPercentage && (
+            <>
+              <div className="gf-form-label query-segment-operator">*</div>
               <div className="gf-form-label">Width of panel</div>
             </>
           )}
@@ -373,5 +373,27 @@ const getStyles = stylesFactory(() => {
     `,
   };
 });
+
+const parseMaxDataPointsInput = (inputValue: string) => {
+  if (inputValue === '') {
+    return null;
+  }
+
+  if (inputValue.endsWith('%')) {
+    const percentValue = parseFloat(inputValue.substring(0, inputValue.length - 1));
+    if (isNaN(percentValue) || percentValue <= 0) {
+      return null;
+    } else {
+      return `${percentValue}%`;
+    }
+  }
+
+  const intValue = parseInt(inputValue, 10);
+  if (isNaN(intValue) || intValue <= 0) {
+    return null;
+  }
+
+  return intValue;
+};
 
 type StylesType = ReturnType<typeof getStyles>;

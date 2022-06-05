@@ -155,7 +155,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   };
   declare fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number | null;
+  maxDataPoints?: number | string | null;
   interval?: string | null;
   description?: string;
   links?: DataLink[];
@@ -297,6 +297,17 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+    let evaluatedMaxDataPoints = Math.floor(width);
+    if (typeof this.maxDataPoints === 'number') {
+      evaluatedMaxDataPoints = this.maxDataPoints;
+    } else if (typeof this.maxDataPoints === 'string' && this.maxDataPoints.endsWith('%')) {
+      const percent = this.maxDataPoints.substring(0, this.maxDataPoints.length - 1);
+      evaluatedMaxDataPoints = Math.floor((parseFloat(percent) / 100) * width);
+    }
+    if (Number.isNaN(evaluatedMaxDataPoints)) {
+      evaluatedMaxDataPoints = Math.floor(width);
+    }
+
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -305,7 +316,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || Math.floor(width),
+      maxDataPoints: evaluatedMaxDataPoints,
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,

@@ -1,3 +1,4 @@
+import { isNumber } from 'lodash';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -38,7 +39,7 @@ export const TestStuffPage: FC = () => {
       datasource: queryOptions.dataSource,
       timezone: 'browser',
       timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
+      maxDataPoints: isNumber(queryOptions.maxDataPoints) ? queryOptions.maxDataPoints : 100,
       minInterval: queryOptions.minInterval,
     });
   };

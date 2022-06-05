@@ -171,13 +171,6 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
   return newTimeData;
 }
 
-export function getResolution(panel: PanelModel): number {
-  const htmlEl = document.getElementsByTagName('html')[0];
-  const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
-
-  return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
-}
-
 export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;

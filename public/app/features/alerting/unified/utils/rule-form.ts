@@ -303,7 +303,7 @@ export const panelToRuleFormValues = async (
     relativeTimeRange,
     panel.scopedVars || {},
     panel.datasource ?? undefined,
-    panel.maxDataPoints ?? undefined,
+    typeof panel.maxDataPoints === 'number' ? panel.maxDataPoints : undefined,
     panel.interval ?? undefined
   );
   // if no alerting capable queries are found, can't create a rule
