@@ -120,7 +120,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     const uid = getDataSourceUID(current);
 
-    if (uid === 'Expression' || uid === ExpressionDatasourceRef.uid) {
+    if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
       return { label: uid, value: uid, hideText: hideTextValue };
     }
 
