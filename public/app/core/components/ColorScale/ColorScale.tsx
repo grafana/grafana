@@ -50,8 +50,15 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
   };
 
   useEffect(() => {
-    if (hoverValue != null) {
-      const percent = hoverValue / (max - min);
+    if (hoverValue == null) {
+      setPercent(null);
+    } else {
+      let percent = hoverValue / (max - min);
+      if (percent < 0) {
+        percent = 0;
+      } else if (percent > 1) {
+        percent = 1;
+      }
       setPercent(percent * 100);
     }
   }, [hoverValue, min, max]);
@@ -124,7 +131,6 @@ const getGradientStops = ({
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
     width: 100%;
-    max-width: 300px;
     font-size: 11px;
     opacity: 1;
   `,

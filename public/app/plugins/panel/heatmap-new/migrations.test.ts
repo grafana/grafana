@@ -59,7 +59,7 @@ describe('Heatmap Migrations', () => {
             "color": "rgba(255,0,255,0.7)",
           },
           "filterValues": Object {
-            "min": 1e-9,
+            "le": 1e-9,
           },
           "legend": Object {
             "show": true,

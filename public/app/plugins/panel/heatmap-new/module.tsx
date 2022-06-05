@@ -228,19 +228,19 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder
       .addNumberInput({
         path: 'color.min',
-        name: 'Min color cell value',
+        name: 'Start color scale from value',
         defaultValue: defaultPanelOptions.color.min,
         settings: {
-          placeholder: 'Auto',
+          placeholder: 'Auto (min)',
         },
         category,
       })
       .addNumberInput({
         path: 'color.max',
-        name: 'Max color cell value',
+        name: 'End color scale at value',
         defaultValue: defaultPanelOptions.color.max,
         settings: {
-          placeholder: 'Auto',
+          placeholder: 'Auto (max)',
         },
         category,
       });
