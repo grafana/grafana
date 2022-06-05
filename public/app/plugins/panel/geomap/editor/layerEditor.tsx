@@ -93,21 +93,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           editor: FrameSelectionEditor,
           defaultValue: undefined,
         });
-        // builder.addSelect({
-        //   path: 'filterData.options',
-        //   name: 'Query',
-        //   settings: {
-        //     options: [],
-        //     getOptions: async (context) => {
-        //       return context.data.map((value) => {
-        //         return {
-        //           value: value.refId,
-        //           label: value.refId,
-        //         } as SelectableValue<DataFrame>;
-        //       });
-        //     },
-        //   },
-        // });
       }
 
       if (!layer) {

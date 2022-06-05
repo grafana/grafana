@@ -58,8 +58,7 @@ export interface MapLayerOptions<TConfig = any> {
   // Common method to define geometry fields
   location?: FrameGeometrySource;
 
-  // Defines which data query is associated with the layer
-  // dataquery?: string;
+  // Defines which data query refId is associated with the layer
   filterData?: MatcherConfig;
 
   // Common properties:
@@ -76,6 +75,9 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
+  /**
+   * The update function should only be implemented if the layer type makes use of query data
+   */
   update?: (data: PanelData) => void;
   legend?: ReactNode;
 
@@ -87,8 +89,6 @@ export interface MapLayerHandler<TConfig = any> {
 
 /**
  * Map layer configuration
- * TODO: we might want to use different interfaces for basemaps vs data layers, since the 'isBaseMap'
- * flag is useless for all non-basemaps, and the 'usesDataFrame' flag is now useless for all basemaps
  * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
@@ -106,12 +106,6 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Show transparency controls in UI (for non-basemaps)
    */
   showOpacity?: boolean;
-
-  /**
-   * Whether this layer type renders its features from a data frame
-   * Required field as this determines key options layout logic
-   */
-  //  usesDataFrame: boolean;
 
   /**
    * Function that configures transformation and returns a transformer
