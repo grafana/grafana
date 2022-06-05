@@ -89,6 +89,7 @@ export interface MapLayerHandler<TConfig = any> {
 
 /**
  * Map layer configuration
+ *
  * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
