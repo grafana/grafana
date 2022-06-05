@@ -139,7 +139,7 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
   const data: HeatmapData = {
     heatmap: frame,
-    exemplars,
+    exemplars: exemplars?.length ? exemplars : undefined,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,

@@ -230,12 +230,18 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         path: 'color.min',
         name: 'Min color cell value',
         defaultValue: defaultPanelOptions.color.min,
+        settings: {
+          placeholder: 'Auto',
+        },
         category,
       })
       .addNumberInput({
         path: 'color.max',
         name: 'Max color cell value',
         defaultValue: defaultPanelOptions.color.max,
+        settings: {
+          placeholder: 'Auto',
+        },
         category,
       });
 
@@ -256,15 +262,21 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //   },
       // })
       .addNumberInput({
-        path: 'filterValues.min',
+        path: 'filterValues.le',
         name: 'Hide cells with values <=',
-        defaultValue: defaultPanelOptions.filterValues?.min,
+        defaultValue: defaultPanelOptions.filterValues?.le,
+        settings: {
+          placeholder: 'None',
+        },
         category,
       })
       .addNumberInput({
-        path: 'filterValues.max',
+        path: 'filterValues.ge',
         name: 'Hide cells with values >=',
-        defaultValue: defaultPanelOptions.filterValues?.max,
+        defaultValue: defaultPanelOptions.filterValues?.ge,
+        settings: {
+          placeholder: 'None',
+        },
         category,
       })
       .addSliderInput({

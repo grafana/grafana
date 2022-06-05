@@ -37,8 +37,8 @@ export interface YAxisConfig extends AxisConfig {
 }
 
 export interface FilterValueRange {
-  min?: number;
-  max?: number;
+  le?: number;
+  ge?: number;
 }
 
 export interface HeatmapTooltip {
@@ -105,7 +105,7 @@ export const defaultPanelOptions: PanelOptions = {
     color: 'rgba(255,0,255,0.7)',
   },
   filterValues: {
-    min: 1e-9,
+    le: 1e-9,
   },
   cellGap: 1,
 };
