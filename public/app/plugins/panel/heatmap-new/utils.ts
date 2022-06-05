@@ -324,7 +324,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
 
           // Skip labels when the height is too small
-          while (splits.length > 5 && self.height / splits.length < 10) {
+          while (splits.length > 3 && self.height / splits.length < 10) {
             splits = splits.filter((v, idx) => idx % 2 === 0); // remove half the items
           }
           return splits;
