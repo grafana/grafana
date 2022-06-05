@@ -120,14 +120,7 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 	if err := flushIfRequired(true); err != nil {
 		return nil, nil, err
 	}
-	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
-	label = time.Now()
-
-	err = writer.Batch(batch)
-	if err != nil {
-		return nil, nil, err
-	}
-	logger.Info("Finish writing batch", "elapsed", time.Since(label))
+	logger.Info("Finish inserting docs into index", "elapsed", time.Since(label))
 
 	reader, err := writer.Reader()
 	if err != nil {
@@ -470,9 +463,6 @@ func doSearchQuery(
 		return response
 	}
 
-	dvfieldNames := []string{"type"}
-	sctx := search.NewSearchContext(0, 0)
-
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -517,11 +507,6 @@ func doSearchQuery(
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		err = match.LoadDocumentValues(sctx, dvfieldNames)
-		if err != nil {
-			continue
-		}
-
 		uid := ""
 		kind := ""
 		ptype := ""
