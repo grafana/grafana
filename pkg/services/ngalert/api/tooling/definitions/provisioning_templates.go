@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route GET /api/v1/provisioning/templates provisioning RouteGetTemplates
+// swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all message templates.
 //
@@ -12,7 +12,7 @@ import (
 //       200: MessageTemplate
 //       400: ValidationError
 
-// swagger:route GET /api/v1/provisioning/templates/{name} provisioning RouteGetTemplate
+// swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
 // Get a message template.
 //
@@ -20,7 +20,7 @@ import (
 //       200: MessageTemplate
 //       404: NotFound
 
-// swagger:route PUT /api/v1/provisioning/templates/{name} provisioning RoutePutTemplate
+// swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
 // Updates an existing template.
 //
@@ -31,7 +31,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning RouteDeleteTemplate
+// swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
 // Delete a template.
 //
