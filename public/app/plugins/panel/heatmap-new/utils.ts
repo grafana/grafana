@@ -1,7 +1,15 @@
 import { MutableRefObject, RefObject } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrameType, GrafanaTheme2, incrRoundDn, incrRoundUp, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  formattedValueToString,
+  getValueFormat,
+  GrafanaTheme2,
+  incrRoundDn,
+  incrRoundUp,
+  TimeRange,
+} from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -302,6 +310,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   const hasLabeledY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
     scaleKey: 'y',
@@ -310,6 +319,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
+    formatValue: (v: any) => formattedValueToString(disp(v)),
     splits: hasLabeledY
       ? (self: uPlot) => {
           const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
