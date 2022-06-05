@@ -13,9 +13,10 @@ import (
 var zScoreDeviations = 3.0
 
 type exemplar struct {
-	labels map[string]string
-	val    float64
-	ts     time.Time
+	seriesLabels map[string]string
+	labels       map[string]string
+	val          float64
+	ts           time.Time
 }
 
 type exemplarSampler struct {
@@ -33,15 +34,16 @@ func newExemplarSampler() *exemplarSampler {
 	}
 }
 
-func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, labels map[string]string) {
+func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, seriesLabels, labels map[string]string) {
 	bucketTs := models.AlignTimeRange(ts, step, 0)
-	e.trackNewLabels(labels)
+	e.trackNewLabels(seriesLabels, labels)
 	e.updateAggregations(val)
 
 	ex := exemplar{
-		val:    val,
-		ts:     ts,
-		labels: labels,
+		val:          val,
+		ts:           ts,
+		labels:       labels,
+		seriesLabels: seriesLabels,
 	}
 
 	if _, exists := e.buckets[bucketTs]; !exists {
@@ -74,7 +76,7 @@ func (e *exemplarSampler) updateAggregations(val float64) {
 	e.m2 += delta * delta2
 }
 
-// stadardDeviation calculates the amount of varation in the data
+// standardDeviation calculates the amount of varation in the data
 // https://en.wikipedia.org/wiki/Standard_deviation
 func (e *exemplarSampler) standardDeviation() float64 {
 	if e.count < 2 {
@@ -91,8 +93,13 @@ func (e *exemplarSampler) zScore(val float64) float64 {
 
 // trackNewLabels saves label names that haven't been seen before
 // so that they can be used to build the label fields in the exemplar frame
-func (e *exemplarSampler) trackNewLabels(labels map[string]string) {
+func (e *exemplarSampler) trackNewLabels(seriesLabels, labels map[string]string) {
 	for k := range labels {
+		if _, ok := e.labelSet[k]; !ok {
+			e.labelSet[k] = struct{}{}
+		}
+	}
+	for k := range seriesLabels {
 		if _, ok := e.labelSet[k]; !ok {
 			e.labelSet[k] = struct{}{}
 		}
@@ -150,13 +157,13 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		exemplarFrame.Name = frame.Name
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		seriesLabels := getSeriesLabels(frame)
 		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
-			ts, val, ok := getTimeValuePair(frame, rowIdx)
-			if !ok {
-				continue
-			}
-			labels := getLabels(frame, rowIdx)
-			sampler.update(step, ts, val, labels)
+			row := frame.RowCopy(rowIdx)
+			ts := row[0].(time.Time)
+			val := row[1].(float64)
+			labels := getLabels(frame, row)
+			sampler.update(step, ts, val, seriesLabels, labels)
 		}
 	}
 
@@ -179,7 +186,10 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		timeField.Append(b.ts)
 		valueField.Append(b.val)
 		for i, labelName := range labelNames {
-			labelValue := b.labels[labelName]
+			labelValue, ok := b.labels[labelName]
+			if !ok {
+				labelValue = b.seriesLabels[labelName]
+			}
 			colIdx := i + 2 // +2 to skip time and value fields
 			exemplarFrame.Fields[colIdx].Append(labelValue)
 		}
@@ -198,32 +208,15 @@ func isExemplarFrame(frame *data.Frame) bool {
 	return rt == models.ResultTypeExemplar
 }
 
-func getLabels(frame *data.Frame, rowIdx int) map[string]string {
-	labels := map[string]string{}
-	for _, f := range frame.Fields {
-		// series labels are stored as field labels
-		for k, v := range f.Labels {
-			labels[k] = v
-		}
-
-		// exemplar labels (trace IDs) are stored in string columns
-		if f.Type() == data.FieldTypeString {
-			if v, ok := f.At(rowIdx).(string); ok {
-				labels[f.Name] = v
-			}
-		}
-	}
-	return labels
+func getSeriesLabels(frame *data.Frame) data.Labels {
+	// series labels are stored on the value field (index 1)
+	return frame.Fields[1].Labels.Copy()
 }
 
-func getTimeValuePair(frame *data.Frame, rowIdx int) (time.Time, float64, bool) {
-	ts, ok := frame.Fields[0].At(rowIdx).(time.Time)
-	if !ok {
-		return time.Time{}, 0, false
+func getLabels(frame *data.Frame, row []interface{}) map[string]string {
+	labels := make(map[string]string)
+	for i := 2; i < len(row); i++ {
+		labels[frame.Fields[i].Name] = row[i].(string)
 	}
-	val, ok := frame.Fields[1].At(rowIdx).(float64)
-	if !ok {
-		return time.Time{}, 0, false
-	}
-	return ts, val, true
+	return labels
 }

@@ -44,22 +44,31 @@ func BenchmarkExemplarJson(b *testing.B) {
 	}
 }
 
+var resp *backend.QueryDataResponse
+
 // when memory-profiling this benchmark, these commands are recommended:
 // - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
 // - go tool pprof -http=localhost:6061 memprofile.out
-func BenchmarkJson(b *testing.B) {
+func BenchmarkRangeJson(b *testing.B) {
+	var (
+		r   *backend.QueryDataResponse
+		err error
+	)
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
 	tCtx := setup(true)
 	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
 			Body:       ioutil.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.queryData.Execute(context.Background(), q)
+		r, err = tCtx.queryData.Execute(context.Background(), q)
 		require.NoError(b, err)
 	}
+
+	resp = r
 }
 
 const nanRate = 0.002
