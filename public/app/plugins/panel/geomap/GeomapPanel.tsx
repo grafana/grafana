@@ -23,6 +23,7 @@ import {
   FrameGeometrySourceMode,
   getFrameMatchers,
   GrafanaTheme,
+  MapLayerHandler,
   MapLayerOptions,
   PanelData,
   PanelProps,
@@ -252,17 +253,7 @@ export class GeomapPanel extends Component<Props, State> {
    */
   dataChanged(data: PanelData) {
     for (const state of this.layers) {
-      if (state.handler.update) {
-        let panelData = this.props.data;
-        if (state.options.filterData) {
-          const matcherFunc = getFrameMatchers(state.options.filterData);
-          panelData = {
-            ...panelData,
-            series: panelData.series.filter(matcherFunc),
-          };
-        }
-        state.handler.update(panelData);
-      }
+      this.applyLayerFilter(state.handler, state.options);
     }
   }
 
@@ -477,17 +468,7 @@ export class GeomapPanel extends Component<Props, State> {
       group.setAt(layerIndex, info.layer);
 
       // initialize with new data
-      if (info.handler.update) {
-        let panelData = this.props.data;
-        if (newOptions.filterData) {
-          const matcherFunc = getFrameMatchers(newOptions.filterData);
-          panelData = {
-            ...panelData,
-            series: panelData.series.filter(matcherFunc),
-          };
-        }
-        info.handler.update(panelData);
-      }
+      this.applyLayerFilter(info.handler, newOptions);
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -547,6 +528,12 @@ export class GeomapPanel extends Component<Props, State> {
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
 
+    this.applyLayerFilter(handler, options);
+
+    return state;
+  }
+
+  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
     if (handler.update) {
       let panelData = this.props.data;
       if (options.filterData) {
@@ -558,8 +545,6 @@ export class GeomapPanel extends Component<Props, State> {
       }
       handler.update(panelData);
     }
-
-    return state;
   }
 
   initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
