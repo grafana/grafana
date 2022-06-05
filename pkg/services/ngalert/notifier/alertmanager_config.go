@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -82,11 +81,9 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
-	if moa.settings.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
-		result, err = moa.mergeProvenance(ctx, result, org)
-		if err != nil {
-			return definitions.GettableUserConfig{}, err
-		}
+	result, err = moa.mergeProvenance(ctx, result, org)
+	if err != nil {
+		return definitions.GettableUserConfig{}, err
 	}
 
 	return result, nil
