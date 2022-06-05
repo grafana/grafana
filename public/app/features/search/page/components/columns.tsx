@@ -6,6 +6,7 @@ import SVG from 'react-inlinesvg';
 import { Field, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import { PluginIconName } from 'app/features/plugins/admin/types';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -287,7 +288,7 @@ function makeTypeColumn(
             break;
 
           case 'panel':
-            icon = 'public/img/icons/mono/library-panel.svg';
+            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
