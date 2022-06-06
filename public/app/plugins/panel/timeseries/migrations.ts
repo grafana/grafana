@@ -14,7 +14,6 @@ import {
   PanelTypeChangedHandler,
   Threshold,
   ThresholdsMode,
-  PanelModel,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -60,15 +59,6 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   migrateHideFrom(panel);
 
   return {};
-};
-
-/** This is called when the runtime version does not match the last saved version */
-export const graphMigrationHandler = (panel: PanelModel): Partial<TimeSeriesOptions> => {
-  // Auto migrating from angular graph panel
-  if ((panel as any)['__auto_migrate_from'] === 'graph') {
-    return graphPanelChangedHandler(panel, 'graph', { angular: panel }, panel.fieldConfig);
-  }
-  return panel.options;
 };
 
 export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: TimeSeriesOptions } {
