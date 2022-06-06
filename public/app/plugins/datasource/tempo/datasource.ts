@@ -613,6 +613,9 @@ function getApmTable(
     df.fields.push({
       ...rate[0].fields[1],
       name: 'Name',
+      config: {
+        filterable: false,
+      },
     });
 
     df.fields.push({
