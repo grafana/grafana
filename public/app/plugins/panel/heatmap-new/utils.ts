@@ -309,7 +309,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           },
   });
 
-  const hasLabeledY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
   const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
@@ -320,17 +320,21 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     formatValue: (v: any) => formattedValueToString(disp(v)),
-    splits: hasLabeledY
+    splits: isOrdianalY
       ? (self: uPlot) => {
-          const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-          let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          if (!meta.yOrdinalDisplay) {
+            return [0, 1]; //?
+          }
+          let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
 
-          const bucketSize = dataRef.current?.yBucketSize!;
-
-          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
-            splits.unshift(ys[0] - bucketSize);
-          } else {
-            splits.push(ys[ys.length - 1] + bucketSize);
+          switch (dataRef.current?.yLayout) {
+            case HeatmapBucketLayout.le:
+              splits.unshift(undefined as any);
+              break;
+            case HeatmapBucketLayout.ge:
+              splits.push(undefined as any);
+              break;
           }
 
           // Skip labels when the height is too small
@@ -340,19 +344,13 @@ export function prepConfig(opts: PrepConfigOpts) {
           return splits;
         }
       : undefined,
-    values: hasLabeledY
+    values: isOrdianalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
-          const yAxisValues = meta.yOrdinalDisplay?.slice()!;
-          const isFromBuckets = meta.yOrdinalDisplay?.length && !('le' === meta.yMatchWithLabel);
-
-          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
-            yAxisValues.unshift(isFromBuckets ? '' : '0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
-            yAxisValues.push(isFromBuckets ? '' : '+Inf');
+          if (meta.yOrdinalDisplay) {
+            return splits.map((v) => meta.yOrdinalDisplay[v]);
           }
-
-          return splits.map((v) => yAxisValues[v]);
+          return splits.map((v) => `$`);
         }
       : undefined,
   });

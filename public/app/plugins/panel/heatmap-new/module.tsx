@@ -82,8 +82,8 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           options: [
             { label: 'Auto', value: HeatmapBucketLayout.auto },
             { label: 'Middle', value: HeatmapBucketLayout.unknown },
-            { label: 'Lower (LE)', value: HeatmapBucketLayout.le },
-            { label: 'Upper (GE)', value: HeatmapBucketLayout.ge },
+            { label: 'Lower (GE)', value: HeatmapBucketLayout.ge },
+            { label: 'Upper (LE)', value: HeatmapBucketLayout.le },
           ],
         },
       });
