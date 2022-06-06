@@ -1,15 +1,18 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, FieldType, PanelProps } from '@grafana/data';
-import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
+import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { Portal, UPlotConfigBuilder, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
+import { HoverEvent, setupConfig } from '../barchart/config';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { TimelineChart } from './TimelineChart';
 import { TimelineMode, TimelineOptions } from './types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+
+const TOOLTIP_OFFSET = 10;
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -26,7 +29,22 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
-  const { sync } = usePanelContext();
+
+  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  const isToolTipOpen = useRef<boolean>(false);
+
+  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
+  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [_dummy, setDummyToForceRender] = useState<boolean>(false);
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setDummyToForceRender(isToolTipOpen.current);
+  };
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data?.series, options.mergeValues ?? true, timeRange, theme),
@@ -107,17 +125,31 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       mode={TimelineMode.Changes}
     >
       {(config, alignedFrame) => {
+        if (oldConfig.current !== config) {
+          oldConfig.current = setupConfig({
+            config,
+            onUPlotClick,
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            setCoords,
+            setHover,
+            isToolTipOpen,
+          });
+        }
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <TooltipPlugin
-              data={alignedFrame}
-              sync={sync}
-              config={config}
-              mode={options.tooltip.mode}
-              timeZone={timeZone}
-              renderTooltip={renderCustomTooltip}
-            />
+            <Portal>
+              {hover && coords && (
+                <VizTooltipContainer
+                  position={{ x: coords.x, y: coords.y }}
+                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                  allowPointerEvents={isToolTipOpen.current}
+                >
+                  {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+                </VizTooltipContainer>
+              )}
+            </Portal>
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );

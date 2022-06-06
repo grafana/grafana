@@ -11,9 +11,7 @@ import {
 } from '@grafana/data';
 import { LinkButton, SeriesTableRow, useTheme2, VerticalGroup } from '@grafana/ui';
 
-import { findNextStateIndex, fmtDuration } from './utils';
-
-interface StateTimelineTooltipProps {
+interface StatusHistoryTooltipProps {
   data: DataFrame[];
   alignedData: DataFrame;
   seriesIdx: number;
@@ -21,7 +19,7 @@ interface StateTimelineTooltipProps {
   timeZone: TimeZone;
 }
 
-export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
+export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
   data,
   alignedData,
   seriesIdx,
@@ -57,9 +55,6 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
     }
   }
 
-  const xField = alignedData.fields[0];
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-
   const field = alignedData.fields[seriesIdx!];
 
   const dataFrameFieldIndex = field.state?.origin;
@@ -74,40 +69,11 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
       )
     : null;
 
-  const nextStateIdx = findNextStateIndex(field, datapointIdx!);
-  let nextStateTs;
-  if (nextStateIdx) {
-    nextStateTs = xField.values.get(nextStateIdx!);
-  }
-
-  const stateTs = xField.values.get(datapointIdx!);
-
-  let toFragment = null;
-  let durationFragment = null;
-
-  if (nextStateTs) {
-    const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-    durationFragment = (
-      <>
-        <br />
-        <strong>Duration:</strong> {duration}
-      </>
-    );
-    toFragment = (
-      <>
-        {' to'} <strong>{xFieldFmt(xField.values.get(nextStateIdx!)).text}</strong>
-      </>
-    );
-  }
-
   return (
     <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
       {fieldDisplayName}
       <br />
       <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-      From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
-      {toFragment}
-      {durationFragment}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (
@@ -129,4 +95,4 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   );
 };
 
-StateTimelineTooltip.displayName = 'StateTimelineTooltip';
+StatusHistoryTooltip.displayName = 'StatusHistoryTooltip';
