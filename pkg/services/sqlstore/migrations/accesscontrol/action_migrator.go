@@ -81,21 +81,25 @@ func (m *actionNameMigrator) migrateActionNames() error {
 
 	permissionsToCreate := make([]*accesscontrol.Permission, 0)
 	for _, oldNamePermission := range oldActionNamePermissions {
+		newPermission := oldNamePermission
+		newPermission.Action = actionNameMapping[oldNamePermission.Action]
+
+		// if there already is a permission in the database with the new action name and the same role ID and scope as the old permissions,
+		// we can just drop the old permission (otherwise the permission table uniqueness constraint won't be satisfied)
 		newNamePermissionExists := false
 		// note - there should not be many permissions with the new action names, so this should not be an expensive iteration
-		for _, newNamePermission := range newActionNamePermissions {
-			if newNamePermission.RoleID == oldNamePermission.RoleID && newNamePermission.Scope == oldNamePermission.Scope {
+		for _, existingPermission := range newActionNamePermissions {
+			if existingPermission.Action == newPermission.Action &&
+				existingPermission.RoleID == newPermission.RoleID &&
+				existingPermission.Scope == newPermission.Scope {
 				newNamePermissionExists = true
 				continue
 			}
 		}
-		// if there already is a permission in the database with the new action name and the same role ID and scope as the old permissions,
-		// we can just drop the old permission (otherwise the permission table uniqueness constraint won't be satisfied)
 		if newNamePermissionExists {
 			continue
 		}
-		newPermission := oldNamePermission
-		newPermission.Action = actionNameMapping[oldNamePermission.Action]
+
 		permissionsToCreate = append(permissionsToCreate, oldNamePermission)
 	}
 

@@ -161,6 +161,37 @@ func TestActionMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "permission with legacy name and a different permission with new name with the same role ID and scope",
+			permissionSeed: []*accesscontrol.Permission{
+				{
+					RoleID:  1,
+					Action:  "org.users.role:update",
+					Scope:   accesscontrol.ScopeUsersAll,
+					Created: now,
+					Updated: now,
+				},
+				{
+					RoleID:  1,
+					Action:  accesscontrol.ActionUsersPasswordUpdate,
+					Scope:   accesscontrol.ScopeUsersAll,
+					Created: now,
+					Updated: now,
+				},
+			},
+			wantPermissions: []*accesscontrol.Permission{
+				{
+					RoleID: 1,
+					Action: accesscontrol.ActionOrgUsersWrite,
+					Scope:  accesscontrol.ScopeUsersAll,
+				},
+				{
+					RoleID: 1,
+					Action: accesscontrol.ActionUsersPasswordUpdate,
+					Scope:  accesscontrol.ScopeUsersAll,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
