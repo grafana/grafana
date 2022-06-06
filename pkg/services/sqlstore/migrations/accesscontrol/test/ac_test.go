@@ -105,7 +105,6 @@ func getDBType() string {
 	return dbType
 }
 
-
 func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
 	switch dbType {
 	case "mysql":
@@ -126,7 +125,6 @@ func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
 		}
 	}
 }
-
 
 func TestMigrations(t *testing.T) {
 	// Run initial migration to have a working DB
