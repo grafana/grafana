@@ -15,9 +15,9 @@ weight: 400
 
 # Message templating
 
-Notifications sent via [contact points]({{< relref "../../contact-points/_index.md" >}}) are built using messaging templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping). The default template, defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go), is a useful reference for custom templates.
+Notifications sent via [contact points]({{< relref "../_index.md" >}}) are built using messaging templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping). The default template, defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go), is a useful reference for custom templates.
 
-Since most of the contact point fields can be templated, you can create reusable custom templates and use them in multiple contact points. The [template data]({{< relref "./template-data.md" >}}) topic lists variables that are available for templating. The default template is defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go) which can serve as a useful reference or starting point for custom templates.
+Since most of the contact point fields can be templated, you can create reusable custom templates and use them in multiple contact points. The [template data]({{< relref "template-data.md" >}}) topic lists variables that are available for templating. The default template is defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go) which can serve as a useful reference or starting point for custom templates.
 
 ### Using templates
 

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -47,7 +48,6 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			Type:      ds.Type,
 			TypeName:  ds.Type,
 			Access:    ds.Access,
-			Password:  ds.Password,
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
@@ -480,25 +480,23 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *models.ReqContext) {
 
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
-		Id:                ds.Id,
-		UID:               ds.Uid,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Url:               ds.Url,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-		SecureJsonFields:  map[string]bool{},
-		Version:           ds.Version,
-		ReadOnly:          ds.ReadOnly,
+		Id:               ds.Id,
+		UID:              ds.Uid,
+		OrgId:            ds.OrgId,
+		Name:             ds.Name,
+		Url:              ds.Url,
+		Type:             ds.Type,
+		Access:           ds.Access,
+		Database:         ds.Database,
+		User:             ds.User,
+		BasicAuth:        ds.BasicAuth,
+		BasicAuthUser:    ds.BasicAuthUser,
+		WithCredentials:  ds.WithCredentials,
+		IsDefault:        ds.IsDefault,
+		JsonData:         ds.JsonData,
+		SecureJsonFields: map[string]bool{},
+		Version:          ds.Version,
+		ReadOnly:         ds.ReadOnly,
 	}
 
 	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
@@ -568,6 +566,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 			PluginID:                   plugin.ID,
 			DataSourceInstanceSettings: dsInstanceSettings,
 		},
+		Headers: map[string]string{},
 	}
 
 	var dsURL string
@@ -578,6 +577,21 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
+	}
+
+	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
+		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
+			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Headers["X-ID-Token"] = idToken
+			}
+		}
+	}
+
+	proxyutil.ClearCookieHeader(c.Req, ds.AllowedCookies())
+	if cookieStr := c.Req.Header.Get("Cookie"); cookieStr != "" {
+		req.Headers["Cookie"] = cookieStr
 	}
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)

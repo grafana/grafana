@@ -1,7 +1,6 @@
 package converter
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -13,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const update = true
 
 func TestReadPromFrames(t *testing.T) {
 	files := []string{
@@ -41,8 +42,8 @@ func TestReadPromFrames(t *testing.T) {
 
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
+		// Safe to disable, this is a test.
 		// nolint:gosec
-		// We can ignore the gosec G304 because this is a test with static defined paths
 		f, err := os.Open(path.Join("testdata", name+".json"))
 		require.NoError(t, err)
 
@@ -53,38 +54,13 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
 		rsp := ReadPrometheusStyleResult(iter, opts)
 
-		out, err := jsoniter.MarshalIndent(rsp, "", "  ")
-		require.NoError(t, err)
-
-		save := true
-		fpath := path.Join("testdata", name+"-frame.json")
-
-		// nolint:gosec
-		// We can ignore the gosec G304 because this is a test with static defined paths
-		current, err := ioutil.ReadFile(fpath)
-		if err == nil {
-			same := assert.JSONEq(t, string(out), string(current))
-			if !same {
-				save = true
-			}
-		} else {
-			assert.Fail(t, "missing file: "+fpath)
-			save = true
-		}
-
-		if save {
-			err = os.WriteFile(fpath, out, 0600)
-			require.NoError(t, err)
-		}
-
-		// skip checking golden file for error response. it's not currently supported
-		if strings.Contains(name, "prom-error") {
+		if strings.Contains(name, "error") {
+			require.Error(t, rsp.Error)
 			return
 		}
 
-		fpath = path.Join("testdata", name+"-golden.txt")
-		err = experimental.CheckGoldenDataResponse(fpath, rsp, true)
-		assert.NoError(t, err)
+		fname := name + "-frame"
+		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
 	}
 }
 

@@ -270,7 +270,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 		return g.teams, nil
 	}
 
-	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
+	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId, SignedInUser: g.user}
 	err := g.store.GetTeamsByUser(g.ctx, &query)
 
 	g.teams = query.Result

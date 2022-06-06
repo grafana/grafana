@@ -87,10 +87,6 @@ const (
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
 
-	// FlagDisableHttpRequestHistogram
-	// Do not create histograms for http requests
-	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
-
 	// FlagPublicDashboards
 	// enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
@@ -122,10 +118,6 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagAlertProvisioning
-	// Provisioning-friendly routes for alerting
-	FlagAlertProvisioning = "alertProvisioning"
 
 	// FlagExport
 	// Export grafana instance (to git, etc)

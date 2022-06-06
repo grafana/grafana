@@ -25,4 +25,4 @@ See also:
 - [Create a silence]({{< relref "./create-silence.md" >}})
 - [Create a URL to link to a silence form]({{< relref "./linking-to-silence-form.md" >}})
 - [Edit silences]({{< relref "./edit-silence.md" >}})
-- [Remove a silences]({{< relref "./remove-silence.md" >}})
+- [Remove silences]({{< relref "./remove-silence.md" >}})

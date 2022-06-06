@@ -62,5 +62,5 @@ Grafana managed alerting rules can only be edited or deleted by users with Edit 
 To edit or delete a rule:
 
 1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
-1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "./create-grafana-managed-rule.md" >}}) or [Create a Grafana Mimir or Loki managed alerting rule]({{< relref "./create-mimir-loki-managed-rule.md" >}}).
+1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "create-grafana-managed-rule.md" >}}) or [Create a Grafana Mimir or Loki managed alerting rule]({{< relref "create-mimir-loki-managed-rule.md" >}}).
 1. Click **Delete** to delete a rule.

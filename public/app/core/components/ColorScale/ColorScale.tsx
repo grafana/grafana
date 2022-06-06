@@ -26,7 +26,7 @@ const GRADIENT_STOPS = 10;
 export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
-  const [percent, setPercent] = useState<number | null>(null);
+  const [percent, setPercent] = useState<number | null>(null); // 0-100 for CSS percentage
 
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
@@ -50,15 +50,12 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
   };
 
   useEffect(() => {
-    if (hoverValue != null) {
-      const percent = hoverValue / (max - min);
-      setPercent(percent * 100);
-    }
+    setPercent(hoverValue == null ? null : clampPercent100((hoverValue - min) / (max - min)));
   }, [hoverValue, min, max]);
 
   return (
-    <div className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+    <div className={styles.scaleWrapper} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+      <div className={styles.scaleGradient}>
         {display && (scaleHover.isShown || hoverValue !== undefined) && (
           <div className={styles.followerContainer}>
             <div className={styles.follower} style={{ left: `${percent}%` }} />
@@ -121,10 +118,19 @@ const getGradientStops = ({
   return [...gradientStops];
 };
 
+function clampPercent100(v: number) {
+  if (v > 1) {
+    return 100;
+  }
+  if (v < 0) {
+    return 0;
+  }
+  return v * 100;
+}
+
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
     width: 100%;
-    max-width: 300px;
     font-size: 11px;
     opacity: 1;
   `,
@@ -138,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   `,
   hoverValue: css`
     position: absolute;
-    padding-top: 5px;
+    padding-top: 4px;
   `,
   followerContainer: css`
     position: relative;

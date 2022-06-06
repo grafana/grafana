@@ -13,7 +13,7 @@ You can view field overrides in the panel display options.
 ## Before you begin
 
 - [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
+- [Add a field override]({{< relref "add-a-field-override.md" >}}).
 
 **To view field overrides**:
 
