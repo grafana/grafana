@@ -151,12 +151,14 @@ describe('InspectDataTab', () => {
       const sgFrames = [
         {
           name: 'Nodes',
+          fields: [],
           meta: {
             preferredVisualisationType: 'nodeGraph',
           },
         },
         {
           name: 'Edges',
+          fields: [],
           meta: {
             preferredVisualisationType: 'nodeGraph',
           },
