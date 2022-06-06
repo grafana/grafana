@@ -1,11 +1,6 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import {
-  FrameGeometrySourceMode,
-  MapLayerOptions,
-  MapLayerRegistryItem,
-  PluginState,
-} from '@grafana/data';
+import { FrameGeometrySourceMode, MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { hasAlphaPanels } from 'app/core/config';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
