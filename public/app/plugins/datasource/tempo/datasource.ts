@@ -619,7 +619,14 @@ function getApmTable(
       ...rate[0].fields[2],
       name: 'Rate',
       config: {
-        links: [makePromLink('Rate', buildLinkExpr(rateMetric), datasourceUid, false)],
+        links: [
+          makePromLink(
+            'Rate',
+            buildLinkExpr(buildExpr(rateMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
         decimals: 2,
       },
     });
@@ -655,7 +662,14 @@ function getApmTable(
       name: 'Error Rate',
       values: values,
       config: {
-        links: [makePromLink('Error Rate', buildLinkExpr(errorRateMetric), datasourceUid, false)],
+        links: [
+          makePromLink(
+            'Error Rate',
+            buildLinkExpr(buildExpr(errorRateMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
         decimals: 2,
       },
     });
@@ -690,7 +704,14 @@ function getApmTable(
       name: 'Duration (p90)',
       values: getRateAlignedValues(rate, durationObj),
       config: {
-        links: [makePromLink('Duration', buildLinkExpr(durationMetric), datasourceUid, false)],
+        links: [
+          makePromLink(
+            'Duration',
+            buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+            datasourceUid,
+            false
+          ),
+        ],
         unit: 's',
       },
     });
@@ -729,9 +750,8 @@ export function buildExpr(
   return metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
 }
 
-export function buildLinkExpr(metric: { expr: string; params: string[] }) {
-  const expr = metric.expr.replace('__range', '__rate_interval').replace(' @ end()', '');
-  return expr.replace('{}', '{' + metric.params.concat('span_name="${__data.fields[0]}"}').join(','));
+export function buildLinkExpr(expr: string) {
+  return expr.replace('__range', '__rate_interval').replace(' @ end()', '');
 }
 
 // query result frames can come back in any order

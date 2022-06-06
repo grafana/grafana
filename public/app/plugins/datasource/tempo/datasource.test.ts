@@ -459,21 +459,10 @@ describe('Tempo apm table', () => {
   });
 
   it('should build link expr correctly', () => {
-    let builtQuery = buildLinkExpr({
-      expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
-      params: [],
-    });
-    expect(builtQuery).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+    let builtQuery = buildLinkExpr(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))'
     );
-
-    builtQuery = buildLinkExpr({
-      expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
-      params: ['span_status="STATUS_CODE_ERROR"'],
-    });
-    expect(builtQuery).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
-    );
+    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval])) by (span_name))');
   });
 
   it('should get rate aligned values correctly', () => {
