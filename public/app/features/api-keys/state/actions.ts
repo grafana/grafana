@@ -69,6 +69,12 @@ export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
   };
 }
 
+export function hideApiKeys(): ThunkResult<void> {
+  return async (dispatch) => {
+    await getBackendSrv().post('/api/serviceaccounts/hideApiKeys');
+  };
+}
+
 export function toggleIncludeExpired(): ThunkResult<void> {
   return (dispatch) => {
     dispatch(includeExpiredToggled());

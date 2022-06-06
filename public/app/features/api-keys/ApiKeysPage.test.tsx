@@ -31,6 +31,7 @@ const setup = (propOverrides: Partial<Props>) => {
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
   const getServiceAccountsUpgradeStatusMock = jest.fn();
+  const hideApiKeysMock = jest.fn();
   const props: Props = {
     navModel: {
       main: {
@@ -50,6 +51,7 @@ const setup = (propOverrides: Partial<Props>) => {
     getServiceAccountsUpgradeStatus: getServiceAccountsUpgradeStatusMock,
     migrateApiKey: migrateApiKeyMock,
     migrateAll: migrateAllMock,
+    hideApiKeys: hideApiKeysMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,

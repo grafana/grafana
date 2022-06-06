@@ -29,6 +29,7 @@ import {
   loadApiKeys,
   toggleIncludeExpired,
   getServiceAccountsUpgradeStatus,
+  hideApiKeys,
 } from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
@@ -59,6 +60,7 @@ const mapDispatchToProps = {
   toggleIncludeExpired,
   addApiKey,
   getServiceAccountsUpgradeStatus,
+  hideApiKeys,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -139,6 +141,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     }
   };
 
+  onHideApiKeys = async () => {
+    await this.props.hideApiKeys();
+    window.location.reload();
+  };
+
   render() {
     const {
       hasFetched,
@@ -174,7 +181,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   {config.featureToggles.serviceAccounts && !apiKeysMigrated && (
                     <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />
                   )}
-                  {config.featureToggles.serviceAccounts && apiKeysMigrated && <APIKeysMigratedCard />}
+                  {config.featureToggles.serviceAccounts && apiKeysMigrated && (
+                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />
+                  )}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

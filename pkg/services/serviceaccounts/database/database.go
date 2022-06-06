@@ -102,6 +102,13 @@ func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context
 	}
 }
 
+func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgID int64) error {
+	if err := s.kvStore.Set(ctx, kvstore.AllOrganizations, "serviceaccounts", "hideApiKeys", "1"); err != nil {
+		s.log.Error("Failed to hide API keys tab", err)
+	}
+	return nil
+}
+
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context) error {
 	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
 	if len(basicKeys) > 0 {

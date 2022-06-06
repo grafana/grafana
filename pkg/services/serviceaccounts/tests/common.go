@@ -76,6 +76,7 @@ type Calls struct {
 	RetrieveServiceAccount          []interface{}
 	DeleteServiceAccount            []interface{}
 	GetAPIKeysMigrationStatus       []interface{}
+	HideApiKeysTab                  []interface{}
 	MigrateApiKeysToServiceAccounts []interface{}
 	ConvertServiceAccounts          []interface{}
 	ListTokens                      []interface{}
@@ -104,6 +105,11 @@ func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) HideApiKeysTab(ctx context.Context, orgID int64) error {
+	s.Calls.HideApiKeysTab = append(s.Calls.HideApiKeysTab, []interface{}{ctx})
 	return nil
 }
 

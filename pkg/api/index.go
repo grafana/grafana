@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/navlinks"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -303,7 +304,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) {
+	apiKeysHidden, _, err := hs.kvStore.Get(c.Req.Context(), kvstore.AllOrganizations, "serviceaccounts", "hideApiKeys")
+	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && apiKeysHidden != "1" {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",

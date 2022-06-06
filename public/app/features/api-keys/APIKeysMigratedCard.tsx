@@ -4,7 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 
-export const APIKeysMigratedCard = (): JSX.Element => {
+interface Props {
+  onHideApiKeys: () => void;
+}
+
+export const APIKeysMigratedCard = ({ onHideApiKeys }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -14,7 +18,7 @@ export const APIKeysMigratedCard = (): JSX.Element => {
         working - you will find them inside respective service accounts. Keys are now called tokens.
       </div>
       <div className={styles.actionRow}>
-        <LinkButton className={styles.actionButton} href="org/serviceaccounts">
+        <LinkButton className={styles.actionButton} href="org/serviceaccounts" onClick={onHideApiKeys}>
           Go to service accounts tab and never show API keys tab again
         </LinkButton>
         <a href="org/serviceaccounts">Go to service accounts tab</a>
