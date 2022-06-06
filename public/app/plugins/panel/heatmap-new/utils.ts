@@ -327,13 +327,14 @@ export function prepConfig(opts: PrepConfigOpts) {
             return [0, 1]; //?
           }
           let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
+          const isFromBuckets = 'le' !== meta.yMatchWithLabel;
 
           switch (dataRef.current?.yLayout) {
             case HeatmapBucketLayout.le:
-              splits.unshift(undefined as any);
+              splits.unshift((isFromBuckets ? undefined : '0.0') as any); // assumes dense layout where lowest bucket's low bound is 0-ish
               break;
             case HeatmapBucketLayout.ge:
-              splits.push(undefined as any);
+              splits.push((isFromBuckets ? undefined : '+Inf') as any);
               break;
           }
 
@@ -348,7 +349,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? (self: uPlot, splits) => {
           const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
-            return splits.map((v) => meta.yOrdinalDisplay[v]);
+            return splits.map((v) => meta.yOrdinalDisplay[v] ?? v);
           }
           return splits.map((v) => `$`);
         }
