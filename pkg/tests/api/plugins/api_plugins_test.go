@@ -24,7 +24,7 @@ const (
 	defaultPassword  = "password"
 )
 
-var updateSnapshotFlag = false
+var updateSnapshotFlag = true
 
 func TestPlugins(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -95,13 +95,22 @@ func TestPlugins(t *testing.T) {
 				if !same {
 					if updateSnapshotFlag {
 						t.Log("updating snapshot results")
-						updateRespSnapshot(t, tc.expRespPath, string(b))
+						str, _ := prettyString(string(b))
+						updateRespSnapshot(t, tc.expRespPath, str)
 					}
 					t.FailNow()
 				}
 			})
 		}
 	})
+}
+
+func prettyString(str string) (string, error) {
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, []byte(str), "", "  "); err != nil {
+		return "", err
+	}
+	return prettyJSON.String(), nil
 }
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) {
