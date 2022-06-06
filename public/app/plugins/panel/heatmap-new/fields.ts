@@ -75,7 +75,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap }), exemplars, theme);
+  return getHeatmapData(bucketsToScanlines({ ...options.bucketFrame, frame: bucketHeatmap }), exemplars, theme);
 }
 
 const getSparseHeatmapData = (
@@ -139,7 +139,7 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
   const data: HeatmapData = {
     heatmap: frame,
-    exemplars,
+    exemplars: exemplars?.length ? exemplars : undefined,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,

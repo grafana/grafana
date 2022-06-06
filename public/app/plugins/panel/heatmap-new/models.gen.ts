@@ -34,11 +34,14 @@ export interface YAxisConfig extends AxisConfig {
   unit?: string;
   reverse?: boolean; 
   decimals?: number;
+  // Only used when the axis is not ordinal
+  min?: number;
+  max?: number;
 }
 
 export interface FilterValueRange {
-  min?: number;
-  max?: number;
+  le?: number;
+  ge?: number;
 }
 
 export interface HeatmapTooltip {
@@ -53,8 +56,8 @@ export interface ExemplarConfig {
   color: string;
 }
 
-export interface BucketOptions {
-  name?: string;
+export interface BucketFrameOptions {
+  value?: string; // value field name
   layout?: HeatmapBucketLayout;
 }
 
@@ -64,11 +67,11 @@ export interface PanelOptions {
 
   color: HeatmapColorOptions;
   filterValues?: FilterValueRange; // was hideZeroBuckets
-  bucket?: BucketOptions;
+  bucketFrame?: BucketFrameOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
-  cellSize?: number; // was cardRadius
+  cellRadius?: number; // was cardRadius (not used, but migrated from angular)
 
   yAxis: YAxisConfig;
   legend: HeatmapLegend;
@@ -87,7 +90,7 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
-  bucket: {
+  bucketFrame: {
     layout: HeatmapBucketLayout.auto,
   },
   yAxis: {
@@ -105,7 +108,7 @@ export const defaultPanelOptions: PanelOptions = {
     color: 'rgba(255,0,255,0.7)',
   },
   filterValues: {
-    min: 1e-9,
+    le: 1e-9,
   },
   cellGap: 1,
 };
