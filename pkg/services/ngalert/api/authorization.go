@@ -184,18 +184,23 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/provisioning/templates",
 		http.MethodGet + "/api/provisioning/templates/{name}",
 		http.MethodGet + "/api/provisioning/mute-timings",
-		http.MethodGet + "/api/provisioning/mute-timings/{name}":
+		http.MethodGet + "/api/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/provisioning/alert-rules/{UID}":
 		return middleware.ReqSignedIn
 
 	case http.MethodPut + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points/{ID}",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/contact-points/{UID}",
+		http.MethodDelete + "/api/provisioning/contact-points/{UID}",
 		http.MethodPut + "/api/provisioning/templates/{name}",
 		http.MethodDelete + "/api/provisioning/templates/{name}",
 		http.MethodPost + "/api/provisioning/mute-timings",
 		http.MethodPut + "/api/provisioning/mute-timings/{name}",
-		http.MethodDelete + "/api/provisioning/mute-timings/{name}":
+		http.MethodDelete + "/api/provisioning/mute-timings/{name}",
+		http.MethodPost + "/api/provisioning/alert-rules",
+		http.MethodPut + "/api/provisioning/alert-rules/{UID}",
+		http.MethodDelete + "/api/provisioning/alert-rules/{UID}",
+		http.MethodPut + "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		return middleware.ReqEditorRole
 	}
 

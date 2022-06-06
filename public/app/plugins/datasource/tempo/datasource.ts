@@ -559,6 +559,21 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
+export function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: serviceName,
+      } as TempoQuery,
+      datasourceUid: datasourceUid,
+      datasourceName: 'Tempo',
+    },
+  };
+}
+
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
   return {
     ...options,
@@ -759,19 +774,4 @@ export function makeApmRequest(metrics: any[]) {
       instant: true,
     };
   });
-}
-
-export function makeTempoLink(title: string, spanName: string, tempoDatasourceUid: string) {
-  return {
-    url: '',
-    title,
-    internal: {
-      query: {
-        queryType: 'nativeSearch',
-        spanName: spanName,
-      } as TempoQuery,
-      datasourceUid: tempoDatasourceUid,
-      datasourceName: 'Tempo',
-    },
-  };
 }

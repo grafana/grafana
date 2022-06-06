@@ -11,7 +11,7 @@ weight: 5
 
 [Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
 
-After you have [installed Grafana]({{< relref "../installation/_index.md" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../auth/_index.md" >}}).
+After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -39,7 +39,7 @@ Templating allows you to drill down into your data, say, from all data to North 
 
 ## Configure Grafana
 
-If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../administration/configuration.md" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
+If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../setup-grafana/configure-grafana/" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
 
 Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 
@@ -49,7 +49,7 @@ Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [p
 
 ## Authentication
 
-Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../auth/overview.md" >}}) for more information.
+Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}) for more information.
 
 In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more information.
 

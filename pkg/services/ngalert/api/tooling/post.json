@@ -194,6 +194,91 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "AlertRule": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Annotations"
+    },
+    "condition": {
+     "type": "string",
+     "x-go-name": "Condition"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "execErrState": {
+     "$ref": "#/definitions/ExecutionErrorState"
+    },
+    "folderUID": {
+     "type": "string",
+     "x-go-name": "FolderUID"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "ID"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Labels"
+    },
+    "noDataState": {
+     "$ref": "#/definitions/NoDataState"
+    },
+    "orgID": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "OrgID"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "ruleGroup": {
+     "type": "string",
+     "x-go-name": "RuleGroup"
+    },
+    "title": {
+     "type": "string",
+     "x-go-name": "Title"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Updated"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertRuleGroup": {
+   "properties": {
+    "interval": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Interval"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -663,6 +748,10 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "EvalQueriesResponse": {},
+  "ExecutionErrorState": {
+   "type": "string",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+  },
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -1455,6 +1544,10 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "NoDataState": {
+   "type": "string",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "NotFound": {
    "type": "object",
@@ -3154,7 +3247,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3176,15 +3268,16 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3304,6 +3397,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3362,9 +3456,7 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
@@ -3374,7 +3466,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3426,15 +3517,16 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3607,6 +3699,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3617,9 +3710,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -4838,6 +4929,134 @@
     ]
    }
   },
+  "/api/provisioning/alert-rules": {
+   "post": {
+    "operationId": "RoutePostAlertRule",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a new alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/alert-rules/{UID}": {
+   "delete": {
+    "operationId": "RouteDeleteAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": " The alert rule was deleted successfully."
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a specific alert rule by UID.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get a specific alert rule by UID.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutAlertRule",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRule",
+      "schema": {
+       "$ref": "#/definitions/AlertRule"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update an existing alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
   "/api/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
@@ -4894,7 +5113,7 @@
     ]
    }
   },
-  "/api/provisioning/contact-points/{ID}": {
+  "/api/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -4904,7 +5123,7 @@
      {
       "description": "ContactPointUID should be the contact point UID identifier",
       "in": "path",
-      "name": "ID",
+      "name": "UID",
       "required": true,
       "type": "string"
      }
@@ -4937,7 +5156,7 @@
      {
       "description": "ContactPointUID should be the contact point UID identifier",
       "in": "path",
-      "name": "ID",
+      "name": "UID",
       "required": true,
       "type": "string"
      },
@@ -4964,6 +5183,53 @@
      }
     },
     "summary": "Update an existing contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleGroup",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update the interval of a rule group.",
     "tags": [
      "provisioning"
     ]
