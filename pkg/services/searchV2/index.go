@@ -567,6 +567,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 			sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
 
+			sess.OrderBy("id ASC")
 			sess.Limit(limit)
 
 			return sess.Find(&rows)
@@ -607,10 +608,6 @@ func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
 	return func(ctx context.Context, folderID int64) (string, error) {
 		uid := ""
 		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			sess.Table("dashboard").
-				Where("id = ?", folderID).
-				Cols("uid")
-
 			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
 			if err != nil {
 				return err

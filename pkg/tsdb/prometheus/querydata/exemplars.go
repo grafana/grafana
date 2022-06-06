@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
-var zScoreDeviations = 3.0
-
 type exemplar struct {
 	seriesLabels map[string]string
 	labels       map[string]string
@@ -51,19 +49,7 @@ func (e *exemplarSampler) update(step time.Duration, ts time.Time, val float64, 
 		return
 	}
 
-	// only keep exemplars that have a z-score above the standard deviation threshold
-	// in the future it might be useful to make it configurable
-	if e.shouldSample(val, zScoreDeviations) {
-		e.buckets[bucketTs] = append(e.buckets[bucketTs], ex)
-	}
-}
-
-// shouldSample returns true if the given exemplar should be sampled
-func (e *exemplarSampler) shouldSample(val float64, deviations float64) bool {
-	if e.standardDeviation() == 0 {
-		return false
-	}
-	return e.zScore(val) >= deviations
+	e.buckets[bucketTs] = append(e.buckets[bucketTs], ex)
 }
 
 // updateAggregations uses Welford's online algorithm for calculating the mean and variance
@@ -83,12 +69,6 @@ func (e *exemplarSampler) standardDeviation() float64 {
 		return 0
 	}
 	return math.Sqrt(e.m2 / float64(e.count-1))
-}
-
-// zScore calculates the number of standard deviations above or below the mean
-// https://en.wikipedia.org/wiki/Standard_score
-func (e *exemplarSampler) zScore(val float64) float64 {
-	return math.Abs(val-e.mean) / e.standardDeviation()
 }
 
 // trackNewLabels saves label names that haven't been seen before
@@ -118,11 +98,39 @@ func (e *exemplarSampler) getLabelNames() []string {
 	return labelNames
 }
 
-// getExemplars returns the sampled exemplars sorted by timestamp
+// getExemplars returns the exemplars sorted by timestamp
 func (e *exemplarSampler) getExemplars() []exemplar {
 	exemplars := make([]exemplar, 0, len(e.buckets))
 	for _, b := range e.buckets {
 		exemplars = append(exemplars, b...)
+	}
+	sort.SliceStable(exemplars, func(i, j int) bool {
+		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
+	})
+	return exemplars
+}
+
+// getSampledExemplars returns the exemplars sorted by timestamp
+func (e *exemplarSampler) getSampledExemplars() []exemplar {
+	exemplars := make([]exemplar, 0, len(e.buckets))
+	for _, b := range e.buckets {
+		// sort by value in descending order
+		sort.SliceStable(b, func(i, j int) bool {
+			return b[i].val > b[j].val
+		})
+		sampled := []exemplar{}
+		for _, ex := range b {
+			if len(sampled) == 0 {
+				sampled = append(sampled, ex)
+				continue
+			}
+			// only sample values at least 2 standard deviation distance to previously taken value
+			prev := sampled[len(sampled)-1]
+			if e.standardDeviation() != 0.0 && prev.val-ex.val > e.standardDeviation()*2.0 {
+				sampled = append(sampled, ex)
+			}
+		}
+		exemplars = append(exemplars, sampled...)
 	}
 	sort.SliceStable(exemplars, func(i, j int) bool {
 		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
@@ -167,7 +175,7 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		}
 	}
 
-	exemplars := sampler.getExemplars()
+	exemplars := sampler.getSampledExemplars()
 	if len(exemplars) == 0 {
 		return dr
 	}
@@ -188,6 +196,7 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		for i, labelName := range labelNames {
 			labelValue, ok := b.labels[labelName]
 			if !ok {
+				// if the label is not present in the exemplar labels, then use the series label
 				labelValue = b.seriesLabels[labelName]
 			}
 			colIdx := i + 2 // +2 to skip time and value fields
