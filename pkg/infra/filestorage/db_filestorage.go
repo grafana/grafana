@@ -479,7 +479,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 
 		if insertErr != nil {
 			if rollErr := sess.Rollback(); rollErr != nil {
-				return fmt.Errorf("Rolling back transaction due to error failed: %s: %w", rollErr, insertErr)
+				return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, insertErr)
 			}
 			return insertErr
 		}

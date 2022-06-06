@@ -136,7 +136,7 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		} else {
 			uid, err := generateNewPublicDashboardUid(sess)
 			if err != nil {
-				return fmt.Errorf("Failed to generate UID for public dashboard: %w", err)
+				return fmt.Errorf("failed to generate UID for public dashboard: %w", err)
 			}
 			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
 		}

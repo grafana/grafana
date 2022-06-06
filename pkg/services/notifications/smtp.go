@@ -48,7 +48,7 @@ func (sc *SmtpClient) Send(messages ...*Message) (int, error) {
 				emailsSentFailed.Inc()
 			}
 
-			err = fmt.Errorf("Failed to send notification to email addresses: %s: %w", strings.Join(msg.To, ";"), innerError)
+			err = fmt.Errorf("failed to send notification to email addresses: %s: %w", strings.Join(msg.To, ";"), innerError)
 			continue
 		}
 

@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DashboardProvisioner is responsible for syncing dashboard from disk to
@@ -70,7 +69,7 @@ func (provider *Provisioner) Provision(ctx context.Context) error {
 				return nil
 			}
 
-			return fmt.Errorf("Failed to provision config %v: %w", reader.Cfg.Name, err)
+			return fmt.Errorf("failed to provision config %v: %w", reader.Cfg.Name, err)
 		}
 	}
 
@@ -132,7 +131,7 @@ func getFileReaders(
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name), service, store)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to create file reader for config %v: %w", config.Name, err)
+				return nil, fmt.Errorf("failed to create file reader for config %v: %w", config.Name, err)
 			}
 			readers = append(readers, fileReader)
 		default:
