@@ -21,22 +21,6 @@ type Store interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-// Loader is responsible for loading plugins from the file system.
-type Loader interface {
-	// Load will return a list of plugins found in the provided file system paths.
-	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-}
-
-// Installer is responsible for managing plugins (add / remove) on the file system.
-type Installer interface {
-	// Install downloads the requested plugin in the provided file system location.
-	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
-	// Uninstall removes the requested plugin from the provided file system location.
-	Uninstall(ctx context.Context, pluginDir string) error
-	// GetUpdateInfo provides update information for the requested plugin.
-	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
-}
-
 type UpdateInfo struct {
 	PluginZipURL string
 }

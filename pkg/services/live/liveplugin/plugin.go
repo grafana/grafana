@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -80,7 +79,7 @@ func (g *ContextGetter) GetPluginContext(ctx context.Context, user *models.Signe
 
 	ds, err := g.dataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 	if err != nil {
-		return backend.PluginContext{}, false, errutil.Wrap("Failed to get datasource", err)
+		return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get datasource", err)
 	}
 	return g.pluginContextProvider.GetWithDataSource(ctx, pluginID, user, ds)
 }

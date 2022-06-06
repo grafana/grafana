@@ -17,7 +17,7 @@ This topic helps you get started with Grafana and build your first dashboard. To
 
 #### Install Grafana
 
-Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
+Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../setup-grafana/installation/" >}}).
 
 #### Sign in to Grafana
 
@@ -45,19 +45,19 @@ Congratulations, you have created your first dashboard and it is displaying resu
 
 #### Next steps
 
-Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}). The following topics will be of interest to you:
 
-- [Panels]({{< relref "../panels/_index.md" >}})
-- [Dashboards]({{< relref "../dashboards/_index.md" >}})
-- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
+- [Panels]({{< relref "../panels/" >}})
+- [Dashboards]({{< relref "../dashboards/" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts/" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ##### Admins
 
 The following topics are of interest to Grafana server admin users:
 
-- [Grafana configuration]({{< relref "../administration/configuration.md" >}})
-- [Authentication]({{< relref "../auth/overview.md" >}})
-- [User permissions and roles]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}})
-- [Provisioning]({{< relref "../administration/provisioning.md" >}})
-- [Grafana CLI]({{< relref "../administration/cli.md" >}})
+- [Grafana configuration]({{< relref "../setup-grafana/configure-grafana/" >}})
+- [Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
+- [User permissions and roles]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/" >}})
+- [Provisioning]({{< relref "../administration/provisioning/" >}})
+- [Grafana CLI]({{< relref "../administration/cli/" >}})
