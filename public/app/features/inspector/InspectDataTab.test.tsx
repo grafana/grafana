@@ -147,5 +147,29 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
+    it('should show download service graph button', () => {
+      const sgFrames = [
+        {
+          name: 'Nodes',
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+        {
+          name: 'Edges',
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+      ] as unknown as DataFrame[];
+      render(
+        <InspectDataTab
+          {...createProps({
+            data: sgFrames,
+          })}
+        />
+      );
+      expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
+    });
   });
 });
