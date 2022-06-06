@@ -35,6 +35,7 @@ var skipPaths = []string{
 	"public/app/plugins/panel/canvas/models.cue",
 	"public/app/plugins/panel/histogram/models.cue",
 	"public/app/plugins/panel/heatmap/models.cue",
+	"public/app/plugins/panel/heatmap-old/models.cue",
 	"public/app/plugins/panel/candlestick/models.cue",
 	"public/app/plugins/panel/state-timeline/models.cue",
 	"public/app/plugins/panel/status-history/models.cue",
