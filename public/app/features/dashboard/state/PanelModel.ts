@@ -225,7 +225,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     // Special 'graph' migration logic
-    if (this.type === 'graph' && config.featureToggles.autoMigrateGraphPanels) {
+    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
       this.autoMigrateFrom = this.type;
       this.type = 'timeseries';
     }
@@ -377,9 +377,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const oldOptions: any = this.getOptionsToRemember();
       const wasAngular = this.autoMigrateFrom === 'graph';
-      this.callPanelTypeChangeHandler(plugin, this.autoMigrateFrom, oldOptions, wasAngular);
+      this.callPanelTypeChangeHandler(
+        plugin,
+        this.autoMigrateFrom,
+        this.getOptionsToRemember(), // old options
+        wasAngular
+      );
+
       delete this.autoMigrateFrom;
     }
 
@@ -434,6 +439,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
+    const wasAngular = this.isAngularPlugin();
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -443,7 +449,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.restorePanelOptions(pluginId);
 
     // Potentially modify current options
-    this.callPanelTypeChangeHandler(newPlugin, oldPluginId, oldOptions, this.isAngularPlugin());
+    this.callPanelTypeChangeHandler(newPlugin, oldPluginId, oldOptions, wasAngular);
 
     // switch
     this.type = pluginId;
