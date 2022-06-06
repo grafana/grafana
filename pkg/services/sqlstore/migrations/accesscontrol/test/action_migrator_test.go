@@ -196,10 +196,11 @@ func TestActionMigration(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			// Remove migration
-			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id = ?;
-DELETE FROM permission`, acmig.ActionMigrationID)
+			// Remove migration and permissions
+			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id = ?`, acmig.ActionMigrationID)
 			require.NoError(t, errDeleteMig)
+			_, errDeletePerms := x.Exec(`DELETE FROM permission`)
+			require.NoError(t, errDeletePerms)
 
 			// seed DB with permissions
 			if len(tc.permissionSeed) != 0 {
