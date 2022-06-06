@@ -158,7 +158,15 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "bar"}))
 
 	// delete baz
-	r.del(baz)
+	deleted, ok := r.del(models.AlertRuleKey{OrgID: 1, UID: "baz"})
+	assert.True(t, ok)
+	require.NotNil(t, deleted)
+	assert.Equal(t, *deleted, *baz)
 	assert.Len(t, r.all(), 0)
 	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"}))
+
+	// baz cannot be deleted twice
+	deleted, ok = r.del(models.AlertRuleKey{OrgID: 1, UID: "baz"})
+	assert.False(t, ok)
+	assert.Nil(t, deleted)
 }

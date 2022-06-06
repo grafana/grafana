@@ -151,8 +151,12 @@ func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule
 	r.rules[rule.GetKey()] = rule
 }
 
-func (r *schedulableAlertRulesRegistry) del(rule *models.SchedulableAlertRule) {
+func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	delete(r.rules, rule.GetKey())
+	rule, ok := r.rules[k]
+	if ok {
+		delete(r.rules, k)
+	}
+	return rule, ok
 }
