@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -187,10 +188,15 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(on.Message)
+	titleTmpl := on.Message
+	if strings.TrimSpace(titleTmpl) == "" {
+		titleTmpl = `{{ template "default.title" . }}`
+	}
+
+	title := tmpl(titleTmpl)
 
 	description := tmpl(on.Description)
-	if description == "" {
+	if strings.TrimSpace(description) == "" {
 		description = fmt.Sprintf(
 			"%s\n%s\n\n%s",
 			tmpl(DefaultMessageTitleEmbed),

@@ -98,10 +98,12 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}`,
 		},
 		{
-			name: "Default config with one alert and send tags as tags",
+			name: "Default config with one alert and send tags as tags, empty description and message",
 			settings: `{
 				"apiKey": "abcdefgh0123456789",
-				"sendTagsAs": "tags"
+				"sendTagsAs": "tags",
+				"message": " ",
+				"description": " "
 			}`,
 			alerts: []*types.Alert{
 				{
