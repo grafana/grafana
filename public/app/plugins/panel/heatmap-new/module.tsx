@@ -63,33 +63,10 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.calculate) {
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
-    } else {
-      builder.addTextInput({
-        path: 'bucket.name',
-        name: 'Cell value name',
-        defaultValue: defaultPanelOptions.bucket?.name,
-        settings: {
-          placeholder: 'Value',
-        },
-        category,
-      });
-      builder.addRadio({
-        path: 'bucket.layout',
-        name: 'Layout',
-        defaultValue: defaultPanelOptions.bucket?.layout ?? HeatmapBucketLayout.auto,
-        category,
-        settings: {
-          options: [
-            { label: 'Auto', value: HeatmapBucketLayout.auto },
-            { label: 'Middle', value: HeatmapBucketLayout.unknown },
-            { label: 'Lower (GE)', value: HeatmapBucketLayout.ge },
-            { label: 'Upper (LE)', value: HeatmapBucketLayout.le },
-          ],
-        },
-      });
     }
 
     category = ['Y Axis'];
+
     builder.addRadio({
       path: 'yAxis.axisPlacement',
       name: 'Placement',
@@ -123,13 +100,30 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           placeholder: 'Auto',
         },
         category,
-      })
-      .addBooleanSwitch({
-        path: 'yAxis.reverse',
-        name: 'Reverse',
-        defaultValue: defaultPanelOptions.yAxis.reverse === true,
-        category,
       });
+
+    if (!opts.calculate) {
+      builder.addRadio({
+        path: 'bucket.layout',
+        name: 'Tick alignment',
+        defaultValue: defaultPanelOptions.bucket?.layout ?? HeatmapBucketLayout.auto,
+        category,
+        settings: {
+          options: [
+            { label: 'Auto', value: HeatmapBucketLayout.auto },
+            { label: 'Top (LE)', value: HeatmapBucketLayout.le },
+            { label: 'Middle', value: HeatmapBucketLayout.unknown },
+            { label: 'Bottom (GE)', value: HeatmapBucketLayout.ge },
+          ],
+        },
+      });
+    }
+    builder.addBooleanSwitch({
+      path: 'yAxis.reverse',
+      name: 'Reverse',
+      defaultValue: defaultPanelOptions.yAxis.reverse === true,
+      category,
+    });
 
     category = ['Colors'];
 
@@ -261,6 +255,16 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //     ],
       //   },
       // })
+      .addSliderInput({
+        name: 'Cell gap',
+        path: 'cellGap',
+        defaultValue: defaultPanelOptions.cellGap,
+        category,
+        settings: {
+          min: 0,
+          max: 25,
+        },
+      })
       .addNumberInput({
         path: 'filterValues.le',
         name: 'Hide cells with values <=',
@@ -278,16 +282,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           placeholder: 'None',
         },
         category,
-      })
-      .addSliderInput({
-        name: 'Cell gap',
-        path: 'cellGap',
-        defaultValue: defaultPanelOptions.cellGap,
-        category,
-        settings: {
-          min: 0,
-          max: 25,
-        },
       });
     // .addSliderInput({
     //   name: 'Cell radius',
@@ -308,6 +302,18 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       defaultValue: defaultPanelOptions.tooltip.show,
       category,
     });
+
+    if (!opts.calculate) {
+      builder.addTextInput({
+        path: 'bucket.name',
+        name: 'Cell value name',
+        defaultValue: defaultPanelOptions.bucket?.name,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+    }
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
