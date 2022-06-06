@@ -76,7 +76,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 36;
+    this.dashboard.schemaVersion = 37;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -775,6 +775,20 @@ export class DashboardMigrator {
           return panel;
         });
       }
+    }
+
+    if (oldVersion < 37) {
+      panelUpgrades.push((panel: any) => {
+        const type = panel.type ?? '';
+        if (type === 'heatmap-new') {
+          // alpha flavor
+          panel.type = 'heatmap';
+          // other options changes?
+        } else if (type === 'heatmap' && Object.keys(panel.options).length < 1) {
+          delete panel.pluginVersion; // this will kick off standard panel migration path
+        }
+        return panel;
+      });
     }
 
     if (panelUpgrades.length === 0) {

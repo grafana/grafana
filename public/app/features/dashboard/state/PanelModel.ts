@@ -369,11 +369,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (plugin.onPanelMigration) {
-      // hack to clear saved plugins for v9-pre
-      if (plugin.meta.id === 'heatmap' && version === this.pluginVersion && !Object.keys(this.options).length) {
-        this.pluginVersion = undefined;
-      }
-
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;

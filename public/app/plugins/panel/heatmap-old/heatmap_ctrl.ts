@@ -140,7 +140,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.opacityScales = opacityScales;
     this.colorModes = colorModes;
     this.colorSchemes = colorSchemes;
-    delete this.panel.pluginVersion; // help trigger migrations when switch to react panel
 
     // Use DataFrames
     this.useDataFrames = true;
