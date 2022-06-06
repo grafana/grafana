@@ -30,7 +30,7 @@ export class DataProcessor {
         continue;
       }
 
-      series = applyNullInsertThreshold(series, timeField.name);
+      series = applyNullInsertThreshold({ frame: series, refFieldName: timeField.name });
       timeField = getTimeField(series).timeField!; // use updated length
 
       for (let j = 0; j < series.fields.length; j++) {
