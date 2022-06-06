@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore_test
 
 import (

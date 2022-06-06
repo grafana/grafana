@@ -83,7 +83,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", errutil.Wrap("failed to unmarshal user info JSON response", err)
+		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
 
 	val, err := jmespath.Search(attributePath, buf)

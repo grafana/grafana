@@ -2,6 +2,7 @@ import { monacoTypes } from '@grafana/ui';
 
 import { Monaco } from '../../monarch/types';
 import * as SQLTestData from '../cloudwatch-sql-test-data';
+import * as DynamicLabelTestData from '../dynamic-label-test-data';
 import * as MetricMathTestData from '../metric-math-test-data';
 
 // Stub for the Monaco instance.
@@ -27,6 +28,14 @@ const MonacoMock: Monaco = {
           [MetricMathTestData.secondArgAfterSearchQuery.query]: MetricMathTestData.secondArgAfterSearchQuery.tokens,
           [MetricMathTestData.withinStringQuery.query]: MetricMathTestData.withinStringQuery.tokens,
           [MetricMathTestData.thirdArgAfterSearchQuery.query]: MetricMathTestData.thirdArgAfterSearchQuery.tokens,
+        };
+        return TestData[value];
+      }
+
+      if (languageId === 'cloudwatch-dynamicLabels') {
+        const TestData = {
+          [DynamicLabelTestData.afterLabelValue.query]: DynamicLabelTestData.afterLabelValue.tokens,
+          [DynamicLabelTestData.insideLabelValue.query]: DynamicLabelTestData.insideLabelValue.tokens,
         };
         return TestData[value];
       }

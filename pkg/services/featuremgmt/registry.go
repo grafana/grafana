@@ -67,17 +67,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service",
 			State:        FeatureStateBeta,
@@ -118,11 +107,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "publicDashboards",
 			Description:     "enables public access to dashboards",
 			State:           FeatureStateAlpha,
@@ -161,11 +145,6 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -247,6 +226,12 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )
