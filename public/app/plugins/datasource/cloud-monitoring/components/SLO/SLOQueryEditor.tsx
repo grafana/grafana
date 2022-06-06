@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { EditorRow, EditorField, Stack } from '@grafana/experimental';
 
-import { AliasBy, PeriodSelect, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
+import { AliasBy, PeriodSelect, AlignmentPeriodLabel, Project } from '..';
 import { ALIGNMENT_PERIODS, SELECT_WIDTH } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
@@ -54,33 +55,37 @@ export function SLOQueryEditor({
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
-      ></Service>
+      />
       <SLO
         refId={refId}
         datasource={datasource}
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
-      ></SLO>
+      />
       <Selector
         refId={refId}
         datasource={datasource}
         templateVariableOptions={variableOptionGroup.options}
         query={query}
         onChange={onChange}
-      ></Selector>
+      />
 
-      <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
-        <PeriodSelect
-          inputId={`${refId}-alignment-period`}
-          templateVariableOptions={variableOptionGroup.options}
-          selectWidth={SELECT_WIDTH}
-          current={query.alignmentPeriod}
-          onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
-          aligmentPeriods={ALIGNMENT_PERIODS}
-        />
-        <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
-      </QueryEditorRow>
+      <EditorRow>
+        <EditorField label="Alignment period" htmlFor={`${refId}-alignment-period`}>
+          <PeriodSelect
+            inputId={`${refId}-alignment-period`}
+            templateVariableOptions={variableOptionGroup.options}
+            selectWidth={SELECT_WIDTH}
+            current={query.alignmentPeriod}
+            onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
+            aligmentPeriods={ALIGNMENT_PERIODS}
+          />
+        </EditorField>
+        <Stack alignItems="flex-end">
+          <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
+        </Stack>
+      </EditorRow>
 
       <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
     </>

@@ -55,6 +55,6 @@ export function PeriodSelect({
       inputId={inputId}
       disabled={disabled}
       allowCustomValue
-    ></Select>
+    />
   );
 }

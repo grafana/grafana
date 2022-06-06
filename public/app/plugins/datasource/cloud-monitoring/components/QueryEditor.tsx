@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { Button, Select } from '@grafana/ui';
+import { EditorField, EditorRows, EditorRow, Stack, AccessoryButton } from '@grafana/experimental';
+import { HorizontalGroup, Select } from '@grafana/ui';
 
 import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
@@ -11,7 +11,7 @@ import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery, Clo
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 
-import { MetricQueryEditor, QueryEditorRow, SLOQueryEditor } from './';
+import { MetricQueryEditor, SLOQueryEditor } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
@@ -55,41 +55,39 @@ export class QueryEditor extends PureComponent<Props> {
     };
 
     return (
-      <>
-        <QueryEditorRow
-          label="Query type"
-          fillComponent={
-            query.queryType !== QueryType.SLO && (
-              <Button
-                variant="secondary"
-                className={css`
-                  margin-left: auto;
-                `}
-                icon="edit"
-                onClick={() =>
-                  this.onQueryChange('metricQuery', {
-                    ...metricQuery,
-                    editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
-                  })
-                }
-              >
-                {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
-              </Button>
-            )
-          }
-          htmlFor={`${query.refId}-query-type`}
-        >
-          <Select
-            width={SELECT_WIDTH}
-            value={queryType}
-            options={QUERY_TYPES}
-            onChange={({ value }) => {
-              onChange({ ...query, sloQuery, queryType: value! });
-              onRunQuery();
-            }}
-            inputId={`${query.refId}-query-type`}
-          />
-        </QueryEditorRow>
+      <EditorRows>
+        <EditorRow>
+          <EditorField label="Query type" htmlFor={`${query.refId}-query-type`}>
+            <HorizontalGroup>
+              <Select
+                width={SELECT_WIDTH}
+                value={queryType}
+                options={QUERY_TYPES}
+                onChange={({ value }) => {
+                  onChange({ ...query, sloQuery, queryType: value! });
+                  onRunQuery();
+                }}
+                inputId={`${query.refId}-query-type`}
+              />
+              <Stack alignItems="flex-end">
+                {query.queryType !== QueryType.SLO && (
+                  <AccessoryButton
+                    variant="secondary"
+                    icon="edit"
+                    onClick={() =>
+                      this.onQueryChange('metricQuery', {
+                        ...metricQuery,
+                        editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
+                      })
+                    }
+                  >
+                    {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
+                  </AccessoryButton>
+                )}
+              </Stack>
+            </HorizontalGroup>
+          </EditorField>
+        </EditorRow>
 
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor
@@ -102,7 +100,7 @@ export class QueryEditor extends PureComponent<Props> {
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={metricQuery}
-          ></MetricQueryEditor>
+          />
         )}
 
         {queryType === QueryType.SLO && (
@@ -114,9 +112,9 @@ export class QueryEditor extends PureComponent<Props> {
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={sloQuery}
-          ></SLOQueryEditor>
+          />
         )}
-      </>
+      </EditorRows>
     );
   }
 }

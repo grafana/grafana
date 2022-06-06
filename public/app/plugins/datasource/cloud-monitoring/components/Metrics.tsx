@@ -3,14 +3,13 @@ import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
-
-import { QueryEditorField, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
@@ -137,40 +136,42 @@ export function Metrics(props: Props) {
 
   return (
     <>
-      <QueryEditorRow>
-        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
-          <Select
-            width={SELECT_WIDTH}
-            onChange={onServiceChange}
-            value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
-            options={[
-              {
-                label: 'Template Variables',
-                options: templateVariableOptions,
-              },
-              ...services,
-            ]}
-            placeholder="Select Services"
-            inputId={`${props.refId}-service`}
-          ></Select>
-        </QueryEditorField>
-        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
-          <Select
-            width={SELECT_WIDTH}
-            onChange={onMetricTypeChange}
-            value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
-            options={[
-              {
-                label: 'Template Variables',
-                options: templateVariableOptions,
-              },
-              ...metrics,
-            ]}
-            placeholder="Select Metric"
-            inputId={`${props.refId}-select-metric`}
-          ></Select>
-        </QueryEditorField>
-      </QueryEditorRow>
+      <EditorRow>
+        <EditorFieldGroup>
+          <EditorField width={LABEL_WIDTH} label="Service">
+            <Select
+              width={SELECT_WIDTH}
+              onChange={onServiceChange}
+              value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
+              options={[
+                {
+                  label: 'Template Variables',
+                  options: templateVariableOptions,
+                },
+                ...services,
+              ]}
+              placeholder="Select Services"
+              inputId={`${props.refId}-service`}
+            />
+          </EditorField>
+          <EditorField label="Metric name" width={INNER_LABEL_WIDTH}>
+            <Select
+              width={SELECT_WIDTH}
+              onChange={onMetricTypeChange}
+              value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
+              options={[
+                {
+                  label: 'Template Variables',
+                  options: templateVariableOptions,
+                },
+                ...metrics,
+              ]}
+              placeholder="Select Metric"
+              inputId={`${props.refId}-select-metric`}
+            />
+          </EditorField>
+        </EditorFieldGroup>
+      </EditorRow>
 
       {children(state.metricDescriptor)}
     </>

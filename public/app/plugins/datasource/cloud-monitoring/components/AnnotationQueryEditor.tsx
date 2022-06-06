@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
+import { EditorRow, EditorField } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import { INPUT_WIDTH } from '../constants';
@@ -17,7 +18,7 @@ import {
 
 import { MetricQueryEditor } from './MetricQueryEditor';
 
-import { AnnotationsHelp, QueryEditorRow } from './';
+import { AnnotationsHelp } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
@@ -88,13 +89,16 @@ export const AnnotationQueryEditor = (props: Props) => {
         query={metricQuery}
       />
 
-      <QueryEditorRow label="Title" htmlFor="annotation-query-title">
-        <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
-      </QueryEditorRow>
-
-      <QueryEditorRow label="Text" htmlFor="annotation-query-text">
-        <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
-      </QueryEditorRow>
+      <EditorRow>
+        <EditorField label="Title">
+          <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
+        </EditorField>
+      </EditorRow>
+      <EditorRow>
+        <EditorField label="Text">
+          <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
+        </EditorField>
+      </EditorRow>
 
       <AnnotationsHelp />
     </>
