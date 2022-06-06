@@ -10,7 +10,7 @@ import { TimeSeriesOptions } from './types';
 
 export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
-  .setMigrationHandler(graphMigrationHandler)
+  //.setMigrationHandler(graphMigrationHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder);

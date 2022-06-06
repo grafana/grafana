@@ -163,6 +163,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
+  autoMigrateFrom?: string;
+
   // non persisted
   isViewing = false;
   isEditing = false;
@@ -217,16 +219,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       delete (this as any)[property];
     }
 
-    // Special 'graph' migration logic
-    if (model.type === 'graph' && config.featureToggles.autoMigrateGraphPanels) {
-      console.log('Migrate graph to timeseries...');
-      model.__auto_migrate_from = model.type;
-      model.type = 'timeseries';
-    }
-
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
+    }
+
+    // Special 'graph' migration logic
+    if (this.type === 'graph' && config.featureToggles.autoMigrateGraphPanels) {
+      this.autoMigrateFrom = this.type;
+      this.type = 'timeseries';
     }
 
     // defaults
@@ -374,6 +375,21 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
     const version = getPluginVersion(plugin);
+
+    if (this.autoMigrateFrom) {
+      if (plugin.onPanelTypeChanged) {
+        const oldOptions: any = this.getOptionsToRemember();
+        const prevFieldConfig = this.fieldConfig;
+        const wasAngular = this.autoMigrateFrom === 'graph';
+
+        const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+        Object.assign(
+          this.options,
+          plugin.onPanelTypeChanged(this, this.autoMigrateFrom, prevOptions, prevFieldConfig)
+        );
+      }
+      delete this.autoMigrateFrom;
+    }
 
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
