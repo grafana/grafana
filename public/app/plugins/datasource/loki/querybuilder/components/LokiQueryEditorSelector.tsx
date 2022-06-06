@@ -30,7 +30,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
-      reportInteraction('user_grafana_loki_editor_mode_clicked', {
+      reportInteraction('grafana_loki_editor_mode_clicked', {
         newEditor: newEditorMode,
         previousEditor: query.editorMode ?? '',
         newQuery: !query.expr,
