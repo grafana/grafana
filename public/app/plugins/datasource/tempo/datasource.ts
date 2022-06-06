@@ -559,14 +559,14 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
-export function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+export function makeTempoLink(title: string, spanName: string, datasourceUid: string) {
   return {
     url: '',
     title,
     internal: {
       query: {
         queryType: 'nativeSearch',
-        serviceName: serviceName,
+        spanName: spanName,
       } as TempoQuery,
       datasourceUid: datasourceUid,
       datasourceName: 'Tempo',

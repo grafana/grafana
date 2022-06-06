@@ -167,34 +167,6 @@ describe('Tempo data source', () => {
     ]);
   });
 
-  it('runs service graph queries', async () => {
-    const ds = new TempoDatasource({
-      ...defaultSettings,
-      jsonData: {
-        serviceMap: {
-          datasourceUid: 'prom',
-        },
-      },
-    });
-    setDataSourceSrv(backendSrvWithPrometheus as any);
-    const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
-    );
-
-    expect(response.data).toHaveLength(2);
-    expect(response.data[0].name).toBe('Nodes');
-    expect(response.data[0].fields[0].values.length).toBe(3);
-
-    // Test Links
-    expect(response.data[0].fields[0].config.links.length).toBe(4);
-    expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
-
-    expect(response.data[1].name).toBe('Edges');
-    expect(response.data[1].fields[0].values.length).toBe(2);
-
-    expect(response.state).toBe(LoadingState.Done);
-  });
-
   it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
@@ -785,18 +757,6 @@ const serviceGraphLinks = [
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
-    },
-  },
-  {
-    url: '',
-    title: 'View traces',
-    internal: {
-      query: {
-        queryType: 'nativeSearch',
-        serviceName: '${__data.fields[0]}',
-      } as TempoQuery,
-      datasourceUid: 'tempo',
-      datasourceName: 'Tempo',
     },
   },
 ];
