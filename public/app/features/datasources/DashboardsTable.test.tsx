@@ -41,7 +41,7 @@ describe('DashboardsTable', () => {
   });
 
   it('should render with no dashboards provided', () => {
-    setup();
+    expect(() => setup()).not.toThrow();
     expect(screen.queryAllByRole('row').length).toEqual(0);
   });
 
