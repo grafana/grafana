@@ -52,6 +52,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
+- [ENHANCEMENT] Optional custom title and description for OpsGenie #50131
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
