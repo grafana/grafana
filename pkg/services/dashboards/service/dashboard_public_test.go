@@ -200,6 +200,15 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			reqDTO.Queries[1],
 		)
 	})
+
+	t.Run("returns an error when panel missing", func(t *testing.T) {
+		_, err := service.BuildPublicDashboardMetricRequest(
+			context.Background(),
+			pdc.PublicDashboard.Uid,
+			49,
+		)
+		require.ErrorContains(t, err, "ID 49")
+	})
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64,
