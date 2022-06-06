@@ -23,7 +23,7 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	}
 }
 
-func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return nil
 	}
