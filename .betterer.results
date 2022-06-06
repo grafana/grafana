@@ -128,9 +128,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderCorner.test.tsx:2851646279": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/datasources/DashboardsTable.test.tsx:1950355032": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/datasources/DataSourceDashboards.test.tsx:1369048021": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
