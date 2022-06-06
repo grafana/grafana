@@ -1,12 +1,10 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
 import {
-  DataFrame,
   FrameGeometrySourceMode,
   MapLayerOptions,
   MapLayerRegistryItem,
   PluginState,
-  SelectableValue,
 } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { hasAlphaPanels } from 'app/core/config';
