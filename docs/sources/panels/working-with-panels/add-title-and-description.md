@@ -12,7 +12,7 @@ Add a title and description to a panel to share with users any important informa
 
 ## Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
 
 **To add a title and description to a panel**:
 
@@ -24,12 +24,12 @@ Add a title and description to a panel to share with users any important informa
 
    Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
 
-   You can use [variables you have defined]({{< relref "../../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../../variables/variable-types/global-variables.md" >}}).
+   You can use [variables you have defined]({{< relref "../../variables/" >}}) in either field, but not [global variables]({{< relref "../../variables/variable-types/global-variables/" >}}).
 
 1. Write a description of the panel and the data you are displaying.
 
    Text entered in this field is displayed in a tooltip in the upper left corner of the panel.
 
-   You can use [variables you have defined]({{< relref "../../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../../variables/variable-types/global-variables.md" >}}).
+   You can use [variables you have defined]({{< relref "../../variables/" >}}) in either field, but not [global variables]({{< relref "../../variables/variable-types/global-variables/" >}}).
 
    ![](/static/img/docs/panels/panel-options-8-0.png)

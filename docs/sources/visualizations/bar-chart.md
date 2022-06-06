@@ -105,7 +105,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md" >}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
 
 ## Text size
 
@@ -137,7 +137,7 @@ Display all Y-axes on the right side.
 
 Hide all axes.
 
-To selectively hide axes, [add an override]({{< relref "../panels/override-field-values/add-a-field-override.md" >}}) targeting specific fields.
+To selectively hide axes, [add an override]({{< relref "../panels/override-field-values/add-a-field-override/" >}}) targeting specific fields.
 
 ### Label
 
@@ -157,4 +157,4 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions.md#max" >}}).
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions/#max" >}}).
