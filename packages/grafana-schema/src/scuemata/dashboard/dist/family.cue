@@ -17,7 +17,7 @@ import (
     ptable "github.com/grafana/grafana/public/app/plugins/panel/table:grafanaschema"
     ptext "github.com/grafana/grafana/public/app/plugins/panel/text:grafanaschema"
     ptimeseries "github.com/grafana/grafana/public/app/plugins/panel/timeseries:grafanaschema"
-    pheatmap_new "github.com/grafana/grafana/public/app/plugins/panel/heatmap-new:grafanaschema"
+    pheatmap "github.com/grafana/grafana/public/app/plugins/panel/heatmap:grafanaschema"
 )
 
 // Family composes the base dashboard scuemata family with all Grafana core plugins -
@@ -43,6 +43,6 @@ Family: dashboard.Family & {
         text: ptext.Panel
         table: ptable.Panel
         timeseries: ptimeseries.Panel
-        "heatmap-new": pheatmap_new.Panel
+        heatmap: pheatmap.Panel
     }
 }
