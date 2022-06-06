@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -76,14 +77,14 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 }
 
 func reqHeaders(headers map[string][]string) map[string]string {
-	// Keep only the authorization header, incase downstream the authorization header is required.
-	// Strip all the others out as appropriate headers will be applied to speak with prometheus.
-	h := make(map[string]string)
-	accessValues := headers["Authorization"]
-
-	if len(accessValues) > 0 {
-		h["Authorization"] = accessValues[0]
+	h := make(map[string]string, len(headers))
+	for k, v := range headers {
+		// Pass on all the headers, except for the "accept" headers, as these need to be
+		// set by the query backend itself.
+		if strings.HasPrefix(strings.ToLower(k), "accept") {
+			continue
+		}
+		h[k] = v[0]
 	}
-
 	return h
 }
