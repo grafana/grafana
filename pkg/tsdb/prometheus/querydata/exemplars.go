@@ -98,18 +98,6 @@ func (e *exemplarSampler) getLabelNames() []string {
 	return labelNames
 }
 
-// getExemplars returns the exemplars sorted by timestamp
-func (e *exemplarSampler) getExemplars() []exemplar {
-	exemplars := make([]exemplar, 0, len(e.buckets))
-	for _, b := range e.buckets {
-		exemplars = append(exemplars, b...)
-	}
-	sort.SliceStable(exemplars, func(i, j int) bool {
-		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
-	})
-	return exemplars
-}
-
 // getSampledExemplars returns the exemplars sorted by timestamp
 func (e *exemplarSampler) getSampledExemplars() []exemplar {
 	exemplars := make([]exemplar, 0, len(e.buckets))
