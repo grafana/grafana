@@ -21,11 +21,14 @@ describe('Heatmap Migrations', () => {
     expect(panel).toMatchInlineSnapshot(`
       Object {
         "fieldConfig": Object {
-          "defaults": Object {},
+          "defaults": Object {
+            "decimals": 6,
+            "unit": "short",
+          },
           "overrides": Array [],
         },
         "options": Object {
-          "bucket": Object {
+          "bucketFrame": Object {
             "layout": "auto",
           },
           "calculate": true,
@@ -44,7 +47,7 @@ describe('Heatmap Migrations', () => {
             },
           },
           "cellGap": 2,
-          "cellSize": 10,
+          "cellRadius": 10,
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
@@ -59,7 +62,7 @@ describe('Heatmap Migrations', () => {
             "color": "rgba(255,0,255,0.7)",
           },
           "filterValues": Object {
-            "min": 1e-9,
+            "le": 1e-9,
           },
           "legend": Object {
             "show": true,
@@ -72,6 +75,8 @@ describe('Heatmap Migrations', () => {
           "yAxis": Object {
             "axisPlacement": "left",
             "axisWidth": 400,
+            "max": 22,
+            "min": 7,
             "reverse": false,
           },
         },
@@ -133,11 +138,11 @@ const oldHeatmap = {
   yAxis: {
     show: true,
     format: 'short',
-    decimals: null,
+    decimals: 6,
     logBase: 2,
     splitFactor: 3,
-    min: null,
-    max: null,
+    min: 7,
+    max: 22,
     width: '400',
   },
   xBucketSize: null,
