@@ -271,6 +271,9 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 	UID   string
 	OrgID int64
 
+	// If true then the select will lock the rows until the transaction is closed
+	ForUpdate bool
+
 	Result []*AlertRule
 }
 
@@ -285,6 +288,9 @@ type ListAlertRulesQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
+
+	// If true then the query will lock the rows until the transaction is closed
+	ForUpdate bool
 
 	Result []*AlertRule
 }

@@ -124,10 +124,14 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var result []*ngmodels.AlertRule
-		err := sess.Table("alert_rule").Alias("A").Join(
+		q := sess.Table("alert_rule").Alias("A").Join(
 			"INNER",
 			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
-		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+		).Where("A.org_id = ?", query.OrgID).Select("A.*")
+		if query.ForUpdate {
+			q.ForUpdate()
+		}
+		err := q.Find(&result)
 		if err != nil {
 			return err
 		}
@@ -255,6 +259,10 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		q := sess.Table("alert_rule")
+
+		if query.ForUpdate {
+			q = q.ForUpdate()
+		}
 
 		if query.OrgID >= 0 {
 			q = q.Where("org_id = ?", query.OrgID)

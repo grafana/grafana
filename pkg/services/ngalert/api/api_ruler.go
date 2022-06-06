@@ -576,6 +576,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
 		RuleGroup:     groupKey.RuleGroup,
+		ForUpdate:     true,
 	}
 	if err := ruleStore.ListAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
@@ -602,7 +603,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 				delete(existingGroupRulesUIDs, r.UID)
 			} else if existing, ok = loadedRulesByUID[r.UID]; !ok { // check the "cache" and if there is no hit, query the database
 				// Rule can be from other group or namespace
-				q := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
+				q := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID, ForUpdate: true}
 				if err := ruleStore.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
 					return nil, fmt.Errorf("failed to query database for a group of alert rules: %w", err)
 				}
