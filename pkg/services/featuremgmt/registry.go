@@ -67,17 +67,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service",
 			State:        FeatureStateBeta,
@@ -156,11 +145,6 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{

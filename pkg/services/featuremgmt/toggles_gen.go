@@ -51,14 +51,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoSearch
-	// Enable searching in tempo datasources
-	FlagTempoSearch = "tempoSearch"
-
-	// FlagTempoBackendSearch
-	// Use backend for tempo search
-	FlagTempoBackendSearch = "tempoBackendSearch"
-
 	// FlagTempoServiceGraph
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
@@ -118,10 +110,6 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagAlertProvisioning
-	// Provisioning-friendly routes for alerting
-	FlagAlertProvisioning = "alertProvisioning"
 
 	// FlagExport
 	// Export grafana instance (to git, etc)

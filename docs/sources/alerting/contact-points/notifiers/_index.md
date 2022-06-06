@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/contact-points/message-templating/
+  - /docs/grafana/latest/alerting/contact-points/notifiers/
   - /docs/grafana/latest/alerting/message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
 keywords:

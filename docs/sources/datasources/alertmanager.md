@@ -37,5 +37,6 @@ datasources:
     # optionally
     basicAuth: true
     basicAuthUser: my_user
-    basicAuthPassword: test_password
+    secureJsonData:
+      basicAuthPassword: test_password
 ```
