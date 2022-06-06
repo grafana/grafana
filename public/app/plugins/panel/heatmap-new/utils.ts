@@ -1,8 +1,13 @@
 import { MutableRefObject, RefObject } from 'react';
-import uPlot from 'uplot';
+import uPlot, { Cursor } from 'uplot';
 
 import {
+  DashboardCursorSync,
   DataFrameType,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
+  EventBus,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
@@ -55,6 +60,7 @@ export interface HeatmapZoomEvent {
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
+  eventBus: EventBus;
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: any) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
@@ -76,6 +82,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const {
     dataRef,
     theme,
+    eventBus,
     onhover,
     onclick,
     onzoom,
@@ -454,7 +461,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
-  builder.setCursor({
+  const cursor: Cursor = {
     drag: {
       x: true,
       y: false,
@@ -489,7 +496,56 @@ export function prepConfig(opts: PrepConfigOpts) {
         };
       },
     },
-  });
+  };
+
+  const sync = () => DashboardCursorSync.Crosshair;
+
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    const xScaleKey = 'x';
+    const yScaleKey = 'y';
+    const xScaleUnit = 'time';
+
+    const payload: DataHoverPayload = {
+      point: {
+        [xScaleKey]: null,
+        //  [yScaleKey]: null,
+      },
+      //  data: frame,
+    };
+    const hoverEvent = new DataHoverEvent(payload);
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+
+          payload.rowIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleUnit] = null;
+            payload.point[yScaleKey] = null;
+            eventBus.publish(new DataHoverClearEvent());
+          } else {
+            // convert the points
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
+            eventBus.publish(hoverEvent);
+            hoverEvent.payload.down = undefined;
+          }
+          return true;
+        },
+      },
+      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
+      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
+      scales: [xScaleKey, null as any],
+      match: [() => true, () => true],
+    };
+  }
+
+  builder.setSync();
+  builder.setCursor(cursor);
 
   return builder;
 }
