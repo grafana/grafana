@@ -1,7 +1,8 @@
 {
   "type": "panel",
-  "name": "Heatmap (old)",
+  "name": "Heatmap (legacy)",
   "id": "heatmap-old",
+  "state": "deprecated",
 
   "info": {
     "description": "Legacy heatmap panel based on angular, d3, and flot",

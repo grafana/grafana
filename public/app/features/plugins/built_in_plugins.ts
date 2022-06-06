@@ -80,16 +80,16 @@ const heatmapPanelOLD = async () =>
 const tableOldPanel = async () =>
   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
 
-// Automatically migrate heatmap panel
+// Automatically migrate heatmap panel.
 const useLegacyHeatmapPanel =
   config.featureToggles.useLegacyHeatmapPanel || window.location?.search?.includes('useLegacyHeatmapPanel=true');
 if (useLegacyHeatmapPanel) {
-  const hm = config.panels['heatmap'];
-  const old = config.panels['heatmap-old'];
-  old.id = hm.id;
-  old.module = hm.module;
-  console.log('OLD', old);
-  config.panels['heatmap'] = old;
+  const heatmap = config.panels['heatmap'];
+  const legacy = config.panels['heatmap-old'];
+  legacy.id = heatmap.id;
+  legacy.module = heatmap.module;
+  legacy.state = heatmap.state;
+  config.panels['heatmap'] = legacy;
 }
 
 const builtInPlugins: any = {
