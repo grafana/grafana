@@ -529,8 +529,8 @@ export function prepConfig(opts: PrepConfigOpts) {
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
+            //  payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+            //   payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
             eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
@@ -539,7 +539,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
       //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
+      scales: [xScaleKey, yScaleKey],
       match: [() => true, () => true],
     };
   }
