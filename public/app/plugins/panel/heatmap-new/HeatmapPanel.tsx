@@ -3,9 +3,19 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
+import { ScaleDistributionConfig } from '@grafana/schema';
+import {
+  Portal,
+  ScaleDistribution,
+  UPlotChart,
+  useStyles2,
+  useTheme2,
+  VizLayout,
+  VizTooltipContainer,
+} from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -46,24 +56,25 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    if (info.exemplars && info.matchByLabel) {
+    const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
+    if (info.exemplars && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
-      const hasLabeledY = info.yLabelValues != null;
+      const hasLabeledY = meta.yOrdinalDisplay != null;
 
       if (hasLabeledY) {
         let matchExemplarsBy = info.exemplars?.fields
-          .find((field) => field.name === info.matchByLabel)!
+          .find((field) => field.name === meta.yMatchWithLabel)!
           .values.toArray();
-        exemplarsyFacet = matchExemplarsBy.map((label) => info.yLabelValues?.indexOf(label)) as number[];
+        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
       } else {
         exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
       }
     }
 
     return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
-  }, [info.heatmap, info.exemplars, info.yLabelValues, info.matchByLabel]);
+  }, [info.heatmap, info.exemplars]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -97,6 +108,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   dataRef.current = info;
 
   const builder = useMemo(() => {
+    const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
+      ?.scaleDistribution as ScaleDistributionConfig;
     return prepConfig({
       dataRef,
       theme,
@@ -113,9 +126,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
-      hideThreshold: options.hideThreshold,
+      hideThreshold: options.filterValues?.min, // eventually a better range
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
-      yAxisReverse: options.yAxisReverse,
+      yAxisConfig: options.yAxis,
+      ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);

@@ -1,13 +1,16 @@
 import { MutableRefObject, RefObject } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, incrRoundDn, incrRoundUp, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
-import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapData } from './fields';
+import { PanelFieldConfig, YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -15,6 +18,7 @@ interface PathbuilderOpts {
   hideThreshold?: number;
   xAlign?: -1 | 0 | 1;
   yAlign?: -1 | 0 | 1;
+  ySizeDivisor?: number;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -52,7 +56,8 @@ interface PrepConfigOpts {
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideThreshold?: number;
-  yAxisReverse?: boolean;
+  yAxisConfig: YAxisConfig;
+  ySizeDivisor?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -68,7 +73,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     palette,
     cellGap,
     hideThreshold,
-    yAxisReverse,
+    yAxisConfig,
+    ySizeDivisor,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -205,7 +211,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
-  const shouldUseLogScale = heatmapType === DataFrameType.HeatmapSparse;
+  const yFieldConfig = dataRef.current?.heatmap?.fields[1]?.config?.custom as PanelFieldConfig | undefined;
+  const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
+  const yAxisReverse = Boolean(yAxisConfig.reverse);
+  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
 
   builder.addScale({
     scaleKey: 'y',
@@ -215,38 +224,84 @@ export function prepConfig(opts: PrepConfigOpts) {
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: 2,
-    range: shouldUseLogScale
-      ? undefined
-      : (u, dataMin, dataMax) => {
-          let bucketSize = dataRef.current?.yBucketSize;
+    log: yScale.log ?? 2,
+    range:
+      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
+      heatmapType === DataFrameType.HeatmapSparse
+        ? undefined
+        : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
+          (u, dataMin, dataMax) => {
+            // logarithmic expansion
+            if (shouldUseLogScale) {
+              let yExp = u.scales['y'].log!;
 
-          if (bucketSize === 0) {
-            bucketSize = 1;
-          }
+              let minExpanded = false;
+              let maxExpanded = false;
 
-          if (bucketSize) {
-            if (dataRef.current?.yLayout === BucketLayout.le) {
-              dataMin -= bucketSize!;
-            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-              dataMax += bucketSize!;
-            } else {
-              dataMin -= bucketSize! / 2;
-              dataMax += bucketSize! / 2;
+              if (ySizeDivisor !== 1) {
+                let log = yExp === 2 ? Math.log2 : Math.log10;
+
+                let minLog = log(dataMin);
+                let maxLog = log(dataMax);
+
+                if (!Number.isInteger(minLog)) {
+                  dataMin = yExp ** incrRoundDn(minLog, 1);
+                  minExpanded = true;
+                }
+
+                if (!Number.isInteger(maxLog)) {
+                  dataMax = yExp ** incrRoundUp(maxLog, 1);
+                  maxExpanded = true;
+                }
+              }
+
+              if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
+                if (!minExpanded) {
+                  dataMin /= yExp;
+                }
+              } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
+                if (!maxExpanded) {
+                  dataMax *= yExp;
+                }
+              } else {
+                dataMin /= yExp / 2;
+                dataMax *= yExp / 2;
+              }
             }
-          } else {
-            // how to expand scale range if inferred non-regular or log buckets?
-          }
+            // linear expansion
+            else {
+              let bucketSize = dataRef.current?.yBucketSize;
 
-          return [dataMin, dataMax];
-        },
+              if (bucketSize === 0) {
+                bucketSize = 1;
+              }
+
+              if (bucketSize) {
+                if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
+                  dataMin -= bucketSize!;
+                } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
+                  dataMax += bucketSize!;
+                } else {
+                  dataMin -= bucketSize! / 2;
+                  dataMax += bucketSize! / 2;
+                }
+              } else {
+                // how to expand scale range if inferred non-regular or log buckets?
+              }
+            }
+
+            return [dataMin, dataMax];
+          },
   });
 
-  const hasLabeledY = dataRef.current?.yAxisValues != null;
+  const hasLabeledY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   builder.addAxis({
     scaleKey: 'y',
-    placement: AxisPlacement.Left,
+    show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
+    placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
+    size: yAxisConfig.axisWidth || null,
+    label: yAxisConfig.axisLabel,
     theme: theme,
     splits: hasLabeledY
       ? () => {
@@ -255,7 +310,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
           const bucketSize = dataRef.current?.yBucketSize!;
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
+          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
             splits.unshift(ys[0] - bucketSize);
           } else {
             splits.push(ys[ys.length - 1] + bucketSize);
@@ -266,12 +321,14 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
     values: hasLabeledY
       ? () => {
-          const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
+          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          const yAxisValues = meta.yOrdinalDisplay?.slice()!;
+          const isFromBuckets = meta.yOrdinalDisplay?.length && !('le' === meta.yMatchWithLabel);
 
-          if (dataRef.current?.yLayout === BucketLayout.le) {
-            yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-            yAxisValues.push('+Inf');
+          if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
+            yAxisValues.unshift(isFromBuckets ? '' : '0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
+          } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
+            yAxisValues.push(isFromBuckets ? '' : '+Inf');
           }
 
           return yAxisValues;
@@ -307,12 +364,18 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       gap: cellGap,
       hideThreshold,
-      xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
-      yAlign: ((dataRef.current?.yLayout === BucketLayout.le
+      xAlign:
+        dataRef.current?.xLayout === HeatmapBucketLayout.le
+          ? -1
+          : dataRef.current?.xLayout === HeatmapBucketLayout.ge
+          ? 1
+          : 0,
+      yAlign: ((dataRef.current?.yLayout === HeatmapBucketLayout.le
         ? -1
-        : dataRef.current?.yLayout === BucketLayout.ge
+        : dataRef.current?.yLayout === HeatmapBucketLayout.ge
         ? 1
         : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      ySizeDivisor,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
@@ -402,7 +465,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1 } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -451,8 +514,22 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let xBinIncr = xs[yBinQty] - xs[0];
 
         // uniform tile sizes based on zoom level
-        let xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
-        let ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff));
+        let xSize: number;
+        let ySize: number;
+
+        if (scaleX.distr === 3) {
+          xSize = Math.abs(valToPosX(xs[0] * scaleX.log!, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
+        } else {
+          xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
+        }
+
+        if (scaleY.distr === 3) {
+          ySize =
+            Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
+            ySizeDivisor;
+        } else {
+          ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
+        }
 
         // clamp min tile size to 1px
         xSize = Math.max(1, round(xSize - cellGap));
