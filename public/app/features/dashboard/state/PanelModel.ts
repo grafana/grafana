@@ -217,6 +217,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       delete (this as any)[property];
     }
 
+    // Special 'graph' migration logic
+    if (model.type === 'graph' && config.featureToggles.autoMigrateGraphPanels) {
+      console.log('Migrate graph to timeseries...');
+      model.__auto_migrate_from = model.type;
+      model.type = 'timeseries';
+    }
+
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];

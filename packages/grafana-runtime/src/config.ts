@@ -153,6 +153,16 @@ export class GrafanaBootConfig implements GrafanaConfig {
     if (this.dateFormats) {
       systemDateFormats.update(this.dateFormats);
     }
+
+    // Runtime override features from URL
+    const params = window.location.search.split('&');
+    for (const param of params) {
+      if (param.startsWith('__feature.')) {
+        const parts = param.split('=');
+        const key = parts[0].slice('__feature.'.length);
+        this.featureToggles[key] = 'false' !== parts[1];
+      }
+    }
   }
 }
 

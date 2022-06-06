@@ -4,12 +4,13 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
-import { graphPanelChangedHandler } from './migrations';
+import { graphMigrationHandler, graphPanelChangedHandler } from './migrations';
 import { TimeSeriesSuggestionsSupplier } from './suggestions';
 import { TimeSeriesOptions } from './types';
 
 export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
+  .setMigrationHandler(graphMigrationHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder);

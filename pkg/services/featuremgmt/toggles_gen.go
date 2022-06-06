@@ -163,6 +163,10 @@ const (
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 
+	// FlagAutoMigrateGraphPanels
+	// Replace the angular graph panel with timeseries
+	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
+
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
