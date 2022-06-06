@@ -54,6 +54,50 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}`,
 		},
 		{
+			name:     "Default config with one alert, custom message and description",
+			settings: `{"apiKey": "abcdefgh0123456789", "message": "test message", "description": "test description"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: `{
+				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"description": "test description",
+				"details": {
+					"url": "http://localhost/alerting/list"
+				},
+				"message": "test message",
+				"source": "Grafana",
+				"tags": ["alertname:alert1", "lbl1:val1"]
+			}`,
+		},
+		{
+			name:     "Default config with one alert, templated message and description",
+			settings: `{"apiKey": "abcdefgh0123456789", "message": "Firing: {{ len .Alerts.Firing }}", "description": "{{ len .Alerts.Firing }} firing, {{ len .Alerts.Resolved }} resolved."}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: `{
+				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"description": "1 firing, 0 resolved.",
+				"details": {
+					"url": "http://localhost/alerting/list"
+				},
+				"message": "Firing: 1",
+				"source": "Grafana",
+				"tags": ["alertname:alert1", "lbl1:val1"]
+			}`,
+		},
+		{
 			name: "Default config with one alert and send tags as tags",
 			settings: `{
 				"apiKey": "abcdefgh0123456789",

@@ -35,6 +35,7 @@ type OpsgenieNotifier struct {
 	*Base
 	APIKey           string
 	APIUrl           string
+	Message          string
 	Description      string
 	AutoClose        bool
 	OverridePriority bool
@@ -49,6 +50,7 @@ type OpsgenieConfig struct {
 	*NotificationChannelConfig
 	APIKey           string
 	APIUrl           string
+	Message          string
 	Description      string
 	AutoClose        bool
 	OverridePriority bool
@@ -83,7 +85,8 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		APIUrl:                    config.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
 		AutoClose:                 config.Settings.Get("autoClose").MustBool(true),
 		OverridePriority:          config.Settings.Get("overridePriority").MustBool(true),
-		Description:               config.Settings.Get("description").MustString(`{{ template "default.message" . }}`),
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.title" . }}`),
+		Description:               config.Settings.Get("description").MustString(""),
 		SendTagsAs:                sendTagsAs,
 	}, nil
 }
@@ -101,6 +104,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		APIKey:           config.APIKey,
 		APIUrl:           config.APIUrl,
 		Description:      config.Description,
+		Message:          config.Message,
 		AutoClose:        config.AutoClose,
 		OverridePriority: config.OverridePriority,
 		SendTagsAs:       config.SendTagsAs,
@@ -183,13 +187,17 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(DefaultMessageTitleEmbed)
-	description := fmt.Sprintf(
-		"%s\n%s\n\n%s",
-		tmpl(DefaultMessageTitleEmbed),
-		ruleURL,
-		tmpl(on.Description),
-	)
+	title := tmpl(on.Message)
+
+	description := tmpl(on.Description)
+	if description == "" {
+		description = fmt.Sprintf(
+			"%s\n%s\n\n%s",
+			tmpl(DefaultMessageTitleEmbed),
+			ruleURL,
+			tmpl(`{{ template "default.message" . }}`),
+		)
+	}
 
 	var priority string
 

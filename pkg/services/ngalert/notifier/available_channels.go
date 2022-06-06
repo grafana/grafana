@@ -864,11 +864,18 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:          "Message",
+					Description:    "Alert text limited to 130 characters.",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    `{{ template "default.title" . }}`,
+					PropertyName:   "message",
+					ValidationRule: "^.{0,130}$",
+				},
+				{
 					Label:        "Description",
 					Description:  "A description of the incident.",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Element:      alerting.ElementTypeTextArea,
 					PropertyName: "description",
 				},
 				{
