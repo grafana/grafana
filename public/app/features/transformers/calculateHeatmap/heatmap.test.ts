@@ -58,7 +58,7 @@ describe('Heatmap transformer', () => {
       ],
     });
 
-    const heatmap = bucketsToScanlines({ frame, name: 'Speed' });
+    const heatmap = bucketsToScanlines({ frame, value: 'Speed' });
     expect(heatmap.fields.map((f) => ({ name: f.name, type: f.type, config: f.config }))).toMatchInlineSnapshot(`
       Array [
         Object {
