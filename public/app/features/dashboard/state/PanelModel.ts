@@ -377,17 +377,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      if (plugin.onPanelTypeChanged) {
-        const oldOptions: any = this.getOptionsToRemember();
-        const prevFieldConfig = this.fieldConfig;
-        const wasAngular = this.autoMigrateFrom === 'graph';
-
-        const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
-        Object.assign(
-          this.options,
-          plugin.onPanelTypeChanged(this, this.autoMigrateFrom, prevOptions, prevFieldConfig)
-        );
-      }
+      const oldOptions: any = this.getOptionsToRemember();
+      const wasAngular = this.autoMigrateFrom === 'graph';
+      this.callPanelTypeChangeHandler(plugin, this.autoMigrateFrom, oldOptions, wasAngular);
       delete this.autoMigrateFrom;
     }
 
@@ -424,12 +416,24 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     };
   }
 
+  // Let panel plugins inspect options from previous panel and keep any that it can use
+  private callPanelTypeChangeHandler(
+    newPlugin: PanelPlugin,
+    oldPluginId: string,
+    oldOptions: any,
+    wasAngular: boolean
+  ) {
+    if (newPlugin.onPanelTypeChanged) {
+      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, this.fieldConfig));
+    }
+  }
+
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin();
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -438,11 +442,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.clearPropertiesBeforePluginChange();
     this.restorePanelOptions(pluginId);
 
-    // Let panel plugins inspect options from previous panel and keep any that it can use
-    if (newPlugin.onPanelTypeChanged) {
-      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, prevFieldConfig));
-    }
+    // Potentially modify current options
+    this.callPanelTypeChangeHandler(newPlugin, oldPluginId, oldOptions, this.isAngularPlugin());
 
     // switch
     this.type = pluginId;
