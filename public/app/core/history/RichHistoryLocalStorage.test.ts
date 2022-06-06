@@ -1,7 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
-import { afterEach, beforeEach } from '../../../test/lib/common';
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
