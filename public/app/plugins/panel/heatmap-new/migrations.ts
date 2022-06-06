@@ -73,7 +73,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       steps: 128, // best match with existing colors
     },
     cellGap: asNumber(angular.cards?.cardPadding, 2),
-    cardRadius: asNumber(angular.cards?.cardRound), // just to keep it
+    cellRadius: asNumber(angular.cards?.cardRound), // just to keep it
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),

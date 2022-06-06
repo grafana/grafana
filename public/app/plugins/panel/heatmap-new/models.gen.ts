@@ -71,7 +71,7 @@ export interface PanelOptions {
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
-  cardRadius?: number; // was cardRadius (not used, but migrated from angular)
+  cellRadius?: number; // was cardRadius (not used, but migrated from angular)
 
   yAxis: YAxisConfig;
   legend: HeatmapLegend;

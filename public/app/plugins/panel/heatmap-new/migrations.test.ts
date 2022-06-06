@@ -23,8 +23,6 @@ describe('Heatmap Migrations', () => {
         "fieldConfig": Object {
           "defaults": Object {
             "decimals": 6,
-            "max": 22,
-            "min": 7,
             "unit": "short",
           },
           "overrides": Array [],
@@ -48,8 +46,8 @@ describe('Heatmap Migrations', () => {
               "value": "3",
             },
           },
-          "cardRadius": 10,
           "cellGap": 2,
+          "cellRadius": 10,
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
@@ -77,6 +75,8 @@ describe('Heatmap Migrations', () => {
           "yAxis": Object {
             "axisPlacement": "left",
             "axisWidth": 400,
+            "max": 22,
+            "min": 7,
             "reverse": false,
           },
         },

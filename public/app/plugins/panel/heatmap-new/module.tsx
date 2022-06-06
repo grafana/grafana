@@ -81,8 +81,8 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    if (opts.calculate) {
-      // TODO: sparse heatmap may also need this setting
+    // TODO: support clamping the min/max range when there is a real axis
+    if (false && opts.calculate) {
       builder
         .addNumberInput({
           path: 'yAxis.min',
