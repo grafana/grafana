@@ -29,8 +29,6 @@ export type Props = {
   addPermissionTitle?: string;
   resource: string;
   resourceId: ResourceId;
-
-  canListUsers: boolean;
   canSetPermissions: boolean;
 };
 
@@ -39,7 +37,6 @@ export const Permissions = ({
   buttonLabel = 'Add a permission',
   resource,
   resourceId,
-  canListUsers,
   canSetPermissions,
   addPermissionTitle,
 }: Props) => {
@@ -145,7 +142,6 @@ export const Permissions = ({
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
-            canListUsers={canListUsers}
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>

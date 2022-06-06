@@ -110,9 +110,16 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   }
 
+  let title = 'Save dashboard';
+  if (isCopy) {
+    title = 'Save dashboard copy';
+  } else if (isProvisioned) {
+    title = 'Provisioned dashboard';
+  }
+
   return (
     <Drawer
-      title={isCopy ? 'Save dashboard copy' : 'Save dashboard'}
+      title={title}
       onClose={onDismiss}
       width={'40%'}
       subtitle={dashboard.title}

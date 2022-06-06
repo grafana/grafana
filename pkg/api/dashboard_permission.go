@@ -86,7 +86,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -203,13 +203,17 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 		}
 	}
 
-	svc := hs.permissionServices.GetDashboardService()
 	if isFolder {
-		svc = hs.permissionServices.GetFolderService()
+		if _, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+			return err
+		}
+		return nil
 	}
 
-	_, err := svc.SetPermissions(ctx, orgID, uid, commands...)
-	return err
+	if _, err := hs.dashboardPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {

@@ -152,7 +152,11 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
             Saving...
           </Button>
         )}
-        {!loading && <Button variant="primary">Save template</Button>}
+        {!loading && (
+          <Button type="submit" variant="primary">
+            Save template
+          </Button>
+        )}
         <LinkButton
           disabled={loading}
           href={makeAMLink('alerting/notifications', alertManagerSourceName)}

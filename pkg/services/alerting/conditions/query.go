@@ -215,7 +215,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		if useDataframes { // convert the dataframes to plugins.DataTimeSeries
 			frames, err := v.Dataframes.Decoded()
 			if err != nil {
-				return nil, errutil.Wrap("request handler failed to unmarshal arrow dataframes from bytes", err)
+				return nil, fmt.Errorf("%v: %w", "request handler failed to unmarshal arrow dataframes from bytes", err)
 			}
 
 			for _, frame := range frames {

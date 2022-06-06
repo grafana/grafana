@@ -61,7 +61,14 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 		}
 	}
 
-	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
+	query := &models.SearchUsersQuery{
+		// added SignedInUser to the query, as to only list the users that the user has permission to read
+		SignedInUser: c.SignedInUser,
+		Query:        searchQuery,
+		Filters:      filters,
+		Page:         page,
+		Limit:        perPage,
+	}
 	if err := s.sqlStore.SearchUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}

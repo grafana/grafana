@@ -164,9 +164,36 @@ export function preparePlotData2(
 ) {
   let data = Array(frame.fields.length) as AlignedData;
 
+  let stacksQty = stackingGroups.length;
+
   let dataLen = frame.length;
-  let zeroArr = Array(dataLen).fill(0);
-  let accums = Array.from({ length: stackingGroups.length }, () => zeroArr.slice());
+  let zeroArr = stacksQty > 0 ? Array(dataLen).fill(0) : [];
+  let falseArr = stacksQty > 0 ? Array(dataLen).fill(false) : [];
+  let accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+
+  let anyValsAtX = Array.from({ length: stacksQty }, () => falseArr.slice());
+
+  // figure out at which time indices each stacking group has any values
+  // (needed to avoid absorbing initial accum 0s at unrelated joined timestamps)
+  stackingGroups.forEach((group, groupIdx) => {
+    let groupValsAtX = anyValsAtX[groupIdx];
+
+    group.series.forEach((seriesIdx) => {
+      let field = frame.fields[seriesIdx];
+
+      if (field.config.custom?.hideFrom?.viz) {
+        return;
+      }
+
+      let vals = field.values.toArray();
+
+      for (let i = 0; i < dataLen; i++) {
+        if (vals[i] != null) {
+          groupValsAtX[i] = true;
+        }
+      }
+    });
+  });
 
   frame.fields.forEach((field, i) => {
     let vals = field.values.toArray();
@@ -210,6 +237,7 @@ export function preparePlotData2(
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
       let accum = accums[stackIdx];
+      let groupValsAtX = anyValsAtX[stackIdx];
       let stacked = (data[i] = Array(dataLen));
 
       for (let i = 0; i < dataLen; i++) {
@@ -218,7 +246,7 @@ export function preparePlotData2(
         if (v != null) {
           stacked[i] = accum[i] += v;
         } else {
-          stacked[i] = v; // we may want to coerce to 0 here
+          stacked[i] = groupValsAtX[i] ? accum[i] : v;
         }
       }
     }

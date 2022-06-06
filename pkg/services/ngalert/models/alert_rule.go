@@ -74,12 +74,6 @@ const (
 	OkErrState       ExecutionErrorState = "OK"
 )
 
-// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
-var InternalLabelNameSet = map[string]struct{}{
-	RuleUIDLabel:      {},
-	NamespaceUIDLabel: {},
-}
-
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
@@ -87,6 +81,23 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
+
+	// This isn't a hard-coded secret token, hence the nolint.
+	//nolint:gosec
+	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+)
+
+var (
+	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
+	InternalLabelNameSet = map[string]struct{}{
+		RuleUIDLabel:      {},
+		NamespaceUIDLabel: {},
+	}
+	InternalAnnotationNameSet = map[string]struct{}{
+		DashboardUIDAnnotation:    {},
+		PanelIDAnnotation:         {},
+		ScreenshotTokenAnnotation: {},
+	}
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -111,6 +122,13 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+type SchedulableAlertRule struct {
+	UID             string `xorm:"uid"`
+	OrgID           int64  `xorm:"org_id"`
+	IntervalSeconds int64
+	Version         int64
 }
 
 type LabelOption func(map[string]string)
@@ -139,13 +157,13 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
-	ops := make([]cmp.Option, 0, 4)
+	ops := make([]cmp.Option, 0, 5)
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
 		return string(in)
 	})
-	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp)
+	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp, cmpopts.EquateEmpty())
 
 	if len(ignore) > 0 {
 		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))
@@ -160,12 +178,33 @@ type AlertRuleKey struct {
 	UID   string
 }
 
+// AlertRuleGroupKey is the identifier of a group of alerts
+type AlertRuleGroupKey struct {
+	OrgID        int64
+	NamespaceUID string
+	RuleGroup    string
+}
+
+func (k AlertRuleGroupKey) String() string {
+	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
+}
+
 func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
+	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetGroupKey returns the identifier of a group the rule belongs to
+func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
+	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
+}
+
+// GetKey returns the alert definitions identifier
+func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
@@ -227,6 +266,14 @@ type GetAlertRuleByUIDQuery struct {
 	Result *AlertRule
 }
 
+// GetAlertRulesGroupByRuleUIDQuery is the query for retrieving a group of alerts by UID of a rule that belongs to that group
+type GetAlertRulesGroupByRuleUIDQuery struct {
+	UID   string
+	OrgID int64
+
+	Result []*AlertRule
+}
+
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
@@ -240,6 +287,12 @@ type ListAlertRulesQuery struct {
 	PanelID      int64
 
 	Result []*AlertRule
+}
+
+type GetAlertRulesForSchedulingQuery struct {
+	ExcludeOrgIDs []int64
+
+	Result []*SchedulableAlertRule
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules

@@ -17,12 +17,8 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   width?: number | 'auto';
   /** Make labels's background transparent */
   transparent?: boolean;
-  /** @deprecated */
-  /** This prop is deprecated and is not used anymore */
-  isFocused?: boolean;
-  /** @deprecated */
-  /** This prop is deprecated and is not used anymore */
-  isInvalid?: boolean;
+  /** Make tooltip interactive */
+  interactive?: boolean;
   /** @beta */
   /** Controls which element the InlineLabel should be rendered into */
   as?: React.ElementType;
@@ -34,6 +30,7 @@ export const InlineLabel: FunctionComponent<Props> = ({
   tooltip,
   width,
   transparent,
+  interactive,
   as: Component = 'label',
   ...rest
 }) => {
@@ -43,7 +40,7 @@ export const InlineLabel: FunctionComponent<Props> = ({
     <Component className={cx(styles.label, className)} {...rest}>
       {children}
       {tooltip && (
-        <Tooltip placement="top" content={tooltip} theme="info">
+        <Tooltip interactive={interactive} placement="top" content={tooltip} theme="info">
           <Icon tabIndex={0} name="info-circle" size="sm" className={styles.icon} />
         </Tooltip>
       )}

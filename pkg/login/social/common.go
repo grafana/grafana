@@ -37,7 +37,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 	valid := false
 	for _, domain := range allowedDomains {
 		emailSuffix := fmt.Sprintf("@%s", domain)
-		valid = valid || strings.HasSuffix(email, emailSuffix)
+		valid = valid || strings.HasSuffix(strings.ToLower(email), strings.ToLower(emailSuffix))
 	}
 
 	return valid
@@ -83,7 +83,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", errutil.Wrap("failed to unmarshal user info JSON response", err)
+		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
 
 	val, err := jmespath.Search(attributePath, buf)

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -25,17 +26,30 @@ func TestProvisioningApi(t *testing.T) {
 		require.Equal(t, 200, response.Status())
 	})
 
-	t.Run("successful POST policies returns 202", func(t *testing.T) {
+	t.Run("successful PUT policies returns 202", func(t *testing.T) {
 		sut := createProvisioningSrvSut()
 		rc := createTestRequestCtx()
 		tree := apimodels.Route{}
 
-		response := sut.RoutePostPolicyTree(&rc, tree)
+		response := sut.RoutePutPolicyTree(&rc, tree)
 
 		require.Equal(t, 202, response.Status())
 	})
 
-	// TODO: we have not lifted out validation yet. Test that we are returning errors properly once validation has been lifted.
+	t.Run("when new policy tree is invalid", func(t *testing.T) {
+		t.Run("PUT policies returns 400", func(t *testing.T) {
+			sut := createProvisioningSrvSut()
+			sut.policies = &fakeRejectingNotificationPolicyService{}
+			rc := createTestRequestCtx()
+			tree := apimodels.Route{}
+
+			response := sut.RoutePutPolicyTree(&rc, tree)
+
+			require.Equal(t, 400, response.Status())
+			expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+			require.Equal(t, expBody, string(response.Body()))
+		})
+	})
 
 	t.Run("when org has no AM config", func(t *testing.T) {
 		t.Run("GET policies returns 404", func(t *testing.T) {
@@ -72,13 +86,13 @@ func TestProvisioningApi(t *testing.T) {
 			require.Contains(t, string(response.Body()), "something went wrong")
 		})
 
-		t.Run("POST policies returns 500", func(t *testing.T) {
+		t.Run("PUT policies returns 500", func(t *testing.T) {
 			sut := createProvisioningSrvSut()
 			sut.policies = &fakeFailingNotificationPolicyService{}
 			rc := createTestRequestCtx()
 			tree := apimodels.Route{}
 
-			response := sut.RoutePostPolicyTree(&rc, tree)
+			response := sut.RoutePutPolicyTree(&rc, tree)
 
 			require.Equal(t, 500, response.Status())
 			require.NotEmpty(t, response.Body())
@@ -145,4 +159,14 @@ func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context
 
 func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
 	return fmt.Errorf("something went wrong")
+}
+
+type fakeRejectingNotificationPolicyService struct{}
+
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, nil
+}
+
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -13,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTempUserCommandsAndQueries(t *testing.T) {
+func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	ss := InitTestDB(t)
 	cmd := models.CreateTempUserCommand{
 		OrgId:  2256,

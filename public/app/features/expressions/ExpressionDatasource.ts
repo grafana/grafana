@@ -43,7 +43,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         return query;
       }
 
-      return ds?.interpolateVariablesInQueries([query], {})[0] as ExpressionQuery;
+      return ds?.interpolateVariablesInQueries([query], request.scopedVars)[0] as ExpressionQuery;
     });
 
     let sub = from(Promise.all(targets));
@@ -69,7 +69,7 @@ export const ExpressionDatasourceUID = '-100';
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,
   uid: ExpressionDatasourceUID,
-  name: ExpressionDatasourceRef.type,
+  name: ExpressionDatasourceRef.name,
   type: ExpressionDatasourceRef.type,
   access: 'proxy',
   meta: {

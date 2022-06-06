@@ -24,6 +24,7 @@ export interface AzureSettings {
 }
 
 export class GrafanaBootConfig implements GrafanaConfig {
+  isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   minRefreshInterval = '';
@@ -47,6 +48,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
@@ -56,6 +58,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
+  rbacEnabled = true;
+  rbacBuiltInRoleAssignmentEnabled = false;
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
@@ -121,6 +125,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
     this.bootData = options.bootData;
+    this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
       datasources: {},

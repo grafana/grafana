@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,7 +33,8 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		c.Map(initCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
 	m.Use(requestContextMiddleware())
@@ -125,7 +127,9 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 }
 
 func requestContextMiddleware() web.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *models.ReqContext) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c := ctxkey.Get(req.Context()).(*models.ReqContext)
+
 		ctx := requestContextFromRequest(req)
 		if ctx == nil {
 			c.Next()
@@ -141,6 +145,5 @@ func requestContextMiddleware() web.Handler {
 		c.RequestNonce = ctx.RequestNonce
 		c.PerfmonTimer = ctx.PerfmonTimer
 		c.LookupTokenErr = ctx.LookupTokenErr
-		c.Map(c)
 	}
 }

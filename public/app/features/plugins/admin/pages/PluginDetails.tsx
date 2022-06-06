@@ -11,7 +11,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
-import { Page as PluginPage } from '../components/Page';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
@@ -75,31 +74,33 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
   return (
     <Page>
-      <PluginPage>
-        <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
-
-        {/* Tab navigation */}
-        <TabsBar>
-          {tabs.map((tab: PluginDetailsTab) => {
-            return (
-              <Tab
-                key={tab.label}
-                label={tab.label}
-                href={tab.href}
-                icon={tab.icon as IconName}
-                active={tab.id === pageId}
-              />
-            );
-          })}
-        </TabsBar>
-
+      <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
+      {/* Tab navigation */}
+      <div>
+        <div className="page-container">
+          <TabsBar hideBorder>
+            {tabs.map((tab: PluginDetailsTab) => {
+              return (
+                <Tab
+                  key={tab.label}
+                  label={tab.label}
+                  href={tab.href}
+                  icon={tab.icon as IconName}
+                  active={tab.id === pageId}
+                />
+              );
+            })}
+          </TabsBar>
+        </div>
+      </div>
+      <Page.Contents>
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={queryParams} plugin={plugin} pageId={pageId} />
         </TabContent>
-      </PluginPage>
+      </Page.Contents>
     </Page>
   );
 }

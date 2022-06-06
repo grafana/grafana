@@ -13,7 +13,9 @@ import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
-  return f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz;
+  return (
+    f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz
+  );
 }
 
 // will mutate the DataFrame's fields' values
@@ -42,7 +44,18 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
-  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
+  frames = frames.map((frame) => {
+    if (!frame.fields[0].state?.nullThresholdApplied) {
+      return applyNullInsertThreshold({
+        frame,
+        refFieldName: null,
+        refFieldPseudoMin: timeRange?.from.valueOf(),
+        refFieldPseudoMax: timeRange?.to.valueOf(),
+      });
+    } else {
+      return frame;
+    }
+  });
 
   let numBarSeries = 0;
 
@@ -105,6 +118,8 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
           vals.push(undefined, undefined);
         }
       });
+
+      alignedFrame.length += 2;
     }
 
     return alignedFrame;

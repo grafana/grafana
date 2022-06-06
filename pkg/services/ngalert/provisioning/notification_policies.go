@@ -38,7 +38,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, err
 	}
 
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -47,11 +47,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, fmt.Errorf("no route present in current alertmanager config")
 	}
 
-	adapter := ProvenanceOrgAdapter{
-		Inner: cfg.AlertmanagerConfig.Route,
-		OrgID: orgID,
-	}
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, adapter)
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, cfg.AlertmanagerConfig.Route, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -63,30 +59,25 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
+	err := tree.Validate()
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	revision, err := getLastConfiguration(ctx, orgID, nps.amStore)
 	if err != nil {
 		return err
 	}
 
-	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
+	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
-	cfg.AlertmanagerConfig.Config.Route = &tree
-
-	serialized, err := SerializeAlertmanagerConfig(*cfg)
+	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
 		return err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      q.Result.ConfigurationVersion,
-		FetchedConfigurationHash:  concurrencyToken,
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
 	}
@@ -95,11 +86,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		if err != nil {
 			return err
 		}
-		adapter := ProvenanceOrgAdapter{
-			Inner: &tree,
-			OrgID: orgID,
-		}
-		err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
+		err = nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 		if err != nil {
 			return err
 		}

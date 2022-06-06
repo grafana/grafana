@@ -256,7 +256,7 @@ export class QueryRows extends PureComponent<Props, State> {
                   return (
                     <QueryWrapper
                       index={index}
-                      key={`${query.refId}-${index}`}
+                      key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
                       query={query}
@@ -313,12 +313,11 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
   return (
     <EmptyQueryWrapper>
       <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
-        <Card
-          heading="This datasource has been removed"
-          description={
-            'The datasource for this query was not found, it was either removed or is not installed correctly.'
-          }
-        >
+        <Card>
+          <Card.Heading>This datasource has been removed</Card.Heading>
+          <Card.Description>
+            The datasource for this query was not found, it was either removed or is not installed correctly.
+          </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />
           </Card.Figure>

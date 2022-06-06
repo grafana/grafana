@@ -2,11 +2,13 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // GetAPIKeys queries the database based
@@ -26,6 +28,14 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 		}
 
 		sess = sess.Where("service_account_id IS NULL")
+
+		if !accesscontrol.IsDisabled(ss.Cfg) {
+			filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
+			if err != nil {
+				return err
+			}
+			sess.And(filter.Where, filter.Args...)
+		}
 
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
@@ -134,4 +144,20 @@ func (ss *SQLStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKey
 		query.Result = &apikey
 		return nil
 	})
+}
+
+func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	var apikey models.ApiKey
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", dialect.Quote("key")), hash).Get(&apikey)
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
+
+		return nil
+	})
+
+	return &apikey, err
 }

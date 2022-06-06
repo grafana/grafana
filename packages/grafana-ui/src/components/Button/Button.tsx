@@ -10,7 +10,7 @@ import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
@@ -23,12 +23,26 @@ type CommonProps = {
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
+  type?: string;
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', fill = 'solid', icon, fullWidth, children, className, ...otherProps }, ref) => {
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      fill = 'solid',
+      icon,
+      fullWidth,
+      children,
+      className,
+      type = 'button',
+      ...otherProps
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
@@ -39,13 +53,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
-    deprecatedPropWarning(
-      variant === 'link',
-      `${Button.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
-    );
-
     return (
-      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
+      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -92,11 +101,6 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         })]: disabled,
       },
       className
-    );
-
-    deprecatedPropWarning(
-      variant === 'link',
-      `${LinkButton.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
     );
 
     return (
@@ -242,7 +246,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     transition: 'none',
   };
 
-  if (fill === 'text' || variant === 'link') {
+  if (fill === 'text') {
     return {
       ...disabledStyles,
       background: 'transparent',
@@ -266,24 +270,15 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
 }
 
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
-  const buttonVariant = variant === 'link' ? 'primary' : variant;
-  const buttonFill = variant === 'link' ? 'text' : fill;
-
-  switch (buttonVariant) {
+  switch (variant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary, buttonFill);
+      return getButtonVariantStyles(theme, theme.colors.secondary, fill);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error, buttonFill);
+      return getButtonVariantStyles(theme, theme.colors.error, fill);
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary, buttonFill);
-  }
-}
-
-function deprecatedPropWarning(test: boolean, message: string) {
-  if (process.env.NODE_ENV === 'development' && test) {
-    console.warn(`@grafana/ui ${message}`);
+      return getButtonVariantStyles(theme, theme.colors.primary, fill);
   }
 }

@@ -93,11 +93,11 @@ func newSinewaveInfo() simulationInfo {
 	df.Fields = append(df.Fields, f)
 
 	return simulationInfo{
-		Type:        "sine",
-		Name:        "Sine",
-		Description: "Sinewave generator",
-		SetupFields: df,
-		OnlyForward: false,
+		Type:         "sine",
+		Name:         "Sine",
+		Description:  "Sinewave generator",
+		ConfigFields: df,
+		OnlyForward:  false,
 		create: func(cfg simulationState) (Simulation, error) {
 			s := &waveformSim{
 				key:        cfg.Key,

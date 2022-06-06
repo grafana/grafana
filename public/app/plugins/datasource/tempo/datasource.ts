@@ -11,8 +11,16 @@ import {
   DataSourceJsonData,
   isValidGoDuration,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
-import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  DataSourceWithBackend,
+  getBackendSrv,
+  reportInteraction,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -92,7 +100,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
@@ -148,10 +159,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.nativeSearch?.length) {
       try {
-        const timeRange = config.featureToggles.tempoBackendSearch
-          ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
-          : undefined;
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
+        reportInteraction('grafana_traces_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          serviceName: targets.nativeSearch[0].serviceName ?? '',
+          spanName: targets.nativeSearch[0].spanName ?? '',
+          limit: targets.nativeSearch[0].limit ?? '',
+          search: targets.nativeSearch[0].search ?? '',
+        });
+
+        const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
+        const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
+        const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -183,14 +202,57 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid, this.name));
     }
 
     if (targets.traceId?.length > 0) {
+      reportInteraction('grafana_traces_traceID_queried', {
+        datasourceType: 'tempo',
+        app: options.app ?? '',
+        query: targets.traceId[0].query ?? '',
+      });
+
       subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 
     return merge(...subQueries);
+  }
+
+  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
+    return this.applyVariables(query, scopedVars);
+  }
+
+  interpolateVariablesInQueries(queries: TempoQuery[], scopedVars: ScopedVars): TempoQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars),
+      };
+    });
+  }
+
+  applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
+    const expandedQuery = { ...query };
+
+    if (query.linkedQuery) {
+      expandedQuery.linkedQuery = {
+        ...query.linkedQuery,
+        expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
+      };
+    }
+
+    return {
+      ...expandedQuery,
+      query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      search: this.templateSrv.replace(query.search ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+    };
   }
 
   /**
@@ -203,7 +265,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[]
   ): Observable<DataQueryResponse> {
-    const validTargets = targets.filter((t) => t.query);
+    const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
@@ -278,12 +340,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Validate query inputs and remove spaces if valid
     if (tempoQuery.minDuration) {
+      tempoQuery.minDuration = this.templateSrv.replace(tempoQuery.minDuration ?? '');
       if (!isValidGoDuration(tempoQuery.minDuration)) {
         throw new Error('Please enter a valid min duration.');
       }
       tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
     }
     if (tempoQuery.maxDuration) {
+      tempoQuery.maxDuration = this.templateSrv.replace(tempoQuery.maxDuration ?? '');
       if (!isValidGoDuration(tempoQuery.maxDuration)) {
         throw new Error('Please enter a valid max duration.');
       }
@@ -332,7 +396,7 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
@@ -360,6 +424,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, tempoDatasourceUid),
         ],
       };
 
@@ -381,6 +446,21 @@ function makePromLink(title: string, metric: string, datasourceUid: string) {
       } as PromQuery,
       datasourceUid,
       datasourceName: 'Prometheus',
+    },
+  };
+}
+
+function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: serviceName,
+      } as TempoQuery,
+      datasourceUid: datasourceUid,
+      datasourceName: 'Tempo',
     },
   };
 }

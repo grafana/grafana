@@ -71,6 +71,7 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
         name: 'traceID',
         type: FieldType.string,
         config: {
+          unit: 'string',
           displayNameFromDS: 'Trace ID',
           links: [
             {

@@ -100,12 +100,14 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		}
 		return err
 	}
+
 	preference.Timezone = cmd.Timezone
 	preference.WeekStart = cmd.WeekStart
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.JSONData = &pref.PreferenceJSONData{}
+	preference.HomeDashboardID = cmd.HomeDashboardID
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar

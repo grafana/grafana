@@ -63,6 +63,7 @@ import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
+import * as tracesPanel from 'app/plugins/panel/traces/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 
@@ -125,6 +126,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/barchart/module': barChartPanel,
   'app/plugins/panel/logs/module': logsPanel,
+  'app/plugins/panel/traces/module': tracesPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
   'app/plugins/panel/histogram/module': histogramPanel,

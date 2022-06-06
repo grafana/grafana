@@ -39,6 +39,7 @@ export interface FileDropzoneProps {
    * any list return null in the function.
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
+  onFileRemove?: (file: DropzoneFile) => void;
 }
 
 export interface DropzoneFile {
@@ -50,7 +51,7 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer }: FileDropzoneProps) {
+export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
 
   const setFileProperty = useCallback(
@@ -137,9 +138,14 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   const removeFile = (file: DropzoneFile) => {
     const newFiles = files.filter((f) => file.id !== f.id);
     setFiles(newFiles);
+    onFileRemove?.(file);
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, useFsAccessApi: false, onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    ...options,
+    useFsAccessApi: false,
+    onDrop,
+  });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
   const fileList = files.map((file) => {

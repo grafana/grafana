@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,6 +70,18 @@ func TestNotificationPolicyService(t *testing.T) {
 		fake := sut.GetAMConfigStore().(*fakeAMConfigStore)
 		intercepted := fake.lastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
+	})
+
+	t.Run("updating invalid route returns ValidationError", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		invalid := createTestRoutingTree()
+		repeat := model.Duration(0)
+		invalid.RepeatInterval = &repeat
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone)
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrValidation)
 	})
 }
 

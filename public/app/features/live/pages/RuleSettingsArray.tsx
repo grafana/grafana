@@ -39,7 +39,6 @@ export const RuleSettingsArray: React.FC<Props> = ({ onChange, value, ruleType, 
     <>
       <Select
         placeholder="Select an index"
-        menuShouldPortal={true}
         options={indexArr}
         value={index}
         onChange={(index) => {

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -67,6 +66,7 @@ type API struct {
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -78,6 +78,9 @@ type API struct {
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
+	MuteTimings          *provisioning.MuteTimingService
+	AlertRules           *provisioning.AlertRuleService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -108,6 +111,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			QuotaService:    api.QuotaService,
 			scheduleService: api.Schedule,
 			store:           api.RuleStore,
+			provenanceStore: api.ProvenanceStore,
 			xactManager:     api.TransactionManager,
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,
@@ -131,11 +135,12 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		},
 	), m)
 
-	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
-		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:                 logger,
-			policies:            api.Policies,
-			contactPointService: api.ContactPointService,
-		}), m)
-	}
+	api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
+		log:                 logger,
+		policies:            api.Policies,
+		contactPointService: api.ContactPointService,
+		templates:           api.Templates,
+		muteTimings:         api.MuteTimings,
+		alertRules:          api.AlertRules,
+	}), m)
 }

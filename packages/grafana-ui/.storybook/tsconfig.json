@@ -6,10 +6,5 @@
   },
   "exclude": ["../dist", "../node_modules"],
   "extends": "../tsconfig.json",
-  "include": [
-    "../src/**/*.ts",
-    "../src/**/*.tsx",
-    "../../../public/app/types/sanitize-url.d.ts",
-    "../../../public/app/types/svg.d.ts"
-  ]
+  "include": ["../src/**/*.ts", "../src/**/*.tsx", "../../../public/app/types/svg.d.ts"]
 }

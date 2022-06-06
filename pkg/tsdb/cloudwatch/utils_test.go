@@ -62,12 +62,15 @@ type fakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatch.GetMetricDataOutput
 
-	Metrics []*cloudwatch.Metric
-
+	Metrics        []*cloudwatch.Metric
 	MetricsPerPage int
+
+	callsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
 }
 
-func (c *fakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (c *fakeCWClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+	c.callsGetMetricDataWithContext = append(c.callsGetMetricDataWithContext, input)
+
 	return &c.GetMetricDataOutput, nil
 }
 

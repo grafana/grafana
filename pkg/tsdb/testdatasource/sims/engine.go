@@ -224,7 +224,6 @@ func (s *SimulationEngine) GetSimulationHandler(rw http.ResponseWriter, req *htt
 		}
 		result = v
 	} else if strings.HasPrefix(path, "/sim/") {
-		rw.WriteHeader(400)
 		sim, err := s.getSimFromPath(path)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusNotFound)

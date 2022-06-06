@@ -152,8 +152,39 @@ func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 	return nil
 }
 
+func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
+		return err
+	}
+	rules, ok := f.Rules[q.OrgID]
+	if !ok {
+		return nil
+	}
+
+	var selected *models.AlertRule
+	for _, rule := range rules {
+		if rule.UID == q.UID {
+			selected = rule
+			break
+		}
+	}
+	if selected == nil {
+		return nil
+	}
+
+	for _, rule := range rules {
+		if rule.GetGroupKey() == selected.GetGroupKey() {
+			q.Result = append(q.Result, rule)
+		}
+	}
+	return nil
+}
+
 // For now, we're not implementing namespace filtering.
-func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -161,7 +192,14 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 		return err
 	}
 	for _, rules := range f.Rules {
-		q.Result = append(q.Result, rules...)
+		for _, rule := range rules {
+			q.Result = append(q.Result, &models.SchedulableAlertRule{
+				UID:             rule.UID,
+				OrgID:           rule.OrgID,
+				IntervalSeconds: rule.IntervalSeconds,
+				Version:         rule.Version,
+			})
+		}
 	}
 	return nil
 }
@@ -277,18 +315,41 @@ func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) erro
 	return nil
 }
 
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) error {
+func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
+	ids := make(map[string]int64, len(q))
 	if err := f.Hook(q); err != nil {
-		return err
+		return ids, err
 	}
-	return nil
+	return ids, nil
 }
 
 func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
+}
+
+func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			return rule.IntervalSeconds, nil
+		}
+	}
+	return 0, ErrAlertRuleGroupNotFound
+}
+
+func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	for _, rule := range f.Rules[orgID] {
+		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
+			rule.IntervalSeconds = interval
+		}
+	}
+	return nil
 }
 
 type FakeInstanceStore struct {

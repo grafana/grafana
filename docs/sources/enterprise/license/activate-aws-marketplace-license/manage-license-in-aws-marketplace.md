@@ -1,10 +1,20 @@
-+++
-title = "Manage your Grafana Enterprise license in AWS Marketplace"
-description = "Manage your Grafana Enterprise license in AWS Marketplace"
-keywords = ["grafana", "enterprise", "aws", "marketplace", "manage", "add", "remove", "users"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/manage-license-in-aws-marketplace"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/manage-license-in-aws-marketplace/
+  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/manage-license-in-aws-marketplace/
+description: Manage your Grafana Enterprise license in AWS Marketplace
+keywords:
+  - grafana
+  - enterprise
+  - aws
+  - marketplace
+  - manage
+  - add
+  - remove
+  - users
+title: Manage your Grafana Enterprise license in AWS Marketplace
+weight: 400
+---
 
 ## Manage your Grafana Enterprise license in AWS Marketplace
 
@@ -28,4 +38,4 @@ You can use AWS Marketplace to make the following modifications to your Grafana 
 
    This action retrieves updated license information from AWS.
 
-> To learn more about licensing and active users, refer to [Understanding Grafana Enterprise licensing]({{< relref "../../license/license-restrictions" >}}).
+> To learn more about licensing and active users, refer to [Understanding Grafana Enterprise licensing]({{< relref "../license-restrictions/" >}}).

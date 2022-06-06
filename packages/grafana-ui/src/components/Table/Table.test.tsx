@@ -177,4 +177,35 @@ describe('Table', () => {
       ]);
     });
   });
+
+  describe('on filtering', () => {
+    it('the rows should be filtered', async () => {
+      getTestContext({
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2, 3, 4, 5],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
+      await userEvent.click(screen.getByLabelText('1'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      // 3 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
+    });
+  });
 });

@@ -85,6 +85,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
+	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
 		"userId", proxy.ctx.UserId,
 		"orgId", proxy.ctx.OrgId,
@@ -92,6 +93,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
+		"traceID", traceID,
 	)
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
@@ -220,14 +222,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	keepCookieNames := []string{}
-	if proxy.ds.JsonData != nil {
-		if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			keepCookieNames = keepCookies.MustStringArray()
-		}
-	}
-
-	proxyutil.ClearCookieHeader(req, keepCookieNames)
+	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies())
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	jsonData := make(map[string]interface{})

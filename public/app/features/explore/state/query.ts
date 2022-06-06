@@ -19,6 +19,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -323,7 +324,8 @@ async function handleHistory(
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
   // used filters. Instead, we refresh the query history list.
   // TODO: run only if Query History list is opened (#47252)
-  dispatch(loadRichHistory(exploreId));
+  await dispatch(loadRichHistory(ExploreId.left));
+  await dispatch(loadRichHistory(ExploreId.right));
 }
 
 /**
@@ -833,7 +835,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -843,7 +846,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }

@@ -2,33 +2,60 @@ package filestorage
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
+
+	// can ignore because we don't need a cryptographically secure hash function
+	// sha1 low chance of collisions and better performance than sha256
+	// nolint:gosec
+	"crypto/sha1"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type file struct {
-	Path             string    `xorm:"path"`
-	ParentFolderPath string    `xorm:"parent_folder_path"`
-	Contents         []byte    `xorm:"contents"`
-	Updated          time.Time `xorm:"updated"`
-	Created          time.Time `xorm:"created"`
-	Size             int64     `xorm:"size"`
-	MimeType         string    `xorm:"mime_type"`
+	Path                 string    `xorm:"path"`
+	PathHash             string    `xorm:"path_hash"`
+	ParentFolderPathHash string    `xorm:"parent_folder_path_hash"`
+	Contents             []byte    `xorm:"contents"`
+	ETag                 string    `xorm:"etag"`
+	CacheControl         string    `xorm:"cache_control"`
+	ContentDisposition   string    `xorm:"content_disposition"`
+	Updated              time.Time `xorm:"updated"`
+	Created              time.Time `xorm:"created"`
+	Size                 int64     `xorm:"size"`
+	MimeType             string    `xorm:"mime_type"`
 }
 
 type fileMeta struct {
-	Path  string `xorm:"path"`
-	Key   string `xorm:"key"`
-	Value string `xorm:"value"`
+	PathHash string `xorm:"path_hash"`
+	Key      string `xorm:"key"`
+	Value    string `xorm:"value"`
 }
 
 type dbFileStorage struct {
 	db  *sqlstore.SQLStore
 	log log.Logger
+}
+
+func createPathHash(path string) (string, error) {
+	hasher := sha1.New()
+	if _, err := hasher.Write([]byte(strings.ToLower(path))); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
+}
+
+func createContentsHash(contents []byte) string {
+	hash := md5.Sum(contents)
+	return hex.EncodeToString(hash[:])
 }
 
 func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, rootFolder string) FileStorage {
@@ -38,19 +65,19 @@ func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, root
 	}, filter, rootFolder)
 }
 
-func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []string) (map[string]map[string]string, error) {
+func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []string) (map[string]map[string]string, error) {
 	attributesByPath := make(map[string]map[string]string)
 
 	entities := make([]*fileMeta, 0)
-	if err := sess.Table("file_meta").In("path", lowerCasePaths).Find(&entities); err != nil {
+	if err := sess.Table("file_meta").In("path_hash", pathHashes).Find(&entities); err != nil {
 		return nil, err
 	}
 
 	for _, entity := range entities {
-		if _, ok := attributesByPath[entity.Path]; !ok {
-			attributesByPath[entity.Path] = make(map[string]string)
+		if _, ok := attributesByPath[entity.PathHash]; !ok {
+			attributesByPath[entity.PathHash] = make(map[string]string)
 		}
-		attributesByPath[entity.Path][entity.Key] = entity.Value
+		attributesByPath[entity.PathHash][entity.Key] = entity.Value
 	}
 
 	return attributesByPath, nil
@@ -58,15 +85,20 @@ func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []
 
 func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	var result *File
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+
+	pathHash, err := createPathHash(filePath)
+	if err != nil {
+		return nil, err
+	}
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		table := &file{}
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
+		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(table)
 		if !exists {
 			return nil
 		}
 
 		var meta = make([]*fileMeta, 0)
-		if err := sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Find(&meta); err != nil {
+		if err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Find(&meta); err != nil {
 			return err
 		}
 
@@ -100,9 +132,13 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 }
 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	pathHash, err := createPathHash(filePath)
+	if err != nil {
+		return err
+	}
+	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		table := &file{}
-		exists, innerErr := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
+		exists, innerErr := sess.Table("file").Where("path_hash = ?", pathHash).Get(table)
 		if innerErr != nil {
 			return innerErr
 		}
@@ -111,14 +147,14 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 			return nil
 		}
 
-		number, innerErr := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Delete(table)
+		number, innerErr := sess.Table("file").Where("path_hash = ?", pathHash).Delete(table)
 		if innerErr != nil {
 			return innerErr
 		}
 		s.log.Info("Deleted file", "path", filePath, "affectedRecords", number)
 
 		metaTable := &fileMeta{}
-		number, innerErr = sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Delete(metaTable)
+		number, innerErr = sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(metaTable)
 		if innerErr != nil {
 			return innerErr
 		}
@@ -131,9 +167,14 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 
 func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error {
 	now := time.Now()
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	pathHash, err := createPathHash(cmd.Path)
+	if err != nil {
+		return err
+	}
+
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Get(existing)
+		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(existing)
 		if err != nil {
 			return err
 		}
@@ -144,10 +185,13 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				contents := cmd.Contents
 				existing.Contents = contents
 				existing.MimeType = cmd.MimeType
+				existing.ETag = createContentsHash(contents)
+				existing.ContentDisposition = cmd.ContentDisposition
+				existing.CacheControl = cmd.CacheControl
 				existing.Size = int64(len(contents))
 			}
 
-			_, err = sess.Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Update(existing)
+			_, err = sess.Where("path_hash = ?", pathHash).Update(existing)
 			if err != nil {
 				return err
 			}
@@ -157,23 +201,32 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				contentsToInsert = cmd.Contents
 			}
 
-			file := &file{
-				Path:             cmd.Path,
-				ParentFolderPath: strings.ToLower(getParentFolderPath(cmd.Path)),
-				Contents:         contentsToInsert,
-				MimeType:         cmd.MimeType,
-				Size:             int64(len(contentsToInsert)),
-				Updated:          now,
-				Created:          now,
-			}
-			_, err := sess.Insert(file)
+			parentFolderPath := getParentFolderPath(cmd.Path)
+			parentFolderPathHash, err := createPathHash(parentFolderPath)
 			if err != nil {
+				return err
+			}
+
+			file := &file{
+				Path:                 cmd.Path,
+				PathHash:             pathHash,
+				ParentFolderPathHash: parentFolderPathHash,
+				Contents:             contentsToInsert,
+				ContentDisposition:   cmd.ContentDisposition,
+				CacheControl:         cmd.CacheControl,
+				ETag:                 createContentsHash(contentsToInsert),
+				MimeType:             cmd.MimeType,
+				Size:                 int64(len(contentsToInsert)),
+				Updated:              now,
+				Created:              now,
+			}
+			if _, err = sess.Insert(file); err != nil {
 				return err
 			}
 		}
 
 		if len(cmd.Properties) != 0 {
-			if err = upsertProperties(sess, now, cmd); err != nil {
+			if err = upsertProperties(s.db.Dialect, sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
 					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
 				}
@@ -187,36 +240,38 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 	return err
 }
 
-func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand) error {
+func upsertProperties(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand, pathHash string) error {
 	fileMeta := &fileMeta{}
-	_, err := sess.Table("file_meta").Where("path = ?", strings.ToLower(cmd.Path)).Delete(fileMeta)
+	_, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(fileMeta)
 	if err != nil {
 		return err
 	}
 
 	for key, val := range cmd.Properties {
-		if err := upsertProperty(sess, now, cmd.Path, key, val); err != nil {
+		if err := upsertProperty(dialect, sess, now, pathHash, key, val); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key string, val string) error {
+func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, pathHash string, key string, val string) error {
 	existing := &fileMeta{}
-	exists, err := sess.Table("file_meta").Where("path = ? AND key = ?", strings.ToLower(path), key).Get(existing)
+
+	keyEqualsCondition := fmt.Sprintf("%s = ?", dialect.Quote("key"))
+	exists, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Where(keyEqualsCondition, key).Get(existing)
 	if err != nil {
 		return err
 	}
 
 	if exists {
 		existing.Value = val
-		_, err = sess.Where("path = ? AND key = ?", strings.ToLower(path), key).Update(existing)
+		_, err = sess.Where("path_hash = ?", pathHash).Where(keyEqualsCondition, key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
-			Path:  strings.ToLower(path),
-			Key:   key,
-			Value: val,
+			PathHash: pathHash,
+			Key:      key,
+			Value:    val,
 		})
 	}
 	return err
@@ -229,7 +284,12 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cursor := ""
 		if paging != nil && paging.After != "" {
-			exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(paging.After)+Delimiter).Cols("mime_type").Exist()
+			pagingFolderPathHash, err := createPathHash(paging.After + Delimiter)
+			if err != nil {
+				return err
+			}
+
+			exists, err := sess.Table("file").Where("path_hash = ?", pagingFolderPathHash).Exist()
 			if err != nil {
 				return err
 			}
@@ -252,12 +312,18 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			lowerFolderPrefix = lowerFolderPath + Delimiter
 		}
 
-		sess.Where("LOWER(path) != ?", lowerFolderPrefix)
+		prefixHash, _ := createPathHash(lowerFolderPrefix)
+
+		sess.Where("path_hash != ?", prefixHash)
+		parentHash, err := createPathHash(lowerFolderPath)
+		if err != nil {
+			return err
+		}
 
 		if !options.Recursive {
-			sess.Where("parent_folder_path = ?", lowerFolderPath)
+			sess.Where("parent_folder_path_hash = ?", parentHash)
 		} else {
-			sess.Where("(parent_folder_path = ?) OR (parent_folder_path LIKE ?)", lowerFolderPath, lowerFolderPrefix+"%")
+			sess.Where("(parent_folder_path_hash = ?) OR (lower(path) LIKE ?)", parentHash, lowerFolderPrefix+"%")
 		}
 
 		if !options.WithFolders && options.WithFiles {
@@ -289,14 +355,20 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			foundLength = pageSize
 		}
 
-		lowerCasePaths := make([]string, 0)
+		pathToHash := make(map[string]string)
+		hashes := make([]string, 0)
 		for i := 0; i < foundLength; i++ {
 			isFolder := strings.HasSuffix(foundFiles[i].Path, Delimiter)
 			if !isFolder {
-				lowerCasePaths = append(lowerCasePaths, strings.ToLower(foundFiles[i].Path))
+				hash, err := createPathHash(foundFiles[i].Path)
+				if err != nil {
+					return err
+				}
+				hashes = append(hashes, hash)
+				pathToHash[foundFiles[i].Path] = hash
 			}
 		}
-		propertiesByLowerPath, err := s.getProperties(sess, lowerCasePaths)
+		propertiesByPathHash, err := s.getProperties(sess, hashes)
 		if err != nil {
 			return err
 		}
@@ -305,8 +377,13 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 		for i := 0; i < foundLength; i++ {
 			var props map[string]string
 			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
-			if foundProps, ok := propertiesByLowerPath[strings.ToLower(path)]; ok {
-				props = foundProps
+
+			if hash, ok := pathToHash[path]; ok {
+				if foundProps, ok := propertiesByPathHash[hash]; ok {
+					props = foundProps
+				} else {
+					props = make(map[string]string)
+				}
 			} else {
 				props = make(map[string]string)
 			}
@@ -360,7 +437,13 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 			if !strings.HasSuffix(currentFolderPath, Delimiter) {
 				currentFolderPath = currentFolderPath + Delimiter
 			}
-			exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(currentFolderPath)).Get(existing)
+
+			currentFolderPathHash, err := createPathHash(currentFolderPath)
+			if err != nil {
+				return err
+			}
+
+			exists, err := sess.Table("file").Where("path_hash = ?", currentFolderPathHash).Get(existing)
 			if err != nil {
 				insertErr = err
 				break
@@ -371,20 +454,28 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 				continue
 			}
 
+			currentFolderParentPathHash, err := createPathHash(currentFolderParentPath)
+			if err != nil {
+				return err
+			}
+
+			contents := make([]byte, 0)
 			file := &file{
-				Path:             currentFolderPath,
-				ParentFolderPath: strings.ToLower(currentFolderParentPath),
-				Contents:         make([]byte, 0),
-				Updated:          now,
-				MimeType:         DirectoryMimeType,
-				Created:          now,
+				Path:                 currentFolderPath,
+				PathHash:             currentFolderPathHash,
+				ParentFolderPathHash: currentFolderParentPathHash,
+				Contents:             contents,
+				ETag:                 createContentsHash(contents),
+				Updated:              now,
+				MimeType:             DirectoryMimeType,
+				Created:              now,
 			}
 			_, err = sess.Insert(file)
 			if err != nil {
 				insertErr = err
 				break
 			}
-			s.log.Info("Created folder", "markerPath", file.Path, "parent", file.ParentFolderPath)
+			s.log.Info("Created folder", "markerPath", file.Path, "parent", currentFolderParentPath)
 		}
 
 		if insertErr != nil {
@@ -403,8 +494,11 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) error {
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		internalFolderPath := strings.ToLower(folderPath) + Delimiter
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", internalFolderPath).Get(existing)
+		internalFolderPathHash, err := createPathHash(folderPath + Delimiter)
+		if err != nil {
+			return err
+		}
+		exists, err := sess.Table("file").Where("path_hash = ?", internalFolderPathHash).Get(existing)
 		if err != nil {
 			return err
 		}
@@ -413,7 +507,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) erro
 			return nil
 		}
 
-		_, err = sess.Table("file").Where("LOWER(path) = ?", internalFolderPath).Delete(existing)
+		_, err = sess.Table("file").Where("path_hash = ?", internalFolderPathHash).Delete(existing)
 		return err
 	})
 

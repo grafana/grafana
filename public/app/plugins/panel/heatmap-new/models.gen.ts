@@ -3,16 +3,10 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { HideableFieldConfig, LegendDisplayMode, OptionsWithLegend, VisibilityMode } from '@grafana/schema';
-import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { AxisConfig, AxisPlacement, HideableFieldConfig, ScaleDistributionConfig, VisibilityMode } from '@grafana/schema';
+import { HeatmapBucketLayout, HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
-
-export enum HeatmapSourceMode {
-  Auto = 'auto',
-  Calculate = 'calculate',
-  Data = 'data', // Use the data as is
-}
 
 export enum HeatmapColorMode {
   Opacity = 'opacity',
@@ -30,10 +24,19 @@ export interface HeatmapColorOptions {
   fill: string; // when opacity mode, the target color
   scale: HeatmapColorScale; // for opacity mode
   exponent: number; // when scale== sqrt
-  steps: number; // 2-256
+  steps: number; // 2-128
 
   // Clamp the colors to the value range
-  field?: string;
+  min?: number;
+  max?: number;
+}
+export interface YAxisConfig extends AxisConfig {
+  unit?: string;
+  reverse?: boolean; 
+  decimals?: number;
+}
+
+export interface FilterValueRange {
   min?: number;
   max?: number;
 }
@@ -42,26 +45,40 @@ export interface HeatmapTooltip {
   show: boolean;
   yHistogram?: boolean;
 }
+export interface HeatmapLegend {
+  show: boolean;
+}
 
-export interface PanelOptions extends OptionsWithLegend {
-  source: HeatmapSourceMode;
+export interface ExemplarConfig {
+  color: string;
+}
+
+export interface BucketOptions {
+  name?: string;
+  layout?: HeatmapBucketLayout;
+}
+
+export interface PanelOptions {
+  calculate?: boolean;
+  calculation?: HeatmapCalculationOptions;
 
   color: HeatmapColorOptions;
-  heatmap?: HeatmapCalculationOptions;
+  filterValues?: FilterValueRange; // was hideZeroBuckets
+  bucket?: BucketOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
   cellSize?: number; // was cardRadius
 
-  hideThreshold?: number; // was hideZeroBuckets
-  yAxisLabels?: string;
-  yAxisReverse?: boolean;
+  yAxis: YAxisConfig;
+  legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
+  exemplars: ExemplarConfig;
 }
 
 export const defaultPanelOptions: PanelOptions = {
-  source: HeatmapSourceMode.Auto,
+  calculate: false,
   color: {
     mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',
@@ -70,23 +87,31 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
-  showValue: VisibilityMode.Auto,
-  legend: {
-    displayMode: LegendDisplayMode.Hidden,
-    placement: 'bottom',
-    calcs: [],
+  bucket: {
+    layout: HeatmapBucketLayout.auto,
   },
+  yAxis: {
+    axisPlacement: AxisPlacement.Left,
+  },
+  showValue: VisibilityMode.Auto,
   tooltip: {
     show: true,
     yHistogram: false,
   },
-  cellGap: 3,
+  legend: {
+    show: true,
+  },
+  exemplars: {
+    color: 'rgba(255,0,255,0.7)',
+  },
+  filterValues: {
+    min: 1e-9,
+  },
+  cellGap: 1,
 };
 
 export interface PanelFieldConfig extends HideableFieldConfig {
-  // TODO points vs lines etc
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
-export const defaultPanelFieldConfig: PanelFieldConfig = {
-  // default to points?
-};
+export const defaultPanelFieldConfig: PanelFieldConfig = {};

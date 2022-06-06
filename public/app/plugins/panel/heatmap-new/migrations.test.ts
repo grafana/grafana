@@ -25,39 +25,55 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
+          "bucket": Object {
+            "layout": "auto",
+          },
+          "calculate": true,
+          "calculation": Object {
+            "xBuckets": Object {
+              "mode": "count",
+              "value": "100",
+            },
+            "yBuckets": Object {
+              "mode": "count",
+              "scale": Object {
+                "log": 2,
+                "type": "log",
+              },
+              "value": "3",
+            },
+          },
           "cellGap": 2,
           "cellSize": 10,
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
+            "max": 100,
+            "min": 5,
             "mode": "scheme",
             "scale": "exponential",
-            "scheme": "Oranges",
-            "steps": 256,
+            "scheme": "BuGn",
+            "steps": 128,
           },
-          "heatmap": Object {
-            "xAxis": Object {
-              "mode": "count",
-              "value": "100",
-            },
-            "yAxis": Object {
-              "mode": "count",
-              "value": "20",
-            },
+          "exemplars": Object {
+            "color": "rgba(255,0,255,0.7)",
+          },
+          "filterValues": Object {
+            "min": 1e-9,
           },
           "legend": Object {
-            "calcs": Array [],
-            "displayMode": "list",
-            "placement": "bottom",
+            "show": true,
           },
           "showValue": "never",
-          "source": "calculate",
           "tooltip": Object {
             "show": true,
             "yHistogram": true,
           },
-          "yAxisLabels": "auto",
-          "yAxisReverse": false,
+          "yAxis": Object {
+            "axisPlacement": "left",
+            "axisWidth": 400,
+            "reverse": false,
+          },
         },
       }
     `);
@@ -102,8 +118,8 @@ const oldHeatmap = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateBuGn',
-    min: null,
-    max: null,
+    min: 5,
+    max: 100,
   },
   legend: {
     show: true,
@@ -118,10 +134,11 @@ const oldHeatmap = {
     show: true,
     format: 'short',
     decimals: null,
-    logBase: 1,
-    splitFactor: null,
+    logBase: 2,
+    splitFactor: 3,
     min: null,
     max: null,
+    width: '400',
   },
   xBucketSize: null,
   xBucketNumber: 100,

@@ -579,19 +579,23 @@ describe('CloudWatchDatasource', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      // We interpolate `expression` and `region` in CloudWatchLogsQuery
+      // We interpolate `region` in CloudWatchLogsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(2);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(1);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
-      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
+      const templateSrv: any = {
+        replace: jest.fn(),
+        getVariables: () => [],
+        getVariableName: jest.fn((name: string) => name),
+      };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
         id: 'someId',
         refId: 'someRefId',
-        queryMode: 'Metrics',
         expression: `$${variableName}`,
         region: `$${variableName}`,
         period: `$${variableName}`,
@@ -608,9 +612,12 @@ describe('CloudWatchDatasource', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(9);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(7);
+
+      expect(templateSrv.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
+      expect(templateSrv.getVariableName).toHaveBeenCalledTimes(1);
     });
   });
 

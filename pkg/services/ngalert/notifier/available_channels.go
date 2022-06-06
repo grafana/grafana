@@ -190,6 +190,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					PropertyName: "message",
 				},
+				{ // New in 9.0.
+					Label:        "Subject",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated subject of the email",
+					PropertyName: "subject",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
 			},
 		},
 		{
@@ -561,6 +569,21 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "Teams incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated title of the Teams message.",
+					PropertyName: "title",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
+				{
+					Label:        "Section Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Section title for the Teams message. Leave blank for none.",
+					PropertyName: "sectiontitle",
 				},
 				{ // New in 8.0.
 					Label:        "Message",

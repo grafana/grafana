@@ -12,7 +12,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'ref'
 }
 
 export function QueryHeaderSwitch({ label, ...inputProps }: Props) {
-  const switchIdRef = useRef(uniqueId(`switch-${label}`));
+  const dashedLabel = label.replace(' ', '-');
+  const switchIdRef = useRef(uniqueId(`switch-${dashedLabel}`));
   const styles = useStyles2(getStyles);
 
   return (

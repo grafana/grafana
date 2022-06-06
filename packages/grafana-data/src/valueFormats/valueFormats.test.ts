@@ -103,6 +103,9 @@ describe('valueFormats', () => {
 
       expect(toFixed(100.4, 2)).toBe('100.40');
       expect(toFixed(100.5, 2)).toBe('100.50');
+
+      expect(toFixed(0, 1)).toBe('0.0');
+      expect(toFixed(0, 2)).toBe('0.00');
     });
   });
 

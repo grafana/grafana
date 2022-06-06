@@ -8,16 +8,13 @@ import {
   ThresholdsMode,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
-  getActiveThreshold,
-  Threshold,
-  getColorForTheme,
-  FieldColorModeId,
-  FALLBACK_COLOR,
-  TextDisplayOptions,
 } from '@grafana/data';
+import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
+
+import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
 
 export interface Props extends Themeable {
   height: number;
@@ -26,7 +23,7 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  text?: TextDisplayOptions;
+  text?: VizTextDisplayOptions;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
 }
@@ -40,13 +37,7 @@ export class Gauge extends PureComponent<Props> {
     field: {
       min: 0,
       max: 100,
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: 'green' },
-          { value: 80, color: 'red' },
-        ],
-      },
+      thresholds: DEFAULT_THRESHOLDS,
     },
   };
 
@@ -56,48 +47,6 @@ export class Gauge extends PureComponent<Props> {
 
   componentDidUpdate() {
     this.draw();
-  }
-
-  getFormattedThresholds(decimals: number): Threshold[] {
-    const { field, theme, value } = this.props;
-
-    if (field.color?.mode !== FieldColorModeId.Thresholds) {
-      return [{ value: field.min ?? GAUGE_DEFAULT_MINIMUM, color: value.color ?? FALLBACK_COLOR }];
-    }
-
-    const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
-    const isPercent = thresholds.mode === ThresholdsMode.Percentage;
-    const steps = thresholds.steps;
-
-    let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
-    let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
-
-    if (isPercent) {
-      min = 0;
-      max = 100;
-    }
-
-    const first = getActiveThreshold(min, steps);
-    const last = getActiveThreshold(max, steps);
-    const formatted: Threshold[] = [];
-    formatted.push({ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) });
-    let skip = true;
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      if (skip) {
-        if (first === step) {
-          skip = false;
-        }
-        continue;
-      }
-      const prev = steps[i - 1];
-      formatted.push({ value: step.value, color: getColorForTheme(prev!.color, theme) });
-      if (step === last) {
-        break;
-      }
-    }
-    formatted.push({ value: +max.toFixed(decimals), color: getColorForTheme(last.color, theme) });
-    return formatted;
   }
 
   draw() {
@@ -157,7 +106,7 @@ export class Gauge extends PureComponent<Props> {
           layout: { margin: 0, thresholdWidth: 0, vMargin: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: this.getFormattedThresholds(decimals),
+            values: getFormattedThresholds(decimals, field, value, theme),
             label: {
               show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
@@ -239,24 +188,4 @@ export class Gauge extends PureComponent<Props> {
       </div>
     );
   }
-}
-
-interface GaugeAutoProps {
-  titleFontSize: number;
-  gaugeHeight: number;
-  showLabel: boolean;
-}
-
-function calculateGaugeAutoProps(width: number, height: number, title: string | undefined): GaugeAutoProps {
-  const showLabel = title !== null && title !== undefined;
-  const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
-  const titleHeight = titleFontSize * 1.5;
-  const availableHeight = showLabel ? height - titleHeight : height;
-  const gaugeHeight = Math.min(availableHeight, width);
-
-  return {
-    showLabel,
-    gaugeHeight,
-    titleFontSize,
-  };
 }
