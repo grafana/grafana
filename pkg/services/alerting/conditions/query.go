@@ -221,7 +221,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
 					return nil, fmt.Errorf(
-						`request handler failed to convert dataframe "%v:" to plugins.DataTimeSeriesSlice: %w`, frame.Name, err)
+						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice: %w`, frame.Name, err)
 				}
 				result = append(result, ss...)
 			}
