@@ -108,6 +108,5 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		}
 	}
 
-
 	return nil
 }
