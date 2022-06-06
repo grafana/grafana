@@ -60,6 +60,9 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
         },
       };
     }
+
+    fieldConfig.defaults.unit = oldYAxis.format;
+    fieldConfig.defaults.decimals = oldYAxis.decimals;
   }
 
   const options: PanelOptions = {
@@ -69,14 +72,16 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
-    cellGap: asNumber(angular.cards?.cardPadding),
-    cellSize: asNumber(angular.cards?.cardRound),
+    cellGap: asNumber(angular.cards?.cardPadding, 2),
+    cellRadius: asNumber(angular.cards?.cardRound), // just to keep it
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),
       axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+      min: oldYAxis.min,
+      max: oldYAxis.max,
     },
-    bucket: {
+    bucketFrame: {
       layout: getHeatmapBucketLayout(angular.yBucketBound),
     },
     legend: {
@@ -134,9 +139,12 @@ function getHeatmapBucketLayout(v?: string): HeatmapBucketLayout {
   return HeatmapBucketLayout.auto;
 }
 
-function asNumber(v: any): number | undefined {
+function asNumber(v: any, defaultValue?: number): number | undefined {
+  if (v == null || v === '') {
+    return defaultValue;
+  }
   const num = +v;
-  return isNaN(num) ? undefined : num;
+  return isNaN(num) ? defaultValue : num;
 }
 
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
