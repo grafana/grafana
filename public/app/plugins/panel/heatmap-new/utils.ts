@@ -304,7 +304,6 @@ export function prepConfig(opts: PrepConfigOpts) {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
             }
-
             return [dataMin, dataMax];
           },
   });
@@ -327,14 +326,13 @@ export function prepConfig(opts: PrepConfigOpts) {
             return [0, 1]; //?
           }
           let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
-          const isFromBuckets = 'le' !== meta.yMatchWithLabel;
 
           switch (dataRef.current?.yLayout) {
             case HeatmapBucketLayout.le:
-              splits.unshift((isFromBuckets ? undefined : '0.0') as any); // assumes dense layout where lowest bucket's low bound is 0-ish
+              splits.unshift(-1);
               break;
             case HeatmapBucketLayout.ge:
-              splits.push((isFromBuckets ? undefined : '+Inf') as any);
+              splits.push(splits.length);
               break;
           }
 
@@ -349,9 +347,18 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? (self: uPlot, splits) => {
           const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
-            return splits.map((v) => meta.yOrdinalDisplay[v] ?? v);
+            return splits.map((v) => {
+              const txt = meta.yOrdinalDisplay[v];
+              if (!txt && v < 0) {
+                // Check prometheus style labels
+                if ('le' === meta.yMatchWithLabel) {
+                  return '0.0';
+                }
+              }
+              return txt;
+            });
           }
-          return splits.map((v) => `$`);
+          return splits.map((v) => `${v}`);
         }
       : undefined,
   });
