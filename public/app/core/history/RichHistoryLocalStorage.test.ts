@@ -72,7 +72,7 @@ describe('RichHistoryLocalStorage', () => {
     now = new Date(1970, 0, 1);
     old = new Date(1969, 0, 1);
 
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(now);
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();
