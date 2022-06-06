@@ -98,8 +98,6 @@ datasources:
     uid: my_unique_uid
     # <string> url
     url: http://localhost:8080
-    # <string> Deprecated, use secureJsonData.password
-    password:
     # <string> database user, if used
     user:
     # <string> database name, if used
@@ -108,8 +106,6 @@ datasources:
     basicAuth:
     # <string> basic auth username
     basicAuthUser:
-    # <string> Deprecated, use secureJsonData.basicAuthPassword
-    basicAuthPassword:
     # <bool> enable/disable with credentials headers
     withCredentials:
     # <bool> mark as default datasource. Max one per org
