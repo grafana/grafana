@@ -648,7 +648,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			if err != nil {
 				return err
 			}
-			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}
 

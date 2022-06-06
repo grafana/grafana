@@ -48,3 +48,26 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 
 	return nil
 }
+
+func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
+	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
+		return nil
+	}
+
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	if err != nil {
+		return err
+	}
+
+	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+
+	canView, err := g.CanView()
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return models.ErrFolderAccessDenied
+	}
+
+	return nil
+}
