@@ -56,8 +56,8 @@ export interface ExemplarConfig {
   color: string;
 }
 
-export interface BucketOptions {
-  name?: string;
+export interface BucketFrameOptions {
+  value?: string; // value field name
   layout?: HeatmapBucketLayout;
 }
 
@@ -67,7 +67,7 @@ export interface PanelOptions {
 
   color: HeatmapColorOptions;
   filterValues?: FilterValueRange; // was hideZeroBuckets
-  bucket?: BucketOptions;
+  bucketFrame?: BucketFrameOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
@@ -90,7 +90,7 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
-  bucket: {
+  bucketFrame: {
     layout: HeatmapBucketLayout.auto,
   },
   yAxis: {

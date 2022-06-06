@@ -81,7 +81,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       min: oldYAxis.min,
       max: oldYAxis.max,
     },
-    bucket: {
+    bucketFrame: {
       layout: getHeatmapBucketLayout(angular.yBucketBound),
     },
     legend: {

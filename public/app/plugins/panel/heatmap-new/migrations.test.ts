@@ -28,7 +28,7 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
-          "bucket": Object {
+          "bucketFrame": Object {
             "layout": "auto",
           },
           "calculate": true,

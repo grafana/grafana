@@ -75,7 +75,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(bucketsToScanlines({ ...options.bucket, frame: bucketHeatmap }), exemplars, theme);
+  return getHeatmapData(bucketsToScanlines({ ...options.bucketFrame, frame: bucketHeatmap }), exemplars, theme);
 }
 
 const getSparseHeatmapData = (

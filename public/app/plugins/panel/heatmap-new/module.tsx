@@ -125,9 +125,9 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (!opts.calculate) {
       builder.addRadio({
-        path: 'bucket.layout',
+        path: 'bucketFrame.layout',
         name: 'Tick alignment',
-        defaultValue: defaultPanelOptions.bucket?.layout ?? HeatmapBucketLayout.auto,
+        defaultValue: defaultPanelOptions.bucketFrame?.layout ?? HeatmapBucketLayout.auto,
         category,
         settings: {
           options: [
@@ -326,9 +326,9 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (!opts.calculate) {
       builder.addTextInput({
-        path: 'bucket.name',
+        path: 'bucketFrame.value',
         name: 'Cell value name',
-        defaultValue: defaultPanelOptions.bucket?.name,
+        defaultValue: defaultPanelOptions.bucketFrame?.value,
         settings: {
           placeholder: 'Value',
         },
