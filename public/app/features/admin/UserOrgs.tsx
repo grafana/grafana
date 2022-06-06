@@ -193,7 +193,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
-    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
+    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
     const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
     const rolePickerDisabled = isExternalUser || !canChangeRole;
 
@@ -328,7 +328,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     this.props.onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
+      if (contextSrv.hasPermission(AccessControlAction.OrgUsersWrite)) {
         if (this.state.pendingUserId) {
           await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state

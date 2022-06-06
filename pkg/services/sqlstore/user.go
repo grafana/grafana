@@ -577,7 +577,20 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			user.ExternalAuthId = ""
 		}
 
-		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+		// tempUser is used to retrieve the teams for the signed in user for internal use.
+		tempUser := &models.SignedInUser{
+			OrgId: user.OrgId,
+			Permissions: map[int64]map[string][]string{
+				user.OrgId: {
+					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+				},
+			},
+		}
+		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+			OrgId:        user.OrgId,
+			UserId:       user.UserId,
+			SignedInUser: tempUser,
+		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 		if err != nil {
 			return err

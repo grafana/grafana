@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/fatih/color"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,12 +24,12 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 
 		cfg, err := initCfg(cmd)
 		if err != nil {
-			return errutil.Wrap("failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
 
 		r, err := runner.Initialize(cfg)
 		if err != nil {
-			return errutil.Wrap("failed to initialize runner", err)
+			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
 		if err := command(cmd, r); err != nil {
@@ -47,17 +47,17 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		cfg, err := initCfg(cmd)
 		if err != nil {
-			return errutil.Wrap("failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
 
 		tracer, err := tracing.ProvideService(cfg)
 		if err != nil {
-			return errutil.Wrap("failed to initialize tracer service", err)
+			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 		}
 
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, tracer)
 		if err != nil {
-			return errutil.Wrap("failed to initialize SQL store", err)
+			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
 
 		if err := command(cmd, sqlStore); err != nil {

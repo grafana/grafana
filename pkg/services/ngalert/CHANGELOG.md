@@ -51,6 +51,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
   - `grafana_alerting_ticker_interval_seconds`
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
+- [ENHANCEMENT] Scheduler: ticker to support stopping #48142
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
@@ -60,7 +61,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
 - [BUGFIX] Fix access to alerts for Viewer role with editor permissions in folder #49270
 - [BUGFIX] Alerting: Remove double quotes from double quoted matchers #xxxx
-- [ENHANCEMENT] Scheduler: ticker to support stopping #48142
+- [BUGFIX] Alerting: rules API to not detect difference between nil and empty map (Annotations, Labels) #50192
 
 ## 8.5.3
 

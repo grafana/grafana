@@ -23,6 +23,20 @@ export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId
   });
 };
 
+export const assertQueryHistoryComment = async (
+  expectedQueryComments: string[],
+  exploreId: ExploreId = ExploreId.left
+) => {
+  const selector = withinExplore(exploreId);
+  await waitFor(() => {
+    expect(selector.getByText(new RegExp(`${expectedQueryComments.length} queries`))).toBeInTheDocument();
+    const queryComments = selector.getAllByLabelText('Query comment');
+    expectedQueryComments.forEach((expectedQueryText, queryIndex) => {
+      expect(queryComments[queryIndex]).toHaveTextContent(expectedQueryText);
+    });
+  });
+};
+
 export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
   const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });

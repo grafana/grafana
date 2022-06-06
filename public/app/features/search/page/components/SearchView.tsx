@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
@@ -13,6 +13,7 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
+import { reportDashboardListViewed } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -49,6 +50,8 @@ export const SearchView = ({
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
+  const [listKey, setListKey] = useState(Date.now());
+
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
       query: queryText,
@@ -80,6 +83,21 @@ export const SearchView = ({
     return q;
   }, [query, queryText, folderDTO, includePanels]);
 
+  // Search usage reporting
+  useDebounce(
+    () => {
+      reportDashboardListViewed(folderDTO ? 'manage_dashboards' : 'dashboard_search', {
+        layout: query.layout,
+        starred: query.starred,
+        sortValue: query.sort?.value,
+        query: query.query,
+        tagCount: query.tag?.length,
+      });
+    },
+    1000,
+    [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
+  );
+
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
@@ -97,10 +115,6 @@ export const SearchView = ({
     [searchSelection]
   );
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
-
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
     return getGrafanaSearcher().tags(searchQuery);
@@ -109,7 +123,8 @@ export const SearchView = ({
   // function to update items when dashboards or folders are moved or deleted
   const onChangeItemsList = async () => {
     // clean up search selection
-    setSearchSelection(newSearchSelection());
+    clearSelection();
+    setListKey(Date.now());
     // trigger again the search to the backend
     onQueryChange(query.query);
   };
@@ -157,11 +172,13 @@ export const SearchView = ({
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
             tags={query.tag}
+            key={listKey}
           />
         );
       }
       return (
         <FolderView
+          key={listKey}
           selection={selection}
           selectionToggle={toggleSelection}
           tags={query.tag}
@@ -197,8 +214,19 @@ export const SearchView = ({
     );
   };
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
+  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
+    return (
+      <EmptyListCTA
+        title="This folder doesn't have any dashboards yet"
+        buttonIcon="plus"
+        buttonTitle="Create Dashboard"
+        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        proTip="Add/move dashboards to your folder at ->"
+        proTipLink="dashboards"
+        proTipLinkTitle="Manage dashboards"
+        proTipTarget=""
+      />
+    );
   }
 
   return (

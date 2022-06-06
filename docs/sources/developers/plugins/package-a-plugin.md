@@ -33,7 +33,7 @@ There are three steps needed to package a plugin:
    mage
    ```
 
-1. [Sign the plugin]({{< relref "sign-a-plugin.md" >}}).
+1. [Sign the plugin]({{< relref "sign-a-plugin/" >}}).
 
 1. Create a ZIP archive of the `dist` directory.
 

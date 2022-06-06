@@ -39,10 +39,10 @@ Windows users might need to make additional adjustments. Look for special instru
 
 You can have more than one InfluxDB data source defined in Grafana.
 
-1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
+1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}).
 1. Decide if you will use InfluxQL or Flux as your query language.
-   - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
-   - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux.md" >}}) for information about specific data source fields.
+   - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/" >}}) for information about specific data source fields.
+   - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux/" >}}) for information about specific data source fields.
 
 ##### InfluxDB guides
 
@@ -101,7 +101,7 @@ You can also create Flux queries in the InfluxDB Explore view.
 
 #### Check InfluxDB metrics in Grafana Explore
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
+In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
 
 #### Start building dashboards
 
@@ -109,5 +109,5 @@ There you go! Use Explore and Data Explorer to experiment with your data, and ad
 
 Here are some resources to learn more:
 
-- Grafana documentation: [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}})
+- Grafana documentation: [InfluxDB data source]({{< relref "../datasources/influxdb/" >}})
 - InfluxDB documentation: [Comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
