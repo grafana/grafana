@@ -63,8 +63,6 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
 
     fieldConfig.defaults.unit = oldYAxis.format;
     fieldConfig.defaults.decimals = oldYAxis.decimals;
-    fieldConfig.defaults.min = oldYAxis.min;
-    fieldConfig.defaults.max = oldYAxis.max;
   }
 
   const options: PanelOptions = {
@@ -80,6 +78,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),
       axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+      min: oldYAxis.min,
+      max: oldYAxis.max,
     },
     bucket: {
       layout: getHeatmapBucketLayout(angular.yBucketBound),

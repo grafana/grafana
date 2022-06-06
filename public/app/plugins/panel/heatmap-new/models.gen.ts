@@ -34,6 +34,9 @@ export interface YAxisConfig extends AxisConfig {
   unit?: string;
   reverse?: boolean; 
   decimals?: number;
+  // Only used when the axis is not ordinal
+  min?: number;
+  max?: number;
 }
 
 export interface FilterValueRange {

@@ -81,6 +81,27 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
+    if (opts.calculate) {
+      // TODO: sparse heatmap may also need this setting
+      builder
+        .addNumberInput({
+          path: 'yAxis.min',
+          name: 'Min value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        })
+        .addTextInput({
+          path: 'yAxis.max',
+          name: 'Max value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        });
+    }
+
     builder
       .addNumberInput({
         path: 'yAxis.axisWidth',
