@@ -6,8 +6,10 @@ export interface AlertRulesContext {
   setSelectedAlertRule: (alertRule: AlertRule | null) => void;
 }
 
+//New types of filters add here, they will be automatically added everywhere
 export enum AlertRuleFilterType {
   EQUAL = '=',
+  REGEX = '=~',
 }
 
 export enum AlertRuleSeverity {

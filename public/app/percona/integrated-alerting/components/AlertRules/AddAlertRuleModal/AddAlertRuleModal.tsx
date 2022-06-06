@@ -1,18 +1,13 @@
-import {
-  Modal,
-  LoaderButton,
-  TextInputField,
-  NumberInputField,
-  logger,
-  validators,
-  TextareaInputField,
-} from '@percona/platform-core';
-import React, { FC, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Modal, LoaderButton, TextInputField, NumberInputField, logger, validators } from '@percona/platform-core';
+import arrayMutators from 'final-form-arrays';
+import React, { FC, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Form, Field } from 'react-final-form';
+import { FieldArray } from 'react-final-form-arrays';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { Button, HorizontalGroup, Switch, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Switch, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { Label } from 'app/percona/shared/components/Form/Label';
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
@@ -23,6 +18,7 @@ import { NotificationChannelService } from '../../NotificationChannel/Notificati
 import { AlertRuleParamField } from '../AlertRuleParamField';
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
+import { AlertRuleFilterType } from '../AlertRules.types';
 
 import { Messages } from './AddAlertRuleModal.messages';
 import { getStyles } from './AddAlertRuleModal.styles';
@@ -35,17 +31,27 @@ import {
   getInitialValues,
   minValidator,
 } from './AddAlertRuleModal.utils';
-import { MINIMUM_DURATION_VALUE } from './AddAlertRulesModal.constants';
+import { SEVERITY_OPTIONS, MINIMUM_DURATION_VALUE } from './AddAlertRulesModal.constants';
 import { AdvancedRuleSection } from './AdvancedRuleSection/AdvancedRuleSection';
 
 const { required } = validators;
 const durationValidators = [required, minValidator(MINIMUM_DURATION_VALUE)];
 const nameValidators = [required];
+const filterTextFieldsValidators = [required];
 
 export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVisible, alertRule }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [templateOptions, setTemplateOptions] = useState<Array<SelectableValue<string>>>();
   const [channelsOptions, setChannelsOptions] = useState<Array<SelectableValue<string>>>();
+
+  const filterOptions: Array<SelectableValue<AlertRuleFilterType>> = useMemo(
+    () =>
+      Object.entries(AlertRuleFilterType).map(([key, value]) => ({
+        label: `${value} (${key})`,
+        value: value,
+      })),
+    []
+  );
   const templates = useRef<Template[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<Template>();
   const { getAlertRules, setSelectedAlertRule } = useContext(AlertRulesProvider);
@@ -146,8 +152,18 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
           changeParam: ([paramName, paramValue], state, tools) => {
             tools.changeValue(state, paramName, () => paramValue);
           },
+          ...arrayMutators,
         }}
-        render={({ handleSubmit, valid, pristine, submitting, form }) => (
+        render={({
+          handleSubmit,
+          valid,
+          pristine,
+          submitting,
+          form: {
+            mutators: { push },
+          },
+          form,
+        }) => (
           <form className={styles.form} onSubmit={handleSubmit} data-testid="add-alert-rule-modal-form">
             <Field name="template" validate={required}>
               {({ input }) => (
@@ -206,8 +222,64 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                 />
               )}
             </Field>
+            <div className={styles.filtersLabelWrapper}>
+              <Label label={Messages.filter.header} dataTestId="filters-field-label" />
+              <LinkTooltip tooltipText={Messages.tooltips.filters} icon="info-circle" />
+            </div>
 
-            <TextareaInputField label={Messages.filtersField} name="filters" tooltipText={Messages.tooltips.filters} />
+            <Button
+              className={styles.filterButton}
+              variant="secondary"
+              type="button"
+              onClick={() => push('filters')}
+              data-testid="add-filter-button"
+            >
+              {Messages.filter.addButton}
+            </Button>
+            <FieldArray name="filters">
+              {({ fields }) =>
+                fields.map((name, index) => (
+                  <div key={name} className={styles.filterRowWrapper} data-testid="filter-fields-row">
+                    <div className={styles.filterFields}>
+                      <TextInputField
+                        label={Messages.filter.fieldLabel}
+                        name={`${name}.label`}
+                        validators={filterTextFieldsValidators}
+                      />
+                    </div>
+
+                    <div className={styles.filterFields}>
+                      <Field name={`${name}.operators`} validate={required}>
+                        {({ input }) => (
+                          <SelectField
+                            className={styles.selectField}
+                            label={Messages.filter.fieldOperators}
+                            options={filterOptions}
+                            {...input}
+                          />
+                        )}
+                      </Field>
+                    </div>
+                    <div className={styles.filterFields}>
+                      <TextInputField
+                        label={Messages.filter.fieldValue}
+                        name={`${name}.value`}
+                        validators={filterTextFieldsValidators}
+                      />
+                    </div>
+                    <div className={styles.iconWrapper}>
+                      <Icon
+                        className={styles.icon}
+                        onClick={() => fields.remove(index)}
+                        name="trash-alt"
+                        size="xl"
+                        data-testid="delete-filter-button"
+                      />
+                    </div>
+                  </div>
+                ))
+              }
+            </FieldArray>
 
             <Field name="notificationChannels">
               {({ input }) => (
