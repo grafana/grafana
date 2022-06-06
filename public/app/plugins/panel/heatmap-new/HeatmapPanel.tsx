@@ -57,7 +57,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsyFacet: number[] = [];
 
     const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
-    if (info.exemplars && meta.yMatchWithLabel) {
+    if (info.exemplars?.length && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
       // ordinal/labeled heatmap-buckets?
@@ -126,7 +126,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
-      hideThreshold: options.filterValues?.min, // eventually a better range
+      hideLE: options.filterValues?.le,
+      hideGE: options.filterValues?.ge,
+      valueMin: options.color.min,
+      valueMax: options.color.max,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
@@ -143,7 +146,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let countFieldIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
-    const { min, max } = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
+    // TODO -- better would be to get the range from the real color scale!
+    let { min, max } = options.color;
+    if (min == null || max == null) {
+      const calc = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
+      if (min == null) {
+        min = calc[ReducerID.min];
+      }
+      if (max == null) {
+        max = calc[ReducerID.max];
+      }
+    }
 
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
@@ -154,7 +167,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
-          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
+          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min!} max={max!} display={info.display} />
         </div>
       </VizLayout.Legend>
     );
@@ -209,5 +222,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   colorScaleWrapper: css`
     margin-left: 25px;
     padding: 10px 0;
+    max-width: 300px;
   `,
 });
