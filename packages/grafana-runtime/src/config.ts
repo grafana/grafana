@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 
 import {
+  AppEvents,
   BootData,
   BuildInfo,
   createTheme,
@@ -9,6 +10,7 @@ import {
   GrafanaConfig,
   GrafanaTheme,
   GrafanaTheme2,
+  LegacyEmitter,
   LicenseInfo,
   MapLayerOptions,
   OAuthSettings,
@@ -17,6 +19,8 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+
+import { getAppEvents } from './services';
 
 export interface AzureSettings {
   cloud?: string;
@@ -160,7 +164,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
       if (param.startsWith('__feature.')) {
         const parts = param.split('=');
         const key = parts[0].slice('__feature.'.length);
-        this.featureToggles[key] = 'false' !== parts[1];
+        const value = 'false' !== parts[1];
+        if (value !== Boolean(this.featureToggles[key])) {
+          this.featureToggles[key] = value;
+          setTimeout(() => {
+            const evts = getAppEvents() as unknown as LegacyEmitter;
+            evts.emit(AppEvents.alertSuccess, [`${key} = ${value}`, 'This change stays active within the session']);
+          }, 1000); // wait for the app to actually initalize
+        }
       }
     }
   }
