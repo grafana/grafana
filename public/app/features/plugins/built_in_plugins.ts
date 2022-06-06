@@ -84,7 +84,10 @@ const tableOldPanel = async () =>
 const useLegacyHeatmapPanel =
   config.featureToggles.useLegacyHeatmapPanel || window.location?.search?.includes('useLegacyHeatmapPanel=true');
 if (useLegacyHeatmapPanel) {
+  const hm = config.panels['heatmap'];
   const old = config.panels['heatmap-old'];
+  old.id = hm.id;
+  old.module = hm.module;
   console.log('OLD', old);
   config.panels['heatmap'] = old;
 }
@@ -124,7 +127,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': config.featureToggles.useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
+  'app/plugins/panel/heatmap/module': useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,
   'app/plugins/panel/news/module': newsPanel,
