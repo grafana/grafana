@@ -77,7 +77,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -380,19 +379,19 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
 		return listener, nil
 	case setting.SocketScheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
+			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
 		}
 
 		// Make socket writable by group
 		// nolint:gosec
 		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
-			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
 		}
 
 		return listener, nil
