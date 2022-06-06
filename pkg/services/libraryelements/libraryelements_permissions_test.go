@@ -53,7 +53,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 		{models.ROLE_EDITOR, adminOnlyPermissions, adminOnlyDesc, 403},
 		{models.ROLE_EDITOR, editorOnlyPermissions, editorOnlyDesc, 200},
 		{models.ROLE_EDITOR, editorAndViewerPermissions, editorAndViewerDesc, 200},
-		{models.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 200},
+		{models.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 403},
 		{models.ROLE_EDITOR, everyonePermissions, everyoneDesc, 200},
 		{models.ROLE_EDITOR, noPermissions, noDesc, 403},
 
