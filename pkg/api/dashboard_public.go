@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -16,7 +17,26 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
-	return response.JSON(http.StatusOK, dash)
+
+	meta := dtos.DashboardMeta{
+		Slug:      dash.Slug,
+		Type:      models.DashTypeDB,
+		CanStar:   false,
+		CanSave:   false,
+		CanEdit:   false,
+		CanAdmin:  false,
+		CanDelete: false,
+		Created:   dash.Created,
+		Updated:   dash.Updated,
+		Version:   dash.Version,
+		IsFolder:  false,
+		FolderId:  dash.FolderId,
+		IsPublic:  dash.IsPublic,
+	}
+
+	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
+
+	return response.JSON(http.StatusOK, dto)
 }
 
 // gets public dashboard configuration for dashboard
