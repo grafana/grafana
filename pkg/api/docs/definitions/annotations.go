@@ -113,7 +113,7 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters updateAnnotation patchAnnotation deleteAnnotation
+// swagger:parameters getAnnotation updateAnnotation patchAnnotation deleteAnnotation
 type AnnotationIDParam struct {
 	// in:path
 	// required:true

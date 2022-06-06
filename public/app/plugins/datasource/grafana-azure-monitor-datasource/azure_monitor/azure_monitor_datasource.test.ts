@@ -1,9 +1,10 @@
-import { startsWith } from 'lodash';
+import { startsWith, get, set } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
+import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
@@ -256,6 +257,50 @@ describe('AzureMonitorDatasource', () => {
           expect(results.supportedAggTypes.length).toEqual(6);
           expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
+    });
+  });
+
+  describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
+    beforeEach(() => {
+      templateSrv.init([]);
+    });
+
+    it('should return a query unchanged if no template variables are provided', () => {
+      const query = createMockQuery();
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toEqual(query);
+    });
+
+    it('should return a query with any template variables replaced', () => {
+      const templateableProps = [
+        'resourceUri',
+        'resourceGroup',
+        'resourceName',
+        'metricNamespace',
+        'metricDefinition',
+        'timeGrain',
+        'aggregation',
+        'top',
+        'dimensionFilters[0].dimension',
+        'dimensionFilters[0].filters[0]',
+      ];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureMonitorQuery: { [index: string]: any } = {};
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        set(azureMonitorQuery, path, `$${templateVariable.variableName}`);
+      }
+
+      query.azureMonitor = {
+        ...query.azureMonitor,
+        ...azureMonitorQuery,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        expect(get(templatedQuery[0].azureMonitor, path)).toEqual(templateVariable.templateVariable.current.value);
+      }
     });
   });
 

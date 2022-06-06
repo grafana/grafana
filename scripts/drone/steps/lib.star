@@ -510,18 +510,30 @@ def test_backend_step(edition):
         ],
     }
 
-
 def test_backend_integration_step(edition):
-    return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'oss':
+        return {
+            'name': 'test-backend-integration',
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend-integration' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                './bin/grabpl integration-tests --edition {}'.format(edition),
+            ],
+        }
+
 
 
 def test_frontend_step():
@@ -1167,6 +1179,16 @@ def ensure_cuetsified_step():
         ],
     }
 
+def verify_gen_cue_step():
+    return {
+        'name': 'verify-gen-cue',
+        'image': build_image,
+        'commands': [
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
 
 def end_to_end_tests_deps(edition):
     if disable_tests:

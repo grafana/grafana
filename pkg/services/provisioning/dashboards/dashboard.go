@@ -40,12 +40,12 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 	cfgReader := &configReader{path: configDirectory, log: logger, orgStore: orgStore}
 	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to read dashboards config", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
 	}
 
 	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to initialize file readers", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)
 	}
 
 	d := &Provisioner{

@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import $ from 'jquery';
 import { find, isEmpty, isNil, sortBy, uniq } from 'lodash';
 
-import { PanelEvents, getColorForTheme } from '@grafana/data';
+import { PanelEvents } from '@grafana/data';
 import coreModule from 'app/angular/core_module';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -273,7 +273,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
         .attr('width', rangeStep)
         .attr('height', legendHeight)
         .attr('stroke-width', 0)
-        .attr('fill', getColorForTheme(options.cardColor, config.theme))
+        .attr('fill', config.theme.visualization.getColorByName(options.cardColor))
         .style('opacity', (d) => legendOpacityScale(d));
     }
   }

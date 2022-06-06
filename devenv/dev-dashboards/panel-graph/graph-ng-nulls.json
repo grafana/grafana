@@ -24,6 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 61,
   "links": [
     {
       "asDropdown": true,
@@ -1326,7 +1327,7 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 33,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "gdev",

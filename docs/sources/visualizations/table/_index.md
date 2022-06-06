@@ -1,9 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/latest/reference/table/", "/docs/grafana/latest/visualizations/table/", "/docs/grafana/next/panels/visualizations/table/table-field-options/"]
-keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
-title = "Table"
-weight = 1000
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/table_panel/
+  - /docs/grafana/latest/reference/table/
+  - /docs/grafana/latest/visualizations/table/
+  - /docs/grafana/next/panels/visualizations/table/table-field-options/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - panels
+  - table panel
+title: Table
+weight: 1000
+---
 
 # Table
 
@@ -104,7 +113,7 @@ Enables value inspection from table cell. The raw value is presented in a modal 
 
 ## Column filter
 
-You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "./filter-table-columns.md" >}}).
+You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "filter-table-columns/" >}}).
 
 ## Pagination
 

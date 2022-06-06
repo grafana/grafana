@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/sharing/"]
-title = "Sharing"
-weight = 85
-+++
+---
+aliases:
+  - /docs/grafana/latest/sharing/
+title: Sharing
+weight: 85
+---
 
 # Sharing dashboards and panels
 
@@ -13,7 +14,7 @@ Grafana allows you to share dashboards and panels with other users within an org
 - An embedded link (for panels only)
 - An export link (for dashboards only)
 
-Refer to [Share a dashboard]({{< relref "share-dashboard.md" >}}) and [Share a panel]({{< relref "share-panel.md" >}}) for more information.
+Refer to [Share a dashboard]({{< relref "share-dashboard/" >}}) and [Share a panel]({{< relref "share-panel/" >}}) for more information.
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
