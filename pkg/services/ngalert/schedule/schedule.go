@@ -54,7 +54,7 @@ type schedule struct {
 	baseInterval time.Duration
 
 	// each alert rule gets its own channel and routine
-	registry alertRuleRegistry
+	registry alertRuleInfoRegistry
 
 	maxAttempts int64
 
@@ -102,7 +102,7 @@ type schedule struct {
 	// evaluation in the current tick. The evaluation of an alert rule in the
 	// current tick depends on its evaluation interval and when it was
 	// last evaluated.
-	schedulableAlertRules []*models.SchedulableAlertRule
+	schedulableAlertRules schedulableAlertRulesRegistry
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -130,7 +130,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
-		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
+		registry:                alertRuleInfoRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
@@ -154,6 +154,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
 		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
+		schedulableAlertRules:   schedulableAlertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.SchedulableAlertRule)},
 	}
 	return &sch
 }
@@ -373,7 +374,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "error", err)
 			}
-			alertRules := sch.schedulableAlertRules
+			alertRules := sch.schedulableAlertRules.all()
 
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
