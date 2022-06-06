@@ -233,5 +233,10 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
+		},
 	}
 )

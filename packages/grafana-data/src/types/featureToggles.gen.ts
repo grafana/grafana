@@ -57,4 +57,5 @@ export interface FeatureToggles {
   validateDashboardsOnSave?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  useLegacyHeatmapPanel?: boolean;
 }
