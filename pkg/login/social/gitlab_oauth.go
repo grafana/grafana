@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -13,9 +14,10 @@ import (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups     []string
-	apiUrl            string
-	roleAttributePath string
+	allowedGroups       []string
+	apiUrl              string
+	roleAttributePath   string
+	roleAttributeStrict bool
 }
 
 func (s *SocialGitlab) Type() int {
@@ -118,6 +120,9 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	role, err := s.extractRole(response.Body)
 	if err != nil {
 		s.log.Error("Failed to extract role", "error", err)
+	}
+	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
+		return nil, errors.New("invalid role")
 	}
 
 	userInfo := &BasicUserInfo{

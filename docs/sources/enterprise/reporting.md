@@ -167,6 +167,8 @@ These options are available in the [configuration]({{< relref "../setup-grafana/
 
 ```ini
 [reporting]
+# Use this option to enable or disable the reporting feature. When disabled, no reports are generated, and the UI is hidden. By default, reporting is enabled.
+enabled = true
 # Set timeout for each panel rendering request
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service

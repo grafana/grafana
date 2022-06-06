@@ -21,12 +21,12 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
   };
 
   renderExpressionType() {
-    const { onChange, query, queries } = this.props;
+    const { onChange, onRunQuery, query, queries } = this.props;
     const refIds = queries!.filter((q) => query.refId !== q.refId).map((q) => ({ value: q.refId, label: q.refId }));
 
     switch (query.type) {
       case ExpressionQueryType.math:
-        return <Math onChange={onChange} query={query} labelWidth={labelWidth} />;
+        return <Math onChange={onChange} query={query} labelWidth={labelWidth} onRunQuery={onRunQuery} />;
 
       case ExpressionQueryType.reduce:
         return <Reduce refIds={refIds} onChange={onChange} labelWidth={labelWidth} query={query} />;
