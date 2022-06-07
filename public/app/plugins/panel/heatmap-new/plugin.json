@@ -5,14 +5,14 @@
   "state": "alpha",
 
   "info": {
-    "description": "Next generation heatmap visualization",
+    "description": "Like a histogram over time",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/heatmap.svg",
-      "large": "img/heatmap.svg"
+      "small": "img/icn-heatmap-panel.svg",
+      "large": "img/icn-heatmap-panel.svg"
     }
   }
 }

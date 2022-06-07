@@ -3,16 +3,16 @@ package manager
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -32,7 +32,7 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to query data", err)
+		return nil, fmt.Errorf("%v: %w", "failed to query data", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -48,11 +48,10 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p, exists := m.plugin(req.PluginContext.PluginID)
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-
 	err := instrumentation.InstrumentCallResourceRequest(p.PluginID(), func() error {
 		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
@@ -68,7 +67,7 @@ func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResou
 }
 
 func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	p, exists := m.plugin(req.PluginContext.PluginID)
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -86,7 +85,7 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.Collect
 }
 
 func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p, exists := m.plugin(req.PluginContext.PluginID)
+	p, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -106,14 +105,14 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
 	}
 
 	return resp, nil
 }
 
 func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -122,7 +121,7 @@ func (m *PluginManager) SubscribeStream(ctx context.Context, req *backend.Subscr
 }
 
 func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -131,7 +130,7 @@ func (m *PluginManager) PublishStream(ctx context.Context, req *backend.PublishS
 }
 
 func (m *PluginManager) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	plugin, exists := m.plugin(req.PluginContext.PluginID)
+	plugin, exists := m.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}

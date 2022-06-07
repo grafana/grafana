@@ -190,11 +190,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
-        const otelTraceData = JSON.parse(this.uploadedJson as string);
-        if (!otelTraceData.batches) {
-          subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
+        const jsonData = JSON.parse(this.uploadedJson as string);
+        const isTraceData = jsonData.batches;
+        const isServiceGraphData =
+          Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
+
+        if (isTraceData) {
+          subQueries.push(of(transformFromOTEL(jsonData.batches, this.nodeGraph?.enabled)));
+        } else if (isServiceGraphData) {
+          subQueries.push(of({ data: jsonData, state: LoadingState.Done }));
         } else {
-          subQueries.push(of(transformFromOTEL(otelTraceData.batches, this.nodeGraph?.enabled)));
+          subQueries.push(of({ error: { message: 'Unable to parse uploaded data.' }, data: [] }));
         }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
@@ -202,7 +208,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid, this.name));
     }
 
     if (targets.traceId?.length > 0) {
@@ -396,7 +402,7 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
@@ -424,6 +430,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, tempoDatasourceUid),
         ],
       };
 
@@ -445,6 +452,21 @@ function makePromLink(title: string, metric: string, datasourceUid: string) {
       } as PromQuery,
       datasourceUid,
       datasourceName: 'Prometheus',
+    },
+  };
+}
+
+function makeTempoLink(title: string, serviceName: string, datasourceUid: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: serviceName,
+      } as TempoQuery,
+      datasourceUid: datasourceUid,
+      datasourceName: 'Tempo',
     },
   };
 }

@@ -236,7 +236,7 @@ export function getAnnotationsFromData(
  */
 export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type !== 'prometheus' && type !== 'elasticsearch';
+  return type !== 'prometheus' && type !== 'elasticsearch' && type !== 'loki';
 }
 
 /**
@@ -244,5 +244,5 @@ export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
  */
 export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type === 'prometheus' || type === 'elasticsearch';
+  return type === 'prometheus' || type === 'elasticsearch' || type === 'loki';
 }
