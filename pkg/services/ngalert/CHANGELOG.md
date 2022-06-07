@@ -45,7 +45,8 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
-- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled.
+## 9.0.0
+
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
   - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
   - `grafana_alerting_ticker_next_tick_timestamp_seconds`
@@ -53,15 +54,16 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
+- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled.
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
 - [FEATURE] Alert rules with associated panels will take screenshots. #49293 #49338 #49374 #49377 #49378 #49379 #49381 #49385 #49439 #49445
 - [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
-- [BUGFIX] Allow anonymous access to alerts #49203 
+- [BUGFIX] Allow anonymous access to alerts #49203
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
 - [BUGFIX] Fix access to alerts for Viewer role with editor permissions in folder #49270
-- [BUGFIX] Alerting: Remove double quotes from double quoted matchers #xxxx
+- [BUGFIX] Alerting: Remove double quotes from double quoted matchers #50038
 - [BUGFIX] Alerting: rules API to not detect difference between nil and empty map (Annotations, Labels) #50192
 
 ## 8.5.3
