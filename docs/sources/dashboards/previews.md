@@ -19,7 +19,7 @@ Dashboard previews provide an overview of all available dashboards. They help yo
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
-You can view dashboard previews only when the feature is enabled for your instance. It is an opt-in feature that is, by default, disabled. You can view the previews in the Grafana UI after clicking on the _Show previews_ toggle once the administrator enables the feature following the procedure described below.
+You can view dashboard previews after the administrator enables the feature following the procedure described below, and after you select the new grid layout. The dashboard previews feature is an opt-in feature that is disabled by default.
 
 - [Enable dashboard previews](#enable-dashboard-previews)
 - [About the dashboard previews crawler](#about-the-dashboard-previews-crawler)
@@ -38,13 +38,13 @@ enable = dashboardPreviews
 
 3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
-Verify that your setup was successful in the dashboard search page. You should see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of the page.
+The first crawler run should begin approximately five minutes after Grafana server restart.
+
+To determine that your setup is successful, select the new grid layout and verify that the dashboard preview placeholders appear.
 
 {{< video-embed src="/static/img/docs/dashboards/previews-successful-setup.webm" max-width="950px" >}}
 
-The first crawler run should begin approximately five minutes after restarting the Grafana instance.
-
-In case you see any warnings after clicking on the toggle, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
+If the dashboard preview placeholders do not appear or if you see any warning messages, check [Grafana server logs]({{< relref "../setup-grafana/configure-grafana/#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
 
 {{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 

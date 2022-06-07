@@ -26,12 +26,10 @@ const setup = (propOverrides?: object) => {
       typeLogoUrl: '',
       access: 'proxy',
       url: '',
-      password: '',
       user: '',
       database: '',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
       jsonData: {

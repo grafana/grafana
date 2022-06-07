@@ -340,7 +340,7 @@ func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *models.Dat
 		return value, nil
 	}
 
-	return ds.BasicAuthPassword, err
+	return "", err
 }
 
 func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
@@ -349,7 +349,7 @@ func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) 
 		return value, nil
 	}
 
-	return ds.Password, err
+	return "", err
 }
 
 func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) (*sdkhttpclient.Options, error) {

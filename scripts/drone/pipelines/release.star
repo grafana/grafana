@@ -39,8 +39,6 @@ load(
     'upload_packages_step',
     'store_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
     'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
@@ -182,8 +180,6 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
         verify_gen_cue_step(),
     ]
 
@@ -191,7 +187,6 @@ def get_steps(edition, ver_mode):
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
-
 
     if include_enterprise2:
         test_steps.extend([

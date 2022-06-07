@@ -148,11 +148,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,

@@ -14,7 +14,13 @@ type DiffReport []Diff
 func (r DiffReport) GetDiffsForField(path string) DiffReport {
 	var result []Diff
 	for _, diff := range r {
-		if strings.HasPrefix(path, diff.Path) {
+		if strings.HasPrefix(diff.Path, path) {
+			if diff.Path != path {
+				char := []rune(diff.Path)[len(path)]
+				if char != '.' && char != '[' { // if the following symbol is not a delimiter or bracket then that's not our path
+					continue
+				}
+			}
 			result = append(result, diff)
 		}
 	}

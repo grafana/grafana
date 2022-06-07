@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -77,7 +78,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -140,6 +140,8 @@ var wireBasicSet = wire.NewSet(
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
+	registry.ProvideService,
+	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
@@ -148,7 +150,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
-	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
+	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
 	cloudmonitoring.ProvideService,
@@ -187,7 +189,6 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
-	schemaloader.ProvideService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
