@@ -99,7 +99,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 		}
 		err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
 		updateRules := make([]store.UpdateRule, 0, len(query.Result))
 		for _, rule := range query.Result {
