@@ -14,7 +14,7 @@ var (
 
 type DashboardVersion struct {
 	ID            int64 `json:"id"`
-	DashboardID   int64 `json:"dashboardId"`
+	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id"`
 	ParentVersion int   `json:"parentVersion"`
 	RestoredFrom  int   `json:"restoredFrom"`
 	Version       int   `json:"version"`
