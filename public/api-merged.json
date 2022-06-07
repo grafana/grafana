@@ -93,6 +93,12 @@
 				"parameters": [
 					{
 						"type": "string",
+						"name": "roleUID",
+						"in": "path",
+						"required": true
+					},
+					{
+						"type": "string",
 						"name": "builtinRole",
 						"in": "path",
 						"required": true
@@ -102,12 +108,6 @@
 						"description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
 						"name": "global",
 						"in": "query"
-					},
-					{
-						"type": "string",
-						"name": "roleUID",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -223,18 +223,18 @@
 				"operationId": "updateRoleWithPermissions",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "roleUID",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateRoleCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "roleUID",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -390,19 +390,19 @@
 				"operationId": "addTeamRole",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"name": "teamId",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/AddTeamRoleCommand"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "teamId",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -587,16 +587,16 @@
 				"operationId": "removeUserRole",
 				"parameters": [
 					{
-						"type": "boolean",
-						"description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
-						"name": "global",
-						"in": "query"
-					},
-					{
 						"type": "string",
 						"name": "roleUID",
 						"in": "path",
 						"required": true
+					},
+					{
+						"type": "boolean",
+						"description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
+						"name": "global",
+						"in": "query"
 					},
 					{
 						"type": "integer",
@@ -1435,18 +1435,18 @@
 				"operationId": "updateUserQuota",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "quota_target",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateUserQuotaCmd"
 						}
-					},
-					{
-						"type": "string",
-						"name": "quota_target",
-						"in": "path",
-						"required": true
 					},
 					{
 						"type": "integer",
@@ -1693,18 +1693,18 @@
 				"operationId": "updateAlertNotificationChannelBYUID",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "notification_channel_uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "notification_channel_uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -1803,19 +1803,19 @@
 				"operationId": "updateAlertNotificationChannel",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"name": "notification_channel_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateAlertNotificationCommand"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "notification_channel_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -1889,39 +1889,6 @@
 						"in": "query"
 					},
 					{
-						"type": "string",
-						"description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
-						"name": "dashboardQuery",
-						"in": "query"
-					},
-					{
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"collectionFormat": "multi",
-						"description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
-						"name": "dashboardTag",
-						"in": "query"
-					},
-					{
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"collectionFormat": "multi",
-						"description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
-						"name": "folderId",
-						"in": "query"
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"description": "Limit response to X number of alerts.",
-						"name": "limit",
-						"in": "query"
-					},
-					{
 						"type": "integer",
 						"format": "int64",
 						"description": "Limit response to alert for a specified panel on a dashboard.",
@@ -1947,6 +1914,39 @@
 						"type": "string",
 						"description": "Return alerts with one or more of the following alert states",
 						"name": "state",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
+						"description": "Limit response to X number of alerts.",
+						"name": "limit",
+						"in": "query"
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"collectionFormat": "multi",
+						"description": "Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders",
+						"name": "folderId",
+						"in": "query"
+					},
+					{
+						"type": "string",
+						"description": "Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.",
+						"name": "dashboardQuery",
+						"in": "query"
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"collectionFormat": "multi",
+						"description": "Limit response to alerts of dashboards with specified tags. To do an “AND” filtering with multiple tags, specify the tags parameter multiple times",
+						"name": "dashboardTag",
 						"in": "query"
 					}
 				],
@@ -2110,6 +2110,27 @@
 					{
 						"type": "integer",
 						"format": "int64",
+						"description": "Find annotations created after specific epoch datetime in milliseconds.",
+						"name": "from",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
+						"description": "Find annotations created before specific epoch datetime in milliseconds.",
+						"name": "to",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
+						"description": "Limit response to annotations created by specific user.",
+						"name": "userId",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
 						"description": "Find annotations for a specified alert.",
 						"name": "alertId",
 						"in": "query"
@@ -2124,8 +2145,8 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"description": "Find annotations created after specific epoch datetime in milliseconds.",
-						"name": "from",
+						"description": "Find annotations that are scoped to a specific panel",
+						"name": "panelId",
 						"in": "query"
 					},
 					{
@@ -2133,19 +2154,6 @@
 						"format": "int64",
 						"description": "Max limit for results returned.",
 						"name": "limit",
-						"in": "query"
-					},
-					{
-						"type": "boolean",
-						"description": "Match any or all tags",
-						"name": "matchAny",
-						"in": "query"
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"description": "Find annotations that are scoped to a specific panel",
-						"name": "panelId",
 						"in": "query"
 					},
 					{
@@ -2159,13 +2167,6 @@
 						"in": "query"
 					},
 					{
-						"type": "integer",
-						"format": "int64",
-						"description": "Find annotations created before specific epoch datetime in milliseconds.",
-						"name": "to",
-						"in": "query"
-					},
-					{
 						"enum": [
 							"alert",
 							"annotation"
@@ -2176,10 +2177,9 @@
 						"in": "query"
 					},
 					{
-						"type": "integer",
-						"format": "int64",
-						"description": "Limit response to annotations created by specific user.",
-						"name": "userId",
+						"type": "boolean",
+						"description": "Match any or all tags",
+						"name": "matchAny",
 						"in": "query"
 					}
 				],
@@ -2309,15 +2309,15 @@
 				"parameters": [
 					{
 						"type": "string",
-						"default": "100",
-						"description": "Max limit for results returned.",
-						"name": "limit",
+						"description": "Tag is a string that you can use to filter tags.",
+						"name": "tag",
 						"in": "query"
 					},
 					{
 						"type": "string",
-						"description": "Tag is a string that you can use to filter tags.",
-						"name": "tag",
+						"default": "100",
+						"description": "Max limit for results returned.",
+						"name": "limit",
 						"in": "query"
 					}
 				],
@@ -2592,17 +2592,17 @@
 				"operationId": "getSnapshots",
 				"parameters": [
 					{
+						"type": "string",
+						"description": "Search Query",
+						"name": "query",
+						"in": "query"
+					},
+					{
 						"type": "integer",
 						"format": "int64",
 						"default": 1000,
 						"description": "Limit the number of returned results",
 						"name": "limit",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "Search Query",
-						"name": "query",
 						"in": "query"
 					}
 				],
@@ -2829,19 +2829,19 @@
 				"deprecated": true,
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"name": "DashboardID",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "Body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/RestoreDashboardVersionCommand"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "DashboardID",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3159,18 +3159,18 @@
 				"operationId": "postDashboardPermissionsWithUid",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "Body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateDashboardAclCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3204,18 +3204,18 @@
 				"operationId": "restoreDashboardVersionByUID",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "Body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/RestoreDashboardVersionCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3246,6 +3246,12 @@
 				"operationId": "getDashboardVersionsByUID",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"type": "integer",
 						"format": "int64",
 						"default": 0,
@@ -3260,12 +3266,6 @@
 						"description": "Version to start from when returning queries",
 						"name": "start",
 						"in": "query"
-					},
-					{
-						"type": "string",
-						"name": "uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3296,15 +3296,15 @@
 				"operationId": "getDashboardVersionByUID",
 				"parameters": [
 					{
-						"type": "integer",
-						"format": "int64",
-						"name": "DashboardVersionID",
+						"type": "string",
+						"name": "uid",
 						"in": "path",
 						"required": true
 					},
 					{
-						"type": "string",
-						"name": "uid",
+						"type": "integer",
+						"format": "int64",
+						"name": "DashboardVersionID",
 						"in": "path",
 						"required": true
 					}
@@ -3498,13 +3498,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "uid",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "uid",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -3540,13 +3540,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "uid",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "uid",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -3585,13 +3585,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "uid",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "uid",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -3630,13 +3630,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "id",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -3672,12 +3672,10 @@
 				"deprecated": true,
 				"parameters": [
 					{
-						"name": "DatasourceProxyParam",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"type": "object"
-						}
+						"type": "string",
+						"name": "id",
+						"in": "path",
+						"required": true
 					},
 					{
 						"type": "string",
@@ -3686,10 +3684,12 @@
 						"required": true
 					},
 					{
-						"type": "string",
-						"name": "id",
-						"in": "path",
-						"required": true
+						"name": "DatasourceProxyParam",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"type": "object"
+						}
 					}
 				],
 				"responses": {
@@ -3727,13 +3727,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "id",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -3806,18 +3806,18 @@
 				"operationId": "updateDatasourceByUID",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "Body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateDataSourceCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3913,13 +3913,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "uid",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "uid",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -4150,18 +4150,18 @@
 				"deprecated": true,
 				"parameters": [
 					{
+						"type": "string",
+						"name": "id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "Body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateDataSourceCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -4262,13 +4262,13 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "datasource_proxy_route",
+						"name": "id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "id",
+						"name": "datasource_proxy_route",
 						"in": "path",
 						"required": true
 					}
@@ -4491,6 +4491,12 @@
 				"operationId": "updateFolder",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "folder_uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"description": "To change the unique identifier (uid), provide another one.\nTo overwrite an existing folder with newer version, set `overwrite` to `true`.\nProvide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`.",
 						"name": "body",
 						"in": "body",
@@ -4498,12 +4504,6 @@
 						"schema": {
 							"$ref": "#/definitions/UpdateFolderCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "folder_uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -4659,14 +4659,8 @@
 				"parameters": [
 					{
 						"type": "string",
-						"description": "Element UID to exclude from search results.",
-						"name": "excludeUid",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "A comma separated list of folder ID(s) to filter the elements by.",
-						"name": "folderFilter",
+						"description": "Part of the name or description searched for.",
+						"name": "searchString",
 						"in": "query"
 					},
 					{
@@ -4678,28 +4672,6 @@
 						"format": "int64",
 						"description": "Kind of element to search for.",
 						"name": "kind",
-						"in": "query"
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"default": 1,
-						"description": "The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1.",
-						"name": "page",
-						"in": "query"
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"default": 100,
-						"description": "The number of results per page.",
-						"name": "perPage",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "Part of the name or description searched for.",
-						"name": "searchString",
 						"in": "query"
 					},
 					{
@@ -4716,6 +4688,34 @@
 						"type": "string",
 						"description": "A comma separated list of types to filter the elements by",
 						"name": "typeFilter",
+						"in": "query"
+					},
+					{
+						"type": "string",
+						"description": "Element UID to exclude from search results.",
+						"name": "excludeUid",
+						"in": "query"
+					},
+					{
+						"type": "string",
+						"description": "A comma separated list of folder ID(s) to filter the elements by.",
+						"name": "folderFilter",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
+						"default": 100,
+						"description": "The number of results per page.",
+						"name": "perPage",
+						"in": "query"
+					},
+					{
+						"type": "integer",
+						"format": "int64",
+						"default": 1,
+						"description": "The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1.",
+						"name": "page",
 						"in": "query"
 					}
 				],
@@ -4878,18 +4878,18 @@
 				"operationId": "updateLibraryElement",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "library_element_uid",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/PatchLibraryElementCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "library_element_uid",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -5490,14 +5490,14 @@
 				"operationId": "lookupOrgUsers",
 				"parameters": [
 					{
-						"type": "integer",
-						"format": "int64",
-						"name": "limit",
+						"type": "string",
+						"name": "query",
 						"in": "query"
 					},
 					{
-						"type": "string",
-						"name": "query",
+						"type": "integer",
+						"format": "int64",
+						"name": "limit",
 						"in": "query"
 					}
 				],
@@ -5643,11 +5643,6 @@
 				"operationId": "searchOrg",
 				"parameters": [
 					{
-						"type": "string",
-						"name": "name",
-						"in": "query"
-					},
-					{
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
@@ -5660,6 +5655,11 @@
 						"default": 1000,
 						"description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
 						"name": "perpage",
+						"in": "query"
+					},
+					{
+						"type": "string",
+						"name": "name",
 						"in": "query"
 					},
 					{
@@ -5977,12 +5977,10 @@
 				"operationId": "updateOrgQuota",
 				"parameters": [
 					{
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/UpdateOrgQuotaCmd"
-						}
+						"type": "string",
+						"name": "quota_target",
+						"in": "path",
+						"required": true
 					},
 					{
 						"type": "integer",
@@ -5992,10 +5990,12 @@
 						"required": true
 					},
 					{
-						"type": "string",
-						"name": "quota_target",
-						"in": "path",
-						"required": true
+						"name": "body",
+						"in": "body",
+						"required": true,
+						"schema": {
+							"$ref": "#/definitions/UpdateOrgQuotaCmd"
+						}
 					}
 				],
 				"responses": {
@@ -6771,19 +6771,19 @@
 				"operationId": "updateReport",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"name": "reportID",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/CreateOrUpdateConfigCmd"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "reportID",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -6936,6 +6936,32 @@
 				"operationId": "search",
 				"parameters": [
 					{
+						"type": "string",
+						"description": "Search Query",
+						"name": "query",
+						"in": "query"
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"collectionFormat": "multi",
+						"description": "List of tags to search for",
+						"name": "tag",
+						"in": "query"
+					},
+					{
+						"enum": [
+							"dash-folder",
+							"dash-db"
+						],
+						"type": "string",
+						"description": "Type to search for, dash-folder or dash-db",
+						"name": "type",
+						"in": "query"
+					},
+					{
 						"type": "array",
 						"items": {
 							"type": "integer",
@@ -6953,6 +6979,12 @@
 						},
 						"description": "List of folder id’s to search in for dashboards",
 						"name": "folderIds",
+						"in": "query"
+					},
+					{
+						"type": "boolean",
+						"description": "Flag indicating if only starred Dashboards should be returned",
+						"name": "starred",
 						"in": "query"
 					},
 					{
@@ -6981,12 +7013,6 @@
 						"in": "query"
 					},
 					{
-						"type": "string",
-						"description": "Search Query",
-						"name": "query",
-						"in": "query"
-					},
-					{
 						"enum": [
 							"alpha-asc",
 							"alpha-desc"
@@ -6995,32 +7021,6 @@
 						"default": "alpha-asc",
 						"description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
 						"name": "sort",
-						"in": "query"
-					},
-					{
-						"type": "boolean",
-						"description": "Flag indicating if only starred Dashboards should be returned",
-						"name": "starred",
-						"in": "query"
-					},
-					{
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"collectionFormat": "multi",
-						"description": "List of tags to search for",
-						"name": "tag",
-						"in": "query"
-					},
-					{
-						"enum": [
-							"dash-folder",
-							"dash-db"
-						],
-						"type": "string",
-						"description": "Type to search for, dash-folder or dash-db",
-						"name": "type",
 						"in": "query"
 					}
 				],
@@ -7245,11 +7245,6 @@
 				"operationId": "searchTeams",
 				"parameters": [
 					{
-						"type": "string",
-						"name": "name",
-						"in": "query"
-					},
-					{
 						"type": "integer",
 						"format": "int64",
 						"default": 1,
@@ -7262,6 +7257,11 @@
 						"default": 1000,
 						"description": "Number of items per page\nThe totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.",
 						"name": "perpage",
+						"in": "query"
+					},
+					{
+						"type": "string",
+						"name": "name",
 						"in": "query"
 					},
 					{
@@ -7458,18 +7458,18 @@
 				"operationId": "updateTeam",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "team_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateTeamCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "team_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -7601,18 +7601,18 @@
 				"operationId": "updateTeamMember",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "team_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdateTeamMemberCommand"
 						}
-					},
-					{
-						"type": "string",
-						"name": "team_id",
-						"in": "path",
-						"required": true
 					},
 					{
 						"type": "integer",
@@ -7715,18 +7715,18 @@
 				"operationId": "updateTeamPreferences",
 				"parameters": [
 					{
+						"type": "string",
+						"name": "team_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/UpdatePrefsCmd"
 						}
-					},
-					{
-						"type": "string",
-						"name": "team_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -8239,17 +8239,17 @@
 					{
 						"type": "integer",
 						"format": "int64",
-						"default": 1,
-						"description": "Page index for starting fetching users",
-						"name": "page",
+						"default": 1000,
+						"description": "Limit the maximum number of users to return per page",
+						"name": "perpage",
 						"in": "query"
 					},
 					{
 						"type": "integer",
 						"format": "int64",
-						"default": 1000,
-						"description": "Limit the maximum number of users to return per page",
-						"name": "perpage",
+						"default": 1,
+						"description": "Page index for starting fetching users",
+						"name": "page",
 						"in": "query"
 					}
 				],
@@ -8373,6 +8373,13 @@
 				"operationId": "updateUser",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"name": "user_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"description": "To change the email, name, login, theme, provide another one.",
 						"name": "body",
 						"in": "body",
@@ -8380,13 +8387,6 @@
 						"schema": {
 							"$ref": "#/definitions/UpdateUserCommand"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "user_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
