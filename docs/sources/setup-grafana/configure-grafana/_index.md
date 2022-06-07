@@ -921,6 +921,28 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### user_identity_enabled
+
+Specifies whether user identity authentication on behalf of currently signed-in user should be enabled in datasources which support it (may require AAD authentication enabled).
+
+Disabled by default, needs to be explicitly enabled.
+
+### user_identity_token_url
+
+AAD token URL for given Azure Directory.
+
+Normally should be same as token URL in AAD authentication configuration.
+
+### user_identity_client_id
+
+ADD application ID which would be used to exchange user's token to an access token to the datasource.
+
+Can be same application as used in AAD authentication or another application (for OBO flow).
+
+### user_identity_client_secret
+
+The AAD application client secret.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt/" >}}) for more information.
