@@ -442,7 +442,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		dashVersion := &models.DashboardVersion{
+		dashVersion := &dashver.DashboardVersion{
 			DashboardId:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,

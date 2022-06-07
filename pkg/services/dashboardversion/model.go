@@ -55,3 +55,19 @@ type DashboardVersionDTO struct {
 	CreatedBy     string    `json:"createdBy"`
 	Message       string    `json:"message"`
 }
+
+// DashboardVersionMeta extends the dashboard version model with the names
+// associated with the UserIds, overriding the field with the same name from
+// the DashboardVersion model.
+type DashboardVersionMeta struct {
+	Id            int64            `json:"id"`
+	DashboardId   int64            `json:"dashboardId"`
+	DashboardUID  string           `json:"uid"`
+	ParentVersion int              `json:"parentVersion"`
+	RestoredFrom  int              `json:"restoredFrom"`
+	Version       int              `json:"version"`
+	Created       time.Time        `json:"created"`
+	Message       string           `json:"message"`
+	Data          *simplejson.Json `json:"data"`
+	CreatedBy     string           `json:"createdBy"`
+}
