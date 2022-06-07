@@ -8,15 +8,16 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 const (
@@ -109,11 +110,11 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 
 // Notify sends an alert notification to Opsgenie
 func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	on.log.Debug("Executing Opsgenie notification", "notification", on.Name)
+	on.log.Debug("executing Opsgenie notification", "notification", on.Name)
 
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !on.SendResolved() {
-		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
+		on.log.Debug("not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
 		return true, nil
 	}
 

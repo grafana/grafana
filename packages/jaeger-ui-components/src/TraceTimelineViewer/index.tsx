@@ -24,7 +24,6 @@ import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
-import ExternalLinkContext from '../url/externalLinkContext';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
@@ -79,8 +78,6 @@ type TProps = TExtractUiFindFromStateReturn & {
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
-  focusSpan: (uiFind: string) => void;
-  createLinkToExternalSpan: (traceID: string, spanID: string) => string;
 
   setSpanNameColumnWidth: (width: number) => void;
   collapseAll: (spans: TraceSpan[]) => void;
@@ -163,7 +160,6 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       updateNextViewRangeTime,
       updateViewRangeTime,
       viewRange,
-      createLinkToExternalSpan,
       traceTimeline,
       theme,
       topOfViewRef,
@@ -174,35 +170,33 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
     const styles = getStyles(theme);
 
     return (
-      <ExternalLinkContext.Provider value={createLinkToExternalSpan}>
-        <div
-          className={styles.TraceTimelineViewer}
-          ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
-        >
-          <TimelineHeaderRow
-            duration={trace.duration}
-            nameColumnWidth={traceTimeline.spanNameColumnWidth}
-            numTicks={NUM_TICKS}
-            onCollapseAll={this.collapseAll}
-            onCollapseOne={this.collapseOne}
-            onColummWidthChange={setSpanNameColumnWidth}
-            onExpandAll={this.expandAll}
-            onExpandOne={this.expandOne}
-            viewRangeTime={viewRange.time}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            columnResizeHandleHeight={this.state.height}
-          />
-          <VirtualizedTraceView
-            {...rest}
-            {...traceTimeline}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            currentViewRangeTime={viewRange.time.current}
-            topOfViewRef={topOfViewRef}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
-          />
-        </div>
-      </ExternalLinkContext.Provider>
+      <div
+        className={styles.TraceTimelineViewer}
+        ref={(ref: HTMLDivElement | null) => ref && this.setState({ height: ref.getBoundingClientRect().height })}
+      >
+        <TimelineHeaderRow
+          duration={trace.duration}
+          nameColumnWidth={traceTimeline.spanNameColumnWidth}
+          numTicks={NUM_TICKS}
+          onCollapseAll={this.collapseAll}
+          onCollapseOne={this.collapseOne}
+          onColummWidthChange={setSpanNameColumnWidth}
+          onExpandAll={this.expandAll}
+          onExpandOne={this.expandOne}
+          viewRangeTime={viewRange.time}
+          updateNextViewRangeTime={updateNextViewRangeTime}
+          updateViewRangeTime={updateViewRangeTime}
+          columnResizeHandleHeight={this.state.height}
+        />
+        <VirtualizedTraceView
+          {...rest}
+          {...traceTimeline}
+          setSpanNameColumnWidth={setSpanNameColumnWidth}
+          currentViewRangeTime={viewRange.time.current}
+          topOfViewRef={topOfViewRef}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+        />
+      </div>
     );
   }
 }

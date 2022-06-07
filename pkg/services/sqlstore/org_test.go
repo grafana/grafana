@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -78,9 +77,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 		})
 
 		t.Run("Given single org mode", func(t *testing.T) {
-			setting.AutoAssignOrg = true
-			setting.AutoAssignOrgId = 1
-			setting.AutoAssignOrgRole = "Viewer"
+			sqlStore.Cfg.AutoAssignOrg = true
+			sqlStore.Cfg.AutoAssignOrgId = 1
+			sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
 
 			t.Run("Users should be added to default organization", func(t *testing.T) {
 				ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
@@ -105,9 +104,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 		t.Run("Given single org and 2 users inserted", func(t *testing.T) {
 			sqlStore = InitTestDB(t)
-			setting.AutoAssignOrg = true
-			setting.AutoAssignOrgId = 1
-			setting.AutoAssignOrgRole = "Viewer"
+			sqlStore.Cfg.AutoAssignOrg = true
+			sqlStore.Cfg.AutoAssignOrgId = 1
+			sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -146,7 +145,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 		t.Run("Given two saved users", func(t *testing.T) {
 			sqlStore = InitTestDB(t)
-			setting.AutoAssignOrg = false
+			sqlStore.Cfg.AutoAssignOrg = false
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
