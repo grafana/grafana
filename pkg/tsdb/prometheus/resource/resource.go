@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -19,6 +20,46 @@ import (
 type Resource struct {
 	provider *client.Provider
 	log      log.Logger
+}
+
+// Hop-by-hop headers. These are removed when sent to the backend.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+var hopHeaders = []string{
+	"Connection",
+	"Keep-Alive",
+	"Proxy-Authenticate",
+	"Proxy-Authorization",
+	"Te", // canonicalized version of "TE"
+	"Trailers",
+	"Transfer-Encoding",
+	"Upgrade",
+}
+
+// These headers simply do not work when set from the client, so
+// strip them out before sending.
+var removeHeaders = []string{
+	"accept",
+	"Accept-Encoding",
+}
+
+func delHopHeaders(header http.Header) {
+	for _, h := range hopHeaders {
+		header.Del(h)
+	}
+}
+
+func delRemoveHeaders(header http.Header) {
+	for _, h := range removeHeaders {
+		header.Del(h)
+	}
+}
+
+func normalizeReqHeaders(headers map[string][]string) map[string]string {
+	h := make(map[string]string, len(headers))
+	for k, v := range headers {
+		h[k] = strings.Join(v, ",")
+	}
+	return h
 }
 
 func New(
@@ -42,7 +83,9 @@ func New(
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
-	client, err := r.provider.GetClient(reqHeaders(req.Headers))
+	delHopHeaders(req.Headers)
+	delRemoveHeaders(req.Headers)
+	client, err := r.provider.GetClient(normalizeReqHeaders(req.Headers))
 	if err != nil {
 		return 500, nil, err
 	}
@@ -74,17 +117,4 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 	}
 
 	return resp.StatusCode, data, err
-}
-
-func reqHeaders(headers map[string][]string) map[string]string {
-	h := make(map[string]string, len(headers))
-	for k, v := range headers {
-		// Pass on all the headers, except for the "accept" headers, as these need to be
-		// set by the query backend itself.
-		if strings.HasPrefix(strings.ToLower(k), "accept") {
-			continue
-		}
-		h[k] = v[0]
-	}
-	return h
 }
