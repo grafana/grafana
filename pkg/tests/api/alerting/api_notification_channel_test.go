@@ -1514,7 +1514,7 @@ const alertmanagerConfig = `
               "username": "Integration Test",
               "icon_emoji": "🚀",
               "icon_url": "https://awesomeemoji.com/rocket",
-              "text": "Integration Test {{ template \"slack.default.text\" . }}",
+              "text": "Integration Test [FIRING:1] SlackAlert1 {{ template \"slack.default.text\" . }}",
               "title": "Integration Test {{ template \"slack.default.title\" . }}",
               "fallback": "Integration Test {{ template \"slack.default.title\" . }}"
             },
@@ -2019,7 +2019,7 @@ var expAlertmanagerConfigFromAPI = `
               "mentionGroups": "group1, group2",
               "mentionUsers": "user1, user2",
               "recipient": "#test-channel",
-              "text": "Integration Test {{ template \"slack.default.text\" . }}",
+              "text": "Integration Test [FIRING:1] SlackAlert1 {{ template \"slack.default.text\" . }}",
               "title": "Integration Test {{ template \"slack.default.title\" . }}",
               "username": "Integration Test"
             },
@@ -2118,7 +2118,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-	      "text": "Integration Test [FIRING:1] SlackAlert1 ",
+	      "text": "Integration Test ",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2149,7 +2149,7 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "channel": "#test-channel",
 		  "username": "Integration Test",
-		  "text": "[FIRING:1] SlackAlert2 ",
+		  "text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = SlackAlert2\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DSlackAlert2\n",
 		  "attachments": [
 			{
 			  "title": "[FIRING:1] SlackAlert2 ",

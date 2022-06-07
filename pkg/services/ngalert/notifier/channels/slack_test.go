@@ -74,6 +74,7 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsg: &slackMessage{
+				Text:      "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				Channel:   "#testchannel",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
@@ -109,6 +110,7 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsg: &slackMessage{
+				Text:      "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 				Channel:   "#testchannel",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
@@ -144,6 +146,7 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsg: &slackMessage{
+				Text:      "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				Channel:   "#testchannel",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
@@ -187,6 +190,7 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsg: &slackMessage{
+				Text:      "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 				Channel:   "#testchannel",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
@@ -235,6 +239,7 @@ func TestSlackNotifier(t *testing.T) {
 				},
 			},
 			expMsg: &slackMessage{
+				Text:      "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 				Channel:   "#testchannel",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
