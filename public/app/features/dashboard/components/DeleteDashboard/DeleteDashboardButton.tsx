@@ -8,10 +8,9 @@ import { DeleteDashboardModal } from './DeleteDashboardModal';
 
 type Props = {
   dashboard: DashboardModel;
-  cleanDashboard: () => void;
 };
 
-export const DeleteDashboardButton = ({ dashboard, cleanDashboard }: Props) => (
+export const DeleteDashboardButton = ({ dashboard }: Props) => (
   <ModalsController>
     {({ showModal, hideModal }) => (
       <Button
@@ -20,7 +19,6 @@ export const DeleteDashboardButton = ({ dashboard, cleanDashboard }: Props) => (
           showModal(DeleteDashboardModal, {
             dashboard,
             hideModal,
-            cleanDashboard,
           });
         }}
         aria-label="Dashboard settings page delete dashboard button"
