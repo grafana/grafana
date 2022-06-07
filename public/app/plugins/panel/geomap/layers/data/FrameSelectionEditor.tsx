@@ -1,6 +1,24 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FrameMatcherID, getFieldDisplayName, MatcherConfig, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Select } from '@grafana/ui';
+
+const recoverRefIdMissing = (newRefIds: SelectableValue[], oldRefIds: SelectableValue[], previousValue: string | undefined): SelectableValue | undefined => {
+  if (!previousValue) {
+    return;
+  }
+  // Previously selected value is missing from the new list.
+  // Find the value that is in the new list but isn't in the old list
+  let changedTo = newRefIds.find((refId) => {
+    return !oldRefIds.some((refId2) => {
+      return refId === refId2;
+    });
+  });
+  if (changedTo) {
+    // Found the new value, we assume the old value changed to this one, so we'll use it
+    return changedTo;
+  }
+  return;
+};
 
 export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
   value,
@@ -16,8 +34,13 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
     }));
   }, [context.data]);
 
+  const [priorSelectionState, updatePriorSelectionState] = useState({
+    refIds: [] as SelectableValue[],
+    value: undefined as string | undefined,
+  });
+
   const currentValue = useMemo(() => {
-    return listOfRefId.find((refId) => refId.value === value?.options) ?? null;
+    return listOfRefId.find((refId) => refId.value === value?.options) ?? recoverRefIdMissing(listOfRefId, priorSelectionState.refIds, priorSelectionState.value);
   }, [value, listOfRefId])
 
   const onFilterChange = useCallback((v: SelectableValue<string>) => {
@@ -27,7 +50,12 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
     } : undefined);
   }, [context.options.name]);
 
-
+  if (listOfRefId !== priorSelectionState.refIds || currentValue?.value !== priorSelectionState.value)  {
+    updatePriorSelectionState({
+      refIds: listOfRefId,
+      value: currentValue?.value
+    });
+  }
   return (
     <Select options={listOfRefId} onChange={onFilterChange} isClearable={true} placeholder="Change filter" value={currentValue}/>
   );
