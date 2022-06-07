@@ -27,7 +27,7 @@ export function getFlatElements(root?: RootElement) {
   return flat;
 }
 
-export function reorder(src: FlatElement, dest: FlatElement, elements: any[]) {
+export function reorderElements(src: FlatElement, dest: FlatElement, elements: any[]) {
   const result = Array.from(elements);
 
   const srcIndex = elements.indexOf(src);

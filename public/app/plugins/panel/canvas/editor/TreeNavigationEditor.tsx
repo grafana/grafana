@@ -6,8 +6,10 @@ import { StandardEditorProps } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 
 import { FrameState } from '../../../../features/canvas/runtime/frame';
+import { RootElement } from '../../../../features/canvas/runtime/root';
 import { PanelOptions } from '../models.gen';
-import { FlatElement, getFlatElements, getParent, reorder } from '../tree';
+import { FlatElement, getFlatElements, getParent, reorderElements } from '../tree';
+import { LayerActionID } from '../types';
 
 import { TreeView } from './TreeView';
 import { TreeViewEditorProps } from './treeViewEditor';
@@ -34,25 +36,52 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     const src = this.state.flatElements[result.source.index];
     const dest = this.state.flatElements[result.destination.index];
 
-    if (src.node.parent === dest.node.parent) {
-      // update the frame
-      src.node.parent?.reorder(src, dest);
+    if (src.node.parent === dest.node.parent && src.node) {
+      src.node.parent?.reorderTree(src.node, dest.node);
     } else {
-      if (src.node.parent instanceof FrameState) {
-        src.node.parent.elements = src.node.parent.elements.filter((e) => e !== src.node);
-        src.node.parent = dest.node.parent;
+      src.node.parent?.doAction(LayerActionID.Delete, src.node);
+      src.node.parent = dest.node instanceof FrameState ? dest.node : dest.node.parent;
+      src.depth = this.setDepth(dest);
+
+      // @TODO dest = frame
+      if (dest.node.parent instanceof RootElement) {
+        dest.node.parent.elements.push(src.node);
+        src.node.updateData(dest.node.parent.scene.context);
+      } else if (dest.node.parent instanceof FrameState) {
+        const destIndex = dest.node.parent.elements.indexOf(dest.node);
+        dest.node.parent?.elements.splice(destIndex, 0, src.node);
+
+        dest.node.parent.scene.byName.set(src.node.options.name, src.node);
+        dest.node.parent.scene.save();
+
+        dest.node.parent?.reorderTree(src.node, dest.node);
+        src.node.updateData(dest.node.parent.scene.context);
       }
+
+      dest.node.parent?.reinitializeMoveable();
     }
 
     this.reorder(src, dest);
   };
 
   reorder = (src: FlatElement, dest: FlatElement) => {
-    const result = reorder(src, dest, this.state.flatElements);
+    const result = reorderElements(src, dest, this.state.flatElements);
     this.setState({ flatElements: result });
 
     const { settings } = this.props.item;
     settings?.scene.root.reinitializeMoveable();
+  };
+
+  // @TODO update depth for nested frames when we'll have the functionality
+  setDepth = (dest: FlatElement) => {
+    let depth = 1;
+    if (dest.node instanceof FrameState) {
+      depth = dest.depth + 1;
+    } else if (dest.node.parent instanceof FrameState) {
+      depth = dest.depth;
+    }
+
+    return depth;
   };
 
   render() {
