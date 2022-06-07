@@ -143,6 +143,7 @@ var wireBasicSet = wire.NewSet(
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	manager.ProvideService,
+	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
