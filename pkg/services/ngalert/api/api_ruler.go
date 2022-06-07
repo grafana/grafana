@@ -257,7 +257,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	result := apimodels.NamespaceConfigResponse{}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User has no access to any namespaces")
+		srv.log.Debug("user has no access to any namespaces")
 		return response.JSON(http.StatusOK, result)
 	}
 
