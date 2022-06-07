@@ -12,9 +12,10 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { MysqlDatasource } from '../datasource';
+import { SQLOptions, SQLQuery } from '../../sql/types';
+import { MysqlDatasource } from '../MySqlDatasource';
 
-import { MySQLOptions, MySQLQuery } from './../types';
+// import { MySQLOptions, MySQLQuery } from './../types';
 
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {
@@ -25,12 +26,12 @@ describe('MySQLDatasource', () => {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown as DataSourceInstanceSettings<MySQLOptions>;
+    } as unknown as DataSourceInstanceSettings<SQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv);
+    const ds = new MysqlDatasource(instanceSettings);
 
     return { ds, variable, templateSrv, fetchMock };
   };
@@ -52,7 +53,7 @@ describe('MySQLDatasource', () => {
             hide: true,
           },
         ],
-      } as unknown as DataQueryRequest<MySQLQuery>;
+      } as unknown as DataQueryRequest<SQLQuery>;
 
       const { ds, fetchMock } = setupTextContext({});
 
