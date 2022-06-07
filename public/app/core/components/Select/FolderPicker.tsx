@@ -82,39 +82,8 @@ export class FolderPicker extends PureComponent<Props, State> {
     await this.loadInitialValue();
   };
 
-  getOptions = async (query: string) => {
-    const {
-      rootName,
-      enableReset,
-      initialTitle,
-      permissionLevel,
-      filter,
-      accessControlMetadata,
-      initialFolderId,
-      showRoot,
-    } = this.props;
-
-    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
-
-    const hasAccess =
-      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
-      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
-
-    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
-      options.unshift({ label: rootName, value: 0 });
-    }
-
-    if (
-      enableReset &&
-      query === '' &&
-      initialTitle !== '' &&
-      !options.find((option) => option.label === initialTitle)
-    ) {
-      options.unshift({ label: initialTitle, value: initialFolderId });
-    }
-
-    return options;
+  getOptions = (query: string, callback: (opts: Array<SelectableValue<number>>) => void) => {
+    this.asyncLoadOptions(query).then((results) => callback(results));
   };
 
   onFolderChange = (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
@@ -154,12 +123,47 @@ export class FolderPicker extends PureComponent<Props, State> {
     return folder;
   };
 
+  private asyncLoadOptions = async (query: string) => {
+    const {
+      rootName,
+      enableReset,
+      initialTitle,
+      permissionLevel,
+      filter,
+      accessControlMetadata,
+      initialFolderId,
+      showRoot,
+    } = this.props;
+
+    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
+
+    const hasAccess =
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+
+    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
+      options.unshift({ label: rootName, value: 0 });
+    }
+
+    if (
+      enableReset &&
+      query === '' &&
+      initialTitle !== '' &&
+      !options.find((option) => option.label === initialTitle)
+    ) {
+      options.unshift({ label: initialTitle, value: initialFolderId });
+    }
+
+    return options;
+  };
+
   private loadInitialValue = async () => {
     const { initialTitle, rootName, initialFolderId, enableReset, dashboardId } = this.props;
     const resetFolder: SelectableValue<number> = { label: initialTitle, value: undefined };
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
-    const options = await this.getOptions('');
+    const options = await this.asyncLoadOptions('');
 
     let folder: SelectableValue<number> | null = null;
 
