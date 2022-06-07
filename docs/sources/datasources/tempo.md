@@ -172,10 +172,10 @@ To display the service graph:
 
 - [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
 - Link a Prometheus datasource in the Tempo datasource settings.
-- Navigate to [Explore]({{< relref "../explore/" >}})
-- Select the Tempo datasource
-- Select the **Service Graph** query type and run the query
-- Optionally, filter by service name
+- Navigate to [Explore]({{< relref "../explore/" >}}).
+- Select the Tempo datasource.
+- Select the **Service Graph** query type and run the query.
+- (Optional): filter by service name.
 
 You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
 
@@ -192,16 +192,16 @@ Click on the service to see a context menu with additional links for quick navig
 
 ## APM table
 
-The APM (Application Performance Management) table enables you to view several APM metrics out of the box.
+The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
 
 To display the APM table:
 
-1. Enable the tempoApmTable feature flag in your ini file
-1. Link a Prometheus datasource in the Tempo datasource settings
-1. Navigate to [Explore]({{< relref "../explore/_index.md" >}})
-1. Select the Tempo datasource
-1. Select the **Service Graph** query type and run the query
-1. (Optional): filter your results
+1. Activate the tempoApmTable feature flag in your ini file.
+1. Link a Prometheus datasource in the Tempo datasource settings.
+1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
+1. Select the Tempo datasource.
+1. Select the **Service Graph** query type and run the query.
+1. (Optional): filter your results.
 
 Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_duration_seconds_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
 
