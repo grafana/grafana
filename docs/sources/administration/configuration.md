@@ -1526,7 +1526,7 @@ The propagation specifies the text map propagation format.(ex: jaeger, w3c)
 
 ## [tracing.opentelemetry.otlp]
 
-Configure Grafana's otlp client for distributed tracing.
+Configure Grafana's OLTP client for distributed tracing.
 
 ### address
 
