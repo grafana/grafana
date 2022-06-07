@@ -72,6 +72,7 @@ func mergeSpecs(output string, sources ...string) error {
 		specOSS.SwaggerProps.Schemes = mergeVectors(specOSS.SwaggerProps.Schemes, additionalSpec.OrigSpec().Schemes)
 
 		//TODO: When there are conflict between definitions, we need to error out, but here we need to fix the existing conflict first
+		// there are false positives, we will have to fix those by regenerate alerting api spec
 		for k, ad := range additionalSpec.OrigSpec().SwaggerProps.Definitions {
 			if ossd, exists := specOSS.SwaggerProps.Definitions[k]; exists {
 				if !compareDefinition(ad, ossd) {

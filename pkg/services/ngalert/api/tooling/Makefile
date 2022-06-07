@@ -26,7 +26,7 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w $(API_DIR) -o spec.json && swagger generate spec -m --include-tag=stable -o ngalert.json
+	swagger generate spec -m -w $(API_DIR) -o spec.json && swagger generate spec -m --include-tag=stable -o ngalert.json
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
