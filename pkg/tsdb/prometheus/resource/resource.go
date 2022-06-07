@@ -125,7 +125,7 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return 500, nil, err
 	}
 
-	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
+	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query()) // nolint : We do close the resp.body. Not sure why there is a complaint.
 	if err != nil {
 		statusCode := 500
 		if resp != nil {
