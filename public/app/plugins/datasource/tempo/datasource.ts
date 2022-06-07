@@ -211,7 +211,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       const dsId = this.serviceMap.datasourceUid;
       if (config.featureToggles.tempoApmTable) {
         subQueries.push(
-          serviceMapQuery(options, dsId).pipe(
+          serviceMapQuery(options, dsId, this.name).pipe(
             concatMap((result) =>
               rateQuery(options, result, dsId).pipe(
                 concatMap((result) => errorAndDurationQuery(options, result, dsId, this.name))
@@ -220,7 +220,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           )
         );
       } else {
-        subQueries.push(serviceMapQuery(options, dsId));
+        subQueries.push(serviceMapQuery(options, dsId, this.name));
       }
     }
 
@@ -415,7 +415,7 @@ function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: st
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   const serviceMapRequest = makePromServiceMapRequest(request);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
@@ -448,6 +448,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
             datasourceUid,
             false
           ),
+          makeTempoLink('View traces', `\${__data.fields[0]}`, '', tempoDatasourceUid),
         ],
       };
 
@@ -559,15 +560,20 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
-export function makeTempoLink(title: string, spanName: string, datasourceUid: string) {
+export function makeTempoLink(title: string, serviceName: string, spanName: string, datasourceUid: string) {
+  let query = { queryType: 'nativeSearch' } as TempoQuery;
+  if (serviceName !== '') {
+    query.serviceName = serviceName;
+  }
+  if (spanName !== '') {
+    query.spanName = spanName;
+  }
+
   return {
     url: '',
     title,
     internal: {
-      query: {
-        queryType: 'nativeSearch',
-        spanName: spanName,
-      } as TempoQuery,
+      query,
       datasourceUid: datasourceUid,
       datasourceName: 'Tempo',
     },
@@ -728,7 +734,7 @@ function getApmTable(
         return 'Tempo';
       }),
       config: {
-        links: [makeTempoLink('Tempo', `\${__data.fields[0]}`, tempoDatasourceUid)],
+        links: [makeTempoLink('Tempo', '', `\${__data.fields[0]}`, tempoDatasourceUid)],
       },
     });
   }

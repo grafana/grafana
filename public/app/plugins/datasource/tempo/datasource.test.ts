@@ -526,7 +526,7 @@ describe('Tempo apm table', () => {
   });
 
   it('should make tempo link correctly', () => {
-    const tempoLink = makeTempoLink('Tempo', '"${__data.fields[0]}"', 'gdev-tempo');
+    const tempoLink = makeTempoLink('Tempo', '', '"${__data.fields[0]}"', 'gdev-tempo');
     expect(tempoLink).toEqual({
       url: '',
       title: 'Tempo',
@@ -744,6 +744,18 @@ const serviceGraphLinks = [
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'View traces',
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: '${__data.fields[0]}',
+      } as TempoQuery,
+      datasourceUid: 'tempo',
+      datasourceName: 'Tempo',
     },
   },
 ];
