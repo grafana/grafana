@@ -30,7 +30,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
     return [
       {
         name: 'Log query with parsing',
-        // {} |= `` | logfmt | label="value"
+        // {} | logfmt | __error__=``
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
@@ -47,7 +47,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
       },
       {
         name: 'Log query with parsing and label filter',
-        // {} |= `` | logfmt | __error__=''
+        // {} |= `` | logfmt | __error__=`` | label=`value`
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
