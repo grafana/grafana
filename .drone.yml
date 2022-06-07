@@ -131,7 +131,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-backend
 - commands:
-  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -790,7 +790,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-backend
 - commands:
-  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -1848,7 +1848,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-frontend
 - commands:
-  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -3606,7 +3606,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-frontend
 - commands:
-  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -4611,6 +4611,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f74d802812e2e8b14bce6d06a4258f832bf798d33b931e846a788cc4ad83eb0f
+hmac: f216cbb815c4aada7b69530d0d7c667e3cf216c77dffe428e17c2c8516c8d88c
 
 ...
