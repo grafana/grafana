@@ -297,11 +297,13 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
+	text := tmpl(sn.Text)
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
 		Username:  tmpl(sn.Username),
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   tmpl(sn.IconURL),
+		Text:      text,
 		// TODO: We should use the Block Kit API instead:
 		// https://api.slack.com/messaging/composing/layouts#when-to-use-attachments
 		Attachments: []attachment{
@@ -341,24 +343,18 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 	mentionChannel := strings.TrimSpace(sn.MentionChannel)
 	if mentionChannel != "" {
 		mentionsBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
-		// When mentioning channeldd, we need to provide text for notifications
-		req.Text = tmpl(sn.Title)
 	}
 	if len(sn.MentionGroups) > 0 {
 		appendSpace()
 		for _, g := range sn.MentionGroups {
 			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", tmpl(g)))
 		}
-		// When mentioning groups, we need to provide text for notifications
-		req.Text = tmpl(sn.Title)
 	}
 	if len(sn.MentionUsers) > 0 {
 		appendSpace()
 		for _, u := range sn.MentionUsers {
 			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", tmpl(u)))
 		}
-		// When mentioning a user, we need to provide text for notifications
-		req.Text = tmpl(sn.Title)
 	}
 
 	if mentionsBuilder.Len() > 0 {
