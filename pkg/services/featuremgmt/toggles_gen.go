@@ -111,10 +111,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagAlertProvisioning
-	// Provisioning-friendly routes for alerting
-	FlagAlertProvisioning = "alertProvisioning"
-
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"

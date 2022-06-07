@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning RouteGetAlertRule
+// swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
 //
@@ -14,7 +14,7 @@ import (
 //       200: AlertRule
 //       400: ValidationError
 
-// swagger:route POST /api/v1/provisioning/alert-rules provisioning RoutePostAlertRule
+// swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
 //
@@ -22,7 +22,7 @@ import (
 //       201: AlertRule
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning RoutePutAlertRule
+// swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
 //
 // Update an existing alert rule.
 //
@@ -33,7 +33,7 @@ import (
 //       200: AlertRule
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning RouteDeleteAlertRule
+// swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
 // Delete a specific alert rule by UID.
 //
@@ -110,7 +110,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 	}
 }
 
-// swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning RoutePutAlertRuleGroup
+// swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Update the interval of a rule group.
 //

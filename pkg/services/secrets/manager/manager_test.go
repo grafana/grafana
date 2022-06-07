@@ -100,8 +100,8 @@ func TestSecretsService_DataKeys(t *testing.T) {
 
 	dataKey := &secrets.DataKey{
 		Id:            util.GenerateShortUID(),
+		Label:         "test1",
 		Active:        true,
-		Name:          "test1",
 		Provider:      "test",
 		EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
 	}
@@ -120,15 +120,15 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, dataKey.EncryptedData, res.EncryptedData)
 		assert.Equal(t, dataKey.Provider, res.Provider)
-		assert.Equal(t, dataKey.Name, res.Name)
+		assert.Equal(t, dataKey.Label, res.Label)
 		assert.Equal(t, dataKey.Id, res.Id)
 		assert.True(t, dataKey.Active)
 
-		current, err := store.GetCurrentDataKey(ctx, dataKey.Name)
+		current, err := store.GetCurrentDataKey(ctx, dataKey.Label)
 		require.NoError(t, err)
 		assert.Equal(t, dataKey.EncryptedData, current.EncryptedData)
 		assert.Equal(t, dataKey.Provider, current.Provider)
-		assert.Equal(t, dataKey.Name, current.Name)
+		assert.Equal(t, dataKey.Label, current.Label)
 		assert.Equal(t, dataKey.Id, current.Id)
 		assert.True(t, current.Active)
 	})
@@ -137,7 +137,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		k := &secrets.DataKey{
 			Id:            util.GenerateShortUID(),
 			Active:        false,
-			Name:          "test2",
+			Label:         "test2",
 			Provider:      "test",
 			EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
 		}
@@ -145,7 +145,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		err := store.CreateDataKey(ctx, k)
 		require.Error(t, err)
 
-		res, err := store.GetDataKey(ctx, k.Name)
+		res, err := store.GetDataKey(ctx, k.Id)
 		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
@@ -287,7 +287,7 @@ func TestSecretsService_Run(t *testing.T) {
 
 		// Data encryption key cache should contain one element
 		require.Len(t, svc.dataKeyCache.byId, 1)
-		require.Len(t, svc.dataKeyCache.byName, 1)
+		require.Len(t, svc.dataKeyCache.byLabel, 1)
 
 		t.Cleanup(func() { now = time.Now })
 		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
@@ -302,7 +302,7 @@ func TestSecretsService_Run(t *testing.T) {
 		// the cleanup process should have happened,
 		// therefore the cache should be empty.
 		require.Len(t, svc.dataKeyCache.byId, 0)
-		require.Len(t, svc.dataKeyCache.byName, 0)
+		require.Len(t, svc.dataKeyCache.byLabel, 0)
 	})
 }
 
@@ -337,12 +337,12 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 		_, err := svc.Decrypt(ctx, ciphertext)
 		require.NoError(t, err)
 		require.NotEmpty(t, svc.dataKeyCache.byId)
-		require.NotEmpty(t, svc.dataKeyCache.byName)
+		require.NotEmpty(t, svc.dataKeyCache.byLabel)
 
 		err = svc.ReEncryptDataKeys(ctx)
 		require.NoError(t, err)
 
 		assert.Empty(t, svc.dataKeyCache.byId)
-		assert.Empty(t, svc.dataKeyCache.byName)
+		assert.Empty(t, svc.dataKeyCache.byLabel)
 	})
 }

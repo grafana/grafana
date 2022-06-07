@@ -1,11 +1,12 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
+  HeatmapBucketLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapMode, PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
 /**
@@ -29,36 +30,55 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
-  const mode = angular.dataFormat === 'tsbuckets' ? HeatmapMode.Aggregated : HeatmapMode.Calculate;
-  const calculate: HeatmapCalculationOptions = {
-    ...defaultPanelOptions.calculate,
+  const calculate = angular.dataFormat === 'tsbuckets' ? false : true;
+  const calculation: HeatmapCalculationOptions = {
+    ...defaultPanelOptions.calculation,
   };
 
-  if (mode === HeatmapMode.Calculate) {
+  const oldYAxis = { logBase: 1, ...angular.yAxis };
+
+  if (calculate) {
     if (angular.xBucketSize) {
-      calculate.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+      calculation.xBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+      calculation.xBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
     }
 
     if (angular.yBucketSize) {
-      calculate.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+      calculation.yBuckets = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
     } else if (angular.xBucketNumber) {
-      calculate.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+      calculation.yBuckets = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+    }
+
+    if (oldYAxis.logBase > 1) {
+      calculation.yBuckets = {
+        mode: HeatmapCalculationMode.Count,
+        value: +oldYAxis.splitFactor > 0 ? `${oldYAxis.splitFactor}` : undefined,
+        scale: {
+          type: ScaleDistribution.Log,
+          log: oldYAxis.logBase,
+        },
+      };
     }
   }
 
   const options: PanelOptions = {
-    mode,
     calculate,
+    calculation,
     color: {
       ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
     cellGap: asNumber(angular.cards?.cardPadding),
     cellSize: asNumber(angular.cards?.cardRound),
-    yAxisLabels: angular.yBucketBound,
-    yAxisReverse: angular.reverseYBuckets,
+    yAxis: {
+      axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
+      reverse: Boolean(angular.reverseYBuckets),
+      axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+    },
+    bucket: {
+      layout: getHeatmapBucketLayout(angular.yBucketBound),
+    },
     legend: {
       show: Boolean(angular.legend.show),
     },
@@ -71,6 +91,10 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       ...defaultPanelOptions.exemplars,
     },
   };
+
+  if (angular.hideZeroBuckets) {
+    options.filterValues = { ...defaultPanelOptions.filterValues }; // min: 1e-9
+  }
 
   // Migrate color options
   const color = angular.color;
@@ -92,8 +116,22 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       break;
     }
   }
+  options.color.min = color.min;
+  options.color.max = color.max;
 
   return { fieldConfig, options };
+}
+
+function getHeatmapBucketLayout(v?: string): HeatmapBucketLayout {
+  switch (v) {
+    case 'upper':
+      return HeatmapBucketLayout.ge;
+    case 'lower':
+      return HeatmapBucketLayout.le;
+    case 'middle':
+      return HeatmapBucketLayout.unknown;
+  }
+  return HeatmapBucketLayout.auto;
 }
 
 function asNumber(v: any): number | undefined {
