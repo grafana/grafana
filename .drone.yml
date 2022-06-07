@@ -131,7 +131,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-backend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -790,7 +790,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-backend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -1848,7 +1848,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -3606,7 +3606,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -v -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.5
@@ -4611,6 +4611,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d2e97d6683c33ccb2dba773e3c103105227a74448fa732124e4c38d67eb464d8
+hmac: f74d802812e2e8b14bce6d06a4258f832bf798d33b931e846a788cc4ad83eb0f
 
 ...
