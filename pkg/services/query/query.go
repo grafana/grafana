@@ -81,6 +81,33 @@ func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skip
 	return s.handleQueryData(ctx, user, parsedReq)
 }
 
+// QueryData can process queries and return query responses.
+func (s *Service) QueryDataMultipleSources(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+	byDataSource := models.GroupQueriesByDataSource(reqDTO.Queries)
+
+	if len(byDataSource) == 1 {
+		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
+	} else {
+		resp := backend.NewQueryDataResponse()
+
+		for _, queries := range byDataSource {
+			subDTO := reqDTO.CloneWithQueries(queries)
+
+			subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
+
+			if err != nil {
+				return nil, err
+			}
+
+			for refId, queryResponse := range subResp.Responses {
+				resp.Responses[refId] = queryResponse
+			}
+		}
+
+		return resp, nil
+	}
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{

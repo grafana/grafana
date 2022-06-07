@@ -73,6 +73,16 @@ type MetricRequest struct {
 	HTTPRequest *http.Request `json:"-"`
 }
 
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:        mr.From,
+		To:          mr.To,
+		Queries:     queries,
+		Debug:       mr.Debug,
+		HTTPRequest: mr.HTTPRequest,
+	}
+}
+
 // swagger:model
 type TimeRangeOnlyMetricRequest struct {
 	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
