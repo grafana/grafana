@@ -28,7 +28,7 @@ func (hs *HTTPServer) GetDashboardSchema(c *models.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "failed marshaling schema to json", err)
 	}
 
-	return response.JSON(http.StatusOK, j)
+	return response.Respond(http.StatusOK, j).SetHeader("Content-Type", "application/schema+json")
 }
 
 func (hs *HTTPServer) GetPanelSchema(c *models.ReqContext) response.Response {
@@ -49,5 +49,5 @@ func (hs *HTTPServer) GetPanelSchema(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "failed marshaling schema to json", err)
 	}
 
-	return response.JSON(http.StatusOK, j)
+	return response.Respond(http.StatusOK, j).SetHeader("Content-Type", "application/schema+json")
 }
