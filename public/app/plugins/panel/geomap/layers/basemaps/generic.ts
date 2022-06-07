@@ -22,7 +22,6 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   name: 'XYZ Tile layer',
   description: 'Add map from custom source',
   isBaseMap: true,
-  showOpacity: true,
 
   create: async (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({
     init: () => {

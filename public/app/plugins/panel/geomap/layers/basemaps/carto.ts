@@ -28,7 +28,6 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   description: 'Add map from CARTO database',
   isBaseMap: true,
   defaultOptions: defaultCartoConfig,
-  showOpacity: true,
 
   /**
    * Function that configures transformation and returns a transformer

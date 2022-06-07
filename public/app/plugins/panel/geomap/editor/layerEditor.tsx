@@ -103,7 +103,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         handler.registerOptionsUI(builder);
       }
       if (!isEqual(opts.category, ['Base layer'])) {
-        if (layer.showOpacity) {
+        if (!layer.hideOpacity) {
           builder.addSliderInput({
             path: 'opacity',
             name: 'Opacity',
