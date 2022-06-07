@@ -168,6 +168,7 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 
 		// verify we didn't update all dashboards
 		pdc2, err := dashboardStore.GetPublicDashboardConfig(savedDashboard2.OrgId, savedDashboard2.Uid)
+		require.NoError(t, err)
 		assert.False(t, pdc2.IsPublic)
 	})
 
