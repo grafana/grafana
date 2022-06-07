@@ -28,7 +28,7 @@ export const TreeView = ({ node, selection, settings, index, parent }: Props) =>
   const styles = useStyles2(getStyles);
   const UID = node.node.UID;
 
-  const hasChildren = node.node instanceof FrameState;
+  const hasChildren = node.node instanceof FrameState && node.node.elements.length > 0;
   const isSelected = Boolean(selection?.includes(node.node.getName()));
 
   const getSelectedClass = (isSelected: boolean) => {
