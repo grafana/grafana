@@ -133,8 +133,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 		// the value for unified alerting is invalid so disable all alerting
 		legacyAlerting := false
 		AlertingEnabled = &legacyAlerting
-
-		return nil, errors.New("the value for enabled must be true or false")
+		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
@@ -158,7 +157,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
