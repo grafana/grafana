@@ -11,7 +11,7 @@ weight: 552
 
 Grafana alerting system can retrieve alerting and recording rules **stored** in most available Prometheus, Loki, Mimir and Alertmanager compatible data sources.
 
-It might not be able to fetch alerting rules from all other supported data sources at this time.
+It does not support reading or writing alerting rules from any other data sources but the ones previously mentioned at this time.
 
 ## Prometheus version support
 
