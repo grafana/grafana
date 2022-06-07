@@ -20,7 +20,7 @@ export const defaultXYZConfig: XYZConfig = {
 export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
-  description: 'Add map from custom source',
+  description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
   create: async (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({

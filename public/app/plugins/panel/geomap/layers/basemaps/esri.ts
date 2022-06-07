@@ -57,7 +57,7 @@ export interface ESRIXYZConfig extends XYZConfig {
 export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
-  description: 'Add map from Arc geographic information system',
+  description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
   create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {
