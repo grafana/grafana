@@ -1149,36 +1149,6 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-
-def validate_scuemata_step():
-    return {
-        'name': 'validate-scuemata',
-        'image': build_image,
-        'depends_on': [
-            'build-backend',
-        ],
-        'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
-        ],
-    }
-
-
-def ensure_cuetsified_step():
-    return {
-        'name': 'ensure-cuetsified',
-        'image': build_image,
-        'depends_on': [
-            'validate-scuemata',
-        ],
-        'commands': [
-            '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# To enforce this, the following command will attempt to generate Typescript from all',
-            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
-            '# code would have been written to. It exits 1 if any diffs are found.',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
-        ],
-    }
-
 def verify_gen_cue_step():
     return {
         'name': 'verify-gen-cue',

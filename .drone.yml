@@ -246,25 +246,6 @@ steps:
   image: grafana/build-container:1.5.5
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -941,25 +922,6 @@ steps:
   image: grafana/build-container:1.5.5
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -1589,25 +1551,6 @@ steps:
   image: grafana/build-container:1.5.5
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -2193,25 +2136,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -3415,25 +3339,6 @@ steps:
   image: grafana/build-container:1.5.5
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -3964,25 +3869,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.5
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.5
-  name: ensure-cuetsified
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -4725,6 +4611,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ee50d41dc69f9e424ac31a7a3e282c913fbe182903d10aebe2df2acf8da6c9d8
+hmac: d2e97d6683c33ccb2dba773e3c103105227a74448fa732124e4c38d67eb464d8
 
 ...
