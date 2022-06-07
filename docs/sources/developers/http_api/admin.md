@@ -358,7 +358,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../administration/configuration.md#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
 
 **Example Response**:
 
@@ -380,9 +380,9 @@ Change password for a specific user.
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                | Scope           |
-| --------------------- | --------------- |
-| users.password:update | global.users:\* |
+| Action               | Scope           |
+| -------------------- | --------------- |
+| users.password:write | global.users:\* |
 
 **Example Request**:
 
@@ -413,9 +413,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                   | Scope           |
-| ------------------------ | --------------- |
-| users.permissions:update | global.users:\* |
+| Action                  | Scope           |
+| ----------------------- | --------------- |
+| users.permissions:write | global.users:\* |
 
 **Example Request**:
 
@@ -516,7 +516,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
-| users.authtoken:list | global.users:\* |
+| users.authtoken:read | global.users:\* |
 
 **Example Request**:
 
@@ -573,9 +573,9 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
-| Action                 | Scope           |
-| ---------------------- | --------------- |
-| users.authtoken:update | global.users:\* |
+| Action                | Scope           |
+| --------------------- | --------------- |
+| users.authtoken:write | global.users:\* |
 
 **Example Request**:
 

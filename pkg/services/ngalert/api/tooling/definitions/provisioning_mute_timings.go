@@ -1,6 +1,11 @@
 package definitions
 
-// swagger:route GET /api/provisioning/mute-timings provisioning RouteGetMuteTimings
+import (
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/alertmanager/config"
+)
+
+// swagger:route GET /api/v1/provisioning/mute-timings provisioning stable RouteGetMuteTimings
 //
 // Get all the mute timings.
 //
@@ -8,7 +13,7 @@ package definitions
 //       200: MuteTimings
 //       400: ValidationError
 
-// swagger:route GET /api/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
+// swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
 // Get a mute timing.
 //
@@ -16,7 +21,7 @@ package definitions
 //       200: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/mute-timings provisioning RoutePostMuteTiming
+// swagger:route POST /api/v1/provisioning/mute-timings provisioning stable RoutePostMuteTiming
 //
 // Create a new mute timing.
 //
@@ -27,7 +32,7 @@ package definitions
 //       201: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/mute-timings/{name} provisioning RoutePutMuteTiming
+// swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //
 // Replace an existing mute timing.
 //
@@ -38,7 +43,7 @@ package definitions
 //       200: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/mute-timings/{name} provisioning RouteDeleteMuteTiming
+// swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
 // Delete a mute timing.
 //
@@ -50,7 +55,7 @@ package definitions
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming RouteDeleteMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming
 type RouteGetMuteTimingParam struct {
 	// Template Name
 	// in:path
@@ -61,4 +66,18 @@ type RouteGetMuteTimingParam struct {
 type MuteTimingPayload struct {
 	// in:body
 	Body MuteTimeInterval
+}
+
+// swagger:model
+type MuteTimeInterval struct {
+	config.MuteTimeInterval
+	Provenance models.Provenance `json:"provenance,omitempty"`
+}
+
+func (mt *MuteTimeInterval) ResourceType() string {
+	return "muteTimeInterval"
+}
+
+func (mt *MuteTimeInterval) ResourceID() string {
+	return mt.MuteTimeInterval.Name
 }

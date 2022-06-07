@@ -58,20 +58,12 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	var err error
 	dash := cmd.Dashboard
 	meta := cmd.Meta
 
-	trimedResult := *dash
-	if !hs.LoadSchemaService.IsDisabled() {
-		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
-		if err != nil {
-			return response.Error(500, "Error while exporting with default values removed", err)
-		}
-	}
-
+	// TODO temporarily just return the input as a no-op while we convert to thema calls
 	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: &trimedResult,
+		Dashboard: dash,
 		Meta:      meta,
 	}
 
@@ -565,19 +557,20 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		return dashboardGuardianResponse(err)
 	}
 
-	query := models.GetDashboardVersionsQuery{
-		OrgId:        c.OrgId,
-		DashboardId:  dashID,
+	query := dashver.ListDashboardVersionsQuery{
+		OrgID:        c.OrgId,
+		DashboardID:  dashID,
 		DashboardUID: dashUID,
 		Limit:        c.QueryInt("limit"),
 		Start:        c.QueryInt("start"),
 	}
 
-	if err := hs.SQLStore.GetDashboardVersions(c.Req.Context(), &query); err != nil {
+	res, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
-	for _, version := range query.Result {
+	for _, version := range res {
 		if version.RestoredFrom == version.Version {
 			version.Message = "Initial save (created by migration)"
 			continue
@@ -593,7 +586,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		}
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, res)
 }
 
 // GetDashboardVersion returns the dashboard version with the given ID.
@@ -790,7 +783,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	query := models.GetDashboardTagsQuery{OrgId: c.OrgId}
-	err := hs.SQLStore.GetDashboardTags(c.Req.Context(), &query)
+	err := hs.dashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return
