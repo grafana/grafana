@@ -194,6 +194,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	}
 
 	title := tmpl(titleTmpl)
+	if len(title) > 130 {
+		title = title[:130]
+	}
 
 	description := tmpl(on.Description)
 	if strings.TrimSpace(description) == "" {
