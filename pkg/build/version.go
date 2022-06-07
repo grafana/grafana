@@ -3,6 +3,7 @@ package build
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -12,9 +13,8 @@ type PackageJSON struct {
 	Version string `json:"version"`
 }
 
-// Opens the package.json file in the provided directory and returns a struct that represents its contents
-func OpenPackageJSON(dir string) (PackageJSON, error) {
-	reader, err := os.Open("package.json")
+func OpenPackageJSONFS(dir fs.FS) (PackageJSON, error) {
+	reader, err := dir.Open("package.json")
 	if err != nil {
 		return PackageJSON{}, err
 	}
@@ -27,6 +27,13 @@ func OpenPackageJSON(dir string) (PackageJSON, error) {
 	}
 
 	return jsonObj, nil
+}
+
+// Opens the package.json file in the provided directory and returns a struct that represents its contents
+func OpenPackageJSON(src string) (PackageJSON, error) {
+	dir := os.DirFS(src)
+
+	return OpenPackageJSONFS(dir)
 }
 
 // LinuxPackageVersion extracts the linux package version and iteration out of the version string. The version string is likely extracted from the package JSON.

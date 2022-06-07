@@ -1,0 +1,6 @@
+go 1.18
+
+use (
+	.
+	./pkg/build/ci
+)
