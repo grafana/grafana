@@ -60,7 +60,13 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView showManage={false} queryText={query.query} />
+          <SearchView
+            showManage={false}
+            queryText={query.query}
+            onQueryTextChange={(newQueryText) => {
+              setInputValue(newQueryText);
+            }}
+          />
         </div>
       </div>
     </div>
