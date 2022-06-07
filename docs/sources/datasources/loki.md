@@ -255,7 +255,6 @@ datasources:
     url: http://localhost:3100
     basicAuth: true
     basicAuthUser: my_user
-    basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
       derivedFields:
@@ -272,6 +271,8 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: 'http://localhost:16686/trace/$${__value.raw}'
+    secureJsonData:
+      basicAuthPassword: test_password
 ```
 
 Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.

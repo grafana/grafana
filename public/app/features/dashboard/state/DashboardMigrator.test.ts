@@ -1,5 +1,4 @@
 import { each, map } from 'lodash';
-import { expect } from 'test/lib/common';
 
 import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
