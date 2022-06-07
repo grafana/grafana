@@ -18,12 +18,15 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
             <MenuItem
               key={i}
               label="Logs for this span"
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
@@ -35,13 +38,16 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
           {links.metricLinks.map((link, i) => (
             <MenuItem
               key={i}
-              label="Metrics for this span"
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              label={link.title ?? 'Metrics for this span'}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
@@ -54,12 +60,15 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
             <MenuItem
               key={i}
               label={link.title ?? 'View linked span'}
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
@@ -78,7 +87,7 @@ export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <>
+    <div data-testid="SpanLinksMenu">
       <button
         onClick={(e) => {
           setIsMenuOpen(true);
@@ -101,7 +110,7 @@ export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
           y={menuPosition.y}
         />
       ) : null}
-    </>
+    </div>
   );
 };
 

@@ -47,6 +47,7 @@ import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
+import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
@@ -105,6 +106,7 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  useBackendMode: boolean;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -116,6 +118,10 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    this.useBackendMode = config.featureToggles.lokiBackendMode ?? false;
+    this.annotations = {
+      QueryEditor: LokiAnnotationsQueryEditor,
+    };
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -168,12 +174,26 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    if (config.featureToggles.lokiBackendMode) {
-      // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
+    if (this.useBackendMode) {
+      const queries = request.targets
+        .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
+        .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
+
       const fixedRequest = {
         ...request,
-        targets: request.targets.map(getNormalizedLokiQuery),
+        targets: queries,
       };
+
+      const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
+      if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+        // this is still an in-development feature,
+        // we do not support mixing stream-queries with normal-queries for now.
+        const streamRequest = {
+          ...fixedRequest,
+          targets: streamQueries,
+        };
+        return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      }
 
       if (fixedRequest.liveStreaming) {
         return this.runLiveQueryThroughBackend(fixedRequest);
@@ -449,8 +469,15 @@ export class LokiDatasource
     if (url.startsWith('/')) {
       throw new Error(`invalid metadata request url: ${url}`);
     }
-    const res = await this.getResource(url, params);
-    return res.data || [];
+
+    if (this.useBackendMode) {
+      const res = await this.getResource(url, params);
+      return res.data || [];
+    } else {
+      const lokiURL = `${LOKI_ENDPOINT}/${url}`;
+      const res = await lastValueFrom(this._request(lokiURL, params, { hideFromInspector: true }));
+      return res.data.data || [];
+    }
   }
 
   async metricFindQuery(query: string) {
@@ -750,7 +777,7 @@ export class LokiDatasource
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const view = new DataFrameView<{ ts: string; line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
 
       view.forEach((row) => {
         const { labels } = row;
@@ -776,9 +803,9 @@ export class LokiDatasource
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
         annotations.push({
-          time: new Date(row.ts).valueOf(),
+          time: new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.line,
+          text: renderLegendFormat(textFormat, labels) || row.Line,
           tags,
         });
       });
@@ -858,10 +885,12 @@ export class LokiDatasource
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
+    const exprWithAdHoc = this.addAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
     };
   }
 

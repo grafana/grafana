@@ -35,6 +35,13 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return `Expression: ${query.type}`;
   }
 
+  filterQuery(query: ExpressionQuery) {
+    if (query.hide) {
+      return false;
+    }
+    return true;
+  }
+
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
       const ds = await getDataSourceSrv().get(query.datasource);
@@ -43,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         return query;
       }
 
-      return ds?.interpolateVariablesInQueries([query], {})[0] as ExpressionQuery;
+      return ds?.interpolateVariablesInQueries([query], request.scopedVars)[0] as ExpressionQuery;
     });
 
     let sub = from(Promise.all(targets));

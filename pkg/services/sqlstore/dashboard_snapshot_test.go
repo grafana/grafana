@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -17,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardSnapshotDBAccess(t *testing.T) {
+func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	sqlstore := InitTestDB(t)
 
 	origSecret := setting.SecretKey
@@ -144,7 +141,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	})
 }
 
-func TestDeleteExpiredSnapshots(t *testing.T) {
+func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	sqlstore := InitTestDB(t)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {

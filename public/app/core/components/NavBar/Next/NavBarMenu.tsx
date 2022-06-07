@@ -7,14 +7,18 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { Branding } from '../../Branding/Branding';
+import { NavFeatureHighlight } from '../NavFeatureHighlight';
 import { isMatchOrChildMatch } from '../utils';
 
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
+
+const MENU_WIDTH = '350px';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -62,7 +66,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
                 variant="secondary"
               />
             </div>
-            <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
+            <NavBarToggle
+              className={styles.menuCollapseIcon}
+              isExpanded={isOpen}
+              onClick={() => {
+                reportInteraction('grafana_navigation_collapsed');
+                onClose();
+              }}
+            />
             <nav className={styles.content}>
               <CustomScrollbar hideHorizontalTrack>
                 <ul className={styles.itemList}>
@@ -129,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    minWidth: '300px',
+    minWidth: MENU_WIDTH,
   }),
   menuCollapseIcon: css({
     position: 'absolute',
@@ -167,7 +178,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
     boxShadow: theme.shadows.z3,
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      width: '300px',
+      width: MENU_WIDTH,
     },
   };
 
@@ -244,18 +255,8 @@ function NavItem({
         </ul>
       </CollapsibleNavItem>
     );
-  } else if (link.id === 'saved-items') {
-    return (
-      <CollapsibleNavItem
-        onClose={onClose}
-        link={link}
-        isActive={isMatchOrChildMatch(link, activeItem)}
-        className={styles.savedItems}
-      >
-        <em className={styles.savedItemsText}>No saved items</em>
-      </CollapsibleNavItem>
-    );
   } else {
+    const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
     return (
       <li className={styles.flex}>
         <NavBarItemWithoutMenu
@@ -270,8 +271,10 @@ function NavItem({
           }}
           isActive={link === activeItem}
         >
-          <div className={styles.savedItemsMenuItemWrapper}>
-            <div className={styles.iconContainer}>{getLinkIcon(link)}</div>
+          <div className={styles.itemWithoutMenuContent}>
+            <div className={styles.iconContainer}>
+              <FeatureHighlightWrapper>{getLinkIcon(link)}</FeatureHighlightWrapper>
+            </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -287,17 +290,10 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    width: `calc(100% - ${theme.spacing(3)})`,
     '&::before': {
       display: 'none',
     },
-  }),
-  savedItems: css({
-    background: theme.colors.background.secondary,
-  }),
-  savedItemsText: css({
-    display: 'block',
-    paddingBottom: theme.spacing(2),
-    color: theme.colors.text.secondary,
   }),
   flex: css({
     display: 'flex',
@@ -318,7 +314,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     placeContent: 'center',
   }),
-  savedItemsMenuItemWrapper: css({
+  itemWithoutMenuContent: css({
     display: 'grid',
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
@@ -347,6 +343,7 @@ function CollapsibleNavItem({
 }) {
   const styles = useStyles2(getCollapsibleStyles);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false);
+  const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
 
   return (
     <li className={cx(styles.menuItem, className)}>
@@ -362,7 +359,7 @@ function CollapsibleNavItem({
         className={styles.collapsibleMenuItem}
         elClassName={styles.collapsibleIcon}
       >
-        {getLinkIcon(link)}
+        <FeatureHighlightWrapper>{getLinkIcon(link)}</FeatureHighlightWrapper>
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
@@ -388,7 +385,7 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'grid',
     gridAutoFlow: 'column',
-    gridTemplateColumns: `${theme.spacing(7)} auto`,
+    gridTemplateColumns: `${theme.spacing(7)} minmax(calc(${MENU_WIDTH} - ${theme.spacing(7)}), auto)`,
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),
@@ -447,9 +444,7 @@ function getLinkIcon(link: NavModelItem) {
     return <Branding.MenuLogo />;
   } else if (link.icon) {
     return <Icon name={link.icon as IconName} size="xl" />;
-  } else if (link.img) {
-    return <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />;
   } else {
-    return null;
+    return <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />;
   }
 }

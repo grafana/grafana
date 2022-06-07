@@ -1,8 +1,10 @@
-+++
-title = "Alerts"
-weight = 114
-aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting/
+title: Alerting
+weight: 114
+---
 
 # Grafana alerting
 
@@ -18,18 +20,19 @@ For new installations or existing installs without alerting configured, Grafana 
 | ----------- | ------------- | ------------- | ------------- |
 | Grafana 9.0 | On by default | On by default | On by default |
 
-- For existing OSS installations with legacy dashboard alerting, you can [opt-in]({{< relref "./opt-in.md" >}}) to Grafana alerting.
-- For Grafana Cloud instances using legacy cloud alerting, contact customer support to migrate to Grafana alerting.
+Existing installations that upgrade to v9.0 will have Grafana alerting enabled by default. For more information on migrating from legacy or the cloud alerting plugin, see [Migrating to Grafana alerting]({{< relref "migrating-alerts/" >}}).
 
-Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using fine-grained permissions.
+Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "fundamentals/" >}}) of Grafana alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
-- [Enable Grafana alerting in OSS]({{< relref "./opt-in.md" >}})
-- [Migrating legacy alerts]({{< relref "./migrating-legacy-alerts.md" >}})
-- [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
-- [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
-- [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
-- [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
-- [View alert groupings]({{< relref "./alert-groups.md" >}})
-- [Add or edit an alert contact point]({{< relref "./contact-points/_index.md" >}})
-- [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
-- [Add or edit silences]({{< relref "./silences.md" >}})
+- [About alert rules]({{< relref "fundamentals/alert-rules/" >}})
+- [Migrating legacy alerts]({{< relref "migrating-alerts/" >}})
+- [Disable Grafana alerting in OSS]({{< relref "migrating-alerts/opt-out/" >}})
+- [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule/" >}})
+- [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule/" >}})
+- [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list/" >}})
+- [View the state and health of alerting rules]({{< relref "fundamentals/state-and-health/" >}})
+- [View alert groupings]({{< relref "alert-groups/" >}})
+- [Add or edit an alert contact point]({{< relref "contact-points/" >}})
+- [Add or edit notification policies]({{< relref "notifications/" >}})
+- [Add or edit silences]({{< relref "silences/" >}})
+- [Performance considerations for alerting]({{< relref "performance/" >}})

@@ -13,7 +13,6 @@ import {
 import { react2AngularDirective } from 'app/angular/react2angular';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
-import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
 
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
@@ -23,7 +22,6 @@ import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
 import { HelpModal } from '../core/components/help/HelpModal';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
-import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -117,12 +115,6 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('cloudMonitoringAnnotationQueryEditor', CloudMonitoringAnnotationQueryEditor, [
-    'target',
-    'onQueryChange',
-    ['datasource', { watchDepth: 'reference' }],
-    ['templateSrv', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('secretFormField', SecretFormField, [
     'value',
     'isConfigured',
@@ -150,13 +142,6 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
-    'expr',
-    'maxLines',
-    'instant',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',

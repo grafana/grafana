@@ -1,9 +1,15 @@
-+++
-title = "Grafana CLI"
-description = "Guide to using grafana-cli"
-keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/cli/
+description: Guide to using grafana-cli
+keywords:
+  - grafana
+  - cli
+  - grafana-cli
+  - command line interface
+title: Grafana CLI
+weight: 400
+---
 
 # Grafana CLI
 
@@ -131,7 +137,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 ### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 
@@ -141,7 +147,7 @@ grafana-cli --config "/etc/configuration/" admin reset-admin-password mynewpassw
 
 ## Plugins commands
 
-Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "../plugins/installation.md" >}}).
+Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "../plugins/installation/" >}}).
 
 All listed commands apply to the Grafana default repositories and directories. You can override the defaults with [Global Options](#global-options).
 
@@ -213,7 +219,7 @@ grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
 
-If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../http_api/user.md#change-password" >}}).
+If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "../developers/http_api/user/#change-password" >}}).
 
 ### Migrate data and encrypt passwords
 

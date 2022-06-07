@@ -37,5 +37,5 @@ func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, req
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, "http://localhost:9999", log.New("test"), "")
+	return newLokiAPI(&client, "http://localhost:9999", log.New("test"), nil)
 }

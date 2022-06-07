@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	legacyMetrics "github.com/grafana/grafana/pkg/services/alerting/metrics"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -47,15 +46,17 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer               prometheus.Registerer
-	BehindSeconds            prometheus.Gauge
-	EvalTotal                *prometheus.CounterVec
-	EvalFailures             *prometheus.CounterVec
-	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
-	SchedulePeriodicDuration prometheus.Histogram
-	Ticker                   *legacyMetrics.Ticker
-	DroppedTicksTotal        *prometheus.CounterVec
+	Registerer                          prometheus.Registerer
+	BehindSeconds                       prometheus.Gauge
+	EvalTotal                           *prometheus.CounterVec
+	EvalFailures                        *prometheus.CounterVec
+	EvalDuration                        *prometheus.SummaryVec
+	SchedulePeriodicDuration            prometheus.Histogram
+	SchedulableAlertRules               prometheus.Gauge
+	SchedulableAlertRulesHash           prometheus.Gauge
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	Ticker                              *legacyMetrics.Ticker
+	DroppedTicksTotal                   *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -165,21 +166,36 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
-			prometheus.HistogramOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
-			},
-		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_periodic_duration_seconds",
 				Help:      "The time taken to run the scheduler.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		SchedulableAlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules",
+				Help:      "The number of alert rules being considered for evaluation each tick.",
+			},
+		),
+		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules_hash",
+				Help:      "A hash of the alert rules over time.",
+			}),
+		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
@@ -289,20 +305,14 @@ func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
 func Instrument(
 	method,
 	path string,
-	action interface{},
+	action func(*models.ReqContext) response.Response,
 	metrics *API,
 ) web.Handler {
 	normalizedPath := MakeLabelValue(path)
 
 	return func(c *models.ReqContext) {
 		start := time.Now()
-		var res response.Response
-		val, err := c.Invoke(action)
-		if err == nil && val != nil && len(val) > 0 {
-			res = val[0].Interface().(response.Response)
-		} else {
-			res = routing.ServerError(err)
-		}
+		res := action(c)
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string

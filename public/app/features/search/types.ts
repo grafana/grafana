@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
 import { FolderInfo } from '../../types';
 
@@ -40,6 +40,7 @@ export interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
+  icon?: string; // used for grid view
   uid?: string;
   uri: string;
   url: string;
@@ -47,7 +48,7 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
 export interface DashboardTag {
   term: string;

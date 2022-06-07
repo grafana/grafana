@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -13,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPluginSettings(t *testing.T) {
+func TestIntegrationPluginSettings(t *testing.T) {
 	store := InitTestDB(t)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {

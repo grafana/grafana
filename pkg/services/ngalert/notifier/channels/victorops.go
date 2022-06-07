@@ -88,7 +88,7 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	vn.log.Debug("Executing victorops notification", "notification", vn.Name)
+	vn.log.Debug("executing victorops notification", "notification", vn.Name)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
@@ -139,7 +139,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
+		vn.log.Error("Failed to send Victorops notification", "err", err, "webhook", vn.Name)
 		return false, err
 	}
 
