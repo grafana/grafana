@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Jaeger Authors.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,30 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow, mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+
+import { LinkModel } from '@grafana/data';
+
+import { TraceSpanReference } from '../types/trace';
 
 import ReferenceLink from './ReferenceLink';
 
 describe(ReferenceLink, () => {
   const createFocusSpanLinkMock = jest.fn((traceId, spanId) => {
-    return {
+    const model: LinkModel = {
       href: `${traceId}-${spanId}`,
+      title: 'link',
+      origin: 'origin',
+      target: '_blank',
     };
+    return model;
   });
 
-  const ref = {
+  const ref: TraceSpanReference = {
     refType: 'FOLLOWS_FROM',
     traceID: 'trace1',
     spanID: 'span1',
   };
-  describe('rendering', () => {
-    it('renders reference with correct href', () => {
-      const component = shallow(<ReferenceLink reference={ref} createFocusSpanLink={createFocusSpanLinkMock} />);
 
-      const link = component.find('a');
-      expect(link.length).toBe(1);
-      expect(link.prop('href')).toBe('trace1-span1');
+  describe('rendering', () => {
+    it('renders reference with correct href', async () => {
+      render(
+        <ReferenceLink reference={ref} createFocusSpanLink={createFocusSpanLinkMock}>
+          link
+        </ReferenceLink>
+      );
+
+      const link = await screen.findByText('link');
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', 'trace1-span1');
     });
   });
 });
