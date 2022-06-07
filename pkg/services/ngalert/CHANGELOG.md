@@ -45,6 +45,8 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
+- [FEATURE] use optimistic lock by version field when updating alert rules #50274
+
 ## 9.0.0
 
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
