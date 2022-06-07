@@ -13,27 +13,27 @@ import (
 )
 
 type AlertRuleService struct {
-	defaultInterval int64
-	baseInterval    int64
-	ruleStore       store.RuleStore
-	provenanceStore ProvisioningStore
-	xact            TransactionManager
-	log             log.Logger
+	defaultIntervalSeconds int64
+	baseIntervalSeconds    int64
+	ruleStore              store.RuleStore
+	provenanceStore        ProvisioningStore
+	xact                   TransactionManager
+	log                    log.Logger
 }
 
 func NewAlertRuleService(ruleStore store.RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
-	defaultInterval int64,
-	baseInterval int64,
+	defaultIntervalSeconds int64,
+	baseIntervalSeconds int64,
 	log log.Logger) *AlertRuleService {
 	return &AlertRuleService{
-		defaultInterval: defaultInterval,
-		baseInterval:    baseInterval,
-		ruleStore:       ruleStore,
-		provenanceStore: provenanceStore,
-		xact:            xact,
-		log:             log,
+		defaultIntervalSeconds: defaultIntervalSeconds,
+		baseIntervalSeconds:    baseIntervalSeconds,
+		ruleStore:              ruleStore,
+		provenanceStore:        provenanceStore,
+		xact:                   xact,
+		log:                    log,
 	}
 }
 
@@ -60,7 +60,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
 	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-		interval = service.defaultInterval
+		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -118,9 +118,9 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 }
 
 func (service *AlertRuleService) validateRuleGroupInterval(interval int64) error {
-	if interval%service.defaultInterval != 0 || interval <= 0 {
+	if interval%service.defaultIntervalSeconds != 0 || interval <= 0 {
 		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v",
-			models.ErrAlertRuleFailedValidation, time.Duration(interval)*time.Second, service.defaultInterval)
+			models.ErrAlertRuleFailedValidation, time.Duration(interval)*time.Second, service.defaultIntervalSeconds)
 	}
 	return nil
 }

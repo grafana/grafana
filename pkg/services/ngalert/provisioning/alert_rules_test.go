@@ -161,12 +161,12 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		BaseInterval: time.Second * 10,
 	}
 	return AlertRuleService{
-		ruleStore:       store,
-		provenanceStore: store,
-		xact:            sqlStore,
-		log:             log.New("testing"),
-		baseInterval:    10,
-		defaultInterval: 60,
+		ruleStore:              store,
+		provenanceStore:        store,
+		xact:                   sqlStore,
+		log:                    log.New("testing"),
+		baseIntervalSeconds:    10,
+		defaultIntervalSeconds: 60,
 	}
 }
 
