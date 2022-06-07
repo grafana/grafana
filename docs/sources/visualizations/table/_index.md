@@ -1,7 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/table/
   - /docs/grafana/latest/features/panels/table_panel/
+  - /docs/grafana/latest/reference/table/
+  - /docs/grafana/latest/visualizations/table/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
 keywords:
   - grafana

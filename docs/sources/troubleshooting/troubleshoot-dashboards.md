@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/troubleshooting/troubleshoot-dashboards/
 description: Guide to troubleshooting Grafana dashboards
 keywords:
   - grafana

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-functions/
 keywords:
   - grafana
   - alerting

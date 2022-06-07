@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/roles/
 description: Understand roles in fine-grained access control
 keywords:
   - grafana

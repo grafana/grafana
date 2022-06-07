@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/
 description: Grant, change, or revoke access to Grafana resources
 keywords:
   - grafana

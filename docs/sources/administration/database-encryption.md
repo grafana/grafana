@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ''
+  - /docs/grafana/latest/administration/database-encryption/
 description: Grafana database encryption
 keywords:
   - grafana

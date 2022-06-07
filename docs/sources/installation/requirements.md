@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/installation/requirements/
 description: Requirements for Grafana
 keywords:
   - grafana

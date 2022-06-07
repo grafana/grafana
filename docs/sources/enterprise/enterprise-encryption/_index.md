@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ''
+  - /docs/grafana/latest/enterprise/enterprise-encryption/
 description: Grafana Enterprise database encryption
 keywords:
   - grafana

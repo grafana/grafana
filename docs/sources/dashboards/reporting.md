@@ -1,6 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/reports
+  - /docs/grafana/latest/administration/reports/
+  - /docs/grafana/latest/dashboards/reporting/
 description: ''
 keywords:
   - grafana

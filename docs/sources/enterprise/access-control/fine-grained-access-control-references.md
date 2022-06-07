@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/fine-grained-access-control-references/
 description: Refer to fine-grained access control references
 keywords:
   - grafana

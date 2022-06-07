@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/field-overrides/
+  - /docs/grafana/latest/panels/override-field-values/
   - /docs/sources/panels/override-field-values/
 title: Override field values
 weight: 400

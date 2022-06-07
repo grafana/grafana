@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/contact-points/
 description: Create or edit contact point
 keywords:
   - grafana

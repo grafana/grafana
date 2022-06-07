@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
   - /docs/sources/panels/add-panels-dynamically/configure-repeating-panels/
 title: Configure repeating panels
 weight: 20

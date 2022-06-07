@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/linking/dashboard-links/
 description: ''
 keywords:
   - grafana

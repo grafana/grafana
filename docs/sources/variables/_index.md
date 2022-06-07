@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/variables/
 title: Templates and variables
 weight: 130
 ---

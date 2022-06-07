@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/visualizations/bar-chart/
+  - /docs/grafana/latest/visualizations/bar-chart/
 description: Bar chart visualization
 keywords:
   - grafana

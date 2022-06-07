@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/state-and-health/
   - /docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/
 description: State and Health of alerting rules
 keywords:

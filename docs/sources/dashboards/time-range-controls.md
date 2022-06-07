@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/dashboards/time-range-controls/
   - /docs/grafana/latest/reference/timerange/
 keywords:
   - grafana

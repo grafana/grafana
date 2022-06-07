@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/
 description: Annotations and labels for alerting
 keywords:
   - grafana

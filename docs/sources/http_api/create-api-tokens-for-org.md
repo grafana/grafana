@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/http_api/create-api-tokens-for-org/
   - /docs/grafana/latest/tutorials/api_org_token_howto/
 keywords:
   - grafana

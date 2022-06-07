@@ -1,6 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/export-logs.md
+  - /docs/grafana/latest/enterprise/usage-insights/export-logs.md/
+  - /docs/grafana/latest/enterprise/usage-insights/export-logs/
 description: Export logs of usage insights
 keywords:
   - grafana

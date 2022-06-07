@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/working-with-panels/navigate-inspector-panel/
   - /docs/sources/panels/working-with-panels/navigate-inspector-panel/
 title: Navigate the Grafana Inspector panel
 weight: 90

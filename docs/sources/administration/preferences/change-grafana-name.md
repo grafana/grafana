@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/preferences/change-grafana-name/
 keywords:
   - grafana
   - configuration

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/
 description: Manage built-in role assignments
 keywords:
   - grafana

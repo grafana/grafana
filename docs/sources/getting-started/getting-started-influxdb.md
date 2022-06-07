@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/getting-started/getting-started-influxdb/
 description: Guide for getting started with Grafana and InfluxDB
 keywords:
   - grafana

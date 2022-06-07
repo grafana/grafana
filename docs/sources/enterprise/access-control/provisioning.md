@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/provisioning/
 description: Understand how to provision roles and assignments in fine-grained access
   control
 keywords:

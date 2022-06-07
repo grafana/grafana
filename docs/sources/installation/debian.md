@@ -1,6 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/installation/debian
+  - /docs/grafana/latest/installation/debian/
+  - /docs/grafana/latest/installation/installation/debian/
 description: Install guide for Grafana on Debian or Ubuntu
 keywords:
   - grafana
