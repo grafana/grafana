@@ -40,6 +40,11 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         name: 'Log query with filtering and parsing',
         // {} |= `` | logfmt | __error__=``
         operations: [
+          // Line contains is an issue, because if it is empty, we don't add
+          // it to expr and then it doesn't appear in model.
+          // Should we add there something?
+          // Should we always render it (only not if it is the only thing in query)
+          // Should we always render it?
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
@@ -97,6 +102,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.Unwrap, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
+          // Should we add here any example label
+          // then we need to rename it to __sum_by
           { id: LokiOperationId.Sum, params: [] },
         ],
       },
@@ -149,7 +156,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
       },
       {
         name: 'Metrics query for extracted quantile',
-        // quantile_over_time(0.99,{} | logfmt | unwrap latency[$__interval]) by ()
+        // quantile_over_time(0.5,{} | logfmt | unwrap latency[$__interval]) by ()
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
