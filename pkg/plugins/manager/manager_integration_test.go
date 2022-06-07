@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
@@ -97,7 +95,7 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pluginRegistry := registry.NewInMemory()
 	pm, err := ProvideService(cfg, pluginRegistry, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), installer.ProvideService(cfg), process.ProvideProcessManager(pluginRegistry), ProvideNoopRunner())
+		provider.ProvideService(coreRegistry)), ProvideNoopRunner())
 	require.NoError(t, err)
 
 	ctx := context.Background()
