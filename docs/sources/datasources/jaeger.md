@@ -115,7 +115,7 @@ Here is an example JSON:
             }
           ],
           "logs": [],
-          "processID": "p1",
+          "resourceID": "p1",
           "warnings": null
         }
       ],
