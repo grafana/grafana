@@ -3992,7 +3992,7 @@ __metadata:
     "@testing-library/user-event": 14.2.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.182
     "@types/marked": 4.0.3
@@ -4157,7 +4157,7 @@ __metadata:
     "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/lodash": 4.14.182
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
@@ -4379,7 +4379,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.7
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.182
     "@types/mock-raf": 1.0.3
@@ -4583,7 +4583,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/lodash": 4.14.182
     "@types/prop-types": 15.7.5
     "@types/react": 17.0.42
@@ -10106,13 +10106,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:27.5.1":
-  version: 27.5.1
-  resolution: "@types/jest@npm:27.5.1"
+"@types/jest@npm:28.1.1":
+  version: 28.1.1
+  resolution: "@types/jest@npm:28.1.1"
   dependencies:
     jest-matcher-utils: ^27.0.0
     pretty-format: ^27.0.0
-  checksum: be20e39f7aaf17179109c0060d0a0489cec2034d4e2e28a631284c7ecd13c5ae52f62697a33a0e89b03b6cfe54e9d5e8c2bd387ab2bd90d6071d68c63b86d1e3
+  checksum: 0a8b045a7b660372decc807c390d3f99a2b12bb1659a1cd593afe04557f4b7c235b0576a5e35b1577710d20e42759d3d8755eb8bed6edc8733f47007e75a5509
   languageName: node
   linkType: hard
 
@@ -20317,7 +20317,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28

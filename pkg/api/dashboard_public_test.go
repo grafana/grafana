@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,6 +46,9 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 
+	dashboardUid := "dashboard-abcd1234"
+	pubdashUid := "pubdash-abcd1234"
+
 	testCases := []struct {
 		name                  string
 		uid                   string
@@ -53,16 +58,19 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	}{
 		{
 			name:                 "It gets a public dashboard",
-			uid:                  "pubdash-abcd1234",
+			uid:                  pubdashUid,
 			expectedHttpResponse: http.StatusOK,
 			publicDashboardResult: &models.Dashboard{
-				Uid: "dashboard-abcd1234",
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"Uid": dashboardUid,
+				}),
+				IsPublic: true,
 			},
 			publicDashboardErr: nil,
 		},
 		{
 			name:                  "It should return 404 if isPublicDashboard is false",
-			uid:                   "pubdash-abcd1234",
+			uid:                   pubdashUid,
 			expectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
 			publicDashboardErr:    models.ErrPublicDashboardNotFound,
@@ -89,10 +97,15 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
 			if test.publicDashboardErr == nil {
-				var dashResp models.Dashboard
+				var dashResp dtos.DashboardFullWithMeta
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.publicDashboardResult.Uid, dashResp.Uid)
+
+				assert.Equal(t, dashboardUid, dashResp.Dashboard.Get("Uid").MustString())
+				assert.Equal(t, true, dashResp.Meta.IsPublic)
+				assert.Equal(t, false, dashResp.Meta.CanEdit)
+				assert.Equal(t, false, dashResp.Meta.CanDelete)
+				assert.Equal(t, false, dashResp.Meta.CanSave)
 			} else {
 				var errResp struct {
 					Error string `json:"error"`

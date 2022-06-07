@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -9,8 +10,10 @@ import (
 	"xorm.io/xorm"
 )
 
+const ActionMigrationID = "RBAC action name migrator"
+
 func AddActionNameMigrator(mg *migrator.Migrator) {
-	mg.AddMigration("RBAC action name migrator", &actionNameMigrator{})
+	mg.AddMigration(ActionMigrationID, &actionNameMigrator{})
 }
 
 type actionNameMigrator struct {
@@ -41,6 +44,7 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"users.password:update":    accesscontrol.ActionUsersPasswordUpdate,
 		"users.permissions:update": accesscontrol.ActionUsersPermissionsUpdate,
 		"users.quotas:update":      accesscontrol.ActionUsersQuotasUpdate,
+		"roles:list":               "roles:read",
 		"teams.roles:list":         "teams.roles:read",
 		"users.roles:list":         "users.roles:read",
 		"users.authtoken:list":     accesscontrol.ActionUsersAuthTokenList,
@@ -49,18 +53,62 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"alert.instances:update":   accesscontrol.ActionAlertingInstanceUpdate,
 		"alert.rules:update":       accesscontrol.ActionAlertingRuleUpdate,
 	}
+
+	var oldActionNames, newActionNames []interface{}
 	for oldName, newName := range actionNameMapping {
-		_, err := m.sess.Table(&accesscontrol.Permission{}).Where("action = ?", oldName).Update(&accesscontrol.Permission{Action: newName})
-		if err != nil {
-			return fmt.Errorf("failed to update permission table for action %s: %w", oldName, err)
-		}
+		oldActionNames = append(oldActionNames, oldName)
+		newActionNames = append(newActionNames, newName)
 	}
 
-	actionsToDelete := []string{"users.teams:read", "roles:list"}
-	for _, action := range actionsToDelete {
-		_, err := m.sess.Table(&accesscontrol.Permission{}).Where("action = ?", action).Delete(accesscontrol.Permission{})
-		if err != nil {
-			return fmt.Errorf("failed to update permission table for action %s: %w", action, err)
+	actionNameQuery := strings.Builder{}
+	actionNameQuery.WriteRune(' ')
+	actionNameQuery.WriteString("action IN ")
+	actionNameQuery.WriteString("(?")
+	actionNameQuery.WriteString(strings.Repeat(",?", len(actionNameMapping)-1))
+	actionNameQuery.WriteRune(')')
+
+	oldActionNamePermissions := make([]*accesscontrol.Permission, 0)
+	err := m.sess.Where(actionNameQuery.String(), oldActionNames...).Find(&oldActionNamePermissions)
+	if err != nil {
+		return fmt.Errorf("failed to list permissions with legacy action names: %w", err)
+	}
+
+	newActionNamePermissions := make([]*accesscontrol.Permission, 0)
+	err = m.sess.Where(actionNameQuery.String(), newActionNames...).Find(&newActionNamePermissions)
+	if err != nil {
+		return fmt.Errorf("failed to list permissions with new action names: %w", err)
+	}
+
+	permissionsToCreate := make([]*accesscontrol.Permission, 0)
+	for _, oldNamePermission := range oldActionNamePermissions {
+		newPermission := oldNamePermission
+		newPermission.Action = actionNameMapping[oldNamePermission.Action]
+
+		// if there already is a permission in the database with the new action name and the same role ID and scope as the old permissions,
+		// we can just drop the old permission (otherwise the permission table uniqueness constraint won't be satisfied)
+		newNamePermissionExists := false
+		// note - there should not be many permissions with the new action names, so this should not be an expensive iteration
+		for _, existingPermission := range newActionNamePermissions {
+			if existingPermission.Action == newPermission.Action &&
+				existingPermission.RoleID == newPermission.RoleID &&
+				existingPermission.Scope == newPermission.Scope {
+				newNamePermissionExists = true
+				continue
+			}
+		}
+		if newNamePermissionExists {
+			continue
+		}
+
+		permissionsToCreate = append(permissionsToCreate, oldNamePermission)
+	}
+
+	if _, err := m.sess.Where(actionNameQuery.String(), oldActionNames...).Delete(accesscontrol.Permission{}); err != nil {
+		return fmt.Errorf("failed to delete permissions with legacy action names: %w", err)
+	}
+	if len(permissionsToCreate) != 0 {
+		if _, err := m.sess.InsertMulti(permissionsToCreate); err != nil {
+			return fmt.Errorf("failed to create permissions with the new action names: %w", err)
 		}
 	}
 

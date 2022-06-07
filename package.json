@@ -130,7 +130,7 @@
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
     "@types/history": "4.7.11",
     "@types/hoist-non-react-statics": "3.3.1",
-    "@types/jest": "27.5.1",
+    "@types/jest": "28.1.1",
     "@types/jquery": "3.5.14",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
