@@ -344,10 +344,6 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
-	return m.ExpectedError
-}
-
 func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 	query.Result = m.ExpectedDashboardAclInfoList
 	return m.ExpectedError

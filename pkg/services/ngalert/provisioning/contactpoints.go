@@ -132,7 +132,9 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		extractedSecrets[k] = encryptedValue
 	}
 
-	contactPoint.UID = util.GenerateShortUID()
+	if contactPoint.UID == "" {
+		contactPoint.UID = util.GenerateShortUID()
+	}
 	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,

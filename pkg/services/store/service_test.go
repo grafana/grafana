@@ -5,7 +5,6 @@ import (
 	"context"
 	"mime/multipart"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -45,8 +44,7 @@ func TestListFiles(t *testing.T) {
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
-	err = experimental.CheckGoldenFrame(path.Join("testdata", "public_testdata.golden.txt"), frame, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame, true)
 
 	file, err := store.Read(context.Background(), dummyUser, "public/testdata/js_libraries.csv")
 	require.NoError(t, err)
@@ -54,8 +52,7 @@ func TestListFiles(t *testing.T) {
 
 	frame, err = testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
 	require.NoError(t, err)
-	err = experimental.CheckGoldenFrame(path.Join("testdata", "public_testdata_js_libraries.golden.txt"), frame, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", frame, true)
 }
 
 func TestUpload(t *testing.T) {

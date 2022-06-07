@@ -190,9 +190,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
     `,
-    cellWrapper: css`
+    nameCellStyle: css`
       border-right: none;
-      padding: ${theme.spacing(1)};
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)};
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
@@ -200,6 +200,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover {
         box-shadow: none;
       }
+    `,
+    headerNameStyle: css`
+      padding-left: ${theme.spacing(1)};
     `,
     headerCell: css`
       padding: ${theme.spacing(1)};
@@ -254,10 +257,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     sortedHeader: css`
       text-align: right;
+      padding-right: ${theme.spacing(2)};
     `,
     sortedItems: css`
       text-align: right;
-      padding: ${theme.spacing(1)};
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
     `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};

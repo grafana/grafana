@@ -16,62 +16,26 @@ import { shallow, mount } from 'enzyme';
 import React from 'react';
 
 import ReferenceLink from './ReferenceLink';
-import ExternalLinkContext from './externalLinkContext';
 
 describe(ReferenceLink, () => {
-  const focusMock = jest.fn();
+  const createFocusSpanLinkMock = jest.fn((traceId, spanId) => {
+    return {
+      href: `${traceId}-${spanId}`,
+    };
+  });
 
-  const sameTraceRef = {
-    refType: 'CHILD_OF',
+  const ref = {
+    refType: 'FOLLOWS_FROM',
     traceID: 'trace1',
     spanID: 'span1',
-    span: {
-      // not null or undefined is an indicator of an internal reference
-    },
   };
-
-  const externalRef = {
-    refType: 'CHILD_OF',
-    traceID: 'trace2',
-    spanID: 'span2',
-  };
-
   describe('rendering', () => {
-    it('render for this trace', () => {
-      const component = shallow(<ReferenceLink reference={sameTraceRef} focusSpan={focusMock} />);
+    it('renders reference with correct href', () => {
+      const component = shallow(<ReferenceLink reference={ref} createFocusSpanLink={createFocusSpanLinkMock} />);
+
       const link = component.find('a');
       expect(link.length).toBe(1);
-      expect(link.props().role).toBe('button');
-    });
-
-    it('render for external trace', () => {
-      const component = mount(
-        <ExternalLinkContext.Provider value={(trace, span) => `${trace}/${span}`}>
-          <ReferenceLink reference={externalRef} focusSpan={focusMock} />
-        </ExternalLinkContext.Provider>
-      );
-      const link = component.find('a[href="trace2/span2"]');
-      expect(link.length).toBe(1);
-    });
-
-    it('throws if ExternalLinkContext is not set', () => {
-      // Prevent writing to stderr during this render.
-      const err = console.error;
-      console.error = jest.fn();
-      expect(() => mount(<ReferenceLink reference={externalRef} focusSpan={focusMock} />)).toThrow(
-        'ExternalLinkContext'
-      );
-      // Restore writing to stderr.
-      console.error = err;
-    });
-  });
-  describe('focus span', () => {
-    it('call focusSpan', () => {
-      focusMock.mockReset();
-      const component = shallow(<ReferenceLink reference={sameTraceRef} focusSpan={focusMock} />);
-      const link = component.find('a');
-      link.simulate('click');
-      expect(focusMock).toHaveBeenLastCalledWith('span1');
+      expect(link.prop('href')).toBe('trace1-span1');
     });
   });
 });

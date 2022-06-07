@@ -64,6 +64,9 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         showManage={isEditor || hasEditPermissionInFolders || canSave}
         folderDTO={folder}
         queryText={query.query}
+        onQueryTextChange={(newQueryText) => {
+          setInputValue(newQueryText);
+        }}
         hidePseudoFolders={true}
         includePanels={includePanels!}
         setIncludePanels={setIncludePanels}

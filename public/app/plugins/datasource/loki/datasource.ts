@@ -47,6 +47,7 @@ import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
+import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
@@ -118,6 +119,9 @@ export class LokiDatasource
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
     this.useBackendMode = config.featureToggles.lokiBackendMode ?? false;
+    this.annotations = {
+      QueryEditor: LokiAnnotationsQueryEditor,
+    };
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -139,28 +143,22 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    const isQuerySuitable = (query: LokiQuery) => {
-      const normalized = getNormalizedLokiQuery(query);
-      const { expr } = normalized;
-      // it has to be a logs-producing range-query
-      return expr && !isMetricsQuery(expr) && normalized.queryType === LokiQueryType.Range;
-    };
-
-    const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
-
+    const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     if (!isLogsVolumeAvailable) {
       return undefined;
     }
 
     const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
-      return {
-        ...target,
-        instant: false,
-        volumeQuery: true,
-        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-      };
-    });
+    logsVolumeRequest.targets = logsVolumeRequest.targets
+      .filter((target) => target.expr && !isMetricsQuery(target.expr))
+      .map((target) => {
+        return {
+          ...target,
+          instant: false,
+          volumeQuery: true,
+          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        };
+      });
 
     return queryLogsVolume(this, logsVolumeRequest, {
       extractLevel,
@@ -887,10 +885,12 @@ export class LokiDatasource
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
+    const exprWithAdHoc = this.addAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
     };
   }
 
