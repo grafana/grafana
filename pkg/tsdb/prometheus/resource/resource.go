@@ -134,11 +134,14 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return statusCode, nil, err
 	}
 
+	defer resp.Body.Close() // nolint : we don't need to handle the return value of Close()
+
 	// Check that the server actually sent compressed data
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
 		reader, err = gzip.NewReader(resp.Body)
+		defer reader.Close() //nolint : we don't need to handle the output of reader.Close()
 		if err != nil {
 			return 500, nil, err
 		}
@@ -146,7 +149,6 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		reader = resp.Body
 	}
 
-	defer reader.Close() //nolint : we don't need to handle the output of reader.Close()
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return 500, nil, err
