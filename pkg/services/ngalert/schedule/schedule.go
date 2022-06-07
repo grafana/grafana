@@ -445,7 +445,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
 					success := item.ruleInfo.eval(tick, item.version)
 					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 					}
 				})
 			}
@@ -606,12 +606,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				return nil
 			})
 			if err != nil {
-				logger.Error("updating rule failed after all retries", "error", err)
+				logger.Error("updating rule failed after all retries", "err", err)
 			}
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				logger.Debug("evaluation channel has been closed. Exiting")
 				return nil
 			}
 			if evalRunning {
