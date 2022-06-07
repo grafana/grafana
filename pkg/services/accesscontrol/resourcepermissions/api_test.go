@@ -418,66 +418,6 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-type inheritSolverTestCase struct {
-	desc           string
-	resourceID     string
-	expectedStatus int
-}
-
-func TestApi_InheritSolver(t *testing.T) {
-	tests := []inheritSolverTestCase{
-		{
-			desc:           "expect parents permission to apply",
-			resourceID:     "resourceID",
-			expectedStatus: http.StatusOK,
-		},
-		{
-			desc:           "expect direct permissions to apply (no inheritance)",
-			resourceID:     "orphanedID",
-			expectedStatus: http.StatusOK,
-		},
-		{
-			desc:           "expect 404 when resource is not found",
-			resourceID:     "notfound",
-			expectedStatus: http.StatusNotFound,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			userPermissions := []*accesscontrol.Permission{
-				{Action: "dashboards.permissions:read", Scope: "parents:id:parentID"},      // Inherited permission
-				{Action: "dashboards.permissions:read", Scope: "dashboards:id:orphanedID"}, // Direct permission
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-			}
-			// Add the inheritance solver "resourceID -> [parentID]" "orphanedID -> []"
-			service, sql := setupTestEnvironment(t, userPermissions,
-				withInheritance(testOptions, testInheritedScopeSolver, testInheritedScopePrefixes),
-			)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
-				1: accesscontrol.GroupScopesByAction(userPermissions),
-			}}, service)
-
-			// Seed permissions for users/teams/built-in roles specific to the test case resourceID
-			seedPermissions(t, tt.resourceID, sql, service)
-
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
-			require.Equal(t, tt.expectedStatus, recorder.Code)
-
-			if tt.expectedStatus == http.StatusOK {
-				checkSeededPermissions(t, permissions)
-			}
-		})
-	}
-}
-
-func withInheritance(options Options, solver InheritedScopesSolver, inheritedPrefixes []string) Options {
-	options.InheritedScopesSolver = solver
-	options.InheritedScopePrefixes = inheritedPrefixes
-	return options
-}
-
 func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))

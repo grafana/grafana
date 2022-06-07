@@ -134,7 +134,6 @@ func ProvideDashboardPermissions(
 
 			return nil
 		},
-		InheritedScopePrefixes: []string{"folders:uid:"},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
