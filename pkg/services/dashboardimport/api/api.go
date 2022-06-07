@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,17 +18,15 @@ import (
 type ImportDashboardAPI struct {
 	dashboardImportService dashboardimport.Service
 	quotaService           QuotaService
-	schemaLoaderService    SchemaLoaderService
 	pluginStore            plugins.Store
 	ac                     accesscontrol.AccessControl
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	schemaLoaderService SchemaLoaderService, pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	pluginStore plugins.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
-		schemaLoaderService:    schemaLoaderService,
 		pluginStore:            pluginStore,
 		ac:                     ac,
 	}
@@ -65,14 +62,6 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 		return response.Error(403, "Quota reached", nil)
 	}
 
-	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
-	if trimDefaults && !api.schemaLoaderService.IsDisabled() {
-		req.Dashboard, err = api.schemaLoaderService.DashboardApplyDefaults(req.Dashboard)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Error while applying default value to the dashboard json", err)
-		}
-	}
-
 	req.User = c.SignedInUser
 	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
 	if err != nil {
@@ -90,9 +79,4 @@ type quotaServiceFunc func(c *models.ReqContext, target string) (bool, error)
 
 func (fn quotaServiceFunc) QuotaReached(c *models.ReqContext, target string) (bool, error) {
 	return fn(c, target)
-}
-
-type SchemaLoaderService interface {
-	IsDisabled() bool
-	DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error)
 }
