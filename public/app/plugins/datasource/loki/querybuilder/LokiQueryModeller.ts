@@ -129,7 +129,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for count of log lines',
+        name: 'Metrics query for count of log lines per stream',
         // count_over_time({}[$__interval])
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
