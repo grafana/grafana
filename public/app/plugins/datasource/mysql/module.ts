@@ -9,7 +9,7 @@ import { SqlQueryEditor } from '../sql/components/QueryEditor';
 import { SQLQuery } from '../sql/types';
 
 import { MySqlDatasource } from './MySqlDatasource';
-import { MysqlQueryCtrl } from './query_ctrl';
+// import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -48,7 +48,7 @@ class MysqlAnnotationsQueryCtrl {
 export {
   MySqlDatasource,
   MySqlDatasource as Datasource,
-  MysqlQueryCtrl as QueryCtrl,
+  // MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

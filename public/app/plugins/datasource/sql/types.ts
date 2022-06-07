@@ -2,6 +2,7 @@ import { JsonTree } from 'react-awesome-query-builder';
 
 import {
   AnnotationEvent,
+  DataFrame,
   DataQuery,
   DataSourceJsonData,
   MetricFindValue,
@@ -10,7 +11,7 @@ import {
   toOption as toOptionFromData,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
-import { BackendDataSourceResponse, FetchResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse } from '@grafana/runtime';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -144,5 +145,5 @@ export interface SqlQueryModel {
 
 export interface ResponseParser {
   transformAnnotationResponse: (options: any, data: BackendDataSourceResponse) => Promise<AnnotationEvent[]>;
-  transformMetricFindResponse: (raw: FetchResponse<BackendDataSourceResponse>) => MetricFindValue[];
+  transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
 }

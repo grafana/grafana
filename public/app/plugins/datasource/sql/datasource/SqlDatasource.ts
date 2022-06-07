@@ -2,7 +2,16 @@ import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 
-import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
+import {
+  AnnotationEvent,
+  DataFrame,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  MetricFindValue,
+  ScopedVars,
+  TimeRange,
+} from '@grafana/data';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
@@ -24,6 +33,7 @@ import {
   SqlQueryForInterpolation,
   ResponseParser,
   SqlQueryModel,
+  QueryFormat,
 } from '../types';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
@@ -134,11 +144,11 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
   }
 
-  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    let refId = 'tempvar';
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
-    }
+  async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
+    // let refId = 'tempvar';
+    // if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+    //   refId = optionalOptions.variable.name;
+    // }
 
     const rawSql = this.templateSrv.replace(
       query,
@@ -147,36 +157,27 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
 
     const interpolatedQuery = {
-      refId: refId,
+      // refId: refId,
       datasourceId: this.id,
       datasource: this.getRef(),
       rawSql,
-      format: 'table',
+      format: QueryFormat.Table,
     };
 
-    const range = optionalOptions?.range;
+    const response = await this.runQuery(interpolatedQuery, optionalOptions);
+    return this.getResponseParser().transformMetricFindResponse(response);
+  }
 
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: range?.from?.valueOf()?.toString(),
-            to: range?.to?.valueOf()?.toString(),
-            queries: [interpolatedQuery],
-          },
-          requestId: refId,
-        })
-        .pipe(
-          map((rsp) => {
-            return this.getResponseParser().transformMetricFindResponse(rsp);
-          }),
-          catchError((err) => {
-            return of([]);
-          })
-        )
-    );
+  private runQuery(request: Partial<SQLQuery>, options?: any): Promise<DataFrame> {
+    return new Promise((resolve) => {
+      const req = {
+        targets: [{ ...request, refId: String(Math.random()) }],
+        range: options?.range,
+      } as DataQueryRequest<SQLQuery>;
+      this.query(req).subscribe((res: DataQueryResponse) => {
+        resolve(res.data[0] || { fields: [] });
+      });
+    });
   }
 
   testDatasource(): Promise<any> {

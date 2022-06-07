@@ -1,16 +1,8 @@
 import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 export default class ResponseParser {
-  transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
-    const frames = toDataQueryResponse(raw).data as DataFrame[];
-
-    if (!frames || !frames.length) {
-      return [];
-    }
-
-    const frame = frames[0];
-
+  transformMetricFindResponse(frame: DataFrame): MetricFindValue[] {
     const values: MetricFindValue[] = [];
     const textField = frame.fields.find((f) => f.name === '__text');
     const valueField = frame.fields.find((f) => f.name === '__value');
