@@ -268,6 +268,8 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 					return nil, errors.New("error")
 				}
 
+				fmt.Printf("plugin ID: %d\n", len(req.Queries))
+
 				resp := backend.Responses{
 					"A": backend.DataResponse{
 						Frames: []*data.Frame{
@@ -411,12 +413,41 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
-		t.Skip("multiple datasources not yet supported")
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
-			mock.Anything,
-		).Return(dtos.MetricRequest{}, nil)
+			"abc123",
+			int64(2),
+		).Return(dtos.MetricRequest{
+			Queries: []*simplejson.Json{
+				simplejson.MustJson([]byte(`
+					{
+					  "datasource": {
+						"type": "prometheus",
+						"uid": "promds1"
+					  },
+					  "exemplar": true,
+					  "expr": "query_2_A",
+					  "interval": "",
+					  "legendFormat": "",
+					  "refId": "A"
+					}
+				`)),
+				simplejson.MustJson([]byte(`
+					{
+					  "datasource": {
+						"type": "prometheus",
+						"uid": "promds2"
+					  },
+					  "exemplar": true,
+					  "expr": "query_2_B",
+					  "interval": "",
+					  "legendFormat": "",
+					  "refId": "B"
+					}
+				`)),
+			},
+		}, nil)
 		req := serverFeatureEnabled.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
 			strings.NewReader("{}"),
@@ -424,6 +455,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, 201, resp.StatusCode)
 	})
 }
