@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent, useEffect } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
@@ -30,6 +30,13 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const styles = getStyles(theme, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
+
+  // Check for a difference between prop value and internal state
+  useEffect(() => {
+    if (value != null && value !== sliderValue) {
+      setSliderValue(value);
+    }
+  }, [value, sliderValue]);
 
   const onSliderChange = useCallback(
     (v: number) => {
