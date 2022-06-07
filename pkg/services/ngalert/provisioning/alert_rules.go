@@ -88,7 +88,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 
 // UpdateRuleGroup will update the interval for all rules in the group.
 func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	if err := service.validateAlertRuleInterval(interval); err != nil {
+	if err := service.validateRuleGroupInterval(interval); err != nil {
 		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -117,7 +117,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) validateAlertRuleInterval(interval int64) error {
+func (service *AlertRuleService) validateRuleGroupInterval(interval int64) error {
 	if interval%service.defaultInterval != 0 || interval <= 0 {
 		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v",
 			models.ErrAlertRuleFailedValidation, time.Duration(interval)*time.Second, service.defaultInterval)
