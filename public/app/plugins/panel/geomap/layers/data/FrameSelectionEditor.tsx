@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo } from 'react';
-import { FrameMatcherID, MatcherConfig, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { FrameMatcherID, getFieldDisplayName, MatcherConfig, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
@@ -11,7 +11,8 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
   const listOfRefId = useMemo(() => {
     return context.data.map(f => ({
       value: f.refId,
-      label: f.refId ?? "missing refId",
+      label: `Query: ${f.refId} (size: ${f.length})`,
+      description: f.fields.map(f => getFieldDisplayName(f)).join(', '),
     }));
   }, [context.data]);
 
