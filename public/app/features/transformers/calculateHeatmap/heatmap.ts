@@ -63,7 +63,7 @@ export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanli
 
 export interface BucketsOptions {
   frame: DataFrame;
-  name?: string;
+  value?: string; // the field value name
   layout?: HeatmapBucketLayout;
 }
 
@@ -147,7 +147,7 @@ export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
         },
       },
       {
-        name: opts.name?.length ? opts.name : 'Value',
+        name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
         config: yFields[0].config,

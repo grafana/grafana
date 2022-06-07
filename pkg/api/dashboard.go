@@ -58,20 +58,12 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	var err error
 	dash := cmd.Dashboard
 	meta := cmd.Meta
 
-	trimedResult := *dash
-	if !hs.LoadSchemaService.IsDisabled() {
-		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
-		if err != nil {
-			return response.Error(500, "Error while exporting with default values removed", err)
-		}
-	}
-
+	// TODO temporarily just return the input as a no-op while we convert to thema calls
 	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: &trimedResult,
+		Dashboard: dash,
 		Meta:      meta,
 	}
 

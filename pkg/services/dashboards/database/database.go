@@ -832,8 +832,8 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore
 	return nil
 }
 
-func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error) {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -852,6 +852,8 @@ func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDash
 		query.Result = &dashboard
 		return nil
 	})
+
+	return query.Result, err
 }
 
 func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {

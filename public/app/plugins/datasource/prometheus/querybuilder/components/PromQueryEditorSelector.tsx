@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
@@ -107,15 +107,17 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
         )}
         <FlexItem grow={1} />
-        <Button
-          variant={dataIsStale ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
-        >
-          Run query
-        </Button>
+        {app !== CoreApp.Explore && (
+          <Button
+            variant={dataIsStale ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={onRunQuery}
+            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            disabled={data?.state === LoadingState.Loading}
+          >
+            Run queries
+          </Button>
+        )}
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
