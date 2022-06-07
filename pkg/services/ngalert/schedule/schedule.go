@@ -394,6 +394,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
+				ruleName string
 				ruleInfo *alertRuleInfo
 				version  int64
 			}
@@ -427,7 +428,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
