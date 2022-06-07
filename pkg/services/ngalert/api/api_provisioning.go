@@ -62,7 +62,7 @@ type AlertRuleService interface {
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
-	UpdateAlertGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
+	UpdateRuleGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -276,7 +276,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
 	rulegroup := pathParam(c, groupPathParam)
 	folderUID := pathParam(c, folderUIDPathParam)
-	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
+	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
