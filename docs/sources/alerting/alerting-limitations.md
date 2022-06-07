@@ -9,7 +9,7 @@ weight: 552
 
 ## Limited rule sources support
 
-Grafana alerting system can retrieve rules from all available Prometheus, Loki, Mimir and Alertmanager data sources.
+Grafana alerting system can retrieve alerting and recording rules **stored** in most available Prometheus, Loki, Mimir and Alertmanager compatible data sources.
 
 It might not be able to fetch alerting rules from all other supported data sources at this time.
 
