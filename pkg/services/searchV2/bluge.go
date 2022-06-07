@@ -50,7 +50,7 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 	// In order to reduce memory usage while initial indexing we are limiting
 	// the size of batch here.
 	docsInBatch := 0
-	maxBatchSize := 100
+	maxBatchSize := 300
 
 	flushIfRequired := func(force bool) error {
 		docsInBatch++

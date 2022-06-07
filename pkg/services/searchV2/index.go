@@ -3,9 +3,11 @@ package searchV2
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -125,7 +127,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
 	memCtx, memCancel := context.WithCancel(ctx)
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
-		go i.debugMemStats(memCtx, 200*time.Millisecond)
+		go i.debugResourceUsage(memCtx, 200*time.Millisecond)
 	}
 
 	// Build on start for orgID 1 but keep lazy for others.
@@ -148,7 +150,52 @@ func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
 	return nil
 }
 
-func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Duration) {
+type Process struct {
+	pid int
+	cpu float64
+}
+
+// This is a naive implementation of process CPU getting (credits to
+// https://stackoverflow.com/a/11357813/1288429). Should work on both Linux and Darwin.
+// Since we only use this during development – seems simple and cheap solution to get
+// process CPU usage in cross-platform way.
+func getProcessCPU(currentPid int) (float64, error) {
+	cmd := exec.Command("ps", "aux")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return 0, err
+	}
+	for {
+		line, err := out.ReadString('\n')
+		if err != nil {
+			break
+		}
+		tokens := strings.Split(line, " ")
+		ft := make([]string, 0)
+		for _, t := range tokens {
+			if t != "" && t != "\t" {
+				ft = append(ft, t)
+			}
+		}
+		pid, err := strconv.Atoi(ft[1])
+		if err != nil {
+			continue
+		}
+		if pid != currentPid {
+			continue
+		}
+		cpu, err := strconv.ParseFloat(ft[2], 64)
+		if err != nil {
+			return 0, err
+		}
+		return cpu, nil
+	}
+	return 0, errors.New("process not found")
+}
+
+func (i *dashboardIndex) debugResourceUsage(ctx context.Context, frequency time.Duration) {
 	var maxHeapInuse uint64
 	var maxSys uint64
 
@@ -163,15 +210,28 @@ func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Durat
 		}
 	}
 
+	var cpuUtilization []float64
+
+	captureCPUStats := func() {
+		cpu, err := getProcessCPU(os.Getpid())
+		if err != nil {
+			i.logger.Error("CPU stats error", "error", err)
+			return
+		}
+		cpuUtilization = append(cpuUtilization, cpu)
+	}
+
 	captureMemStats()
+	captureCPUStats()
 
 	for {
 		select {
 		case <-ctx.Done():
-			i.logger.Warn("Memory stats during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys))
+			i.logger.Warn("Resource usage during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys), "cpuPercent", cpuUtilization)
 			return
 		case <-time.After(frequency):
 			captureMemStats()
+			captureCPUStats()
 		}
 	}
 }
