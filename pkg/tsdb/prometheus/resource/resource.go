@@ -18,8 +18,9 @@ import (
 )
 
 type Resource struct {
-	provider *client.Provider
-	log      log.Logger
+	provider      *client.Provider
+	log           log.Logger
+	customHeaders map[string]string
 }
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -45,6 +46,12 @@ var removeHeaders = []string{
 func delHopHeaders(header http.Header) {
 	for _, h := range hopHeaders {
 		header.Del(h)
+	}
+}
+
+func addHeaders(header http.Header, toAdd map[string]string) {
+	for k, v := range toAdd {
+		header.Add(k, v)
 	}
 }
 
@@ -76,15 +83,45 @@ func New(
 
 	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
 
+	customHeaders := make(map[string]string)
+	var jsonDataMap map[string]interface{}
+
+	err := json.Unmarshal(settings.JSONData, &jsonDataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	index := 1
+	for {
+		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
+		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+
+		key := jsonDataMap[headerNameSuffix]
+		if key == nil {
+			// No (more) header values are available
+			break
+		}
+
+		if val, ok := settings.DecryptedSecureJSONData[headerValueSuffix]; ok {
+			switch k := key.(type) {
+			case string:
+				customHeaders[k] = val
+			}
+		}
+		index++
+	}
+
 	return &Resource{
-		log:      plog,
-		provider: p,
+		log:           plog,
+		provider:      p,
+		customHeaders: customHeaders,
 	}, nil
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
 	delHopHeaders(req.Headers)
 	delRemoveHeaders(req.Headers)
+	addHeaders(req.Headers, r.customHeaders)
 	client, err := r.provider.GetClient(normalizeReqHeaders(req.Headers))
 	if err != nil {
 		return 500, nil, err
