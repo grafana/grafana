@@ -539,7 +539,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return nil, err
 		}
 
-		if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
+		if q.Result.Labels == nil {
+			q.Result.Labels = make(map[string]string)
+		} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
 			logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
 		}
 		q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
