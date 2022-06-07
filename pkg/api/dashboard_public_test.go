@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/web/webtest"
 
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
@@ -245,6 +246,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 			DataSources: []*models.DataSource{
 				{Uid: "mysqlds"},
 				{Uid: "promds"},
+				{Uid: "promds2"},
 			},
 		},
 		nil,
@@ -256,17 +258,17 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 					return nil, errors.New("error")
 				}
 
-				fmt.Printf("plugin ID: %d\n", len(req.Queries))
+				resp := backend.Responses{}
 
-				resp := backend.Responses{
-					"A": backend.DataResponse{
+				for _, query := range req.Queries {
+					resp[query.RefID] = backend.DataResponse{
 						Frames: []*data.Frame{
 							{
-								RefID: "A",
-								Name:  "potato",
+								RefID: query.RefID,
+								Name:  "query-" + query.RefID,
 							},
 						},
-					},
+					}
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
@@ -274,42 +276,45 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		&fakeOAuthTokenService{},
 	)
 
-	fakeDashboardService := &dashboards.FakeDashboardService{}
+	setup := func(enabled bool) (*webtest.Server, *dashboards.FakeDashboardService) {
+		fakeDashboardService := &dashboards.FakeDashboardService{}
 
-	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, true)
-		hs.dashboardService = fakeDashboardService
-	})
-	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, false)
-		hs.dashboardService = fakeDashboardService
-	})
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.queryDataService = qds
+			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, enabled)
+			hs.dashboardService = fakeDashboardService
+		}), fakeDashboardService
+	}
 
 	t.Run("Status code is 404 when feature toggle is disabled", func(t *testing.T) {
-		req := serverFeatureDisabled.NewPostRequest(
+		server, _ := setup(false)
+
+		req := server.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
 			strings.NewReader("{}"),
 		)
-		resp, err := serverFeatureDisabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("Status code is 400 when the panel ID is invalid", func(t *testing.T) {
-		req := serverFeatureEnabled.NewPostRequest(
+		server, _ := setup(true)
+
+		req := server.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/notanumber/query",
 			strings.NewReader("{}"),
 		)
-		resp, err := serverFeatureDisabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
+		server, fakeDashboardService := setup(true)
+
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
@@ -332,11 +337,11 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 				`)),
 			},
 		}, nil)
-		req := serverFeatureEnabled.NewPostRequest(
+		req := server.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
 			strings.NewReader("{}"),
 		)
-		resp, err := serverFeatureEnabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		require.JSONEq(
@@ -352,7 +357,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 								"schema": {
 									"fields": [],
 									"refId": "A",
-									"name": "potato"
+									"name": "query-A"
 								}
 							}
 						]
@@ -366,6 +371,8 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
+		server, fakeDashboardService := setup(true)
+
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
@@ -388,12 +395,12 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 				`)),
 			},
 		}, nil)
-		req := serverFeatureEnabled.NewPostRequest(
+		req := server.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
 			strings.NewReader("{}"),
 		)
 		queryReturnsError = true
-		resp, err := serverFeatureDisabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
@@ -401,6 +408,8 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
+		server, fakeDashboardService := setup(true)
+
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
@@ -412,7 +421,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 					{
 					  "datasource": {
 						"type": "prometheus",
-						"uid": "promds1"
+						"uid": "promds"
 					  },
 					  "exemplar": true,
 					  "expr": "query_2_A",
@@ -436,12 +445,50 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 				`)),
 			},
 		}, nil)
-		req := serverFeatureEnabled.NewPostRequest(
+		req := server.NewPostRequest(
 			"/api/public/dashboards/abc123/panels/2/query",
 			strings.NewReader("{}"),
 		)
-		resp, err := serverFeatureEnabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		t.Logf("response: %s", string(bodyBytes))
+		require.JSONEq(
+			t,
+			`{
+				"results": {
+					"A": {
+						"frames": [
+							{
+								"data": {
+									"values": []
+								},
+								"schema": {
+									"fields": [],
+									"refId": "A",
+									"name": "query-A"
+								}
+							}
+						]
+					},
+					"B": {
+						"frames": [
+							{
+								"data": {
+									"values": []
+								},
+								"schema": {
+									"fields": [],
+									"refId": "B",
+									"name": "query-B"
+								}
+							}
+						]
+					}
+				}
+			}`,
+			string(bodyBytes),
+		)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 201, resp.StatusCode)
 	})
