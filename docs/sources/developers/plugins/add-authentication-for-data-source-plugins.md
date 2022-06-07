@@ -351,9 +351,7 @@ func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourc
 
 ## Forward cookies for the logged-in user
 
-Your data source plugin can forward certain cookies for the logged-in Grafana user to the data source.
-
-To allow Grafana to pass cookies to the plugin, update the data source configuration and set the` jsonData.keepCookies` property to an array of strings, where the strings are the names of the cookies that should be passed to the plugin. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) provides a UI element, the **Allowed cookies** option, for this. You can also build an appropriate input element to set `jsonData.keepCookies` in your data source configuration page UI.
+Your data source plugin can forward certain cookies for the logged-in Grafana user to the data source. Use the [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) component on the data source's configuration page. It provides the **Allowed cookies** option, where the names of cookies to pass to the plugin can be specified.
 
 When configured, Grafana will pass these cookies to the plugin in the `Cookie` header, available in the `QueryData`, `CallResource` and `CheckHealth` requests in your backend data source.
 
