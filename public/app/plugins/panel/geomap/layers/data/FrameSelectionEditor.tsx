@@ -21,15 +21,11 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({
   }, [value, listOfRefId])
 
   const onFilterChange = useCallback((v: SelectableValue<string>) => {
-    if (!v?.value) {
-      onChange(undefined);
-    } else {
-      onChange({
-        "id": FrameMatcherID.byRefId,
-        "options": v.value
-      })
-    }
-  }, []);
+    onChange(v?.value ? {
+      "id": FrameMatcherID.byRefId,
+      "options": v.value
+    } : undefined);
+  }, [context.options.name]);
 
 
   return (
