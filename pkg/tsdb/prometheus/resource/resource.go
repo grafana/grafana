@@ -138,7 +138,7 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return 500, nil, err
 	}
 
-	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query()) // nolint : We do close the resp.body. Not sure why there is a complaint.
+	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
 	if err != nil {
 		statusCode := 500
 		if resp != nil {
@@ -147,14 +147,18 @@ func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backen
 		return statusCode, nil, err
 	}
 
-	defer resp.Body.Close() // nolint : we don't need to handle the return value of Close()
+	defer func() {
+		err = resp.Body.Close()
+	}()
 
 	// Check that the server actually sent compressed data
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
 		reader, err = gzip.NewReader(resp.Body)
-		defer reader.Close() // nolint : we don't need to handle the output of reader.Close()
+		defer func() {
+			err = reader.Close()
+		}()
 		if err != nil {
 			return 500, nil, err
 		}
