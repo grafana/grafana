@@ -68,7 +68,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with updated log line',
+        name: 'Log query with reformatted log line',
         // {} |= `` | logfmt | line_format `{{.message}}`
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
