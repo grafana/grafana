@@ -56,7 +56,7 @@ type Scheduler struct {
 	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
 	Ticker                              *legacyMetrics.Ticker
-	DroppedTicksTotal                   *prometheus.CounterVec
+	EvaluationMissed                    *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -200,11 +200,11 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),
-		DroppedTicksTotal: promauto.With(r).NewCounterVec(
+		EvaluationMissed: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "rule_iterations_missed_total",
+				Name:      "rule_evaluations_missed_total",
 				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
 			},
 			[]string{"org", "rule_uid"},
