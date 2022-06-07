@@ -3,7 +3,6 @@ package resourcepermissions
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -456,17 +455,6 @@ var testOptions = Options{
 		"View": {"dashboards:read"},
 		"Edit": {"dashboards:read", "dashboards:write", "dashboards:delete"},
 	},
-}
-
-var testInheritedScopePrefixes = []string{"parents:id:"}
-var testInheritedScopeSolver = func(ctx context.Context, orgID int64, id string) ([]string, error) {
-	if id == "resourceID" { // Has parent
-		return []string{"parents:id:parentID"}, nil
-	}
-	if id == "orphanedID" { // Exists but with no parent
-		return nil, nil
-	}
-	return nil, errors.New("not found")
 }
 
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
