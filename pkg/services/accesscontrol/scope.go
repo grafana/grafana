@@ -2,12 +2,33 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 const (
 	maxPrefixParts = 2
 )
+
+func ParseScopeID(scope string) (int64, error) {
+	id, err := strconv.ParseInt(ScopeSuffix(scope), 10, 64)
+	if err != nil {
+		return 0, ErrInvalidScope
+	}
+	return id, nil
+}
+
+func ParseScopeUID(scope string) (string, error) {
+	uid := ScopeSuffix(scope)
+	if len(uid) == 0 {
+		return "", ErrInvalidScope
+	}
+	return uid, nil
+}
+
+func ScopeSuffix(scope string) string {
+	return scope[len(ScopePrefix(scope)):]
+}
 
 func GetResourceScope(resource string, resourceID string) string {
 	return Scope(resource, "id", resourceID)

@@ -116,7 +116,9 @@ To query a particular trace, select the **TraceID** query type, and then put the
 
 ## Upload JSON trace file
 
-You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization.
+You can upload a JSON file that contains a single trace or service graph to visualize it. If the file has multiple traces, the first trace is used for visualization.
+
+You can download a trace or service graph through the inspector. Open the inspector, navigate to the 'Data' tab, and click 'Download traces' or 'Download service graph'.
 
 Here is an example JSON:
 

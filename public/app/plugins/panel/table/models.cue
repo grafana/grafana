@@ -15,22 +15,25 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    frameIndex: number | *0
-                    showHeader: bool | *true
-                    showTypeIcons: bool | *false
-                    sortBy?: [...ui.TableSortByFieldState]
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
-            },
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "table"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						frameIndex:    number | *0
+						showHeader:    bool | *true
+						showTypeIcons: bool | *false
+						sortBy?: [...ui.TableSortByFieldState]
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }
