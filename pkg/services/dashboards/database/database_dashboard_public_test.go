@@ -12,7 +12,7 @@ import (
 )
 
 // GetPublicDashboard
-func TestGetPublicDashboard(t *testing.T) {
+func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -79,7 +79,7 @@ func TestGetPublicDashboard(t *testing.T) {
 }
 
 // GetPublicDashboardConfig
-func TestGetPublicDashboardConfig(t *testing.T) {
+func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -128,7 +128,7 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 }
 
 // SavePublicDashboardConfig
-func TestSavePublicDashboardConfig(t *testing.T) {
+func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
