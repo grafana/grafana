@@ -33,7 +33,7 @@ export default function ReferenceLink(props: ReferenceLinkProps) {
     <a
       href={link.href}
       target={link.target}
-      rel="noreferrer"
+      rel="noopener noreferrer"
       onClick={
         link.onClick
           ? (event) => {
