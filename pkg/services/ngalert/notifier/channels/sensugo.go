@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 type SensuGoNotifier struct {
@@ -99,7 +100,7 @@ func NewSensuGoNotifier(config *SensuGoConfig, ns notifications.WebhookSender, t
 
 // Notify sends an alert notification to Sensu Go
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	sn.log.Debug("Sending Sensu Go result")
+	sn.log.Debug("sending Sensu Go result")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
@@ -176,7 +177,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
+		sn.log.Error("failed to send Sensu Go event", "err", err, "sensugo", sn.Name)
 		return false, err
 	}
 

@@ -17,7 +17,7 @@
     "@types/deep-freeze": "^0.1.1",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
     "@types/hoist-non-react-statics": "^3.3.1",
-    "@types/jest": "27.5.1",
+    "@types/jest": "28.1.1",
     "@types/lodash": "4.14.182",
     "@types/prop-types": "15.7.5",
     "@types/react": "17.0.42",
