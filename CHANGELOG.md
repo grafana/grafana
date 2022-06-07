@@ -1,3 +1,19 @@
+<!-- 8.5.5 START -->
+
+# 8.5.5 (2022-06-06)
+
+### Features and enhancements
+
+- **Azure Monitor:** Include datasource ref when interpolating variables. [#49543](https://github.com/grafana/grafana/pull/49543), [@kevinwcyu](https://github.com/kevinwcyu)
+- **CloudWatch:** Add multi-value template variable support for log group names in logs query builder. [#49737](https://github.com/grafana/grafana/pull/49737), [@kevinwcyu](https://github.com/kevinwcyu)
+- **Cloudwatch:** Add template variable query function for listing log groups. [#50100](https://github.com/grafana/grafana/pull/50100), [@yaelleC](https://github.com/yaelleC)
+
+### Bug fixes
+
+- **Alerting:** Do not overwrite existing alert rule condition. [#49920](https://github.com/grafana/grafana/pull/49920), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Remove double quotes from matchers. [#50044](https://github.com/grafana/grafana/pull/50044), [@alexweav](https://github.com/alexweav)
+
+<!-- 8.5.5 END -->
 <!-- 8.5.4 START -->
 
 # 8.5.4 (2022-05-30)
@@ -630,7 +646,7 @@ The access mode "browser" is deprecated in the following data sources and will b
 
 ### Features and enhancements
 
-- **AccessControl:** Apply fine-grained access control to licensing. (Enterprise)
+- **AccessControl:** Apply role-based access control to licensing. (Enterprise)
 - **Alerting:** Add UI for contact point testing with custom annotations and labels. [#40491](https://github.com/grafana/grafana/pull/40491), [@nathanrodman](https://github.com/nathanrodman)
 - **Alerting:** Make alert state indicator in panel header work with Grafana 8 alerts. [#38713](https://github.com/grafana/grafana/pull/38713), [@domasx2](https://github.com/domasx2)
 - **Alerting:** Option for Discord notifier to use webhook name. [#40463](https://github.com/grafana/grafana/pull/40463), [@Skyebold](https://github.com/Skyebold)
