@@ -754,7 +754,7 @@ export function buildExpr(
 }
 
 export function buildLinkExpr(expr: string) {
-  return expr.replace('__range', '__rate_interval').replace(' @ end()', '');
+  return expr.replace('__range', '__rate_interval');
 }
 
 // query result frames can come back in any order

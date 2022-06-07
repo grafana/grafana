@@ -137,15 +137,15 @@ export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
 export const rateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
   params: [],
 };
 export const errorRateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
   params: ['span_status="STATUS_CODE_ERROR"'],
 };
 export const durationMetric = {
-  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range] @ end())) by (le))',
+  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
   params: ['span_status="STATUS_CODE_ERROR"'],
 };
 

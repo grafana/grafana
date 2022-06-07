@@ -417,51 +417,49 @@ describe('Tempo apm table', () => {
   it('should build expr correctly', () => {
     let targets = { targets: [{ queryType: 'serviceMap' }] } as any;
     let builtQuery = buildExpr(
-      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))', params: [] },
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))', params: [] },
       '',
       targets
     );
-    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))');
+    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
 
     builtQuery = buildExpr(
       {
-        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
         params: ['span_status="STATUS_CODE_ERROR"'],
       },
       'span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"',
       targets
     );
     expect(builtQuery).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"}[$__range] @ end())) by (span_name))'
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET|HTTP GET - root|HTTP POST|HTTP POST - post"}[$__range])) by (span_name))'
     );
 
     builtQuery = buildExpr(
       {
-        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range] @ end())) by (le))',
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
         params: ['span_status="STATUS_CODE_ERROR"'],
       },
       'span_name=~"HTTP Client"',
       targets
     );
     expect(builtQuery).toBe(
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range] @ end())) by (le))'
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client"}[$__range])) by (le))'
     );
 
     targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="app",service="app"}' }] } as any;
     builtQuery = buildExpr(
-      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))', params: [] },
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))', params: [] },
       '',
       targets
     );
     expect(builtQuery).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range] @ end())) by (span_name))'
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))'
     );
   });
 
   it('should build link expr correctly', () => {
-    let builtQuery = buildLinkExpr(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))'
-    );
+    let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
     expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval])) by (span_name))');
   });
 
@@ -469,7 +467,7 @@ describe('Tempo apm table', () => {
     const resp = [
       {
         refId:
-          'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range] @ end())) by (span_name))',
+          'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))',
         fields: [
           {
             name: 'Time',
@@ -509,19 +507,19 @@ describe('Tempo apm table', () => {
 
   it('should make apm request correctly', () => {
     const apmRequest = makeApmRequest([
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
     ]);
     expect(apmRequest).toEqual([
       {
-        refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
-        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range] @ end())) by (span_name))"',
+        refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
+        expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app"}[$__range])) by (span_name))"',
         instant: true,
       },
       {
         refId:
-          'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
-        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range] @ end())) by (le))',
+          'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
         instant: true,
       },
     ]);
@@ -597,12 +595,12 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
 };
 
 const rateMetric = new MutableDataFrame({
-  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range] @ end())) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
       values: [12.75164671814457, 12.121331111401608],
     },
   ],
@@ -610,12 +608,12 @@ const rateMetric = new MutableDataFrame({
 
 const errorRateMetric = new MutableDataFrame({
   refId:
-    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range] @ end())) by (span_name))',
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR"}[$__range] @ end())) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR"}[$__range])) by (span_name))',
       values: [3.75164671814457, 3.121331111401608],
     },
   ],
@@ -623,11 +621,11 @@ const errorRateMetric = new MutableDataFrame({
 
 const durationMetric = new MutableDataFrame({
   refId:
-    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range] @ end())) by (le))',
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
   fields: [
     { name: 'Time', values: [1653725618609] },
     {
-      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range] @ end())) by (le))',
+      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
       values: [0.12003505696757232],
     },
   ],
