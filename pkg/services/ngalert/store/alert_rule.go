@@ -326,10 +326,8 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 
 func (st DBstore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Update(
-			ngmodels.AlertRule{IntervalSeconds: interval},
-			ngmodels.AlertRule{OrgID: orgID, RuleGroup: ruleGroup, NamespaceUID: namespaceUID},
-		)
+		updated := TimeNow()
+		_, err := sess.Query("UPDATE alert_rule SET interval_seconds = ?, updated = ?, version = version + 1 WHERE org_id = ? AND rule_group = ? AND namespace_uid = ?", interval, updated, orgID, ruleGroup, namespaceUID)
 		return err
 	})
 }
