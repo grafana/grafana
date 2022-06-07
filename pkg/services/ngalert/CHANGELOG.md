@@ -45,7 +45,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
-- [ENHANCEMENT] Scheduler: Metric `get_alert_rules_duration_seconds` has been renamed to `schedule_query_alert_rules_duration_seconds`.
+- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled.
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
   - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
   - `grafana_alerting_ticker_next_tick_timestamp_seconds`
