@@ -46,6 +46,10 @@ func main() {
 	}
 
 	wd, err := codegen.CuetsifyPlugins(cuecontext.New(), groot)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while generating code:\n%s\n", err)
+		os.Exit(1)
+	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		err = wd.Verify()
