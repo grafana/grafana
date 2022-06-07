@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { useMemo, useState, createRef } from 'react';
@@ -15,6 +15,22 @@ const styles = {
     height: 100%;
     overflow: scroll;
   `,
+  container: css`
+    width: 120%;
+    border: none;
+    position: inherit;
+  `,
+  searBarContainer: css`
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    margin-bottom: 20px;
+  `,
+  body: css`
+    padding: 0px 8px 8px 0px;
+  `,
 };
 
 export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
@@ -27,6 +43,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
   const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
+  const containerClasses = cx([styles.container, 'panel-container']);
 
   if (!data || !data.series.length || !traceProp) {
     return (
@@ -38,32 +55,39 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
 
   return (
     <div className={styles.wrapper}>
-      <div ref={topOfViewRef}></div>
-      {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
-        <TracePageSearchBar
-          navigable={true}
-          searchValue={search}
-          setSearch={setSearch}
-          spanFindMatches={spanFindMatches}
-          searchBarSuffix={searchBarSuffix}
-          setSearchBarSuffix={setSearchBarSuffix}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
-          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-        />
-      ) : null}
+      <div className={containerClasses}>
+        <div ref={topOfViewRef}></div>
 
-      <TraceView
-        dataFrames={data.series}
-        scrollElement={scrollElement}
-        traceProp={traceProp}
-        spanFindMatches={spanFindMatches}
-        search={search}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
-        queryResponse={data}
-        datasource={dataSource.value}
-        topOfViewRef={topOfViewRef}
-        topOfViewRefType={TopOfViewRefType.Panel}
-      />
+        <div className={styles.body}>
+          {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
+            <div className={styles.searBarContainer}>
+              <TracePageSearchBar
+                navigable={true}
+                searchValue={search}
+                setSearch={setSearch}
+                spanFindMatches={spanFindMatches}
+                searchBarSuffix={searchBarSuffix}
+                setSearchBarSuffix={setSearchBarSuffix}
+                focusedSpanIdForSearch={focusedSpanIdForSearch}
+                setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+              />
+            </div>
+          ) : null}
+
+          <TraceView
+            dataFrames={data.series}
+            scrollElement={scrollElement}
+            traceProp={traceProp}
+            spanFindMatches={spanFindMatches}
+            search={search}
+            focusedSpanIdForSearch={focusedSpanIdForSearch}
+            queryResponse={data}
+            datasource={dataSource.value}
+            topOfViewRef={topOfViewRef}
+            topOfViewRefType={TopOfViewRefType.Panel}
+          />
+        </div>
+      </div>
     </div>
   );
 };

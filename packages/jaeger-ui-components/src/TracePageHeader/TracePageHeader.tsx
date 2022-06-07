@@ -37,7 +37,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageHeader: css`
       label: TracePageHeader;
-      width: 120%;
       & > :first-child {
         border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
       }

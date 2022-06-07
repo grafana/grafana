@@ -14,8 +14,12 @@ import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';
 
 const getStyles = () => ({
-  container: css`
+  wrapper: css`
+    width: 100%;
     overflow-x: scroll;
+  `,
+  container: css`
+    width: 120%;
   `,
   body: css`
     padding: 0px 8px 8px;
@@ -24,6 +28,7 @@ const getStyles = () => ({
     padding: 8px 16px 18px 16px;
   `,
 });
+
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
@@ -32,10 +37,11 @@ interface Props {
   queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
+
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, queryResponse, topOfViewRef } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -63,23 +69,25 @@ export function TraceViewContainer(props: Props) {
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
       />
 
-      <div className={containerClasses}>
-        <div className={styles.headerLabel}>Trace View</div>
-        <div className={styles.body}>
-          <TraceView
-            exploreId={exploreId}
-            dataFrames={dataFrames}
-            splitOpenFn={splitOpenFn}
-            scrollElement={scrollElement}
-            traceProp={traceProp}
-            spanFindMatches={spanFindMatches}
-            search={search}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
-            queryResponse={queryResponse}
-            datasource={datasource}
-            topOfViewRef={topOfViewRef}
-            topOfViewRefType={TopOfViewRefType.Explore}
-          />
+      <div className={styles.wrapper}>
+        <div className={containerClasses}>
+          <div className={styles.headerLabel}>Trace View</div>
+          <div className={styles.body}>
+            <TraceView
+              exploreId={exploreId}
+              dataFrames={dataFrames}
+              splitOpenFn={splitOpenFn}
+              scrollElement={scrollElement}
+              traceProp={traceProp}
+              spanFindMatches={spanFindMatches}
+              search={search}
+              focusedSpanIdForSearch={focusedSpanIdForSearch}
+              queryResponse={queryResponse}
+              datasource={datasource}
+              topOfViewRef={topOfViewRef}
+              topOfViewRefType={TopOfViewRefType.Explore}
+            />
+          </div>
         </div>
       </div>
     </>

@@ -37,7 +37,6 @@ type TExtractUiFindFromStateReturn = {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TraceTimelineViewer: css`
-      width: 120%;
       label: TraceTimelineViewer;
       border-bottom: 1px solid ${autoColor(theme, '#bbb')};
 
