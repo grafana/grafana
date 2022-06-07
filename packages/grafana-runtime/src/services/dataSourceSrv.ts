@@ -37,6 +37,9 @@ export interface DataSourceSrv {
 
 /** @public */
 export interface GetDataSourceListFilters {
+  /** Include conditional data source by setting this to true */
+  conditional?: boolean;
+
   /** Include mixed data source by setting this to true */
   mixed?: boolean;
 

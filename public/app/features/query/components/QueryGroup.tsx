@@ -182,6 +182,7 @@ export class QueryGroup extends PureComponent<Props, State> {
               current={options.dataSource}
               metrics={true}
               mixed={true}
+              conditional={true}
               dashboard={true}
               variables={true}
             />
@@ -234,6 +235,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <DataSourcePicker
         mixed={false}
+        conditional={false}
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}

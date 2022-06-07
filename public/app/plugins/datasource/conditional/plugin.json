@@ -1,0 +1,11 @@
+{
+  "type": "datasource",
+  "name": "-- Conditional --",
+  "id": "conditional",
+  "builtIn": true,
+  "mixed": true,
+  "metrics": true,
+  "queryOptions": {
+    "minInterval": true
+  }
+}

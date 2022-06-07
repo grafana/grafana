@@ -134,10 +134,12 @@ const renderDataSource = <TQuery extends DataQuery>(
 ): ReactNode => {
   const { alerting, dataSource, onChangeDataSource } = props;
 
+  // If not mixed data source
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 
+  // If mixed data source
   return (
     <div className={styles.itemWrapper}>
       <DataSourcePicker alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />

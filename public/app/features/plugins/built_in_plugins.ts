@@ -19,6 +19,8 @@ const zipkinPlugin = async () =>
   await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
+const conditionalPlugin = async () =>
+  await import(/* webpackChunkName: "conditionalPlugin" */ 'app/plugins/datasource/conditional/module');
 const mysqlPlugin = async () =>
   await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
 const postgresPlugin = async () =>
@@ -89,6 +91,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/jaeger/module': jaegerPlugin,
   'app/plugins/datasource/zipkin/module': zipkinPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
+  'app/plugins/datasource/conditional/module': conditionalPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
   'app/plugins/datasource/mssql/module': mssqlPlugin,

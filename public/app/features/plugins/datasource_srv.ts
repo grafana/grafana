@@ -23,6 +23,7 @@ import {
   ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
+import { CONDITIONAL_DATASOURCE_NAME } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 
 import { DataSourceVariableModel } from '../variables/types';
 
@@ -202,7 +203,12 @@ export class DatasourceSrv implements DataSourceService {
 
   getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
     const base = Object.values(this.settingsMapByName).filter((x) => {
-      if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
+      if (
+        x.meta.id === 'grafana' ||
+        x.meta.id === 'mixed' ||
+        x.meta.id === 'dashboard' ||
+        x.meta.id === 'conditional'
+      ) {
         return false;
       }
       if (filters.metrics && !x.meta.metrics) {
@@ -275,6 +281,13 @@ export class DatasourceSrv implements DataSourceService {
         const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
         if (mixedInstanceSettings) {
           base.push(mixedInstanceSettings);
+        }
+      }
+
+      if (filters.conditional) {
+        const conditionalInstanceSettings = this.getInstanceSettings(CONDITIONAL_DATASOURCE_NAME);
+        if (conditionalInstanceSettings) {
+          base.push(conditionalInstanceSettings);
         }
       }
 
