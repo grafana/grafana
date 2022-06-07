@@ -5,10 +5,11 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
+import { SqlQueryEditor } from '../sql/components/QueryEditor';
+import { SQLQuery } from '../sql/types';
 
-import { MysqlDatasource } from './datasource';
+import { MysqlDatasource } from './MySqlDatasource';
 import { MysqlQueryCtrl } from './query_ctrl';
-import { MySQLQuery } from './types';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -52,7 +53,8 @@ export {
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
 
-export const plugin = new DataSourcePlugin<MysqlDatasource, MySQLQuery>(MysqlDatasource)
-  .setQueryCtrl(MysqlQueryCtrl)
+export const plugin = new DataSourcePlugin<MysqlDatasource, SQLQuery>(MysqlDatasource)
+  // .setQueryCtrl(MysqlQueryCtrl)
+  .setQueryEditor(SqlQueryEditor)
   .setConfigCtrl(MysqlConfigCtrl)
   .setAnnotationQueryCtrl(MysqlAnnotationsQueryCtrl);
