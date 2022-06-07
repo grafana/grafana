@@ -194,7 +194,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		if !cfgFound {
 			if found {
 				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
-				moa.logger.Warn("alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
 			}
 			err := alertmanager.SaveAndApplyDefaultConfig(ctx)
 			if err != nil {
