@@ -192,47 +192,6 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
-// retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	var result []*models.Dashboard
-
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&result)
-	})
-
-	if len(result) == 0 {
-		return nil, models.ErrDashboardNotFound
-	}
-
-	pdc := &models.PublicDashboardConfig{
-		IsPublic: result[0].IsPublic,
-	}
-
-	return pdc, err
-}
-
-// stores public dashboard configuration
-func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
-		if err != nil {
-			return err
-		}
-
-		if affectedRowCount == 0 {
-			return models.ErrDashboardNotFound
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &cmd.PublicDashboardConfig, nil
-}
-
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// delete existing items
@@ -930,66 +889,6 @@ func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDas
 	})
 }
 
-func (d *DashboardStore) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
-	res, err := d.FindDashboards(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	makeQueryResult(query, res)
-
-	return nil
-}
-
-func getHitType(item dashboards.DashboardSearchProjection) models.HitType {
-	var hitType models.HitType
-	if item.IsFolder {
-		hitType = models.DashHitFolder
-	} else {
-		hitType = models.DashHitDB
-	}
-
-	return hitType
-}
-
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
-
-	for _, item := range res {
-		hit, exists := hits[item.ID]
-		if !exists {
-			hit = &models.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
-				Type:        getHitType(item),
-				FolderID:    item.FolderID,
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			query.Result = append(query.Result, hit)
-			hits[item.ID] = hit
-		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
-		}
-	}
-}
-
 func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
@@ -1024,8 +923,10 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
 	}
 
-	if len(query.DashboardIds) > 0 {
-		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
 	}
 
 	if query.IsStarred {
@@ -1068,4 +969,22 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	return res, nil
+}
+
+func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := `SELECT
+					  COUNT(*) as count,
+						term
+					FROM dashboard
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
+					WHERE dashboard.org_id=?
+					GROUP BY term
+					ORDER BY term`
+
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
 }

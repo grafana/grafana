@@ -49,7 +49,13 @@ const MakeEditable = (props: { onMakeEditable: () => any }) => (
 
 export function DashboardSettings({ dashboard, editview }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps } = useOverlay({}, ref);
+  const { overlayProps } = useOverlay(
+    {
+      isOpen: true,
+      onClose,
+    },
+    ref
+  );
   const { dialogProps } = useDialog(
     {
       'aria-label': 'Dashboard settings',

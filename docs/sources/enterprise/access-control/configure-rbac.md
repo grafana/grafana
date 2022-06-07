@@ -1,14 +1,15 @@
 ---
-title: 'Configure RBAC in Grafana'
-menuTitle: 'Configure RBAC'
-description: 'Learn how to configure RBAC.'
-aliases: []
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/configure-rbac/
+description: Learn how to configure RBAC.
+menuTitle: Configure RBAC
+title: Configure RBAC in Grafana
 weight: 30
 ---
 
 # Configure RBAC in Grafana
 
-The table below describes all RBAC configuration options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../administration/configuration.md#configure-with-environment-variables" >}}).
+The table below describes all RBAC configuration options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../setup-grafana/configure-grafana/#configure-with-environment-variables" >}}).
 
 | Setting            | Required | Description                                                                  | Default |
 | ------------------ | -------- | ---------------------------------------------------------------------------- | ------- |

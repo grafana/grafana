@@ -26,7 +26,10 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false, theme), [data, theme]);
+  const { frames, warn } = useMemo(
+    () => prepareTimelineFields(data?.series, false, timeRange, theme),
+    [data, timeRange, theme]
+  );
 
   const legendItems = useMemo(
     () => prepareTimelineLegendItems(frames, options.legend, theme),
@@ -72,7 +75,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
-            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

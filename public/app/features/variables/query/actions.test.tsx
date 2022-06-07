@@ -1,5 +1,4 @@
 import React from 'react';
-import { expect } from 'test/lib/common';
 
 import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';

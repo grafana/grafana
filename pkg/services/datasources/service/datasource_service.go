@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 )
 
 type Service struct {
@@ -147,6 +146,12 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
+	}
+
 	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 		return err
 	}
@@ -288,11 +293,10 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 	}
 
 	if exist {
-		err := json.Unmarshal([]byte(secret), &decryptedValues)
-		if err != nil {
-			return nil, err
-		}
-	} else if len(ds.SecureJsonData) > 0 {
+		err = json.Unmarshal([]byte(secret), &decryptedValues)
+	}
+
+	if (!exist || err != nil) && len(ds.SecureJsonData) > 0 {
 		decryptedValues, err = s.MigrateSecrets(ctx, ds)
 		if err != nil {
 			return nil, err
@@ -303,9 +307,13 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 }
 
 func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
-	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, err
+	secureJsonData := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := s.SecretsService.Decrypt(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		secureJsonData[k] = string(decrypted)
 	}
 
 	jsonData, err := json.Marshal(secureJsonData)
@@ -332,7 +340,7 @@ func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *models.Dat
 		return value, nil
 	}
 
-	return ds.BasicAuthPassword, err
+	return "", err
 }
 
 func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
@@ -341,7 +349,7 @@ func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) 
 		return value, nil
 	}
 
-	return ds.Password, err
+	return "", err
 }
 
 func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) (*sdkhttpclient.Options, error) {
@@ -402,7 +410,8 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 	}
 
-	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
+	// TODO: #35857 Required for templating queries in Prometheus datasource when Azure authentication enabled
+	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
@@ -410,20 +419,17 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 
 		if credentials != nil {
-			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
-			if resourceIdStr == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) not provided")
+			var scopes []string
+
+			if scopes, err = promclient.GetOverriddenScopes(ds.JsonData.MustMap()); err != nil {
 				return nil, err
 			}
 
-			resourceId, err := url.Parse(resourceIdStr)
-			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
-				return nil, err
+			if scopes == nil {
+				if scopes, err = promclient.GetPrometheusScopes(s.cfg.Azure, credentials); err != nil {
+					return nil, err
+				}
 			}
-
-			resourceId.Path = path.Join(resourceId.Path, ".default")
-			scopes := []string{resourceId.String()}
 
 			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
@@ -580,6 +586,12 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
 		}
+	}
+
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
 	}
 
 	return nil

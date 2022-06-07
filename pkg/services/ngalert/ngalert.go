@@ -96,12 +96,13 @@ func (ng *AlertNG) init() error {
 	var err error
 
 	store := &store.DBstore{
-		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
-		SQLStore:        ng.SQLStore,
-		Logger:          ng.Log,
-		FolderService:   ng.folderService,
-		AccessControl:   ng.accesscontrol,
+		BaseInterval:     ng.Cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval:  ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		SQLStore:         ng.SQLStore,
+		Logger:           ng.Log,
+		FolderService:    ng.folderService,
+		AccessControl:    ng.accesscontrol,
+		DashboardService: ng.dashboardService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
@@ -156,6 +157,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(store, store, store, int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()), ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -179,6 +181,7 @@ func (ng *AlertNG) init() error {
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
+		AlertRules:           alertRuleService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

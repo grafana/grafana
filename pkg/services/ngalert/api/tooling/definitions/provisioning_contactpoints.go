@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-// swagger:route GET /api/provisioning/contact-points provisioning RouteGetContactpoints
+// swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
 //
 // Get all the contact points.
 //
@@ -15,7 +15,7 @@ import (
 //       200: Route
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/contact-points provisioning RoutePostContactpoints
+// swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -23,10 +23,10 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
+// swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -34,10 +34,10 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/contact-points/{ID} provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
@@ -45,8 +45,15 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
+
+// swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
+type ContactPointUIDReference struct {
+	// ContactPointUID should be the contact point UID identifier
+	// in:path
+	UID string
+}
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {

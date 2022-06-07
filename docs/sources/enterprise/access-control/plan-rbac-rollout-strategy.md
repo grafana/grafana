@@ -27,8 +27,8 @@ As a first step in determining your permissions rollout strategy, we recommend t
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
-- [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}})
-- [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}})
+- [Basic role definitions]({{< relref "rbac-fixed-basic-role-definitions/#basic-role-assignments" >}})
+- [Fixed role definitions]({{< relref "rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}})
 
 ## User and team considerations
 
@@ -52,7 +52,7 @@ For example:
    - If a team does not exist in Grafana, team sync creates it.
    - If a team exists in Grafana, team sync updates its membership.
 
-   For more information about team sync, refer to [Team sync]({{< relref "../team-sync.md" >}}).
+   For more information about team sync, refer to [Team sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
@@ -62,7 +62,7 @@ Consider the following guidelines when you determine if you should modify basic 
 
 - **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
 
-  > **Note:** Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../administration/manage-organizations/_index.md" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  > **Note:** Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../administration/manage-organizations/" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
 
@@ -85,13 +85,13 @@ We've compiled the following permissions rollout scenarios based on current Graf
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:querier` role to the `Internal employees` team.
-1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../team-sync.md" >}}).
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
 1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions
 
 1. Review the list of permissions associated with the basic role.
-1. [Change the permissions of the basic role]({{< relref "manage-rbac-roles.md#update-basic-role-permissions" >}}).
+1. [Change the permissions of the basic role]({{< relref "manage-rbac-roles/#update-basic-role-permissions" >}}).
 
 ### Allow only members of one team to manage Alerts
 
@@ -169,11 +169,10 @@ roles:
         global: true
 ```
 
-- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
+- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control/#update-a-role" >}}):
 
 | action         | scope                       |
 | -------------- | --------------------------- |
-| `roles:list`   | `roles:*`                   |
 | `roles:read`   | `roles:*`                   |
 | `roles:write`  | `permissions:type:delegate` |
 | `roles:delete` | `permissions:type:delegate` |
@@ -200,16 +199,16 @@ roles:
         global: true
 ```
 
-> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
 
-- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}):
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../developers/http_api/access_control/#update-a-role" >}}):
 
-| Action                 | Scope                           |
-| ---------------------- | ------------------------------- |
-| `reports.admin:create` | n/a                             |
-| `reports.admin:write`  | `reports:*` <br> `reports:id:*` |
-| `reports:read`         | `reports:*`                     |
-| `reports:send`         | `reports:*`                     |
+| Action           | Scope                           |
+| ---------------- | ------------------------------- |
+| `reports:create` | n/a                             |
+| `reports:write`  | `reports:*` <br> `reports:id:*` |
+| `reports:read`   | `reports:*`                     |
+| `reports:send`   | `reports:*`                     |
 
 ### Prevent a Grafana Admin from creating and inviting users
 
@@ -243,4 +242,4 @@ roles:
         state: 'absent'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../developers/http_api/access_control.md#update-a-role" >}}).
+- Or use [RBAC HTTP API]({{< relref "../../developers/http_api/access_control/#update-a-role" >}}).

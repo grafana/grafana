@@ -236,9 +236,11 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the data source name to each query
+      // Attach the data source to each query
       request.targets = request.targets.map((query) => {
-        if (!query.datasource) {
+        // When using a data source variable, the panel might have the incorrect datasource
+        // stored, so when running the query make sure it is done with the correct one
+        if (!query.datasource || (query.datasource.uid !== ds.uid && !ds.meta.mixed)) {
           query.datasource = ds.getRef();
         }
         return query;
