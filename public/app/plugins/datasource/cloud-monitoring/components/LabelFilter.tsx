@@ -64,6 +64,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
         }
         menuPlacement="bottom"
         renderControl={FilterButton}
+        width="auto"
       />
     );
   };

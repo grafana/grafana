@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRow, EditorField } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { Select, InlineField } from '@grafana/ui';
 
 interface VariableQueryFieldProps {
   onChange: (value: string) => void;
@@ -20,16 +19,14 @@ export const VariableQueryField: FC<VariableQueryFieldProps> = ({
   allowCustomValue = false,
 }) => {
   return (
-    <EditorRow>
-      <EditorField label={label} width={20}>
-        <Select
-          width={25}
-          allowCustomValue={allowCustomValue}
-          value={value}
-          onChange={({ value }) => onChange(value!)}
-          options={options}
-        />
-      </EditorField>
-    </EditorRow>
+    <InlineField label={label} labelWidth={20}>
+      <Select
+        width={25}
+        allowCustomValue={allowCustomValue}
+        value={value}
+        onChange={({ value }) => onChange(value!)}
+        options={options}
+      />
+    </InlineField>
   );
 };

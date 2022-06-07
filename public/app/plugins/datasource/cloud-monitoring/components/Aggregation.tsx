@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
+import { LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import { getAggregationOptionsByMetric } from '../functions';
 import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
 
@@ -21,9 +22,9 @@ export const Aggregation: FC<Props> = (props) => {
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <EditorField width={18} label="Group by function" data-testid="cloud-monitoring-aggregation">
+    <EditorField width={LABEL_WIDTH} label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
-        width={16}
+        width={SELECT_WIDTH}
         onChange={({ value }) => props.onChange(value!)}
         value={selected}
         options={[

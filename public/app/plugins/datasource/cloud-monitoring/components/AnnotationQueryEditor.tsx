@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { EditorRow, EditorField } from '@grafana/experimental';
+import { EditorRow, EditorField, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import { INPUT_WIDTH } from '../constants';
@@ -78,7 +78,7 @@ export const AnnotationQueryEditor = (props: Props) => {
   );
 
   return (
-    <>
+    <EditorRows>
       <MetricQueryEditor
         refId={query.refId}
         variableOptionGroup={variableOptionGroup}
@@ -101,6 +101,6 @@ export const AnnotationQueryEditor = (props: Props) => {
       </EditorRow>
 
       <AnnotationsHelp />
-    </>
+    </EditorRows>
   );
 };
