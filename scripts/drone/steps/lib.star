@@ -507,7 +507,7 @@ def test_backend_step(edition):
                 'wire-install',
             ],
             'commands': [
-                'go test -v -short -covermode=atomic -timeout=30m ./pkg/...',
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
     else:
