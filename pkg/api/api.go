@@ -423,6 +423,11 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 		})
 
+		apiRoute.Group("/schema", func(schemaIdRoute routing.RouteRegister) {
+			schemaIdRoute.Get("/dashboard", routing.Wrap(hs.GetDashboardSchema))
+			schemaIdRoute.Get("/panel", routing.Wrap(hs.GetPanelSchema))
+		})
+
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
