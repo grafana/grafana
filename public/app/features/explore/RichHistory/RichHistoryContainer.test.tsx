@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
       getList: () => [],
     };
   },
+  reportInteraction: jest.fn(),
 }));
 
 const setup = (propOverrides?: Partial<Props>) => {

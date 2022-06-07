@@ -8,14 +8,16 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -108,11 +110,11 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 
 // Notify sends an alert notification to Opsgenie
 func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	on.log.Debug("Executing Opsgenie notification", "notification", on.Name)
+	on.log.Debug("executing Opsgenie notification", "notification", on.Name)
 
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !on.SendResolved() {
-		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
+		on.log.Debug("not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
 		return true, nil
 	}
 
@@ -212,25 +214,15 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		}
 
 		images := []string{}
-		for i := range as {
-			imgToken := getTokenFromAnnotations(as[i].Annotations)
-			if len(imgToken) == 0 {
-				continue
-			}
-
-			dbContext, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-			imgURL, err := on.images.GetURL(dbContext, imgToken)
-			cancel()
-
-			if err != nil {
-				if !errors.Is(err, ErrImagesUnavailable) {
-					// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-					on.log.Warn("Error reading screenshot data from ImageStore: %v", err)
+		_ = withStoredImages(ctx, on.log, on.images,
+			func(index int, image *ngmodels.Image) error {
+				if image == nil || len(image.URL) == 0 {
+					return nil
 				}
-			} else if len(imgURL) != 0 {
-				images = append(images, imgURL)
-			}
-		}
+				images = append(images, image.URL)
+				return nil
+			},
+			as...)
 
 		if len(images) != 0 {
 			details.Set("image_urls", images)

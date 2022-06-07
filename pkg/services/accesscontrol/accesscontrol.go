@@ -23,9 +23,6 @@ type AccessControl interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
-
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
@@ -38,7 +35,12 @@ type AccessControl interface {
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
-type PermissionsProvider interface {
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
+}
+
+type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
@@ -256,4 +258,22 @@ func extractPrefixes(prefix string) (string, string, bool) {
 
 func IsDisabled(cfg *setting.Cfg) bool {
 	return !cfg.RBACEnabled
+}
+
+// GetOrgRoles returns legacy org roles for a user
+func GetOrgRoles(cfg *setting.Cfg, user *models.SignedInUser) []string {
+	roles := []string{string(user.OrgRole)}
+
+	// With built-in role simplifying, inheritance is performed upon role registration.
+	if cfg.RBACBuiltInRoleAssignmentEnabled {
+		for _, br := range user.OrgRole.Children() {
+			roles = append(roles, string(br))
+		}
+	}
+
+	if user.IsGrafanaAdmin {
+		roles = append(roles, RoleGrafanaAdmin)
+	}
+
+	return roles
 }

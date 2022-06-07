@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.49'
-build_image = 'grafana/build-container:1.5.4'
+grabpl_version = 'v2.9.50'
+build_image = 'grafana/build-container:1.5.5'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -510,18 +510,30 @@ def test_backend_step(edition):
         ],
     }
 
-
 def test_backend_integration_step(edition):
-    return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'oss':
+        return {
+            'name': 'test-backend-integration',
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend-integration' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                './bin/grabpl integration-tests --edition {}'.format(edition),
+            ],
+        }
+
 
 
 def test_frontend_step():
@@ -1137,36 +1149,16 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-
-def validate_scuemata_step():
+def verify_gen_cue_step():
     return {
-        'name': 'validate-scuemata',
+        'name': 'verify-gen-cue',
         'image': build_image,
-        'depends_on': [
-            'build-backend',
-        ],
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
         ],
     }
-
-
-def ensure_cuetsified_step():
-    return {
-        'name': 'ensure-cuetsified',
-        'image': build_image,
-        'depends_on': [
-            'validate-scuemata',
-        ],
-        'commands': [
-            '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# To enforce this, the following command will attempt to generate Typescript from all',
-            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
-            '# code would have been written to. It exits 1 if any diffs are found.',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
-        ],
-    }
-
 
 def end_to_end_tests_deps(edition):
     if disable_tests:

@@ -47,7 +47,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear folders"

@@ -14,17 +14,21 @@
 
 package grafanaschema
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    // empty/missing will default to grafana blog
-                    feedUrl?: string
-                    showImage?: bool | *true
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "news"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						// empty/missing will default to grafana blog
+						feedUrl?:   string
+						showImage?: bool | *true
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

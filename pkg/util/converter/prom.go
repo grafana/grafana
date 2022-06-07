@@ -3,11 +3,13 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -437,6 +439,8 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) *backend
 	}
 
 	if len(rsp.Frames) == 0 {
+		sorter := experimental.NewFrameSorter(frame, frame.Fields[0])
+		sort.Sort(sorter)
 		rsp.Frames = append(rsp.Frames, frame)
 	}
 

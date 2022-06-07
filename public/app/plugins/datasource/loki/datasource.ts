@@ -47,6 +47,7 @@ import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
+import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
@@ -117,9 +118,10 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    const keepCookiesUsed = (settingsData.keepCookies ?? []).length > 0;
-    // only use backend-mode when keep-cookies is not used
-    this.useBackendMode = !keepCookiesUsed && (config.featureToggles.lokiBackendMode ?? false);
+    this.useBackendMode = config.featureToggles.lokiBackendMode ?? false;
+    this.annotations = {
+      QueryEditor: LokiAnnotationsQueryEditor,
+    };
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -883,10 +885,12 @@ export class LokiDatasource
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
+    const exprWithAdHoc = this.addAdHocFilters(target.expr);
+
     return {
       ...target,
       legendFormat: this.templateSrv.replace(target.legendFormat, rest),
-      expr: this.templateSrv.replace(target.expr, rest, this.interpolateQueryExpr),
+      expr: this.templateSrv.replace(exprWithAdHoc, rest, this.interpolateQueryExpr),
     };
   }
 

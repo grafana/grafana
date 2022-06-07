@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Installer struct {
@@ -80,7 +79,7 @@ func (e ErrVersionNotFound) Error() string {
 	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger Logger) plugins.Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) Service {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
@@ -137,7 +136,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
-		return errutil.Wrap("failed to create temporary file", err)
+		return fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
@@ -150,16 +149,16 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 		if err := tmpFile.Close(); err != nil {
 			i.log.Warn("Failed to close file", "err", err)
 		}
-		return errutil.Wrap("failed to download plugin archive", err)
+		return fmt.Errorf("%v: %w", "failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
 	if err != nil {
-		return errutil.Wrap("failed to close tmp file", err)
+		return fmt.Errorf("%v: %w", "failed to close tmp file", err)
 	}
 
 	err = i.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
 	if err != nil {
-		return errutil.Wrap("failed to extract plugin archive", err)
+		return fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
@@ -170,7 +169,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
 		if err := i.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
+			return fmt.Errorf("failed to install plugin %s: %w", dep.ID, err)
 		}
 	}
 
@@ -203,7 +202,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		// nolint:gosec
 		f, err := os.Open(url)
 		if err != nil {
-			return errutil.Wrap("Failed to read plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to read plugin archive", err)
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
@@ -212,7 +211,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		}()
 		_, err = io.Copy(tmpFile, f)
 		if err != nil {
-			return errutil.Wrap("Failed to copy plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to copy plugin archive", err)
 		}
 		return nil
 	}
@@ -260,7 +259,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 	w := bufio.NewWriter(tmpFile)
 	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("failed to compute SHA256 checksum", err)
+		return fmt.Errorf("%v: %w", "failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
@@ -571,7 +570,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return errutil.Wrap("failed to create directory to extract plugin files", err)
+			return fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
 		}
 
 		if isSymlink(zf) {
@@ -587,7 +586,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 
 		if err := extractFile(zf, dstPath); err != nil {
-			return errutil.Wrap("failed to extract file", err)
+			return fmt.Errorf("%v: %w", "failed to extract file", err)
 		}
 	}
 
@@ -602,14 +601,14 @@ func extractSymlink(file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
 	if _, err := io.Copy(buf, src); err != nil {
-		return errutil.Wrap("failed to copy symlink contents", err)
+		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
+		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
 }
@@ -636,7 +635,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
 		}
 
-		return errutil.Wrap("failed to open file", err)
+		return fmt.Errorf("%v: %w", "failed to open file", err)
 	}
 	defer func() {
 		err = dst.Close()
@@ -644,7 +643,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	defer func() {
 		err = src.Close()

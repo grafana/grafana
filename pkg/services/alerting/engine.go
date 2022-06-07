@@ -97,6 +97,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 func (e *AlertEngine) Run(ctx context.Context) error {
 	reg := prometheus.WrapRegistererWithPrefix("legacy_", prometheus.DefaultRegisterer)
 	e.ticker = NewTicker(clock.New(), 1*time.Second, metrics.NewTickerMetrics(reg))
+	defer e.ticker.Stop()
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })

@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -112,7 +114,7 @@ func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSende
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
+		pn.log.Debug("not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -126,7 +128,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
@@ -186,23 +188,15 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
-	for i := range as {
-		imgToken := getTokenFromAnnotations(as[i].Annotations)
-		if len(imgToken) == 0 {
-			continue
-		}
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := pn.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				pn.log.Warn("failed to retrieve image url from store", "error", err)
+	_ = withStoredImages(ctx, pn.log, pn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil && len(image.URL) != 0 {
+				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
 			}
-		} else {
-			msg.Images = append(msg.Images, pagerDutyImage{Src: imgURL})
-		}
-	}
+
+			return nil
+		},
+		as...)
 
 	if len(msg.Payload.Summary) > 1024 {
 		// This is the Pagerduty limit.

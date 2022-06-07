@@ -706,48 +706,6 @@ func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 	return "code migration"
 }
 
-// CheckUnifiedAlertingEnabledByDefault determines the final status of unified alerting, if it is not enabled explicitly.
-// Checks table `alert` and if it is empty, then it changes UnifiedAlerting.Enabled to true. Otherwise, it sets the flag to false.
-// After this method is executed the status of alerting should be determined, i.e. both flags will not be nil.
-// Note: this is not a real migration but a step that other migrations depend on.
-// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
-func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
-	// if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
-	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
-		return nil
-	}
-	var ualertEnabled bool
-	// this duplicates the logic in setting.ReadUnifiedAlertingSettings, and is put here just for logical completeness.
-	if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
-		ualertEnabled = true
-		migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
-		migrator.Logger.Debug("Unified alerting is enabled because the legacy is disabled explicitly")
-		return nil
-	}
-
-	resp := &struct {
-		Count int64
-	}{}
-	exist, err := migrator.DBEngine.IsTableExist("alert")
-	if err != nil {
-		return fmt.Errorf("failed to verify if the 'alert' table exists: %w", err)
-	}
-	if exist {
-		if _, err := migrator.DBEngine.SQL("SELECT COUNT(1) as count FROM alert").Get(resp); err != nil {
-			return fmt.Errorf("failed to read 'alert' table: %w", err)
-		}
-	}
-	// if table does not exist then we treat it as absence of legacy alerting and therefore enable unified alerting.
-
-	ualertEnabled = resp.Count == 0
-	legacyEnabled := !ualertEnabled
-	migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
-	setting.AlertingEnabled = &legacyEnabled
-
-	migrator.Logger.Debug(fmt.Sprintf("Found %d legacy alerts in the database. Unified alerting enabled is %v", resp.Count, ualertEnabled))
-	return nil
-}
-
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
 // If the resulting string exceeds the migrations.MaxTitleLength, the dashboard title is stripped to be at the maximum length
 func getAlertFolderNameFromDashboard(dash *dashboard) string {

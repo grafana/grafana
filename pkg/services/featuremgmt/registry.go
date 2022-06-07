@@ -19,11 +19,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "httpclientprovider_azure_auth",
-			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
@@ -72,17 +67,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service",
 			State:        FeatureStateBeta,
@@ -101,6 +85,11 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
@@ -116,11 +105,6 @@ var (
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "publicDashboards",
@@ -164,11 +148,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
@@ -196,12 +175,6 @@ var (
 		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "persistNotifications",
-			Description:  "PoC Notifications page",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
@@ -242,7 +215,6 @@ var (
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateBeta,
-			Expression:  "true", // Enabled by default
 		},
 		{
 			Name:            "validateDashboardsOnSave",
@@ -254,6 +226,12 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

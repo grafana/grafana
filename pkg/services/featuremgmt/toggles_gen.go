@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagHttpclientproviderAzureAuth
-	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
-	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
-
 	// FlagServiceAccounts
 	// support service accounts
 	FlagServiceAccounts = "serviceAccounts"
@@ -55,14 +51,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoSearch
-	// Enable searching in tempo datasources
-	FlagTempoSearch = "tempoSearch"
-
-	// FlagTempoBackendSearch
-	// Use backend for tempo search
-	FlagTempoBackendSearch = "tempoBackendSearch"
-
 	// FlagTempoServiceGraph
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
@@ -75,6 +63,10 @@ const (
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
+	// FlagPrometheusAzureOverrideAudience
+	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -86,10 +78,6 @@ const (
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
-
-	// FlagDisableHttpRequestHistogram
-	// Do not create histograms for http requests
-	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
 
 	// FlagPublicDashboards
 	// enables public access to dashboards
@@ -123,10 +111,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagAlertProvisioning
-	// Provisioning-friendly routes for alerting
-	FlagAlertProvisioning = "alertProvisioning"
-
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
@@ -146,10 +130,6 @@ const (
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
-
-	// FlagPersistNotifications
-	// PoC Notifications page
-	FlagPersistNotifications = "persistNotifications"
 
 	// FlagCommandPalette
 	// Enable command palette
@@ -186,4 +166,8 @@ const (
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
+
+	// FlagCanvasPanelNesting
+	// Allow elements nesting
+	FlagCanvasPanelNesting = "canvasPanelNesting"
 )

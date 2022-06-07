@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  httpclientprovider_azure_auth?: boolean;
   serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
@@ -28,15 +27,13 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoSearch?: boolean;
-  tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   lokiBackendMode?: boolean;
   prometheus_azure_auth?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
-  disable_http_request_histogram?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;
@@ -45,13 +42,11 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  alertProvisioning?: boolean;
   export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
   tracing?: boolean;
-  persistNotifications?: boolean;
   commandPalette?: boolean;
   savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -61,4 +56,5 @@ export interface FeatureToggles {
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
   prometheusWideSeries?: boolean;
+  canvasPanelNesting?: boolean;
 }
