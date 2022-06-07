@@ -9,14 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type alertRuleRegistry struct {
+type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
 	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
 }
 
 // getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -30,7 +30,7 @@ func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.
 
 // get returns the channel for the specific alert rule
 // if the key does not exist returns an error
-func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
+func (r *alertRuleInfoRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -41,7 +41,7 @@ func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error)
 	return info, nil
 }
 
-func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
+func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -52,7 +52,7 @@ func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 // del removes pair that has specific key from alertRuleInfo.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	info, ok := r.alertRuleInfo[key]
@@ -62,7 +62,7 @@ func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) 
 	return info, ok
 }
 
-func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
@@ -110,4 +110,53 @@ func (a *alertRuleInfo) update() bool {
 type evaluation struct {
 	scheduledAt time.Time
 	version     int64
+}
+
+type schedulableAlertRulesRegistry struct {
+	rules map[models.AlertRuleKey]*models.SchedulableAlertRule
+	mu    sync.Mutex
+}
+
+// all returns all rules in the registry.
+func (r *schedulableAlertRulesRegistry) all() []*models.SchedulableAlertRule {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	result := make([]*models.SchedulableAlertRule, 0, len(r.rules))
+	for _, rule := range r.rules {
+		result = append(result, rule)
+	}
+	return result
+}
+
+func (r *schedulableAlertRulesRegistry) get(k models.AlertRuleKey) *models.SchedulableAlertRule {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.rules[k]
+}
+
+// set replaces all rules in the registry.
+func (r *schedulableAlertRulesRegistry) set(rules []*models.SchedulableAlertRule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.rules = make(map[models.AlertRuleKey]*models.SchedulableAlertRule)
+	for _, rule := range rules {
+		r.rules[rule.GetKey()] = rule
+	}
+}
+
+// update inserts or replaces a rule in the registry.
+func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.rules[rule.GetKey()] = rule
+}
+
+func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rule, ok := r.rules[k]
+	if ok {
+		delete(r.rules, k)
+	}
+	return rule, ok
 }

@@ -28,6 +28,7 @@ type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
+  onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
 };
@@ -36,14 +37,14 @@ export const SearchView = ({
   showManage,
   folderDTO,
   queryText,
+  onQueryTextChange,
   hidePseudoFolders,
   includePanels,
   setIncludePanels,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
-    useSearchQuery({});
+  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -126,7 +127,7 @@ export const SearchView = ({
     clearSelection();
     setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryChange(query.query);
+    onQueryTextChange(query.query);
   };
 
   const renderResults = () => {
@@ -145,7 +146,7 @@ export const SearchView = ({
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryChange('');
+                onQueryTextChange('');
               }
               if (query.tag?.length) {
                 onTagFilterChange([]);
@@ -238,7 +239,7 @@ export const SearchView = ({
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+                onQueryTextChange(''); // parent will clear the sort
               }
             }
             onLayoutChange(v);
