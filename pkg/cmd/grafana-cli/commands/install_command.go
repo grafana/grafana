@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
@@ -117,7 +116,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
-		return errutil.Wrap("failed to create temporary file", err)
+		return fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
@@ -130,16 +129,16 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 		if err := tmpFile.Close(); err != nil {
 			logger.Warn("Failed to close file", "err", err)
 		}
-		return errutil.Wrap("failed to download plugin archive", err)
+		return fmt.Errorf("%v: %w", "failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
 	if err != nil {
-		return errutil.Wrap("failed to close tmp file", err)
+		return fmt.Errorf("%v: %w", "failed to close tmp file", err)
 	}
 
 	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
 	if err != nil {
-		return errutil.Wrap("failed to extract plugin archive", err)
+		return fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
@@ -147,7 +146,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
 		if err := InstallPlugin(v.ID, "", c, client); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", v.ID)
+			return fmt.Errorf("failed to install plugin '%s': %w", v.ID, err)
 		}
 
 		logger.Infof("Installed dependency: %v ✔\n", v.ID)
@@ -275,7 +274,7 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return errutil.Wrap("failed to create directory to extract plugin files", err)
+			return fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
 		}
 
 		if isSymlink(zf) {
@@ -291,7 +290,7 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 		}
 
 		if err := extractFile(zf, dstPath); err != nil {
-			return errutil.Wrap("failed to extract file", err)
+			return fmt.Errorf("%v: %w", "failed to extract file", err)
 		}
 	}
 
@@ -306,14 +305,14 @@ func extractSymlink(file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
 	if _, err := io.Copy(buf, src); err != nil {
-		return errutil.Wrap("failed to copy symlink contents", err)
+		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
+		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
 }
@@ -340,7 +339,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
 		}
 
-		return errutil.Wrap("failed to open file", err)
+		return fmt.Errorf("%v: %w", "failed to open file", err)
 	}
 	defer func() {
 		err = dst.Close()
@@ -348,7 +347,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	defer func() {
 		err = src.Close()

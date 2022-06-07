@@ -1,7 +1,6 @@
 import { keys as _keys } from 'lodash';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { expect } from '../../../../test/lib/common';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';

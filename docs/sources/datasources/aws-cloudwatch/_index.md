@@ -13,7 +13,7 @@ weight: 200
 
 # AWS CloudWatch data source
 
-Grafana ships with built-in support for CloudWatch. This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source. For instructions on how to add a data source to Grafana, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+Grafana ships with built-in support for CloudWatch. This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source. For instructions on how to add a data source to Grafana, refer to [Add a data source]({{< relref "../add-a-data-source/" >}}). Only users with the organization admin role can add data sources.
 
 Once you have added the Cloudwatch data source, you can build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
@@ -23,7 +23,7 @@ Once you have added the Cloudwatch data source, you can build dashboards or use 
 
 To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the AWS Cloudwatch data source.
 
-For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication.md" >}}) topic.
+For authentication options and configuration details, see [AWS authentication]({{< relref "aws-authentication/" >}}) topic.
 
 ### CloudWatch specific data source configuration
 
@@ -165,7 +165,7 @@ Link an X-Ray data source in the "X-Ray trace link" section of the configuration
 
 The data source select will contain only existing data source instances of type X-Ray so in order to use this feature you need to have existing X-Ray data source already configured, see [X-Ray docs](https://grafana.com/grafana/plugins/grafana-x-ray-datasource/) for details.
 
-The X-Ray link will then appear in the log details section which is accessible by clicking on the log row either in Explore or in dashboard [Logs panel]({{< relref "../../visualizations/logs-panel.md" >}}). To log the `@xrayTraceId` in your logs see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana your log queries also have to contain the `@xrayTraceId` field, for example using query `fields @message, @xrayTraceId`.
+The X-Ray link will then appear in the log details section which is accessible by clicking on the log row either in Explore or in dashboard [Logs panel]({{< relref "../../visualizations/logs-panel/" >}}). To log the `@xrayTraceId` in your logs see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana your log queries also have to contain the `@xrayTraceId` field, for example using query `fields @message, @xrayTraceId`.
 
 ![Trace link in log details](/static/img/docs/cloudwatch/xray-link-log-details-8-2.png 'Trace link in log details')
 
@@ -338,11 +338,11 @@ filter @message like /Exception/
 
 **NOTE**: When trying to alert on a query, if an error like `input data must be a wide series but got ...` is received, make sure that your query returns valid numeric data that can be printed in a Time series panel.
 
-For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/_index.md" >}}) documentation.
+For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting/" >}}) documentation.
 
 ## Configure CloudWatch with grafana.ini
 
-The Grafana [configuration]({{< relref "../../administration/configuration.md#aws" >}}) file includes an `AWS` section where you can customize the data source.
+The Grafana [configuration]({{< relref "../../setup-grafana/configure-grafana/#aws" >}}) file includes an `AWS` section where you can customize the data source.
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

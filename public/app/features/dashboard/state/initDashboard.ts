@@ -60,6 +60,9 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+      case DashboardRoutes.Public: {
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.urlUid);
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 

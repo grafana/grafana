@@ -36,7 +36,7 @@ var (
 			DisplayName: "Rules Editor",
 			Description: "Can add, update, and delete rules in any Grafana folder and external providers",
 			Group:       AlertRolesGroup,
-			Version:     2,
+			Version:     3,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
@@ -84,7 +84,7 @@ var (
 			DisplayName: "Silences Editor",
 			Description: "Can add and update silences in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(instancesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingInstanceCreate,

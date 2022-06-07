@@ -356,6 +356,18 @@ func TestMuteTimingService(t *testing.T) {
 
 				require.ErrorContains(t, err, "failed to save config")
 			})
+
+			t.Run("when mute timing is used in route", func(t *testing.T) {
+				sut := createMuteTimingSvcSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithMuteTimingsInRoute,
+					})
+
+				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
+
+				require.Error(t, err)
+			})
 		})
 	})
 }
@@ -385,6 +397,44 @@ var configWithMuteTimings = `
 	"alertmanager_config": {
 		"route": {
 			"receiver": "grafana-default-email"
+		},
+		"mute_time_intervals": [{
+			"name": "asdf",
+			"time_intervals": [{
+				"times": [],
+				"weekdays": ["monday"]
+			}]
+		}],
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var configWithMuteTimingsInRoute = `
+{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email",
+			"routes": [
+				{
+					"receiver": "grafana-default-email",
+					"mute_time_intervals": ["asdf"]
+				}
+			]
 		},
 		"mute_time_intervals": [{
 			"name": "asdf",

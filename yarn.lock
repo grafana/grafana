@@ -3992,7 +3992,7 @@ __metadata:
     "@testing-library/user-event": 14.2.0
     "@types/d3-interpolate": ^1.4.0
     "@types/history": 4.7.11
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.182
     "@types/marked": 4.0.3
@@ -4027,7 +4027,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     xss: 1.0.11
   languageName: unknown
   linkType: soft
@@ -4157,7 +4157,7 @@ __metadata:
     "@testing-library/user-event": 14.2.0
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/lodash": 4.14.182
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
@@ -4284,7 +4284,6 @@ __metadata:
     inquirer: ^8.2.2
     jest: 27.5.1
     jest-canvas-mock: 2.3.1
-    jest-coverage-badges: ^1.1.2
     jest-junit: 13.1.0
     less: ^4.1.2
     less-loader: ^10.2.0
@@ -4380,7 +4379,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.7
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.182
     "@types/mock-raf": 1.0.3
@@ -4472,7 +4471,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     uuid: 8.3.2
     webpack: 5.72.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -4577,17 +4576,20 @@ __metadata:
     "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 9.0.0-pre
+    "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.2.0
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
+    "@types/jest": 28.1.1
     "@types/lodash": 4.14.182
     "@types/prop-types": 15.7.5
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
     "@types/reselect": 2.2.0
+    "@types/testing-library__jest-dom": 5.14.3
     "@types/tinycolor2": 1.4.3
     chance: ^1.0.10
     classnames: ^2.2.5
@@ -10104,13 +10106,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:27.5.1":
-  version: 27.5.1
-  resolution: "@types/jest@npm:27.5.1"
+"@types/jest@npm:28.1.1":
+  version: 28.1.1
+  resolution: "@types/jest@npm:28.1.1"
   dependencies:
     jest-matcher-utils: ^27.0.0
     pretty-format: ^27.0.0
-  checksum: be20e39f7aaf17179109c0060d0a0489cec2034d4e2e28a631284c7ecd13c5ae52f62697a33a0e89b03b6cfe54e9d5e8c2bd387ab2bd90d6071d68c63b86d1e3
+  checksum: 0a8b045a7b660372decc807c390d3f99a2b12bb1659a1cd593afe04557f4b7c235b0576a5e35b1577710d20e42759d3d8755eb8bed6edc8733f47007e75a5509
   languageName: node
   linkType: hard
 
@@ -20315,7 +20317,7 @@ __metadata:
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 27.5.1
+    "@types/jest": 28.1.1
     "@types/jquery": 3.5.14
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
@@ -20528,7 +20530,7 @@ __metadata:
     ts-node: 10.7.0
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     uuid: 8.3.2
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -22822,17 +22824,6 @@ __metadata:
     ts-node:
       optional: true
   checksum: 48bfbef4334a187ce6873fd515230e521f500fe2ae57e43ec5747abee95a80583e784cfb99dd1b11664774f33da63758cc63d4a2b2ecf95c8984f2a880cd773e
-  languageName: node
-  linkType: hard
-
-"jest-coverage-badges@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "jest-coverage-badges@npm:1.1.2"
-  dependencies:
-    mkdirp: 0.5.1
-  bin:
-    jest-coverage-badges: cli.js
-  checksum: 0aa103d198d2167973d4b7da496abf7256aeb05437034c0eb6200926df6739230854b1eb53fbf62e5db41fbc21005ae0ee44e08b85ea6096ea5c1ad1e323cec3
   languageName: node
   linkType: hard
 
@@ -25655,13 +25646,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:0.0.8":
-  version: 0.0.8
-  resolution: "minimist@npm:0.0.8"
-  checksum: 042f8b626b1fa44dffc23bac55771425ac4ee9d267b56f9064c07713e516e1799f3ba933bb628d2475a210caf7dcdb98161611baa1f0daf49309a944cb4bc48f
-  languageName: node
-  linkType: hard
-
 "minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6":
   version: 1.2.6
   resolution: "minimist@npm:1.2.6"
@@ -25804,17 +25788,6 @@ __metadata:
     infer-owner: ^1.0.4
     mkdirp: ^1.0.3
   checksum: d8f4ecd32f6762459d6b5714eae6487c67ae9734ab14e26d14377ddd9b2a1bf868d8baa18c0f3e73d3d513f53ec7a698e0f81a9367102c870a55bef7833880f7
-  languageName: node
-  linkType: hard
-
-"mkdirp@npm:0.5.1":
-  version: 0.5.1
-  resolution: "mkdirp@npm:0.5.1"
-  dependencies:
-    minimist: 0.0.8
-  bin:
-    mkdirp: bin/cmd.js
-  checksum: ed1ab49bb1d06c88dba7cfe930a3186f2605b5465aab7c8f24119baaba6e38f9ab4ac1695c68f476c65a48df2a69a8495049cd6e26c360ea082151a0771343d2
   languageName: node
   linkType: hard
 
@@ -35463,10 +35436,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.20":
-  version: 1.6.20
-  resolution: "uplot@npm:1.6.20"
-  checksum: 17ddacefbba2b0db0e919ad5ed85f43ebe40afbfced442bc821adbf6d84dc4f969ebf5754f913b316acf17f24ca18c3ca971181a530ea1fc91f45763f25cddaf
+"uplot@npm:1.6.21":
+  version: 1.6.21
+  resolution: "uplot@npm:1.6.21"
+  checksum: 38aa8c899f5010ce6a340db2717ef14e50e49a227a64be225ecba5a5d64bbda4d84a29a6a93ce77aa19a68f0631beaab8ba9ed6a456f11ce65160a6757b5b384
   languageName: node
   linkType: hard
 
