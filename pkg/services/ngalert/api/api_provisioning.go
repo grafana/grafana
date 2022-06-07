@@ -247,6 +247,9 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) respons
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.ID = createdAlertRule.ID
@@ -258,6 +261,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodel
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.Updated = updatedAlertRule.Updated
@@ -278,6 +284,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apim
 	folderUID := pathParam(c, folderUIDPathParam)
 	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
