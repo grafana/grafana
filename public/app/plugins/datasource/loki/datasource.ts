@@ -47,6 +47,7 @@ import { renderLegendFormat } from '../prometheus/legend';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
+import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
@@ -118,6 +119,9 @@ export class LokiDatasource
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
     this.useBackendMode = config.featureToggles.lokiBackendMode ?? false;
+    this.annotations = {
+      QueryEditor: LokiAnnotationsQueryEditor,
+    };
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {

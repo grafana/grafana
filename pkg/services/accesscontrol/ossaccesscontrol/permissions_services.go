@@ -113,7 +113,7 @@ func ProvideDashboardPermissions(
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
 		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
-		if err := dashboardStore.GetDashboard(ctx, query); err != nil {
+		if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
@@ -142,7 +142,7 @@ func ProvideDashboardPermissions(
 			}
 			if dashboard.FolderId > 0 {
 				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
-				if err := dashboardStore.GetDashboard(ctx, query); err != nil {
+				if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 					return nil, err
 				}
 				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.Uid)}, nil
@@ -196,7 +196,7 @@ func ProvideFolderPermissions(
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
-			if err := dashboardStore.GetDashboard(ctx, query); err != nil {
+			if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 				return err
 			}
 

@@ -62,7 +62,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -79,7 +79,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -96,7 +96,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -120,7 +120,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
@@ -202,7 +202,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err = dashboardStore.GetDashboard(context.Background(), &query)
+		_, err = dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, query.Result.FolderId, int64(0))
 		require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
