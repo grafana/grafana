@@ -101,7 +101,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for total requests per label',
+        name: 'Metrics query for total requests per label of streams',
         // sum by() (count_over_time({}[$__interval)
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -110,7 +110,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for total requests per parsed label',
+        name: 'Metrics query for total requests per parsed label or label of streams',
         // sum by() (count_over_time({}| logfmt | __error__=`` [$__interval))
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -137,7 +137,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for top n results by parsed label',
+        name: 'Metrics query for top n results by label or parsed label',
         // topk(10, sum by () (count_over_time({} | logfmt | __error__=`` [$__interval])))
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
