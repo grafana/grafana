@@ -52,7 +52,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.LabelFilter, params: ['', '=', ''] },
+          { id: LokiOperationId.LabelFilter, params: ['label', '=', 'value'] },
         ],
       },
       {
@@ -94,7 +94,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.Unwrap, params: [''] },
+          { id: LokiOperationId.Unwrap, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
           { id: LokiOperationId.Sum, params: [] },
