@@ -25,6 +25,11 @@
       "type": "dashboard",
       "name": "Azure VM Monitoring - VM Insights by Resource Group",
       "path": "dashboards/vMInsightsRG.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Networks",
+      "path": "dashboards/networkInsightsDashboard.json"
     }
   ],
 
