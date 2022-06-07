@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  AnnotationQueryRequest,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -700,7 +701,14 @@ export class PrometheusDatasource
     };
   }
 
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return Promise.reject(error);
+    }
+
     const annotation = options.annotation;
     const { expr = '' } = annotation;
 
@@ -740,7 +748,7 @@ export class PrometheusDatasource
     );
   }
 
-  processAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
+  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
     const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
     if (!frames || !frames.length) {
       return [];
