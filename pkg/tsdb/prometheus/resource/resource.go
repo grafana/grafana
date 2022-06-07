@@ -38,8 +38,20 @@ var hopHeaders = []string{
 	"Upgrade",
 }
 
+// The following headers will be removed from the request
+var stopHeaders = []string{
+	"cookie",
+	"Cookie",
+}
+
 func delHopHeaders(header http.Header) {
 	for _, h := range hopHeaders {
+		header.Del(h)
+	}
+}
+
+func delStopHeaders(header http.Header) {
+	for _, h := range stopHeaders {
 		header.Del(h)
 	}
 }
@@ -109,6 +121,7 @@ func New(
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
 	delHopHeaders(req.Headers)
+	delStopHeaders(req.Headers)
 	addHeaders(req.Headers, r.customHeaders)
 	client, err := r.provider.GetClient(normalizeReqHeaders(req.Headers))
 	if err != nil {
