@@ -12,6 +12,8 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 
+import { ConditionID } from './ConditionsRegistry';
+
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 
 export interface BatchedQueries {
@@ -19,7 +21,14 @@ export interface BatchedQueries {
   targets: DataQuery[];
 }
 
-export class ConditionalDataSource extends DataSourceApi<DataQuery> {
+export interface ConditionalDataSourceQuery extends DataQuery {
+  conditions: Array<{
+    id: ConditionID;
+    options: any;
+  }>;
+}
+
+export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }

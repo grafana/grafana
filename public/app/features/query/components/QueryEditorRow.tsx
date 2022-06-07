@@ -45,6 +45,7 @@ interface Props<TQuery extends DataQuery> {
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
   renderHeaderExtras?: () => ReactNode;
+  renderConditionsEditor?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
@@ -223,6 +224,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
+  renderConditionsEditor = () => {
+    const { renderConditionsEditor } = this.props;
+
+    return renderConditionsEditor ? renderConditionsEditor() : null;
+  };
+
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
@@ -397,6 +404,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
+    const conditionsEditor = this.renderConditionsEditor();
     const editor = this.renderPluginEditor();
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
@@ -421,6 +429,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                   />
                 </OperationRowHelp>
               )}
+              {conditionsEditor}
               {editor}
             </ErrorBoundaryAlert>
             {data?.error && data.error.refId === query.refId && <QueryErrorAlert error={data.error} />}

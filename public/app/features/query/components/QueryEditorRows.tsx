@@ -9,8 +9,15 @@ import {
   EventBusExtended,
   HistoryItem,
   PanelData,
+  SelectableValue,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { Button, ValuePicker } from '@grafana/ui';
+import {
+  ConditionalDataSourceQuery,
+  CONDITIONAL_DATASOURCE_NAME,
+} from 'app/plugins/datasource/conditional/ConditionalDataSource';
+import { ConditionID, conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -128,8 +135,74 @@ export class QueryEditorRows extends PureComponent<Props> {
     });
   };
 
+  onAddCondition = (index: number, conditionId: ConditionID) => {
+    const { queries, onQueriesChange } = this.props;
+
+    const q = queries[index] as ConditionalDataSourceQuery;
+    q.conditions = q.conditions
+      ? [...q.conditions, { id: conditionId, options: { pattern: 'field name' } }]
+      : [{ id: conditionId, options: { pattern: 'field name' } }];
+
+    const nextQueries = [...queries];
+    nextQueries[index] = q;
+
+    onQueriesChange(nextQueries);
+  };
+
+  onQueryConditionChange = (queryIdx: number, conditionIdx: number) => (options: any) => {
+    const { queries, onQueriesChange } = this.props;
+
+    const q = queries[queryIdx] as ConditionalDataSourceQuery;
+    q.conditions[conditionIdx].options = options;
+
+    const nextQueries = [...queries];
+    nextQueries[queryIdx] = q;
+
+    onQueriesChange(nextQueries);
+  };
+
+  renderConditionsEditor(q: ConditionalDataSourceQuery, queryIdx: number) {
+    return (
+      <>
+        {q.conditions?.map((c, i) => {
+          const conditionItem = conditionsRegistry.getIfExists(c.id);
+          if (!conditionItem) {
+            throw new Error('No condition definition for ID ' + c.id);
+          }
+          const EditorComponent = conditionItem.editor;
+
+          return (
+            <div key={i}>
+              <EditorComponent onChange={this.onQueryConditionChange(queryIdx, i)} options={c.options} />
+            </div>
+          );
+        })}
+
+        <ValuePicker
+          icon="plus"
+          label="Add field override"
+          variant="secondary"
+          menuPlacement="auto"
+          isFullWidth={true}
+          size="md"
+          options={conditionsRegistry
+            .list()
+            .filter((o) => !o.excludeFromPicker)
+            .map<SelectableValue<ConditionID>>((i) => ({
+              label: i.name,
+              value: i.id as ConditionID,
+              description: i.description,
+            }))}
+          onChange={(value) => this.onAddCondition(queryIdx, value.value!)}
+        />
+      </>
+    );
+  }
+
   render() {
     const { dsSettings, data, queries, app, history, eventBus } = this.props;
+
+    const isConditional = dsSettings.name === CONDITIONAL_DATASOURCE_NAME;
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -160,6 +233,11 @@ export class QueryEditorRows extends PureComponent<Props> {
                       app={app}
                       history={history}
                       eventBus={eventBus}
+                      renderConditionsEditor={
+                        isConditional
+                          ? () => this.renderConditionsEditor(query as ConditionalDataSourceQuery, index)
+                          : undefined
+                      }
                     />
                   );
                 })}
