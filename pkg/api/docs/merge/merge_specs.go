@@ -31,6 +31,10 @@ func mergeVectors(a, b []string) []string {
 	return a
 }
 
+func compareDefinition(a, b spec.Schema) bool {
+	return reflect.DeepEqual(a.Type, b.Type) && a.Format == b.Format && reflect.DeepEqual(a.Properties, b.Properties)
+}
+
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
 func mergeSpecs(output string, sources ...string) error {
 	if len(sources) < 2 {
@@ -70,7 +74,7 @@ func mergeSpecs(output string, sources ...string) error {
 		//TODO: When there are conflict between definitions, we need to error out, but here we need to fix the existing conflict first
 		for k, ad := range additionalSpec.OrigSpec().SwaggerProps.Definitions {
 			if ossd, exists := specOSS.SwaggerProps.Definitions[k]; exists {
-				if !reflect.DeepEqual(ad, ossd) {
+				if !compareDefinition(ad, ossd) {
 					fmt.Printf("the definition of %s differs in specs!\n", k)
 				}
 			}
