@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, AsyncSelect } from '@grafana/ui';
+import { ActionMeta, AsyncSelect, LoadOptionsCallback } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -52,7 +52,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder: null,
     };
 
-    this.debouncedSearch = debounce(this.getOptions, 300, {
+    this.debouncedSearch = debounce(this.loadOptions, 300, {
       leading: true,
       trailing: true,
     });
@@ -82,8 +82,45 @@ export class FolderPicker extends PureComponent<Props, State> {
     await this.loadInitialValue();
   };
 
-  getOptions = (query: string, callback: (opts: Array<SelectableValue<number>>) => void) => {
-    this.asyncLoadOptions(query).then((results) => callback(results));
+  // when debouncing, we must use the callback form of react-select's loadOptions so we don't
+  // drop results for user input
+  loadOptions = (query: string, callback: LoadOptionsCallback<number>): void => {
+    this.searchFolders(query).then(callback);
+  };
+
+  private searchFolders = async (query: string) => {
+    const {
+      rootName,
+      enableReset,
+      initialTitle,
+      permissionLevel,
+      filter,
+      accessControlMetadata,
+      initialFolderId,
+      showRoot,
+    } = this.props;
+
+    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
+
+    const hasAccess =
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+
+    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
+      options.unshift({ label: rootName, value: 0 });
+    }
+
+    if (
+      enableReset &&
+      query === '' &&
+      initialTitle !== '' &&
+      !options.find((option) => option.label === initialTitle)
+    ) {
+      options.unshift({ label: initialTitle, value: initialFolderId });
+    }
+
+    return options;
   };
 
   onFolderChange = (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
@@ -123,47 +160,12 @@ export class FolderPicker extends PureComponent<Props, State> {
     return folder;
   };
 
-  private asyncLoadOptions = async (query: string) => {
-    const {
-      rootName,
-      enableReset,
-      initialTitle,
-      permissionLevel,
-      filter,
-      accessControlMetadata,
-      initialFolderId,
-      showRoot,
-    } = this.props;
-
-    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
-
-    const hasAccess =
-      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
-      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
-
-    if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
-      options.unshift({ label: rootName, value: 0 });
-    }
-
-    if (
-      enableReset &&
-      query === '' &&
-      initialTitle !== '' &&
-      !options.find((option) => option.label === initialTitle)
-    ) {
-      options.unshift({ label: initialTitle, value: initialFolderId });
-    }
-
-    return options;
-  };
-
   private loadInitialValue = async () => {
     const { initialTitle, rootName, initialFolderId, enableReset, dashboardId } = this.props;
     const resetFolder: SelectableValue<number> = { label: initialTitle, value: undefined };
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
-    const options = await this.asyncLoadOptions('');
+    const options = await this.searchFolders('');
 
     let folder: SelectableValue<number> | null = null;
 
