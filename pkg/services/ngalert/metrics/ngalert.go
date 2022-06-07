@@ -55,7 +55,6 @@ type Scheduler struct {
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
-	UpdateSchedulableAlertRulesFailures prometheus.Counter
 	Ticker                              *legacyMetrics.Ticker
 }
 
@@ -179,7 +178,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			prometheus.GaugeOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "schedulable_alert_rules",
+				Name:      "schedule_alert_rules",
 				Help:      "The number of alert rules being considered for evaluation each tick.",
 			},
 		),
@@ -187,24 +186,16 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			prometheus.GaugeOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "schedulable_alert_rules_hash",
+				Name:      "schedule_alert_rules_hash",
 				Help:      "A hash of the alert rules over time.",
 			}),
 		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "update_schedulable_alert_rules_duration_seconds",
-				Help:      "The time taken to get update alert rules for the scheduler.",
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
-			},
-		),
-		UpdateSchedulableAlertRulesFailures: promauto.With(r).NewCounter(
-			prometheus.CounterOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "update_schedulable_alert_rules_failures_total",
-				Help:      "The total number of failures to update the alert rules for the scheduler.",
 			},
 		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),

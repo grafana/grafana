@@ -47,7 +47,6 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context, disabledOr
 		ExcludeOrgIDs: disabledOrgs,
 	}
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
-		defer sch.metrics.UpdateSchedulableAlertRulesFailures.Inc()
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
 	sch.schedulableAlertRules.set(q.Result)

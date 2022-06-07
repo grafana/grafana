@@ -380,7 +380,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			}
 
 			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
-				sch.log.Error("scheduler failed to update alert rules", "error", err)
+				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
 			alertRules := sch.schedulableAlertRules.all()
 
