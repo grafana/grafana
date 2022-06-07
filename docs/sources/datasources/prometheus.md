@@ -47,7 +47,9 @@ Prometheus query editor is separated into 3 distinct modes that you can switch b
 
 ![Editor toolbar](/static/img/docs/prometheus/header-8-5.png 'Editor toolbar')
 
-At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
+At the top of the editor, select `Run queries` to run a query. Select `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
+
+> **Note:** In Explore, to run Prometheus queries, select `Run query`.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
 

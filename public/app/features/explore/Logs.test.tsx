@@ -37,7 +37,7 @@ describe('Logs', () => {
   };
 
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
   });
 
   afterEach(() => {

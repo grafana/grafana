@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -265,7 +264,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 		if err != nil {
-			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
+			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
 		if ss.dbCfg.Pwd == "" {
@@ -318,7 +317,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
-			return errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
+			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
 		}
 
 		const perms = 0640
@@ -326,15 +325,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			if err := f.Close(); err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 		} else {
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to stat SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			m := fi.Mode() & os.ModePerm
 			if m|perms != perms {
