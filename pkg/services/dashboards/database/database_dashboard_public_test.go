@@ -75,7 +75,6 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		_, _, err = dashboardStore.GetPublicDashboard("abc1234")
 		require.Error(t, models.ErrDashboardNotFound, err)
 	})
-
 }
 
 // GetPublicDashboardConfig
