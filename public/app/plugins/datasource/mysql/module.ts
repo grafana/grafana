@@ -8,7 +8,7 @@ import {
 import { SqlQueryEditor } from '../sql/components/QueryEditor';
 import { SQLQuery } from '../sql/types';
 
-import { MysqlDatasource } from './MySqlDatasource';
+import { MySqlDatasource } from './MySqlDatasource';
 import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
@@ -46,14 +46,14 @@ class MysqlAnnotationsQueryCtrl {
 }
 
 export {
-  MysqlDatasource,
-  MysqlDatasource as Datasource,
+  MySqlDatasource,
+  MySqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
 
-export const plugin = new DataSourcePlugin<MysqlDatasource, SQLQuery>(MysqlDatasource)
+export const plugin = new DataSourcePlugin<MySqlDatasource, SQLQuery>(MySqlDatasource)
   // .setQueryCtrl(MysqlQueryCtrl)
   .setQueryEditor(SqlQueryEditor)
   .setConfigCtrl(MysqlConfigCtrl)

@@ -5,7 +5,7 @@ import { QueryEditorProps } from '@grafana/data';
 import { EditorMode, Space } from '@grafana/experimental';
 
 import { QueryHeader } from '../components/QueryHeader';
-import { SqlDatasource } from '../datasource/datasource';
+import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
 import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';

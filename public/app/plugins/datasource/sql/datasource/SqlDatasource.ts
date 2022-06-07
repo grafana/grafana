@@ -148,6 +148,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
     const interpolatedQuery = {
       refId: refId,
+      datasourceId: this.id,
       datasource: this.getRef(),
       rawSql,
       format: 'table',
@@ -193,6 +194,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
                 intervalMs: 1,
                 maxDataPoints: 1,
                 datasource: this.getRef(),
+                datasourceId: this.id,
                 rawSql: 'SELECT 1',
                 format: 'table',
               },

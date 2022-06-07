@@ -13,7 +13,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { SQLOptions, SQLQuery } from '../../sql/types';
-import { MysqlDatasource } from '../MySqlDatasource';
+import { MySqlDatasource } from '../MySqlDatasource';
 
 // import { MySQLOptions, MySQLQuery } from './../types';
 
@@ -31,7 +31,7 @@ describe('MySQLDatasource', () => {
     const variable = { ...initialCustomVariableModelState };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings);
+    const ds = new MySqlDatasource(instanceSettings);
 
     return { ds, variable, templateSrv, fetchMock };
   };

@@ -4,13 +4,13 @@ import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data
 import { TemplateSrv } from '@grafana/runtime';
 import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
-import { SqlDatasource } from '../sql/datasource/datasource';
+import { SqlDatasource } from '../sql/datasource/SqlDatasource';
 import { DB, ResponseParser, SQLOptions, SQLQuery, TableSchema, ValidationResults } from '../sql/types';
 
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import MySqlResponseParser from './response_parser';
 
-export class MysqlDatasource extends SqlDatasource {
+export class MySqlDatasource extends SqlDatasource {
   // queryModel: MySQLQueryModel;
   // metaBuilder: MysqlMetaQuery;
 
