@@ -142,7 +142,7 @@ func (ng *AlertNG) init() error {
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
 		appUrl = nil
 	}
 

@@ -185,7 +185,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
-		d.log.Error("Failed to send notification to Discord", "error", err)
+		d.log.Error("failed to send notification to Discord", "err", err)
 		return false, err
 	}
 	return true, nil
@@ -225,7 +225,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
 				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
-					d.log.Warn("failed to retrieve image data from store", "error", err)
+					d.log.Warn("failed to retrieve image data from store", "err", err)
 					return nil
 				}
 
@@ -262,7 +262,7 @@ func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []by
 	defer func() {
 		if err := w.Close(); err != nil {
 			// Shouldn't matter since we already close w explicitly on the non-error path
-			d.log.Warn("Failed to close multipart writer", "err", err)
+			d.log.Warn("failed to close multipart writer", "err", err)
 		}
 	}()
 

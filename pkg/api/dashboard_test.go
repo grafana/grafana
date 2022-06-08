@@ -951,10 +951,16 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
 	cfg := setting.NewCfg()
+	ac := accesscontrolmock.New()
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures()
 
 	if dashboardService == nil {
-		dashboardService = service.ProvideDashboardService(cfg, dashboardStore, nil, features, nil, accesscontrolmock.NewMockedPermissionsService())
+		dashboardService = service.ProvideDashboardService(
+			cfg, dashboardStore, nil, features,
+			folderPermissions, dashboardPermissions, ac,
+		)
 	}
 
 	hs := &HTTPServer{
@@ -966,7 +972,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, nil, features,
-			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+			folderPermissions, dashboardPermissions, ac,
 		),
 		dashboardService: dashboardService,
 	}

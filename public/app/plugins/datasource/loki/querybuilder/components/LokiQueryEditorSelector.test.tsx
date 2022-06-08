@@ -10,6 +10,13 @@ import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 jest.mock('app/core/store', () => {
   return {
     get() {
