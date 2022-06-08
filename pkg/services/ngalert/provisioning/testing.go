@@ -136,13 +136,13 @@ func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.P
 	return nil
 }
 
-type nopTransactionManager struct{}
+type NopTransactionManager struct{}
 
-func newNopTransactionManager() *nopTransactionManager {
-	return &nopTransactionManager{}
+func newNopTransactionManager() *NopTransactionManager {
+	return &NopTransactionManager{}
 }
 
-func (n *nopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
+func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
 	return work(ctx)
 }
 
@@ -157,6 +157,11 @@ func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *M
 
 func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
 	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
+	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	return m
 }
 

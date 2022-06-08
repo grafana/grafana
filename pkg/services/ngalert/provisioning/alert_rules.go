@@ -14,13 +14,13 @@ import (
 
 type AlertRuleService struct {
 	defaultInterval int64
-	ruleStore       store.RuleStore
+	ruleStore       RuleStore
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
 }
 
-func NewAlertRuleService(ruleStore store.RuleStore,
+func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
 	defaultInterval int64,

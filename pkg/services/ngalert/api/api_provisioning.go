@@ -252,7 +252,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) respons
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
-	if errors.Is(err, provisioning.ErrValidation) {
+	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
@@ -266,7 +266,10 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodel
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
-	if errors.Is(err, provisioning.ErrValidation) {
+	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
+		return response.Empty(http.StatusNotFound)
+	}
+	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {

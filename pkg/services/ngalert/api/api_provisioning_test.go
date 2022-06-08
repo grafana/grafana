@@ -2,19 +2,21 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/web"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -141,7 +143,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				withURLParams(rc, namePathParam, "test")
-				tmpl := definitions.MessageTemplateContent{Template: ""}
+				tmpl := apimodels.MessageTemplateContent{Template: ""}
 
 				response := sut.RoutePutTemplate(&rc, tmpl)
 
@@ -191,6 +193,45 @@ func TestProvisioningApi(t *testing.T) {
 			require.Equal(t, 404, response.Status())
 		})
 	})
+
+	t.Run("alert rules", func(t *testing.T) {
+		t.Run("are invalid", func(t *testing.T) {
+			t.Run("POST returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createInvalidAlertRule()
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+				rule := createInvalidAlertRule()
+
+				response := sut.RoutePutAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+		})
+
+		t.Run("are missing, PUT returns 404", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			rule := createTestAlertRule("rule", 1)
+
+			response := sut.RoutePutAlertRule(&rc, rule)
+
+			require.Equal(t, 404, response.Status())
+		})
+	})
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
@@ -202,13 +243,23 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 		GetsConfig(domain.AlertConfiguration{
 			AlertmanagerConfiguration: testConfig,
 		})
+	sqlStore := sqlstore.InitTestDB(t)
+	store := store.DBstore{
+		SQLStore:     sqlStore,
+		BaseInterval: time.Second * 10,
+	}
+	xact := &provisioning.NopTransactionManager{}
+	prov := &provisioning.MockProvisioningStore{}
+	prov.EXPECT().SaveSucceeds()
+	prov.EXPECT().GetReturns(domain.ProvenanceNone)
 
 	return ProvisioningSrv{
 		log:                 log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(configs, secrets, nil, nil, log),
-		templates:           provisioning.NewTemplateService(configs, nil, nil, log),
-		muteTimings:         provisioning.NewMuteTimingService(configs, nil, nil, log),
+		contactPointService: provisioning.NewContactPointService(configs, secrets, prov, xact, log),
+		templates:           provisioning.NewTemplateService(configs, prov, xact, log),
+		muteTimings:         provisioning.NewMuteTimingService(configs, prov, xact, log),
+		alertRules:          provisioning.NewAlertRuleService(store, prov, xact, 10, log),
 	}
 }
 
@@ -281,24 +332,24 @@ func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Co
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func createInvalidContactPoint() definitions.EmbeddedContactPoint {
+func createInvalidContactPoint() apimodels.EmbeddedContactPoint {
 	settings, _ := simplejson.NewJson([]byte(`{}`))
-	return definitions.EmbeddedContactPoint{
+	return apimodels.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
 		Settings: settings,
 	}
 }
 
-func createInvalidTemplate() definitions.MessageTemplate {
-	return definitions.MessageTemplate{
+func createInvalidTemplate() apimodels.MessageTemplate {
+	return apimodels.MessageTemplate{
 		Name:     "",
 		Template: "",
 	}
 }
 
-func createInvalidMuteTiming() definitions.MuteTimeInterval {
-	return definitions.MuteTimeInterval{
+func createInvalidMuteTiming() apimodels.MuteTimeInterval {
+	return apimodels.MuteTimeInterval{
 		MuteTimeInterval: prometheus.MuteTimeInterval{
 			Name: "interval",
 			TimeIntervals: []timeinterval.TimeInterval{
@@ -315,6 +366,40 @@ func createInvalidMuteTiming() definitions.MuteTimeInterval {
 			},
 		},
 	}
+}
+
+func createInvalidAlertRule() apimodels.AlertRule {
+	return apimodels.AlertRule{}
+}
+
+func createTestAlertRule(title string, orgID int64) apimodels.AlertRule {
+	return apimodels.AlertRule{
+		OrgID:     orgID,
+		Title:     title,
+		Condition: "A",
+		Data: []domain.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage("{}"),
+				RelativeTimeRange: domain.RelativeTimeRange{
+					From: domain.Duration(60),
+					To:   domain.Duration(0),
+				},
+			},
+		},
+		RuleGroup:    "my-cool-group",
+		For:          time.Second * 60,
+		NoDataState:  domain.OK,
+		ExecErrState: domain.OkErrState,
+	}
+}
+
+func insertRule(t *testing.T, srv ProvisioningSrv, rule apimodels.AlertRule) {
+	t.Helper()
+
+	rc := createTestRequestCtx()
+	resp := srv.RoutePostAlertRule(&rc, rule)
+	require.Equal(t, 201, resp.Status())
 }
 
 var testConfig = `
