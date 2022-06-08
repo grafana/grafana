@@ -265,6 +265,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	err = checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil {
+		backend.Logger.Error(err.Error())
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: fmt.Sprintf("Error querying Azure Monitor endpoint: %v", err.Error()),
@@ -273,6 +274,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	err = checkAzureLogAnalyticsHealth(dsInfo)
 	if err != nil {
+		backend.Logger.Error(err.Error())
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: fmt.Sprintf("Error querying Azure Log Analytics endpoint: %v", err.Error()),
@@ -281,6 +283,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	err = checkAzureMonitorGraphHealth(dsInfo)
 	if err != nil {
+		backend.Logger.Error(err.Error())
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: fmt.Sprintf("Error querying Azure Resource Graph endpoint: %v", err.Error()),
