@@ -360,7 +360,7 @@ type Cfg struct {
 	// User
 	UserInviteMaxLifetime time.Duration
 	HiddenUsers           map[string]struct{}
-	CaseInsensitiveID     bool // Login and Email will be considered case insensitive
+	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
@@ -1354,7 +1354,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveID = users.Key("case_insensitive_id").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")

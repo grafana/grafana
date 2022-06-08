@@ -48,7 +48,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsDisabled)
 
 		t.Run("Get User by email case insensitive", func(t *testing.T) {
-			ss.Cfg.CaseInsensitiveID = true
+			ss.Cfg.CaseInsensitiveLogin = true
 			query := models.GetUserByEmailQuery{Email: "USERtest@TEST.COM"}
 			err = ss.GetUserByEmail(context.Background(), &query)
 			require.Nil(t, err)
@@ -59,11 +59,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Len(t, query.Result.Salt, 10)
 			require.False(t, query.Result.IsDisabled)
 
-			ss.Cfg.CaseInsensitiveID = false
+			ss.Cfg.CaseInsensitiveLogin = false
 		})
 
 		t.Run("Get User by login - case insensitive", func(t *testing.T) {
-			ss.Cfg.CaseInsensitiveID = true
+			ss.Cfg.CaseInsensitiveLogin = true
 
 			query := models.GetUserByLoginQuery{LoginOrEmail: "USER_test_login"}
 			err = ss.GetUserByLogin(context.Background(), &query)
@@ -75,11 +75,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Len(t, query.Result.Salt, 10)
 			require.False(t, query.Result.IsDisabled)
 
-			ss.Cfg.CaseInsensitiveID = false
+			ss.Cfg.CaseInsensitiveLogin = false
 		})
 
 		t.Run("Get User by login - email fallback case insensitive", func(t *testing.T) {
-			ss.Cfg.CaseInsensitiveID = true
+			ss.Cfg.CaseInsensitiveLogin = true
 			query := models.GetUserByLoginQuery{LoginOrEmail: "USERtest@TEST.COM"}
 			err = ss.GetUserByLogin(context.Background(), &query)
 			require.Nil(t, err)
@@ -90,7 +90,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Len(t, query.Result.Salt, 10)
 			require.False(t, query.Result.IsDisabled)
 
-			ss.Cfg.CaseInsensitiveID = false
+			ss.Cfg.CaseInsensitiveLogin = false
 		})
 	})
 
