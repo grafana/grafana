@@ -16,8 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const namePathParam = ":name"
-const idPathParam = ":ID"
+const (
+	namePathParam      = ":name"
+	uidPathParam       = ":UID"
+	groupPathParam     = ":Group"
+	folderUIDPathParam = ":FolderUID"
+)
 
 type ProvisioningSrv struct {
 	log                 log.Logger
@@ -25,6 +29,7 @@ type ProvisioningSrv struct {
 	contactPointService ContactPointService
 	templates           TemplateService
 	muteTimings         MuteTimingService
+	alertRules          AlertRuleService
 }
 
 type ContactPointService interface {
@@ -50,6 +55,14 @@ type MuteTimingService interface {
 	CreateMuteTiming(ctx context.Context, mt apimodels.MuteTimeInterval, orgID int64) (*apimodels.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt apimodels.MuteTimeInterval, orgID int64) (*apimodels.MuteTimeInterval, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
+}
+
+type AlertRuleService interface {
+	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
+	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
+	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
+	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
+	UpdateAlertGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -97,8 +110,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimo
 }
 
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	id := pathParam(c, idPathParam)
-	cp.UID = id
+	cp.UID = pathParam(c, uidPathParam)
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -107,8 +119,8 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimod
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) response.Response {
-	cpID := pathParam(c, idPathParam)
-	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
+	UID := pathParam(c, uidPathParam)
+	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, UID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -221,6 +233,54 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) response.Response {
+	uid := pathParam(c, uidPathParam)
+	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgId, uid)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, apimodels.NewAlertRule(rule, provenace))
+}
+
+func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	ar.ID = createdAlertRule.ID
+	ar.UID = createdAlertRule.UID
+	ar.Updated = createdAlertRule.Updated
+	return response.JSON(http.StatusCreated, ar)
+}
+
+func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	ar.Updated = updatedAlertRule.Updated
+	return response.JSON(http.StatusOK, ar)
+}
+
+func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext) response.Response {
+	uid := pathParam(c, uidPathParam)
+	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgId, uid, alerting_models.ProvenanceAPI)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusNoContent, "")
+}
+
+func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag apimodels.AlertRuleGroup) response.Response {
+	rulegroup := pathParam(c, groupPathParam)
+	folderUID := pathParam(c, folderUIDPathParam)
+	err := srv.alertRules.UpdateAlertGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, ag)
 }
 
 func pathParam(c *models.ReqContext, param string) string {

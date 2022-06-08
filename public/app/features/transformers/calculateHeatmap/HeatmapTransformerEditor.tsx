@@ -25,7 +25,7 @@ const supplier = (
 
 export const HeatmapTransformerEditor: React.FC<TransformerUIProps<HeatmapTransformerOptions>> = (props) => {
   useEffect(() => {
-    if (!props.options.xAxis?.mode) {
+    if (!props.options.xBuckets?.mode) {
       const opts = getDefaultOptions(supplier);
       props.onChange({ ...opts, ...props.options });
       console.log('geometry useEffect', opts);

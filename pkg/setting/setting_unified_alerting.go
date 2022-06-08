@@ -95,47 +95,50 @@ func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
 }
 
+// readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
+// It returns a non-nil bool and a nil error when unified alerting is enabled either
+// because it has been enabled in the settings or by default. It returns nil and
+// a non-nil error both unified alerting and legacy alerting are enabled at the same time.
 func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
-	enabled, err := section.Key("enabled").Bool()
-	// the unified alerting is not enabled by default. First, check the feature flag
+	// At present an invalid value is considered the same as no value. This means that a
+	// spelling mistake in the string "false" could enable unified alerting rather
+	// than disable it. This issue can be found here
+	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
 		// TODO: Remove in Grafana v9
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-			enabled = true
-			// feature flag overrides the legacy alerting setting.
+			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
 			AlertingEnabled = &legacyAlerting
-			return &enabled, nil
+			unifiedAlerting = true
+			return &unifiedAlerting, nil
 		}
-		if IsEnterprise {
-			enabled = false
-			if AlertingEnabled == nil {
-				legacyEnabled := true
-				AlertingEnabled = &legacyEnabled
-			}
-			return &enabled, nil
+
+		// if legacy alerting has not been configured then enable unified alerting
+		if AlertingEnabled == nil {
+			unifiedAlerting = true
+			return &unifiedAlerting, nil
 		}
-		// next, check whether legacy flag is set
-		if AlertingEnabled != nil && !*AlertingEnabled {
-			enabled = true
-			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
-		}
-		// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
-		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during as we run the database migrations")
-		return nil, nil // the flag is not defined
+
+		// enable unified alerting and disable legacy alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		unifiedAlerting = true
+		return &unifiedAlerting, nil
 	}
 
-	// If unified alerting is defined explicitly as well as legacy alerting and both are enabled, return error.
-	if enabled && AlertingEnabled != nil && *AlertingEnabled {
-		return nil, errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	// If both legacy and unified alerting are enabled then return an error
+	if AlertingEnabled != nil && *AlertingEnabled && unifiedAlerting {
+		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
 	}
-	// if legacy alerting is not defined but unified is determined then update the legacy with inverted value
+
 	if AlertingEnabled == nil {
-		legacyEnabled := !enabled
-		AlertingEnabled = &legacyEnabled
+		legacyAlerting := !unifiedAlerting
+		AlertingEnabled = &legacyAlerting
 	}
-	return &enabled, nil
+
+	return &unifiedAlerting, nil
 }
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.

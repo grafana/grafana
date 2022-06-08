@@ -70,6 +70,7 @@ export interface QueryBuilderOperationParamDef {
   description?: string;
   minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
+  runQueryOnEnter?: boolean;
 }
 
 export interface QueryBuilderOperationEditorProps {

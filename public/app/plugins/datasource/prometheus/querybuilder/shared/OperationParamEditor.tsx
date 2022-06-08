@@ -1,11 +1,10 @@
 import React, { ComponentType } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Checkbox, Select } from '@grafana/ui';
+import { AutoSizeInput, Checkbox, Select } from '@grafana/ui';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 
-import { AutoSizeInput } from './AutoSizeInput';
 import { getOperationParamId } from './operationUtils';
 
 export function getOperationParamEditor(
@@ -39,6 +38,9 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       title={props.paramDef.description}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
+        if (props.paramDef.runQueryOnEnter && evt.type === 'keydown') {
+          props.onRunQuery();
+        }
       }}
     />
   );

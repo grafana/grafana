@@ -1,12 +1,14 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -27,6 +29,11 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const canSave = folder?.canSave;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
 
+  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
+  if (!config.featureToggles.panelTitleSearch) {
+    includePanels = false;
+  }
+
   const { isEditor } = contextSrv;
 
   const [inputValue, setInputValue] = useState(query.query ?? '');
@@ -38,14 +45,14 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
 
   return (
     <>
-      <div className="page-action-bar">
-        <div className="gf-form gf-form--grow m-r-2">
+      <div className={cx(styles.actionBar, 'page-action-bar')}>
+        <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
           <Input
             value={inputValue}
             onChange={onSearchQueryChange}
             autoFocus
             spellCheck={false}
-            placeholder="Search for dashboards and panels"
+            placeholder={includePanels ? 'Search for dashboards and panels' : 'Search for dashboards'}
             className={styles.searchInput}
             suffix={false ? <Spinner /> : null}
           />
@@ -57,7 +64,12 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         showManage={isEditor || hasEditPermissionInFolders || canSave}
         folderDTO={folder}
         queryText={query.query}
+        onQueryTextChange={(newQueryText) => {
+          setInputValue(newQueryText);
+        }}
         hidePseudoFolders={true}
+        includePanels={includePanels!}
+        setIncludePanels={setIncludePanels}
       />
     </>
   );
@@ -68,6 +80,16 @@ ManageDashboardsNew.displayName = 'ManageDashboardsNew';
 export default ManageDashboardsNew;
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  actionBar: css`
+    ${theme.breakpoints.down('sm')} {
+      flex-wrap: wrap;
+    }
+  `,
+  inputWrapper: css`
+    ${theme.breakpoints.down('sm')} {
+      margin-right: 0 !important;
+    }
+  `,
   searchInput: css`
     margin-bottom: 6px;
     min-height: ${theme.spacing(4)};

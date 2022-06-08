@@ -12,58 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
+import { render, screen } from '@testing-library/react';
 import * as React from 'react';
-
-import { Input } from '@grafana/ui';
 
 import UiFindInput from './UiFindInput';
 
-const debounceMock = jest.spyOn(_, 'debounce').mockImplementation((func) => {
-  return Object.assign(func, { cancel: jest.fn(), flush: jest.fn() });
-});
-
 describe('UiFindInput', () => {
-  const flushMock = jest.fn();
-
-  const uiFind = 'uiFind';
-  const ownInputValue = 'ownInputValue';
-  const props = {
-    uiFind: undefined,
-    history: {
-      replace: () => {},
-    },
-    location: {
-      search: null,
-    },
-  };
-  let wrapper;
-
-  beforeAll(() => {
-    debounceMock.mockImplementation((fn) => {
-      function debounceFunction(...args) {
-        fn(...args);
-      }
-      debounceFunction.flush = flushMock;
-      return debounceFunction;
-    });
-  });
-
-  beforeEach(() => {
-    flushMock.mockReset();
-    wrapper = shallow(<UiFindInput {...props} />);
-  });
-
   describe('rendering', () => {
-    it('renders as expected', () => {
-      expect(wrapper).toMatchSnapshot();
+    it('renders as expected with no value', () => {
+      render(<UiFindInput value={undefined} />);
+      const uiFindInput = screen.queryByPlaceholderText('Find...');
+      expect(uiFindInput).toBeInTheDocument();
+      expect(uiFindInput['value']).toEqual('');
     });
 
-    it('renders props.uiFind when state.ownInputValue is `undefined`', () => {
-      wrapper.setProps({ value: uiFind });
-      expect(wrapper.find(Input).prop('value')).toBe(uiFind);
+    it('renders as expected with value', () => {
+      render(<UiFindInput value="value" />);
+      const uiFindInput = screen.queryByPlaceholderText('Find...');
+      expect(uiFindInput).toBeInTheDocument();
+      expect(uiFindInput['value']).toEqual('value');
     });
   });
 });

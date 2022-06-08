@@ -35,9 +35,9 @@ How can you tell you are here?
 
 - Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
 
-  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples.md" >}}) if you want some ideas.
+  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples/" >}}) if you want some ideas.
 
-- Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
+- Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies/" >}}).
 - Hierarchical dashboards with drill-downs to the next level.
 
   {{< figure class="float-right"  max-width="100%" src="/static/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
@@ -53,7 +53,7 @@ How can you tell you are here?
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
-  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/_index.md" >}}).
+  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/" >}}).
 - Version-controlled dashboard JSON.
 
 ## High - optimized use
@@ -63,7 +63,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/_index.md" >}}).
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/" >}}).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)
