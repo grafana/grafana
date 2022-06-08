@@ -112,7 +112,7 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 ## Panel title search (opt-in beta)
 
-Grafana 9 has a feature toggle `panelTitleSearch`. When enabled it tells Grafana to use a new search engine. Instead of using SQL queries new search uses a full-text index built in memory, and Grafana maintains this index actual upon changes in dashboards and folders. New index should provide a better search experience, and it can search through panel titles as well as dashboard titles.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index, and Grafana maintains this index actual upon changes in dashboards and folders. The new index should provide a better search experience, and it can search through panel titles as well as dashboard titles.
 
 ## Expanding the navigation bar
 
