@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -143,7 +142,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, backendplugin.ErrMethodNotImplemented
 		}
 
-		return nil, errutil.Wrap("Failed to query data", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
 	return backend.FromProto().QueryDataResponse(protoResp)
@@ -161,7 +160,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 			return backendplugin.ErrMethodNotImplemented
 		}
 
-		return errutil.Wrap("Failed to call resource", err)
+		return fmt.Errorf("%v: %w", "Failed to call resource", err)
 	}
 
 	for {
@@ -175,7 +174,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 				return nil
 			}
 
-			return errutil.Wrap("failed to receive call resource response", err)
+			return fmt.Errorf("%v: %w", "failed to receive call resource response", err)
 		}
 
 		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {
@@ -217,7 +216,7 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 		if status.Code(err) == codes.Unimplemented {
 			return backendplugin.ErrMethodNotImplemented
 		}
-		return errutil.Wrap("Failed to call resource", err)
+		return fmt.Errorf("%v: %w", "Failed to call resource", err)
 	}
 
 	for {

@@ -42,10 +42,7 @@ func TestCSVFileScenario(t *testing.T) {
 				dr := &backend.DataResponse{
 					Frames: data.Frames{frame},
 				}
-				err = experimental.CheckGoldenDataResponse(
-					filepath.Join("testdata", name+".golden.txt"), dr, true,
-				)
-				require.NoError(t, err)
+				experimental.CheckGoldenJSONResponse(t, "testdata", name+".golden", dr, true)
 			})
 		}
 

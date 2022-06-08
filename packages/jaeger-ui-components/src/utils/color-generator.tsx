@@ -44,9 +44,10 @@ class ColorGenerator {
   _getColorIndex(key: string): number {
     let i = this.cache.get(key);
     if (i == null) {
-      i = this.currentIdx;
-      this.cache.set(key, this.currentIdx);
-      this.currentIdx = ++this.currentIdx % this.colorsHex.length;
+      // colors[4] is red (which we want to disallow as a span color because it looks like an error)
+      i = this.currentIdx !== 4 ? this.currentIdx : this.currentIdx + 1;
+      this.cache.set(key, i);
+      this.currentIdx = (i + 1) % this.colorsHex.length;
     }
     return i;
   }

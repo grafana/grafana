@@ -17,12 +17,10 @@ const setup = (propOverrides?: object) => {
       typeLogoUrl: '',
       access: 'direct',
       url: 'http://localhost:8086',
-      password: '',
       user: 'grafana',
       database: 'site',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
       jsonData: {
