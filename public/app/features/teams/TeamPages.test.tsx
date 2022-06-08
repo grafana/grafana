@@ -124,3 +124,25 @@ describe('Render', () => {
     expect(await screen.findByText('Team group sync')).toBeInTheDocument();
   });
 });
+
+describe('when feature toggle editorsCanAdmin is turned on', () => {
+  it('should render settings page if user is team admin', async () => {
+    setup({
+      team: getMockTeam(),
+      pageName: 'settings',
+      preferences: {
+        homeDashboardId: 1,
+        theme: 'Default',
+        timezone: 'Default',
+      },
+      editorsCanAdmin: true,
+      signedInUser: {
+        id: 1,
+        isGrafanaAdmin: false,
+        orgRole: OrgRole.Admin,
+      } as User,
+    });
+
+    expect(await screen.findByText('Team settings')).toBeInTheDocument();
+  });
+});
