@@ -1,33 +1,29 @@
 import React from 'react';
 
-import { PanelData, Registry, RegistryItemWithOptions } from '@grafana/data';
+import {
+  ConditionID,
+  ConditionInfo,
+  ConditionType,
+  FieldClickArgs,
+  FieldClickConditionOptions,
+  FieldMatcherID,
+  fieldMatchers,
+  Registry,
+} from '@grafana/data';
 import { Input } from '@grafana/ui';
 
-export interface CondtionInfo<TOptions = any> extends RegistryItemWithOptions {
-  evaluate: (options: TOptions) => (panelData: PanelData) => boolean;
-  editor: React.ComponentType<ConditionUIProps<TOptions>>;
-}
-
-interface FieldClickConditionOptions {
-  pattern: string;
-}
-
-interface ConditionUIProps<TOptions = any> {
-  options: TOptions;
-  onChange: (options: TOptions) => void;
-}
-
-export enum ConditionID {
-  FieldClick = 'field-click',
-}
-
-export const fieldClickCondition: CondtionInfo<FieldClickConditionOptions> = {
+export const fieldClickCondition: ConditionInfo<FieldClickConditionOptions, FieldClickArgs> = {
   id: ConditionID.FieldClick,
+  type: ConditionType.Field,
   name: 'field click',
   description: 'When a field is clicked',
   defaultOptions: {},
-  evaluate: (options: FieldClickConditionOptions) => (panelData: PanelData) => {
-    return true;
+  evaluate: (options: FieldClickConditionOptions) => (fieldClickArgs) => {
+    const regexFieldMatcher = fieldMatchers.get(FieldMatcherID.byRegexp);
+
+    const evaluateRegex = regexFieldMatcher.get(options.pattern);
+
+    return evaluateRegex(fieldClickArgs.field, fieldClickArgs.frame, fieldClickArgs.allFrames);
   },
   editor: ({ onChange, options }) => {
     return (
@@ -44,6 +40,6 @@ export const fieldClickCondition: CondtionInfo<FieldClickConditionOptions> = {
   },
 };
 
-export const conditionsRegistry = new Registry<CondtionInfo>();
+export const conditionsRegistry = new Registry<ConditionInfo>();
 
 export const getConditionItems = () => [fieldClickCondition];

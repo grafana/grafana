@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
+  ConditionType,
   CoreApp,
   DataConfigSource,
   DataFrame,
@@ -15,6 +16,7 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   DataTransformerConfig,
+  Field,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -29,6 +31,18 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { getNextAvailableId } from 'app/features/variables/editor/actions';
+import { setIdInEditor } from 'app/features/variables/editor/reducer';
+import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
+import { getLastKey, getNewVariableIndex, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { addVariable } from 'app/features/variables/state/sharedReducer';
+import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
+import { VariableModel } from 'app/features/variables/types';
+import { toStateKey, toVariablePayload } from 'app/features/variables/utils';
+import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
+import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
+import { store } from 'app/store/store';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 import { PanelModel } from '../../dashboard/state';
@@ -140,6 +154,51 @@ export class PanelQueryRunner {
           // Apply field defaults and overrides
           let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
+          let applyConditions = undefined;
+
+          if (data.request?.targets.some((target) => (target as ConditionalDataSourceQuery).conditions?.length)) {
+            const conditions = data.request.targets.map((target) =>
+              (target as ConditionalDataSourceQuery).conditions?.filter(
+                (condition) => conditionsRegistry.getIfExists(condition.id)?.type === ConditionType.Field
+              )
+            );
+
+            applyConditions = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+              for (let i = 0; i < conditions.length; i++) {
+                for (let j = 0; j < conditions[i]?.length; j++) {
+                  const fieldMatcher = conditionsRegistry
+                    .getIfExists(conditions[i][j].id)
+                    ?.evaluate(conditions[i][j].options);
+
+                  if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
+                    return () => {
+                      const state = store.getState();
+
+                      const key = getLastKey(state);
+
+                      const rootStateKey = toStateKey(key);
+                      const id = getNextAvailableId('adhoc', getVariablesByKey(rootStateKey, state));
+                      const identifier: VariableIdentifier = { type: 'adhoc', id };
+                      const global = false;
+                      const index = getNewVariableIndex(rootStateKey, state);
+                      const model: VariableModel = cloneDeep(variableAdapters.get('adhoc').initialState);
+                      model.id = field.name;
+                      model.name = field.name;
+                      model.rootStateKey = rootStateKey;
+                      store.dispatch(
+                        toKeyedAction(
+                          rootStateKey,
+                          addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))
+                        )
+                      );
+                      store.dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
+                    };
+                  }
+                }
+              }
+            };
+          }
+
           if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
             lastConfigRev = this.dataConfigSource.configRev!;
             processedData = {
@@ -148,6 +207,7 @@ export class PanelQueryRunner {
                 timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
                 ...fieldConfig!,
+                applyConditions,
               }),
             };
             isFirstPacket = false;

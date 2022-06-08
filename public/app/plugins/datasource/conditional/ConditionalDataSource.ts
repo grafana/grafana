@@ -3,6 +3,7 @@ import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 import {
+  ConditionID,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -11,8 +12,6 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-
-import { ConditionID } from './ConditionsRegistry';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 

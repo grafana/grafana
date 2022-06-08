@@ -20,6 +20,7 @@ import {
   InterpolateFunction,
   LinkModel,
   NumericRange,
+  QueryConditions,
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
@@ -199,7 +200,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field,
         field.state!.scopedVars,
         context.replaceVariables,
-        options.timeZone
+        options.timeZone,
+        options.applyConditions
       );
     }
 
@@ -346,16 +348,36 @@ export const getLinksSupplier =
     field: Field,
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
-    timeZone?: TimeZone
+    timeZone?: TimeZone,
+    applyConditions?: (field: Field, frame: DataFrame, allFrames: DataFrame[]) => (() => void) | void
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
-    if (!field.config.links || field.config.links.length === 0) {
-      return [];
+    const links: Array<LinkModel<Field>> = [];
+
+    if (applyConditions) {
+      const conditionalClickHandler = applyConditions(field, frame, []);
+
+      if (conditionalClickHandler) {
+        links.push({
+          href: '',
+          title: 'drilldown',
+          target: undefined,
+          onClick: (evt, origin) => {
+            conditionalClickHandler();
+          },
+          origin: field,
+        });
+      }
     }
+
+    if (!field.config.links || field.config.links.length === 0) {
+      return links;
+    }
+
     const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
     const { timeField } = getTimeField(frame);
 
-    return field.config.links.map((link: DataLink) => {
+    const dataLinks = field.config.links.map<LinkModel>((link: DataLink) => {
       const variablesQuery = locationUtil.getVariablesUrlParams();
       let dataFrameVars = {};
       let valueVars = {};
@@ -452,6 +474,8 @@ export const getLinksSupplier =
       };
       return info;
     });
+
+    return [...links, ...dataLinks];
   };
 
 /**
