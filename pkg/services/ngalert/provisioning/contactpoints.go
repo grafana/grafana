@@ -205,7 +205,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 	secretKeys, err := contactPoint.SecretKeys()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()

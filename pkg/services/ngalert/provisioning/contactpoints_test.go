@@ -79,6 +79,18 @@ func TestContactPointService(t *testing.T) {
 		require.ErrorIs(t, err, ErrValidation)
 	})
 
+	t.Run("update rejects contact points with no type", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Type = ""
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+
+		require.ErrorIs(t, err, ErrValidation)
+	})
+
 	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
