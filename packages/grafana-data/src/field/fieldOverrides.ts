@@ -20,7 +20,6 @@ import {
   InterpolateFunction,
   LinkModel,
   NumericRange,
-  QueryConditions,
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
@@ -349,7 +348,11 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    applyConditions?: (field: Field, frame: DataFrame, allFrames: DataFrame[]) => (() => void) | void
+    applyConditions?: (
+      field: Field,
+      frame: DataFrame,
+      allFrames: DataFrame[]
+    ) => ((evt: any, origin: any) => void) | void
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     const links: Array<LinkModel<Field>> = [];
@@ -363,7 +366,7 @@ export const getLinksSupplier =
           title: 'drilldown',
           target: undefined,
           onClick: (evt, origin) => {
-            conditionalClickHandler();
+            conditionalClickHandler(evt, origin);
           },
           origin: field,
         });

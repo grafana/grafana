@@ -32,13 +32,11 @@ import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
-import { getNextAvailableId } from 'app/features/variables/editor/actions';
-import { setIdInEditor } from 'app/features/variables/editor/reducer';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
-import { getLastKey, getNewVariableIndex, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { getLastKey, getNewVariableIndex } from 'app/features/variables/state/selectors';
 import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
-import { VariableModel } from 'app/features/variables/types';
+import { ConstantVariableModel } from 'app/features/variables/types';
 import { toStateKey, toVariablePayload } from 'app/features/variables/utils';
 import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
@@ -171,31 +169,33 @@ export class PanelQueryRunner {
                     ?.evaluate(conditions[i][j].options);
 
                   if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
-                    return () => {
+                    return (evt: any, origin: any) => {
                       const state = store.getState();
 
                       const key = getLastKey(state);
 
                       const rootStateKey = toStateKey(key);
-                      const id = getNextAvailableId('adhoc', getVariablesByKey(rootStateKey, state));
-                      const identifier: VariableIdentifier = { type: 'adhoc', id };
+                      const id = '__drilldown-' + field.name;
+                      const identifier: VariableIdentifier = { type: 'constant', id };
                       const global = false;
                       const index = getNewVariableIndex(rootStateKey, state);
-                      const model: VariableModel = cloneDeep(variableAdapters.get('adhoc').initialState);
-                      model.id = field.name;
+                      const model: ConstantVariableModel = cloneDeep(variableAdapters.get('constant').initialState);
+                      model.id = id;
                       model.name = field.name;
                       model.rootStateKey = rootStateKey;
+                      model.query = origin.field.values.get(origin.rowIndex);
                       store.dispatch(
                         toKeyedAction(
                           rootStateKey,
                           addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))
                         )
                       );
-                      store.dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
                     };
                   }
                 }
               }
+
+              return;
             };
           }
 

@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
+  ConditionID,
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
@@ -12,12 +13,12 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Button, ValuePicker } from '@grafana/ui';
+import { ValuePicker } from '@grafana/ui';
 import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
-import { ConditionID, conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
+import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
