@@ -117,7 +117,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 				} else if len(image.Path) != 0 {
 					_, err := os.Stat(image.Path)
 					if err == nil {
-						data.Alerts[index].EmbeddedImage = image.Path
+						data.Alerts[index].EmbeddedImage = path.Base(image.Path)
 						embeddedFiles = append(embeddedFiles, image.Path)
 					} else {
 						en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
