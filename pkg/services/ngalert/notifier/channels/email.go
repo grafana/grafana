@@ -111,7 +111,6 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	var embeddedFiles []string
 	_ = withStoredImages(ctx, en.log, en.images,
 		func(index int, image *ngmodels.Image) error {
-			en.log.Error("IMAGE", "index", index)
 			if image != nil {
 				if len(image.URL) != 0 {
 					data.Alerts[index].ImageURL = image.URL
