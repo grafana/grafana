@@ -28,7 +28,10 @@ var ErrInvalidFileType = errors.New("invalid file type")
 var ErrFileAlreadyExists = errors.New("file exists")
 
 const RootPublicStatic = "public-static"
+const RootUpload = "upload"
+
 const MAX_UPLOAD_SIZE = 1024 * 1024 // 1MB
+
 type StorageService interface {
 	registry.BackgroundService
 
@@ -67,7 +70,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 			config := &StorageSQLConfig{orgId: orgId}
-			storages = append(storages, newSQLStorage("upload", "Local file upload", config, sql).setBuiltin(true))
+			storages = append(storages, newSQLStorage(RootUpload, "Local file upload", config, sql).setBuiltin(true))
 		}
 		return storages
 	}
@@ -133,12 +136,12 @@ type UploadRequest struct {
 }
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req UploadRequest) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), "upload")
+	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
 	if upload == nil {
 		return ErrUploadFeatureDisabled
 	}
 
-	if !strings.HasPrefix(req.Path, "upload/") {
+	if !strings.HasPrefix(req.Path, RootUpload+"/") {
 		return ErrUnsupportedFolder
 	}
 
@@ -153,7 +156,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 
 	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
 
-	storagePath := strings.TrimPrefix(req.Path, "upload")
+	storagePath := strings.TrimPrefix(req.Path, RootUpload)
 	if !req.OverwriteExistingFile {
 		file, err := upload.Get(ctx, storagePath)
 		if err != nil {
@@ -192,7 +195,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 }
 
 func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), "upload")
+	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
 	if upload == nil {
 		return fmt.Errorf("upload feature is not enabled")
 	}

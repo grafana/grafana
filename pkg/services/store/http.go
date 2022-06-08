@@ -96,7 +96,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return response.Error(500, "Internal Server Error", err)
 	}
 
-	path := "upload/" + fileHeader.Filename
+	path := RootUpload + "/" + fileHeader.Filename
 
 	mimeType := http.DetectContentType(data)
 
