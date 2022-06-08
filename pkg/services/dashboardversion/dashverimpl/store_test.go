@@ -54,7 +54,7 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 
 		_, err := dashVerStore.Get(context.Background(), &query)
 		require.Error(t, err)
-		assert.Equal(t, models.ErrDashboardVersionNotFound, err)
+		assert.Equal(t, dashver.ErrDashboardVersionNotFound, err)
 	})
 }
 
@@ -165,8 +165,8 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
@@ -227,8 +227,8 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *m
 	require.Nil(t, err)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
