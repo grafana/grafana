@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/manager"
+	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
@@ -85,6 +87,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
+	pluginRegistry.ProvideService,
+	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
+	manager.ProvideNoopExecutor(),
+	wire.Bind(new(plugins.ManagerExecutorRunner), new(*manager.NoopExecutor)),
 )
 
 var wireExtsSet = wire.NewSet(

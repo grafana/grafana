@@ -32,6 +32,7 @@ type PluginManager struct {
 	pluginLoader    loader.Service
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
+	executor        plugins.ManagerExecutor
 	log             log.Logger
 }
 
@@ -40,24 +41,27 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	executor plugins.ManagerExecutor) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, pluginLoader, executor)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
+	executor plugins.ManagerExecutor) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
+		executor:        executor,
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
@@ -75,6 +79,11 @@ func (m *PluginManager) Init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
+	go func() {
+		if err := m.executor.Execute(ctx, m); err != nil {
+			m.log.Error("Plugin manager executor failure", "err", err)
+		}
+	}()
 	<-ctx.Done()
 	m.shutdown(ctx)
 	return ctx.Err()

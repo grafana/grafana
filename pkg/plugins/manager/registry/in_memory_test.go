@@ -172,7 +172,7 @@ func TestInMemory_Plugins(t *testing.T) {
 		expected []*plugins.Plugin
 	}{
 		{
-			name: "Can retrieve a list of plugin",
+			name: "Can retrieve a list of plugins",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginID: {

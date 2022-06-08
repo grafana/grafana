@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -140,8 +139,6 @@ var wireBasicSet = wire.NewSet(
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
-	registry.ProvideService,
-	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
