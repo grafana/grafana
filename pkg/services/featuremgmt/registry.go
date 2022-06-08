@@ -198,11 +198,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
