@@ -1,7 +1,6 @@
 import { GraphiteQuery } from './types';
 
 type LegacyAnnotation = {
-  // have to handle this target attribute as post migration annotaion will also have a target that is an object
   target?: string;
   tags?: string;
 };
@@ -19,11 +18,16 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation): GraphiteQuery => {
 };
 
 export const prepareAnnotation = (json: any) => {
-  // annotation attributes are wither 'tags' or 'target'
-  // when migrating legacy annotations we cannot simply look for these
-  // because the post migration annotations will also have a target attribute
-  // so, we check that target is a string or the attribute 'tags'
-  const isAnnotation = typeof json.target === 'string' || json.target instanceof String || json.tags;
-  json.target = isAnnotation ? migrateLegacyAnnotation(json) : json.target;
+  // annotation attributes are either 'tags' or 'target'(a graphite query string)
+  // because the new annotations will also have a target attribute, {}
+  // we need to handle the ambiguous 'target' when migrating legacy annotations
+  // so, to migrate legacy annotations
+  // we check that target is a string
+  // or
+  // there is a tags attringbute with no target
+  const targetAnnotation = typeof json.target === 'string' || json.target instanceof String;
+  const tagsAnnotation = json.tags && !json.target;
+
+  json.target = targetAnnotation || tagsAnnotation ? migrateLegacyAnnotation(json) : json.target;
   return json;
 };
