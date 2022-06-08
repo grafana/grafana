@@ -207,7 +207,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "schedule_rule_evaluations_missed_total",
 				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
 			},
-			[]string{"org", "rule_name"},
+			[]string{"org", "name"},
 		),
 	}
 }
