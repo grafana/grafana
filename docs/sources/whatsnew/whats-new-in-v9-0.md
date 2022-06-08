@@ -226,6 +226,7 @@ We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-
 - We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods) [PR #47493](https://github.com/grafana/grafana/pull/47493)
 - We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead [PR #49945](https://github.com/grafana/grafana/pull/49945)
 - We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use `/api/ds/query` instead [PR #49916](https://github.com/grafana/grafana/pull/49916)
+- We have removed the deprecated `update` method from `LocationSrv`. Use `partial`, `push`, or `replace` instead [PR #50294](https://github.com/grafana/grafana/pull/50294)
 
 You can find the complete list of breaking changes in the links below. Please check them out for more details and see if there is anything affecting your plugin
 
