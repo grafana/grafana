@@ -15,14 +15,12 @@ import { getMockTeam } from './__mocks__/teamMocks';
 jest.mock('app/core/components/Select/UserPicker', () => {
   return { UserPicker: () => null };
 });
-// jest.mock('app/core/components/SharedPreferences/SharedPreferences', () => {
-//   return { SharedPreferences: () => null };
-// });
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     accessControlEnabled: () => false,
     hasPermissionInMetadata: () => false,
-    hasAccessInMetadata: () => false,
+    hasAccessInMetadata: () => true,
     user: {},
   },
 }));
@@ -45,7 +43,19 @@ jest.mock('@grafana/runtime', () => ({
     },
     appSubUrl: '',
   },
+  featureEnabled: () => true,
 }));
+
+// Mock connected child components instead of rendering them
+jest.mock('./TeamSettings', () => {
+  //eslint-disable-next-line
+  return () => <div>Team settings</div>;
+});
+
+jest.mock('./TeamGroupSync', () => {
+  //eslint-disable-next-line
+  return () => <div>Team group sync</div>;
+});
 
 const setup = (propOverrides?: object) => {
   const store = configureStore();
@@ -102,62 +112,15 @@ describe('Render', () => {
       },
     });
 
-    screen.debug();
     expect(await screen.findByText('Team settings')).toBeInTheDocument();
   });
-});
 
-//
-//
-//
-//   it('should render group sync page', () => {
-//     const { wrapper } = setup({
-//       team: getMockTeam(),
-//       pageName: 'groupsync',
-//     });
-//
-//     expect(wrapper).toMatchSnapshot();
-//   });
-//
-//   describe('when feature toggle editorsCanAdmin is turned on', () => {
-//     it('should render settings page if user is team admin', () => {
-//       const { wrapper } = setup({
-//         team: getMockTeam(),
-//         pageName: 'settings',
-//         preferences: {
-//           homeDashboardId: 1,
-//           theme: 'Default',
-//           timezone: 'Default',
-//         },
-//         editorsCanAdmin: true,
-//         signedInUser: {
-//           id: 1,
-//           isGrafanaAdmin: false,
-//           orgRole: OrgRole.Admin,
-//         } as User,
-//       });
-//
-//       expect(wrapper).toMatchSnapshot();
-//     });
-//
-//     it('should not render settings page if user is team member', () => {
-//       const { wrapper } = setup({
-//         team: getMockTeam(),
-//         pageName: 'settings',
-//         preferences: {
-//           homeDashboardId: 1,
-//           theme: 'Default',
-//           timezone: 'Default',
-//         },
-//         editorsCanAdmin: true,
-//         signedInUser: {
-//           id: 1,
-//           isGrafanaAdmin: false,
-//           orgRole: OrgRole.Viewer,
-//         } as User,
-//       });
-//
-//       expect(wrapper).toMatchSnapshot();
-//     });
-//   });
-// });
+  it('should render group sync page', async () => {
+    setup({
+      team: getMockTeam(),
+      pageName: 'groupsync',
+    });
+
+    expect(await screen.findByText('Team group sync')).toBeInTheDocument();
+  });
+});
