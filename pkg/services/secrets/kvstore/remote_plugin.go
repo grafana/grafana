@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -13,7 +12,7 @@ import (
 // secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
 type secretsKVStorePlugin struct {
 	log            log.Logger
-	secretsPlugin  secretsmanagerplugin.SecretsManagerPlugin
+	secretsPlugin  smp.SecretsManagerPlugin
 	secretsService secrets.Service
 }
 
@@ -114,7 +113,7 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 	return err
 }
 
-func parseKeys(keys []*secretsmanagerplugin.Key) []Key {
+func parseKeys(keys []*smp.Key) []Key {
 	var newKeys []Key
 
 	for _, k := range keys {
