@@ -17,10 +17,15 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 	logger := log.New("secrets.kvstore")
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		logger.Info("secrets kvstore is using a remote plugin for secrets management")
-		return &secretsKVStorePlugin{
-			secretsPlugin:  remoteCheck.GetManager().SecretsManager().SecretsManager,
-			secretsService: secretsService,
-			log:            logger,
+		secretsPlugin, err := remoteCheck.GetPlugin()
+		if err != nil {
+			logger.Error("plugin client was nil, falling back to SQL implementation")
+		} else {
+			return &secretsKVStorePlugin{
+				secretsPlugin:  secretsPlugin,
+				secretsService: secretsService,
+				log:            logger,
+			}
 		}
 	}
 	logger.Info("secrets kvstore is using the default (SQL) implementation for secrets management")
