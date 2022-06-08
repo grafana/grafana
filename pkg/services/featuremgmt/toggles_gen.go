@@ -166,4 +166,8 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagCloudMonitoringExperimentalUI
+	// Use grafana-experimental UI in Cloud Monitoring
+	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
 )
