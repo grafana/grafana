@@ -95,12 +95,23 @@ type GetFoldersParams struct {
 }
 
 // swagger:parameters getFolderByUID updateFolder deleteFolder
-// swagger:parameters getFolderPermissions updateFolderPermissions
+// swagger:parameters getFolderPermissions
 type FolderUIDParam struct {
 	// in:path
 	// required:true
 	FolderUID string `json:"folder_uid"`
 }
+
+// swagger:parameters updateFolderPermissions
+type PostDashboardPermissionsParam struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardAclCommand
+}
+
 
 // swagger:parameters getFolderByID
 type FolderIDParam struct {
