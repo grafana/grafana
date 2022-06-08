@@ -187,7 +187,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_alert_rules_hash",
-				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick..",
+				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick.",
 			}),
 		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
