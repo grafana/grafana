@@ -89,8 +89,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginRegistry.ProvideService,
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
-	manager.ProvideNoopExecutor(),
-	wire.Bind(new(plugins.ManagerExecutorRunner), new(*manager.NoopExecutor)),
+	manager.ProvideNoopExecutor,
+	wire.Bind(new(plugins.ManagerExecutor), new(*manager.NoopExecutor)),
 )
 
 var wireExtsSet = wire.NewSet(
