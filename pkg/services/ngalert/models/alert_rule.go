@@ -125,6 +125,7 @@ type AlertRule struct {
 }
 
 type SchedulableAlertRule struct {
+	Title           string
 	UID             string `xorm:"uid"`
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
