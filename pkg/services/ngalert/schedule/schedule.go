@@ -452,7 +452,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 					if dropped != nil {
 						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 						orgID := fmt.Sprint(item.key.OrgID)
-						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.key.UID, item.ruleName).Inc()
+						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.ruleName).Inc()
 					}
 				})
 			}
