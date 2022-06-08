@@ -365,7 +365,7 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const numberNode = node.getChild('Number');
 
   if (numberNode) {
-    params.push(getString(expr, numberNode));
+    params.push(Number(getString(expr, numberNode)));
   }
 
   if (grouping) {
