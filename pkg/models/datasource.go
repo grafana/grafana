@@ -145,6 +145,18 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 }
 
+// DeleteDataSourceSecrets will delete the SecureJsonData on DataSource based on OrgID as well as the UID (preferred), ID, or Name.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
+type DeleteDataSourceSecretsCommand struct {
+	ID   int64
+	UID  string
+	Name string
+
+	OrgID int64
+
+	DeletedSecretsCount int
+}
+
 // ---------------------
 // QUERIES
 

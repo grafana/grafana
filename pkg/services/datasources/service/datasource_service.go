@@ -146,10 +146,13 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	// this is here for backwards compatibility
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-	if err != nil {
-		return err
+	if !s.features.IsEnabled("disableSecretsCompatibility") {
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
+		}
+	} else {
+		cmd.EncryptedSecureJsonData = make(map[string][]byte)
 	}
 
 	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
@@ -193,6 +196,10 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 		return err
 	}
 	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+}
+
+func (s *Service) DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error {
+	return s.SQLStore.DeleteDataSourceSecrets(ctx, cmd)
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
@@ -296,10 +303,17 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
 	}
 
-	if (!exist || err != nil) && len(ds.SecureJsonData) > 0 {
-		decryptedValues, err = s.MigrateSecrets(ctx, ds)
-		if err != nil {
-			return nil, err
+	if len(ds.SecureJsonData) > 0 {
+		if !exist || err != nil {
+			decryptedValues, err = s.MigrateSecrets(ctx, ds)
+			if err != nil {
+				return nil, err
+			}
+		} else if s.features.IsEnabled("disableSecretsCompatibility") {
+			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -588,10 +602,13 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 		}
 	}
 
-	// this is here for backwards compatibility
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-	if err != nil {
-		return err
+	if !s.features.IsEnabled("disableSecretsCompatibility") {
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
+		}
+	} else {
+		cmd.EncryptedSecureJsonData = make(map[string][]byte)
 	}
 
 	return nil

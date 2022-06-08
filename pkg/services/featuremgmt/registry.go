@@ -226,5 +226,11 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
 	}
 )
