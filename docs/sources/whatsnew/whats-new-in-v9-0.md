@@ -217,7 +217,7 @@ The rename by regex transformation has been improved to allow global patterns of
 
 ### Clock Panel
 
-We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` and encourage everyone to update as soon as possible. It will cause the Grafana to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard.
+We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it Compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
 
 ### Plugins: Most relevant breaking changes
 
