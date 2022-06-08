@@ -150,10 +150,6 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		return ErrInvalidFileType
 	}
 
-	if (len(req.Contents)) > MAX_UPLOAD_SIZE {
-		return ErrFileTooBig
-	}
-
 	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
 
 	storagePath := strings.TrimPrefix(req.Path, RootUpload)

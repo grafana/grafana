@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var errFileTooBig = response.Error(400, "Please limit file uploaded under 1MB", errors.New("file is too big"))
+
 // HTTPStorageService passes raw HTTP requests to a well typed storage service
 type HTTPStorageService interface {
 	List(c *models.ReqContext) response.Response
@@ -62,7 +64,6 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
 		return response.Error(400, "error in parsing form", err)
 	}
-	const MAX_UPLOAD_SIZE = 1024 * 1024
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		return response.Error(400, "Please limit file uploaded under 1MB", err)
@@ -78,7 +79,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 	fileHeader := files[0]
 	if fileHeader.Size > MAX_UPLOAD_SIZE {
-		return response.Error(400, "Please limit file uploaded under 1MB", errors.New("file is too big"))
+		return errFileTooBig
 	}
 
 	// restrict file size based on file size
@@ -94,6 +95,10 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		return response.Error(500, "Internal Server Error", err)
+	}
+
+	if (len(data)) > MAX_UPLOAD_SIZE {
+		return errFileTooBig
 	}
 
 	path := RootUpload + "/" + fileHeader.Filename
