@@ -158,7 +158,7 @@ We've added a migration from the old action names to the new names and have upda
 ### Breaking changes
 
 Drop support for deprecated setting ldap_sync_ttl under [auth.proxy]
-Only sync_ttl will work from now on Issue [#49902](https://github.com/grafana/grafana/issues/49902)
+Only sync_ttl  will work from now on Issue [#49902](https://github.com/grafana/grafana/issues/49902)
 
 Removes support for deprecated `heading` and `description` props. Moving forward, the `Card.Heading` and `Card.Description` components should be used. Issue [#49885](https://github.com/grafana/grafana/issues/49885)
 
@@ -166,15 +166,17 @@ Removes the deprecated `link` variant from the `Button` component.
 To migrate, replace any usage of `variant="link"` with `fill="text"`. Issue [#49843](https://github.com/grafana/grafana/issues/49843)
 
 Removes the deprecated `surface` prop from the `IconButton` component. This prop hasn't actually done anything for a while, so it should be safe to just remove any instances of its usage.
-Issue [#49715](https://github.com/grafana/grafana/issues/49715)
+ Issue [#49715](https://github.com/grafana/grafana/issues/49715)
 
 Removes the deprecated `TextDisplayOptions` export from `@grafana/data` in favor of `VizTextDisplayOptions` from `@grafana/schema`. To migrate, just replace usage of `TextDisplayOptions` with `VizTextDisplayOptions`. Issue [#49705](https://github.com/grafana/grafana/issues/49705)
 
 Removed support for the deprecated `getColorForTheme(color: string, theme: GrafanaTheme)` function in favor of the
 `theme.visualization.getColorByName(color: string)` method. The output of this method is identical to the removed function, so migration should just be a matter of rewriting calls of `getColorForTheme(myColor, myTheme)` to `myTheme.visualization.getColorByName(myColor)`.
-Issue [#49519](https://github.com/grafana/grafana/issues/49519)
+ Issue [#49519](https://github.com/grafana/grafana/issues/49519)
+
 
 In the Prometheus data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Prometheus. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#49475](https://github.com/grafana/grafana/issues/49475)
+
 
 Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official migration guide](https://webpack.js.org/migrate/5/) for assistance.
 
@@ -194,34 +196,11 @@ module.exports.getWebpackConfig = (config, options) => ({
     },
   },
 });
-````
+```
+Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks. Issue [#47826](https://github.com/grafana/grafana/issues/47826)
 
-Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
-
-**Which issue(s) this PR fixes**:
-
-<!--
-
-- Automatically closes linked issue when the Pull Request is merged.
-
-Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
-
--->
-
-Fixes #
-
-**Special notes for your reviewer**:
-
-It does not bump the following dependencies to the very latest due to the latest versions being ES modules:
-
-- ora
-- globby
-- execa
-- chalk
-  Issue [#47826](https://github.com/grafana/grafana/issues/47826)
 
 We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON.
-
 ```javascript
 // PREVIOUSLY: this was returning with an empty object {} - in case the response is an invalid JSON
 return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
@@ -231,17 +210,15 @@ return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
 ```
 
 **When is the response handled as JSON?**
-
 - If the response has the `"Content-Type: application/json"` header, OR
 - If the backendSrv options ([`BackendSrvRequest`](https://github.com/grafana/grafana/blob/e237ff20a996c7313632b2e28f38032012f0e340/packages/grafana-runtime/src/services/backendSrv.ts#L8)) specify the response as JSON: `{ responseType: 'json' }`
 
 **How does it work after this change?**
-
 - In case it is recognised as a JSON response and the response is empty, it returns an empty object `{}`
 - In case it is recognised as a JSON response and it has formatting errors, it throws an error
 
 **How to migrate?**
-Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods). Issue [#47493](https://github.com/grafana/grafana/issues/47493)
+Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods).  Issue [#47493](https://github.com/grafana/grafana/issues/47493)
 
 ### Plugin development fixes & changes
 
@@ -470,7 +447,7 @@ The change in behavior is that negative-valued series are now stacked downwards 
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
-The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.  
+The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.
  Issue [#45053](https://github.com/grafana/grafana/issues/45053)
 
 ### Deprecations
@@ -4909,3 +4886,4 @@ repo on July 1st. Make sure you have switched to the new repo by then. The new r
 - **Dashboard**: Panel property `minSpan` replaced by `maxPerRow`. Dashboard migration will automatically migrate all dashboard panels using the `minSpan` property to the new `maxPerRow` property [#12991](https://github.com/grafana/grafana/pull/12991)
 
 For older release notes, refer to the [CHANGELOG_ARCHIVE.md](https://github.com/grafana/grafana/blob/master/CHANGELOG_ARCHIVE.md)
+````
