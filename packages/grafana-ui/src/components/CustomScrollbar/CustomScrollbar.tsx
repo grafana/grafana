@@ -55,10 +55,6 @@ export const CustomScrollbar: FC<Props> = ({
 
   useEffect(() => {
     if (ref.current && scrollTop != null) {
-      if (ref.current.view.scrollTop === scrollTop) {
-        console.log('CustomScrollbar: update but  the same');
-      }
-
       ref.current.scrollTop(scrollTop);
     }
   }, [scrollTop]);
