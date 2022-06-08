@@ -20,7 +20,7 @@ The Alert list allows you to display your alerts. You can configure the list to 
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
-The following settings are available to customize your visualization.
+Customize your visualization using the following settings. 
 
 ## Options
 
