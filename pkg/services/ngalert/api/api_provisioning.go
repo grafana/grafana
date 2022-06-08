@@ -103,6 +103,9 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	// TODO: provenance is hardcoded for now, change it later to make it more flexible
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -112,6 +115,9 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimo
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	cp.UID = pathParam(c, uidPathParam)
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -246,6 +252,9 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext) respons
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -257,6 +266,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar apimodel
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar apimodels.AlertRule) response.Response {
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

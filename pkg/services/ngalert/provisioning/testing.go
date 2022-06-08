@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	mock "github.com/stretchr/testify/mock"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -143,4 +144,24 @@ func newNopTransactionManager() *nopTransactionManager {
 
 func (n *nopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
 	return work(ctx)
+}
+
+func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
+	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
+			q.Result = &ac
+		}).
+		Return(nil)
+	return m
+}
+
+func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_Expecter {
+	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	return m
 }
