@@ -209,7 +209,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 		for _, r := range rules {
 			var parentVersion int64
 			r.New.ID = r.Existing.ID
-			r.New.Version = r.Existing.Version // xorm will take care of increasing it
+			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
 			if err := st.validateAlertRule(r.New); err != nil {
 				return err
 			}
