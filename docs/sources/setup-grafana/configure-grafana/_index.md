@@ -1177,7 +1177,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../../alerting/" >}}).
+For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting/" >}}).
 
 ### enabled
 
@@ -1265,7 +1265,7 @@ For more information about the legacy dashboard alerting feature in Grafana, ref
 
 ### enabled
 
-Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
+Set to `false` to [enable Grafana Alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana Alerting, set to `true`.
 
 ### execute_alerts
 
