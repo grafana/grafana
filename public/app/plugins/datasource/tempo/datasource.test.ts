@@ -15,6 +15,7 @@ import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceS
 
 import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
+import mockServiceGraph from './mockServiceGraph.json';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -208,6 +209,24 @@ describe('Tempo data source', () => {
     );
     expect(response.error?.message).toBeDefined();
     expect(response.data.length).toBe(0);
+  });
+
+  it('should handle service graph upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockServiceGraph);
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
+    expect(response.data).toHaveLength(2);
+    const nodesFrame = response.data[0];
+    expect(nodesFrame.name).toBe('Nodes');
+    expect(nodesFrame.meta.preferredVisualisationType).toBe('nodeGraph');
+
+    const edgesFrame = response.data[1];
+    expect(edgesFrame.name).toBe('Edges');
+    expect(edgesFrame.meta.preferredVisualisationType).toBe('nodeGraph');
   });
 
   it('should build search query correctly', () => {

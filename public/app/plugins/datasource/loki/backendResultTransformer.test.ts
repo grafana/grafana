@@ -28,20 +28,20 @@ const inputFrame: DataFrame = {
   },
   fields: [
     {
-      name: 'time',
+      name: 'Time',
       type: FieldType.time,
       config: {},
       values: new ArrayVector([1645030244810, 1645030247027]),
     },
     {
-      name: 'value',
+      name: 'Line',
       type: FieldType.string,
       config: {},
       values: new ArrayVector(['line1', 'line2']),
     },
     {
       name: 'labels',
-      type: FieldType.string,
+      type: FieldType.other,
       config: {},
       values: new ArrayVector([
         { level: 'info', code: '41🌙' },
