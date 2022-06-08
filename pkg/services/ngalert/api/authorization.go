@@ -186,7 +186,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
-		return middleware.ReqSignedIn
+		return middleware.ReqOrgAdmin
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
 		http.MethodPost + "/api/v1/provisioning/contact-points",
@@ -201,7 +201,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		return middleware.ReqEditorRole
+		return middleware.ReqOrgAdmin
 	}
 
 	if eval != nil {

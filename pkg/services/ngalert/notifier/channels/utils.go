@@ -79,7 +79,7 @@ func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, i
 		}
 	} else if err != nil {
 		// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-		l.Warn("failed to retrieve image url from store", "error", err)
+		l.Warn("failed to retrieve image url from store", "err", err)
 	}
 
 	err = imageFunc(index, img)
@@ -208,7 +208,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -223,7 +223,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 		return nil, fmt.Errorf("failed to send HTTP request - status code %d", resp.StatusCode)
 	}
 
-	logger.Debug("Sending HTTP request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
+	logger.Debug("sending HTTP request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return respBody, nil
 }
 

@@ -3745,9 +3745,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/webpack-preprocessor@npm:5.11.1":
-  version: 5.11.1
-  resolution: "@cypress/webpack-preprocessor@npm:5.11.1"
+"@cypress/webpack-preprocessor@npm:5.12.0":
+  version: 5.12.0
+  resolution: "@cypress/webpack-preprocessor@npm:5.12.0"
   dependencies:
     bluebird: 3.7.1
     debug: ^4.3.2
@@ -3757,7 +3757,7 @@ __metadata:
     "@babel/preset-env": ^7.0.0
     babel-loader: ^8.0.2
     webpack: ^4 || ^5
-  checksum: 48f0c083b491db88920f3bb05089d2de5f079f3eb33b579d77ce60a804ae9e02eb9170d677f4632eabb1abb48dad50978ca918ea537d68b27733d96b9765b9a6
+  checksum: 3fa209655412369eb5bf0e8e0eaf25c89f0dfc6937d9aa4c51aa351449cf3d56b1834908dc81e507eb3d6508fee8534769b576f46f26034220a9f3f82ed7b3f8
   languageName: node
   linkType: hard
 
@@ -4391,7 +4391,7 @@ __metadata:
   dependencies:
     "@babel/core": 7.18.2
     "@babel/preset-env": 7.18.2
-    "@cypress/webpack-preprocessor": 5.11.1
+    "@cypress/webpack-preprocessor": 5.12.0
     "@grafana/e2e-selectors": 9.0.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
@@ -6596,11 +6596,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor@npm:7.24.1":
-  version: 7.24.1
-  resolution: "@microsoft/api-extractor@npm:7.24.1"
+"@microsoft/api-extractor@npm:7.25.0":
+  version: 7.25.0
+  resolution: "@microsoft/api-extractor@npm:7.25.0"
   dependencies:
-    "@microsoft/api-extractor-model": 7.17.3
+    "@microsoft/api-extractor-model": 7.18.0
     "@microsoft/tsdoc": 0.14.1
     "@microsoft/tsdoc-config": ~0.16.1
     "@rushstack/node-core-library": 3.45.5
@@ -6614,7 +6614,7 @@ __metadata:
     typescript: ~4.6.3
   bin:
     api-extractor: bin/api-extractor
-  checksum: b615783f6248c0d95931c1a0272860358a9618b9a1bff7959e7c5a242799eec7efc2b87db460bf2a3ae967da793dd457ac90570b60810fe9f094ca84b0deabe3
+  checksum: 3b57304c6dfec8cb42095c1bd7813ecdaf19042a3f435a7931e55449a38a6aa619b238bafe53ee686b745393d3a41f3dc55aef10c91695fcbe1a109c437fb144
   languageName: node
   linkType: hard
 
@@ -20605,7 +20605,7 @@ __metadata:
     "@lingui/core": 3.13.3
     "@lingui/macro": 3.13.3
     "@lingui/react": 3.13.3
-    "@microsoft/api-extractor": 7.24.1
+    "@microsoft/api-extractor": 7.25.0
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.2.0
