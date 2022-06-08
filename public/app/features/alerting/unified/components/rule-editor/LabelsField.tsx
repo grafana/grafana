@@ -98,7 +98,7 @@ const LabelsField: FC<Props> = ({ className }) => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing.xl};
     `,
     flexColumn: css`
       display: flex;
