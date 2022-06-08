@@ -7,17 +7,15 @@ import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 import { SqlDatasource } from '../sql/datasource/SqlDatasource';
 import { DB, ResponseParser, SQLOptions, SQLQuery, TableSchema, ValidationResults } from '../sql/types';
 
+import MySqlResponseParser from './MySqlResponseParser';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
-import MySqlResponseParser from './response_parser';
 
 export class MySqlDatasource extends SqlDatasource {
-  // queryModel: MySQLQueryModel;
-  // metaBuilder: MysqlMetaQuery;
+  responseParser: MySqlResponseParser;
 
   constructor(instanceSettings: DataSourceInstanceSettings<SQLOptions>) {
     super(instanceSettings);
-    // this.queryModel = new MySQLQueryModel(this.target, templateSrv, this.panel.scopedVars);
-    // this.metaBuilder = new MysqlMetaQuery(this.target, this.queryModel);
+    this.responseParser = new MySqlResponseParser();
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
@@ -25,7 +23,7 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   getResponseParser(): ResponseParser {
-    return new MySqlResponseParser();
+    return this.responseParser;
   }
 
   async fetchDatasets(): Promise<string[]> {
@@ -40,14 +38,14 @@ export class MySqlDatasource extends SqlDatasource {
 
   async fetchFields(query: SQLQuery) {
     const queryString = buildColumnQuery(this.getQueryModel(query), query.table!);
-    const fields = await this.metricFindQuery(queryString, {});
-    return fields.map((f) => f.text);
+    const frame = await this.runSql(queryString);
+    return frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1] }));
   }
 
   getDB(dsID?: string): DB {
     return {
       init: () => {
-        return Promise.resolve();
+        return Promise.resolve(true);
       },
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),

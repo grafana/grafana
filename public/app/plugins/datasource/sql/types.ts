@@ -108,11 +108,11 @@ export interface ResourceSelectorProps {
 }
 
 export interface DB {
-  init: (datasourceId?: string) => Promise<void>;
+  init: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
   tableSchema: (query: SQLQuery | string) => Promise<TableSchema>;
-  fields: (query: SQLQuery, order?: boolean) => Promise<string[]>;
+  fields: (query: SQLQuery, order?: boolean) => Promise<SelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => string;
   dispose: (dsID?: string) => void;

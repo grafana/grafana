@@ -13,18 +13,18 @@ interface UseSqlChange {
 
 export function useSqlChange({ db, query, onQueryChange }: UseSqlChange) {
   const datasourceId = db.dsID(); // TODO - cleanup
-  const { value: apiClient } = useAsync(async () => await db.init(datasourceId), []);
+  const { value: init } = useAsync(async () => await db.init(datasourceId), []);
 
   const onSqlChange = useCallback(
     (sql: SQLExpression) => {
-      if (!apiClient) {
+      if (!init) {
         return;
       }
       const newQuery: SQLQuery = { ...query, sql };
       newQuery.rawSql = toRawSql(newQuery);
       onQueryChange(newQuery);
     },
-    [apiClient, onQueryChange, query]
+    [init, onQueryChange, query]
   );
 
   return { onSqlChange };

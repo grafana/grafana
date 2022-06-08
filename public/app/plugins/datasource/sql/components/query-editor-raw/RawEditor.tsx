@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { SQLQuery, QueryEditorProps } from '../../types';
-import { getColumnInfoFromSchema } from '../../utils/useColumns';
 
 import { QueryEditorRaw } from './QueryEditorRaw';
 import { QueryToolbox } from './QueryToolbox';
@@ -27,37 +26,15 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>();
 
   const getColumns = useCallback(
-    // expects fully qualified table name: <project-id>.<dataset-id>.<table-id>
     async (q: SQLQuery) => {
       if (!db) {
         return [];
       }
-      let cols;
-      // const tablePath = t.split('.');
 
-      cols = await db.fields(q);
-
-      // move to DB impl of "fields" - big query would have this logic
-      // if (tablePath.length === 3) {
-      //   cols = await db.fields(t);
-      // } else {
-      //   if (!query.dataset) {
-      //     return [];
-      //   }
-      //   cols = await apiClient.getColumns({ ...query, table: t, project: tablePath[0] });
-      // }
-
+      const cols = await db.fields(q);
       if (cols.length > 0) {
-        const schema = await db.tableSchema(q);
-        // const schema = await apiClient.getTableSchema({
-        //   ...query,
-        //   dataset: tablePath[1],
-        //   table: tablePath[2],
-        //   project: tablePath[0],
-        // });
         return cols.map((c) => {
-          const cInfo = schema.schema ? getColumnInfoFromSchema(c, schema.schema) : null;
-          return { name: c, ...cInfo };
+          return { name: c.value, type: c.value, description: c.value };
         });
       } else {
         return [];

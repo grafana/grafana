@@ -154,7 +154,7 @@ export function showDatabases() {
 }
 
 export function buildColumnQuery(queryModel: MySQLQueryModel, table: string, type?: string, timeColumn?: string) {
-  let query = 'SELECT column_name FROM information_schema.columns WHERE ';
+  let query = 'SELECT column_name, data_type FROM information_schema.columns WHERE ';
   query += buildTableConstraint(queryModel, table);
 
   switch (type) {

@@ -5,6 +5,7 @@ import { catchError, map, mapTo } from 'rxjs/operators';
 import {
   AnnotationEvent,
   DataFrame,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -168,6 +169,11 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
+  async runSql(query: string) {
+    const frame = await this.runQuery({ rawSql: query, format: QueryFormat.Table }, {});
+    return new DataFrameView(frame);
+  }
+
   private runQuery(request: Partial<SQLQuery>, options?: any): Promise<DataFrame> {
     return new Promise((resolve) => {
       const req = {
@@ -238,7 +244,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const empty: string[] = [];
     return {
       init: () => {
-        return Promise.resolve();
+        return Promise.resolve(true);
       },
       datasets: () => {
         return Promise.resolve(empty);
@@ -252,7 +258,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       },
       fields: (query: SQLQuery) => {
         // handle "path" here: database.table
-        return Promise.resolve(empty);
+        return Promise.resolve([]);
       },
       validateQuery: (query: SQLQuery, range?: TimeRange) => {
         const results = {} as ValidationResults;
