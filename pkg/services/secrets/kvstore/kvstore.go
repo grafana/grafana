@@ -23,7 +23,7 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 			log:            logger,
 		}
 	}
-	logger.Info("secrets kvstore is using the default (SQL) implementation for secrets management")
+	logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
 	return &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
