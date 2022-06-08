@@ -13,6 +13,7 @@ import DimensionFields from '../MetricsQueryEditor/DimensionFields';
 import LegendFormatField from '../MetricsQueryEditor/LegendFormatField';
 import MetricNameField from '../MetricsQueryEditor/MetricNameField';
 import MetricNamespaceField from '../MetricsQueryEditor/MetricNamespaceField';
+import NewDimensionFields from '../MetricsQueryEditor/NewDimensionFields';
 import TimeGrainField from '../MetricsQueryEditor/TimeGrainField';
 import TopField from '../MetricsQueryEditor/TopField';
 import { setResource } from '../MetricsQueryEditor/setQueryValue';
@@ -105,7 +106,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           </EditorRow>
           <EditorRow>
             <EditorFieldGroup>
-              <DimensionFields
+              <NewDimensionFields
                 data={data}
                 query={query}
                 datasource={datasource}
@@ -125,10 +126,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
                 onQueryChange={onChange}
                 setError={setError}
               />
-            </EditorFieldGroup>
-          </EditorRow>
-          <EditorRow>
-            <EditorFieldGroup>
               <LegendFormatField
                 query={query}
                 datasource={datasource}

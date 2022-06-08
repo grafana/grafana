@@ -27,15 +27,11 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoSearch?: boolean;
-  tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
-  lokiBackendMode?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
-  disable_http_request_histogram?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;
@@ -44,7 +40,6 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  alertProvisioning?: boolean;
   export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;

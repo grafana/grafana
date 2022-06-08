@@ -10,6 +10,7 @@ const defaultAmRoute: FormAmRoute = {
   object_matchers: [],
   continue: false,
   receiver: '',
+  overrideGrouping: false,
   groupBy: [],
   overrideTimings: false,
   groupWaitValue: '',

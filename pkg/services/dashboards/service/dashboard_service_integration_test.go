@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -14,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -78,7 +74,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					res := callSaveWithResult(t, cmd, sc.sqlStore)
 					require.NotNil(t, res)
 
-					err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+					_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 						OrgId: otherOrgId,
 						Uid:   sc.savedDashInFolder.Uid,
 					})
@@ -318,7 +314,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -343,7 +339,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -368,7 +364,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
 						assert.True(t, res.IsFolder)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -390,7 +386,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 						assert.Greater(t, res.Id, int64(0))
 						assert.NotEmpty(t, res.Uid)
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -411,7 +407,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -465,7 +461,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    sc.savedDashInGeneralFolder.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -505,7 +501,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    sc.savedDashInFolder.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -579,7 +575,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    sc.savedDashInGeneralFolder.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -601,7 +597,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    sc.savedDashInFolder.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -625,7 +621,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
 						assert.Equal(t, "new-uid", res.Uid)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    sc.savedDashInFolder.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -665,7 +661,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
 						assert.Equal(t, sc.savedDashInFolder.Uid, res.Uid)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -689,7 +685,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInGeneralFolder.Id, res.Id)
 						assert.Equal(t, sc.savedDashInGeneralFolder.Uid, res.Uid)
 
-						err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						_, err := sc.dashboardStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
 							Id:    res.Id,
 							OrgId: cmd.OrgId,
 						})
@@ -797,7 +793,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
 	sqlStore                 *sqlstore.SQLStore
-	dashboardStore           dashboards.Store
+	dashboardStore           dashbboardservice.Store
 	savedFolder              *models.Dashboard
 	savedDashInFolder        *models.Dashboard
 	otherSavedFolder         *models.Dashboard
@@ -815,8 +811,15 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		service := ProvideDashboardService(
+			&setting.Cfg{}, dashboardStore, &dummyDashAlertExtractor{},
+			featuremgmt.WithFeatures(),
+			accesscontrolmock.NewMockedPermissionsService(),
+			accesscontrolmock.NewMockedPermissionsService(),
+			accesscontrolmock.New(),
+		)
+		guardian.InitLegacyGuardian(sqlStore, service)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
@@ -870,6 +873,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -887,6 +891,7 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
 	return err
@@ -920,7 +925,9 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -955,7 +962,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
-		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.New(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)

@@ -67,28 +67,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:         "tempoServiceGraph",
 			Description:  "show service",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "prometheusAzureOverrideAudience",
@@ -111,11 +93,6 @@ var (
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "publicDashboards",
@@ -156,11 +133,6 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{

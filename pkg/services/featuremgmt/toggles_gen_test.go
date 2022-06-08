@@ -18,12 +18,12 @@ import (
 
 func TestFeatureToggleFiles(t *testing.T) {
 	legacyNames := map[string]bool{
-		"service-accounts":               true,
-		"database_metrics":               true,
-		"live-config":                    true,
-		"live-pipeline":                  true,
-		"live-service-web-worker":        true,
-		"disable_http_request_histogram": true,
+		"httpclientprovider_azure_auth": true,
+		"service-accounts":              true,
+		"database_metrics":              true,
+		"live-config":                   true,
+		"live-pipeline":                 true,
+		"live-service-web-worker":       true,
 	}
 
 	t.Run("verify files", func(t *testing.T) {
