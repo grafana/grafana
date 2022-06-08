@@ -22,7 +22,6 @@ import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
 import { HelpModal } from '../core/components/help/HelpModal';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
-import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -143,13 +142,6 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
-    'expr',
-    'maxLines',
-    'instant',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',

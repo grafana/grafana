@@ -172,6 +172,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
     saveAs(blob, fileName);
   };
 
+  exportServiceGraph = () => {
+    const { data, panel } = this.props;
+    if (!data) {
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(data)], {
+      type: 'application/json',
+    });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
+    const fileName = `${displayTitle}-service-graph-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
+  };
+
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
@@ -232,6 +246,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const dataFrame = dataFrames[index];
     const hasLogs = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'logs');
     const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
+    const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
       <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -280,6 +295,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
               `}
             >
               Download traces
+            </Button>
+          )}
+          {hasServiceGraph && (
+            <Button
+              variant="primary"
+              onClick={this.exportServiceGraph}
+              className={css`
+                margin-bottom: 10px;
+                margin-left: 10px;
+              `}
+            >
+              Download service graph
             </Button>
           )}
         </div>
