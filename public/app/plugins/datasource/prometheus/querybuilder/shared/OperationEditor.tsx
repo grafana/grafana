@@ -27,6 +27,7 @@ export interface Props {
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  flash?: boolean;
   highlight?: boolean;
 }
 
@@ -39,11 +40,12 @@ export function OperationEditor({
   queryModeller,
   query,
   datasource,
+  flash,
   highlight,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
-  const shouldHighlight = useHighlight(highlight);
+  const shouldFlash = useFlash(flash);
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
@@ -125,11 +127,12 @@ export function OperationEditor({
     }
   }
 
+  console.log(operation, highlight);
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
         <div
-          className={cx(styles.card, shouldHighlight && styles.cardHighlight)}
+          className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
           ref={provided.innerRef}
           {...provided.draggableProps}
           data-testid={`operations.${index}.wrapper`}
@@ -162,7 +165,7 @@ export function OperationEditor({
  * out.
  * @param highlight
  */
-function useHighlight(highlight?: boolean) {
+function useFlash(highlight?: boolean) {
   const [keepHighlight, setKeepHighlight] = useState(true);
   useEffect(() => {
     let t: any;
@@ -228,7 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
       position: 'relative',
-      transition: 'all 1s ease-in 0s',
+      // transition: 'all 1s ease-in 0s',
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,

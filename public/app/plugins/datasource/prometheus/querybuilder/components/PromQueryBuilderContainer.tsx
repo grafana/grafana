@@ -19,6 +19,7 @@ export interface Props {
   onRunQuery: () => void;
   data?: PanelData;
   showRawQuery?: boolean;
+  explain: boolean;
 }
 
 export interface State {
@@ -30,7 +31,7 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, data, showRawQuery } = props;
+  const { query, onChange, onRunQuery, datasource, data, showRawQuery, explain } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
 
   // Only rebuild visual query if expr changes from outside
@@ -56,6 +57,7 @@ export function PromQueryBuilderContainer(props: Props) {
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
         data={data}
+        explain={explain}
       />
       {showRawQuery && <QueryPreview query={query.expr} />}
     </>

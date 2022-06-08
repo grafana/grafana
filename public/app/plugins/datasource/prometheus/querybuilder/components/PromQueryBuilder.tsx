@@ -1,15 +1,19 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
+import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';
 import { LabelFilters } from '../shared/LabelFilters';
+import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
+import { OperationListExplained } from '../shared/OperationListExplained';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
-import { QueryBuilderLabelFilter } from '../shared/types';
+import { RawQuery } from '../shared/RawQuery';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricSelect } from './MetricSelect';
@@ -23,9 +27,12 @@ export interface Props {
   onRunQuery: () => void;
   nested?: boolean;
   data?: PanelData;
+  explain: boolean;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data, explain }) => {
+  const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -86,6 +93,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return withTemplateVariableOptions(getMetrics(datasource, query));
   }, [datasource, query, withTemplateVariableOptions]);
 
+  const lang = { grammar: promqlGrammar, name: 'promql' };
   return (
     <>
       <EditorRow>
@@ -101,6 +109,14 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           }
         />
       </EditorRow>
+      {explain && (
+        <OperationExplainedBox
+          stepNumber={1}
+          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+        >
+          Fetch all series matching metric name and label filters.
+        </OperationExplainedBox>
+      )}
       <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
@@ -108,9 +124,24 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          highlightedOp={highlightedOp}
         />
         <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
+      {explain && (
+        <OperationListExplained<PromVisualQuery>
+          stepNumber={2}
+          queryModeller={promQueryModeller}
+          query={query}
+          lang={lang}
+          onMouseEnter={(op) => {
+            setHighlightedOp(op);
+          }}
+          onMouseLeave={() => {
+            setHighlightedOp(undefined);
+          }}
+        />
+      )}
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
       )}

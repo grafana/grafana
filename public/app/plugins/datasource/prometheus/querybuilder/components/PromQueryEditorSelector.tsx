@@ -26,6 +26,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const [explain, setExplain] = useState(false);
 
   const query = getQueryWithDefaults(props.query, app);
   const [rawQuery, setRawQuery] = useRawQuery();
@@ -61,6 +62,10 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
     setRawQuery(isEnabled);
+  };
+
+  const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    setExplain(event.currentTarget.checked);
   };
 
   const onChangeInternal = (query: PromQuery) => {
@@ -101,6 +106,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
               options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
           </>
         )}
         {editorMode === QueryEditorMode.Builder && (
@@ -122,7 +128,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} explain={explain} />}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}
@@ -131,6 +137,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             onRunQuery={props.onRunQuery}
             data={data}
             showRawQuery={rawQuery}
+            explain={explain}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
