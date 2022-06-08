@@ -1,11 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
+import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
 
 import { SelectBase } from './SelectBase';
-import { selectOptionInTest } from './test-utils';
 
 describe('SelectBase', () => {
   const onChangeHandler = () => jest.fn();
@@ -199,7 +199,7 @@ describe('SelectBase', () => {
       const selectEl = screen.getByLabelText('My select');
       expect(selectEl).toBeInTheDocument();
 
-      await selectOptionInTest(selectEl, 'Option 2');
+      await select(selectEl, 'Option 2', { container: document.body });
       expect(spy).toHaveBeenCalledWith(
         { label: 'Option 2', value: 2 },
         { action: 'select-option', name: undefined, option: undefined }
