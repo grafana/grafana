@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/prometheus/alertmanager/template"
@@ -113,13 +114,15 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			en.log.Error("IMAGE", "index", index)
 			if image != nil {
 				if len(image.URL) != 0 {
-					en.log.Error("ADDING IMAGE URL " + image.URL)
 					data.Alerts[index].ImageURL = image.URL
 				} else if len(image.Path) != 0 {
-					data.Alerts[index].EmbeddedImage = image.Path
-					filename := path.Base(image.Path)
-					en.log.Error("ADDING IMAGE PATH " + filename)
-					embeddedFiles = append(embeddedFiles, filename)
+					file, err := os.Stat(image.Path)
+					if err == nil {
+						data.Alerts[index].EmbeddedImage = image.Path
+						embeddedFiles = append(embeddedFiles, file.Name())
+					} else {
+						en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
+					}
 				}
 			}
 			return nil
