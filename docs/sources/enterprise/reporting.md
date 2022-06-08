@@ -170,7 +170,7 @@ You can add more than one dashboard to the report, which will be rendered in the
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
-You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case the email recipients can see the dashboard at a glance instead of having to open the PDF.
+You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
 ## Send report via the API
 
