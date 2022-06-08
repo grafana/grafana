@@ -34,8 +34,8 @@ When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to h
 
 Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
 
-1. Click on the Reports icon in the side navigation menu. 
-The Reports tab allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
+1. Click on the Reports icon in the side navigation menu.
+   The Reports tab allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
 2. Select report dashboard.
    - **Source dashboard -** Select the dashboard to generate the report from.
    - **Time range -** (optional) Use custom time range for the report. For more information, refer to [Report time range]({{< relref "#report-time-range" >}}).
@@ -45,7 +45,7 @@ The Reports tab allows you to view, create, and update your reports. The report 
    - If you selected the PDF format option:
      - Select an orientation for the report: **Portrait** or **Landscape**.
      - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-     - Click **Preview PDF**  to view a rendered PDF with the options you selected.
+     - Click **Preview PDF** to view a rendered PDF with the options you selected.
 4. Schedule report.
    - Enter scheduling information. Options vary depending on the frequency selected.
 5. Enter report information. All fields are required unless otherwise indicated.
@@ -170,8 +170,7 @@ You can add more than one dashboard to a report. Additional dashboards will be r
 ### Embed a dashboard as an image into a report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
-
-You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
+> You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
 ## Send a report via the API
 
