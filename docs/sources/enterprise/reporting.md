@@ -42,9 +42,10 @@ The Reports tab allows you to view, create, and update your reports. The report 
    - **Add another dashboard -** Add more than one dashboard to the report.
 3. Format report.
    - **Choose format options for the report -** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
-   - Select an orientation for the report: **Portrait** or **Landscape**.
-   - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-   - **Preview PDF** View a rendered PDF with the options you selected.
+   - If you selected the PDF format option:
+     - Select an orientation for the report: **Portrait** or **Landscape**.
+     - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
+     - Click **Preview PDF**  to view a rendered PDF with the options you selected.
 4. Schedule report.
    - Enter scheduling information. Options vary depending on the frequency selected.
 5. Enter report information. All fields are required unless otherwise indicated.
@@ -141,7 +142,7 @@ For reports that have an hourly or daily frequency, you can choose to send them 
 
 When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month.
 
-### Send test email
+### Send a test email
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
@@ -154,31 +155,31 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Pause report
+### Pause a report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
-### Add multiple dashboards to report
+### Add multiple dashboards to a report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
-You can add more than one dashboard to the report, which will be rendered in the same PDF file or image. It is currently not possible to add the same dashboard more than once to the report.
+You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. Note: you cannot add the same dashboard to a report twice.
 
-### Embed dashboard as an image into report
+### Embed a dashboard as an image into a report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
 
 You can send a report email with an image of the dashboard embedded in the email itself, instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
-## Send report via the API
+## Send a report via the API
 
 You can send reports programmatically with the [send report]({{< relref "../developers/http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../developers/http_api/" >}}).
 
 ## Rendering configuration
 
-When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
+When generating reports, each panel renders separately before being collected in a PDF. The per-panel rendering timeout and number of concurrently rendered panels can be configured.
 
 To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
 
@@ -207,7 +208,7 @@ font_bold = DejaVuSansCondensed-Bold.ttf
 font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
-## Reports settings
+## Report settings
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
