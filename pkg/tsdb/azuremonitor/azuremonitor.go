@@ -1,8 +1,10 @@
 package azuremonitor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -160,4 +162,133 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 		})
 	}
 	return mux
+}
+
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (types.DatasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
+	if err != nil {
+		return types.DatasourceInfo{}, err
+	}
+
+	instance, ok := i.(types.DatasourceInfo)
+	if !ok {
+		return types.DatasourceInfo{}, fmt.Errorf("failed to cast datsource info")
+	}
+
+	return instance, nil
+}
+
+func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) error {
+	// Azure Monitor health check
+	url := fmt.Sprintf("%v/subscriptions?api-version=2019-03-01", dsInfo.Routes["Azure Monitor"].URL)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = dsInfo.Services["Azure Monitor"].HTTPClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) error {
+	defaultWorkspaceId := dsInfo.Settings.LogAnalyticsDefaultWorkspace
+
+	if defaultWorkspaceId == "" {
+		workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, dsInfo.Settings.SubscriptionId)
+		workspacesReq, err := http.NewRequest(http.MethodGet, workspacesUrl, nil)
+		if err != nil {
+			return err
+		}
+		res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(workspacesReq)
+		if err != nil {
+			return err
+		}
+		var target struct {
+			Value []types.LogAnalyticsWorkspaceResponse
+		}
+		json.NewDecoder(res.Body).Decode(&target)
+		if len(target.Value) == 0 {
+			return errors.New("no default workspace found")
+		}
+		defaultWorkspaceId = target.Value[0].Properties.CustomerId
+	}
+
+	workspaceUrl := fmt.Sprintf("%v/v1/workspaces/%v/metadata", dsInfo.Routes["Azure Log Analytics"].URL, defaultWorkspaceId)
+	fmt.Println(defaultWorkspaceId, workspaceUrl)
+	workspaceReq, err := http.NewRequest(http.MethodGet, workspaceUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = dsInfo.Services["Azure Log Analytics"].HTTPClient.Do(workspaceReq)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkAzureMonitorGraphHealth(dsInfo types.DatasourceInfo) error {
+	// Azure Resource Graph health check
+	body, err := json.Marshal(map[string]interface{}{
+		"query":         "Resources | project id | limit 1",
+		"subscriptions": []string{dsInfo.Settings.SubscriptionId},
+	})
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("%v/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview", dsInfo.Routes["Azure Resource Graph"].URL)
+	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
+	request.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		return err
+	}
+
+	_, err = dsInfo.Services["Azure Resource Graph"].HTTPClient.Do(request)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkAzureMonitorMetricsHealth(dsInfo)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Error querying Azure Monitor endpoint: %v", err.Error()),
+		}, nil
+	}
+
+	err = checkAzureLogAnalyticsHealth(dsInfo)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Error querying Azure Log Analytics endpoint: %v", err.Error()),
+		}, nil
+	}
+
+	err = checkAzureMonitorGraphHealth(dsInfo)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Error querying Azure Resource Graph endpoint: %v", err.Error()),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Successfully queried all Azure Monitor services.",
+	}, nil
 }

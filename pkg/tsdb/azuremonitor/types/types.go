@@ -190,3 +190,22 @@ type MetricVisualization struct {
 type ServiceProxy interface {
 	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
 }
+
+type LogAnalyticsWorkspaceResponse struct {
+	Id         string `json:"id"`
+	Location   string `json:"location"`
+	Name       string `json:"name"`
+	Properties struct {
+		CreatedDate string `json:"createdDate"`
+		CustomerId  string `json:"customerId"`
+		Features    struct {
+			EnableLogAccessUsingOnlyResourcePermissions bool `json:"enableLogAccessUsingOnlyResourcePermissions"`
+			Legacy                                      int  `json:"legacy"`
+			SearchVersion                               int  `json:"searchVersion"`
+		} `json:"features"`
+	} `json:"properties"`
+	ProvisioningState               string `json:"provisioningState"`
+	PublicNetworkAccessForIngestion string `json:"publicNetworkAccessForIngestion"`
+	PublicNetworkAccessForQuery     string `json:"publicNetworkAccessForQuery"`
+	RetentionInDays                 int    `json:"retentionInDays"`
+}
