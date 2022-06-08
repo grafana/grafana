@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -27,6 +29,34 @@ func ProvideHTTPService(store StorageService) HTTPStorageService {
 	}
 }
 
+func uploadErrorToStatusCode(err error) int {
+	if errors.Is(err, ErrUploadFeatureDisabled) {
+		return 404
+	}
+
+	if errors.Is(err, ErrUnsupportedFolder) {
+		return 400
+	}
+
+	if errors.Is(err, ErrFileTooBig) {
+		return 400
+	}
+
+	if errors.Is(err, ErrInvalidPath) {
+		return 400
+	}
+
+	if errors.Is(err, ErrInvalidFileType) {
+		return 400
+	}
+
+	if errors.Is(err, ErrFileAlreadyExists) {
+		return 400
+	}
+
+	return 500
+}
+
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	// 32 MB is the default used by FormFile()
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
@@ -37,16 +67,54 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		return response.Error(400, "Please limit file uploaded under 1MB", err)
 	}
-	res, err := s.store.Upload(c.Req.Context(), c.SignedInUser, c.Req.MultipartForm)
 
+	files := c.Req.MultipartForm.File["file"]
+	if len(files) != 1 {
+		return response.JSON(400, map[string]interface{}{
+			"message": "please upload files one at a time",
+			"err":     true,
+		})
+	}
+
+	fileHeader := files[0]
+	if fileHeader.Size > MAX_UPLOAD_SIZE {
+		return response.Error(400, "Please limit file uploaded under 1MB", errors.New("file is too big"))
+	}
+
+	// restrict file size based on file size
+	// open each file to copy contents
+	file, err := fileHeader.Open()
+	if err != nil {
+		return response.Error(500, "Internal Server Error", err)
+	}
+	err = file.Close()
+	if err != nil {
+		return response.Error(500, "Internal Server Error", err)
+	}
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		return response.Error(500, "Internal Server Error", err)
 	}
 
-	return response.JSON(res.statusCode, map[string]interface{}{
-		"message": res.message,
-		"path":    res.path,
-		"file":    res.fileName,
+	path := "upload/" + fileHeader.Filename
+
+	mimeType := http.DetectContentType(data)
+
+	err = s.store.Upload(c.Req.Context(), c.SignedInUser, UploadRequest{
+		Contents:              data,
+		MimeType:              mimeType,
+		Path:                  path,
+		OverwriteExistingFile: true,
+	})
+
+	if err != nil {
+		return response.Error(uploadErrorToStatusCode(err), err.Error(), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"message": "Uploaded successfully",
+		"path":    path,
+		"file":    fileHeader.Filename,
 		"err":     true,
 	})
 }
