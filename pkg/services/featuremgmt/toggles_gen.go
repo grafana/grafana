@@ -55,10 +55,6 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
-	// FlagLokiBackendMode
-	// Loki datasource works as backend datasource
-	FlagLokiBackendMode = "lokiBackendMode"
-
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -110,10 +106,6 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagAlertProvisioning
-	// Provisioning-friendly routes for alerting
-	FlagAlertProvisioning = "alertProvisioning"
 
 	// FlagExport
 	// Export grafana instance (to git, etc)

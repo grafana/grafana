@@ -33,7 +33,7 @@ type Service interface {
 // Store defines methods to interact with secrets storage
 type Store interface {
 	GetDataKey(ctx context.Context, id string) (*DataKey, error)
-	GetCurrentDataKey(ctx context.Context, name string) (*DataKey, error)
+	GetCurrentDataKey(ctx context.Context, label string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
 	CreateDataKey(ctx context.Context, dataKey *DataKey) error
 	CreateDataKeyWithDBSession(ctx context.Context, dataKey *DataKey, sess *xorm.Session) error
@@ -61,7 +61,7 @@ func (id ProviderID) Kind() (string, error) {
 	return parts[0], nil
 }
 
-func KeyName(scope string, providerID ProviderID) string {
+func KeyLabel(scope string, providerID ProviderID) string {
 	return fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, providerID)
 }
 

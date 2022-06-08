@@ -1670,7 +1670,8 @@
     "/api/v1/provisioning/alert-rules": {
       "post": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Create a new alert rule.",
         "operationId": "RoutePostAlertRule",
@@ -1702,7 +1703,8 @@
     "/api/v1/provisioning/alert-rules/{UID}": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get a specific alert rule by UID.",
         "operationId": "RouteGetAlertRule",
@@ -1734,7 +1736,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Update an existing alert rule.",
         "operationId": "RoutePutAlertRule",
@@ -1770,7 +1773,8 @@
       },
       "delete": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Delete a specific alert rule by UID.",
         "operationId": "RouteDeleteAlertRule",
@@ -1798,7 +1802,8 @@
     "/api/v1/provisioning/contact-points": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
@@ -1822,7 +1827,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Create a contact point.",
         "operationId": "RoutePostContactpoints",
@@ -1857,7 +1863,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Update an existing contact point.",
         "operationId": "RoutePutContactpoint",
@@ -1897,7 +1904,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Delete a contact point.",
         "operationId": "RouteDeleteContactpoints",
@@ -1932,7 +1940,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Update the interval of a rule group.",
         "operationId": "RoutePutAlertRuleGroup",
@@ -1976,7 +1985,8 @@
     "/api/v1/provisioning/mute-timings": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get all the mute timings.",
         "operationId": "RouteGetMuteTimings",
@@ -2000,7 +2010,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Create a new mute timing.",
         "operationId": "RoutePostMuteTiming",
@@ -2032,7 +2043,8 @@
     "/api/v1/provisioning/mute-timings/{name}": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get a mute timing.",
         "operationId": "RouteGetMuteTiming",
@@ -2066,7 +2078,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Replace an existing mute timing.",
         "operationId": "RoutePutMuteTiming",
@@ -2104,7 +2117,8 @@
       },
       "delete": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Delete a mute timing.",
         "operationId": "RouteDeleteMuteTiming",
@@ -2131,7 +2145,8 @@
     "/api/v1/provisioning/policies": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get the notification policy tree.",
         "operationId": "RouteGetPolicyTree",
@@ -2155,7 +2170,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Sets the notification policy tree.",
         "operationId": "RoutePutPolicyTree",
@@ -2187,7 +2203,8 @@
     "/api/v1/provisioning/templates": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get all message templates.",
         "operationId": "RouteGetTemplates",
@@ -2210,7 +2227,8 @@
     "/api/v1/provisioning/templates/{name}": {
       "get": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Get a message template.",
         "operationId": "RouteGetTemplate",
@@ -2244,7 +2262,8 @@
           "application/json"
         ],
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Updates an existing template.",
         "operationId": "RoutePutTemplate",
@@ -2282,7 +2301,8 @@
       },
       "delete": {
         "tags": [
-          "provisioning"
+          "provisioning",
+          "stable"
         ],
         "summary": "Delete a template.",
         "operationId": "RouteDeleteTemplate",
@@ -3191,6 +3211,13 @@
             "$ref": "#/definitions/InhibitRule"
           },
           "x-go-name": "InhibitRules"
+        },
+        "muteTimeProvenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          },
+          "x-go-name": "MuteTimeProvenances"
         },
         "mute_time_intervals": {
           "type": "array",
@@ -5627,6 +5654,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5649,8 +5677,6 @@
           "$ref": "#/definitions/receiver"
         }
       },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
@@ -5779,7 +5805,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5839,19 +5864,19 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5904,14 +5929,17 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
+      "x-go-name": "GettableSilences",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {
@@ -6041,7 +6069,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6082,10 +6109,11 @@
           "x-go-name": "StartsAt"
         }
       },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -6097,6 +6125,8 @@
           "x-go-name": "Name"
         }
       },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {
