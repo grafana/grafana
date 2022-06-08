@@ -16,7 +16,7 @@ const (
 func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
 	logger := log.New("secrets.kvstore")
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
-		logger.Info("secrets kvstore is using a remote plugin for secrets management")
+		logger.Debug("secrets kvstore is using a remote plugin for secrets management")
 		secretsPlugin, err := remoteCheck.GetPlugin()
 		if err != nil {
 			logger.Error("plugin client was nil, falling back to SQL implementation")
@@ -28,7 +28,7 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 			}
 		}
 	}
-	logger.Info("secrets kvstore is using the default (SQL) implementation for secrets management")
+	logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
 	return &secretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
