@@ -7,47 +7,36 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 func TestForwardedOAuthIdentityMiddleware(t *testing.T) {
+	at := &oauth2.Token{
+		AccessToken: "access-token",
+	}
 	tcs := []struct {
 		desc                        string
-		headers                     map[string]string
+		token                       *oauth2.Token
 		expectedAuthorizationHeader string
 		expectedIDTokenHeader       string
 	}{
 		{
-			desc:                        "With nil headers should not populate Cookie headers",
-			headers:                     nil,
+			desc:                        "With nil token should not populate Cookie headers",
+			token:                       nil,
 			expectedAuthorizationHeader: "",
 			expectedIDTokenHeader:       "",
 		},
 		{
-			desc:                        "With empty headers should not populate headers",
-			headers:                     map[string]string{},
-			expectedAuthorizationHeader: "",
+			desc:                        "With access token set should populate Authorization header",
+			token:                       at,
+			expectedAuthorizationHeader: "Bearer access-token",
 			expectedIDTokenHeader:       "",
 		},
 		{
-			desc:                        "With Authorization header set should populate Authorization header",
-			headers:                     map[string]string{"Authorization": "bearer something"},
-			expectedAuthorizationHeader: "bearer something",
-			expectedIDTokenHeader:       "",
-		},
-		{
-			desc:                        "With X-ID-Token header set should populate X-ID-Token header",
-			headers:                     map[string]string{"X-ID-Token": "token payload"},
-			expectedAuthorizationHeader: "",
-			expectedIDTokenHeader:       "token payload",
-		},
-		{
-			desc: "With Authorization and X-ID-Token header set should populate Authorization and X-Id-Token header",
-			headers: map[string]string{
-				"Authorization": "bearer something",
-				"X-ID-Token":    "token payload",
-			},
-			expectedAuthorizationHeader: "bearer something",
-			expectedIDTokenHeader:       "token payload",
+			desc:                        "With Authorization and X-ID-Token header set should populate Authorization and X-Id-Token header",
+			token:                       at.WithExtra(map[string]interface{}{"id_token": "id-token"}),
+			expectedAuthorizationHeader: "Bearer access-token",
+			expectedIDTokenHeader:       "id-token",
 		},
 	}
 
@@ -55,7 +44,7 @@ func TestForwardedOAuthIdentityMiddleware(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			ctx := &testContext{}
 			finalRoundTripper := ctx.createRoundTripper()
-			mw := httpclientprovider.ForwardedOAuthIdentityMiddleware(tc.headers)
+			mw := httpclientprovider.ForwardedOAuthIdentityMiddleware(tc.token)
 			opts := httpclient.Options{}
 			rt := mw.CreateMiddleware(opts, finalRoundTripper)
 			require.NotNil(t, rt)

@@ -1,29 +1,28 @@
 package httpclientprovider
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/oauth2"
 )
 
-// ForwardedOAuthIdentityMiddleware middleware that sets Authorization/X-ID-Token
-// headers on the outgoing request, if forwarded OAuth identity configured/provided.
-func ForwardedOAuthIdentityMiddleware(headers map[string]string) httpclient.Middleware {
-	return httpclient.NamedMiddlewareFunc("forwarded-oauth-identity", func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		authzHeader, authzHeaderExists := headers["Authorization"]
-		idTokenHeader, idTokenHeaderExists := headers["X-ID-Token"]
+const ForwardedOAuthIdentityMiddlewareName = "forwarded-oauth-identity"
 
-		if !authzHeaderExists && !idTokenHeaderExists {
+// ForwardedOAuthIdentityMiddleware middleware that sets Authorization/X-ID-Token
+// headers on the outgoing request if an OAuth Token is provided
+func ForwardedOAuthIdentityMiddleware(token *oauth2.Token) httpclient.Middleware {
+	return httpclient.NamedMiddlewareFunc(ForwardedOAuthIdentityMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		if token == nil {
 			return next
 		}
-
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if authzHeaderExists {
-				req.Header.Set("Authorization", authzHeader)
-			}
+			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
-			if idTokenHeaderExists {
-				req.Header.Set("X-ID-Token", idTokenHeader)
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Header.Set("X-ID-Token", idToken)
 			}
 
 			return next.RoundTrip(req)
