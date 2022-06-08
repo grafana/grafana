@@ -1,6 +1,6 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { PostgresConfigCtrl } from './config_ctrl';
+import { PostgresConfigEditor } from './configuration/ConfigurationEditor';
 import { PostgresDatasource } from './datasource';
 import { PostgresQueryCtrl } from './query_ctrl';
 import { PostgresQuery } from './types';
@@ -29,5 +29,5 @@ class PostgresAnnotationsQueryCtrl {
 
 export const plugin = new DataSourcePlugin<PostgresDatasource, PostgresQuery>(PostgresDatasource)
   .setQueryCtrl(PostgresQueryCtrl)
-  .setConfigCtrl(PostgresConfigCtrl)
+  .setConfigEditor(PostgresConfigEditor)
   .setAnnotationQueryCtrl(PostgresAnnotationsQueryCtrl);
