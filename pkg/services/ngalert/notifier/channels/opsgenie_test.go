@@ -95,7 +95,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 				"details": {
 					"url": "http://localhost/alerting/list"
 				},
-				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsqT9W",
+				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsq...",
 				"source": "Grafana",
 				"tags": ["alertname:alert1", "lbl1:val1"]
 			}`,
