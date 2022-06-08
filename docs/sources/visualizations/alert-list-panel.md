@@ -16,10 +16,9 @@ weight: 100
 
 # Alert list
 
-The Alert list allows you to display your alerts. You can configure the list to show the current state or recent state changes. You can read more about alerts in [Alerting overview]({{< relref "../alerting/" >}}).
+The Alert list allows you to display your alerts. You can configure the list to show the current state or recent state changes. You can read more about alerts in [Grafana Alerting overview]({{< relref "../alerting/" >}}).
 
-**TODO: update this screenshot**
-{{< figure src="/static/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
+{{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
 The following settings are available to customize your visualization.
 
