@@ -54,7 +54,7 @@ The Reports tab allows you to view, create, and update your reports. The report 
    - **Message -** (optional) Message body in the email with the report.
    - **Include a dashboard link -** Include a link to the dashboard from within the report email.
    - **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
-6. Preview and Save the report.
+6. Preview and save the report.
 
 {{< figure src="/static/img/docs/enterprise/reports/select-dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 {{< figure src="/static/img/docs/enterprise/reports/format-report.png" max-width="500px" class="docs-image--no-shadow" >}}
