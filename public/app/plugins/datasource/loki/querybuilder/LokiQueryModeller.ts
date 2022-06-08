@@ -40,11 +40,6 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         name: 'Log query with filtering and parsing',
         // {} |= `` | logfmt | __error__=``
         operations: [
-          // Line contains is an issue, because if it is empty, we don't add
-          // it to expr and then it doesn't appear in model.
-          // Should we add there something?
-          // Should we always render it (only not if it is the only thing in query)
-          // Should we always render it?
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
@@ -99,11 +94,9 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.Unwrap, params: [] },
+          { id: LokiOperationId.Unwrap, params: [''] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
-          // Should we add here any example label
-          // then we need to rename it to __sum_by
           { id: LokiOperationId.Sum, params: [] },
         ],
       },
@@ -113,7 +106,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
-          { id: LokiOperationId.Sum, params: ['label'] },
+          { id: LokiOperationId.Sum, params: [] },
         ],
       },
       {
