@@ -296,42 +296,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  async testDatasource(): Promise<DatasourceValidationResult> {
-    const validationError = this.validateDatasource();
-    if (validationError) {
-      return Promise.resolve(validationError);
-    }
-
-    try {
-      const url = `${this.resourcePath}/subscriptions?api-version=2019-03-01`;
-
-      return await this.getResource(url).then<DatasourceValidationResult>((response: any) => {
-        return {
-          status: 'success',
-          message: 'Successfully queried the Azure Monitor service.',
-          title: 'Success',
-        };
-      });
-    } catch (e) {
-      let message = 'Azure Monitor: ';
-      message += e.statusText ? e.statusText + ': ' : '';
-
-      if (e.data && e.data.error && e.data.error.code) {
-        message += e.data.error.code + '. ' + e.data.error.message;
-      } else if (e.data && e.data.error) {
-        message += e.data.error;
-      } else if (e.data) {
-        message += e.data;
-      } else {
-        message += 'Cannot connect to Azure Monitor REST API.';
-      }
-      return {
-        status: 'error',
-        message: message,
-      };
-    }
-  }
-
   private validateDatasource(): DatasourceValidationResult | undefined {
     const authType = getAuthType(this.instanceSettings);
 

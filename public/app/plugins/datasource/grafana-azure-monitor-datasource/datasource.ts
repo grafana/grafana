@@ -1,4 +1,4 @@
-import { cloneDeep, upperFirst } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -16,6 +16,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import { getAuthType } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
@@ -38,11 +39,14 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   declare optionsKey: Record<AzureQueryType, string>;
 
+  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.instanceSettings = instanceSettings;
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
@@ -142,29 +146,39 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
   }
 
-  async testDatasource(): Promise<DatasourceValidationResult> {
-    const promises: Array<Promise<DatasourceValidationResult>> = [];
+  private isValidConfigField(field?: string): boolean {
+    return typeof field === 'string' && field.length > 0;
+  }
 
-    promises.push(this.azureMonitorDatasource.testDatasource());
-    promises.push(this.azureLogAnalyticsDatasource.testDatasource());
+  private validateDatasource(): DatasourceValidationResult | undefined {
+    const authType = getAuthType(this.instanceSettings);
 
-    return await Promise.all(promises).then((results) => {
-      let status: 'success' | 'error' = 'success';
-      let message = '';
-
-      for (let i = 0; i < results.length; i++) {
-        if (results[i].status !== 'success') {
-          status = results[i].status;
-        }
-        message += `${i + 1}. ${results[i].message} `;
+    if (authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
       }
 
-      return {
-        status: status,
-        message: message,
-        title: upperFirst(status),
-      };
-    });
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
+    }
+
+    return undefined;
+  }
+
+  async testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
+    if (validationError) {
+      return Promise.resolve(validationError);
+    }
+
+    return await this.azureMonitorDatasource.testDatasource();
   }
 
   /* Azure Monitor REST API methods */
