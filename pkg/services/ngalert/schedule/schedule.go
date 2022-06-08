@@ -394,6 +394,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
+				ruleName string
 				ruleInfo *alertRuleInfo
 				version  int64
 			}
@@ -427,7 +428,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -443,9 +444,15 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.eval(tick, item.version)
+					success, dropped := item.ruleInfo.eval(tick, item.version)
 					if !success {
 						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						return
+					}
+					if dropped != nil {
+						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						orgID := fmt.Sprint(item.key.OrgID)
+						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.ruleName).Inc()
 					}
 				})
 			}
