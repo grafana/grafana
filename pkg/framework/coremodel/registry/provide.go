@@ -13,17 +13,17 @@ import (
 //
 // This will use the default Grafana thema.Library, defined in pkg/cuectx, which
 // will avoid duplicate parsing of Thema CUE schemas. If you need control over the
-// thema.Library in use, use ProvideExplicitRegistryWithLib instead.
+// thema.Library in use, use ProvideStaticWithLib instead.
 func ProvideStatic() (*Static, error) {
 	return provideStatic(nil)
 }
 
-// ProvideExplicitRegistryWithLib is the same as ProvideStatic, but
+// ProvideStaticWithLib is the same as ProvideStatic, but
 // allows control over the thema.Library used to initialize the underlying
 // coremodels.
 //
 // Prefer ProvideStatic unless you absolutely need this control.
-func ProvideExplicitRegistryWithLib(lib thema.Library) (*Static, error) {
+func ProvideStaticWithLib(lib thema.Library) (*Static, error) {
 	return provideStatic(&lib)
 }
 
