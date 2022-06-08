@@ -309,7 +309,8 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 			if err != nil {
 				return nil, err
 			}
-		} else if s.features.IsEnabled("disableSecretsCompatibility") {
+		}
+		if s.features.IsEnabled("disableSecretsCompatibility") {
 			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId})
 			if err != nil {
 				return nil, err
