@@ -11,8 +11,8 @@ export interface GraphiteQuery extends DataQuery {
 
 export type GraphiteEventsQuery = {
   fromAnnotations?: boolean;
-  target: string;
-  tags: string;
+  target?: string;
+  tags?: string;
 };
 
 export interface GraphiteOptions extends DataSourceJsonData {

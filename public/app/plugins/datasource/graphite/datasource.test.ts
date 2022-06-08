@@ -2,7 +2,7 @@ import { isArray } from 'lodash';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, dateTime, getFrameDisplayName } from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -194,14 +194,22 @@ describe('graphiteDatasource', () => {
       errorSpy.mockRestore();
     });
 
-    const options = {
-      annotation: {
+    const target = {
+      queryType: 'events',
+      eventsQuery: {
+        fromAnnotations: true,
         tags: 'tag1',
+        target: '',
       },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-        raw: { from: 'now-24h', to: 'now' },
+      refId: 'Anno',
+    };
+
+    const range = {
+      from: '2022-06-06T07:03:03.109Z',
+      to: '2022-06-07T07:03:03.109Z',
+      raw: {
+        from: '2022-06-06T07:03:03.109Z',
+        to: '2022-06-07T07:03:03.109Z',
       },
     };
 
@@ -220,7 +228,7 @@ describe('graphiteDatasource', () => {
         fetchMock.mockImplementation((options: any) => {
           return of(createFetchResponse(response));
         });
-        await ctx.ds.annotationQuery(options).then((data: any) => {
+        await ctx.ds.annotationEvents(range, target).then((data: any) => {
           results = data;
         });
       });
@@ -249,7 +257,7 @@ describe('graphiteDatasource', () => {
           return of(createFetchResponse(response));
         });
 
-        await ctx.ds.annotationQuery(options).then((data: any) => {
+        await ctx.ds.annotationEvents(range, target).then((data: any) => {
           results = data;
         });
       });
@@ -266,7 +274,7 @@ describe('graphiteDatasource', () => {
       fetchMock.mockImplementation((options: any) => {
         return of(createFetchResponse('zzzzzzz'));
       });
-      await ctx.ds.annotationQuery(options).then((data: any) => {
+      await ctx.ds.annotationEvents(range, target).then((data: any) => {
         results = data;
       });
       expect(results).toEqual([]);

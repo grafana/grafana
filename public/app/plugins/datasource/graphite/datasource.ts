@@ -25,6 +25,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
+import { AnnotationEditor } from './components/AnnotationsEditor';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { prepareAnnotation } from './migrations';
@@ -95,9 +96,7 @@ export class GraphiteDatasource
     this.funcDefsPromise = null;
     this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     this.annotations = {
-      // new annoations editor, using query editor default
-
-      // use this to migrate annotations from angular to react
+      QueryEditor: AnnotationEditor,
       prepareAnnotation,
     };
   }
@@ -194,7 +193,7 @@ export class GraphiteDatasource
         // handle the events that are annotations
         streams.push(
           new Observable((subscriber) => {
-            this.getEvents2(options, target)
+            this.annotationEvents(options.range, target)
               .then((events) => {
                 return subscriber.next({ data: [toDataFrame(events)] });
               })
@@ -238,12 +237,11 @@ export class GraphiteDatasource
         if (options.panelId) {
           httpOptions.requestId = this.name + '.panelId.' + options.panelId;
         }
-        // can these queries be pushed into a stream? How would this work?
-        return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
+
+        streams.push(this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames)));
       }
     }
 
-    // Is there ever more than one annotation sent in a target?
     if (streams.length === 0) {
       return of({ data: [] });
     }
@@ -362,11 +360,11 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  private getEvents2(options: DataQueryRequest<GraphiteQuery>, target: GraphiteQuery) {
+  annotationEvents(range: any, target: GraphiteQuery) {
     if (target.eventsQuery?.tags) {
-      // Graphite event as annotation
+      // Graphite event/tag as annotation
       const tags = this.templateSrv.replace(target.eventsQuery?.tags);
-      return this.events({ range: options.range, tags: tags }).then((results: any) => {
+      return this.events({ range: range, tags: tags }).then((results: any) => {
         const list = [];
         if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
@@ -395,7 +393,7 @@ export class GraphiteDatasource
       // Graphite query as target as annotation
       const targetAnnotation = this.templateSrv.replace(target.eventsQuery?.target, {}, 'glob');
       const graphiteQuery = {
-        range: options.range,
+        range: range,
         targets: [{ target: targetAnnotation }],
         format: 'json',
         maxDataPoints: 100,
