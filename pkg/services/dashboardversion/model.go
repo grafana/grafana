@@ -60,8 +60,8 @@ type DashboardVersionDTO struct {
 // associated with the UserIds, overriding the field with the same name from
 // the DashboardVersion model.
 type DashboardVersionMeta struct {
-	Id            int64            `json:"id"`
-	DashboardId   int64            `json:"dashboardId"`
+	ID            int64            `json:"id"`
+	DashboardID   int64            `json:"dashboardId"`
 	DashboardUID  string           `json:"uid"`
 	ParentVersion int              `json:"parentVersion"`
 	RestoredFrom  int              `json:"restoredFrom"`
