@@ -1,12 +1,12 @@
 package kvstore
 
 import (
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 )
 
 type UseRemoteSecretsPluginCheck interface {
 	ShouldUseRemoteSecretsPlugin() bool
-	GetManager() *manager.PluginManager
+	GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error)
 }
 
 type OSSRemoteSecretsPluginCheck struct {
@@ -21,6 +21,6 @@ func (c *OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
 	return false
 }
 
-func (c *OSSRemoteSecretsPluginCheck) GetManager() *manager.PluginManager {
-	return nil
+func (c *OSSRemoteSecretsPluginCheck) GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error) {
+	return nil, nil
 }

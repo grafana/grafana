@@ -47,7 +47,7 @@ type RendererManager interface {
 	Renderer() *Plugin
 }
 
-type SecretsManagerManager interface {
+type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
 	SecretsManager() *Plugin
 }
