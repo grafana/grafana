@@ -20,6 +20,11 @@ var (
 	multipleDelimiters       = regexp.MustCompile(`/+`)
 )
 
+func IsPathValidationError(err error) bool {
+	return errors.Is(err, ErrRelativePath) || errors.Is(err, ErrNonCanonicalPath) || errors.Is(err, ErrPathEndsWithDelimiter) ||
+		errors.Is(err, ErrPathInvalid) || errors.Is(err, ErrPathTooLong)
+}
+
 func Join(parts ...string) string {
 	joinedPath := Delimiter + strings.Join(parts, Delimiter)
 
