@@ -125,20 +125,20 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 }
 
 func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
-	memCtx, memCancel := context.WithCancel(ctx)
+	debugCtx, debugCtxCancel := context.WithCancel(ctx)
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
-		go i.debugResourceUsage(memCtx, 200*time.Millisecond)
+		go i.debugResourceUsage(debugCtx, 200*time.Millisecond)
 	}
 
 	// Build on start for orgID 1 but keep lazy for others.
 	started := time.Now()
 	numDashboards, err := i.buildOrgIndex(ctx, 1)
 	if err != nil {
-		memCancel()
+		debugCtxCancel()
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
 	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", numDashboards)
-	memCancel()
+	debugCtxCancel()
 
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
 		// May help to estimate size of index when introducing changes. Though it's not a direct
@@ -148,11 +148,6 @@ func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
 		i.reportSizeOfIndexDiskBackup(1)
 	}
 	return nil
-}
-
-type Process struct {
-	pid int
-	cpu float64
 }
 
 // This is a naive implementation of process CPU getting (credits to
@@ -218,6 +213,7 @@ func (i *dashboardIndex) debugResourceUsage(ctx context.Context, frequency time.
 			i.logger.Error("CPU stats error", "error", err)
 			return
 		}
+		// Just collect CPU utilization to a slice and show in the of index build.
 		cpuUtilization = append(cpuUtilization, cpu)
 	}
 
