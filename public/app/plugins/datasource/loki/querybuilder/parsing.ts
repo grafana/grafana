@@ -368,8 +368,6 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
     params.push(getString(expr, numberNode));
   }
 
-  console.log(grouping);
-
   if (grouping) {
     const byModifier = grouping.getChild(`By`);
     if (byModifier && funcName) {
