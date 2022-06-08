@@ -28,7 +28,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   tempoServiceGraph?: boolean;
-  lokiBackendMode?: boolean;
   prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;

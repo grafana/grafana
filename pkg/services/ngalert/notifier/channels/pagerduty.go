@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -113,7 +114,7 @@ func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSende
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
+		pn.log.Debug("not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -127,7 +128,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),

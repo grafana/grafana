@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
@@ -15,7 +12,7 @@ import (
 )
 
 // GetPublicDashboard
-func TestGetPublicDashboard(t *testing.T) {
+func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -78,11 +75,10 @@ func TestGetPublicDashboard(t *testing.T) {
 		_, _, err = dashboardStore.GetPublicDashboard("abc1234")
 		require.Error(t, models.ErrDashboardNotFound, err)
 	})
-
 }
 
 // GetPublicDashboardConfig
-func TestGetPublicDashboardConfig(t *testing.T) {
+func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -131,7 +127,7 @@ func TestGetPublicDashboardConfig(t *testing.T) {
 }
 
 // SavePublicDashboardConfig
-func TestSavePublicDashboardConfig(t *testing.T) {
+func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -171,6 +167,7 @@ func TestSavePublicDashboardConfig(t *testing.T) {
 
 		// verify we didn't update all dashboards
 		pdc2, err := dashboardStore.GetPublicDashboardConfig(savedDashboard2.OrgId, savedDashboard2.Uid)
+		require.NoError(t, err)
 		assert.False(t, pdc2.IsPublic)
 	})
 

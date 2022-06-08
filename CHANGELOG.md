@@ -282,6 +282,23 @@ In the Loki data source, for consistency and performance reasons, we changed how
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
 
+<!-- 8.5.5 START -->
+
+# 8.5.5 (2022-06-06)
+
+### Features and enhancements
+
+- **Azure Monitor:** Include datasource ref when interpolating variables. [#49543](https://github.com/grafana/grafana/pull/49543), [@kevinwcyu](https://github.com/kevinwcyu)
+- **CloudWatch:** Add multi-value template variable support for log group names in logs query builder. [#49737](https://github.com/grafana/grafana/pull/49737), [@kevinwcyu](https://github.com/kevinwcyu)
+- **Cloudwatch:** Add template variable query function for listing log groups. [#50100](https://github.com/grafana/grafana/pull/50100), [@yaelleC](https://github.com/yaelleC)
+
+### Bug fixes
+
+- **Alerting:** Do not overwrite existing alert rule condition. [#49920](https://github.com/grafana/grafana/pull/49920), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Remove double quotes from matchers. [#50044](https://github.com/grafana/grafana/pull/50044), [@alexweav](https://github.com/alexweav)
+
+<!-- 8.5.5 END -->
+
 <!-- 8.5.4 START -->
 
 # 8.5.4 (2022-05-30)
@@ -1070,7 +1087,7 @@ If an alert should evaluate to `OK` when one or all conditions return `No Data` 
 - **Explore:** We fixed the problem where the Explore log panel disappears when an Elasticsearch logs query returns no results. [#40217](https://github.com/grafana/grafana/pull/40217), [@Elfo404](https://github.com/Elfo404)
 - **Graph:** You can now see annotation descriptions on hover. [#40581](https://github.com/grafana/grafana/pull/40581), [@axelavargas](https://github.com/axelavargas)
 - **Logs:** The system now uses the JSON parser only if the line is parsed to an object. [#40507](https://github.com/grafana/grafana/pull/40507), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Prometheus:** We fixed the issue where the system did not reuse TCP connections when querying from Grafana alerting. [#40349](https://github.com/grafana/grafana/pull/40349), [@kminehart](https://github.com/kminehart)
+- **Prometheus:** We fixed the issue where the system did not reuse TCP connections when querying from Grafana Alerting. [#40349](https://github.com/grafana/grafana/pull/40349), [@kminehart](https://github.com/kminehart)
 - **Prometheus:** We fixed the problem that resulted in an error when a user created a query with a $\_\_interval min step. [#40525](https://github.com/grafana/grafana/pull/40525), [@ivanahuckova](https://github.com/ivanahuckova)
 - **RowsToFields:** We fixed the issue where the system was not properly interpreting number values. [#40580](https://github.com/grafana/grafana/pull/40580), [@torkelo](https://github.com/torkelo)
 - **Scale:** We fixed how the system handles NaN percent when data min = data max. [#40622](https://github.com/grafana/grafana/pull/40622), [@torkelo](https://github.com/torkelo)

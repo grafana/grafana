@@ -73,13 +73,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:        "prometheus_azure_auth",
 			Description: "Experimental. Azure authentication for Prometheus datasource",
 			State:       FeatureStateBeta,

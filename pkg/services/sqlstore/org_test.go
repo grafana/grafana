@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -441,8 +442,8 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
