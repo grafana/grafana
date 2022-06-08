@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import SVG from 'react-inlinesvg';
 
@@ -19,17 +19,18 @@ type Props = {
   selection: string[];
   settings: TreeViewEditorProps;
   index: number;
+  onToggle: (node: FlatElement) => void;
 };
 
-export const TreeView = ({ node, selection, settings, index, parent }: Props) => {
-  const [isChildVisible, setIsChildVisible] = useState({});
-
+export const TreeView = ({ node, selection, settings, index, parent, onToggle }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const UID = node.node.UID;
 
+  const UID = node.node.UID;
   const hasChildren = node.node instanceof FrameState && node.node.elements.length > 0;
   const isSelected = Boolean(selection?.includes(node.node.getName()));
+
+  const nodeStyle = { paddingLeft: (node.depth - 1) * 20 };
 
   const getSelectedClass = (isSelected: boolean) => {
     return isSelected ? `${styles.treeNodeHeader} ${styles.selected}` : styles.treeNodeHeader;
@@ -54,18 +55,13 @@ export const TreeView = ({ node, selection, settings, index, parent }: Props) =>
     return path;
   };
 
-  let childStyle = { paddingLeft: (node.depth - 1) * 20 };
-
   const onSelectNode = (e: React.MouseEvent<HTMLDivElement>, element: ElementState | FrameState) => {
     e.stopPropagation();
     doSelect(settings, element);
   };
 
   const onToggleParent = () => {
-    setIsChildVisible((prevState) => ({
-      ...prevState,
-      [UID]: !prevState[UID],
-    }));
+    onToggle(node);
   };
 
   return (
@@ -74,13 +70,12 @@ export const TreeView = ({ node, selection, settings, index, parent }: Props) =>
         <div
           key={UID}
           className={getSelectedClass(isSelected)}
-          style={{ paddingLeft: !hasChildren ? '24px' : '' }}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <div onClick={onToggleParent} className={styles.flex} style={childStyle}>
-            {hasChildren && <div>{isChildVisible[UID] ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
+          <div onClick={onToggleParent} className={styles.flex} style={nodeStyle}>
+            {hasChildren && <div>{node.isOpen ? <Icon name="angle-down" /> : <Icon name="angle-right" />}</div>}
             <div onClick={(e) => onSelectNode(e, node.node)} className={styles.nodeIcon}>
               <SVG
                 src={getSvgPath()}

@@ -8,7 +8,7 @@ import { stylesFactory } from '@grafana/ui';
 import { FrameState } from '../../../../features/canvas/runtime/frame';
 import { RootElement } from '../../../../features/canvas/runtime/root';
 import { PanelOptions } from '../models.gen';
-import { FlatElement, getFlatElements, getParent, reorderElements } from '../tree';
+import { collapseParent, FlatElement, getFlatElements, getParent, reorderElements } from '../tree';
 import { LayerActionID } from '../types';
 
 import { TreeView } from './TreeView';
@@ -18,6 +18,7 @@ type Props = StandardEditorProps<any, TreeViewEditorProps, PanelOptions>;
 
 type State = {
   flatElements: FlatElement[];
+  refresh: boolean;
 };
 
 export class TreeNavigationEditor extends PureComponent<Props, State> {
@@ -25,6 +26,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     super(props);
     this.state = {
       flatElements: getFlatElements(props.item?.settings?.scene.root),
+      refresh: false,
     };
   }
 
@@ -43,7 +45,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
       src.node.parent = dest.node instanceof FrameState ? dest.node : dest.node.parent;
       src.depth = this.setDepth(dest);
 
-      // @TODO dest = frame
+      // @TODO issue with dest = frame
       if (dest.node.parent instanceof RootElement) {
         dest.node.parent.elements.push(src.node);
         src.node.updateData(dest.node.parent.scene.context);
@@ -72,7 +74,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     settings?.scene.root.reinitializeMoveable();
   };
 
-  // @TODO update depth for nested frames when we'll have the functionality
+  // @TODO update depth
   setDepth = (dest: FlatElement) => {
     let depth = 1;
     if (dest.node instanceof FrameState) {
@@ -82,6 +84,11 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     }
 
     return depth;
+  };
+
+  onToggle = (node: FlatElement) => {
+    collapseParent(node);
+    this.setState({ refresh: !this.state.refresh });
   };
 
   render() {
@@ -102,8 +109,21 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
               {this.state.flatElements.map((element, index) => {
                 const parent = getParent(element, this.state.flatElements);
                 return (
-                  <div className={styles.treeListContainer} key={element.node.UID}>
-                    <TreeView node={element} selection={selection} settings={settings} index={index} parent={parent} />
+                  <div
+                    className={styles.treeListContainer}
+                    key={element.node.UID}
+                    style={{
+                      display: parent && parent.node instanceof FrameState && !parent.isOpen ? 'none' : 'block',
+                    }}
+                  >
+                    <TreeView
+                      node={element}
+                      selection={selection}
+                      settings={settings}
+                      index={index}
+                      parent={parent}
+                      onToggle={this.onToggle}
+                    />
                   </div>
                 );
               })}
