@@ -46,28 +46,28 @@ export const CustomScrollbar: FC<Props> = ({
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
-  useEffect(() => {
-    if (ref.current) {
-      scrollRefCallback?.(ref.current.view);
-    }
-  }, [ref, scrollRefCallback]);
   const styles = useStyles2(getStyles);
 
-  const updateScroll = () => {
-    if (ref.current && !isNil(scrollTop)) {
-      ref.current.scrollTop(scrollTop);
+  useEffect(() => {
+    if (ref.current && scrollRefCallback) {
+      scrollRefCallback(ref.current.view);
     }
-  };
+  }, [ref, scrollRefCallback]);
 
   useEffect(() => {
-    updateScroll();
-  });
+    if (ref.current && scrollTop != null) {
+      if (ref.current.view.scrollTop === scrollTop) {
+        console.log('CustomScrollbar: update but  the same');
+      }
+
+      ref.current.scrollTop(scrollTop);
+    }
+  }, [scrollTop]);
 
   /**
    * Special logic for doing a update a few milliseconds after mount to check for
    * updated height due to dynamic content
    */
-
   useEffect(() => {
     if (!updateAfterMountMs) {
       return;
