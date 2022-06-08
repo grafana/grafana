@@ -1,6 +1,6 @@
 import { CircularDataFrame, FieldType } from '@grafana/data';
 
-import * as ResultTransformer from './result_transformer';
+import * as ResultTransformer from './live_streams_result_transformer';
 import { LokiTailResponse } from './types';
 
 describe('loki result transformer', () => {
