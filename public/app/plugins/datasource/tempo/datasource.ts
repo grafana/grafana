@@ -190,11 +190,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
-        const otelTraceData = JSON.parse(this.uploadedJson as string);
-        if (!otelTraceData.batches) {
-          subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
+        const jsonData = JSON.parse(this.uploadedJson as string);
+        const isTraceData = jsonData.batches;
+        const isServiceGraphData =
+          Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
+
+        if (isTraceData) {
+          subQueries.push(of(transformFromOTEL(jsonData.batches, this.nodeGraph?.enabled)));
+        } else if (isServiceGraphData) {
+          subQueries.push(of({ data: jsonData, state: LoadingState.Done }));
         } else {
-          subQueries.push(of(transformFromOTEL(otelTraceData.batches, this.nodeGraph?.enabled)));
+          subQueries.push(of({ error: { message: 'Unable to parse uploaded data.' }, data: [] }));
         }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
