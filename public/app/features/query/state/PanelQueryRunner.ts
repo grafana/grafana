@@ -235,12 +235,15 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
+      // If the Uid of the datasource has changed when retrieving it, it means it is
+      // a variable data source
+      const isVariableDatasource = datasource?.uid !== ds.uid;
 
       // Attach the data source to each query
       request.targets = request.targets.map((query) => {
         // When using a data source variable, the panel might have the incorrect datasource
         // stored, so when running the query make sure it is done with the correct one
-        if (!query.datasource || (query.datasource.uid !== ds.uid && !ds.meta.mixed)) {
+        if (!query.datasource || isVariableDatasource) {
           query.datasource = ds.getRef();
         }
         return query;
