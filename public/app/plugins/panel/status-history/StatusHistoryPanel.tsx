@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { Portal, UPlotConfigBuilder, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { HoverEvent, setupConfig } from '../barchart/config';
 import { TimelineChart } from '../state-timeline/TimelineChart';
@@ -37,13 +39,19 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [_dummy, setDummyToForceRender] = useState<boolean>(false);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setCoords(null);
+    setShouldDisplayCloseButton(false);
+  };
 
   const onUPlotClick = () => {
     isToolTipOpen.current = !isToolTipOpen.current;
 
     // Linking into useState required to re-render tooltip
-    setDummyToForceRender(isToolTipOpen.current);
+    setShouldDisplayCloseButton(isToolTipOpen.current);
   };
 
   const { frames, warn } = useMemo(
@@ -84,17 +92,29 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
         return null;
       }
 
+      const closeButtonSpacer = css`
+        margin-bottom: 15px;
+      `;
+
       return (
-        <StatusHistoryTooltip
-          data={data}
-          alignedData={alignedData}
-          seriesIdx={seriesIdx}
-          datapointIdx={datapointIdx}
-          timeZone={timeZone}
-        />
+        <>
+          {shouldDisplayCloseButton && (
+            <>
+              <CloseButton onClick={onCloseToolTip} />
+              <div className={closeButtonSpacer} />
+            </>
+          )}
+          <StatusHistoryTooltip
+            data={data}
+            alignedData={alignedData}
+            seriesIdx={seriesIdx}
+            datapointIdx={datapointIdx}
+            timeZone={timeZone}
+          />
+        </>
       );
     },
-    [timeZone, frames]
+    [timeZone, frames, shouldDisplayCloseButton]
   );
 
   if (!frames || warn) {
