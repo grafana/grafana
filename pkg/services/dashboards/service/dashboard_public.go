@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -26,7 +25,10 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// FIXME maybe insert logic to substitute pdc.TimeSettings into d
+	// Replace dashboard time range with pubdash time range
+	var pdcTimeSettings map[string]interface{}
+	json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
+	d.Data.Set("time", pdcTimeSettings)
 
 	return d, nil
 }
