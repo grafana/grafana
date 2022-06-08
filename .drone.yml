@@ -100,17 +100,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - ./bin/grabpl verify-drone
@@ -208,17 +204,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -273,35 +265,6 @@ steps:
   environment: null
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
@@ -808,17 +771,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - ./bin/grabpl verify-drone
@@ -906,17 +865,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -998,35 +953,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
@@ -1609,17 +1535,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -1662,35 +1584,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss  --sign ${DRONE_TAG}
   depends_on:
@@ -1939,17 +1832,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -2256,7 +2145,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -2293,35 +2182,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
@@ -2633,7 +2493,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - |-
@@ -3487,17 +3347,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -3540,35 +3396,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
@@ -3787,17 +3614,13 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - make gen-go
-<<<<<<< HEAD
-  image: grafana/build-container:1.5.5
-=======
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.5.4
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+  image: grafana/build-container:1.5.5
   name: wire-install
 - commands:
   - yarn install --immutable
@@ -4078,7 +3901,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -4116,35 +3939,6 @@ steps:
       from_secret: grafana_api_key
   image: grafana/build-container:1.5.5
   name: build-plugins
-- commands:
-<<<<<<< HEAD
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  image: grafana/build-container:1.5.5
-  name: verify-gen-cue
-=======
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.4
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.4
-  name: ensure-cuetsified
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
@@ -4453,7 +4247,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.4
+  image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
   - |-
@@ -4889,10 +4683,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-<<<<<<< HEAD
-hmac: d2e97d6683c33ccb2dba773e3c103105227a74448fa732124e4c38d67eb464d8
-=======
-hmac: 6a36a7fac6b3cee60a407a5815711cb12ae92ba8325475a0ee8e5bb6a92108b8
->>>>>>> 7f93cb02c1 (Put verify_gen_cue_step() in the right places)
+hmac: 378147a306d077b0566f5353c9e5c236c40dbb8d81392091a1346ed275b86496
 
 ...
