@@ -78,12 +78,3 @@ func (r *Generic) addModels(models []coremodel.Interface) error {
 
 	return nil
 }
-
-// Get retrieves a coremodel with the given string identifier. nil, false
-// is returned if no such coremodel exists.
-func (r *Generic) Get(name string) (cm coremodel.Interface, has bool) {
-	r.lock.RLock()
-	cm, has = r.modelIdx[name]
-	r.lock.RUnlock()
-	return
-}
