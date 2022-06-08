@@ -9373,7 +9373,7 @@ exports[`better eslint`] = {
       [124, 18, 35, "Do not use any type assertions.", "2439650125"],
       [156, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mssql/module.ts:895125479": [
+    "public/app/plugins/datasource/mssql/module.ts:1059721725": [
       [21, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -9401,13 +9401,13 @@ exports[`better eslint`] = {
       [201, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [222, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mssql/types.ts:876365569": [
-      [3, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [4, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/plugins/datasource/mssql/types.ts:550141394": [
+      [4, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [5, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [15, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [8, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/mysql/datasource.ts:2229384958": [
       [16, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9427,10 +9427,9 @@ exports[`better eslint`] = {
       [1, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [1, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mysql/module.ts:3186892007": [
-      [14, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [37, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [40, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/mysql/module.ts:278000175": [
+      [21, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/mysql/mysql_query_model.ts:4177220047": [
       [6, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9528,13 +9527,13 @@ exports[`better eslint`] = {
       [4, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [13, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mysql/types.ts:1676212033": [
-      [2, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [3, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/plugins/datasource/mysql/types.ts:4183699667": [
+      [3, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [4, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [5, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [18, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [7, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/opentsdb/datasource.d.ts:320371355": [
       [0, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -9643,22 +9642,13 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/opentsdb/types.ts:2727737953": [
       [3, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/postgres/config_ctrl.ts:2134672281": [
-      [14, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [16, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [22, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [40, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [41, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [46, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [59, 45, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/plugins/datasource/postgres/datasource.test.ts:1217917488": [
       [53, 40, 40, "Do not use any type assertions.", "1581159081"],
       [53, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/postgres/datasource.ts:793253503": [
+    "public/app/plugins/datasource/postgres/datasource.ts:3189395455": [
       [16, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
       [17, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
       [18, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9672,12 +9662,12 @@ exports[`better eslint`] = {
       [124, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
       [143, 18, 35, "Do not use any type assertions.", "2439650125"],
       [186, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [190, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [194, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [199, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [204, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [195, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [204, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [209, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [214, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/postgres/module.ts:332136459": [
+    "public/app/plugins/datasource/postgres/module.ts:2020285585": [
       [20, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [23, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -9801,13 +9791,13 @@ exports[`better eslint`] = {
       [4, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [13, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/postgres/types.ts:1220867434": [
-      [3, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [4, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/plugins/datasource/postgres/types.ts:982290925": [
+      [4, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [5, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [19, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [8, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [30, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/components/PromExploreExtraField.test.tsx:3562942415": [
       [11, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
