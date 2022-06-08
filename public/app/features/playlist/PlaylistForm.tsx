@@ -70,7 +70,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               </div>
 
               <HorizontalGroup>
-                <Button variant="primary" disabled={isDisabled}>
+                <Button type="submit" variant="primary" disabled={isDisabled}>
                   Save
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>
