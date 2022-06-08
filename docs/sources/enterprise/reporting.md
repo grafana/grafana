@@ -34,18 +34,19 @@ When [RBAC]({{< relref "access-control/_index.md" >}}) is enabled, you need to h
 
 Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "access-control/_index.md" >}}).
 
-1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports. The report form has a multistep layout. The steps do not need to be filled in succession and can be skipped over by clicking on a step name.
+1. Click on the Reports icon in the side navigation menu. 
+The Reports tab allows you to view, create, and update your reports. The report form has a multi-step layout. The steps do not need to be completed in succession and can be skipped over by clicking a step name.
 2. Select report dashboard.
    - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+   - **Time range -** (optional) Use custom time range for the report. For more information, refer to [Report time range]({{< relref "#report-time-range" >}}).
    - **Add another dashboard -** Add more than one dashboard to the report.
 3. Format report.
-   - **Choose format options for the report -** (at least one selected option required) Attach report as PDF, embed dashboard as an image or attach CSV file of table panel data.
+   - **Choose format options for the report -** Select at least one option. Attach report as PDF, embed dashboard as an image, or attach CSV file of table panel data.
    - Select an orientation for the report: **Portrait** or **Landscape**.
    - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-   - **Preview PDF** View a rendered PDF with the options you have selected.
+   - **Preview PDF** View a rendered PDF with the options you selected.
 4. Schedule report.
-   - Enter scheduling information. Options vary depending on the frequency you select.
+   - Enter scheduling information. Options vary depending on the frequency selected.
 5. Enter report information. All fields are required unless otherwise indicated.
    - **Report name -** Name of the report as you want it to appear in the Reports list. It's also used as the email subject.
    - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
