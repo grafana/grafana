@@ -104,6 +104,7 @@ type AddDataSourceCommand struct {
 	UserId                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
+	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 
 	Result *DataSource `json:"-"`
 }
@@ -129,6 +130,7 @@ type UpdateDataSourceCommand struct {
 	Id                      int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
+	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 
 	Result *DataSource `json:"-"`
 }
@@ -143,7 +145,12 @@ type DeleteDataSourceCommand struct {
 	OrgID int64
 
 	DeletedDatasourcesCount int64
+
+	UpdateSecretFn UpdateSecretFn
 }
+
+// Function for updating secrets along with datasources, to ensure atomicity
+type UpdateSecretFn func() error
 
 // ---------------------
 // QUERIES

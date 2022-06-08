@@ -152,17 +152,16 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
-		return err
-	}
-
 	secret, err := json.Marshal(cmd.SecureJsonData)
 	if err != nil {
 		return err
 	}
 
-	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
-	if err != nil {
+	cmd.UpdateSecretFn = func() error {
+		return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	}
+
+	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -188,11 +187,15 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	cmd.UpdateSecretFn = func() error {
+		return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+	}
+
 	err := s.SQLStore.DeleteDataSource(ctx, cmd)
 	if err != nil {
 		return err
 	}
-	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+	return nil
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
@@ -212,8 +215,16 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		return err
 	}
 
-	err = s.SQLStore.UpdateDataSource(ctx, cmd)
+	secret, err := json.Marshal(cmd.SecureJsonData)
 	if err != nil {
+		return err
+	}
+
+	cmd.UpdateSecretFn = func() error {
+		return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	}
+
+	if err = s.SQLStore.UpdateDataSource(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -224,12 +235,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		}
 	}
 
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
-
-	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	return nil
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
