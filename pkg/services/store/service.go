@@ -48,14 +48,6 @@ type standardStorageService struct {
 	tree *nestedTree
 }
 
-type Response struct {
-	path       string
-	statusCode int
-	message    string
-	fileName   string
-	err        bool
-}
-
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
 	globalRoots := []storageRuntime{
 		newDiskStorage(RootPublicStatic, "Public static files", &StorageLocalDiskConfig{
