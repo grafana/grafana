@@ -256,7 +256,7 @@ export class QueryRows extends PureComponent<Props, State> {
                   return (
                     <QueryWrapper
                       index={index}
-                      key={`${query.refId}-${index}`}
+                      key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
                       query={query}

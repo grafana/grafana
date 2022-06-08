@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, Select, Alert, Input, InlineFieldRow, CodeEditor } from '@grafana/ui';
+import { hasAlphaPanels } from 'app/core/config';
 import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
@@ -49,7 +50,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    if (config.featureToggles.panelTitleSearch) {
+    if (config.featureToggles.panelTitleSearch && hasAlphaPanels) {
       this.queryTypes.push({
         label: 'Search',
         value: GrafanaQueryType.Search,

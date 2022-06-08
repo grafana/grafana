@@ -71,9 +71,7 @@ func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, fi
 func checkSearchResponseExtended(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, reader, filter, query, extender, "/pfix")
-	goldenFile := filepath.Join("testdata", fileName)
-	err := experimental.CheckGoldenDataResponse(goldenFile, resp, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
 }
 
 var testDashboards = []dashboard{
@@ -96,14 +94,14 @@ var testDashboards = []dashboard{
 func TestDashboardIndex(t *testing.T) {
 	t.Run("basic-search", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
 
 	t.Run("basic-filter", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testDisallowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testDisallowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
@@ -116,7 +114,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		newReader, err := index.removeDashboard(context.Background(), writer, reader, "2")
 		require.NoError(t, err)
 
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
@@ -133,7 +131,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "created"},
 		)
 	})
@@ -150,7 +148,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "nginx"},
 		)
 	})
@@ -234,14 +232,14 @@ func TestDashboardIndexSort(t *testing.T) {
 
 	t.Run("sort-asc", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
-		checkSearchResponseExtended(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponseExtended(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "test"}, extender.GetQueryExtender(),
 		)
 	})
 
 	t.Run("sort-desc", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashesExtended(t, testSortDashboards, extender.GetDocumentExtender())
-		checkSearchResponseExtended(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponseExtended(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "*", Sort: "-test"}, extender.GetQueryExtender(),
 		)
 	})
@@ -267,28 +265,28 @@ var testPrefixDashboards = []dashboard{
 func TestDashboardIndex_PrefixSearch(t *testing.T) {
 	t.Run("prefix-search-beginning", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "Arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "Syn"},
 		)
 	})
 
 	t.Run("prefix-search-beginning-lower", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "arch"},
 		)
 	})
 
 	t.Run("prefix-search-middle-lower", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "syn"},
 		)
 	})
@@ -297,28 +295,28 @@ func TestDashboardIndex_PrefixSearch(t *testing.T) {
 func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 	t.Run("multiple-tokens-beginning", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "Archer da"},
 		)
 	})
 
 	t.Run("multiple-tokens-beginning-lower", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "archer da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "rcher Da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle-lower", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, testPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "cument sy"},
 		)
 	})
@@ -337,7 +335,7 @@ var longPrefixDashboards = []dashboard{
 func TestDashboardIndex_PrefixNgramExceeded(t *testing.T) {
 	t.Run("prefix-search-ngram-exceeded", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, longPrefixDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "Eyjafjallajöku"},
 		)
 	})
@@ -363,13 +361,13 @@ var scatteredTokensDashboards = []dashboard{
 func TestDashboardIndex_MultipleTokensScattered(t *testing.T) {
 	t.Run("scattered-tokens-match", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "dead secret"},
 		)
 	})
 	t.Run("scattered-tokens-match-reversed", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, scatteredTokensDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "powerful secret"},
 		)
 	})
@@ -434,7 +432,7 @@ var dashboardsWithFolders = []dashboard{
 func TestDashboardIndex_Folders(t *testing.T) {
 	t.Run("folders-indexed", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, dashboardsWithFolders)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "My folder", Kind: []string{string(entityKindFolder)}},
 		)
 	})
@@ -454,7 +452,7 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		newReader, err := index.removeFolder(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
 		// In response we expect one dashboard which does not belong to removed folder.
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "dash", Kind: []string{string(entityKindDashboard)}},
 		)
 	})
@@ -508,7 +506,7 @@ func TestDashboardIndex_Panels(t *testing.T) {
 		index, reader, writer := initTestIndexFromDashes(t, dashboardsWithPanels)
 		newReader, err := index.removeDashboard(context.Background(), writer, reader, "1")
 		require.NoError(t, err)
-		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+		checkSearchResponse(t, filepath.Base(t.Name()), newReader, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
 		)
 	})

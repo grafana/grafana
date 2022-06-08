@@ -19,7 +19,7 @@ jest.mock('app/core/services/search_srv');
 const { mockSearch } = SearchSrv as typeof MockSearchSrv;
 
 beforeEach(() => {
-  jest.useFakeTimers('modern');
+  jest.useFakeTimers();
   mockSearch.mockClear();
 });
 

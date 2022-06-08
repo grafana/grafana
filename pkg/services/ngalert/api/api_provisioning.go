@@ -18,7 +18,6 @@ import (
 
 const (
 	namePathParam      = ":name"
-	idPathParam        = ":ID"
 	uidPathParam       = ":UID"
 	groupPathParam     = ":Group"
 	folderUIDPathParam = ":FolderUID"
@@ -111,8 +110,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimo
 }
 
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	id := pathParam(c, idPathParam)
-	cp.UID = id
+	cp.UID = pathParam(c, uidPathParam)
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -121,8 +119,8 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimod
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) response.Response {
-	cpID := pathParam(c, idPathParam)
-	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
+	UID := pathParam(c, uidPathParam)
+	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, UID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

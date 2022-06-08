@@ -159,6 +159,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
 		return nil
 	}
+	if isMuteTimeInUse(name, []*definitions.Route{revision.cfg.AlertmanagerConfig.Route}) {
+		return fmt.Errorf("mute time '%s' is currently used by a notification policy", name)
+	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name == existing.Name {
 			intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
@@ -189,4 +192,21 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		}
 		return nil
 	})
+}
+
+func isMuteTimeInUse(name string, routes []*definitions.Route) bool {
+	if len(routes) == 0 {
+		return false
+	}
+	for _, route := range routes {
+		for _, mtName := range route.MuteTimeIntervals {
+			if mtName == name {
+				return true
+			}
+		}
+		if isMuteTimeInUse(name, route.Routes) {
+			return true
+		}
+	}
+	return false
 }
