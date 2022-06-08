@@ -20,7 +20,7 @@ Use Alert list to display your alerts. You can configure the list to show the cu
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
-Customize your visualization using the following settings. 
+Customize your visualization using the following settings.
 
 ## Options
 
