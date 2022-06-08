@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
+	gfcore "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -37,7 +37,7 @@ func TestProvisioningApi(t *testing.T) {
 		t.Run("successful PUT returns 202", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			tree := apimodels.Route{}
+			tree := definitions.Route{}
 
 			response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -49,7 +49,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeRejectingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := apimodels.Route{}
+				tree := definitions.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -98,7 +98,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeFailingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := apimodels.Route{}
+				tree := definitions.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -143,7 +143,7 @@ func TestProvisioningApi(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				withURLParams(rc, namePathParam, "test")
-				tmpl := apimodels.MessageTemplateContent{Template: ""}
+				tmpl := definitions.MessageTemplateContent{Template: ""}
 
 				response := sut.RoutePutTemplate(&rc, tmpl)
 
@@ -186,7 +186,7 @@ func TestProvisioningApi(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
 			withURLParams(rc, namePathParam, "does not exist")
-			mti := apimodels.MuteTimeInterval{}
+			mti := definitions.MuteTimeInterval{}
 
 			response := sut.RoutePutMuteTiming(&rc, mti)
 
@@ -240,7 +240,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 	log := log.NewNopLogger()
 	configs := &provisioning.MockAMConfigStore{}
 	configs.EXPECT().
-		GetsConfig(domain.AlertConfiguration{
+		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: testConfig,
 		})
 	sqlStore := sqlstore.InitTestDB(t)
@@ -251,7 +251,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 	xact := &provisioning.NopTransactionManager{}
 	prov := &provisioning.MockProvisioningStore{}
 	prov.EXPECT().SaveSucceeds()
-	prov.EXPECT().GetReturns(domain.ProvenanceNone)
+	prov.EXPECT().GetReturns(models.ProvenanceNone)
 
 	return ProvisioningSrv{
 		log:                 log,
@@ -263,47 +263,47 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 	}
 }
 
-func createTestRequestCtx() models.ReqContext {
-	return models.ReqContext{
+func createTestRequestCtx() gfcore.ReqContext {
+	return gfcore.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &gfcore.SignedInUser{
 			OrgId: 1,
 		},
 	}
 }
 
-func withURLParams(rc models.ReqContext, key, value string) {
+func withURLParams(rc gfcore.ReqContext, key, value string) {
 	params := web.Params(rc.Req)
 	params[key] = value
 	rc.Req = web.SetURLParams(rc.Req, params)
 }
 
 type fakeNotificationPolicyService struct {
-	tree apimodels.Route
-	prov domain.Provenance
+	tree definitions.Route
+	prov models.Provenance
 }
 
 func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	return &fakeNotificationPolicyService{
-		tree: apimodels.Route{
+		tree: definitions.Route{
 			Receiver: "some-receiver",
 		},
-		prov: domain.ProvenanceNone,
+		prov: models.ProvenanceNone,
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	if orgID != 1 {
-		return apimodels.Route{}, store.ErrNoAlertmanagerConfiguration
+		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
 	result.Provenance = f.prov
 	return result, nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
 	if orgID != 1 {
 		return store.ErrNoAlertmanagerConfiguration
 	}
@@ -314,42 +314,42 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
-	return apimodels.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
 	return fmt.Errorf("something went wrong")
 }
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
-	return apimodels.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	return definitions.Route{}, nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func createInvalidContactPoint() apimodels.EmbeddedContactPoint {
+func createInvalidContactPoint() definitions.EmbeddedContactPoint {
 	settings, _ := simplejson.NewJson([]byte(`{}`))
-	return apimodels.EmbeddedContactPoint{
+	return definitions.EmbeddedContactPoint{
 		Name:     "test-contact-point",
 		Type:     "slack",
 		Settings: settings,
 	}
 }
 
-func createInvalidTemplate() apimodels.MessageTemplate {
-	return apimodels.MessageTemplate{
+func createInvalidTemplate() definitions.MessageTemplate {
+	return definitions.MessageTemplate{
 		Name:     "",
 		Template: "",
 	}
 }
 
-func createInvalidMuteTiming() apimodels.MuteTimeInterval {
-	return apimodels.MuteTimeInterval{
+func createInvalidMuteTiming() definitions.MuteTimeInterval {
+	return definitions.MuteTimeInterval{
 		MuteTimeInterval: prometheus.MuteTimeInterval{
 			Name: "interval",
 			TimeIntervals: []timeinterval.TimeInterval{
@@ -368,33 +368,33 @@ func createInvalidMuteTiming() apimodels.MuteTimeInterval {
 	}
 }
 
-func createInvalidAlertRule() apimodels.AlertRule {
-	return apimodels.AlertRule{}
+func createInvalidAlertRule() definitions.AlertRule {
+	return definitions.AlertRule{}
 }
 
-func createTestAlertRule(title string, orgID int64) apimodels.AlertRule {
-	return apimodels.AlertRule{
+func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
+	return definitions.AlertRule{
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
-		Data: []domain.AlertQuery{
+		Data: []models.AlertQuery{
 			{
 				RefID: "A",
 				Model: json.RawMessage("{}"),
-				RelativeTimeRange: domain.RelativeTimeRange{
-					From: domain.Duration(60),
-					To:   domain.Duration(0),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
 				},
 			},
 		},
 		RuleGroup:    "my-cool-group",
 		For:          time.Second * 60,
-		NoDataState:  domain.OK,
-		ExecErrState: domain.OkErrState,
+		NoDataState:  models.OK,
+		ExecErrState: models.OkErrState,
 	}
 }
 
-func insertRule(t *testing.T, srv ProvisioningSrv, rule apimodels.AlertRule) {
+func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.AlertRule) {
 	t.Helper()
 
 	rc := createTestRequestCtx()
