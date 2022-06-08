@@ -16,6 +16,7 @@ spec.json spec-stable.json: $(GO_PKG_FILES)
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
 	docker run --rm -it \
 		-w /src/$(PATH_DOWN) \
+		-e SWAGGER_GENERATE_EXTENSION=false \
 		-v $$(pwd)/$(PATH_UP):/src \
 		--entrypoint sh \
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
@@ -26,7 +27,7 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
-	swagger generate spec -m -w $(API_DIR) -o spec.json && swagger generate spec -m --include-tag=stable -o ngalert.json
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w $(API_DIR) -o spec.json && swagger generate spec -m --include-tag=stable -o ngalert.json
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
