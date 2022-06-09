@@ -41,7 +41,7 @@ const buildCjsPackage = ({ env }) => {
     ],
     plugins: [
       // rc-time-picker has a transitive dependency on component-indexof which
-      // when bundled imports a nonexistant `indexof` module.
+      // when bundled via `component-classes` imports a nonexistent `indexof` module.
       alias({ entries: [{ find: 'indexof', replacement: 'component-indexof' }] }),
       commonjs({
         include: /node_modules/,
