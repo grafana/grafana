@@ -9,6 +9,7 @@ import { labelsToGroupedOptions } from '../../functions';
 import { MetricDescriptor, MetricQuery } from '../../types';
 
 import { Aggregation } from './Aggregation';
+import { Preprocessor } from './Preprocessor';
 
 export interface Props {
   refId: string;
@@ -35,6 +36,7 @@ export const GroupBy: FunctionComponent<Props> = ({
   return (
     <EditorRow>
       <EditorFieldGroup>
+        <Preprocessor metricDescriptor={metricDescriptor} query={query} onChange={onChange} />
         <EditorField
           label="Group by"
           tooltip="You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, you can specify a grouping and a function. Grouping is done on the basis of labels. The grouping function is used to combine the time series in the group into a single time series."

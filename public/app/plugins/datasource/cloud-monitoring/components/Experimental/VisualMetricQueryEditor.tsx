@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../../types';
-import { LabelFilter, Metrics, Preprocessor } from '../index';
+import { LabelFilter, Metrics } from '../index';
 
 import { Alignment } from './Alignment';
 import { GroupBy } from './GroupBy';
@@ -48,7 +48,6 @@ function Editor({
             onChange={(filters: string[]) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
-          <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
           <GroupBy
             refId={refId}
             labels={Object.keys(labels)}
