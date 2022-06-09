@@ -161,6 +161,25 @@ var (
 		},
 		Grants: []string{string(models.ROLE_EDITOR), string(models.ROLE_ADMIN)},
 	}
+
+	alertingProvisioningRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting:provisioning",
+			DisplayName: "Access to alert rules provisioning API",
+			Description: "Can manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
+			Group:       AlertRolesGroup,
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
 )
 
 func DeclareFixedRoles(ac accesscontrol.AccessControl) error {
@@ -168,6 +187,6 @@ func DeclareFixedRoles(ac accesscontrol.AccessControl) error {
 		rulesReaderRole, rulesEditorRole,
 		instancesReaderRole, instancesEditorRole,
 		notificationsReaderRole, notificationsEditorRole,
-		alertingReaderRole, alertingWriterRole,
+		alertingReaderRole, alertingWriterRole, alertingProvisioningRole,
 	)
 }
