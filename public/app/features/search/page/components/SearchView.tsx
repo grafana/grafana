@@ -27,6 +27,7 @@ type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
+  onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
 };
@@ -36,18 +37,20 @@ export const SearchView = ({
   folderDTO,
   queryText,
   hidePseudoFolders,
+  onQueryTextChange,
   includePanels,
   setIncludePanels,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
-    useSearchQuery({});
+  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
+
+  const [listKey, setListKey] = useState(Date.now());
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
@@ -109,9 +112,10 @@ export const SearchView = ({
   // function to update items when dashboards or folders are moved or deleted
   const onChangeItemsList = async () => {
     // clean up search selection
-    setSearchSelection(newSearchSelection());
+    clearSelection();
+    setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryChange(query.query);
+    onQueryTextChange(query.query);
   };
 
   const renderResults = () => {
@@ -130,7 +134,7 @@ export const SearchView = ({
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryChange('');
+                onQueryTextChange('');
               }
               if (query.tag?.length) {
                 onTagFilterChange([]);
@@ -157,11 +161,13 @@ export const SearchView = ({
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
             tags={query.tag}
+            key={listKey}
           />
         );
       }
       return (
         <FolderView
+          key={listKey}
           selection={selection}
           selectionToggle={toggleSelection}
           tags={query.tag}
@@ -210,7 +216,7 @@ export const SearchView = ({
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+                onQueryTextChange(''); // parent will clear the sort
               }
             }
             onLayoutChange(v);

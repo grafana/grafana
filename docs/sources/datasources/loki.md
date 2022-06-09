@@ -63,7 +63,9 @@ The new field with the link shown in log details:
 
 Loki query editor is separated into 3 distinct modes that you can switch between. See docs for each section below.
 
-At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
+At the top of the editor, select `Run queries` to run a query. Select `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
+
+> **Note:** In Explore, to run Loki queries, select `Run query`.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
 
@@ -255,7 +257,6 @@ datasources:
     url: http://localhost:3100
     basicAuth: true
     basicAuthUser: my_user
-    basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
       derivedFields:
@@ -272,6 +273,8 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: 'http://localhost:16686/trace/$${__value.raw}'
+    secureJsonData:
+      basicAuthPassword: test_password
 ```
 
 Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.

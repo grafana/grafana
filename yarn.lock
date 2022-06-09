@@ -3815,9 +3815,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.0.0-beta.2
-    "@grafana/toolkit": 9.0.0-beta.2
-    "@grafana/ui": 9.0.0-beta.2
+    "@grafana/data": 9.0.0-beta.3
+    "@grafana/toolkit": 9.0.0-beta.3
+    "@grafana/ui": 9.0.0-beta.3
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -3855,12 +3855,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.0.0-beta.2, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.0.0-beta.3, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 9.0.0-beta.2
+    "@grafana/schema": 9.0.0-beta.3
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
@@ -3908,12 +3908,12 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     xss: 1.0.11
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.0.0-beta.2, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.0.0-beta.3, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3937,7 +3937,7 @@ __metadata:
     "@babel/core": 7.17.8
     "@babel/preset-env": 7.17.10
     "@cypress/webpack-preprocessor": 5.11.1
-    "@grafana/e2e-selectors": 9.0.0-beta.2
+    "@grafana/e2e-selectors": 9.0.0-beta.3
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 22.0.0
@@ -4026,10 +4026,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": 9.0.0-beta.2
-    "@grafana/e2e-selectors": 9.0.0-beta.2
+    "@grafana/data": 9.0.0-beta.3
+    "@grafana/e2e-selectors": 9.0.0-beta.3
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-beta.2
+    "@grafana/ui": 9.0.0-beta.3
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -4058,7 +4058,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.0.0-beta.2, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.0.0-beta.3, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -4105,7 +4105,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@9.0.0-beta.2, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.0.0-beta.3, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -4121,10 +4121,10 @@ __metadata:
     "@babel/preset-env": ^7.16.11
     "@babel/preset-react": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
-    "@grafana/data": 9.0.0-beta.2
+    "@grafana/data": 9.0.0-beta.3
     "@grafana/eslint-config": ^3.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-beta.2
+    "@grafana/ui": 9.0.0-beta.3
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -4208,7 +4208,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.0.0-beta.2, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.0.0-beta.3, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -4216,9 +4216,9 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.0
     "@grafana/aws-sdk": 0.0.36
-    "@grafana/data": 9.0.0-beta.2
-    "@grafana/e2e-selectors": 9.0.0-beta.2
-    "@grafana/schema": 9.0.0-beta.2
+    "@grafana/data": 9.0.0-beta.3
+    "@grafana/e2e-selectors": 9.0.0-beta.3
+    "@grafana/schema": 9.0.0-beta.3
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
@@ -4353,7 +4353,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     uuid: 8.3.2
     webpack: 5.72.1
     webpack-filter-warnings-plugin: 1.2.1
@@ -4454,10 +4454,10 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.9.0
-    "@grafana/data": 9.0.0-beta.2
-    "@grafana/e2e-selectors": 9.0.0-beta.2
+    "@grafana/data": 9.0.0-beta.3
+    "@grafana/e2e-selectors": 9.0.0-beta.3
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-beta.2
+    "@grafana/ui": 9.0.0-beta.3
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.2.0
     "@types/classnames": ^2.2.7
@@ -9813,9 +9813,9 @@ __metadata:
   linkType: hard
 
 "@types/long@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "@types/long@npm:4.0.1"
-  checksum: ff9653c33f5000d0f131fd98a950a0343e2e33107dd067a97ac4a3b9678e1a2e39ea44772ad920f54ef6e8f107f76bc92c2584ba905a0dc4253282a4101166d0
+  version: 4.0.2
+  resolution: "@types/long@npm:4.0.2"
+  checksum: d16cde7240d834cf44ba1eaec49e78ae3180e724cd667052b194a372f350d024cba8dd3f37b0864931683dab09ca935d52f0c4c1687178af5ada9fc85b0635f4
   languageName: node
   linkType: hard
 
@@ -9880,7 +9880,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=13.7.0":
+"@types/node@npm:*":
   version: 16.11.6
   resolution: "@types/node@npm:16.11.6"
   checksum: 6e19634766ff589d3d2f361c2196b671f8f133cdadc5ad347a621c360d8994b6c4fbccfb2ad9c60c588c593831a96497c9c6b77d2b7e91be723384b94f6368e7
@@ -9905,6 +9905,13 @@ __metadata:
   version: 16.11.36
   resolution: "@types/node@npm:16.11.36"
   checksum: 878e8e2032869785dd4f73dd862042c7eb588fb9a27199f1b493a7029438ccb58f96e203c35c2e66e08307ca3f9767133cae888958c15e031982f7e9719e5e47
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:>=13.7.0":
+  version: 17.0.41
+  resolution: "@types/node@npm:17.0.41"
+  checksum: ddaf9e7decb487850a9bbfeb670b41c9d35c5b1597c4c4f889419b65042d776e9041ed533c7afc1bac30cad1e9dcfd984085b4a35312efe8ea5eaf0bd36a8191
   languageName: node
   linkType: hard
 
@@ -19990,7 +19997,7 @@ __metadata:
     ts-node: 10.7.0
     tslib: 2.4.0
     typescript: 4.6.4
-    uplot: 1.6.20
+    uplot: 1.6.21
     uuid: 8.3.2
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -28207,8 +28214,8 @@ __metadata:
   linkType: hard
 
 "protobufjs@npm:^6.11.2":
-  version: 6.11.2
-  resolution: "protobufjs@npm:6.11.2"
+  version: 6.11.3
+  resolution: "protobufjs@npm:6.11.3"
   dependencies:
     "@protobufjs/aspromise": ^1.1.2
     "@protobufjs/base64": ^1.1.2
@@ -28226,7 +28233,7 @@ __metadata:
   bin:
     pbjs: bin/pbjs
     pbts: bin/pbts
-  checksum: 80e9d9610c3eb66f9eae4e44a1ae30381cedb721b7d5f635d781fe4c507e2c77bb7c879addcd1dda79733d3ae589d9e66fd18d42baf99b35df7382a0f9920795
+  checksum: 4a6ce1964167e4c45c53fd8a312d7646415c777dd31b4ba346719947b88e61654912326101f927da387d6b6473ab52a7ea4f54d6f15d63b31130ce28e2e15070
   languageName: node
   linkType: hard
 
@@ -34361,10 +34368,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.20":
-  version: 1.6.20
-  resolution: "uplot@npm:1.6.20"
-  checksum: 17ddacefbba2b0db0e919ad5ed85f43ebe40afbfced442bc821adbf6d84dc4f969ebf5754f913b316acf17f24ca18c3ca971181a530ea1fc91f45763f25cddaf
+"uplot@npm:1.6.21":
+  version: 1.6.21
+  resolution: "uplot@npm:1.6.21"
+  checksum: 38aa8c899f5010ce6a340db2717ef14e50e49a227a64be225ecba5a5d64bbda4d84a29a6a93ce77aa19a68f0631beaab8ba9ed6a456f11ce65160a6757b5b384
   languageName: node
   linkType: hard
 

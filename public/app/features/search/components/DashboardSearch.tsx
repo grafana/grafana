@@ -69,6 +69,9 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           <SearchView
             showManage={false}
             queryText={query.query}
+            onQueryTextChange={(newQueryText) => {
+              setInputValue(newQueryText);
+            }}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
           />

@@ -61,6 +61,7 @@ export const emptyArrayFieldMatcher: MatcherFieldValue = {
 
 export const emptyRoute: FormAmRoute = {
   id: '',
+  overrideGrouping: false,
   groupBy: [],
   object_matchers: [],
   routes: [],
@@ -114,6 +115,7 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
       ],
       continue: route.continue ?? false,
       receiver: route.receiver ?? '',
+      overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
       groupBy: route.group_by ?? [],
       overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
       groupWaitValue,
@@ -137,6 +139,8 @@ export const formAmRouteToAmRoute = (
   const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
 
   const {
+    overrideGrouping,
+    groupBy,
     overrideTimings,
     groupWaitValue,
     groupWaitValueType,
@@ -145,6 +149,8 @@ export const formAmRouteToAmRoute = (
     repeatIntervalValue,
     repeatIntervalValueType,
   } = formAmRoute;
+
+  const group_by = overrideGrouping && groupBy ? groupBy : [];
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
   const group_wait = overrideGroupWait ? `${groupWaitValue}${groupWaitValueType}` : undefined;
@@ -158,7 +164,7 @@ export const formAmRouteToAmRoute = (
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
-    group_by: formAmRoute.groupBy,
+    group_by: group_by,
     object_matchers: formAmRoute.object_matchers.length
       ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
       : undefined,

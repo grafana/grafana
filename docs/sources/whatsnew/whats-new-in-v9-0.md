@@ -94,7 +94,7 @@ Alert state history for Grafana managed alerts indicates the cause of the state.
 
 ### Images in notifications for Grafana managed alerts
 
-Unified alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Unified alerting . This functionality was available in legacy dashboard alerting, but was missing in unified alerting. It requires the alert to be related to a specific dashboard using the “Dashboard UID” field.
+Unified alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Unified alerting . This functionality was available in legacy dashboard alerting, but was missing in unified alerting. It requires the alert to be related to a specific dashboard panel using the “Dashboard UID” and “Panel ID” annotations.
 
 ## Envelope encryption is generally available and enabled by default
 
