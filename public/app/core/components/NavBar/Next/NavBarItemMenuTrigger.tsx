@@ -173,6 +173,9 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         setMenuIdOpen(item.id);
         state.open();
       }
+      e.target.scrollIntoView({
+        block: 'nearest',
+      });
     },
     onBlurWithin: (e) => {
       if (e.target?.getAttribute('role') === 'menuitem' && !overlayRef.current?.contains(e.relatedTarget)) {

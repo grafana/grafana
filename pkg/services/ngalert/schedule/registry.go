@@ -84,16 +84,28 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
 }
 
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
+// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
+// Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
+// Returns a tuple where first element is
+//   - true when message was sent
+//   - false when the send operation is stopped
+// the second element contains a dropped message that was sent by a concurrent sender.
+func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
+	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
+	var droppedMsg *evaluation
+	select {
+	case droppedMsg = <-a.evalCh:
+	default:
+	}
+
 	select {
 	case a.evalCh <- &evaluation{
 		scheduledAt: t,
 		version:     version,
 	}:
-		return true
+		return true, droppedMsg
 	case <-a.ctx.Done():
-		return false
+		return false, droppedMsg
 	}
 }
 
@@ -151,6 +163,9 @@ func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule
 	r.rules[rule.GetKey()] = rule
 }
 
+// del removes pair that has specific key from schedulableAlertRulesRegistry.
+// Returns 2-tuple where the first element is value of the removed pair
+// and the second element indicates whether element with the specified key existed.
 func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
