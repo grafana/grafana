@@ -143,11 +143,11 @@ func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
 	if err != nil {
-		a.log.Error("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserId, "id", a.dashboardID)
+		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserId, "id", a.dashboardID)
 	}
 
 	if !ok && err == nil {
-		a.log.Info("Access denied to folder or dashboard", "userId", a.user.UserId, "id", a.dashboardID, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserId, "id", a.dashboardID, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
