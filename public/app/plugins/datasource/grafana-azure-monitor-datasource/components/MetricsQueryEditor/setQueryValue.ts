@@ -9,6 +9,7 @@ export function setResource(query: AzureMonitorQuery, resourceURI: string | unde
       metricNamespace: undefined,
       metricName: undefined,
       aggregation: undefined,
+      metricDefinition: undefined,
       timeGrain: '',
       dimensionFilters: [],
     },

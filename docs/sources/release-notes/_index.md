@@ -13,6 +13,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 9.0.0-beta3]({{< relref "release-notes-9-0-0-beta3" >}})
 - [Release notes for 9.0.0-beta2]({{< relref "release-notes-9-0-0-beta2/" >}})
 - [Release notes for 9.0.0-beta1]({{< relref "release-notes-9-0-0-beta1/" >}})
+- [Release notes for 8.5.5]({{< relref "release-notes-8-5-5" >}})
 - [Release notes for 8.5.4]({{< relref "release-notes-8-5-4/" >}})
 - [Release notes for 8.5.3]({{< relref "release-notes-8-5-3/" >}})
 - [Release notes for 8.5.2]({{< relref "release-notes-8-5-2/" >}})

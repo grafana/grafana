@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -657,9 +656,9 @@ func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64,
 
 func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
 	t.Helper()
-	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = 1
-	setting.AutoAssignOrgRole = role
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = 1
+	sqlStore.Cfg.AutoAssignOrgRole = role
 	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
