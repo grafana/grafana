@@ -1,27 +1,30 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { SelectableValue } from '@grafana/data';
+
 import { QueryWithDefaults } from '../../defaults';
-import { DB, SQLExpression, SQLQuery, TableSchema } from '../../types';
+import { DB, SQLExpression, SQLQuery } from '../../types';
 import { mapColumnTypeToIcon } from '../../utils/useColumns';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { Config } from './AwesomeQueryBuilder';
 import { WhereRow } from './WhereRow';
 
-interface BQWhereRowProps {
+interface WhereRowProps {
   db: DB;
   query: QueryWithDefaults;
   onQueryChange: (query: SQLQuery) => void;
 }
 
-export function SQLWhereRow({ db, query, onQueryChange }: BQWhereRowProps) {
+export function SQLWhereRow({ db, query, onQueryChange }: WhereRowProps) {
   const state = useAsync(async () => {
+    // TODO - move check to db.fields impl.  big query etc will need to check project etc
     if (!query.dataset || !query.table) {
       return;
     }
-    const tableSchema = await db.tableSchema(query);
-    return getFields(tableSchema);
+    const fields = await db.fields(query);
+    return getFields(fields);
   }, [db, query.dataset, query.table]);
 
   const { onSqlChange } = useSqlChange({ db, query, onQueryChange });
@@ -39,11 +42,12 @@ export function SQLWhereRow({ db, query, onQueryChange }: BQWhereRowProps) {
   );
 }
 
-function getFields(tableSchema: TableSchema) {
+// TODO - move type mappings to db interface since it will vary per dbms
+function getFields(columns: SelectableValue[]) {
   const fields: Config['fields'] = {};
-  tableSchema.schema?.forEach((field) => {
+  for (const col of columns) {
     let type = 'text';
-    switch (field.type) {
+    switch (col.type) {
       case 'BOOLEAN':
       case 'BOOL': {
         type = 'boolean';
@@ -85,11 +89,12 @@ function getFields(tableSchema: TableSchema) {
       default:
         break;
     }
-    fields[field.name] = {
+
+    fields[col.value] = {
       type,
       valueSources: ['value'],
-      mainWidgetProps: { customProps: { icon: mapColumnTypeToIcon(field.type) } },
+      mainWidgetProps: { customProps: { icon: mapColumnTypeToIcon(col.type.toUpperCase()) } },
     };
-  });
+  }
   return fields;
 }

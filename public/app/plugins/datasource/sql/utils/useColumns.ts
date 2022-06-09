@@ -31,6 +31,7 @@ export function useColumns({ db, query, isOrderable = false }: Options) {
   return state;
 }
 
+// TODO - move type mappings to db interface since they will vary per dbms
 export function mapColumnTypeToIcon(type: string) {
   switch (type) {
     case 'TIME':
