@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -463,7 +464,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		t.Logf("response: %s", string(bodyBytes))
 		require.JSONEq(
 			t,
 			`{
@@ -501,6 +501,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 			string(bodyBytes),
 		)
 		require.NoError(t, resp.Body.Close())
-		require.Equal(t, 201, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 }
