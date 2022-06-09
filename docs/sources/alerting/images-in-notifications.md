@@ -6,27 +6,27 @@ keywords:
   - alerting
   - images
   - notifications
-title: Images in Notifications
+title: Images in notifications
 ---
 
-# Images in Notifications
+# Images in notifications
 
 Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including an image of the panel for the Grafana managed alert rule.
 
 > **Note**: Images in notifications are not available for Grafana Mimir and Loki managed alert rules, or when Grafana is set up to send alert notifications to an external Alertmanager.
 
-If Grafana is set up to send images in notifications it takes a screenshot of the panel for the Grafana managed alert rule when either of the following happen:
+If Grafana is set up to send images in notifications, it takes a screenshot of the panel for the Grafana managed alert rule when either of the following happen:
 
 1. The alert rule transitions from pending to firing
 2. The alert rule transitions from firing to OK
 
-Images are stored in the [data]({{< relref "../setup-grafana/configure-grafana/#paths" >}}) path and so Grafana must have write-access to this path. If Grafana cannot write to data then taken screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt. In addition to storing images on disk Grafana can also store the image in an external image store such as Amazon S3, Azure Blob Storage, Google Cloud Storage and even Grafana where screenshots are stored in `public/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from disk but not the external image store. If Grafana is the external image store then screenshots are deleted from `data` but not from `public/img/attachments`.
+Images are stored in the [data]({{< relref "../setup-grafana/configure-grafana/#paths" >}}) path and so Grafana must have write-access to this path. If Grafana cannot write to this path then taken screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt. In addition to storing images on disk, Grafana can also store the image in an external image store such as Amazon S3, Azure Blob Storage, Google Cloud Storage and even Grafana where screenshots are stored in `public/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from disk but not the external image store. If Grafana is the external image store then screenshots are deleted from `data` but not from `public/img/attachments`.
 
-> **Note**: It is recommended that an external image store is used for images in notifications as not all contact points supported uploading images from disk, and should `temp_data_lifetime` be less than the `group_wait` and `group_interval` options in Alertmanager then it is possible that the image on disk is deleted before an alert notification is even sent.
+> **Note**: It is recommended to use an external image store is used for images in notifications as not all contact points supported uploading images from disk. It is also possible that the image on disk is deleted before an alert notification is sent if `temp_data_lifetime` is less than the `group_wait` and `group_interval` options used in Alertmanager.
 
 ## Requirements
 
-To use images in notifications Grafana must be set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}). It is also recommended that Grafana is set up to upload images to an [external image store]({{< relref "../setup-grafana/configure-grafana/#external_image_storage" >}}) such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
+To use images in notifications, Grafana must be set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}). It is also recommended that Grafana is set up to upload images to an [external image store]({{< relref "../setup-grafana/configure-grafana/#external_image_storage" >}}) such as Amazon S3, Azure Blob Storage, Google Cloud Storage or even Grafana.
 
 ## Configuration
 
@@ -44,18 +44,18 @@ It is recommended that `max_concurrent_screenshots` is set to a value that is le
     # the total number of concurrent screenshots across all Grafana services.
     max_concurrent_screenshots = 5
 
-If Grafana has been set up to use an external image store then `upload_external_image_storage` should be set to `true`:
+If Grafana has been set up to use an external image store, `upload_external_image_storage` should be set to `true`:
 
     # Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please
-    # see [external_image_storage] for further configuration options. If this option is false then
-    # screenshots will be persisted to disk for up to temp_data_lifetime.
+    # see [external_image_storage] for further configuration options. If this option is false, screenshots
+    # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
 Restart Grafana for the changes to take affect.
 
 ## Supported notifiers
 
-Images in notifications are supported in the following notifiers:
+Images in notifications are supported in the following notifiers and additional support will be added in the future:
 
 | Name                    | Upload images from disk | Include images from URL |
 | ----------------------- | ----------------------- | ----------------------- |
