@@ -84,3 +84,25 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.D
 
 	return nil
 }
+
+// detachApiKeyFromServiceAccount converts service account token to old API key
+func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *sqlstore.DBSession, apiKeyId int64) error {
+	key := models.ApiKey{Id: apiKeyId}
+	exists, err := sess.Get(&key)
+	if err != nil {
+		s.log.Warn("Cannot get API key", "err", err)
+		return err
+	}
+	if !exists {
+		s.log.Warn("API key not found", "err", err)
+		return models.ErrApiKeyNotFound
+	}
+	key.ServiceAccountId = nil
+
+	if _, err := sess.ID(key.Id).Update(&key); err != nil {
+		s.log.Error("Could not update api key", "err", err)
+		return err
+	}
+
+	return nil
+}

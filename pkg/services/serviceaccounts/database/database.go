@@ -57,6 +57,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		Tokens: 0,
 	}, nil
 }
+
 func ServiceAccountDeletions() []string {
 	deletes := []string{
 		"DELETE FROM api_key WHERE service_account_id = ?",
@@ -171,7 +172,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 	})
 }
 
-//nolint:gosimple
 func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccountID int64) ([]*models.ApiKey, error) {
 	result := make([]*models.ApiKey, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -438,6 +438,45 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 	}
 
 	return searchResult, nil
+}
+
+// RevertApiKey converts service account token to old API key
+func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, key *models.ApiKey) error {
+	if key.ServiceAccountId == nil {
+		// TODO: better error message
+		return fmt.Errorf("API key is not linked to service account")
+	}
+
+	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
+	if err != nil {
+		return fmt.Errorf("Cannot revert API key: %w", err)
+	}
+	if len(tokens) > 1 {
+		return fmt.Errorf("Cannot revert API key: service account contains more than one token")
+	}
+
+	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Delete service account
+		user := models.User{}
+		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+
+		// Detach API key from service account
+		if err := s.detachApiKeyFromServiceAccount(sess, key.Id); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot revert API key: %w", err)
+	}
+	return nil
 }
 
 func contains(s []int64, e int64) bool {
