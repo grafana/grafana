@@ -17,7 +17,7 @@ weight: -33
 
 # What’s new in Grafana v9.0 ((beta))
 
-As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default unified alerting experience.
+As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 
 A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
 
@@ -82,11 +82,11 @@ The new heatmap by default assumes that the data is pre-bucketed. So if your que
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap_with_time_series_light_theme.png" max-width="500px" caption="Heatmap panel with time series" >}}
 
-## Unified alerting is the default in Grafana 9
+## Grafana Alerting is the default in Grafana 9
 
-Unified alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the unified alerting interface.
+Grafana Alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the Grafana Alerting interface.
 
-Unified alerting has been available since June, 2021, it now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out/" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out/" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
@@ -94,7 +94,7 @@ Alert state history for Grafana managed alerts indicates the cause of the state.
 
 ### Images in notifications for Grafana managed alerts
 
-Unified alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Unified alerting . This functionality was available in legacy dashboard alerting, but was missing in unified alerting. It requires the alert to be related to a specific dashboard panel using the “Dashboard UID” and “Panel ID” annotations.
+Grafana Alerting now provides the ability to capture an image for Grafana managed alerts and deliver it via a notification. This is configurable via the contact points tab of Grafana Alerting . This functionality was available in legacy dashboard alerting, but was missing in Grafana Alerting. It requires the alert to be related to a specific dashboard panel using the “Dashboard UID” and “Panel ID” annotations.
 
 ## Envelope encryption is generally available and enabled by default
 
