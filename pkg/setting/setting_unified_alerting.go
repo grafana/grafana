@@ -48,7 +48,7 @@ const (
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	screenshotsDefaultEnabled               = false
+	screenshotsDefaultCapture               = false
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -84,7 +84,7 @@ type UnifiedAlertingSettings struct {
 }
 
 type UnifiedAlertingScreenshotSettings struct {
-	Enabled                    bool
+	Capture                    bool
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
 }
@@ -260,7 +260,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
 
-	uaCfgScreenshots.Enabled = screenshots.Key("enabled").MustBool(screenshotsDefaultEnabled)
+	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
