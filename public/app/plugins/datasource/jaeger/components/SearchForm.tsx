@@ -81,12 +81,15 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         `/api/services/${encodeURIComponent(query.service!)}/operations`,
         'operations'
       );
+      if (query.operation && getTemplateSrv().containsTemplate(query.operation)) {
+        operations.push(toOption(query.operation));
+      }
       setOperationOptions([allOperationsOption, ...operations]);
     };
     if (query.service) {
       getOperations();
     }
-  }, [datasource, query.service, loadOptions]);
+  }, [datasource, query.service, loadOptions, query.operation]);
 
   return (
     <div className={css({ maxWidth: '500px' })}>
