@@ -341,13 +341,6 @@ func createInvalidContactPoint() definitions.EmbeddedContactPoint {
 	}
 }
 
-func createInvalidTemplate() definitions.MessageTemplate {
-	return definitions.MessageTemplate{
-		Name:     "",
-		Template: "",
-	}
-}
-
 func createInvalidMuteTiming() definitions.MuteTimeInterval {
 	return definitions.MuteTimeInterval{
 		MuteTimeInterval: prometheus.MuteTimeInterval{
