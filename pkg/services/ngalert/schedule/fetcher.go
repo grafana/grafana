@@ -50,7 +50,5 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context, disabledOr
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
 	sch.schedulableAlertRules.set(q.Result)
-	sch.metrics.SchedulableAlertRules.Set(float64(len(q.Result)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(q.Result)))
 	return nil
 }
