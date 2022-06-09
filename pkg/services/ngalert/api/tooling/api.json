@@ -452,6 +452,13 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "ContactPoints": {
+   "items": {
+    "$ref": "#/definitions/EmbeddedContactPoint"
+   },
+   "type": "array",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "CreateDashboardSnapshotCommand": {
    "properties": {
     "Result": {
@@ -3407,6 +3414,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3465,20 +3473,16 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3530,7 +3534,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -3667,7 +3673,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3707,7 +3712,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "description": "Receiver receiver",
@@ -3965,9 +3972,9 @@
     "operationId": "RouteGetContactpoints",
     "responses": {
      "200": {
-      "description": "Route",
+      "description": "ContactPoints",
       "schema": {
-       "$ref": "#/definitions/Route"
+       "$ref": "#/definitions/ContactPoints"
       }
      }
     },
@@ -3992,9 +3999,9 @@
     ],
     "responses": {
      "202": {
-      "description": "Ack",
+      "description": "EmbeddedContactPoint",
       "schema": {
-       "$ref": "#/definitions/Ack"
+       "$ref": "#/definitions/EmbeddedContactPoint"
       }
      },
      "400": {
@@ -4412,9 +4419,9 @@
     ],
     "responses": {
      "202": {
-      "description": "Ack",
+      "description": "MessageTemplate",
       "schema": {
-       "$ref": "#/definitions/Ack"
+       "$ref": "#/definitions/MessageTemplate"
       }
      },
      "400": {

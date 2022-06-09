@@ -56,7 +56,7 @@ type MessageTemplate struct {
 type MessageTemplates []MessageTemplate
 
 type MessageTemplateContent struct {
-	Template string
+	Template string `json:"template"`
 }
 
 // swagger:parameters RoutePutTemplate
