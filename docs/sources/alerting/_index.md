@@ -8,7 +8,7 @@ weight: 114
 
 # Grafana Alerting
 
-Grafana alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
+Grafana Alerting allows you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
 
 - Create and manage Grafana alerts
 - Create and manage Grafana Mimir and Loki managed alerts
@@ -20,7 +20,7 @@ For new installations or existing installs without alerting configured, Grafana 
 | ----------- | ------------- | ------------- | ------------- |
 | Grafana 9.0 | On by default | On by default | On by default |
 
-Existing installations that upgrade to v9.0 will have Grafana Alerting enabled by default. For more information on migrating from legacy or the cloud alerting plugin, see [Migrating to Grafana Alerting]({{< relref "migrating-alerts/" >}}).
+Existing installations that upgrade to v9.0 will have Grafana Alerting enabled by default. For more information on migrating from legacy or the cloud alerting plugin, see [Migrating to Grafana Alerting]({{< relref "migrating-alerts/" >}}). 
 
 Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "fundamentals/" >}}) of Grafana Alerting. Refer to [Role-based access control]({{< relref "../enterprise/access-control/" >}}) in Grafana Enterprise to learn more about controlling access to alerts using role-based permissions.
 
