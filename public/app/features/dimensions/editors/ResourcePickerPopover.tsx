@@ -131,7 +131,9 @@ export const ResourcePickerPopover = (props: Props) => {
                       .then((data) => {
                         getBackendSrv()
                           .get(`api/storage/read/${data.path}`)
-                          .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => {
+                            setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
+                          })
                           .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
                       })
                       .catch((err) => console.error(err));

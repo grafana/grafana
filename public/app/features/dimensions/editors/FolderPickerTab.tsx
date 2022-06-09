@@ -3,6 +3,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
@@ -14,7 +15,7 @@ const getFolders = (mediaType: MediaType) => {
   if (mediaType === MediaType.Icon) {
     return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
   } else {
-    return [ResourceFolderName.BG];
+    return [ResourceFolderName.BG, 'upload'];
   }
 };
 
@@ -71,36 +72,55 @@ export const FolderPickerTab = (props: Props) => {
         mediaType === MediaType.Icon
           ? (item: FileElement) => item.name.endsWith('.svg')
           : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
-
-      getDatasourceSrv()
-        .get('-- Grafana --')
-        .then((ds) => {
-          (ds as GrafanaDatasource).listFiles(folder).subscribe({
-            next: (frame) => {
-              const cards: ResourceItem[] = [];
-              frame.forEach((item) => {
-                if (filter(item)) {
-                  const idx = item.name.lastIndexOf('.');
-                  cards.push({
-                    value: `${folder}/${item.name}`,
-                    label: item.name,
-                    search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
-                    imgUrl: `public/${folder}/${item.name}`,
-                  });
-                }
+      if (folder.toLowerCase().includes('upload')) {
+        fetch(`/api/storage/list/upload`)
+          .then((res) => res.json())
+          .then(({ data }) => {
+            const filesArray = data.values[0];
+            const cards: ResourceItem[] = [];
+            filesArray.forEach((fileName: string) => {
+              const idx = fileName.lastIndexOf('.');
+              cards.push({
+                value: `${config.appUrl}api/storage/read/upload/${fileName}`,
+                label: fileName,
+                search: (idx ? fileName.substring(0, idx) : fileName).toLowerCase(),
+                imgUrl: `${config.appUrl}api/storage/read/upload/${fileName}`,
               });
-              setDirectoryIndex(cards);
-              setFilteredIndex(cards);
-            },
+            });
+            setDirectoryIndex(cards);
+            setFilteredIndex(cards);
           });
-        });
+      } else {
+        getDatasourceSrv()
+          .get('-- Grafana --')
+          .then((ds) => {
+            (ds as GrafanaDatasource).listFiles(folder).subscribe({
+              next: (frame) => {
+                const cards: ResourceItem[] = [];
+                frame.forEach((item) => {
+                  if (filter(item)) {
+                    const idx = item.name.lastIndexOf('.');
+                    cards.push({
+                      value: `${folder}/${item.name}`,
+                      label: item.name,
+                      search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
+                      imgUrl: `public/${folder}/${item.name}`,
+                    });
+                  }
+                });
+                setDirectoryIndex(cards);
+                setFilteredIndex(cards);
+              },
+            });
+          });
+      }
     }
   }, [mediaType, currentFolder]);
 
   return (
     <>
       <Field>
-        <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
+        <Select options={folders} onChange={setCurrentFolder} value={currentFolder} menuShouldPortal={false} />
       </Field>
       <Field>
         <FilterInput
