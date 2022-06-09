@@ -93,6 +93,67 @@ type QueryHistoryByUID struct {
 	UID string `json:"query_history_uid"`
 }
 
+// swagger:parameters searchQueries
+type SearchQueriesParams struct {
+	// List of data source UIDs to search for
+	// in:query
+	// required: false
+	// type: array
+	// collectionFormat: multi
+	DatasourceUid []string `json:"datasourceUid"`
+	// Text inside query or comments that is searched for
+	// in:query
+	// required: false
+	SearchString string `json:"searchString"`
+	// Flag indicating if only starred queries should be returned
+	// in:query
+	// required: false
+	OnlyStarred bool `json:"onlyStarred"`
+	// Sort method
+	// in:query
+	// required: false
+	// default: time-desc
+	// Enum: time-desc,time-asc
+	Sort string `json:"sort"`
+	// Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size.
+	// in:query
+	// required: false
+	Page int `json:"page"`
+	// Limit the number of returned results 
+	// in:query
+	// required: false
+	Limit int `json:"limit"`
+	// From range for the query history search
+	// in:query
+	// required: false
+	From int64 `json:"from"`
+	// To range for the query history search
+	// in:query
+	// required: false
+	To int64 `json:"to"`
+}
+
+// swagger:parameters createQuery
+type CreateQueryParams struct {
+	// in:body
+	// required:true
+	Body  queryhistory.CreateQueryInQueryHistoryCommand `json:"body"`
+}
+
+// swagger:parameters patchQueryComment
+type PatchQueryCommentParams struct {
+	// in:body
+	// required:true
+	Body  queryhistory.PatchQueryCommentInQueryHistoryCommand `json:"body"`
+}
+
+// swagger:parameters migrateQueries
+type MigrateQueriesParams struct {
+	// in:body
+	// required:true
+	Body  queryhistory.MigrateQueriesToQueryHistoryCommand `json:"body"`
+}
+
 //swagger:response getQueryHistorySearchResponse
 type GetQueryHistorySearchResponse struct {
 	// in: body
