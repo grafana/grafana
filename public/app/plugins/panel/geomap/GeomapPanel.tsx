@@ -21,7 +21,9 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   FrameGeometrySourceMode,
+  getFrameMatchers,
   GrafanaTheme,
+  MapLayerHandler,
   MapLayerOptions,
   PanelData,
   PanelProps,
@@ -251,9 +253,7 @@ export class GeomapPanel extends Component<Props, State> {
    */
   dataChanged(data: PanelData) {
     for (const state of this.layers) {
-      if (state.handler.update) {
-        state.handler.update(data);
-      }
+      this.applyLayerFilter(state.handler, state.options);
     }
   }
 
@@ -468,9 +468,7 @@ export class GeomapPanel extends Component<Props, State> {
       group.setAt(layerIndex, info.layer);
 
       // initialize with new data
-      if (info.handler.update) {
-        info.handler.update(this.props.data);
-      }
+      this.applyLayerFilter(info.handler, newOptions);
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -506,10 +504,6 @@ export class GeomapPanel extends Component<Props, State> {
     const handler = await item.create(map, options, config.theme2);
     const layer = handler.init();
 
-    if (handler.update) {
-      handler.update(this.props.data);
-    }
-
     if (!options.name) {
       options.name = this.getNextLayerName();
     }
@@ -533,7 +527,24 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
+
+    this.applyLayerFilter(handler, options);
+
     return state;
+  }
+
+  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+    if (handler.update) {
+      let panelData = this.props.data;
+      if (options.filterData) {
+        const matcherFunc = getFrameMatchers(options.filterData);
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
+      }
+      handler.update(panelData);
+    }
   }
 
   initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
