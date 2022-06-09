@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -66,10 +67,13 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   useEffect(() => {
     const getServices = async () => {
       const services = await loadOptions('/api/services', 'services');
+      if (query.service && getTemplateSrv().containsTemplate(query.service)) {
+        services.push(toOption(query.service));
+      }
       setServiceOptions(services);
     };
     getServices();
-  }, [datasource, loadOptions]);
+  }, [datasource, loadOptions, query.service]);
 
   useEffect(() => {
     const getOperations = async () => {
@@ -127,6 +131,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             menuPlacement="bottom"
             isClearable
             aria-label={'select-operation-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>

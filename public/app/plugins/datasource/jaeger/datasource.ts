@@ -56,7 +56,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
     if (target.queryType !== 'search' && target.query) {
       return this._request(
-        `/api/traces/${encodeURIComponent(getTemplateSrv().replace(target.query, options.scopedVars))}`
+        `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`
       ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
@@ -132,7 +132,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     // if (query.tags) {
     //   query = {
     //     ...query,
-    //     tags: getTemplateSrv().replace(query.tags, scopedVars),
+    //     tags: this.templateSrv.replace(query.tags, scopedVars),
     //   };
     // }
 
