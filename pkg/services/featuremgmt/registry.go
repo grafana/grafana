@@ -73,6 +73,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "prometheus_azure_auth",
 			Description: "Experimental. Azure authentication for Prometheus datasource",
 			State:       FeatureStateBeta,
