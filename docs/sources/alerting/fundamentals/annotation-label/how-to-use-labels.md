@@ -7,11 +7,11 @@ keywords:
   - alerting
   - guide
   - fundamentals
-title: Labels in Grafana alerting
+title: Labels in Grafana Alerting
 weight: 117
 ---
 
-# Labels in Grafana alerting
+# Labels in Grafana Alerting
 
 This topic explains why labels are a fundamental component of alerting.
 

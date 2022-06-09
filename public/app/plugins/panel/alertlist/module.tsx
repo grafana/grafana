@@ -285,12 +285,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       category: ['Alert state filter'],
     })
     .addBooleanSwitch({
-      path: 'stateFilter.inactive',
-      name: 'Inactive',
-      defaultValue: false,
-      category: ['Alert state filter'],
-    })
-    .addBooleanSwitch({
       path: 'stateFilter.noData',
       name: 'No Data',
       defaultValue: false,

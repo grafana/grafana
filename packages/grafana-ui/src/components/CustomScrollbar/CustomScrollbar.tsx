@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { isNil } from 'lodash';
 import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
@@ -46,28 +45,24 @@ export const CustomScrollbar: FC<Props> = ({
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
-  useEffect(() => {
-    if (ref.current) {
-      scrollRefCallback?.(ref.current.view);
-    }
-  }, [ref, scrollRefCallback]);
   const styles = useStyles2(getStyles);
 
-  const updateScroll = () => {
-    if (ref.current && !isNil(scrollTop)) {
-      ref.current.scrollTop(scrollTop);
+  useEffect(() => {
+    if (ref.current && scrollRefCallback) {
+      scrollRefCallback(ref.current.view);
     }
-  };
+  }, [ref, scrollRefCallback]);
 
   useEffect(() => {
-    updateScroll();
-  });
+    if (ref.current && scrollTop != null) {
+      ref.current.scrollTop(scrollTop);
+    }
+  }, [scrollTop]);
 
   /**
    * Special logic for doing a update a few milliseconds after mount to check for
    * updated height due to dynamic content
    */
-
   useEffect(() => {
     if (!updateAfterMountMs) {
       return;

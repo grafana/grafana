@@ -308,19 +308,21 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
+			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
+			uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+			nameScope := datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name"))
 			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
-			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.UpdateDataSourceByID))
-			datasourceRoute.Put("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.UpdateDataSourceByUID))
-			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.DeleteDataSourceById))
-			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.DeleteDataSourceByUID))
-			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByName))
+			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
+			datasourceRoute.Put("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(hs.UpdateDataSourceByUID))
+			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
+			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, nameScope)), routing.Wrap(hs.DeleteDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, uidScope)), routing.Wrap(hs.GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
+			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
 		})
-
-		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
