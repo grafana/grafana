@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -403,13 +403,19 @@ func setup(wideFrames bool) *testContext {
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
+	rt, err := httpProvider.GetTransport()
+	if err != nil {
+		panic(err)
+	}
+
+	apiClient := client.NewClient(rt, "POST", "http://localhost:9090/")
 	queryData, _ := querydata.New(
-		httpProvider,
-		setting.NewCfg(),
-		&fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}},
+		apiClient,
 		tracer,
-		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
 		&fakeLogger{},
+		1,
+		"15s",
+		true,
 	)
 
 	return &testContext{
@@ -432,9 +438,8 @@ type fakeHttpClientProvider struct {
 	res  *http.Response
 }
 
-func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Client, error) {
-	p.opts = opts[0]
-	c, err := sdkhttpclient.New(opts[0])
+func (p *fakeHttpClientProvider) New(_ ...sdkhttpclient.Options) (*http.Client, error) {
+	c, err := sdkhttpclient.New()
 	if err != nil {
 		return nil, err
 	}
@@ -442,8 +447,7 @@ func (p *fakeHttpClientProvider) New(opts ...sdkhttpclient.Options) (*http.Clien
 	return c, nil
 }
 
-func (p *fakeHttpClientProvider) GetTransport(opts ...sdkhttpclient.Options) (http.RoundTripper, error) {
-	p.opts = opts[0]
+func (p *fakeHttpClientProvider) GetTransport(_ ...sdkhttpclient.Options) (http.RoundTripper, error) {
 	return http.DefaultTransport, nil
 }
 

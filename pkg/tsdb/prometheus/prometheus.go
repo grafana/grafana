@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -15,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
+	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
@@ -49,20 +52,35 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
+		httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
+		if httpMethod == "" {
+			httpMethod = http.MethodPost
+		}
+
+		rt, err := httpClientProvider.GetTransport()
+		if err != nil {
+			return nil, err
+		}
+
+		timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
+		if err != nil {
+			return nil, err
+		}
+
+		apiClient := client.NewClient(rt, httpMethod, settings.URL)
+
 		b, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		qd, err := querydata.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		enableWideSeries := features.IsEnabled(featuremgmt.FlagPrometheusWideSeries)
+		qd, err := querydata.New(apiClient, tracer, plog, settings.ID, timeInterval, enableWideSeries)
 		if err != nil {
 			return nil, err
 		}
 
-		r, err := resource.New(httpClientProvider, cfg, features, settings, plog)
-		if err != nil {
-			return nil, err
-		}
+		r := resource.New(apiClient, plog, settings.URL)
 
 		return instance{
 			buffered:  b,
