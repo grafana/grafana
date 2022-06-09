@@ -79,13 +79,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:        "prometheus_azure_auth",
 			Description: "Experimental. Azure authentication for Prometheus datasource",
 			State:       FeatureStateBeta,
@@ -236,6 +229,12 @@ var (
 		{
 			Name:         "canvasPanelNesting",
 			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

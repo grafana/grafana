@@ -38,13 +38,17 @@ type DashboardServiceImpl struct {
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
+	ac                   accesscontrol.AccessControl
 }
 
 func ProvideDashboardService(
 	cfg *setting.Cfg, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store))
+
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
@@ -53,6 +57,7 @@ func ProvideDashboardService(
 		features:             features,
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
+		ac:                   ac,
 	}
 }
 
@@ -484,7 +489,8 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return dr.dashboardStore.GetDashboard(ctx, query)
+	_, err := dr.dashboardStore.GetDashboard(ctx, query)
+	return err
 }
 
 func (dr *DashboardServiceImpl) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
