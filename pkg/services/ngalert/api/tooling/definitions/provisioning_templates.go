@@ -10,7 +10,7 @@ import (
 //
 //     Responses:
 //       200: MessageTemplate
-//       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //

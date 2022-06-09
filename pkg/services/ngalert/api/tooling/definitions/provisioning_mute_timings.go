@@ -11,7 +11,7 @@ import (
 //
 //     Responses:
 //       200: MuteTimings
-//       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
@@ -19,7 +19,7 @@ import (
 //
 //     Responses:
 //       200: MuteTimeInterval
-//       400: ValidationError
+//       404: NotFound
 
 // swagger:route POST /api/v1/provisioning/mute-timings provisioning stable RoutePostMuteTiming
 //

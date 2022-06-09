@@ -6,7 +6,6 @@ package definitions
 //
 //     Responses:
 //       200: Route
-//       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/policies provisioning stable RoutePutPolicyTree
 //

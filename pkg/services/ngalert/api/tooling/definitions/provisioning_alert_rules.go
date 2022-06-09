@@ -12,7 +12,6 @@ import (
 //
 //     Responses:
 //       200: AlertRule
-//       400: ValidationError
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
@@ -39,7 +38,6 @@ import (
 //
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
-//       400: ValidationError
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
 type AlertRuleUIDReference struct {

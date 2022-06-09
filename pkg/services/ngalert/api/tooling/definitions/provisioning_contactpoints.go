@@ -13,7 +13,6 @@ import (
 //
 //     Responses:
 //       200: Route
-//       400: ValidationError
 
 // swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
@@ -46,7 +45,6 @@ import (
 //
 //     Responses:
 //       202: Ack
-//       400: ValidationError
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
