@@ -236,7 +236,7 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
-      const isMixedDS = ds.meta.mixed;
+      const isMixedDS = ds.meta?.mixed;
       // Attach the data source to each query
       request.targets = request.targets.map((query) => {
         const isExpressionQuery = query.datasource?.type === ExpressionDatasourceRef.type;
