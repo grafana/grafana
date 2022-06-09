@@ -83,7 +83,7 @@ Status codes:
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **401** – Unauthorized
-- **500** – Unable to add query to the database
+- **500** – Internal error
 
 ## Query history search
 
@@ -179,7 +179,7 @@ Status codes:
 
 - **200** – OK
 - **401** – Unauthorized
-- **500** – Unable to delete query from the database
+- **500** – Internal error
 
 ## Update comment of query in Query history by UID
 
@@ -236,7 +236,7 @@ Status codes:
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **401** – Unauthorized
-- **500** – Unable to update comment of query in the database
+- **500** – Internal error
 
 ## Star query in Query history
 
@@ -285,7 +285,7 @@ Status codes:
 
 - **200** – OK
 - **401** – Unauthorized
-- **500** – Unable to star query in the database
+- **500** – Internal error
 
 ## Unstar query in Query history
 
@@ -334,7 +334,7 @@ Status codes:
 
 - **200** – OK
 - **401** – Unauthorized
-- **500** – Unable to unstar query in the database
+- **500** – Internal error
 
 ## Migrate queries to Query history
 
@@ -393,4 +393,4 @@ Status codes:
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **401** – Unauthorized
-- **500** – Unable to add queries to the database
+- **500** – Internal error
