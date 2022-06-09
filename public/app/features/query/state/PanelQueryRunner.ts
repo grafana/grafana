@@ -32,12 +32,12 @@ import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
+import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
-import { getLastKey, getNewVariableIndex } from 'app/features/variables/state/selectors';
+import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
 import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
-import { ConstantVariableModel } from 'app/features/variables/types';
-import { toStateKey, toVariablePayload } from 'app/features/variables/utils';
+import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
 import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 import { store } from 'app/store/store';
@@ -169,7 +169,7 @@ export class PanelQueryRunner {
                     ?.evaluate(conditions[i][j].options);
 
                   if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
-                    return (evt: any, origin: any) => {
+                    return async (evt: any, origin: any) => {
                       const state = store.getState();
 
                       const key = getLastKey(state);
@@ -179,16 +179,28 @@ export class PanelQueryRunner {
                       const identifier: VariableIdentifier = { type: 'constant', id };
                       const global = false;
                       const index = getNewVariableIndex(rootStateKey, state);
-                      const model: ConstantVariableModel = cloneDeep(variableAdapters.get('constant').initialState);
-                      model.id = id;
-                      model.name = field.name;
-                      model.rootStateKey = rootStateKey;
-                      model.query = origin.field.values.get(origin.rowIndex);
+
+                      const variable = constantBuilder()
+                        .withId(id)
+                        .withoutOptions()
+                        .withName(id)
+                        .withRootStateKey(rootStateKey)
+                        .build();
+
                       store.dispatch(
                         toKeyedAction(
                           rootStateKey,
-                          addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))
+                          addVariable(toVariablePayload<AddVariable>(identifier, { global, model: variable, index }))
                         )
+                      );
+
+                      const existing = getVariable(toKeyedVariableIdentifier(variable), store.getState());
+                      const value = origin.field.values.get(origin.rowIndex);
+                      const adapter = variableAdapters.get('constant');
+                      await adapter.setValue(
+                        existing,
+                        { selected: true, value, text: value ? value.toString() : '' },
+                        true
                       );
                     };
                   }

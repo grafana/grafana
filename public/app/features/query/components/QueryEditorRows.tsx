@@ -181,7 +181,7 @@ export class QueryEditorRows extends PureComponent<Props> {
 
         <ValuePicker
           icon="plus"
-          label="Add field override"
+          label="Add query condition"
           variant="secondary"
           menuPlacement="auto"
           isFullWidth={true}
