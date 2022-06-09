@@ -12,16 +12,17 @@ import (
 )
 
 var (
-	ErrEmailNotAllowed       = errors.New("required email domain not fulfilled")
-	ErrInvalidCredentials    = errors.New("invalid username or password")
-	ErrNoEmail               = errors.New("login provider didn't return an email address")
-	ErrProviderDeniedRequest = errors.New("login provider denied login request")
-	ErrTooManyLoginAttempts  = errors.New("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
-	ErrPasswordEmpty         = errors.New("no password provided")
-	ErrUserDisabled          = errors.New("user is disabled")
-	ErrAbsoluteRedirectTo    = errors.New("absolute URLs are not allowed for redirect_to cookie value")
-	ErrInvalidRedirectTo     = errors.New("invalid redirect_to cookie value")
-	ErrForbiddenRedirectTo   = errors.New("forbidden redirect_to cookie value")
+	ErrEmailNotAllowed        = errors.New("required email domain not fulfilled")
+	ErrInvalidCredentials     = errors.New("invalid username or password")
+	ErrNoEmail                = errors.New("login provider didn't return an email address")
+	ErrProviderDeniedRequest  = errors.New("login provider denied login request")
+	ErrTooManyLoginAttempts   = errors.New("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+	ErrPasswordEmpty          = errors.New("no password provided")
+	ErrUserDisabled           = errors.New("user is disabled")
+	ErrAbsoluteRedirectTo     = errors.New("absolute URLs are not allowed for redirect_to cookie value")
+	ErrInvalidRedirectTo      = errors.New("invalid redirect_to cookie value")
+	ErrForbiddenRedirectTo    = errors.New("forbidden redirect_to cookie value")
+	ErrNoLoginProviderEnabled = errors.New("no login providers are enabled")
 )
 
 var loginLogger = log.New("login")
@@ -53,9 +54,9 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query, a.store)
-	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
-		!errors.Is(err, ErrUserDisabled)) {
+	grafanaLoginEnabled, err := loginUsingGrafanaDB(ctx, query, a.store)
+	if grafanaLoginEnabled && (err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled))) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -70,6 +71,10 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		if !errors.Is(err, ErrUserDisabled) || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			err = ldapErr
 		}
+	}
+
+	if !grafanaLoginEnabled && !ldapEnabled {
+		return ErrNoLoginProviderEnabled
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,23 +22,27 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 	return nil
 }
 
-var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
+var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) (bool, error) {
+	if setting.DisableLogin {
+		return false, nil
+	}
+
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
 	if err := store.GetUserByLogin(ctx, &userQuery); err != nil {
-		return err
+		return true, err
 	}
 
 	user := userQuery.Result
 
 	if user.IsDisabled {
-		return ErrUserDisabled
+		return true, ErrUserDisabled
 	}
 
 	if err := validatePassword(query.Password, user.Password, user.Salt); err != nil {
-		return err
+		return true, err
 	}
 
 	query.User = user
-	return nil
+	return true, nil
 }

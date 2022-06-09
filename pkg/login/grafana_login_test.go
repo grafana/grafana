@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,9 @@ import (
 func TestLoginUsingGrafanaDB(t *testing.T) {
 	grafanaLoginScenario(t, "When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
 		sc.withNonExistingUser()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+		enabled, err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+
+		assert.True(t, enabled)
 		require.EqualError(t, err, models.ErrUserNotFound.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
@@ -22,8 +25,9 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with invalid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withInvalidPassword()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+		enabled, err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 
+		assert.True(t, enabled)
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
 
 		assert.True(t, sc.validatePasswordCalled)
@@ -32,9 +36,10 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with valid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withValidCredentials()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+		enabled, err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 		require.NoError(t, err)
 
+		assert.True(t, enabled)
 		assert.True(t, sc.validatePasswordCalled)
 
 		require.NotNil(t, sc.loginUserQuery.User)
@@ -44,11 +49,21 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with disabled user", func(sc *grafanaLoginScenarioContext) {
 		sc.withDisabledUser()
-		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+		enabled, err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
 		require.EqualError(t, err, ErrUserDisabled.Error())
 
+		assert.True(t, enabled)
 		assert.False(t, sc.validatePasswordCalled)
 		assert.Nil(t, sc.loginUserQuery.User)
+	})
+
+	grafanaLoginScenario(t, "When login with grafana login provider disabled", func(sc *grafanaLoginScenarioContext) {
+		setting.DisableLogin = true
+		enabled, err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery, sc.store)
+
+		require.NoError(t, err)
+		assert.False(t, enabled)
+		assert.False(t, sc.validatePasswordCalled)
 	})
 }
 
