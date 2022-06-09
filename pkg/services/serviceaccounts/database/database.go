@@ -87,7 +87,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	migrationStatus, exists, err := s.kvStore.Get(ctx, kvstore.AllOrganizations, "serviceaccounts", "migrationStatus")
+	migrationStatus, exists, err := s.kvStore.Get(ctx, orgID, "serviceaccounts", "migrationStatus")
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +103,14 @@ func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context
 }
 
 func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	if err := s.kvStore.Set(ctx, kvstore.AllOrganizations, "serviceaccounts", "hideApiKeys", "1"); err != nil {
+	if err := s.kvStore.Set(ctx, orgID, "serviceaccounts", "hideApiKeys", "1"); err != nil {
 		s.log.Error("Failed to hide API keys tab", err)
 	}
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context) error {
-	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
+func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
+	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgID)
 	if len(basicKeys) > 0 {
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
@@ -120,14 +120,14 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 			}
 		}
 	}
-	if err := s.kvStore.Set(ctx, kvstore.AllOrganizations, "serviceaccounts", "migrationStatus", "1"); err != nil {
+	if err := s.kvStore.Set(ctx, orgID, "serviceaccounts", "migrationStatus", "1"); err != nil {
 		s.log.Error("Failed to write API keys migration status", err)
 	}
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
-	basicKeys := s.sqlStore.GetAllOrgsAPIKeys(ctx)
+func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, orgID int64, keys []int64) error {
+	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgID)
 	if len(basicKeys) == 0 {
 		return fmt.Errorf("No API keys to convert found")
 	}

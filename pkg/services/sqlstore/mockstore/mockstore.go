@@ -537,7 +537,7 @@ func (m *SQLStoreMock) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQ
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey {
+func (m *SQLStoreMock) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
 	return nil
 }
 

@@ -118,12 +118,12 @@ func (s *ServiceAccountsStoreMock) GetAPIKeysMigrationStatus(ctx context.Context
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) MigrateApiKeysToServiceAccounts(ctx context.Context) error {
+func (s *ServiceAccountsStoreMock) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
 	s.Calls.MigrateApiKeysToServiceAccounts = append(s.Calls.MigrateApiKeysToServiceAccounts, []interface{}{ctx})
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
+func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, orgID int64, keys []int64) error {
 	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
 	return nil
 }

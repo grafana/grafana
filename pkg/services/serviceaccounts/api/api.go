@@ -131,7 +131,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 }
 
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context()); err == nil {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
 		return response.Success("API keys migrated to service accounts")
 	} else {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
@@ -143,7 +143,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
-	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), []int64{keyId}); err == nil {
+	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), ctx.OrgId, []int64{keyId}); err == nil {
 		return response.Success("Service accounts converted")
 	} else {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
