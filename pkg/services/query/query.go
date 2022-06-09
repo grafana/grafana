@@ -138,8 +138,11 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		Queries: []backend.DataQuery{},
 	}
 
-	middlewares := []httpclient.Middleware{
-		httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+	middlewares := []httpclient.Middleware{}
+	if parsedReq.httpRequest != nil {
+		middlewares = append(middlewares,
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+		)
 	}
 
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
