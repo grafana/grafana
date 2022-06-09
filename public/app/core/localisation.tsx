@@ -1,17 +1,33 @@
 import { I18n, i18n } from '@lingui/core';
 import { I18nProvider as LinguiI18nProvider } from '@lingui/react';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
-import { messages } from '../../locales/en/messages';
+import config from 'app/core/config';
 
 let i18nInstance: I18n;
 
-export function getI18n(locale = 'en') {
+export async function getI18n(locale = 'en') {
   if (i18nInstance) {
     return i18nInstance;
   }
+  let loc = locale;
+  switch (config.bootData.user.weekStart) {
+    case 'saturday':
+      loc = 'es';
+      break;
+    case 'sunday':
+      loc = 'fr';
+      break;
+    default:
+      loc = 'en';
+      break;
+  }
 
-  i18n.load(locale, messages);
+  // Dynamically load the messages for the user's locale
+  const imp = await import(`@lingui/loader!../../locales/${loc}/messages.po`).catch((err) => {
+    return err;
+  });
+  i18n.load(locale, imp.messages);
 
   // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
   // but because this could potentially be in a the critical path of loading the frontend lets
@@ -38,7 +54,9 @@ interface I18nProviderProps {
   children: React.ReactNode;
 }
 export function I18nProvider({ children }: I18nProviderProps) {
-  const [i18nRef] = useState(() => getI18n());
+  useEffect(() => {
+    getI18n();
+  }, []);
 
-  return <LinguiI18nProvider i18n={i18nRef}>{children}</LinguiI18nProvider>;
+  return <LinguiI18nProvider i18n={i18n}>{children}</LinguiI18nProvider>;
 }
