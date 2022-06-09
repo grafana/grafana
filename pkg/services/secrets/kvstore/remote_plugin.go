@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -27,12 +28,12 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	}
 	res, err := kv.secretsPlugin.Get(ctx, req)
 	if err != nil {
-		return "", false, err
+		return "", false, wrapSecretError(err)
 	} else if res.Error != "" {
 		err = fmt.Errorf(res.Error)
 	}
 
-	return res.DecryptedValue, res.Exists, err
+	return res.DecryptedValue, res.Exists, wrapSecretError(err)
 }
 
 // Set an item in the store
@@ -51,7 +52,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 		err = fmt.Errorf(res.Error)
 	}
 
-	return err
+	return wrapSecretError(err)
 }
 
 // Del deletes an item from the store.
@@ -69,7 +70,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 		err = fmt.Errorf(res.Error)
 	}
 
-	return err
+	return wrapSecretError(err)
 }
 
 // Keys get all keys for a given namespace. To query for all
@@ -86,12 +87,12 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 
 	res, err := kv.secretsPlugin.Keys(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, wrapSecretError(err)
 	} else if res.Error != "" {
 		err = fmt.Errorf(res.Error)
 	}
 
-	return parseKeys(res.Keys), err
+	return parseKeys(res.Keys), wrapSecretError(err)
 }
 
 // Rename an item in the store
@@ -110,7 +111,7 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 		err = fmt.Errorf(res.Error)
 	}
 
-	return err
+	return wrapSecretError(err)
 }
 
 func parseKeys(keys []*smp.Key) []Key {
@@ -122,4 +123,8 @@ func parseKeys(keys []*smp.Key) []Key {
 	}
 
 	return newKeys
+}
+
+func wrapSecretError(err error) models.ErrDatasourceSecretsPlugin {
+	return models.ErrDatasourceSecretsPlugin{Err: err}
 }
