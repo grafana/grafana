@@ -31,6 +31,7 @@ type TransactionManager interface {
 // RuleStore represents the ability to persist and query alert rules.
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) error
+	ListAlertRulesQuery(ctx context.Context, query *models.ListAlertRulesQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
 	UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error
