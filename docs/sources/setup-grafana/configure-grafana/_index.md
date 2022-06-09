@@ -1189,7 +1189,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If enabled, we’ll migrate all your alert rules and notification channels to the new system as alert rules and notification channels you had previously defined will be converted into an Alertmanager configuration. Legacy alerting data is preserved to enable backwards compatibility. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set  force_migration=true to avoid deletion of data. The default value is `true`.
+Enable or disable Grafana Alerting. If enabled, we’ll migrate all your alert rules and notification channels to the new system as alert rules and notification channels you had previously defined will be converted into an Alertmanager configuration. Legacy alerting data is preserved to enable backwards compatibility. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 

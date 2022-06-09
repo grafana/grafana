@@ -10,9 +10,8 @@ weight: 106
 
 # Differences and limitations
 
-When Grafana Alerting is enabled or upgraded to Grafana 9.0 or later, existing legacy dashboard alerts migrate in a format compatible with the Grafana Alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside any new alerts. 
+When Grafana Alerting is enabled or upgraded to Grafana 9.0 or later, existing legacy dashboard alerts migrate in a format compatible with the Grafana Alerting. In the Alerting page of your Grafana instance, you can view the migrated alerts alongside any new alerts.
 This topic explains how legacy dashboard alerts are migrated and some limitations of the migration.
-
 
 > **Note:** This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana Alerting for your Cloud stack.
 

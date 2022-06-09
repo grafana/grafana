@@ -16,7 +16,7 @@ Existing installations that do not use legacy alerting will have Grafana Alertin
 
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 1. Enter the following in your configuration:
-   
+
 ```
 [alerting]
 enabled = false
@@ -27,12 +27,13 @@ enabled = false
 
 3. Restart Grafana for the configuration changes to take effect.
 
-If at any time you want to turn alerting back on, you can do so. 
+If at any time you want to turn alerting back on, you can do so.
 
 Existing installations that use legacy alerting will automatically be upgraded to Grafana Alerting unless you have opted-out of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost. To keep using legacy alerting and disable Grafana Alerting:
 
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 2. Enter the following in your configuration:
+
 ```
 [alerting]
 enabled = false
