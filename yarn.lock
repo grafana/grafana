@@ -4684,6 +4684,7 @@ __metadata:
     "@react-aria/menu": 3.4.4
     "@react-aria/overlays": 3.8.2
     "@react-stately/menu": 3.2.7
+    "@rollup/plugin-alias": ^3.1.9
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -4796,6 +4797,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-svg-import: ^1.6.0
     rollup-plugin-terser: 7.0.2
+    rollup-plugin-visualizer: ^5.6.0
     rxjs: 7.5.5
     sass-loader: 13.0.0
     slate: 0.47.8
@@ -7649,6 +7651,17 @@ __metadata:
     react-redux:
       optional: true
   checksum: be5cdea975a8a631fe2d88cafc7077554c7bc3621a4a7031556cc17e5dec26359018f2614c325895e7ab50865f5c511025d1e589ca01de7e2bd88d95e0a1a963
+  languageName: node
+  linkType: hard
+
+"@rollup/plugin-alias@npm:^3.1.9":
+  version: 3.1.9
+  resolution: "@rollup/plugin-alias@npm:3.1.9"
+  dependencies:
+    slash: ^3.0.0
+  peerDependencies:
+    rollup: ^1.20.0||^2.0.0
+  checksum: cefae9dfb7c30f0dc78d24f4ad9ccb8a0878397b313c0fa9d0f519667394941c58a930d968d841e25aee43b0fb892d1e3f7edbb55e8197f191cce7da6a50b882
   languageName: node
   linkType: hard
 
@@ -26412,7 +26425,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.3, nanoid@npm:^3.3.4":
+"nanoid@npm:^3.1.32, nanoid@npm:^3.3.3, nanoid@npm:^3.3.4":
   version: 3.3.4
   resolution: "nanoid@npm:3.3.4"
   bin:
@@ -32202,6 +32215,22 @@ __metadata:
   peerDependencies:
     rollup: ^2.0.0
   checksum: af84bb7a7a894cd00852b6486528dfb8653cf94df4c126f95f389a346f401d054b08c46bee519a2ab6a22b33804d1d6ac6d8c90b1b2bf8fffb097eed73fc3c72
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-visualizer@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "rollup-plugin-visualizer@npm:5.6.0"
+  dependencies:
+    nanoid: ^3.1.32
+    open: ^8.4.0
+    source-map: ^0.7.3
+    yargs: ^17.3.1
+  peerDependencies:
+    rollup: ^2.0.0
+  bin:
+    rollup-plugin-visualizer: dist/bin/cli.js
+  checksum: 1036a3873f3b6a0c46d692538aaac5dc9f7a7b2a5aec9e7ab816aaf8a31576ae750f415e1019e401707d18490b634a982fbe8c22d9761cafbd9b12c756e7fd99
   languageName: node
   linkType: hard
 
