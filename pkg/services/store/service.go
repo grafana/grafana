@@ -20,11 +20,9 @@ import (
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
 var ErrUploadFeatureDisabled = errors.New("upload feature is disabled")
-var ErrUnsupportedFolder = errors.New("unsupported folder for uploads")
-var ErrFileTooBig = errors.New("file is too big")
-var ErrInvalidPath = errors.New("path is invalid")
+var ErrUnsupportedStorage = errors.New("storage does not support upload operation")
 var ErrUploadInternalError = errors.New("upload internal error")
-var ErrInvalidFileType = errors.New("invalid file type")
+var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 
 const RootPublicStatic = "public-static"
@@ -41,9 +39,12 @@ type StorageService interface {
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
-	Upload(ctx context.Context, user *models.SignedInUser, req UploadRequest) error
+	Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error
 
 	Delete(ctx context.Context, user *models.SignedInUser, path string) error
+
+	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest) validationResult
+	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error
 }
 
 type standardStorageService struct {
@@ -117,13 +118,6 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 	return s.tree.GetFile(ctx, getOrgId(user), path)
 }
 
-func isFileTypeValid(filetype string) bool {
-	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype == "image/webp") {
-		return true
-	}
-	return false
-}
-
 type UploadRequest struct {
 	Contents           []byte
 	MimeType           string
@@ -131,23 +125,30 @@ type UploadRequest struct {
 	CacheControl       string
 	ContentDisposition string
 	Properties         map[string]string
+	EntityType         EntityType
 
 	OverwriteExistingFile bool
 }
 
-func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req UploadRequest) error {
+func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
 	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
 	if upload == nil {
 		return ErrUploadFeatureDisabled
 	}
 
 	if !strings.HasPrefix(req.Path, RootUpload+"/") {
-		return ErrUnsupportedFolder
+		return ErrUnsupportedStorage
 	}
 
-	validFileType := isFileTypeValid(req.MimeType)
-	if !validFileType {
-		return ErrInvalidFileType
+	validationResult := s.validateUploadRequest(ctx, user, req)
+	if !validationResult.ok {
+		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
+		return ErrValidationFailed
+	}
+
+	if err := s.sanitizeUploadRequest(ctx, user, req); err != nil {
+		grafanaStorageLogger.Warn("failed while sanitizing upload request", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
+		return ErrUploadInternalError
 	}
 
 	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
@@ -156,10 +157,6 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	if !req.OverwriteExistingFile {
 		file, err := upload.Get(ctx, storagePath)
 		if err != nil {
-			if filestorage.IsPathValidationError(err) {
-				return ErrInvalidPath
-			}
-
 			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
 			return ErrUploadInternalError
 		}
@@ -179,10 +176,6 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	})
 
 	if err != nil {
-		if filestorage.IsPathValidationError(err) {
-			return ErrInvalidPath
-		}
-
 		grafanaStorageLogger.Error("failed while uploading the file", "err", err, "path", req.Path)
 		return ErrUploadInternalError
 	}

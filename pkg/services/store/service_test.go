@@ -65,6 +65,6 @@ func TestUpload(t *testing.T) {
 		Path:     "upload/myFile.jpg",
 		MimeType: "image/jpeg",
 	}
-	err = s.Upload(context.Background(), dummyUser, request)
+	err = s.Upload(context.Background(), dummyUser, &request)
 	require.NoError(t, err)
 }

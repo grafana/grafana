@@ -36,19 +36,11 @@ func uploadErrorToStatusCode(err error) int {
 		return 404
 	}
 
-	if errors.Is(err, ErrUnsupportedFolder) {
+	if errors.Is(err, ErrUnsupportedStorage) {
 		return 400
 	}
 
-	if errors.Is(err, ErrFileTooBig) {
-		return 400
-	}
-
-	if errors.Is(err, ErrInvalidPath) {
-		return 400
-	}
-
-	if errors.Is(err, ErrInvalidFileType) {
+	if errors.Is(err, ErrValidationFailed) {
 		return 400
 	}
 
@@ -105,9 +97,10 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 	mimeType := http.DetectContentType(data)
 
-	err = s.store.Upload(c.Req.Context(), c.SignedInUser, UploadRequest{
+	err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 		Contents:              data,
 		MimeType:              mimeType,
+		EntityType:            EntityTypeImage,
 		Path:                  path,
 		OverwriteExistingFile: true,
 	})
