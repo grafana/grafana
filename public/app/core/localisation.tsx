@@ -10,21 +10,8 @@ export async function getI18n(locale = 'en') {
   if (i18nInstance) {
     return i18nInstance;
   }
-  let loc = locale;
-  switch (config.bootData.user.weekStart) {
-    case 'saturday':
-      loc = 'es';
-      break;
-    case 'sunday':
-      loc = 'fr';
-      break;
-    default:
-      loc = 'en';
-      break;
-  }
-
   // Dynamically load the messages for the user's locale
-  const imp = await import(`@lingui/loader!../../locales/${loc}/messages.po`).catch((err) => {
+  const imp = await import(`@lingui/loader!../../locales/${locale}/messages.po`).catch((err) => {
     // TODO: Properly return an error if we can't find the messages for a locale
     return err;
   });
@@ -56,7 +43,21 @@ interface I18nProviderProps {
 }
 export function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
-    getI18n();
+    // TODO: Use locale preference instead of weekStart
+    let loc;
+    switch (config.bootData.user.weekStart) {
+      case 'saturday':
+        loc = 'es';
+        break;
+      case 'sunday':
+        loc = 'fr';
+        break;
+      default:
+        loc = 'en';
+        break;
+    }
+
+    getI18n(loc);
   }, []);
 
   return <LinguiI18nProvider i18n={i18n}>{children}</LinguiI18nProvider>;
