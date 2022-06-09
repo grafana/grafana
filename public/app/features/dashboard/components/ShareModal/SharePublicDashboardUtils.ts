@@ -37,12 +37,15 @@ export const savePublicDashboardConfig = async (
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
   const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
+
   // Never allow a user to send the orgId
+  // @ts-ignore
   delete pdResp.orgId;
+
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboardConfig(pdResp);
 };
 
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard) => {
-  return 'POTATES';
+  return `/public-dashboards/${publicDashboard.uid}`;
 };

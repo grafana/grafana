@@ -96,8 +96,11 @@ export const SharePublicDashboard = (props: Props) => {
   const datasource_description = "to learn more <a href='google.com'>link</a>";
   return (
     <>
-      Welcome to Grafana public dashboards (alpha)! To allow the current dashboard to be published publicly, toggle the
-      switch. For now we do not support template variables or frontend datasources. <br />
+      <p>Welcome to Grafana public dashboards alpha!</p>
+      <p>
+        To allow the current dashboard to be published publicly, toggle the switch. For now we do not support template
+        variables or frontend datasources.
+      </p>
       {dashboardHasTemplateVariables(dashboardVariables) && (
         <Alert severity="warning" title="dashboard cannot be public">
           This dashboard cannot be made public because it has template variables
