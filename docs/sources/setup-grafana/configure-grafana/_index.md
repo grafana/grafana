@@ -611,6 +611,14 @@ Current core features that will stop working:
 
 Before we disable angular support by default we plan to migrate these remaining areas to React.
 
+### csrf_trusted_origins
+
+List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
+
+### csrf_additional_headers
+
+List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
+
 ## [snapshots]
 
 ### external_enabled
