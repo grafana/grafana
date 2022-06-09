@@ -56,6 +56,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
+- [ENHANCEMENT] Optional custom title and description for OpsGenie #50131
 - [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled #49874
   - `grafana_alerting_schedule_alert_rules `
   - `grafana_alerting_schedule_alert_rules_hash `

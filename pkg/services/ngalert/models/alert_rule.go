@@ -376,3 +376,11 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 		ruleToPatch.For = existingRule.For
 	}
 }
+
+func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
+	if intervalSeconds%baseIntervalSeconds != 0 || intervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v",
+			ErrAlertRuleFailedValidation, time.Duration(intervalSeconds)*time.Second, baseIntervalSeconds)
+	}
+	return nil
+}

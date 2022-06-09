@@ -227,6 +227,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
