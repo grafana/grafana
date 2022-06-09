@@ -113,29 +113,28 @@ type ProvisioningServiceImpl struct {
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
 	err := ps.ProvisionDatasources(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to provision datasources: %w", err)
 	}
 
 	err = ps.ProvisionPlugins(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to provision plugins: %w", err)
 	}
 
 	err = ps.ProvisionNotifications(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to provision notifications: %w", err)
+	}
+
+	err = ps.ProvisionDashboards(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to provision dashboards: %w", err)
 	}
 
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
-	err := ps.ProvisionDashboards(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision dashboard", "error", err)
-		return err
-	}
-
 	for {
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
