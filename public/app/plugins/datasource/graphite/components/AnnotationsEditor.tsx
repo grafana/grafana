@@ -29,6 +29,9 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
           placeholder="Example: statsd.application.counters.*.count"
         />
       </div>
+
+      <h5 className="section-heading">Or</h5>
+
       <div className="gf-form">
         <InlineFormLabel width={12}>Graphite events tags</InlineFormLabel>
         <Input
