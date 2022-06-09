@@ -94,6 +94,10 @@ func TestFilestorageApi_ValidatePath(t *testing.T) {
 			expectedError: ErrInvalidCharacters,
 		},
 		{
+			path:          "/path/with/utf/char/at/the/end.jpg�",
+			expectedError: ErrInvalidCharacters,
+		},
+		{
 			path: "/myFile/file.jpg",
 		},
 	}
