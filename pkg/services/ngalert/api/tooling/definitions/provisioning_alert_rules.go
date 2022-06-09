@@ -17,6 +17,9 @@ import (
 //
 // Create a new alert rule.
 //
+//     Consumes:
+//     - application/json
+//
 //     Responses:
 //       201: AlertRule
 //       400: ValidationError
