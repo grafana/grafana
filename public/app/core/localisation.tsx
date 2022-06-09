@@ -25,6 +25,7 @@ export async function getI18n(locale = 'en') {
 
   // Dynamically load the messages for the user's locale
   const imp = await import(`@lingui/loader!../../locales/${loc}/messages.po`).catch((err) => {
+    // TODO: Properly return an error if we can't find the messages for a locale
     return err;
   });
   i18n.load(locale, imp.messages);
