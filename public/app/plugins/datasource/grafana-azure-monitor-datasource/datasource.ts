@@ -6,11 +6,11 @@ import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
@@ -23,7 +23,7 @@ import migrateAnnotation from './utils/migrateAnnotation';
 import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
-export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
   };
@@ -178,7 +178,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve(validationError);
     }
 
-    return await this.azureMonitorDatasource.testDatasource();
+    return await super.testDatasource();
   }
 
   /* Azure Monitor REST API methods */
