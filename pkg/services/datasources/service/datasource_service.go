@@ -146,7 +146,7 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	if !s.features.IsEnabled("disableSecretsCompatibility") {
+	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err
@@ -310,7 +310,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 				return nil, err
 			}
 		}
-		if s.features.IsEnabled("disableSecretsCompatibility") {
+		if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
 			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId})
 			if err != nil {
 				return nil, err
@@ -603,7 +603,7 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 		}
 	}
 
-	if !s.features.IsEnabled("disableSecretsCompatibility") {
+	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err
