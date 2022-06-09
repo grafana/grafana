@@ -119,7 +119,7 @@ type SearchQueriesParams struct {
 	// in:query
 	// required: false
 	Page int `json:"page"`
-	// Limit the number of returned results 
+	// Limit the number of returned results
 	// in:query
 	// required: false
 	Limit int `json:"limit"`
@@ -137,21 +137,21 @@ type SearchQueriesParams struct {
 type CreateQueryParams struct {
 	// in:body
 	// required:true
-	Body  queryhistory.CreateQueryInQueryHistoryCommand `json:"body"`
+	Body queryhistory.CreateQueryInQueryHistoryCommand `json:"body"`
 }
 
 // swagger:parameters patchQueryComment
 type PatchQueryCommentParams struct {
 	// in:body
 	// required:true
-	Body  queryhistory.PatchQueryCommentInQueryHistoryCommand `json:"body"`
+	Body queryhistory.PatchQueryCommentInQueryHistoryCommand `json:"body"`
 }
 
 // swagger:parameters migrateQueries
 type MigrateQueriesParams struct {
 	// in:body
 	// required:true
-	Body  queryhistory.MigrateQueriesToQueryHistoryCommand `json:"body"`
+	Body queryhistory.MigrateQueriesToQueryHistoryCommand `json:"body"`
 }
 
 //swagger:response getQueryHistorySearchResponse

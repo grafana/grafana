@@ -96,7 +96,7 @@ type CreateQueryInQueryHistoryCommand struct {
 	DatasourceUID string `json:"datasourceUid"`
 	// The JSON model of queries.
 	// required: true
-	// example: [ { "datasourceUid": "PE1C5CBDA0504A6A3", "queries": [ { "refId": "A", "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0", "scenarioId": "csv_content", "datasource": { "type": "testdata", "uid": "PD8C576611E62080A" } } ], "starred": false, "createdAt": 1643630762, "comment": "debugging" } ] 
+	// example: [ { "datasourceUid": "PE1C5CBDA0504A6A3", "queries": [ { "refId": "A", "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0", "scenarioId": "csv_content", "datasource": { "type": "testdata", "uid": "PD8C576611E62080A" } } ], "starred": false, "createdAt": 1643630762, "comment": "debugging" } ]
 	Queries *simplejson.Json `json:"queries"`
 }
 
