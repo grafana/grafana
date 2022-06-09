@@ -20,13 +20,13 @@ type DashboardService interface {
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetPublicDashboard(ctx context.Context, publicDashboardUid string) (*models.Dashboard, error)
-	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
+	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error)
+	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboard, error)
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
@@ -65,7 +65,7 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error)
+	GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error)
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
@@ -73,7 +73,7 @@ type Store interface {
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error)
+	SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.

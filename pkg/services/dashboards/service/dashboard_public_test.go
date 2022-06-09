@@ -32,9 +32,9 @@ func TestGetPublicDashboard(t *testing.T) {
 		{
 			name:      "returns a dashboard",
 			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: true}, err: nil},
+			storeResp: &storeResp{pd: &models.PublicDashboard{IsEnabled: true}, d: &models.Dashboard{Uid: "mydashboard"}, err: nil},
 			errResp:   nil,
-			dashResp:  &models.Dashboard{IsPublic: true},
+			dashResp:  &models.Dashboard{Uid: "mydashboard"},
 		},
 		{
 			name: "puts pubdash time settings into dashboard",
@@ -52,7 +52,7 @@ func TestGetPublicDashboard(t *testing.T) {
 		{
 			name:      "returns ErrPublicDashboardNotFound when isPublic is false",
 			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: false}, err: nil},
+			storeResp: &storeResp{pd: &models.PublicDashboard{IsEnabled: false}, d: &models.Dashboard{Uid: "mydashboard"}, err: nil},
 			errResp:   models.ErrPublicDashboardNotFound,
 			dashResp:  nil,
 		},
@@ -107,20 +107,18 @@ func TestSavePublicDashboard(t *testing.T) {
 		dto := &dashboards.SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
-			PublicDashboardConfig: &models.PublicDashboardConfig{
-				IsPublic: true,
-				PublicDashboard: models.PublicDashboard{
-					DashboardUid: "NOTTHESAME",
-					OrgId:        9999999,
-				},
+			PublicDashboard: &models.PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
 			},
 		}
 
 		pdc, err := service.SavePublicDashboardConfig(context.Background(), dto)
 		require.NoError(t, err)
 
-		assert.Equal(t, dashboard.Uid, pdc.PublicDashboard.DashboardUid)
-		assert.Equal(t, dashboard.OrgId, pdc.PublicDashboard.OrgId)
+		assert.Equal(t, dashboard.Uid, pdc.DashboardUid)
+		assert.Equal(t, dashboard.OrgId, pdc.OrgId)
 	})
 
 	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {

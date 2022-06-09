@@ -12,7 +12,6 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "time_settings", Type: DB_Text, Nullable: false},
-			{Name: "refresh_rate", Type: DB_Int, Nullable: false, Default: "30"},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
 		},
 		Indices: []*Index{
@@ -30,4 +29,11 @@ func addPublicDashboardMigration(mg *Migrator) {
 	// recreate table with proper primary key type
 	mg.AddMigration("recreate dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
 	addTableIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
+
+	mg.AddMigration("Add isPublic to public dashboards", NewAddColumnMigration(dashboardPublicCfgV1, &Column{
+		Name: "is_enabled", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	// rename table
+	addTableRenameMigration(mg, "dashboard_public_config", "dashboard_public", "v1")
 }

@@ -5,14 +5,13 @@ import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
-export interface PublicDashboardConfig {
+export interface PublicDashboard {
+  uid: string;
+  dashboardUid: string;
+  timeSettings?: object;
   isPublic: boolean;
-  publicDashboard: {
-    uid: string;
-    dashboardUid: string;
-    timeSettings?: object;
-  };
 }
+
 export interface DashboardResponse {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
@@ -24,20 +23,26 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
 
 export const getPublicDashboardConfig = async (
   dashboardUid: string,
-  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboardConfig>>
+  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboardConfig = await getBackendSrv().get(url);
+  const pdResp: PublicDashboard = await getBackendSrv().get(url);
   setPublicDashboardConfig(pdResp);
 };
 
 export const savePublicDashboardConfig = async (
   dashboardUid: string,
-  publicDashboardConfig: PublicDashboardConfig,
+  publicDashboardConfig: PublicDashboard,
   setPublicDashboardConfig: Function
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboardConfig = await getBackendSrv().post(url, publicDashboardConfig);
+  const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
+  // Never allow a user to send the orgId
+  delete pdResp.orgId;
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboardConfig(pdResp);
+};
+
+export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard) => {
+  return 'POTATES';
 };

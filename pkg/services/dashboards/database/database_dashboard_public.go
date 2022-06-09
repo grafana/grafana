@@ -71,26 +71,15 @@ func generateNewPublicDashboardUid(sess *sqlstore.DBSession) (string, error) {
 }
 
 // retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	if dashboardUid == "" {
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
 
-	// get dashboard and publicDashboard
-	dashRes := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
 	pdRes := &models.PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// dashboard
-		has, err := sess.Get(dashRes)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return models.ErrDashboardNotFound
-		}
-
 		// publicDashboard
-		_, err = sess.Get(pdRes)
+		_, err := sess.Get(pdRes)
 		if err != nil {
 			return err
 		}
@@ -102,35 +91,20 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 		return nil, err
 	}
 
-	pdc := &models.PublicDashboardConfig{
-		IsPublic:        dashRes.IsPublic,
-		PublicDashboard: *pdRes,
-	}
-
-	return pdc, err
+	return pdRes, err
 }
 
 // persists public dashboard configuration
-func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-	if len(cmd.PublicDashboardConfig.PublicDashboard.DashboardUid) == 0 {
+func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	if len(cmd.PublicDashboard.DashboardUid) == 0 {
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
 
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// update isPublic on dashboard entry
-		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.DashboardUid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
-		if err != nil {
-			return err
-		}
-
-		if affectedRowCount == 0 {
-			return models.ErrDashboardNotFound
-		}
-
-		// update dashboard_public_config
+		// update dashboard_public
 		// if we have a uid, public dashboard config exists. delete it otherwise generate a uid
-		if cmd.PublicDashboardConfig.PublicDashboard.Uid != "" {
-			if _, err = sess.Exec("DELETE FROM dashboard_public_config WHERE uid=?", cmd.PublicDashboardConfig.PublicDashboard.Uid); err != nil {
+		if cmd.PublicDashboard.Uid != "" {
+			if _, err := sess.Exec("DELETE FROM dashboard_public WHERE uid=?", cmd.PublicDashboard.Uid); err != nil {
 				return err
 			}
 		} else {
@@ -138,10 +112,10 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 			if err != nil {
 				return fmt.Errorf("failed to generate UID for public dashboard: %w", err)
 			}
-			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
+			cmd.PublicDashboard.Uid = uid
 		}
 
-		_, err = sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard)
+		_, err := sess.Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}
@@ -153,5 +127,5 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		return nil, err
 	}
 
-	return &cmd.PublicDashboardConfig, nil
+	return &cmd.PublicDashboard, nil
 }

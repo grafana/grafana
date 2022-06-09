@@ -6,12 +6,13 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { ShareModal } from './ShareModal';
-import { PublicDashboardConfig } from './SharePublicDashboardUtils';
+import { PublicDashboard } from './SharePublicDashboardUtils';
 
 // Mock api request
-const publicDashboardconfigResp: PublicDashboardConfig = {
+const publicDashboardconfigResp: PublicDashboard = {
   isPublic: true,
-  publicDashboard: { uid: '', dashboardUid: '' },
+  uid: '',
+  dashboardUid: '',
 };
 
 const backendSrv = {
