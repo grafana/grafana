@@ -31,7 +31,7 @@ func ProvideHTTPService(store StorageService) HTTPStorageService {
 	}
 }
 
-func uploadErrorToStatusCode(err error) int {
+func UploadErrorToStatusCode(err error) int {
 	if errors.Is(err, ErrUploadFeatureDisabled) {
 		return 404
 	}
@@ -106,7 +106,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	})
 
 	if err != nil {
-		return response.Error(uploadErrorToStatusCode(err), err.Error(), err)
+		return response.Error(UploadErrorToStatusCode(err), err.Error(), err)
 	}
 
 	return response.JSON(200, map[string]interface{}{

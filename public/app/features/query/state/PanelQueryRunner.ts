@@ -26,6 +26,7 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -235,12 +236,13 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
-
+      const isMixedDS = ds.meta?.mixed;
       // Attach the data source to each query
       request.targets = request.targets.map((query) => {
+        const isExpressionQuery = query.datasource?.type === ExpressionDatasourceRef.type;
         // When using a data source variable, the panel might have the incorrect datasource
         // stored, so when running the query make sure it is done with the correct one
-        if (!query.datasource || (query.datasource.uid !== ds.uid && !ds.meta.mixed)) {
+        if (!query.datasource || (query.datasource.uid !== ds.uid && !isMixedDS && !isExpressionQuery)) {
           query.datasource = ds.getRef();
         }
         return query;

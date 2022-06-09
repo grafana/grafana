@@ -146,20 +146,11 @@ exports[`no enzyme tests`] = {
     "public/app/features/org/OrgDetailsPage.test.tsx:3835042085": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamPages.test.tsx:3990420214": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/teams/TeamSettings.test.tsx:2043271249": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersListPage.test.tsx:2518052139": [
       [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/components/Aggregation.test.tsx:3822406835": [
-      [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:227258837": [
       [0, 19, 13, "RegExp match", "2409514259"]
