@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
-import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
+
+import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
 
 import { SelectBase } from './SelectBase';
 
@@ -199,7 +200,7 @@ describe('SelectBase', () => {
       const selectEl = screen.getByLabelText('My select');
       expect(selectEl).toBeInTheDocument();
 
-      await select(selectEl, 'Option 2', { container: document.body });
+      await selectOptionInTest(selectEl, 'Option 2');
       expect(spy).toHaveBeenCalledWith(
         { label: 'Option 2', value: 2 },
         { action: 'select-option', name: undefined, option: undefined }
