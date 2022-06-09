@@ -50,7 +50,8 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
         dest.node.parent.elements.push(src.node);
         src.node.updateData(dest.node.parent.scene.context);
       } else if (dest.node.parent instanceof FrameState) {
-        const destIndex = dest.node.parent.elements.indexOf(dest.node);
+        let destIndex = dest.node.parent.elements.indexOf(dest.node);
+        destIndex = dest.node.parent.elements.length - destIndex - 1;
         dest.node.parent?.elements.splice(destIndex, 0, src.node);
 
         dest.node.parent.scene.byName.set(src.node.options.name, src.node);
