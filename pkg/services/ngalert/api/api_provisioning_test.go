@@ -259,7 +259,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 		contactPointService: provisioning.NewContactPointService(configs, secrets, prov, xact, log),
 		templates:           provisioning.NewTemplateService(configs, prov, xact, log),
 		muteTimings:         provisioning.NewMuteTimingService(configs, prov, xact, log),
-		alertRules:          provisioning.NewAlertRuleService(store, prov, xact, 10, log),
+		alertRules:          provisioning.NewAlertRuleService(store, prov, xact, 60, 10, log),
 	}
 }
 
