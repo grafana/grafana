@@ -22,6 +22,7 @@ export const usePanelSave = () => {
         err.isHandled = true;
         throw new Error(err.data.message);
       }
+      throw err;
     }
   }, []);
 

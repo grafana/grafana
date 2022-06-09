@@ -90,7 +90,9 @@ export async function checkOtherSegments(
       }
     }
   } catch (err) {
-    handleMetricsAutoCompleteError(state, err);
+    if (err instanceof Error) {
+      handleMetricsAutoCompleteError(state, err);
+    }
   }
 }
 
