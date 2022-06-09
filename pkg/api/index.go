@@ -320,7 +320,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
-			Icon:        "keyhole-circle",
+			Icon:        "gf-service-account",
 			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
@@ -717,6 +717,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	navTree, err := hs.getNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.IsPublicDashboardView {
+		settings["isPublicDashboardView"] = true
 	}
 
 	data := dtos.IndexViewData{
