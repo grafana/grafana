@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
@@ -52,7 +53,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Service');
-    await ui.selectOptionInTest(metrics, 'Logs');
+    await selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,

@@ -205,7 +205,6 @@ export { FieldArray } from './Forms/FieldArray';
 
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
-export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 export { DropdownIndicator } from './Select/DropdownIndicator';
 export { getSelectStyles } from './Select/getSelectStyles';
