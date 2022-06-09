@@ -311,7 +311,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 			}
 		}
 		if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
-			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId})
+			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
 			if err != nil {
 				return nil, err
 			}
