@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 		Version:            dash.Version,
 		IsFolder:           false,
 		FolderId:           dash.FolderId,
-		IsPublic:           dash.IsPublic,
+		IsPublic:           true,
 		PublicDashboardUid: publicDashboardUid,
 	}
 
@@ -54,15 +54,18 @@ func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Re
 
 // sets public dashboard configuration for dashboard
 func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc := &models.PublicDashboardConfig{}
+	pdc := &models.PublicDashboard{}
 	if err := web.Bind(c.Req, pdc); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	// Always set the org id to the current auth session orgId
+	pdc.OrgId = c.OrgId
+
 	dto := dashboards.SavePublicDashboardConfigDTO{
-		OrgId:                 c.OrgId,
-		DashboardUid:          web.Params(c.Req)[":uid"],
-		PublicDashboardConfig: pdc,
+		OrgId:           c.OrgId,
+		DashboardUid:    web.Params(c.Req)[":uid"],
+		PublicDashboard: pdc,
 	}
 
 	pdc, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)

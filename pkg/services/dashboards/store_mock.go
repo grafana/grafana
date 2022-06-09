@@ -331,15 +331,15 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 }
 
 // GetPublicDashboardConfig provides a mock function with given fields: orgId, dashboardUid
-func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(orgId, dashboardUid)
 
-	var r0 *models.PublicDashboardConfig
-	if rf, ok := ret.Get(0).(func(int64, string) *models.PublicDashboardConfig); ok {
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(int64, string) *models.PublicDashboard); ok {
 		r0 = rf(orgId, dashboardUid)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.PublicDashboardConfig)
+			r0 = ret.Get(0).(*models.PublicDashboard)
 		}
 	}
 
@@ -442,15 +442,15 @@ func (_m *FakeDashboardStore) SaveProvisionedDashboard(cmd models.SaveDashboardC
 }
 
 // SavePublicDashboardConfig provides a mock function with given fields: cmd
-func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
+func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
 	ret := _m.Called(cmd)
 
-	var r0 *models.PublicDashboardConfig
-	if rf, ok := ret.Get(0).(func(models.SavePublicDashboardConfigCommand) *models.PublicDashboardConfig); ok {
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(models.SavePublicDashboardConfigCommand) *models.PublicDashboard); ok {
 		r0 = rf(cmd)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.PublicDashboardConfig)
+			r0 = ret.Get(0).(*models.PublicDashboard)
 		}
 	}
 

@@ -234,4 +234,7 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("Remove isPublic for dashboard", NewRawSQLMigration(
+		"ALTER TABLE dashboard DROP COLUMN is_public"))
 }

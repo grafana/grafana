@@ -21,7 +21,7 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	if !d.IsPublic {
+	if !pdc.IsEnabled {
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
@@ -40,7 +40,7 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 }
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
 	if err != nil {
 		return nil, err
@@ -51,16 +51,16 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
+func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	cmd := models.SavePublicDashboardConfigCommand{
-		DashboardUid:          dto.DashboardUid,
-		OrgId:                 dto.OrgId,
-		PublicDashboardConfig: *dto.PublicDashboardConfig,
+		DashboardUid:    dto.DashboardUid,
+		OrgId:           dto.OrgId,
+		PublicDashboard: *dto.PublicDashboard,
 	}
 
 	// Eventually we want this to propagate to array of public dashboards
-	cmd.PublicDashboardConfig.PublicDashboard.OrgId = dto.OrgId
-	cmd.PublicDashboardConfig.PublicDashboard.DashboardUid = dto.DashboardUid
+	cmd.PublicDashboard.OrgId = dto.OrgId
+	cmd.PublicDashboard.DashboardUid = dto.DashboardUid
 
 	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
 	if err != nil {

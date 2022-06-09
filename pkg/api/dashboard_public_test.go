@@ -54,39 +54,38 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 
-	dashboardUid := "dashboard-abcd1234"
+	DashboardUid := "dashboard-abcd1234"
 	pubdashUid := "pubdash-abcd1234"
 
 	testCases := []struct {
-		name                  string
+		Name                  string
 		uid                   string
-		expectedHttpResponse  int
+		ExpectedHttpResponse  int
 		publicDashboardResult *models.Dashboard
 		publicDashboardErr    error
 	}{
 		{
-			name:                 "It gets a public dashboard",
+			Name:                 "It gets a public dashboard",
 			uid:                  pubdashUid,
-			expectedHttpResponse: http.StatusOK,
+			ExpectedHttpResponse: http.StatusOK,
 			publicDashboardResult: &models.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
-					"Uid": dashboardUid,
+					"Uid": DashboardUid,
 				}),
-				IsPublic: true,
 			},
 			publicDashboardErr: nil,
 		},
 		{
-			name:                  "It should return 404 if isPublicDashboard is false",
+			Name:                  "It should return 404 if isPublicDashboard is false",
 			uid:                   pubdashUid,
-			expectedHttpResponse:  http.StatusNotFound,
+			ExpectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
 			publicDashboardErr:    models.ErrPublicDashboardNotFound,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
@@ -102,14 +101,14 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				t,
 			)
 
-			assert.Equal(t, test.expectedHttpResponse, response.Code)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.publicDashboardErr == nil {
 				var dashResp dtos.DashboardFullWithMeta
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
 
-				assert.Equal(t, dashboardUid, dashResp.Dashboard.Get("Uid").MustString())
+				assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
 				assert.Equal(t, true, dashResp.Meta.IsPublic)
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
@@ -127,44 +126,44 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 }
 
 func TestAPIGetPublicDashboardConfig(t *testing.T) {
-	pdc := &models.PublicDashboardConfig{IsPublic: true}
+	pdc := &models.PublicDashboard{IsEnabled: true}
 
 	testCases := []struct {
-		name                        string
-		dashboardUid                string
-		expectedHttpResponse        int
-		publicDashboardConfigResult *models.PublicDashboardConfig
-		publicDashboardConfigError  error
+		Name                  string
+		DashboardUid          string
+		ExpectedHttpResponse  int
+		PublicDashboardResult *models.PublicDashboard
+		PublicDashboardError  error
 	}{
 		{
-			name:                        "retrieves public dashboard config when dashboard is found",
-			dashboardUid:                "1",
-			expectedHttpResponse:        http.StatusOK,
-			publicDashboardConfigResult: pdc,
-			publicDashboardConfigError:  nil,
+			Name:                  "retrieves public dashboard config when dashboard is found",
+			DashboardUid:          "1",
+			ExpectedHttpResponse:  http.StatusOK,
+			PublicDashboardResult: pdc,
+			PublicDashboardError:  nil,
 		},
 		{
-			name:                        "returns 404 when dashboard not found",
-			dashboardUid:                "77777",
-			expectedHttpResponse:        http.StatusNotFound,
-			publicDashboardConfigResult: nil,
-			publicDashboardConfigError:  models.ErrDashboardNotFound,
+			Name:                  "returns 404 when dashboard not found",
+			DashboardUid:          "77777",
+			ExpectedHttpResponse:  http.StatusNotFound,
+			PublicDashboardResult: nil,
+			PublicDashboardError:  models.ErrDashboardNotFound,
 		},
 		{
-			name:                        "returns 500 when internal server error",
-			dashboardUid:                "1",
-			expectedHttpResponse:        http.StatusInternalServerError,
-			publicDashboardConfigResult: nil,
-			publicDashboardConfigError:  errors.New("database broken"),
+			Name:                  "returns 500 when internal server error",
+			DashboardUid:          "1",
+			ExpectedHttpResponse:  http.StatusInternalServerError,
+			PublicDashboardResult: nil,
+			PublicDashboardError:  errors.New("database broken"),
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(test.publicDashboardConfigResult, test.publicDashboardConfigError)
+				Return(test.PublicDashboardResult, test.PublicDashboardError)
 			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -176,13 +175,13 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 				t,
 			)
 
-			assert.Equal(t, test.expectedHttpResponse, response.Code)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if response.Code == http.StatusOK {
-				var pdcResp models.PublicDashboardConfig
+				var pdcResp models.PublicDashboard
 				err := json.Unmarshal(response.Body.Bytes(), &pdcResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.publicDashboardConfigResult, &pdcResp)
+				assert.Equal(t, test.PublicDashboardResult, &pdcResp)
 			}
 		})
 	}
@@ -190,40 +189,40 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 
 func TestApiSavePublicDashboardConfig(t *testing.T) {
 	testCases := []struct {
-		name                  string
-		dashboardUid          string
-		publicDashboardConfig *models.PublicDashboardConfig
-		expectedHttpResponse  int
+		Name                  string
+		DashboardUid          string
+		publicDashboardConfig *models.PublicDashboard
+		ExpectedHttpResponse  int
 		saveDashboardError    error
 	}{
 		{
-			name:                  "returns 200 when update persists",
-			dashboardUid:          "1",
-			publicDashboardConfig: &models.PublicDashboardConfig{IsPublic: true},
-			expectedHttpResponse:  http.StatusOK,
+			Name:                  "returns 200 when update persists",
+			DashboardUid:          "1",
+			publicDashboardConfig: &models.PublicDashboard{IsEnabled: true},
+			ExpectedHttpResponse:  http.StatusOK,
 			saveDashboardError:    nil,
 		},
 		{
-			name:                  "returns 500 when not persisted",
-			expectedHttpResponse:  http.StatusInternalServerError,
-			publicDashboardConfig: &models.PublicDashboardConfig{},
+			Name:                  "returns 500 when not persisted",
+			ExpectedHttpResponse:  http.StatusInternalServerError,
+			publicDashboardConfig: &models.PublicDashboard{},
 			saveDashboardError:    errors.New("backend failed to save"),
 		},
 		{
-			name:                  "returns 404 when dashboard not found",
-			expectedHttpResponse:  http.StatusNotFound,
-			publicDashboardConfig: &models.PublicDashboardConfig{},
+			Name:                  "returns 404 when dashboard not found",
+			ExpectedHttpResponse:  http.StatusNotFound,
+			publicDashboardConfig: &models.PublicDashboard{},
 			saveDashboardError:    models.ErrDashboardNotFound,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*dashboards.SavePublicDashboardConfigDTO")).
-				Return(&models.PublicDashboardConfig{IsPublic: true}, test.saveDashboardError)
+				Return(&models.PublicDashboard{IsEnabled: true}, test.saveDashboardError)
 			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -235,7 +234,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 				t,
 			)
 
-			assert.Equal(t, test.expectedHttpResponse, response.Code)
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			// check the result if it's a 200
 			if response.Code == http.StatusOK {
