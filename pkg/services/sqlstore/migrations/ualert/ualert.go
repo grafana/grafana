@@ -75,7 +75,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 		})
 	// If unified alerting is disabled and upgrade migration has been run
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
-		// If legacy alertung is also disabled, there is nothing to do
+		// If legacy alerting is also disabled, there is nothing to do
 		if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
 			return
 		}
