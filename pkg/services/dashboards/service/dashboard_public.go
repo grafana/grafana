@@ -66,7 +66,7 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 }
 
 func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	pdc, d, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
+	publicDashboardConfig, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
@@ -75,12 +75,12 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		From string `json:"from"`
 		To   string `json:"to"`
 	}
-	err = json.Unmarshal([]byte(pdc.TimeSettings), &timeSettings)
+	err = json.Unmarshal([]byte(publicDashboardConfig.TimeSettings), &timeSettings)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
 
-	queriesByPanel := models.GetQueriesFromDashboard(d.Data)
+	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
 		return dtos.MetricRequest{}, fmt.Errorf("no panel with ID %d", panelId)
