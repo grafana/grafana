@@ -139,7 +139,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	}
 
 	middlewares := []httpclient.Middleware{
-		httpclientprovider.ForwardedCookiesMiddleware(ds.AllowedCookies()),
+		httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
 	}
 
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
