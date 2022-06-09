@@ -338,6 +338,11 @@ func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
 	}
 	// stop rule evaluation
 	ruleInfo.stop()
+
+	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
+	alertRules := sch.schedulableAlertRules.all()
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
@@ -391,6 +396,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// each alert rule found also in this cycle is removed
 			// so, at the end, the remaining registered alert rules are the deleted ones
 			registeredDefinitions := sch.registry.keyMap()
+
+			// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+			// scheduled as rules could be removed before we get a chance to evaluate them.
+			sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey

@@ -163,6 +163,9 @@ func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule
 	r.rules[rule.GetKey()] = rule
 }
 
+// del removes pair that has specific key from schedulableAlertRulesRegistry.
+// Returns 2-tuple where the first element is value of the removed pair
+// and the second element indicates whether element with the specified key existed.
 func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
