@@ -9,7 +9,7 @@ import (
 // Get all message templates.
 //
 //     Responses:
-//       200: MessageTemplate
+//       200: MessageTemplates
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
