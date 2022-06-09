@@ -27,18 +27,19 @@ func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, starService s
 }
 
 type Query struct {
-	Title        string
-	Tags         []string
-	OrgId        int64
-	SignedInUser *models.SignedInUser
-	Limit        int64
-	Page         int64
-	IsStarred    bool
-	Type         string
-	DashboardIds []int64
-	FolderIds    []int64
-	Permission   models.PermissionType
-	Sort         string
+	Title         string
+	Tags          []string
+	OrgId         int64
+	SignedInUser  *models.SignedInUser
+	Limit         int64
+	Page          int64
+	IsStarred     bool
+	Type          string
+	DashboardUIDs []string
+	DashboardIds  []int64
+	FolderIds     []int64
+	Permission    models.PermissionType
+	Sort          string
 
 	Result models.HitList
 }
@@ -58,16 +59,17 @@ type SearchService struct {
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	dashboardQuery := models.FindPersistedDashboardsQuery{
-		Title:        query.Title,
-		SignedInUser: query.SignedInUser,
-		IsStarred:    query.IsStarred,
-		DashboardIds: query.DashboardIds,
-		Type:         query.Type,
-		FolderIds:    query.FolderIds,
-		Tags:         query.Tags,
-		Limit:        query.Limit,
-		Page:         query.Page,
-		Permission:   query.Permission,
+		Title:         query.Title,
+		SignedInUser:  query.SignedInUser,
+		IsStarred:     query.IsStarred,
+		DashboardUIDs: query.DashboardUIDs,
+		DashboardIds:  query.DashboardIds,
+		Type:          query.Type,
+		FolderIds:     query.FolderIds,
+		Tags:          query.Tags,
+		Limit:         query.Limit,
+		Page:          query.Page,
+		Permission:    query.Permission,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

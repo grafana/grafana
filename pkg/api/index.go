@@ -318,9 +318,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
-			// TODO: change icon to "key-skeleton-alt" when it's available
-			Icon: "keyhole-circle",
-			Url:  hs.Cfg.AppSubURL + "/org/serviceaccounts",
+			Icon:        "gf-service-account",
+			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
 
@@ -671,7 +670,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := hs.SQLStore.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+	if err := hs.dashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return false
 	}
 	return hasEditPermissionInFoldersQuery.Result
@@ -716,6 +715,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	navTree, err := hs.getNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.IsPublicDashboardView {
+		settings["isPublicDashboardView"] = true
 	}
 
 	data := dtos.IndexViewData{

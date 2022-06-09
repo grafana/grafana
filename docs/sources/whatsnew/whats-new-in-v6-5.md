@@ -47,7 +47,7 @@ We also broke the Docker images for ARM, but this is fixed in Grafana v6.5.
 
 Grafana Docker images should be as secure as possible by default and that’s why the Alpine-based Docker images will continue to be the Grafana default (`grafana/grafana:<version>`). With that said, it’s good to give users options, and that’s why starting from Grafana v6.5, Ubuntu-based Docker images are also (`grafana/grafana:<version>-ubuntu`) available.
 
-Read more about [Installing using Docker]({{< relref "../installation/docker/" >}}).
+Read more about [Installing using Docker]({{< relref "../setup-grafana/installation/docker/" >}}).
 
 ### CloudWatch data source improvements
 
@@ -191,25 +191,25 @@ Read more about this new feature in [Provisioning Grafana]({{< relref "../admini
 
 With the new setting, `enable_login_token`, set to true Grafana will, after successful auth proxy header validation, assign the user a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route. Requests via other routes will be authenticated using the cookie.
 
-Read more about this new feature in [Auth Proxy Authentication]({{< relref "../auth/auth-proxy/#login-token-and-session-cookie" >}})
+Read more about this new feature in [Auth Proxy Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/auth-proxy/#login-token-and-session-cookie" >}})
 
 ### Generic OAuth role mapping
 
-Grafana 6.5 makes it possible to configure Generic OAuth to map a certain response from OAuth provider to a certain Grafana organization role, similar to the existing [LDAP Group Mappings]({{< relref "../auth/ldap/#group-mappings" >}}) feature. The new setting is named `role_attribute_path` and expects a [JMESPath](http://jmespath.org/) expression.
+Grafana 6.5 makes it possible to configure Generic OAuth to map a certain response from OAuth provider to a certain Grafana organization role, similar to the existing [LDAP Group Mappings]({{< relref "../setup-grafana/configure-security/configure-authentication/ldap/#group-mappings" >}}) feature. The new setting is named `role_attribute_path` and expects a [JMESPath](http://jmespath.org/) expression.
 
-Read more about this new feature in [Generic OAuth Authentication]({{< relref "../auth/generic-oauth/" >}}) and make sure to check out the [JMESPath examples]({{< relref "../auth/generic-oauth/#jmespath-examples" >}}).
+Read more about this new feature in [Generic OAuth Authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/generic-oauth/" >}}) and make sure to check out the [JMESPath examples]({{< relref "../setup-grafana/configure-security/configure-authentication/generic-oauth/#jmespath-examples" >}}).
 
 ### Image renderer plugin
 
 Since we announced the deprecation of PhantomJS and the new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4]({{< relref "whats-new-in-v6-4/#phantomjs-deprecation" >}}), we’ve received bug reports and valuable feedback.
 
-In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering]({{< relref "../image-rendering/" >}}).
+In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering]({{< relref "../setup-grafana/image-rendering/" >}}).
 
 Please try the [Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) and let us know what you think.
 
 ## Upgrading
 
-See [upgrade notes]({{< relref "../installation/upgrading/#upgrading-to-v6-5" >}}).
+See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#upgrading-to-v6-5" >}}).
 
 ## Changelog
 

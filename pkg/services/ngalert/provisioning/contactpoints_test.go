@@ -42,6 +42,67 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, "slack", cps[1].Type)
 	})
 
+	t.Run("it's possbile to use a custom uid", func(t *testing.T) {
+		customUID := "1337"
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), 1)
+		require.NoError(t, err)
+		require.Len(t, cps, 2)
+		require.Equal(t, customUID, cps[1].UID)
+	})
+
+	t.Run("create rejects contact points that fail validation", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp.Type = ""
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+
+		require.ErrorIs(t, err, ErrValidation)
+	})
+
+	t.Run("update rejects contact points with no settings", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Settings = nil
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+
+		require.ErrorIs(t, err, ErrValidation)
+	})
+
+	t.Run("update rejects contact points with no type", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Type = ""
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+
+		require.ErrorIs(t, err, ErrValidation)
+	})
+
+	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+
+		require.ErrorIs(t, err, ErrValidation)
+	})
+
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 

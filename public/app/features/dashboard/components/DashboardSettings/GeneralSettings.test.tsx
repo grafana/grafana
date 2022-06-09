@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { selectOptionInTest } from '@grafana/ui';
 
 import { DashboardModel } from '../../state';
 
