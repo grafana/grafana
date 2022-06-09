@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { selectOptionInTest } from '@grafana/ui';
-import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
+import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { adHocBuilder } from '../shared/testing/builders';
 
