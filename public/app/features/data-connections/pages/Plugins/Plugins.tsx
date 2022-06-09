@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
 
 export function Plugins(): ReactElement | null {
-  return <div>Plugins Tab</div>;
+  return <div>The list of plugins is under development</div>;
 }
