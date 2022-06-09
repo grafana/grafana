@@ -6,10 +6,10 @@ import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboard {
+  isEnabled: boolean;
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-  isPublic: boolean;
 }
 
 export interface DashboardResponse {

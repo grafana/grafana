@@ -28,7 +28,7 @@ interface Acknowledgements {
 export const SharePublicDashboard = (props: Props) => {
   const dashboardUid = props.dashboard.uid;
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
-    isPublic: false,
+    isEnabled: false,
     uid: '',
     dashboardUid,
   });

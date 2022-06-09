@@ -10,7 +10,7 @@ import { PublicDashboard } from './SharePublicDashboardUtils';
 
 // Mock api request
 const publicDashboardconfigResp: PublicDashboard = {
-  isPublic: true,
+  isEnabled: true,
   uid: '',
   dashboardUid: '',
 };
