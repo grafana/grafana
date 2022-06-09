@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
@@ -24,7 +23,7 @@ type ContactPointService struct {
 	log               log.Logger
 }
 
-func NewContactPointService(store store.AlertingStore, encryptionService secrets.Service,
+func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
 	return &ContactPointService{
 		amStore:           store,
@@ -111,7 +110,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
+		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
@@ -197,13 +196,16 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
+	if contactPoint.Settings == nil {
+		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
+	}
 	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
 	secretKeys, err := contactPoint.SecretKeys()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
@@ -211,10 +213,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
 		}
 	}
+
 	// validate merged values
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
+
 	// check that provenance is not changed in a invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {

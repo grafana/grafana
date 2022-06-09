@@ -587,14 +587,15 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dash, err := dashdb.ProvideDashboardStore(store).SaveDashboard(models.SaveDashboardCommand{
+	dashStore := dashdb.ProvideDashboardStore(store)
+	dash, err := dashStore.SaveDashboard(models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
 		OrgId:     1,
-		FolderId:  0,
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
