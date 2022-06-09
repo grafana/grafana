@@ -402,6 +402,85 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		assert.Len(t, query.Result.Users, 2)
 	})
 
+	t.Run("Testing DB - error on case insensitive conflict", func(t *testing.T) {
+		cmd := models.CreateUserCommand{
+			Email: "confusertest@test.com",
+			Name:  "user name",
+			Login: "user_email_conflict",
+		}
+		userEmailConflict, err := ss.CreateUser(context.Background(), cmd)
+		require.NoError(t, err)
+
+		cmd = models.CreateUserCommand{
+			Email: "confusertest@TEST.COM",
+			Name:  "user name",
+			Login: "user_email_conflict_two",
+		}
+		_, err = ss.CreateUser(context.Background(), cmd)
+		require.NoError(t, err)
+
+		cmd = models.CreateUserCommand{
+			Email: "user_test_login_conflict@test.com",
+			Name:  "user name",
+			Login: "user_test_login_conflict",
+		}
+		userLoginConflict, err := ss.CreateUser(context.Background(), cmd)
+		require.NoError(t, err)
+
+		cmd = models.CreateUserCommand{
+			Email: "user_test_login_conflict_two@test.com",
+			Name:  "user name",
+			Login: "user_test_login_CONFLICT",
+		}
+		_, err = ss.CreateUser(context.Background(), cmd)
+		require.NoError(t, err)
+
+		ss.Cfg.CaseInsensitiveLogin = true
+
+		t.Run("GetUserByEmail - email conflict", func(t *testing.T) {
+			query := models.GetUserByEmailQuery{Email: "confusertest@test.com"}
+			err = ss.GetUserByEmail(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByEmail - login conflict", func(t *testing.T) {
+			query := models.GetUserByEmailQuery{Email: "user_test_login_conflict@test.com"}
+			err = ss.GetUserByEmail(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByID - email conflict", func(t *testing.T) {
+			query := models.GetUserByIdQuery{Id: userEmailConflict.Id}
+			err = ss.GetUserById(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByID - login conflict", func(t *testing.T) {
+			query := models.GetUserByIdQuery{Id: userLoginConflict.Id}
+			err = ss.GetUserById(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByLogin - email conflict", func(t *testing.T) {
+			query := models.GetUserByLoginQuery{LoginOrEmail: "user_email_conflict_two"}
+			err = ss.GetUserByLogin(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByLogin - login conflict", func(t *testing.T) {
+			query := models.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict"}
+			err = ss.GetUserByLogin(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		t.Run("GetUserByLogin - login conflict by email", func(t *testing.T) {
+			query := models.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict@test.com"}
+			err = ss.GetUserByLogin(context.Background(), &query)
+			require.Error(t, err)
+		})
+
+		ss.Cfg.CaseInsensitiveLogin = false
+	})
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
