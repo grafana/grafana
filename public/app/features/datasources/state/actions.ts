@@ -77,7 +77,9 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      dispatch(initDataSourceSettingsFailed(err));
+      if (err instanceof Error) {
+        dispatch(initDataSourceSettingsFailed(err));
+      }
     }
   };
 };
