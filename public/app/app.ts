@@ -53,7 +53,8 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
-import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+//import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -194,11 +195,24 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  if (config.sentry.enabled) {
+  /*if (config.sentry.enabled) {
     registerEchoBackend(
       new SentryEchoBackend({
         ...config.sentry,
         user: config.bootData.user,
+        buildInfo: config.buildInfo,
+      })
+    );
+  }*/
+
+  if (config.sentry.enabled) {
+    registerEchoBackend(
+      new GrafanaJavascriptAgentBackend({
+        ...config.sentry,
+        app: {
+          version: config.buildInfo.version,
+          environment: config.buildInfo.env,
+        },
         buildInfo: config.buildInfo,
       })
     );

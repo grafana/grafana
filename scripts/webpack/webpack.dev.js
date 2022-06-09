@@ -46,6 +46,12 @@ module.exports = (env = {}) =>
           sourceMap: false,
           preserveUrl: false,
         }),
+        {
+          test: /\.m?js/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
       ],
     },
 
