@@ -12,8 +12,9 @@ import {
   DateTime,
   FieldType,
   MutableDataFrame,
+  ScopedVars,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -33,7 +34,8 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   nodeGraph?: NodeGraphOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly timeSrv: TimeSrv = getTimeSrv(),
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
@@ -89,25 +91,25 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       }
     }
 
-    let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+      'service',
+      'operation',
+      'tags',
+      'minDuration',
+      'maxDuration',
+      'limit',
+    ]);
     // remove empty properties
-    jaegerQuery = pickBy(jaegerQuery, identity);
+    let jaegerQuery = pickBy(jaegerInterpolated, identity);
     if (jaegerQuery.tags) {
       jaegerQuery = {
         ...jaegerQuery,
-        tags: convertTagsLogfmt(getTemplateSrv().replace(jaegerQuery.tags, options.scopedVars)),
+        tags: convertTagsLogfmt(jaegerQuery.tags),
       };
     }
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
       jaegerQuery = omit(jaegerQuery, 'operation');
-    }
-
-    if (jaegerQuery.service) {
-      jaegerQuery = {
-        ...jaegerQuery,
-        service: getTemplateSrv().replace(jaegerQuery.service, options.scopedVars),
-      };
     }
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
@@ -122,6 +124,26 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         };
       })
     );
+  }
+
+  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+    const expandedQuery = { ...query };
+
+    // if (query.tags) {
+    //   query = {
+    //     ...query,
+    //     tags: getTemplateSrv().replace(query.tags, scopedVars),
+    //   };
+    // }
+
+    return {
+      ...expandedQuery,
+      service: this.templateSrv.replace(query.service ?? '', scopedVars),
+      operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
+      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
+    };
   }
 
   async testDatasource(): Promise<any> {
