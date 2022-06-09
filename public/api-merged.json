@@ -19,6 +19,576 @@
   },
   "basePath": "/api",
   "paths": {
+    "/access-control/builtin-roles": {
+      "get": {
+        "description": "You need to have a permission with action `roles.builtin:list` with scope `roles:*`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Get all built-in role assignments.",
+        "operationId": "listBuiltinRoles",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listBuiltinRolesResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Create a built-in role assignment.",
+        "operationId": "addBuiltinRole",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddBuiltInRoleCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
+      "delete": {
+        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Remove a built-in role assignment.",
+        "operationId": "removeBuiltinRole",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "builtinRole",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
+            "name": "global",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/roles": {
+      "get": {
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Get all roles.",
+        "operationId": "getAllRoles",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAllRolesResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Create a new custom role.",
+        "operationId": "createRoleWithPermissions",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetUserRolesCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/roles/{roleUID}": {
+      "get": {
+        "description": "Get a role for the given UID.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Get a role.",
+        "operationId": "getRole",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Update a custom role.",
+        "operationId": "updateRoleWithPermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateRoleCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Delete a custom role.",
+        "operationId": "deleteCustomRole",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/status": {
+      "get": {
+        "description": "Returns an indicator to check if fine-grained access control is enabled or not.\n\nYou need to have a permission with action `status:accesscontrol` and scope `services:accesscontrol`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Get status.",
+        "operationId": "getAccessControlStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAccessControlStatusResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/teams/{teamId}/roles": {
+      "get": {
+        "description": "You need to have a permission with action `teams.roles:list` and scope `teams:id:\u003cteam ID\u003e`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Get team roles.",
+        "operationId": "listTeamRoles",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Update team role.",
+        "operationId": "setTeamRoles",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Add team role.",
+        "operationId": "addTeamRole",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddTeamRoleCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/teams/{teamId}/roles/{roleUID}": {
+      "delete": {
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Remove team role.",
+        "operationId": "removeTeamRole",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/users/{user_id}/roles": {
+      "get": {
+        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "List roles assigned to a user.",
+        "operationId": "listUserRoles",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getAllRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Set user role assignments.",
+        "operationId": "setUserRoles",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Add a user role assignment.",
+        "operationId": "addUserRole",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddUserRoleCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/users/{user_id}/roles/{roleUID}": {
+      "delete": {
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "tags": ["access_control", "enterprise"],
+        "summary": "Remove a user role assignment.",
+        "operationId": "removeUserRole",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
+            "name": "global",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/ldap-sync-status": {
+      "get": {
+        "description": "You need to have a permission with action `ldap.status:read`.",
+        "tags": ["ldap_debug"],
+        "summary": "Available to grafana admins.",
+        "operationId": "getLDAPSyncStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getLDAPSyncStatusResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/admin/ldap/reload": {
       "post": {
         "security": [
@@ -176,6 +746,24 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/access-control/reload": {
+      "post": {
+        "tags": ["access_control_provisioning", "enterprise"],
+        "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
+        "operationId": "adminProvisioningReloadAccessControl",
+        "responses": {
+          "202": {
+            "$ref": "#/responses/acceptedResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           }
         }
       }
@@ -3108,6 +3696,150 @@
         }
       }
     },
+    "/datasources/{datasourceId}/disable-permissions": {
+      "post": {
+        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "tags": ["datasource_permissions", "enterprise"],
+        "summary": "Disable permissions for a data source.",
+        "operationId": "disablePermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasourceId}/enable-permissions": {
+      "post": {
+        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "tags": ["datasource_permissions", "enterprise"],
+        "summary": "Enable permissions for a data source.",
+        "operationId": "enablePermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createOrUpdateDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasourceId}/permissions": {
+      "get": {
+        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "tags": ["datasource_permissions", "enterprise"],
+        "summary": "Get permissions for a data source.",
+        "operationId": "getPermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasourceId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPermissionseResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
+      "delete": {
+        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "tags": ["datasource_permissions", "enterprise"],
+        "summary": "Remove permission for a data source.",
+        "operationId": "deletePermissions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "permissionId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/{id}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDatasourceByUID) instead",
@@ -3897,6 +4629,205 @@
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/licensing/check": {
+      "get": {
+        "tags": ["licensing", "enterprise"],
+        "summary": "Check license availability.",
+        "operationId": "getLicenseStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getLicenseStatusResponse"
+          }
+        }
+      }
+    },
+    "/licensing/custom-permissions": {
+      "get": {
+        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Get custom permissions report.",
+        "operationId": "getCustomPermissionsReport",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCustomPermissionsReportResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/licensing/custom-permissions-csv": {
+      "get": {
+        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "produces": ["text/csv"],
+        "tags": ["licensing", "enterprise"],
+        "summary": "Get custom permissions report in CSV format.",
+        "operationId": "getCustomPermissionsCSV",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCustomPermissionsReportResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/licensing/refresh-stats": {
+      "get": {
+        "description": "You need to have a permission with action `licensing:read`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Refresh license stats.",
+        "operationId": "refreshLicenseStats",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/refreshLicenseStatsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/licensing/token": {
+      "get": {
+        "description": "You need to have a permission with action `licensing:read`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Get license token.",
+        "operationId": "getLicenseToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getLicenseTokenResponse"
+          }
+        }
+      },
+      "post": {
+        "description": "You need to have a permission with action `licensing:update`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Create license token.",
+        "operationId": "postLicenseToken",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteTokenCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getLicenseTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Removes the license stored in the Grafana database. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:delete`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Remove license from database.",
+        "operationId": "deleteLicenseToken",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteTokenCommand"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/acceptedResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/licensing/token/renew": {
+      "post": {
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "tags": ["licensing", "enterprise"],
+        "summary": "Manually force license refresh.",
+        "operationId": "postRenewLicenseToken",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postRenewLicenseTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          }
+        }
+      }
+    },
+    "/login/saml": {
+      "get": {
+        "tags": ["saml", "enterprise"],
+        "summary": "It initiates the login flow by redirecting the user to the IdP.",
+        "operationId": "getSAMLLogin",
+        "responses": {
+          "302": {
+            "description": ""
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/logout/saml": {
+      "get": {
+        "tags": ["saml", "enterprise"],
+        "summary": "GetLogout initiates single logout process.",
+        "operationId": "getSAMLLogout",
+        "responses": {
+          "302": {
+            "description": ""
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -4859,18 +5790,55 @@
         }
       }
     },
-    "/query-history": {
+    "/recording-rules": {
       "get": {
-        "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
-        "tags": ["query_history"],
-        "summary": "Query history search.",
-        "operationId": "searchQueries",
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Get all recording rules.",
+        "operationId": "listRecordingRules",
         "responses": {
           "200": {
-            "$ref": "#/responses/getQueryHistorySearchResponse"
+            "$ref": "#/responses/listRecordingRulesResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Update a recording rule.",
+        "operationId": "updateRecordingRule",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecordingRuleJSON"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/recordingRuleResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -4878,68 +5846,127 @@
         }
       },
       "post": {
-        "description": "Adds new query to query history.",
-        "tags": ["query_history"],
-        "summary": "Add query to query history.",
-        "operationId": "createQuery",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getQueryHistoryResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "tags": ["query_history"],
-        "summary": "Migrate queries to query history.",
-        "operationId": "migrateQueries",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getQueryHistoryMigrationResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/query-history/star/{query_history_uid}": {
-      "post": {
-        "description": "Adds star to query in query history as specified by the UID.",
-        "tags": ["query_history"],
-        "summary": "Add star to query in query history.",
-        "operationId": "starQuery",
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Create a new recording rule.",
+        "operationId": "createRecordingRule",
         "parameters": [
           {
-            "type": "string",
-            "name": "query_history_uid",
-            "in": "path",
-            "required": true
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecordingRuleJSON"
+            }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getQueryHistoryResponse"
+            "$ref": "#/responses/recordingRuleResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/recording-rules/test": {
+      "post": {
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Test a recording rule.",
+        "operationId": "testCreateRecordingRule",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecordingRuleJSON"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/recording-rules/writer": {
+      "get": {
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Get the write target.",
+        "operationId": "getRecordingRuleWriteTarget",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/recordingRuleWriteTargetResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Create a new write target.",
+        "operationId": "createRecordingRuleWriteTarget",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PrometheusRemoteWriteTargetJSON"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/recordingRuleWriteTargetResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "422": {
+            "$ref": "#/responses/unprocessableEntityError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -4947,21 +5974,180 @@
         }
       },
       "delete": {
-        "description": "Removes star from query in query history as specified by the UID.",
-        "tags": ["query_history"],
-        "summary": "Remove star to query in query history.",
-        "operationId": "unstarQuery",
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Delete the write target.",
+        "operationId": "deleteRecordingRuleWriteTarget",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/recording-rules/{recordingRuleID}": {
+      "delete": {
+        "tags": ["recording_rules", "enterprise"],
+        "summary": "Delete a recording rule.",
+        "operationId": "deleteRecordingRule",
         "parameters": [
           {
-            "type": "string",
-            "name": "query_history_uid",
+            "type": "integer",
+            "format": "int64",
+            "name": "recordingRuleID",
             "in": "path",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getQueryHistoryResponse"
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "List reports.",
+        "operationId": "getReports",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getReportsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports.admin:create`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Create a report.",
+        "operationId": "createReport",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createReportResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/email": {
+      "post": {
+        "description": "Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client’s timeout to at least 60 seconds. Available to org admins only and with a valid license.\n\nOnly available in Grafana Enterprise v7.0+.\nThis API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.\n\nYou need to have a permission with action `reports:send`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Send a report.",
+        "operationId": "sendReport",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportEmailDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/pdf/{DashboardID}": {
+      "get": {
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for dashboard.",
+        "operationId": "renderReportPDF",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4972,23 +6158,19 @@
         }
       }
     },
-    "/query-history/{query_history_uid}": {
-      "delete": {
-        "description": "Deletes an existing query in query history as specified by the UID. This operation cannot be reverted.",
-        "tags": ["query_history"],
-        "summary": "Delete query in query history.",
-        "operationId": "deleteQuery",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "query_history_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
+        "summary": "Render report for multiple dashboards.",
+        "operationId": "renderReportPDFs",
         "responses": {
           "200": {
-            "$ref": "#/responses/getQueryHistoryDeleteQueryResponse"
+            "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4997,29 +6179,280 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      }
+    },
+    "/reports/settings": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Get settings.",
+        "operationId": "getReportSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getReportSettingsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       },
-      "patch": {
-        "description": "Updates comment for query in query history as specified by the UID.",
-        "tags": ["query_history"],
-        "summary": "Update comment for query in query history.",
-        "operationId": "patchQueryComment",
+      "post": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Save settings.",
+        "operationId": "saveReportSettings",
         "parameters": [
           {
-            "type": "string",
-            "name": "query_history_uid",
-            "in": "path",
-            "required": true
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SettingsDTO"
+            }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getQueryHistoryResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/test-email": {
+      "post": {
+        "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports:send`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Send test report via email.",
+        "operationId": "sendTestEmail",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/{reportID}": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Get a report.",
+        "operationId": "getReport",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getReportResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Update a report.",
+        "operationId": "updateReport",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateOrUpdateConfigCmd"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": ["reports", "enterprise"],
+        "summary": "Delete a report.",
+        "operationId": "deleteReport",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/saml/acs": {
+      "post": {
+        "tags": ["saml", "enterprise"],
+        "summary": "It performs assertion Consumer Service (ACS).",
+        "operationId": "postACS",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "RelayState",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": ""
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/saml/metadata": {
+      "get": {
+        "produces": ["application/xml;application/samlmetadata+xml"],
+        "tags": ["saml", "enterprise"],
+        "summary": "It exposes the SP (Grafana's) metadata for the IdP's consumption.",
+        "operationId": "getSAMLMetadata",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          }
+        }
+      }
+    },
+    "/saml/slo": {
+      "post": {
+        "tags": ["saml", "enterprise"],
+        "summary": "It performs Single Logout (SLO) callback.",
+        "operationId": "postSLO",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "SAMLRequest",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "SAMLResponse",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -5352,6 +6785,127 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{teamId}/groups": {
+      "get": {
+        "tags": ["sync_team_groups", "enterprise"],
+        "summary": "Get External Groups.",
+        "operationId": "getTeamGroupsApi",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getTeamGroupsApiResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["sync_team_groups", "enterprise"],
+        "summary": "Add External Group.",
+        "operationId": "addTeamGroupApi",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamGroupMapping"
+            }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{teamId}/groups/{groupId}": {
+      "delete": {
+        "tags": ["sync_team_groups", "enterprise"],
+        "summary": "Remove External Group.",
+        "operationId": "removeTeamGroupApi",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "groupId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -6364,6 +7918,42 @@
       "type": "object",
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "ActiveSyncStatusDTO": {
+      "description": "ActiveSyncStatusDTO holds the information for LDAP background Sync",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "nextSync": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "prevSync": {
+          "$ref": "#/definitions/SyncResult"
+        },
+        "schedule": {
+          "type": "string"
+        }
+      }
+    },
+    "ActiveUserStats": {
+      "type": "object",
+      "properties": {
+        "active_admins_and_editors": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "active_users": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "active_viewers": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AddApiKeyCommand": {
       "description": "COMMANDS",
       "type": "object",
@@ -6385,6 +7975,22 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
+    "AddBuiltInRoleCommand": {
+      "type": "object",
+      "properties": {
+        "builtInRole": {
+          "type": "string",
+          "enum": ["Viewer", " Editor", " Admin", " Grafana Admin"]
+        },
+        "global": {
+          "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
+          "type": "boolean"
+        },
+        "roleUid": {
+          "type": "string"
+        }
+      }
     },
     "AddDataSourceCommand": {
       "description": "Also acts as api DTO",
@@ -6464,12 +8070,50 @@
         }
       }
     },
+    "AddPermissionDTO": {
+      "type": "object",
+      "properties": {
+        "builtinRole": {
+          "type": "string"
+        },
+        "permission": {
+          "$ref": "#/definitions/DsPermissionType"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AddTeamMemberCommand": {
       "type": "object",
       "properties": {
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AddTeamRoleCommand": {
+      "type": "object",
+      "properties": {
+        "roleUid": {
+          "type": "string"
+        }
+      }
+    },
+    "AddUserRoleCommand": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "type": "boolean"
+        },
+        "roleUid": {
+          "type": "string"
         }
       }
     },
@@ -7156,6 +8800,26 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
+    "BrandingOptionsDTO": {
+      "type": "object",
+      "properties": {
+        "emailFooterLink": {
+          "type": "string"
+        },
+        "emailFooterMode": {
+          "type": "string"
+        },
+        "emailFooterText": {
+          "type": "string"
+        },
+        "emailLogoUrl": {
+          "type": "string"
+        },
+        "reportLogoUrl": {
+          "type": "string"
+        }
+      }
+    },
     "CalculateDiffTarget": {
       "type": "object",
       "properties": {
@@ -7221,6 +8885,84 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "ConfigDTO": {
+      "description": "ConfigDTO is model representation in transfer",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptionsDTO"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleDTO"
+        },
+        "state": {
+          "type": "string"
+        },
+        "templateVars": {
+          "type": "object"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -7341,6 +9083,60 @@
         }
       }
     },
+    "CreateOrUpdateConfigCmd": {
+      "type": "object",
+      "properties": {
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardDTO"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptionsDTO"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleDTO"
+        },
+        "state": {
+          "type": "string"
+        },
+        "templateVars": {
+          "type": "object"
+        }
+      }
+    },
     "CreateOrgCommand": {
       "type": "object",
       "properties": {
@@ -7349,16 +9145,36 @@
         }
       }
     },
-    "CreateQueryInQueryHistoryCommand": {
-      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
+    "CreateRoleWithPermissionsCommand": {
       "type": "object",
       "properties": {
-        "datasourceUid": {
-          "description": "UID of the data source for which are queries stored.",
+        "description": {
           "type": "string"
         },
-        "queries": {
-          "$ref": "#/definitions/Json"
+        "displayName": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "uid": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -7370,6 +9186,53 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "CustomPermissionsRecordDTO": {
+      "type": "object",
+      "properties": {
+        "customPermissions": {
+          "type": "string"
+        },
+        "granteeName": {
+          "type": "string"
+        },
+        "granteeType": {
+          "type": "string"
+        },
+        "granteeUrl": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isFolder": {
+          "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgRole": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "usersCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -7465,6 +9328,20 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardDTO": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/DashboardReportDTO"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
         }
       }
     },
@@ -7574,6 +9451,21 @@
       "type": "object",
       "properties": {
         "redirectUri": {
+          "type": "string"
+        }
+      }
+    },
+    "DashboardReportDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -7692,6 +9584,7 @@
       }
     },
     "DashboardVersionDTO": {
+      "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
       "type": "object",
       "properties": {
         "created": {
@@ -7947,6 +9840,14 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
+    "DeleteTokenCommand": {
+      "type": "object",
+      "properties": {
+        "instance": {
+          "type": "string"
+        }
+      }
+    },
     "DiscoveryBase": {
       "type": "object",
       "required": ["status"],
@@ -8188,6 +10089,18 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "FailedUser": {
+      "description": "FailedUser holds the information of an user that failed",
+      "type": "object",
+      "properties": {
+        "Error": {
+          "type": "string"
+        },
+        "Login": {
+          "type": "string"
+        }
+      }
     },
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
@@ -9670,19 +11583,6 @@
         }
       }
     },
-    "MigrateQueriesToQueryHistoryCommand": {
-      "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
-      "type": "object",
-      "properties": {
-        "queries": {
-          "description": "Array of queries to store in query history.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/QueryToMigrate"
-          }
-        }
-      }
-    },
     "MonthRange": {
       "type": "object",
       "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
@@ -10262,16 +12162,6 @@
         }
       }
     },
-    "PatchQueryCommentInQueryHistoryCommand": {
-      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history",
-      "type": "object",
-      "properties": {
-        "comment": {
-          "description": "Updated comment",
-          "type": "string"
-        }
-      }
-    },
     "PauseAlertCommand": {
       "type": "object",
       "properties": {
@@ -10289,6 +12179,26 @@
       "properties": {
         "paused": {
           "type": "boolean"
+        }
+      }
+    },
+    "Permission": {
+      "type": "object",
+      "title": "Permission is the model for access control permissions.",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -10693,6 +12603,20 @@
         }
       }
     },
+    "PrometheusRemoteWriteTargetJSON": {
+      "type": "object",
+      "properties": {
+        "data_source_uid": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "remote_write_path": {
+          "type": "string"
+        }
+      }
+    },
     "Provenance": {
       "type": "string",
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -10760,108 +12684,11 @@
         }
       }
     },
-    "QueryHistoryDTO": {
-      "type": "object",
-      "properties": {
-        "comment": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "createdBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "datasourceUid": {
-          "type": "string"
-        },
-        "queries": {
-          "$ref": "#/definitions/Json"
-        },
-        "starred": {
-          "type": "boolean"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "QueryHistoryDeleteQueryResponse": {
-      "description": "QueryHistoryDeleteQueryResponse is the response struct for deleting a query from query history",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "QueryHistoryMigrationResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "starredCount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "QueryHistoryPreference": {
       "type": "object",
       "properties": {
         "homeTab": {
           "type": "string"
-        }
-      }
-    },
-    "QueryHistoryResponse": {
-      "description": "QueryHistoryResponse is a response struct for QueryHistoryDTO",
-      "type": "object",
-      "properties": {
-        "result": {
-          "$ref": "#/definitions/QueryHistoryDTO"
-        }
-      }
-    },
-    "QueryHistorySearchResponse": {
-      "type": "object",
-      "properties": {
-        "result": {
-          "$ref": "#/definitions/QueryHistorySearchResult"
-        }
-      }
-    },
-    "QueryHistorySearchResult": {
-      "type": "object",
-      "properties": {
-        "page": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "perPage": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "queryHistory": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/QueryHistoryDTO"
-          }
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -10950,27 +12777,6 @@
         }
       }
     },
-    "QueryToMigrate": {
-      "type": "object",
-      "properties": {
-        "comment": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "datasourceUid": {
-          "type": "string"
-        },
-        "queries": {
-          "$ref": "#/definitions/Json"
-        },
-        "starred": {
-          "type": "boolean"
-        }
-      }
-    },
     "Receiver": {
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
@@ -11046,6 +12852,53 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "RecordingRuleJSON": {
+      "description": "RecordingRuleJSON is the external representation of a recording rule",
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "count": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dest_data_source_uid": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "prom_name": {
+          "type": "string"
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
+        },
+        "range": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target_ref_id": {
+          "type": "string"
+        }
+      }
+    },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
       "type": "object",
@@ -11064,6 +12917,41 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+    },
+    "ReportEmailDTO": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "emails": {
+          "description": "Comma-separated list of emails to which to send the report to.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "type": "string",
+          "format": "int64"
+        },
+        "useEmailsFromReport": {
+          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "type": "boolean"
+        }
+      }
+    },
+    "ReportOptionsDTO": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/TimeRangeDTO"
+        }
+      }
     },
     "ResponseDetails": {
       "type": "object",
@@ -11096,6 +12984,50 @@
       "type": "object",
       "properties": {
         "authTokenId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "RoleDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "delegatable": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -11408,6 +13340,49 @@
         }
       }
     },
+    "ScheduleDTO": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "dayOfMonth": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "hour": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalAmount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalFrequency": {
+          "type": "string"
+        },
+        "minute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "workdaysOnly": {
+          "type": "boolean"
+        }
+      }
+    },
     "SearchTeamQueryResult": {
       "type": "object",
       "properties": {
@@ -11463,12 +13438,49 @@
       "title": "SecretURL is a URL that must not be revealed on marshaling.",
       "$ref": "#/definitions/URL"
     },
+    "SetUserRolesCommand": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "type": "boolean"
+        },
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "roleUids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SettingsBag": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": {
           "type": "string"
+        }
+      }
+    },
+    "SettingsDTO": {
+      "type": "object",
+      "properties": {
+        "branding": {
+          "$ref": "#/definitions/BrandingOptionsDTO"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -11682,6 +13694,14 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Status": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -11690,6 +13710,39 @@
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "SyncResult": {
+      "type": "object",
+      "title": "SyncResult holds the result of a sync with LDAP. This gives us information on which users were updated and how.",
+      "properties": {
+        "Elapsed": {
+          "$ref": "#/definitions/Duration"
+        },
+        "FailedUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FailedUser"
+          }
+        },
+        "MissingUserIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "Started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "UpdatedUserIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -11770,6 +13823,30 @@
         },
         "permission": {
           "$ref": "#/definitions/PermissionType"
+        }
+      }
+    },
+    "TeamGroupDTO": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "TeamGroupMapping": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
         }
       }
     },
@@ -12076,6 +14153,108 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
+    "TimeRangeDTO": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      }
+    },
+    "Token": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "details_url": {
+          "type": "string"
+        },
+        "exp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "iat": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "included_users": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "iss": {
+          "type": "string"
+        },
+        "jti": {
+          "type": "string"
+        },
+        "lexp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lic_exp_warn_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lid": {
+          "type": "string"
+        },
+        "limit_by": {
+          "type": "string"
+        },
+        "max_concurrent_user_sessions": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "nbf": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prod": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "slug": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/TokenStatus"
+        },
+        "sub": {
+          "type": "string"
+        },
+        "tok_exp_warn_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "trial": {
+          "type": "boolean"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "update_days": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "usage_billing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "TokenStatus": {
+      "type": "integer",
+      "format": "int64"
+    },
     "TrimDashboardCommand": {
       "type": "object",
       "properties": {
@@ -12097,6 +14276,9 @@
           "$ref": "#/definitions/Json"
         }
       }
+    },
+    "Type": {
+      "type": "string"
     },
     "URL": {
       "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
@@ -12397,6 +14579,39 @@
         },
         "weekStart": {
           "type": "string"
+        }
+      }
+    },
+    "UpdateRoleCommand": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "global": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -13412,6 +15627,16 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "contentResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8"
+        }
+      }
+    },
     "createAnnotationResponse": {
       "description": "",
       "schema": {
@@ -13477,6 +15702,12 @@
             "example": 65
           }
         }
+      }
+    },
+    "createReportResponse": {
+      "description": "",
+      "schema": {
+        "type": "object"
       }
     },
     "createSnapshotResponse": {
@@ -13683,6 +15914,12 @@
         }
       }
     },
+    "getAccessControlStatusResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Status"
+      }
+    },
     "getAlertNotificationChannelResponse": {
       "description": "",
       "schema": {
@@ -13716,6 +15953,15 @@
         }
       }
     },
+    "getAllRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
     "getAnnotationResponse": {
       "description": "",
       "schema": {
@@ -13743,6 +15989,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/UserToken"
+        }
+      }
+    },
+    "getCustomPermissionsReportResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/CustomPermissionsRecordDTO"
         }
       }
     },
@@ -13815,6 +16070,12 @@
         }
       }
     },
+    "getLDAPSyncStatusResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ActiveSyncStatusDTO"
+      }
+    },
     "getLibraryElementConnectionsResponse": {
       "description": "",
       "schema": {
@@ -13833,6 +16094,15 @@
         "$ref": "#/definitions/LibraryElementSearchResponse"
       }
     },
+    "getLicenseStatusResponse": {
+      "description": ""
+    },
+    "getLicenseTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/Token"
+      }
+    },
     "getOrgResponse": {
       "description": "",
       "schema": {
@@ -13848,34 +16118,16 @@
         }
       }
     },
+    "getPermissionseResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/AddPermissionDTO"
+      }
+    },
     "getPreferencesResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/Prefs"
-      }
-    },
-    "getQueryHistoryDeleteQueryResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
-      }
-    },
-    "getQueryHistoryMigrationResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/QueryHistoryMigrationResponse"
-      }
-    },
-    "getQueryHistoryResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/QueryHistoryResponse"
-      }
-    },
-    "getQueryHistorySearchResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/QueryHistorySearchResponse"
       }
     },
     "getQuotaResponse": {
@@ -13885,6 +16137,33 @@
         "items": {
           "$ref": "#/definitions/UserQuotaDTO"
         }
+      }
+    },
+    "getReportResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ConfigDTO"
+      }
+    },
+    "getReportSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SettingsDTO"
+      }
+    },
+    "getReportsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ConfigDTO"
+        }
+      }
+    },
+    "getRoleResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RoleDTO"
       }
     },
     "getSettingsResponse": {
@@ -13923,6 +16202,15 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/AdminStats"
+      }
+    },
+    "getTeamGroupsApiResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamGroupDTO"
+        }
       }
     },
     "getTeamMembersResponse": {
@@ -13983,6 +16271,27 @@
       "description": "InternalServerError is a general error indicating something went wrong internally.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "listBuiltinRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleDTO"
+          }
+        }
+      }
+    },
+    "listRecordingRulesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RecordingRuleJSON"
+        }
       }
     },
     "lookupAlertNotificationChannelsResponse": {
@@ -14102,6 +16411,9 @@
         }
       }
     },
+    "postRenewLicenseTokenResponse": {
+      "description": ""
+    },
     "preconditionFailedError": {
       "description": "PreconditionFailedError",
       "schema": {
@@ -14112,6 +16424,24 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "recordingRuleResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RecordingRuleJSON"
+      }
+    },
+    "recordingRuleWriteTargetResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PrometheusRemoteWriteTargetJSON"
+      }
+    },
+    "refreshLicenseStatsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ActiveUserStats"
       }
     },
     "searchOrgResponse": {
@@ -14245,10 +16575,6 @@
     {
       "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
       "name": "library_elements"
-    },
-    {
-      "description": "The identifier (ID) of a query in query history is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a query history uniquely identifies queries in query history between multiple Grafana installs. It’s automatically generated. The UID provides consistent URLs for accessing queries in query history.",
-      "name": "query_history"
     },
     {
       "description": "The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user is called `admin` and has permission to use this API).",
