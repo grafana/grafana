@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useToggle } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import useWindowDimensions from 'app/core/hooks/useWindowDimensions';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
@@ -54,6 +55,18 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const { nodes } = useCategorizeFrames(frames);
   const [open, toggleOpen] = useToggle(false);
 
+  // Calculate node graph height based on window and top position, with some padding
+  const { height: windowHeight } = useWindowDimensions();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState(250);
+  useEffect(() => {
+    if (containerRef.current) {
+      const { top } = containerRef.current.getBoundingClientRect();
+      setTop(top);
+    }
+  }, [containerRef]);
+  const height = windowHeight - top - 32;
+
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
       <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
@@ -72,7 +85,17 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       isOpen={withTraceView ? open : true}
       onToggle={withTraceView ? () => toggleOpen() : undefined}
     >
-      <div style={{ height: withTraceView ? 500 : 600 }}>
+      <div
+        ref={containerRef}
+        style={
+          withTraceView
+            ? { height: 500 }
+            : {
+                minHeight: 600,
+                height,
+              }
+        }
+      >
         <NodeGraph dataFrames={frames} getLinks={getLinks} />
       </div>
     </Collapse>
