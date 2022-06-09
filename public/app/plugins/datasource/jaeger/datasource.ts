@@ -101,12 +101,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     ]);
     // remove empty properties
     let jaegerQuery = pickBy(jaegerInterpolated, identity);
-    if (jaegerQuery.tags) {
-      jaegerQuery = {
-        ...jaegerQuery,
-        tags: convertTagsLogfmt(jaegerQuery.tags),
-      };
-    }
 
     if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
       jaegerQuery = omit(jaegerQuery, 'operation');
@@ -126,13 +120,27 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     );
   }
 
+  interpolateVariablesInQueries(queries: JaegerQuery[], scopedVars: ScopedVars): JaegerQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars),
+      };
+    });
+  }
+
   applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
     let expandedQuery = { ...query };
 
-    if (query.tags) {
+    if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
       expandedQuery = {
         ...query,
-        tags: this.templateSrv.replace(query.tags, scopedVars),
+        tags: convertTagsLogfmt(this.templateSrv.replace(query.tags, scopedVars)),
       };
     }
 
@@ -142,7 +150,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
-      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
     };
   }
 
