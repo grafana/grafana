@@ -16,12 +16,9 @@ const DEFAULT_LABEL_WIDTH = 18;
 export const Field = (props: Props) => {
   const { labelWidth, inlineField, ...remainingProps } = props;
 
-  if (config.featureToggles.azureMonitorExperimentalUI) {
-    if (inlineField) {
-      return <InlineField labelWidth={labelWidth || DEFAULT_LABEL_WIDTH} {...remainingProps} />;
-    } else {
-      return <EditorField width={labelWidth || DEFAULT_LABEL_WIDTH} {...remainingProps} />;
-    }
+  if (config.featureToggles.azureMonitorExperimentalUI && !inlineField) {
+    return <EditorField width={labelWidth || DEFAULT_LABEL_WIDTH} {...remainingProps} />;
+  } else {
+    return <InlineField labelWidth={labelWidth || DEFAULT_LABEL_WIDTH} {...remainingProps} />;
   }
-  return <InlineField labelWidth={labelWidth || DEFAULT_LABEL_WIDTH} {...remainingProps} />;
 };
