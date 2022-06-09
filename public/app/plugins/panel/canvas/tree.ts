@@ -11,7 +11,7 @@ export interface FlatElement {
 function flattenElements(node: FrameState, array: FlatElement[], depth: number) {
   for (let i = node.elements.length; i--; i >= 0) {
     const child = node.elements[i];
-    const nodeDetails = { node: child, depth: depth + 1, ...(child instanceof FrameState && { isOpen: false }) };
+    const nodeDetails = { node: child, depth: depth + 1, ...(child instanceof FrameState && { isOpen: true }) };
     array.push(nodeDetails);
 
     if (child instanceof FrameState) {
