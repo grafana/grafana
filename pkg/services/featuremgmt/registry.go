@@ -226,5 +226,11 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
