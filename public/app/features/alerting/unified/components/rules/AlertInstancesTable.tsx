@@ -34,6 +34,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
       isExpandable={true}
       items={items}
       renderExpandedContent={({ data }) => <AlertInstanceDetails instance={data} />}
+      pagination={{ itemsPerPage: 5 }}
     />
   );
 };

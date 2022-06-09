@@ -69,6 +69,7 @@ export const RulesTable: FC<Props> = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        pagination={{ itemsPerPage: 20 }}
       />
     </div>
   );
@@ -85,7 +86,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     width: auto;
-    background-color: ${theme.colors.background.secondary};
+    // background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
   `,
 });

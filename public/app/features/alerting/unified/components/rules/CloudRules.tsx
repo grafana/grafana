@@ -2,14 +2,17 @@ import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useMemo } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
+import { PaginationWrapper } from '../PaginationWrapper';
 
 import { RulesGroup } from './RulesGroup';
+import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -17,14 +20,17 @@ interface Props {
 }
 
 export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
+  const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
     () => rulesDataSources.filter((ds) => rules[ds.name]?.loading),
     [rules, rulesDataSources]
   );
+
+  const { numberOfPages, onPageChange, page, pageItems } = usePagination(groupsWithNamespaces, 1, 5);
 
   return (
     <section className={styles.wrapper}>
@@ -40,24 +46,27 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
         )}
       </div>
 
-      {namespaces.map((namespace) => {
-        const { groups, rulesSource } = namespace;
-        return groups.map((group) => (
+      {pageItems.map(({ group, namespace }) => {
+        // const { groups, rulesSource } = namespace;
+        return (
           <RulesGroup
             group={group}
-            key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
+            key={`${getRulesSourceName(namespace.rulesSource)}-${name}-${group.name}`}
             namespace={namespace}
             expandAll={expandAll}
           />
-        ));
+        );
       })}
       {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
-      {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
+      {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
+      <PaginationWrapper>
+        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+      </PaginationWrapper>
     </section>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   loader: css`
     margin-bottom: 0;
   `,
@@ -66,6 +75,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: space-between;
   `,
   wrapper: css`
-    margin-bottom: ${theme.spacing.xl};
+    margin-bottom: ${theme.spacing(4)};
   `,
 });
