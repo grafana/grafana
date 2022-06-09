@@ -36,7 +36,12 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			ctx := &testContext{}
 			finalRoundTripper := ctx.createRoundTripper()
-			mw := httpclientprovider.ForwardedCookiesMiddleware(tc.allowedCookies)
+			forwarded := []*http.Cookie{
+				{Name: "c1", Value: "1"},
+				{Name: "c2", Value: "2"},
+				{Name: "c3", Value: "3"},
+			}
+			mw := httpclientprovider.ForwardedCookiesMiddleware(forwarded, tc.allowedCookies)
 			opts := httpclient.Options{}
 			rt := mw.CreateMiddleware(opts, finalRoundTripper)
 			require.NotNil(t, rt)
@@ -46,9 +51,6 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 
 			req, err := http.NewRequest(http.MethodGet, "http://", nil)
 			require.NoError(t, err)
-			req.AddCookie(&http.Cookie{Name: "c1", Value: "1"})
-			req.AddCookie(&http.Cookie{Name: "c2", Value: "2"})
-			req.AddCookie(&http.Cookie{Name: "c3", Value: "3"})
 			res, err := rt.RoundTrip(req)
 			require.NoError(t, err)
 			require.NotNil(t, res)

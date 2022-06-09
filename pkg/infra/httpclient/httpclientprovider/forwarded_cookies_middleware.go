@@ -11,9 +11,12 @@ const ForwardedCookiesMiddlewareName = "forwarded-cookies"
 
 // ForwardedCookiesMiddleware middleware that sets Cookie header on the
 // outgoing request, if forwarded cookies configured/provided.
-func ForwardedCookiesMiddleware(allowedCookies []string) httpclient.Middleware {
+func ForwardedCookiesMiddleware(forwardedCookies []*http.Cookie, allowedCookies []string) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(ForwardedCookiesMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			for _, cookie := range forwardedCookies {
+				req.AddCookie(cookie)
+			}
 			proxyutil.ClearCookieHeader(req, allowedCookies)
 			return next.RoundTrip(req)
 		})
