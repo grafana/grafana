@@ -6,6 +6,7 @@ package definitions
 //
 //     Responses:
 //       200: Route
+//         description: The currently active notification routing tree
 
 // swagger:route PUT /api/v1/provisioning/policies provisioning stable RoutePutPolicyTree
 //
@@ -20,6 +21,7 @@ package definitions
 
 // swagger:parameters RoutePutPolicyTree
 type Policytree struct {
+	// The new notification routing tree to use
 	// in:body
 	Body Route
 }

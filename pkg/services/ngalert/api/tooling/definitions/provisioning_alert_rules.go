@@ -12,6 +12,7 @@ import (
 //
 //     Responses:
 //       200: AlertRule
+//       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
@@ -44,6 +45,7 @@ import (
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
 type AlertRuleUIDReference struct {
+	// Alert rule UID
 	// in:path
 	UID string
 }

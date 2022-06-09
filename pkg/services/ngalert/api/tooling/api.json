@@ -1469,14 +1469,16 @@
   },
   "MessageTemplate": {
    "properties": {
-    "Name": {
-     "type": "string"
-    },
-    "Template": {
-     "type": "string"
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "template": {
+     "type": "string",
+     "x-go-name": "Template"
     }
    },
    "type": "object",
@@ -3067,6 +3069,7 @@
   "ValidationError": {
    "properties": {
     "msg": {
+     "example": "error message",
      "type": "string",
      "x-go-name": "Msg"
     }
@@ -3254,6 +3257,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3275,16 +3279,15 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3404,7 +3407,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3463,16 +3465,20 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3524,16 +3530,15 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3870,6 +3875,7 @@
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -3890,6 +3896,7 @@
     "operationId": "RouteGetAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -3902,6 +3909,9 @@
       "schema": {
        "$ref": "#/definitions/AlertRule"
       }
+     },
+     "404": {
+      "description": " Not found."
      }
     },
     "summary": "Get a specific alert rule by UID.",
@@ -3916,6 +3926,7 @@
     "operationId": "RoutePutAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -4007,7 +4018,7 @@
     "operationId": "RouteDeleteContactpoints",
     "parameters": [
      {
-      "description": "ContactPointUID should be the contact point UID identifier",
+      "description": "Contact point UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -4015,11 +4026,8 @@
      }
     ],
     "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+     "204": {
+      "description": " The contact point was deleted successfully."
      }
     },
     "summary": "Delete a contact point.",
@@ -4034,7 +4042,7 @@
     "operationId": "RoutePutContactpoint",
     "parameters": [
      {
-      "description": "ContactPointUID should be the contact point UID identifier",
+      "description": "Contact point UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -4124,12 +4132,6 @@
       "schema": {
        "$ref": "#/definitions/MuteTimings"
       }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
      }
     },
     "summary": "Get all the mute timings.",
@@ -4176,7 +4178,7 @@
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -4186,10 +4188,7 @@
     ],
     "responses": {
      "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+      "description": " The mute timing was deleted successfully."
      }
     },
     "summary": "Delete a mute timing.",
@@ -4201,7 +4200,7 @@
     "operationId": "RouteGetMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -4217,10 +4216,7 @@
       }
      },
      "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
+      "description": " Not found."
      }
     },
     "summary": "Get a mute timing.",
@@ -4235,7 +4231,7 @@
     "operationId": "RoutePutMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -4293,6 +4289,7 @@
     "operationId": "RoutePutPolicyTree",
     "parameters": [
      {
+      "description": "The new notification routing tree to use",
       "in": "body",
       "name": "Body",
       "schema": {
@@ -4331,10 +4328,7 @@
       }
      },
      "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
+      "description": " Not found."
      }
     },
     "summary": "Get all message templates.",
@@ -4358,10 +4352,7 @@
     ],
     "responses": {
      "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+      "description": " The template was deleted successfully."
      }
     },
     "summary": "Delete a template.",
@@ -4389,10 +4380,7 @@
       }
      },
      "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
+      "description": " Not found."
      }
     },
     "summary": "Get a message template.",

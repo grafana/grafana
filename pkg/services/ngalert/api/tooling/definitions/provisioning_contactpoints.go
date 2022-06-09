@@ -44,11 +44,11 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Ack
+//       204: description: The contact point was deleted successfully.
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
-	// UID should be the contact point unique identifier
+	// UID is the contact point unique identifier
 	// in:path
 	UID string
 }
