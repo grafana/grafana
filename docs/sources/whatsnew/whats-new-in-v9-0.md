@@ -181,10 +181,11 @@ This is a partial list of notable breaking changes. For the complete list, see o
 
 Fine-grained access control is now called "Role-based access control". As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
 
-Built-in roles are now called basic roles, and they now consist of permissions, not roles
-The Terraform builtin_role_assignment resource is going away.
-Grafana provisioning has a new schema, please refer to the documentation for more information.
-Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Built-in roles are now called basic roles. They now consist of permissions, not roles.
+- The Terraform builtin_role_assignment resource is going away.
+- Grafana provisioning has a new schema. Please refer to the documentation for more information.
+- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Several role-based access control actions have been renamed. All the database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
 ### Loki: logs data format changed
 
