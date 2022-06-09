@@ -91,6 +91,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
+	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
