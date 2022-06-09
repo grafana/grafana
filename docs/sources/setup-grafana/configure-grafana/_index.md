@@ -1267,6 +1267,24 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 <hr>
 
+## [unified_alerting.screenshots]
+
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications" >}}).
+
+### capture
+
+Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### max_concurrent_screenshots
+
+The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
+
+### upload_external_image_storage
+
+Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please see `[external_image_storage]` for further configuration options. If this option is false then screenshots will be persisted to disk for up to `temp_data_lifetime`.
+
+<hr>
+
 ## [alerting]
 
 For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
