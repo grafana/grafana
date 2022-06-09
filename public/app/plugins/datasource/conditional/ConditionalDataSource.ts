@@ -11,7 +11,8 @@ import {
   DataSourceInstanceSettings,
   LoadingState,
 } from '@grafana/data';
-import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { ConstantVariableModel } from 'app/features/variables/types';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 
@@ -32,18 +33,115 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
     super(instanceSettings);
   }
 
+  filterQuery(query: ConditionalDataSourceQuery) {
+    if (query.datasource?.uid !== CONDITIONAL_DATASOURCE_NAME) {
+      const drilldownTplVars = getTemplateSrv()
+        .getVariables()
+        .filter((arg) => (arg as ConstantVariableModel).id.includes('__drilldown'));
+
+      // Executing default (no conditions query)
+      if (!query.conditions && drilldownTplVars.length === 0) {
+        return true;
+      }
+
+      // Skipping default (no conditions query) if there are template variables applied
+      if (!query.conditions && drilldownTplVars.length !== 0) {
+        return false;
+      }
+
+      let isCorrectTarget = true;
+
+      for (let j = 0; j < query.conditions?.length; j++) {
+        if (
+          drilldownTplVars.filter((arg) => {
+            const result = (arg as ConstantVariableModel).name
+              .replace('__drilldown-', '')
+              .match(query.conditions[j].options.field);
+
+            return result;
+          }).length === 0
+        ) {
+          isCorrectTarget = false;
+          break;
+        }
+      }
+
+      return isCorrectTarget;
+    } else {
+      return false;
+    }
+  }
+
+  getQueryScore = (query: ConditionalDataSourceQuery) => {
+    const drilldownTplVars = getTemplateSrv()
+      .getVariables()
+      .filter((arg) => (arg as ConstantVariableModel).id.includes('__drilldown'));
+
+    if (query.conditions) {
+      let score = query.conditions.length;
+      for (let j = 0; j < query.conditions.length; j++) {
+        const condition = query.conditions[j];
+        for (let i = 0; i < drilldownTplVars.length; i++) {
+          const variable = drilldownTplVars[i];
+          const result = (variable as ConstantVariableModel).name
+            .replace('__drilldown-', '')
+            .match(condition.options.pattern);
+
+          if (result) {
+            score--;
+          }
+        }
+      }
+
+      return score;
+    }
+
+    return undefined;
+  };
+
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    // Remove any invalid queries
-    const queries = request.targets.filter((t) => {
-      return t.datasource?.uid !== CONDITIONAL_DATASOURCE_NAME;
+    const queries = (request.targets as ConditionalDataSourceQuery[]).filter(this.filterQuery);
+
+    let runnableQueries = [];
+    const queryScores = queries.map((query) => {
+      return this.getQueryScore(query);
     });
 
-    if (!queries.length) {
+    const notScoredQueries = queryScores.filter((score) => score === undefined);
+
+    if (notScoredQueries.length === queryScores.length) {
+      runnableQueries = queries;
+    } else {
+      let minScore = Infinity;
+
+      for (let i = 0; i < queryScores.length; i++) {
+        if (queryScores[i] !== undefined && queryScores[i]! <= minScore) {
+          minScore = queryScores[i]!;
+        }
+      }
+
+      runnableQueries = queryScores
+        .map((s, i) => {
+          if (s === minScore) {
+            return queries[i];
+          }
+
+          return undefined;
+        })
+        .filter((q) => q !== undefined);
+
+      runnableQueries = findQueryWithHighestNumberOfConditions(runnableQueries as ConditionalDataSourceQuery[]);
+    }
+
+    if (!runnableQueries.length) {
       return of({ data: [] } as DataQueryResponse); // nothing
     }
 
     // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+    const sets: { [key: string]: ConditionalDataSourceQuery[] } = groupBy(
+      runnableQueries as ConditionalDataSourceQuery[],
+      'datasource.uid'
+    );
     const mixed: BatchedQueries[] = [];
 
     for (const key in sets) {
@@ -135,4 +233,17 @@ function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryRe
       return innerAll;
     }, all);
   }, []);
+}
+
+function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[]) {
+  let maxNoConditions = 0;
+
+  for (let i = 0; i < q.length; i++) {
+    const query = q[i];
+    if (query.conditions.length > maxNoConditions) {
+      maxNoConditions = query.conditions.length;
+    }
+  }
+
+  return q.filter((query) => query.conditions.length === maxNoConditions);
 }
