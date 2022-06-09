@@ -22,7 +22,7 @@ export const AlignmentPeriodLabel: FC<Props> = ({ customMetaData, datasource }) 
     }
 
     const alignment = ALIGNMENTS.find((ap) => ap.value === datasource.templateSrv.replace(perSeriesAligner));
-    const seconds = parseInt(alignmentPeriod ?? ''.replace(/[^0-9]/g, ''), 10);
+    const seconds = parseInt(alignmentPeriod, 10);
     const hms = rangeUtil.secondsToHms(seconds);
     return `${hms} interval (${alignment?.text ?? ''})`;
   }, [datasource, perSeriesAligner, alignmentPeriod]);
