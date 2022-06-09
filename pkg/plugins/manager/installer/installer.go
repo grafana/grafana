@@ -91,17 +91,8 @@ func New(skipTLSVerify bool, grafanaVersion string, logger Logger) Service {
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
 func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
-	isInternal := false
-
 	var checksum string
 	if pluginZipURL == "" {
-		if strings.HasPrefix(pluginID, "grafana-") {
-			// At this point the plugin download is going through grafana.com API and thus the name is validated.
-			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
-			// You can supply custom plugin name and then set custom download url to 3rd party plugin but then that
-			// is up to the user to know what she is doing.
-			isInternal = true
-		}
 		plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 		if err != nil {
 			return err
@@ -156,7 +147,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 		return fmt.Errorf("%v: %w", "failed to close tmp file", err)
 	}
 
-	err = i.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
+	err = i.extractFiles(tmpFile.Name(), pluginID, pluginsDir)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
@@ -508,7 +499,7 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string) error {
 	var err error
 	dest, err = filepath.Abs(dest)
 	if err != nil {
@@ -574,10 +565,6 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 
 		if isSymlink(zf) {
-			if !allowSymlinks {
-				i.log.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name)
-				continue
-			}
 			if err := extractSymlink(zf, dstPath); err != nil {
 				i.log.Warn("failed to extract symlink", "err", err)
 				continue
