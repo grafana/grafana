@@ -291,14 +291,6 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 
 List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
 
-### csrf_trusted_origins
-
-List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
-
-### csrf_additional_headers
-
-List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
-
 ## [keystore.vault]
 
 ### url
