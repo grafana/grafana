@@ -103,6 +103,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       jaegerQuery = omit(jaegerQuery, 'operation');
     }
 
+    if (jaegerQuery.service) {
+      jaegerQuery = {
+        ...jaegerQuery,
+        service: getTemplateSrv().replace(jaegerQuery.service, options.scopedVars),
+      };
+    }
+
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces`, {
       ...jaegerQuery,

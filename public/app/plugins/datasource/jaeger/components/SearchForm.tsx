@@ -104,6 +104,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             menuPlacement="bottom"
             isClearable
             aria-label={'select-service-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>
