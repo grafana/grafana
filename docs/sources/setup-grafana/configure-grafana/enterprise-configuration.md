@@ -293,7 +293,7 @@ List of comma- or space-separated roles that will be mapped to the Grafana Admin
 
 ### csrf_trusted_origins
 
-list of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
+List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
 
 ### csrf_additional_headers
 
