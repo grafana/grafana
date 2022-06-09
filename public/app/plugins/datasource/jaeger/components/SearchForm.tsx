@@ -78,7 +78,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   useEffect(() => {
     const getOperations = async () => {
       const operations = await loadOptions(
-        `/api/services/${encodeURIComponent(query.service!)}/operations`,
+        `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
         'operations'
       );
       if (query.operation && getTemplateSrv().containsTemplate(query.operation)) {
@@ -121,7 +121,10 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="operation"
             options={operationOptions}
             onOpenMenu={() =>
-              loadOptions(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
+              loadOptions(
+                `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
+                'operations'
+              )
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}

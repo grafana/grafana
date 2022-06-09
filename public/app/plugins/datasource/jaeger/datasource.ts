@@ -127,14 +127,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
-    const expandedQuery = { ...query };
+    let expandedQuery = { ...query };
 
-    // if (query.tags) {
-    //   query = {
-    //     ...query,
-    //     tags: this.templateSrv.replace(query.tags, scopedVars),
-    //   };
-    // }
+    if (query.tags) {
+      expandedQuery = {
+        ...query,
+        tags: this.templateSrv.replace(query.tags, scopedVars),
+      };
+    }
 
     return {
       ...expandedQuery,
