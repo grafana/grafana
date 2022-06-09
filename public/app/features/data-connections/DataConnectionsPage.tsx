@@ -5,10 +5,10 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ROUTES } from './constants';
 import { useNavModel } from './hooks/useNavModel';
-import { CloudIntegrations } from './pages/CloudIntegrations';
-import { DataSources } from './pages/DataSources';
-import { Plugins } from './pages/Plugins';
-import { RecordedQueries } from './pages/RecordedQueries';
+import { CloudIntegrations } from './tabs/CloudIntegrations';
+import { DataSources } from './tabs/DataSources';
+import { Plugins } from './tabs/Plugins';
+import { RecordedQueries } from './tabs/RecordedQueries';
 
 export default function DataConnectionsPage(): React.ReactElement | null {
   const navModel = useNavModel();
