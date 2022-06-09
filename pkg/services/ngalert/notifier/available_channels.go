@@ -864,6 +864,20 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Message",
+					Description:  "Alert text limited to 130 characters.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.title" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "description",
+				},
+				{
 					Label:        "Auto close incidents",
 					Element:      alerting.ElementTypeCheckbox,
 					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",

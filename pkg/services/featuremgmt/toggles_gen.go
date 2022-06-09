@@ -55,10 +55,6 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
-	// FlagLokiBackendMode
-	// Loki datasource works as backend datasource
-	FlagLokiBackendMode = "lokiBackendMode"
-
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -170,4 +166,8 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagCloudMonitoringExperimentalUI
+	// Use grafana-experimental UI in Cloud Monitoring
+	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
 )

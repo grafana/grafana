@@ -69,6 +69,9 @@ def wire_install_step():
         'commands': [
             'make gen-go',
         ],
+        'depends_on': [
+            'verify-gen-cue',
+        ],
     }
 
 
