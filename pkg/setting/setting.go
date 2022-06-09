@@ -105,6 +105,7 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DisableLoginForm        bool
+	DisableLogin            bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
@@ -1269,6 +1270,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	DisableLogin = auth.Key("disable_login").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
