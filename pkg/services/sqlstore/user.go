@@ -14,6 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type ErrCaseInsensitiveLoginConflict struct {
+	users []*models.User
+}
+
+func (e *ErrCaseInsensitiveLoginConflict) Error() string {
+	n := len(e.users)
+
+	userStrings := make([]string, 0, 3)
+	for _, v := range e.users {
+		userStrings = append(userStrings, fmt.Sprintf("%s (%s)", v.Login, v.Email))
+	}
+
+	return fmt.Sprintf("Found a conflict in user login information. %d users already exist with either the same login or email: [%s].", n, strings.Join(userStrings, ", "))
+}
+
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
 	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
 		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
@@ -28,6 +43,23 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCo
 	}
 
 	return ss.getOrCreateOrg(sess, orgName)
+}
+
+func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
+	users := make([]*models.User, 0)
+	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+	login = strings.ToLower(login)
+	email = strings.ToLower(email)
+
+	if err := sess.Where(where, email, login).Find(&users); err != nil {
+		return err
+	}
+
+	if len(users) > 1 {
+		return &ErrCaseInsensitiveLoginConflict{users}
+	}
+
+	return nil
 }
 
 // createUser creates a user in the database
@@ -165,6 +197,12 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 			return models.ErrUserNotFound
 		}
 
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
 		query.Result = user
 
 		return nil
@@ -207,6 +245,12 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			return models.ErrUserNotFound
 		}
 
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
 		query.Result = user
 
 		return nil
@@ -231,6 +275,12 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			return err
 		} else if !has {
 			return models.ErrUserNotFound
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		query.Result = user
