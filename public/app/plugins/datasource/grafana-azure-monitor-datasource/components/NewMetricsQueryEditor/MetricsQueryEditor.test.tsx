@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { config } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
