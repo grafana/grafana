@@ -1,12 +1,22 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { AbsoluteTimeRange, DataQueryError, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQueryError,
+  DataQueryResponse,
+  GrafanaTheme2,
+  LoadingState,
+  SplitOpen,
+  TimeZone,
+} from '@grafana/data';
 import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './ExploreGraph';
 
 type Props = {
+  oldVersionData?: DataQueryResponse;
+  oldVersionVisibleRange?: AbsoluteTimeRange;
   logsVolumeData?: DataQueryResponse;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -46,21 +56,50 @@ function ErrorAlert(props: { error: DataQueryError }) {
   );
 }
 
+type MergedInfo = {
+  logsVolumeData?: DataQueryResponse;
+  oldMode: boolean;
+  range: AbsoluteTimeRange;
+};
+
+function mergeOldAndNewVersion(
+  oldVersion: DataQueryResponse | undefined,
+  oldVersionVisibleRange: AbsoluteTimeRange | undefined,
+  newVersion: DataQueryResponse | undefined,
+  absoluteRange: AbsoluteTimeRange
+): MergedInfo {
+  const oldFrames = oldVersion?.data;
+  if (oldFrames && oldFrames.length) {
+    return {
+      logsVolumeData: {
+        data: oldFrames,
+        state: oldVersion?.state,
+      },
+      oldMode: true,
+      range: oldVersionVisibleRange || absoluteRange,
+    };
+  }
+
+  return {
+    logsVolumeData: newVersion,
+    oldMode: false,
+    range: absoluteRange,
+  };
+}
+
 export function LogsVolumePanel(props: Props) {
-  const {
-    width,
-    logsVolumeData,
-    absoluteRange,
-    timeZone,
-    splitOpen,
-    onUpdateTimeRange,
-    onLoadLogsVolume,
-    onHiddenSeriesChanged,
-  } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
+
+  const { logsVolumeData, oldMode, range } = mergeOldAndNewVersion(
+    props.oldVersionData,
+    props.oldVersionVisibleRange,
+    props.logsVolumeData,
+    props.absoluteRange
+  );
 
   let LogsVolumePanelContent;
 
@@ -79,7 +118,7 @@ export function LogsVolumePanel(props: Props) {
           data={logsVolumeData.data}
           height={height}
           width={width - spacing}
-          absoluteRange={absoluteRange}
+          absoluteRange={range}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
@@ -92,30 +131,37 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  const zoomRatio = logsLevelZoomRatio(logsVolumeData, absoluteRange);
-  let zoomLevelInfo;
-
-  if (zoomRatio !== undefined && zoomRatio < 1) {
-    zoomLevelInfo = (
-      <InlineField label="Reload log volume" transparent>
-        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
-      </InlineField>
+  let extraInfo;
+  if (oldMode) {
+    extraInfo = (
+      <div className={styles.oldInfoText}>
+        This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+      </div>
     );
-  }
+  } else {
+    const zoomRatio = logsLevelZoomRatio(logsVolumeData, range);
 
+    if (zoomRatio !== undefined && zoomRatio < 1) {
+      extraInfo = (
+        <InlineField label="Reload log volume" transparent>
+          <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+        </InlineField>
+      );
+    }
+  }
   return (
     <Collapse label="" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
-      <div className={styles.zoomInfoContainer}>{zoomLevelInfo}</div>
+      <div className={styles.extraInfoContainer}>{extraInfo}</div>
     </Collapse>
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    zoomInfoContainer: css`
+    extraInfoContainer: css`
       display: flex;
       justify-content: end;
       position: absolute;
@@ -126,6 +172,10 @@ const getStyles = () => {
       display: flex;
       align-items: center;
       justify-content: center;
+    `,
+    oldInfoText: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };
