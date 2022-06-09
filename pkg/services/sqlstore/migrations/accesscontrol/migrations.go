@@ -2,6 +2,8 @@ package accesscontrol
 
 import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
+const CodeMigrationSQL = "code migration"
+
 func AddMigration(mg *migrator.Migrator) {
 	permissionV1 := migrator.Table{
 		Name: "permission",
