@@ -13,24 +13,27 @@ import (
 )
 
 type AlertRuleService struct {
-	defaultInterval int64
-	ruleStore       store.RuleStore
-	provenanceStore ProvisioningStore
-	xact            TransactionManager
-	log             log.Logger
+	defaultIntervalSeconds int64
+	baseIntervalSeconds    int64
+	ruleStore              store.RuleStore
+	provenanceStore        ProvisioningStore
+	xact                   TransactionManager
+	log                    log.Logger
 }
 
 func NewAlertRuleService(ruleStore store.RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
-	defaultInterval int64,
+	defaultIntervalSeconds int64,
+	baseIntervalSeconds int64,
 	log log.Logger) *AlertRuleService {
 	return &AlertRuleService{
-		defaultInterval: defaultInterval,
-		ruleStore:       ruleStore,
-		provenanceStore: provenanceStore,
-		xact:            xact,
-		log:             log,
+		defaultIntervalSeconds: defaultIntervalSeconds,
+		baseIntervalSeconds:    baseIntervalSeconds,
+		ruleStore:              ruleStore,
+		provenanceStore:        provenanceStore,
+		xact:                   xact,
+		log:                    log,
 	}
 }
 
@@ -57,7 +60,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
 	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-		interval = service.defaultInterval
+		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -75,16 +78,43 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		} else {
 			return errors.New("couldn't find newly created id")
 		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
-		if err != nil {
-			return err
-		}
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 	return rule, nil
+}
+
+// UpdateRuleGroup will update the interval for all rules in the group.
+func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+	if err := models.ValidateRuleGroupInterval(interval, service.baseIntervalSeconds); err != nil {
+		return err
+	}
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		query := &models.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{namespaceUID},
+			RuleGroup:     ruleGroup,
+		}
+		err := service.ruleStore.ListAlertRules(ctx, query)
+		if err != nil {
+			return fmt.Errorf("failed to list alert rules: %w", err)
+		}
+		updateRules := make([]store.UpdateRule, 0, len(query.Result))
+		for _, rule := range query.Result {
+			if rule.IntervalSeconds == interval {
+				continue
+			}
+			newRule := *rule
+			newRule.IntervalSeconds = interval
+			updateRules = append(updateRules, store.UpdateRule{
+				Existing: rule,
+				New:      newRule,
+			})
+		}
+		return service.ruleStore.UpdateAlertRules(ctx, updateRules)
+	})
 }
 
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
@@ -109,10 +139,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 				New:      rule,
 			},
 		})
-		if err != nil {
-			return err
-		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {
 			return err
 		}
@@ -144,8 +170,4 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		}
 		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
 	})
-}
-
-func (service *AlertRuleService) UpdateAlertGroup(ctx context.Context, orgID int64, folderUID, roulegroup string, interval int64) error {
-	return service.ruleStore.UpdateRuleGroup(ctx, orgID, folderUID, roulegroup, interval)
 }
