@@ -89,6 +89,6 @@ describe('SharePublic', () => {
 
     fireEvent.click(screen.getByText('Public Dashboard'));
 
-    await waitFor(() => screen.getByText('Enabled'));
+    await waitFor(() => screen.getByText('Welcome to Grafana public dashboards alpha!'));
   });
 });
