@@ -16,10 +16,14 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
+  ConditionID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { ConstantVariableModel } from 'app/features/variables/types';
+import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
+import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -297,9 +301,39 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+    let targets = this.targets;
+
+    if (this.datasource?.uid === '-- Conditional --') {
+      const drilldownTplVars = getTemplateSrv()
+        .getVariables()
+        .filter((arg) => (arg as ConstantVariableModel).id.includes('__drilldown'));
+
+      for (let i = 0; i < targets.length; i++) {
+        let isCorrectTarget = true;
+
+        for (let j = 0; j < (targets[i] as ConditionalDataSourceQuery).conditions?.length; j++) {
+          if (
+            drilldownTplVars.filter((arg) =>
+              (arg as ConstantVariableModel).name.match(
+                (targets[i] as ConditionalDataSourceQuery).conditions[j].options.field
+              )
+            ).length === 0
+          ) {
+            isCorrectTarget = false;
+            break;
+          }
+        }
+
+        if (isCorrectTarget) {
+          targets = [targets[i]];
+          break;
+        }
+      }
+    }
+
     this.getQueryRunner().run({
       datasource: this.datasource,
-      queries: this.targets,
+      queries: targets,
       panelId: this.id,
       dashboardId: dashboardId,
       timezone: dashboardTimezone,
