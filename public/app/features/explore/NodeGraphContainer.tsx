@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useToggle } from 'react-use';
+import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
-import useWindowDimensions from 'app/core/hooks/useWindowDimensions';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
@@ -56,7 +55,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const [open, toggleOpen] = useToggle(false);
 
   // Calculate node graph height based on window and top position, with some padding
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight } = useWindowSize();
   const containerRef = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(250);
   useEffect(() => {
