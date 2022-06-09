@@ -142,8 +142,7 @@ func (ss *SQLStore) DeleteDataSourceSecrets(ctx context.Context, cmd *models.Del
 		ds := dsQuery.Result
 		if ds != nil {
 			// Delete the data source
-			_, err := sess.Exec(
-				fmt.Sprintf("UPDATE data_source SET secure_json_data=%s WHERE org_id=? AND id=?", dialect.Quote("{}")), ds.OrgId, ds.Id)
+			_, err := sess.Exec("UPDATE data_source SET secure_json_data=NULL WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
 			if err != nil {
 				return err
 			}
