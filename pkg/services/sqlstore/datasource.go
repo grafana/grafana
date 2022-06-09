@@ -132,23 +132,16 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 // DeleteDataSourceSecrets removes a datasource secure_json_data by org_id as well as either uid (preferred), id, or name.
 func (ss *SQLStore) DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
-		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
-
-		if errGettingDS != nil && !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
-			return errGettingDS
+		if cmd.OrgID == 0 || len(cmd.UID) == 0 {
+			return models.ErrDataSourceIdentifierNotSet
 		}
 
-		ds := dsQuery.Result
-		if ds != nil {
-			// Delete the data source
-			_, err := sess.Exec("UPDATE data_source SET secure_json_data=NULL WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
-			if err != nil {
-				return err
-			}
-
-			cmd.DeletedSecretsCount = len(ds.SecureJsonData)
+		result, err := sess.Exec("UPDATE data_source SET secure_json_data=NULL WHERE org_id=? AND uid=?", cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
 		}
+
+		cmd.DeletedSecretsCount, _ = result.RowsAffected()
 
 		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceSecretDeleted{

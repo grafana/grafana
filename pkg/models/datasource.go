@@ -154,7 +154,7 @@ type DeleteDataSourceSecretsCommand struct {
 
 	OrgID int64
 
-	DeletedSecretsCount int
+	DeletedSecretsCount int64
 }
 
 // ---------------------
