@@ -183,7 +183,9 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		}
 
 		// Delete any hanging/invalid connections
-		session.Exec(deleteInvalidConnections, element.ID)
+		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+			return err
+		}
 
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
