@@ -361,35 +361,7 @@ export class GraphiteDatasource
   }
 
   annotationEvents(range: any, target: GraphiteQuery) {
-    if (target.eventsQuery?.tags) {
-      // Graphite event/tag as annotation
-      const tags = this.templateSrv.replace(target.eventsQuery?.tags);
-      return this.events({ range: range, tags: tags }).then((results: any) => {
-        const list = [];
-        if (!isArray(results.data)) {
-          console.error(`Unable to get annotations from ${results.url}.`);
-          return [];
-        }
-        for (let i = 0; i < results.data.length; i++) {
-          const e = results.data[i];
-
-          let tags = e.tags;
-          if (isString(e.tags)) {
-            tags = this.parseTags(e.tags);
-          }
-
-          list.push({
-            annotation: target.eventsQuery,
-            time: e.when * 1000,
-            title: e.what,
-            tags: tags,
-            text: e.data,
-          });
-        }
-
-        return list;
-      });
-    } else {
+    if (target.eventsQuery?.target) {
       // Graphite query as target as annotation
       const targetAnnotation = this.templateSrv.replace(target.eventsQuery?.target, {}, 'glob');
       const graphiteQuery = {
@@ -427,6 +399,34 @@ export class GraphiteDatasource
           })
         )
       );
+    } else {
+      // Graphite event/tag as annotation
+      const tags = this.templateSrv.replace(target.eventsQuery?.tags);
+      return this.events({ range: range, tags: tags }).then((results: any) => {
+        const list = [];
+        if (!isArray(results.data)) {
+          console.error(`Unable to get annotations from ${results.url}.`);
+          return [];
+        }
+        for (let i = 0; i < results.data.length; i++) {
+          const e = results.data[i];
+
+          let tags = e.tags;
+          if (isString(e.tags)) {
+            tags = this.parseTags(e.tags);
+          }
+
+          list.push({
+            annotation: target.eventsQuery,
+            time: e.when * 1000,
+            title: e.what,
+            tags: tags,
+            text: e.data,
+          });
+        }
+
+        return list;
+      });
     }
   }
 
