@@ -114,6 +114,16 @@ You can hide the Grafana login form using the below configuration settings.
 disable_login_form = true
 ```
 
+### Disable Grafana built-in Login provider
+
+You can fully disable the grafana login provider, for instance to only rely on LDAP for user authentication.
+
+To disable the grafana login provider:
+
+```bash
+disable_login = true
+```
+
 ### Automatic OAuth login
 
 Set to true to attempt login with OAuth automatically, skipping the login screen.

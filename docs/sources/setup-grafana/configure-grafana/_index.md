@@ -770,6 +770,10 @@ How often auth tokens are rotated for authenticated users when the user is activ
 
 Set to true to disable (hide) the login form, useful if you use OAuth. Default is false.
 
+### disable_login
+
+Set to true to disable grafana built-in login provider
+
 ### disable_signout_menu
 
 Set to `true` to disable the signout link in the side menu. This is useful if you use auth.proxy. Default is `false`.
