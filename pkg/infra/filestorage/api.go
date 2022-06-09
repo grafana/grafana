@@ -26,11 +26,6 @@ var (
 	maxPathPartLength        = 256
 )
 
-func IsPathValidationError(err error) bool {
-	return errors.Is(err, ErrRelativePath) || errors.Is(err, ErrNonCanonicalPath) || errors.Is(err, ErrPathEndsWithDelimiter) ||
-		errors.Is(err, ErrPathInvalid) || errors.Is(err, ErrPathTooLong)
-}
-
 func ValidatePath(path string) error {
 	if !filepath.IsAbs(path) {
 		return ErrRelativePath
