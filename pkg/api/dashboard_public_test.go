@@ -355,6 +355,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 		require.JSONEq(
 			t,
 			`{
@@ -463,6 +464,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 		require.JSONEq(
 			t,
 			`{
