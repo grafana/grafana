@@ -130,7 +130,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, orgID int64, keys []int64) error {
 	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgID)
 	if len(basicKeys) == 0 {
-		return fmt.Errorf("No API keys to convert found")
+		return fmt.Errorf("no API keys to convert found")
 	}
 	for _, key := range basicKeys {
 		if contains(keys, key.Id) {
@@ -455,10 +455,10 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 
 	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
 	if err != nil {
-		return fmt.Errorf("Cannot revert API key: %w", err)
+		return fmt.Errorf("cannot revert API key: %w", err)
 	}
 	if len(tokens) > 1 {
-		return fmt.Errorf("Cannot revert API key: service account contains more than one token")
+		return fmt.Errorf("cannot revert API key: service account contains more than one token")
 	}
 
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -480,7 +480,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("Cannot revert API key: %w", err)
+		return fmt.Errorf("cannot revert API key: %w", err)
 	}
 	return nil
 }

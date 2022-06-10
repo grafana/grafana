@@ -303,7 +303,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	apiKeysHidden, _, err := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
+	apiKeysHidden, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
 	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && apiKeysHidden != "1" {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
