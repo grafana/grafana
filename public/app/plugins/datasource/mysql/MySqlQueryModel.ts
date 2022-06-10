@@ -94,13 +94,16 @@ export default class MySQLQueryModel {
   render(interpolate?: boolean) {
     const target = this.target;
 
-    if (target.editorMode === EditorMode.Builder && target.sql?.from === undefined) {
+    // TODO: should we store table on SQLExpression (SQLQuery.sql.table) instead of SQLQuery.table
+    // if (target.editorMode === EditorMode.Builder && target.sql?.from === undefined) {
+    if (target.editorMode === EditorMode.Builder && target.table === undefined) {
       return '';
     }
+
     // new query with no table set yet
-    // if (!this.target.rawQuery && !('table' in this.target)) {
-    //   return '';
-    // }
+    if (!this.target.rawSql && !this.target.table) {
+      return '';
+    }
 
     // if (!target.rawQuery) {
     //   target.rawSql = this.buildQuery();

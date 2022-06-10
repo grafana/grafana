@@ -20,8 +20,9 @@ export function useSqlChange({ db, query, onQueryChange }: UseSqlChange) {
       if (!init) {
         return;
       }
-      const newQuery: SQLQuery = { ...query, sql };
-      newQuery.rawSql = toRawSql(newQuery);
+      const rawSql = toRawSql({ sql, dataset: query.dataset, table: query.table } as SQLQuery);
+      const newQuery: SQLQuery = { ...query, sql, rawSql };
+      // newQuery.rawSql = toRawSql(newQuery);
       onQueryChange(newQuery);
     },
     [init, onQueryChange, query]
