@@ -55,6 +55,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagTempoApmTable
+	// Show APM table
+	FlagTempoApmTable = "tempoApmTable"
+
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"

@@ -29,6 +29,8 @@ interface ResourceFieldProps extends AzureQueryEditorFieldProps {
   setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
   selectableEntryTypes: ResourceRowType[];
   resourceUri?: string;
+  inlineField?: boolean;
+  labelWidth?: number;
 }
 
 const ResourceField: React.FC<ResourceFieldProps> = ({
@@ -38,6 +40,8 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
   setResource,
   selectableEntryTypes,
   resourceUri,
+  inlineField,
+  labelWidth,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -77,8 +81,7 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
           selectableEntryTypes={selectableEntryTypes}
         />
       </Modal>
-
-      <Field label="Resource">
+      <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
         <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resource={resourceUri} datasource={datasource} />
         </Button>
