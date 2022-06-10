@@ -60,4 +60,5 @@ export interface FeatureToggles {
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
+  internationalization?: boolean;
 }
