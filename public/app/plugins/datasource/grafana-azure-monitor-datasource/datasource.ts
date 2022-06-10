@@ -183,21 +183,21 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   /* Azure Monitor REST API methods */
   getResourceGroups(subscriptionId: string) {
-    return this.azureMonitorDatasource.getResourceGroups(this.replaceTemplateVariable(subscriptionId));
+    return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
     return this.azureMonitorDatasource.getMetricDefinitions(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup)
+      this.templateSrv.replace(subscriptionId),
+      this.templateSrv.replace(resourceGroup)
     );
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
     return this.azureMonitorDatasource.getResourceNames(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition)
+      this.templateSrv.replace(subscriptionId),
+      this.templateSrv.replace(resourceGroup),
+      this.templateSrv.replace(metricDefinition)
     );
   }
 
@@ -226,16 +226,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return mapped;
   }
 
-  replaceTemplateVariable(variable: string) {
-    return this.templateSrv.replace(variable);
-  }
-
   getVariables() {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
-  }
-
-  isTemplateVariable(value: string) {
-    return this.getVariables().includes(value);
   }
 }
 
