@@ -8,6 +8,7 @@ export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
+export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => void;
 
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
@@ -87,8 +88,10 @@ export interface SelectCommonProps<T> {
 export interface SelectAsyncProps<T> {
   /** When specified as boolean the loadOptions will execute when component is mounted */
   defaultOptions?: boolean | Array<SelectableValue<T>>;
+
   /** Asynchronously load select options */
-  loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
+  loadOptions?: (query: string, cb?: LoadOptionsCallback<T>) => Promise<Array<SelectableValue<T>>> | void;
+
   /** If cacheOptions is true, then the loaded data will be cached. The cache will remain until cacheOptions changes value. */
   cacheOptions?: boolean;
   /** Message to display when options are loading */

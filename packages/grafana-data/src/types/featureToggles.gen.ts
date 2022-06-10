@@ -58,4 +58,7 @@ export interface FeatureToggles {
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
+  logRequestsInstrumentedAsUnknown?: boolean;
+  dataConnectionsConsole?: boolean;
+  internationalization?: boolean;
 }

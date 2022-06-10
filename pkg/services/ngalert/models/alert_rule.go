@@ -24,6 +24,7 @@ var (
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
+// swagger:enum NoDataState
 type NoDataState string
 
 func (noDataState NoDataState) String() string {
@@ -49,6 +50,7 @@ const (
 	OK       NoDataState = "OK"
 )
 
+// swagger:enum ExecutionErrorState
 type ExecutionErrorState string
 
 func (executionErrorState ExecutionErrorState) String() string {
