@@ -140,7 +140,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
     if (shouldScrollToBottom && listContainerRef.current) {
       setScrollTop(listContainerRef.current.offsetHeight);
     }
-  }, [shouldScrollToBottom]);
+  }, [shouldScrollToBottom, rows]);
 
   const headerProps = {
     row,
