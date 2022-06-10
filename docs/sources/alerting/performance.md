@@ -2,7 +2,7 @@
 title = "Performance considerations"
 description = "Understanding alerting performance"
 keywords = ["grafana", "alerting", "performance"]
-weight = 100
+weight = 555
 +++
 
 # Alerting performance considerations
