@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,6 +47,8 @@ func init() {
 
 // RequestMetrics is a middleware handler that instruments the request.
 func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
+	log := log.New("middleware.request-metrics")
+
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") || c.Req.URL.Path == "robots.txt" || c.Req.URL.Path == "/metrics" {
 			c.Next()
@@ -58,14 +61,17 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 		defer httpRequestsInFlight.Dec()
 		c.Next()
 
-		handler := "unknown"
-
-		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
-			handler = routeOperation
-		}
-
 		status := rw.Status()
 		code := sanitizeCode(status)
+
+		handler := "unknown"
+		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
+			handler = routeOperation
+		} else {
+			if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+				log.Warn("request instrumented as unknown", "path", c.Req.URL.Path, "status_code", status)
+			}
+		}
 
 		// avoiding the sanitize functions for in the new instrumentation
 		// since they dont make much sense. We should remove them later.
