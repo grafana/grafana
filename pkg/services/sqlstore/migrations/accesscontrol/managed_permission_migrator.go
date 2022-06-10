@@ -134,6 +134,10 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 
 			// assign permissions if they don't exist to the role
 			roleID := foundRole.ID
+			if roleID == 0 {
+				logger.Warn("Unable to create managed permission, got role ID 0", "orgID", orgID, "managedRole", managedRole)
+				continue
+			}
 			for p, toInsert := range permissions {
 				if toInsert {
 					perm := accesscontrol.Permission{RoleID: roleID, Action: p.Action, Scope: p.Scope, Created: now, Updated: now}
