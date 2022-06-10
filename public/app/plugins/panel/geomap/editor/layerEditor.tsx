@@ -6,6 +6,7 @@ import { hasAlphaPanels } from 'app/core/config';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
+import { FrameSelectionEditor } from '../layers/data/FrameSelectionEditor';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { MapLayerState } from '../types';
@@ -75,6 +76,17 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           options: layerTypes.options,
         },
       });
+
+      // Show data filter if the layer type can do something with the data query results
+      if (handler.update) {
+        builder.addCustomEditor({
+          id: 'filterData',
+          path: 'filterData',
+          name: 'Data',
+          editor: FrameSelectionEditor,
+          defaultValue: undefined,
+        });
+      }
 
       if (!layer) {
         return; // unknown layer type

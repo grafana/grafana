@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import React, { memo, useState, useEffect, useRef } from 'react';
 
 import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
@@ -107,6 +108,9 @@ function LogsNavigation({
       variant="secondary"
       onClick={() => {
         //If we are not on the last page, use next page's range
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'olderLogsButton',
+        });
         if (!onLastPage) {
           const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
@@ -133,6 +137,9 @@ function LogsNavigation({
       className={styles.navButton}
       variant="secondary"
       onClick={() => {
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'newerLogsButton',
+        });
         //If we are not on the first page, use previous page's range
         if (!onFirstPage) {
           const indexChange = oldestLogsFirst ? 1 : -1;

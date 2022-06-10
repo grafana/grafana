@@ -53,6 +53,9 @@ export function DashboardSearch({ onCloseSearch }: Props) {
         </div>
         <div className={styles.search}>
           <SearchView
+            onQueryTextChange={(newQueryText) => {
+              setInputValue(newQueryText);
+            }}
             showManage={false}
             queryText={query.query}
             includePanels={includePanels!}
