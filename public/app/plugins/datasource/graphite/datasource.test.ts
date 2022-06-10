@@ -198,7 +198,7 @@ describe('graphiteDatasource', () => {
       queryType: 'events',
       eventsQuery: {
         fromAnnotations: true,
-        tags: 'tag1',
+        tags: ['tag1'],
         target: '',
       },
       refId: 'Anno',

@@ -401,7 +401,7 @@ export class GraphiteDatasource
       );
     } else {
       // Graphite event/tag as annotation
-      const tags = this.templateSrv.replace(target.eventsQuery?.tags);
+      const tags = this.templateSrv.replace(target.eventsQuery?.tags?.join(' '));
       return this.events({ range: range, tags: tags }).then((results: any) => {
         const list = [];
         if (!isArray(results.data)) {
