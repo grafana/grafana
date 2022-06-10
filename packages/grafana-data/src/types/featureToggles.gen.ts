@@ -59,4 +59,5 @@ export interface FeatureToggles {
   canvasPanelNesting?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
+  dataConnectionsConsole?: boolean;
 }
