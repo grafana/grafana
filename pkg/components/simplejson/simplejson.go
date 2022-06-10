@@ -49,6 +49,7 @@ func NewJson(body []byte) (*Json, error) {
 	return j, nil
 }
 
+// MustJson returns a pointer to a new `Json` object, panicking if `body` cannot be parsed.
 func MustJson(body []byte) *Json {
 	j, err := NewJson(body)
 
