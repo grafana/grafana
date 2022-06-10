@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/alerting/silences/create-silence/
   - /docs/grafana/latest/alerting/unified-alerting/silences/
 description: Add silence alert notification
 keywords:
@@ -18,7 +19,7 @@ Silences stop notifications from getting created and last for only a specified w
 To add a silence:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-2. In the Alerting page, click **Silences** to open the page listing existing contact points.
+2. On the Alerting page, click **Silences** to open the page listing existing contact points.
 3. From Alertmanager drop-down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 4. Click **New Silence** to open the Create silence page.
 5. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
