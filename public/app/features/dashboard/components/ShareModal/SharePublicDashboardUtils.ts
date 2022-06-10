@@ -23,17 +23,17 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
 
 export const getPublicDashboardConfig = async (
   dashboardUid: string,
-  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboard>>
+  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
   const pdResp: PublicDashboard = await getBackendSrv().get(url);
-  setPublicDashboardConfig(pdResp);
+  setPublicDashboard(pdResp);
 };
 
 export const savePublicDashboardConfig = async (
   dashboardUid: string,
   publicDashboardConfig: PublicDashboard,
-  setPublicDashboardConfig: Function
+  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
   const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
@@ -43,7 +43,7 @@ export const savePublicDashboardConfig = async (
   delete pdResp.orgId;
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
-  setPublicDashboardConfig(pdResp);
+  setPublicDashboard(pdResp);
 };
 
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard) => {

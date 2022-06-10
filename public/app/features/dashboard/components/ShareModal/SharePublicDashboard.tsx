@@ -93,7 +93,6 @@ export const SharePublicDashboard = (props: Props) => {
     );
   };
 
-  const datasource_description = "to learn more <a href='google.com'>link</a>";
   return (
     <>
       <p>Welcome to Grafana public dashboards alpha!</p>
@@ -123,24 +122,28 @@ export const SharePublicDashboard = (props: Props) => {
           <FieldSet>
             <Checkbox
               label="Your entire dashboard will be public"
+              value={acknowledgements.public}
               onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
             />{' '}
             <br />
             <Checkbox
               label="Publishing currently only works with a subset of datasources"
-              description={datasource_description}
+              value={acknowledgements.datasources}
+              description="learn more about supported datasources"
               onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
             />{' '}
             <br />
             <Checkbox
               label="Variables can be sensitive and are currently not recommended"
-              description="To learn more go to: LINK"
+              value={acknowledgements.variables}
+              description="learn more about template variables"
               onChange={(e) => onAcknowledge('variables', e.currentTarget.checked)}
             />
             <br />
             <Checkbox
               label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
-              description="Learn more about _query caching_"
+              value={acknowledgements.usage}
+              description="learn more about query caching"
               onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
             />{' '}
             <br />
@@ -173,8 +176,8 @@ export const SharePublicDashboard = (props: Props) => {
             <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
               <Switch
                 disabled={dashboardHasTemplateVariables(dashboardVariables)}
-                value={publicDashboard?.isPublic}
-                onChange={() => setPublicDashboardConfig({ ...publicDashboard, isPublic: !publicDashboard.isPublic })}
+                value={publicDashboard?.isEnabled}
+                onChange={() => setPublicDashboardConfig({ ...publicDashboard, isEnabled: !publicDashboard.isEnabled })}
               />
             </Field>
             {publicDashboard?.dashboardUid && (
