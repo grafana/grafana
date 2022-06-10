@@ -79,6 +79,8 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Post("/revert/:keyId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionDelete)), routing.Wrap(api.RevertApiKey))
 	})
 }
 
@@ -148,6 +150,17 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	} else {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
+}
+
+func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
+	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
+	}
+	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reverting API key", err)
+	}
+	return response.Success("API key reverted")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {

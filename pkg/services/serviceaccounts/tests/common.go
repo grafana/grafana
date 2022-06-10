@@ -79,6 +79,7 @@ type Calls struct {
 	HideApiKeysTab                  []interface{}
 	MigrateApiKeysToServiceAccounts []interface{}
 	ConvertServiceAccounts          []interface{}
+	RevertApiKey                    []interface{}
 	ListTokens                      []interface{}
 	DeleteServiceAccountToken       []interface{}
 	UpdateServiceAccount            []interface{}
@@ -125,6 +126,11 @@ func (s *ServiceAccountsStoreMock) MigrateApiKeysToServiceAccounts(ctx context.C
 
 func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, orgID int64, keys []int64) error {
 	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, keyId int64) error {
+	s.Calls.RevertApiKey = append(s.Calls.RevertApiKey, []interface{}{ctx})
 	return nil
 }
 

@@ -441,7 +441,13 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 }
 
 // RevertApiKey converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, key *models.ApiKey) error {
+func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64) error {
+	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
+	if err := s.sqlStore.GetApiKeyById(ctx, &query); err != nil {
+		return err
+	}
+	key := query.Result
+
 	if key.ServiceAccountId == nil {
 		// TODO: better error message
 		return fmt.Errorf("API key is not linked to service account")
