@@ -14,25 +14,28 @@ import (
 
 // gets public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
-	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	publicDashboardUid := web.Params(c.Req)[":uid"]
+
+	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), publicDashboardUid)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
-		Slug:      dash.Slug,
-		Type:      models.DashTypeDB,
-		CanStar:   false,
-		CanSave:   false,
-		CanEdit:   false,
-		CanAdmin:  false,
-		CanDelete: false,
-		Created:   dash.Created,
-		Updated:   dash.Updated,
-		Version:   dash.Version,
-		IsFolder:  false,
-		FolderId:  dash.FolderId,
-		IsPublic:  dash.IsPublic,
+		Slug:               dash.Slug,
+		Type:               models.DashTypeDB,
+		CanStar:            false,
+		CanSave:            false,
+		CanEdit:            false,
+		CanAdmin:           false,
+		CanDelete:          false,
+		Created:            dash.Created,
+		Updated:            dash.Updated,
+		Version:            dash.Version,
+		IsFolder:           false,
+		FolderId:           dash.FolderId,
+		IsPublic:           dash.IsPublic,
+		PublicDashboardUid: publicDashboardUid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
