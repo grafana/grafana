@@ -28,7 +28,6 @@ describe('PublicDashboardDatasource', () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
 
-    // const ds = new MyDataSource(settings);
     const ds = new PublicDashboardDataSource();
     const panelId = 1;
     const publicDashboardUid = 'abc123';
