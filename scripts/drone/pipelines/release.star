@@ -39,8 +39,6 @@ load(
     'upload_packages_step',
     'store_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
     'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
@@ -160,6 +158,7 @@ def get_steps(edition, ver_mode):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -182,16 +181,12 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
-        verify_gen_cue_step(),
     ]
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
-
 
     if include_enterprise2:
         test_steps.extend([
@@ -312,7 +307,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         clone_enterprise_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode)]:
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step()]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 

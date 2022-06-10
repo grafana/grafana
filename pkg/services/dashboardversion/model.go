@@ -14,7 +14,7 @@ var (
 
 type DashboardVersion struct {
 	ID            int64 `json:"id"`
-	DashboardID   int64 `json:"dashboardId"`
+	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id"`
 	ParentVersion int   `json:"parentVersion"`
 	RestoredFrom  int   `json:"restoredFrom"`
 	Version       int   `json:"version"`
@@ -45,13 +45,29 @@ type ListDashboardVersionsQuery struct {
 }
 
 type DashboardVersionDTO struct {
-	ID            int64     `json:"id"`
-	DashboardID   int64     `json:"dashboardId"`
-	DashboardUID  string    `json:"dashboardUid"`
+	ID            int64     `json:"id" xorm:"id"`
+	DashboardID   int64     `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID  string    `json:"dashboardUid" xorm:"dashboard_uid"`
 	ParentVersion int       `json:"parentVersion"`
 	RestoredFrom  int       `json:"restoredFrom"`
 	Version       int       `json:"version"`
 	Created       time.Time `json:"created"`
 	CreatedBy     string    `json:"createdBy"`
 	Message       string    `json:"message"`
+}
+
+// DashboardVersionMeta extends the dashboard version model with the names
+// associated with the UserIds, overriding the field with the same name from
+// the DashboardVersion model.
+type DashboardVersionMeta struct {
+	ID            int64            `json:"id"`
+	DashboardID   int64            `json:"dashboardId"`
+	DashboardUID  string           `json:"uid"`
+	ParentVersion int              `json:"parentVersion"`
+	RestoredFrom  int              `json:"restoredFrom"`
+	Version       int              `json:"version"`
+	Created       time.Time        `json:"created"`
+	Message       string           `json:"message"`
+	Data          *simplejson.Json `json:"data"`
+	CreatedBy     string           `json:"createdBy"`
 }
