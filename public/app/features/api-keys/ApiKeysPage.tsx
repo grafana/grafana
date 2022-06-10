@@ -28,7 +28,7 @@ import {
   migrateAll,
   loadApiKeys,
   toggleIncludeExpired,
-  getServiceAccountsUpgradeStatus,
+  getApiKeysMigrationStatus,
   hideApiKeys,
 } from './state/actions';
 import { setSearchQuery } from './state/reducers';
@@ -59,7 +59,7 @@ const mapDispatchToProps = {
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
-  getServiceAccountsUpgradeStatus,
+  getApiKeysMigrationStatus,
   hideApiKeys,
 };
 
@@ -80,7 +80,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchApiKeys();
-    this.props.getServiceAccountsUpgradeStatus();
+    this.props.getApiKeysMigrationStatus();
   }
 
   async fetchApiKeys() {

@@ -90,7 +90,7 @@ const serviceAccountsSlice = createSlice({
     builtInRolesLoaded: (state, action: PayloadAction<Record<string, Role[]>>): ServiceAccountsState => {
       return { ...state, builtInRoles: action.payload };
     },
-    serviceAccountsUpgradeStatusLoaded: (state, action): ServiceAccountsState => {
+    apiKeysMigrationStatusLoaded: (state, action): ServiceAccountsState => {
       return { ...state, apiKeysMigrated: action.payload };
     },
     queryChanged: (state, action: PayloadAction<string>) => {
@@ -118,7 +118,7 @@ export const {
   serviceAccountsFetched,
   acOptionsLoaded,
   builtInRolesLoaded,
-  serviceAccountsUpgradeStatusLoaded,
+  apiKeysMigrationStatusLoaded,
   pageChanged,
   stateFilterChanged,
   queryChanged,

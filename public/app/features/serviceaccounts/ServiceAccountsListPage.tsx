@@ -22,7 +22,7 @@ import {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getServiceAccountsUpgradeStatus,
+  getApiKeysMigrationStatus,
 } from './state/actions';
 
 interface OwnProps {}
@@ -44,7 +44,7 @@ const mapDispatchToProps = {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getServiceAccountsUpgradeStatus,
+  getApiKeysMigrationStatus,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -65,7 +65,7 @@ export const ServiceAccountsListPageUnconnected = ({
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getServiceAccountsUpgradeStatus,
+  getApiKeysMigrationStatus,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -76,11 +76,11 @@ export const ServiceAccountsListPageUnconnected = ({
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
-    getServiceAccountsUpgradeStatus();
+    getApiKeysMigrationStatus();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchACOptions, fetchServiceAccounts, getServiceAccountsUpgradeStatus]);
+  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;

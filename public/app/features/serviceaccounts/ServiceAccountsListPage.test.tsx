@@ -22,7 +22,7 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
   const changeStateFilterMock = jest.fn();
   const createServiceAccountTokenMock = jest.fn();
-  const getServiceAccountsUpgradeStatusMock = jest.fn();
+  const getApiKeysMigrationStatusMock = jest.fn();
   const props: Props = {
     navModel: {
       main: {
@@ -50,7 +50,7 @@ const setup = (propOverrides: Partial<Props>) => {
     updateServiceAccount: updateServiceAccountMock,
     changeStateFilter: changeStateFilterMock,
     createServiceAccountToken: createServiceAccountTokenMock,
-    getServiceAccountsUpgradeStatus: getServiceAccountsUpgradeStatusMock,
+    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
   };
 
   Object.assign(props, propOverrides);

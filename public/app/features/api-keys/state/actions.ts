@@ -6,7 +6,7 @@ import {
   apiKeysLoaded,
   includeExpiredToggled,
   isFetching,
-  serviceAccountsUpgradeStatusLoaded,
+  apiKeysMigrationStatusLoaded,
   setSearchQuery,
 } from './reducers';
 
@@ -53,18 +53,18 @@ export function migrateAll(): ThunkResult<void> {
     try {
       await getBackendSrv().post('/api/serviceaccounts/migrate');
     } finally {
-      dispatch(getServiceAccountsUpgradeStatus());
+      dispatch(getApiKeysMigrationStatus());
       dispatch(loadApiKeys());
     }
   };
 }
 
-export function getServiceAccountsUpgradeStatus(): ThunkResult<void> {
+export function getApiKeysMigrationStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: remove when service account enabled by default (or use another way to detect if it's enabled)
     if (config.featureToggles.serviceAccounts) {
       const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
-      dispatch(serviceAccountsUpgradeStatusLoaded(!!result?.migrated));
+      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
     }
   };
 }

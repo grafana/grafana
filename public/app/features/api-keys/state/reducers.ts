@@ -23,7 +23,7 @@ const apiKeysSlice = createSlice({
           : state.includeExpired;
       return { ...state, hasFetched: true, keys, keysIncludingExpired, includeExpired };
     },
-    serviceAccountsUpgradeStatusLoaded: (state, action): ApiKeysState => {
+    apiKeysMigrationStatusLoaded: (state, action): ApiKeysState => {
       return { ...state, apiKeysMigrated: action.payload };
     },
     setSearchQuery: (state, action): ApiKeysState => {
@@ -38,7 +38,7 @@ const apiKeysSlice = createSlice({
   },
 });
 
-export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery, serviceAccountsUpgradeStatusLoaded } =
+export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery, apiKeysMigrationStatusLoaded } =
   apiKeysSlice.actions;
 
 export const apiKeysReducer = apiKeysSlice.reducer;
