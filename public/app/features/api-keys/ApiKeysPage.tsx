@@ -116,6 +116,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     }
   };
 
+  //@TODO Remove this, it's only for dev testing
+  produceErrorr = () => {
+    throw new Error('This is a test error');
+  };
+
   render() {
     const {
       hasFetched,
@@ -154,6 +159,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                         you will find them in the detail view of a respective service account.
                       </Alert>
                   )} */}
+                  <button onClick={this.produceErrorr}>ExceptioN!</button>
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

@@ -1,4 +1,4 @@
-import { initializeAgent, BrowserConfig } from '@grafana/agent-web';
+import { initializeAgent, BrowserConfig, ErrorsInstrumentation } from '@grafana/agent-web';
 import { BuildInfo } from '@grafana/data';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
@@ -31,6 +31,12 @@ export class GrafanaJavascriptAgentBackend
         environment: options.buildInfo.env,
       },
       url: options.customEndpoint || '/log',
+      instrumentations: [
+        new ErrorsInstrumentation(),
+        // new ConsoleInstrumentation({
+        //   disabledLevels: [LogLevel.TRACE, LogLevel.ERROR] // console.log will be captured
+        // })
+      ],
     };
 
     /*if (options.user) {

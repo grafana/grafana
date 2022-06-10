@@ -370,6 +370,9 @@ type Cfg struct {
 	// Sentry config
 	Sentry Sentry
 
+	// GrafanaJavascriptAgent config
+	GrafanaJavascriptAgent GrafanaJavascriptAgent
+
 	// Data sources
 	DataSourceLimit int
 
@@ -1052,6 +1055,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
+	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err

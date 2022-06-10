@@ -53,8 +53,8 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
-//import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
+import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -195,7 +195,7 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  /*if (config.sentry.enabled) {
+  if (config.sentry.enabled) {
     registerEchoBackend(
       new SentryEchoBackend({
         ...config.sentry,
@@ -203,12 +203,13 @@ function initEchoSrv() {
         buildInfo: config.buildInfo,
       })
     );
-  }*/
-
-  if (config.sentry.enabled) {
+  }
+  console.log(config);
+  if (config.grafanaJavascriptAgent.enabled) {
+    console.log(config.grafanaJavascriptAgent);
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
-        ...config.sentry,
+        ...config.grafanaJavascriptAgent,
         app: {
           version: config.buildInfo.version,
           environment: config.buildInfo.env,

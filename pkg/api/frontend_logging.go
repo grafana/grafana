@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -12,6 +13,7 @@ import (
 )
 
 var frontendLogger = log.New("frontend")
+var grafanaJavascriptAgentLogger = log.New("grafana_javascript_agent")
 
 type frontendLogMessageHandler func(c *models.ReqContext) response.Response
 
@@ -43,6 +45,21 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 			frontendLogger.Info(msg, ctx...)
 		}
 
+		return response.Success("ok")
+	}
+}
+
+func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
+	return func(c *models.ReqContext) response.Response {
+		event := frontendlogging.FrontendGrafanaJavascriptAgentEvent{}
+		if err := web.Bind(c.Req, &event); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		var msg = "unknown"
+
+		var ctx = event.ToGrafanJavascriptAgentLogContext()
+		grafanaJavascriptAgentLogger.Info(spew.Sdump(event))
+		grafanaJavascriptAgentLogger.Info(msg, ctx...)
 		return response.Success("ok")
 	}
 }
