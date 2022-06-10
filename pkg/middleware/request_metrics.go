@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -59,9 +60,13 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 		c.Next()
 
 		handler := "unknown"
-
 		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
 			handler = routeOperation
+		}
+
+		if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+			ctx := contexthandler.FromContext(c.Req.Context())
+			ctx.Logger.Warn("request instrumented as unknown", "path", c.Req.URL.Path)
 		}
 
 		status := rw.Status()
