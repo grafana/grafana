@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/administration/manage-users-and-permissions/
 title: User management
-weight: 800
+weight: 200
 ---
 
 # User management

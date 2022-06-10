@@ -8,11 +8,11 @@ aliases:
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
-title: Manage users globally
-weight: 300
+title: Server user management
+weight: 100
 ---
 
-# Manage users globally
+# Server user management
 
 A _user_ is defined as any individual who can log in to Grafana. Each user is associated with a _role_ that includes _permissions_. Permissions determine the tasks a user can perform in the system.
 

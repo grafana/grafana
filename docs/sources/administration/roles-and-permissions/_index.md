@@ -6,7 +6,7 @@ aliases:
   - /docs/grafana/latest/permissions/organization_roles/
   - /docs/grafana/latest/permissions/overview/
 title: Roles and permissions
-weight: 700
+weight: 300
 ---
 
 # Roles and permissions

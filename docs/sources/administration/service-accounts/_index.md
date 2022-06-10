@@ -10,17 +10,17 @@ keywords:
   - API keys
   - Service accounts
 menuTitle: Service accounts
-title: Service accounts in Grafana
-weight: 200
+title: Service accounts
+weight: 800
 ---
 
-# Service accounts in Grafana
+# Service accounts
 
 You can use service accounts to run automated or compute workloads.
 
 {{< section >}}
 
-## About service accounts in Grafana
+## About service accounts
 
 A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications like Terraform with the Grafana API.
 

@@ -1,9 +1,9 @@
 ---
-title: Server management
-weight: 800
+title: Server administration
+weight: 900
 ---
 
-# Server management
+# Server administration
 
 Grafana servers have global settings, users, and preferences that server administers must configure and maintain. This includes licenses for Grafana Enterprise, server-wide settings, and global user accounts.
 

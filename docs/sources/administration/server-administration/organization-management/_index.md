@@ -10,7 +10,7 @@ keywords:
   - dashboards
 menuTitle: Manage organizations
 title: Manage organizations
-weight: 300
+weight: 200
 ---
 
 # Manage organizations

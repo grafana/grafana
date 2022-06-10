@@ -4,11 +4,11 @@ aliases:
   - /docs/grafana/latest/manage-users/add-or-remove-user-from-team/
   - /docs/grafana/latest/manage-users/create-or-remove-team/
   - /docs/grafana/latest/manage-users/manage-teams/
-title: Manage teams
-weight: 600
+title: Team management
+weight: 400
 ---
 
-# Manage teams
+# Team management
 
 A team is a group of users within an organization that have common dashboard and data source permission needs. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 

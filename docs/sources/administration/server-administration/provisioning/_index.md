@@ -6,11 +6,11 @@ description: ''
 keywords:
   - grafana
   - provisioning
-title: Provisioning
-weight: 800
+title: Provision Grafana
+weight: 600
 ---
 
-# Provisioning Grafana
+# Provision Grafana
 
 In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
 
