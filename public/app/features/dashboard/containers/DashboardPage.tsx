@@ -119,8 +119,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   initDashboard() {
     const { dashboard, isPublic, match, queryParams } = this.props;
 
-    console.log('init dashboard');
-
     if (dashboard) {
       this.closeDashboard();
     }

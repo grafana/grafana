@@ -10,6 +10,8 @@ import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/D
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { toStateKey } from 'app/features/variables/utils';
+import { AzureMonitorQuery } from 'app/plugins/datasource/grafana-azure-monitor-datasource/types';
+import { logAzureMonitorEvent } from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/logging';
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
@@ -206,6 +208,15 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
+    dashboard.panels.forEach((panel) => {
+      if (panel.datasource?.type === 'grafana-azure-monitor-datasource' || panel.datasource?.uid === '-- Mixed --') {
+        panel.targets.forEach((target) => {
+          if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
+            logAzureMonitorEvent(target as AzureMonitorQuery, 'dashboard_load');
+          }
+        });
+      }
+    });
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
