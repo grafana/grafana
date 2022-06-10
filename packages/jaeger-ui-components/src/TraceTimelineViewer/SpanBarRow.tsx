@@ -213,11 +213,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       cursor: pointer;
       flex: 1 1 auto;
       outline: none;
-      overflow: hidden;
+      overflow-y: hidden;
+      overflow-x: auto;
+      margin-right: 8px;
       padding-left: 4px;
       padding-right: 0.25em;
       position: relative;
-      text-overflow: ellipsis;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
       &::before {
         content: ' ';
         position: absolute;
@@ -226,17 +232,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         left: 0;
         border-left: 4px solid;
         border-left-color: inherit;
-      }
-
-      /* This is so the hit area of the span-name extends the rest of the width of the span-name column */
-      &::after {
-        background: transparent;
-        bottom: 0;
-        content: ' ';
-        left: 0;
-        position: absolute;
-        top: 0;
-        width: 1000px;
       }
       &:focus {
         text-decoration: none;

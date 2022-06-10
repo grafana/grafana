@@ -1,34 +1,16 @@
-import { css, cx } from '@emotion/css';
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
 import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';
-
-const getStyles = () => ({
-  wrapper: css`
-    width: 100%;
-    overflow-x: scroll;
-  `,
-  container: css`
-    width: 120%;
-  `,
-  body: css`
-    padding: 0px 8px 8px;
-  `,
-  headerLabel: css`
-    padding: 8px 16px 18px 16px;
-  `,
-});
-
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
@@ -49,8 +31,6 @@ export function TraceViewContainer(props: Props) {
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
   );
-  const styles = useStyles2(getStyles);
-  const containerClasses = cx([styles.container, 'panel-container']);
 
   if (!traceProp) {
     return null;
@@ -69,27 +49,22 @@ export function TraceViewContainer(props: Props) {
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
       />
 
-      <div className={styles.wrapper}>
-        <div className={containerClasses}>
-          <div className={styles.headerLabel}>Trace View</div>
-          <div className={styles.body}>
-            <TraceView
-              exploreId={exploreId}
-              dataFrames={dataFrames}
-              splitOpenFn={splitOpenFn}
-              scrollElement={scrollElement}
-              traceProp={traceProp}
-              spanFindMatches={spanFindMatches}
-              search={search}
-              focusedSpanIdForSearch={focusedSpanIdForSearch}
-              queryResponse={queryResponse}
-              datasource={datasource}
-              topOfViewRef={topOfViewRef}
-              topOfViewRefType={TopOfViewRefType.Explore}
-            />
-          </div>
-        </div>
-      </div>
+      <Collapse label="Trace View" isOpen>
+        <TraceView
+          exploreId={exploreId}
+          dataFrames={dataFrames}
+          splitOpenFn={splitOpenFn}
+          scrollElement={scrollElement}
+          traceProp={traceProp}
+          spanFindMatches={spanFindMatches}
+          search={search}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          queryResponse={queryResponse}
+          datasource={datasource}
+          topOfViewRef={topOfViewRef}
+          topOfViewRefType={TopOfViewRefType.Explore}
+        />
+      </Collapse>
     </>
   );
 }
