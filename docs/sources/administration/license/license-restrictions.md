@@ -50,11 +50,11 @@ Your license is controlled by the following rules:
 
 **License expiration date:** The license includes an expiration date, which is the date when a license becomes inactive.
 
-As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "license-expiration/" >}}).
+As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "../../../enterprise/license/license-restrictions/license-expiration/" >}}).
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
-The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) configuration setting.
+The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../../enterprise/setup-grafana/configure-grafana/#root_url" >}}) configuration setting.
 
 **Concurrent sessions limit**: As of Grafana Enterprise 7.5, users can initiate up to three concurrent sessions of Grafana.
 
@@ -66,10 +66,10 @@ When a user reaches the session limit, the fourth connection succeeds and the lo
 
 You can request Grafana Labs to activate usage billing which allows an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits or display warning banners. Instead, you are charged for active users that exceed the limit, according to your customer contract.
 
-Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
+Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license token]({{< relref "../../../enterprise/setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
 
 ## Request a change to your license
 
 To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana.
 
-For instructions about how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "activate-license/" >}}).
+For instructions about how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "../../../enterprise/license/license-restrictions/activate-license/" >}}).

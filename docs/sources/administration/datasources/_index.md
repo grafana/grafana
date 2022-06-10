@@ -38,7 +38,7 @@ To add a data source:
 
 1. Click **Select**. The data source configuration page opens.
 
-1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "." >}}) for links to configuration instructions for all supported data sources.
+1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "/" >}}) for links to configuration instructions for all supported data sources.
 
 ## Data source permissions
 
