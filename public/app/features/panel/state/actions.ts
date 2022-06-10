@@ -1,12 +1,15 @@
 import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+
+import { getLibraryPanelLoadingView } from '../components/LibraryPanelLoader';
 
 import {
   changePanelKey,
@@ -18,6 +21,18 @@ import {
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    if (panel.libraryPanel?.uid && !panel.libraryPanel.meta) {
+      dispatch(
+        panelModelAndPluginReady({
+          key: panel.key,
+          plugin: getLibraryPanelLoadingView(panel),
+        })
+      );
+      // this will call init with a loaded libary panel if it loads succesfully
+      dispatch(loadLibraryPanelAndUpdate(panel));
+      return;
+    }
+
     let pluginToLoad = panel.type;
     let plugin = getStore().plugins.panels[pluginToLoad];
 
@@ -152,5 +167,34 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
 
     panel.events.publish(PanelQueriesChangedEvent);
     panel.events.publish(PanelOptionsChangedEvent);
+  };
+}
+
+export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const uid = panel.libraryPanel!.uid!;
+    try {
+      const found = await getLibraryPanel(uid, true);
+      for (const [key, val] of Object.entries(found.model)) {
+        switch (key) {
+          case 'id':
+          case 'gridPos':
+          case 'libraryPanel': // recursive?
+            continue;
+        }
+        (panel as any)[key] = val; // :grimmice:
+        console.log('SET', key, val);
+      }
+      panel.libraryPanel = found;
+      dispatch(initPanelState(panel));
+    } catch (ex) {
+      console.log('ERROR: ', ex);
+      dispatch(
+        panelModelAndPluginReady({
+          key: panel.key,
+          plugin: getPanelPluginNotFound('Unable to load library panel: ' + uid, false),
+        })
+      );
+    }
   };
 }
