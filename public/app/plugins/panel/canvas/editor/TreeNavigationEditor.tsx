@@ -35,36 +35,56 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const src = this.state.flatElements[result.source.index];
-    const dest = this.state.flatElements[result.destination.index];
+    const srcIndex = result.source.index;
+    const destIndex = result.destination.index;
 
-    if (src.node.parent === dest.node.parent && src.node) {
+    const src = this.state.flatElements[srcIndex];
+    const dest = this.state.flatElements[destIndex];
+
+    const isNewChild = srcIndex < destIndex;
+
+    if (src.node.parent === dest.node.parent && !(dest.node instanceof FrameState)) {
       src.node.parent?.reorderTree(src.node, dest.node);
     } else {
       src.node.parent?.doAction(LayerActionID.Delete, src.node);
-      src.node.parent = dest.node instanceof FrameState ? dest.node : dest.node.parent;
-      src.depth = this.setDepth(dest);
+      src.node.parent = dest.node instanceof FrameState && isNewChild ? dest.node : dest.node.parent;
+      src.depth = this.setDepth(dest, isNewChild);
 
-      // @TODO issue with dest = frame
+      let destIndex = 0;
+
+      // @TODO moving nodes with children
       if (dest.node.parent instanceof RootElement) {
-        dest.node.parent.elements.push(src.node);
-        src.node.updateData(dest.node.parent.scene.context);
+        if (dest.node instanceof FrameState && isNewChild) {
+          destIndex = dest.node.elements.length;
+          this.updateNode(dest.node, null, src, destIndex);
+        } else {
+          destIndex = dest.node.parent.elements.length - dest.node.parent.elements.indexOf(dest.node) - 1;
+          this.updateNode(dest.node.parent, dest.node, src, destIndex);
+          src.node.updateData(dest.node.parent.scene.context);
+        }
       } else if (dest.node.parent instanceof FrameState) {
-        let destIndex = dest.node.parent.elements.indexOf(dest.node);
-        destIndex = dest.node.parent.elements.length - destIndex - 1;
-        dest.node.parent?.elements.splice(destIndex, 0, src.node);
-
-        dest.node.parent.scene.byName.set(src.node.options.name, src.node);
-        dest.node.parent.scene.save();
-
-        dest.node.parent?.reorderTree(src.node, dest.node);
-        src.node.updateData(dest.node.parent.scene.context);
+        destIndex = dest.node.parent.elements.length - dest.node.parent.elements.indexOf(dest.node) - 1;
+        this.updateNode(dest.node.parent, dest.node, src, destIndex);
       }
 
       dest.node.parent?.reinitializeMoveable();
     }
 
     this.reorder(src, dest);
+  };
+
+  updateNode = (destParent: any, destNode: any, src: FlatElement, destIndex: number) => {
+    destParent.elements.splice(destIndex, 0, src.node);
+
+    destParent.scene.byName.set(src.node.options.name, src.node);
+    destParent.scene.save();
+
+    if (destNode) {
+      destParent.reorderTree(src.node, destNode);
+    }
+
+    src.node.updateData(destParent.scene.context);
+    destParent.reinitializeMoveable();
   };
 
   reorder = (src: FlatElement, dest: FlatElement) => {
@@ -76,11 +96,13 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
   };
 
   // @TODO update depth
-  setDepth = (dest: FlatElement) => {
+  setDepth = (dest: FlatElement, isNewChild = false) => {
     let depth = 1;
-    if (dest.node instanceof FrameState) {
-      depth = dest.depth + 1;
-    } else if (dest.node.parent instanceof FrameState) {
+    if (isNewChild) {
+      return depth + 1;
+    }
+
+    if (dest.node.parent instanceof FrameState) {
       depth = dest.depth;
     }
 
