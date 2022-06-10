@@ -210,7 +210,11 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 		var target struct {
 			Value []types.LogAnalyticsWorkspaceResponse
 		}
-		json.NewDecoder(res.Body).Decode(&target)
+		err = json.NewDecoder(res.Body).Decode(&target)
+		if err != nil {
+			return nil, err
+		}
+
 		if len(target.Value) == 0 {
 			return nil, errors.New("no default workspace found")
 		}
@@ -313,6 +317,18 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	} else {
 		message = fmt.Sprintf("%v\n 3. Successfully connected to Azure Resource Graph endpoint.", message)
 	}
+
+	defer func() {
+		if err := metricsRes.Body.Close(); err != nil {
+			backend.Logger.Error("Failed to close response body", "err", err)
+		}
+		if err := logsRes.Body.Close(); err != nil {
+			backend.Logger.Error("Failed to close response body", "err", err)
+		}
+		if err := resourceGraphRes.Body.Close(); err != nil {
+			backend.Logger.Error("Failed to close response body", "err", err)
+		}
+	}()
 
 	return &backend.CheckHealthResult{
 		Status:  status,
