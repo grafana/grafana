@@ -53,4 +53,4 @@ const buildCjsPackage = ({ env }) => {
     ],
   };
 };
-export default [buildCjsPackage({ env: 'development' })];
+export default [buildCjsPackage({ env: 'development' }), buildCjsPackage({ env: 'production' })];
