@@ -101,6 +101,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     signatureOrg,
     signatureType,
     hasUpdate,
+    enabled,
   } = plugin;
 
   return {
@@ -119,7 +120,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     installedVersion: version,
     hasUpdate,
     isInstalled: true,
-    isDisabled: !!error,
+    isDisabled: !enabled || !!error,
     isCore: signature === 'internal',
     isPublished: false,
     isDev: Boolean(dev),
