@@ -4,13 +4,13 @@ aliases:
   - /docs/grafana/latest/features/datasources/add-a-data-source/
   - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/sources/permissions/datasource_permissions/
-title: Data sources
+title: Data source management
 weight: 100
 ---
 
-# Data sources
+# Data source management
 
-Grafana supports many different storage backends for your time series data (data source). Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data source in Grafana. Only users with the organization admin role can add data sources.
+Grafana supports many different storage backends for your time series data (data source). Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data sources in Grafana. Only users with the organization admin role can add data sources.
 
 ## Add a data source
 
