@@ -6,7 +6,6 @@ import {
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
-  ConditionType,
   CoreApp,
   DataConfigSource,
   DataFrame,
@@ -16,7 +15,6 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   DataTransformerConfig,
-  Field,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -31,16 +29,11 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { variableAdapters } from 'app/features/variables/adapters';
-import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
-import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
-import { addVariable } from 'app/features/variables/state/sharedReducer';
-import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
-import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
-import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
-import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
-import { store } from 'app/store/store';
+import {
+  applyConditionalDataLinks,
+  ConditionalDataSourceQuery,
+  CONDITIONAL_DATASOURCE_NAME,
+} from 'app/plugins/datasource/conditional/ConditionalDataSource';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 import { PanelModel } from '../../dashboard/state';
@@ -152,62 +145,16 @@ export class PanelQueryRunner {
           // Apply field defaults and overrides
           let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
-          let applyConditions = undefined;
+          const dataSourceRef = this.dataConfigSource.getDataSourceRef();
+          let applyConditionalDataLinksFc = undefined;
+
+          if (dataSourceRef && dataSourceRef.uid === CONDITIONAL_DATASOURCE_NAME && data.request) {
+            applyConditionalDataLinksFc = applyConditionalDataLinks(
+              data.request.targets as ConditionalDataSourceQuery[]
+            );
+          }
 
           if (data.request?.targets.some((target) => (target as ConditionalDataSourceQuery).conditions?.length)) {
-            const conditions = data.request.targets.map((target) =>
-              (target as ConditionalDataSourceQuery).conditions?.filter(
-                (condition) => conditionsRegistry.getIfExists(condition.id)?.type === ConditionType.Field
-              )
-            );
-
-            applyConditions = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-              for (let i = 0; i < conditions.length; i++) {
-                for (let j = 0; j < conditions[i]?.length; j++) {
-                  const conditionDef = conditionsRegistry.getIfExists(conditions[i][j].id);
-                  const fieldMatcher = conditionDef?.evaluate(conditions[i][j].options);
-
-                  if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
-                    return async (evt: any, origin: any) => {
-                      const state = store.getState();
-
-                      const key = getLastKey(state);
-
-                      const rootStateKey = toStateKey(key);
-                      const id = conditionDef!.getVariableName(conditions[i][j].options);
-                      const identifier: VariableIdentifier = { type: 'constant', id };
-                      const global = false;
-                      const index = getNewVariableIndex(rootStateKey, state);
-
-                      const variable = constantBuilder()
-                        .withId(id)
-                        .withoutOptions()
-                        .withName(id)
-                        .withRootStateKey(rootStateKey)
-                        .build();
-
-                      store.dispatch(
-                        toKeyedAction(
-                          rootStateKey,
-                          addVariable(toVariablePayload<AddVariable>(identifier, { global, model: variable, index }))
-                        )
-                      );
-
-                      const existing = getVariable(toKeyedVariableIdentifier(variable), store.getState());
-                      const value = origin.field.values.get(origin.rowIndex);
-                      const adapter = variableAdapters.get('constant');
-                      await adapter.setValue(
-                        existing,
-                        { selected: true, value, text: value ? value.toString() : '' },
-                        true
-                      );
-                    };
-                  }
-                }
-              }
-
-              return;
-            };
           }
 
           if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
@@ -218,7 +165,7 @@ export class PanelQueryRunner {
                 timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
                 ...fieldConfig!,
-                applyConditions,
+                applyConditionalDataLinksFc,
               }),
             };
             isFirstPacket = false;

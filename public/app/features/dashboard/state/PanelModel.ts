@@ -16,14 +16,10 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
-  ConditionID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { ConstantVariableModel } from 'app/features/variables/types';
-import { ConditionalDataSourceQuery } from 'app/plugins/datasource/conditional/ConditionalDataSource';
-import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -511,6 +507,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   getDataSupport(): PanelPluginDataSupport {
     return this.plugin?.dataSupport ?? { annotations: false, alertStates: false };
+  }
+
+  getDataSourceRef(): DataSourceRef | null {
+    return this.datasource;
   }
 
   getQueryRunner(): PanelQueryRunner {

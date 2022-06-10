@@ -200,7 +200,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field.state!.scopedVars,
         context.replaceVariables,
         options.timeZone,
-        options.applyConditions
+        (field, frame) => {
+          if (options.applyConditionalDataLinksFc && options.data) {
+            return options.applyConditionalDataLinksFc(field, frame, options.data);
+          }
+
+          return undefined;
+        }
       );
     }
 
@@ -348,25 +354,21 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    applyConditions?: (
-      field: Field,
-      frame: DataFrame,
-      allFrames: DataFrame[]
-    ) => ((evt: any, origin: any) => void) | void
+    getConditionalDataLinks?: (field: Field, frame: DataFrame) => ((evt: any, origin: any) => void) | undefined
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     const links: Array<LinkModel<Field>> = [];
 
-    if (applyConditions) {
-      const conditionalClickHandler = applyConditions(field, frame, []);
+    if (getConditionalDataLinks) {
+      const getConditionalDataLinksSupplier = getConditionalDataLinks(field, frame);
 
-      if (conditionalClickHandler) {
+      if (getConditionalDataLinksSupplier) {
         links.push({
           href: '',
           title: 'drilldown',
           target: undefined,
           onClick: (evt, origin) => {
-            conditionalClickHandler(evt, origin);
+            getConditionalDataLinksSupplier(evt, origin);
           },
           origin: field,
         });

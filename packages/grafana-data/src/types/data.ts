@@ -1,7 +1,7 @@
 import { DataFrameDTO, FieldConfig } from './dataFrame';
 import { DataFrameType } from './dataFrameTypes';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import { DataTopic } from './query';
+import { DataSourceRef, DataTopic } from './query';
 import { DataTransformerConfig } from './transformations';
 
 import { PanelPluginDataSupport } from '.';
@@ -176,5 +176,6 @@ export interface DataConfigSource {
   getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
+  getDataSourceRef: () => DataSourceRef | null;
   snapshotData?: DataFrameDTO[];
 }

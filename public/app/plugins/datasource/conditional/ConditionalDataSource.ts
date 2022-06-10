@@ -4,15 +4,28 @@ import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/opera
 
 import {
   ConditionID,
+  ConditionType,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  Field,
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { constantBuilder } from 'app/features/variables/shared/testing/builders';
+import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
+import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
+import { addVariable } from 'app/features/variables/state/sharedReducer';
+import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
 import { ConstantVariableModel } from 'app/features/variables/types';
+import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
+import { store } from 'app/store/store';
+
+import { conditionsRegistry } from './ConditionsRegistry';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 
@@ -247,4 +260,54 @@ function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[])
   }
 
   return q.filter((query) => query.conditions.length === maxNoConditions);
+}
+
+export function applyConditionalDataLinks(targets: ConditionalDataSourceQuery[]) {
+  const conditions = targets.map((target) =>
+    target.conditions?.filter((condition) => conditionsRegistry.getIfExists(condition.id)?.type === ConditionType.Field)
+  );
+
+  return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+    for (let i = 0; i < conditions.length; i++) {
+      for (let j = 0; j < conditions[i]?.length; j++) {
+        const conditionDef = conditionsRegistry.getIfExists(conditions[i][j].id);
+        const fieldMatcher = conditionDef?.evaluate(conditions[i][j].options);
+
+        if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
+          return async (evt: any, origin: any) => {
+            const state = store.getState();
+
+            const key = getLastKey(state);
+
+            const rootStateKey = toStateKey(key);
+            const id = conditionDef!.getVariableName(conditions[i][j].options);
+            const identifier: VariableIdentifier = { type: 'constant', id };
+            const global = false;
+            const index = getNewVariableIndex(rootStateKey, state);
+
+            const variable = constantBuilder()
+              .withId(id)
+              .withoutOptions()
+              .withName(id)
+              .withRootStateKey(rootStateKey)
+              .build();
+
+            store.dispatch(
+              toKeyedAction(
+                rootStateKey,
+                addVariable(toVariablePayload<AddVariable>(identifier, { global, model: variable, index }))
+              )
+            );
+
+            const existing = getVariable(toKeyedVariableIdentifier(variable), store.getState());
+            const value = origin.field.values.get(origin.rowIndex);
+            const adapter = variableAdapters.get('constant');
+            await adapter.setValue(existing, { selected: true, value, text: value ? value.toString() : '' }, true);
+          };
+        }
+      }
+    }
+
+    return undefined;
+  };
 }

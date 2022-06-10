@@ -119,7 +119,11 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
-  applyConditions?: (field: Field, frame: DataFrame, allFrames: DataFrame[]) => ((evt: any, args: any) => void) | void;
+  applyConditionalDataLinksFc?: (
+    field: Field,
+    frame: DataFrame,
+    allFrames: DataFrame[]
+  ) => ((evt: any, origin: any) => void) | undefined;
 }
 
 export enum FieldConfigProperty {
