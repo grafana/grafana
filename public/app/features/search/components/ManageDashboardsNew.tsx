@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -57,7 +57,14 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             suffix={false ? <Spinner /> : null}
           />
         </div>
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        <DashboardActions
+          folderId={folderId}
+          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
+          canCreateDashboards={contextSrv.hasAccess(
+            AccessControlAction.DashboardsCreate,
+            hasEditPermissionInFolders || !!canSave
+          )}
+        />
       </div>
 
       <SearchView
