@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/alerting-rules/alert-annotation-label/
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/
 description: Annotations and labels for alerting
 keywords:
@@ -27,6 +28,6 @@ Labels are key-value pairs that contain information about, and are used to uniqu
 
 Before you begin using annotations and labels, familiarize yourself with:
 
-- [Labels in Grafana alerting]({{< relref "how-to-use-labels/" >}})
+- [Labels in Grafana Alerting]({{< relref "how-to-use-labels/" >}})
 - [How label matching works]({{< relref "how-to-use-labels/" >}})
 - [Template variables for alerting rule labels and annotations]({{< relref "variables-label-annotation/" >}})
