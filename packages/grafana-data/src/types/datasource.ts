@@ -477,6 +477,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardId?: number;
+  publicDashboardUid?: string;
 
   // Request Timing
   startTime: number;

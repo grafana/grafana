@@ -31,6 +31,7 @@ import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
+import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -45,6 +46,7 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
+  publicDashboardUid?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -200,6 +202,7 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      publicDashboardUid,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -219,6 +222,7 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      publicDashboardUid,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -234,7 +238,7 @@ export class PanelQueryRunner {
     (request as any).rangeRaw = timeRange.raw;
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardUid);
 
       // Attach the data source to each query
       request.targets = request.targets.map((query) => {
@@ -351,10 +355,16 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars
+  scopedVars: ScopedVars,
+  publicDashboardUid?: string
 ): Promise<DataSourceApi> {
+  if (publicDashboardUid) {
+    return new PublicDashboardDataSource();
+  }
+
   if (datasource && (datasource as any).query) {
     return datasource as DataSourceApi;
   }
+
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
