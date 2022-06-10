@@ -32,6 +32,19 @@ func inheritanceTestCases() []inheritanceTestCase {
 			wantRolePerms: map[int64]map[string][]rawPermission{},
 		},
 		{
+			desc: "only unrelated perms",
+			putRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				},
+			},
+			wantRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				},
+			},
+		},
+		{
 			desc: "inherit permissions from managed role",
 			putRolePerms: map[int64]map[string][]rawPermission{
 				1: {
