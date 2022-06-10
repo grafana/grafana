@@ -457,6 +457,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			OrgID:    orgID,
 			Enabled:  true,
 		}
+		if plugin.IsSecretsManager && !hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin() {
+			pluginSetting.Enabled = false
+		}
 
 		// if plugin is included in an app, check app settings
 		if plugin.IncludedInAppID != "" {
