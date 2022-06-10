@@ -17,7 +17,6 @@ import {
   dataFrameToJSON,
 } from '@grafana/data';
 
-import { getConfig } from '../../../../public/app/core/config';
 import { config } from '../config';
 import {
   getBackendSrv,
@@ -107,23 +106,6 @@ class DataSourceWithBackend<
     super(instanceSettings);
   }
 
-  getRequestUrl = (request: DataQueryRequest): string => {
-    const pubdashEnabled = getConfig().featureToggles.publicDashboards;
-    const publicView = getConfig().isPublicDashboardView;
-
-    // Assuming url /public-dashboards/:uid
-    const path = window.location.pathname;
-    // Get the last segment of the url path
-    const pubdashUid = path.substring(path.lastIndexOf('/') + 1);
-    const panelId = request.panelId;
-
-    if (pubdashEnabled && publicView && pubdashUid && panelId) {
-      return `/api/public/dashboards/${pubdashUid}/panels/${panelId}/query`;
-    }
-
-    return '/api/ds/query';
-  };
-
   /**
    * Ideally final -- any other implementation may not work as expected
    */
@@ -188,7 +170,7 @@ class DataSourceWithBackend<
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: this.getRequestUrl(request),
+        url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,

@@ -11,8 +11,6 @@ import {
   DataSourceRef,
 } from '@grafana/data';
 
-import { getConfig, updateConfig } from '../../../../public/app/core/config';
-
 import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
@@ -40,73 +38,6 @@ jest.mock('../services', () => ({
 }));
 
 describe('DataSourceWithBackend', () => {
-  test('getRequestUrl gets the pubdash query api url when looking at public dashboard', () => {
-    const pubdashUid = 'abc123';
-    const panelId = 1;
-
-    window.history.pushState({}, 'pubdash view', `/public-dashboards/${pubdashUid}`);
-
-    updateConfig({
-      featureToggles: {
-        ...getConfig().featureToggles,
-        publicDashboards: true,
-      },
-      isPublicDashboardView: true,
-    });
-
-    const settings = {
-      name: 'test',
-      id: 1234,
-      uid: 'abc',
-      type: 'dummy',
-      jsonData: {},
-    } as DataSourceInstanceSettings<DataSourceJsonData>;
-
-    const ds = new MyDataSource(settings);
-
-    const request: DataQueryRequest = {
-      intervalMs: 100,
-      panelId,
-    } as DataQueryRequest;
-
-    const url = ds.getRequestUrl(request);
-
-    expect(url).toEqual(`/api/public/dashboards/${pubdashUid}/panels/${panelId}/query`);
-  });
-
-  test('getRequestUrl gets the normal query api url /api/ds/query when not looking at a public dashboard', () => {
-    const panelId = 1;
-
-    window.history.pushState({}, 'dashboard view', '/d/dashboardUid123');
-
-    updateConfig({
-      featureToggles: {
-        ...getConfig().featureToggles,
-        publicDashboards: true,
-      },
-      isPublicDashboardView: false,
-    });
-
-    const settings = {
-      name: 'test',
-      id: 1234,
-      uid: 'abc',
-      type: 'dummy',
-      jsonData: {},
-    } as DataSourceInstanceSettings<DataSourceJsonData>;
-
-    const ds = new MyDataSource(settings);
-
-    const request: DataQueryRequest = {
-      intervalMs: 100,
-      panelId,
-    } as DataQueryRequest;
-
-    const url = ds.getRequestUrl(request);
-
-    expect(url).toEqual('/api/ds/query');
-  });
-
   test('check the executed queries', () => {
     const settings = {
       name: 'test',
