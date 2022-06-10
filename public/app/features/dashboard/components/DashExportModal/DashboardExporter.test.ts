@@ -146,8 +146,6 @@ describe('given dashboard with repeated panels', () => {
         { id: 9, datasource: { uid: '$ds', type: 'other2' } },
         {
           id: 17,
-          datasource: { uid: '$ds', type: 'other2' },
-          type: 'graph',
           libraryPanel: {
             name: 'Library Panel 2',
             uid: 'ah8NqyDPs',
@@ -181,8 +179,8 @@ describe('given dashboard with repeated panels', () => {
             { id: 15, repeat: null, repeatPanelId: 14 },
             {
               id: 16,
-              datasource: { uid: 'gfdb', type: 'testdb' },
-              type: 'graph',
+              // datasource: { uid: 'gfdb', type: 'testdb' },
+              // type: 'graph',
               libraryPanel: {
                 name: 'Library Panel',
                 uid: 'jL6MrxCMz',
@@ -218,6 +216,17 @@ describe('given dashboard with repeated panels', () => {
     } as PanelPluginMeta;
 
     dash = new DashboardModel(dash, {}, () => dash.templating.list);
+
+    // init library panels
+    dash.getPanelById(17).initLibraryPanel({
+      uid: 'ah8NqyDPs',
+      name: 'Library Panel 2',
+      model: {
+        datasource: { uid: '$ds', type: 'other2' },
+        type: 'graph',
+      },
+    });
+
     const exporter = new DashboardExporter();
     exporter.makeExportable(dash).then((clean) => {
       exported = clean;
@@ -343,7 +352,6 @@ describe('given dashboard with repeated panels', () => {
     expect(element.name).toBe('Library Panel 2');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      id: 17,
       datasource: { type: 'other2', uid: '$ds' },
       type: 'graph',
     });

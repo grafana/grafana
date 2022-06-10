@@ -171,21 +171,11 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
 }
 
 export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
-  return async (dispatch, getStore) => {
+  return async (dispatch) => {
     const uid = panel.libraryPanel!.uid!;
     try {
-      const found = await getLibraryPanel(uid, true);
-      for (const [key, val] of Object.entries(found.model)) {
-        switch (key) {
-          case 'id':
-          case 'gridPos':
-          case 'libraryPanel': // recursive?
-            continue;
-        }
-        (panel as any)[key] = val; // :grimmice:
-        console.log('SET', key, val);
-      }
-      panel.libraryPanel = found;
+      const libPanel = await getLibraryPanel(uid, true);
+      panel.initLibraryPanel(libPanel);
       dispatch(initPanelState(panel));
     } catch (ex) {
       console.log('ERROR: ', ex);

@@ -28,7 +28,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { LibraryElementDTO, PanelModelLibraryPanel } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -588,6 +588,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * */
   getDisplayTitle(): string {
     return this.replaceVariables(this.title, undefined, 'text');
+  }
+
+  initLibraryPanel(libPanel: LibraryElementDTO) {
+    for (const [key, val] of Object.entries(libPanel.model)) {
+      switch (key) {
+        case 'id':
+        case 'gridPos':
+        case 'libraryPanel': // recursive?
+          continue;
+      }
+      (this as any)[key] = val; // :grimmice:
+    }
+    this.libraryPanel = libPanel;
   }
 }
 

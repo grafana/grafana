@@ -148,10 +148,16 @@ export class DashboardExporter {
 
     const processLibraryPanels = (panel: any) => {
       if (isPanelModelLibraryPanel(panel)) {
-        const { libraryPanel, ...model } = panel;
-        const { name, uid } = libraryPanel;
-        if (!libraryPanels.has(uid)) {
-          libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model });
+        // Need to get the save model directly from the panel here
+        const realPanel = dashboard.getPanelById(panel.id);
+        if (realPanel) {
+          const { libraryPanel } = realPanel.getSaveModel();
+          const { name, uid } = libraryPanel;
+          if (!libraryPanels.has(uid)) {
+            libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: libraryPanel.model });
+          }
+        } else {
+          // TODO library panel in collapsed row need to handle this
         }
       }
     };
