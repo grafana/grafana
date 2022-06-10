@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
 
-import { rangeUtil, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { rangeUtil } from '@grafana/data';
 
 import { ALIGNMENTS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
@@ -15,7 +13,6 @@ export interface Props {
 
 export const AlignmentPeriodLabel: FC<Props> = ({ customMetaData, datasource }) => {
   const { perSeriesAligner, alignmentPeriod } = customMetaData;
-  const styles = useStyles2(getStyles);
   const formatAlignmentText = useMemo(() => {
     if (!alignmentPeriod || !perSeriesAligner) {
       return '';
@@ -27,12 +24,5 @@ export const AlignmentPeriodLabel: FC<Props> = ({ customMetaData, datasource }) 
     return `${hms} interval (${alignment?.text ?? ''})`;
   }, [datasource, perSeriesAligner, alignmentPeriod]);
 
-  return <label className={styles.label}>{formatAlignmentText}</label>;
+  return <label>{formatAlignmentText}</label>;
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  label: css({
-    fontSize: 12,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-});
