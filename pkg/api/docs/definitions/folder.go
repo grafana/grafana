@@ -112,7 +112,6 @@ type PostDashboardPermissionsParam struct {
 	Body dtos.UpdateDashboardAclCommand
 }
 
-
 // swagger:parameters getFolderByID
 type FolderIDParam struct {
 	// in:path

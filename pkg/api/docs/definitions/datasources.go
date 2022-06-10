@@ -471,7 +471,7 @@ type UpdateDatasourceParams struct {
 }
 
 // swagger:parameters updateDatasourceByUID
-type updateDatasourceByUIDParams struct {
+type UpdateDatasourceByUIDParams struct {
 	// in:body
 	// required:true
 	Body models.UpdateDataSourceCommand
