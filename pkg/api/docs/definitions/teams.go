@@ -189,7 +189,6 @@ type SearchTeamsParams struct {
 	Query string `json:"query"`
 }
 
-
 // swagger:parameters createTeam
 type CreateTeamParams struct {
 	// in:body
