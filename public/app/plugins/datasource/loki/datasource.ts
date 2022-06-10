@@ -104,6 +104,11 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    // if there are any stream-queries, we are not creating a log-volume-histogram
+    if (request.targets.some((query) => query.queryType === LokiQueryType.Stream)) {
+      return undefined;
+    }
+
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     if (!isLogsVolumeAvailable) {
       return undefined;
