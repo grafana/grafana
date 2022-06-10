@@ -80,6 +80,9 @@ func inheritanceTestCases() []inheritanceTestCase {
 					},
 					"managed:builtins:admin:permissions": {}, //Role existed with no permission
 				},
+				4: {
+					"managed:builtins:admin:permissions": {}, //Role existed with no permission
+				},
 			},
 			wantRolePerms: map[int64]map[string][]rawPermission{
 				1: {
@@ -127,6 +130,9 @@ func inheritanceTestCases() []inheritanceTestCase {
 						{Action: "teams.permissions:write", Scope: team2Scope},
 					},
 				},
+				4: {
+					"managed:builtins:admin:permissions": {}, //Role existed with no permission
+				},
 			},
 		},
 	}
@@ -139,7 +145,7 @@ func TestManagedPermissionsMigration(t *testing.T) {
 	for _, tc := range inheritanceTestCases() {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Remove migration
-			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id LIKE ?`, acmig.ManagedPermissionsMigrationID+"%")
+			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id = ?`, acmig.ManagedPermissionsMigrationID)
 			require.NoError(t, errDeleteMig)
 			_, errDeletePerm := x.Exec(`DELETE FROM permission`)
 			require.NoError(t, errDeletePerm)
