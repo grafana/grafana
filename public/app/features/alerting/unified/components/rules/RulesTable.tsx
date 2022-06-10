@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -69,7 +70,7 @@ export const RulesTable: FC<Props> = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
-        pagination={{ itemsPerPage: 20 }}
+        pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
       />
     </div>
@@ -87,7 +88,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     width: auto;
-    // background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
   `,
   pagination: css`

@@ -147,7 +147,7 @@ export const DynamicTable = <T extends object>({
       </div>
       {pagination && (
         <PaginationWrapper className={paginationStyles}>
-          <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+          <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
         </PaginationWrapper>
       )}
     </>

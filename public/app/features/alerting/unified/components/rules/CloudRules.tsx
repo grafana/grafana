@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
@@ -30,7 +31,11 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
     [rules, rulesDataSources]
   );
 
-  const { numberOfPages, onPageChange, page, pageItems } = usePagination(groupsWithNamespaces, 1, 5);
+  const { numberOfPages, onPageChange, page, pageItems } = usePagination(
+    groupsWithNamespaces,
+    1,
+    DEFAULT_PER_PAGE_PAGINATION
+  );
 
   return (
     <section className={styles.wrapper}>
@@ -60,7 +65,7 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
       {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
       <PaginationWrapper>
-        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
       </PaginationWrapper>
     </section>
   );

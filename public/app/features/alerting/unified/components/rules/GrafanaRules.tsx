@@ -6,6 +6,7 @@ import { LoadingPlaceholder, Pagination, useStyles } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -34,7 +35,11 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
-  const { numberOfPages, onPageChange, page, pageItems } = usePagination(groupsWithNamespaces, 1, 5);
+  const { numberOfPages, onPageChange, page, pageItems } = usePagination(
+    groupsWithNamespaces,
+    1,
+    DEFAULT_PER_PAGE_PAGINATION
+  );
 
   return (
     <section className={styles.wrapper}>
@@ -48,7 +53,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
       ))}
       {namespacesFormat?.length === 0 && <p>No rules found.</p>}
       <PaginationWrapper>
-        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
       </PaginationWrapper>
     </section>
   );
