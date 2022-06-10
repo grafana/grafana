@@ -4,6 +4,7 @@ import {
   PublicDashboard,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
+  publicDashboardPersisted,
 } from './SharePublicDashboardUtils';
 
 describe('dashboardHasTemplateVariables', () => {
@@ -23,5 +24,19 @@ describe('generatePublicDashboardUrl', () => {
   it('has the right uid', () => {
     let pubdash = { uid: 'abcd1234' } as PublicDashboard;
     expect(generatePublicDashboardUrl(pubdash)).toEqual('/public-dashboards/abcd1234');
+  });
+});
+
+describe('publicDashboardPersisted', () => {
+  it('true', () => {
+    let pubdash = { uid: 'abcd1234' } as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(true);
+  });
+
+  it('false', () => {
+    let pubdash = { uid: '' } as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(false);
+    pubdash = {} as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(false);
   });
 });
