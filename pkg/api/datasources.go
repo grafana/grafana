@@ -127,7 +127,8 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if _, ok := err.(models.ErrDatasourceSecretsPlugin); ok {
+		var secretsPluginError *models.ErrDatasourceSecretsPlugin
+		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
 		}
 		return response.Error(500, "Failed to delete datasource", err)
@@ -181,7 +182,8 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if _, ok := err.(models.ErrDatasourceSecretsPlugin); ok {
+		var secretsPluginError *models.ErrDatasourceSecretsPlugin
+		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
 		}
 		return response.Error(500, "Failed to delete datasource", err)
@@ -218,7 +220,8 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
 	err := hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		if _, ok := err.(models.ErrDatasourceSecretsPlugin); ok {
+		var secretsPluginError *models.ErrDatasourceSecretsPlugin
+		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
 		}
 		return response.Error(500, "Failed to delete datasource", err)
@@ -261,7 +264,8 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 			return response.Error(409, err.Error(), err)
 		}
 
-		if _, ok := err.(models.ErrDatasourceSecretsPlugin); ok {
+		var secretsPluginError *models.ErrDatasourceSecretsPlugin
+		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to add datasource: "+err.Error(), err)
 		}
 
@@ -337,7 +341,8 @@ func (hs *HTTPServer) updateDataSourceByID(c *models.ReqContext, ds *models.Data
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 
-		if _, ok := err.(models.ErrDatasourceSecretsPlugin); ok {
+		var secretsPluginError *models.ErrDatasourceSecretsPlugin
+		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to update datasource: "+err.Error(), err)
 		}
 		return response.Error(500, "Failed to update datasource", err)
