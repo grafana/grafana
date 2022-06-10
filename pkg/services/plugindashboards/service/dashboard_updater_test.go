@@ -444,10 +444,6 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
-func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
-	return nil, nil
-}
-
 type scenarioInput struct {
 	storedPluginSettings []*pluginsettings.DTO
 	installedPlugins     []plugins.PluginDTO
