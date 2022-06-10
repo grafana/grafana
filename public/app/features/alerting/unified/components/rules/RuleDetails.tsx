@@ -43,7 +43,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={3} />
+      <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={15} />
     </div>
   );
 };
