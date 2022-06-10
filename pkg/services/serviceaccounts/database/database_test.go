@@ -106,3 +106,35 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestStore_AddServiceAccountToTeam(t *testing.T) {
+	cases := []struct {
+		desc        string
+		sa          tests.TestUser
+		team        tests.TestTeam
+		expectedErr error
+	}{
+		{
+			desc:        "should be able to add service account to team",
+			sa:          tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
+			team:        tests.TestTeam{Email: "teamtest1@admin", Name: "test-team"},
+			expectedErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			db, store := setupTestDatabase(t)
+			sa := tests.SetupUserServiceAccount(t, db, c.sa)
+			team, err := db.CreateTeam(c.team.Name, c.team.Email, sa.OrgId)
+			if err != nil {
+				require.NoError(t, err)
+			}
+			cmd := &serviceaccounts.AddServiceAccountToTeamCommand{OrgId: sa.OrgId, TeamId: team.Id}
+			err = store.AddServiceAccountToTeam(context.Background(), sa.Id, cmd)
+			if c.expectedErr != nil {
+				require.ErrorIs(t, err, c.expectedErr)
+			}
+		})
+	}
+}

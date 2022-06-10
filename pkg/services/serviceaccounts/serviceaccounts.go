@@ -27,5 +27,6 @@ type Store interface {
 	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountTokenCommand) error
+	AddServiceAccountToTeam(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountToTeamCommand) error
 	GetUsageMetrics(ctx context.Context) (map[string]interface{}, error)
 }

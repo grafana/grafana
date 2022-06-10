@@ -19,10 +19,6 @@ const (
 	ActionDelete = "serviceaccounts:delete"
 )
 
-type ServiceAccount struct {
-	Id int64
-}
-
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`
@@ -47,6 +43,11 @@ type AddServiceAccountTokenCommand struct {
 	Key           string         `json:"-"`
 	SecondsToLive int64          `json:"secondsToLive"`
 	Result        *models.ApiKey `json:"-"`
+}
+
+type AddServiceAccountToTeamCommand struct {
+	TeamId int64 `json:"teamId" xorm:"team_id"`
+	OrgId  int64 `json:"orgId" xorm:"org_id"`
 }
 
 type SearchServiceAccountsResult struct {

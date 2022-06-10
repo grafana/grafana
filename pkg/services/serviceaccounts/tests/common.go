@@ -19,6 +19,11 @@ type TestUser struct {
 	IsServiceAccount bool
 }
 
+type TestTeam struct {
+	Name  string
+	Email string
+}
+
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
 	role := string(models.ROLE_VIEWER)
 	if testUser.Role != "" {
@@ -81,6 +86,7 @@ type Calls struct {
 	DeleteServiceAccountToken      []interface{}
 	UpdateServiceAccount           []interface{}
 	AddServiceAccountToken         []interface{}
+	AddServiceAccountToTeam        []interface{}
 	SearchOrgServiceAccounts       []interface{}
 	RetrieveServiceAccountIdByName []interface{}
 }
@@ -153,6 +159,11 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccountToken(ctx context.Context
 
 func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) AddServiceAccountToTeam(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountToTeamCommand) error {
+	s.Calls.AddServiceAccountToTeam = append(s.Calls.AddServiceAccountToTeam, []interface{}{ctx, cmd})
 	return nil
 }
 
