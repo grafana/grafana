@@ -23,7 +23,7 @@ interface Props {
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, queryResponse, topOfViewRef } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
