@@ -64,7 +64,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -77,7 +76,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -109,6 +107,7 @@ type HTTPServer struct {
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
+	pluginManager                plugins.Manager
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -123,7 +122,6 @@ type HTTPServer struct {
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
-	LoadSchemaService            *schemaloader.SchemaLoaderService
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
@@ -173,7 +171,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginManager plugins.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -181,8 +179,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
-	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
-	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
@@ -211,6 +208,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
+		pluginManager:                pluginManager,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
@@ -238,7 +236,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LivePushGateway:              livePushGateway,
 		PluginContextProvider:        plugCtxProvider,
 		ContextHandler:               contextHandler,
-		LoadSchemaService:            schemaService,
 		AlertNG:                      alertNG,
 		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
@@ -380,19 +377,19 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
 		return listener, nil
 	case setting.SocketScheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
+			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
 		}
 
 		// Make socket writable by group
 		// nolint:gosec
 		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
-			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
 		}
 
 		return listener, nil

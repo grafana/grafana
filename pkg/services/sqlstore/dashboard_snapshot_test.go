@@ -15,6 +15,9 @@ import (
 )
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlstore := InitTestDB(t)
 
 	origSecret := setting.SecretKey
@@ -142,6 +145,9 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlstore := InitTestDB(t)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {

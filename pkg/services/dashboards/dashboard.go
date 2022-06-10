@@ -53,7 +53,7 @@ type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error)
 	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
