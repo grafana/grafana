@@ -137,7 +137,9 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
   useLayoutEffect(() => {
-    if (shouldScrollToBottom && listContainerRef.current) {
+    // We want to scroll to bottom only when we receive first 10 log lines
+    const shouldScrollRows = rows.length > 0 && rows.length <= 10;
+    if (shouldScrollToBottom && shouldScrollRows && listContainerRef.current) {
       setScrollTop(listContainerRef.current.offsetHeight);
     }
   }, [shouldScrollToBottom, rows]);
