@@ -15,6 +15,7 @@ const getFolders = (mediaType: MediaType) => {
   if (mediaType === MediaType.Icon) {
     return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
   } else {
+    // TODO: hardcode upload for now but need to figure out how to get folder name
     return [ResourceFolderName.BG, 'upload'];
   }
 };
@@ -72,6 +73,7 @@ export const FolderPickerTab = (props: Props) => {
         mediaType === MediaType.Icon
           ? (item: FileElement) => item.name.endsWith('.svg')
           : (item: FileElement) => item.name.endsWith('.png') || item.name.endsWith('.gif');
+      // TODO: not branching these API calls?
       if (folder.toLowerCase().includes('upload')) {
         fetch(`/api/storage/list/upload`)
           .then((res) => res.json())
