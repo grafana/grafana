@@ -82,7 +82,6 @@
     "inquirer": "^8.2.2",
     "jest": "27.5.1",
     "jest-canvas-mock": "2.3.1",
-    "jest-coverage-badges": "^1.1.2",
     "jest-junit": "13.1.0",
     "less": "^4.1.2",
     "less-loader": "^10.2.0",

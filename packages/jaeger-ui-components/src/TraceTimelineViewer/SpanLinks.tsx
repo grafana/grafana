@@ -18,12 +18,15 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
             <MenuItem
               key={i}
               label="Logs for this span"
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
@@ -36,12 +39,15 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
             <MenuItem
               key={i}
               label={link.title ?? 'Metrics for this span'}
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
@@ -54,12 +60,15 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
             <MenuItem
               key={i}
               label={link.title ?? 'View linked span'}
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                closeMenu();
-              }}
+              onClick={
+                link.onClick
+                  ? (event) => {
+                      event?.preventDefault();
+                      link.onClick!(event);
+                      closeMenu();
+                    }
+                  : undefined
+              }
               url={link.href}
               className={styles.menuItem}
             />
