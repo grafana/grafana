@@ -12,6 +12,8 @@ var (
 	ErrQueryAlreadyStarred  = errors.New("query was already starred")
 )
 
+type Queries *simplejson.Json
+
 // QueryHistory is the model for query history definitions
 type QueryHistory struct {
 	ID            int64  `xorm:"pk autoincr 'id'"`
@@ -21,7 +23,7 @@ type QueryHistory struct {
 	CreatedBy     int64
 	CreatedAt     int64
 	Comment       string
-	Queries       *simplejson.Json
+	Queries       Queries
 }
 
 // QueryHistory is the model for query history star definitions
@@ -43,13 +45,13 @@ type SearchInQueryHistoryQuery struct {
 }
 
 type QueryHistoryDTO struct {
-	UID           string           `json:"uid" xorm:"uid"`
-	DatasourceUID string           `json:"datasourceUid" xorm:"datasource_uid"`
-	CreatedBy     int64            `json:"createdBy"`
-	CreatedAt     int64            `json:"createdAt"`
-	Comment       string           `json:"comment"`
-	Queries       *simplejson.Json `json:"queries"`
-	Starred       bool             `json:"starred"`
+	UID           string  `json:"uid" xorm:"uid"`
+	DatasourceUID string  `json:"datasourceUid" xorm:"datasource_uid"`
+	CreatedBy     int64   `json:"createdBy"`
+	CreatedAt     int64   `json:"createdAt"`
+	Comment       string  `json:"comment"`
+	Queries       Queries `json:"queries"`
+	Starred       bool    `json:"starred"`
 }
 
 // QueryHistoryResponse is a response struct for QueryHistoryDTO
@@ -75,11 +77,11 @@ type QueryHistoryDeleteQueryResponse struct {
 }
 
 type QueryToMigrate struct {
-	DatasourceUID string           `json:"datasourceUid"`
-	Queries       *simplejson.Json `json:"queries"`
-	CreatedAt     int64            `json:"createdAt"`
-	Comment       string           `json:"comment"`
-	Starred       bool             `json:"starred"`
+	DatasourceUID string  `json:"datasourceUid"`
+	Queries       Queries `json:"queries"`
+	CreatedAt     int64   `json:"createdAt"`
+	Comment       string  `json:"comment"`
+	Starred       bool    `json:"starred"`
 }
 
 type QueryHistoryMigrationResponse struct {
@@ -97,7 +99,7 @@ type CreateQueryInQueryHistoryCommand struct {
 	// The JSON model of queries.
 	// required: true
 	// example: [ { "datasourceUid": "PE1C5CBDA0504A6A3", "queries": [ { "refId": "A", "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0", "scenarioId": "csv_content", "datasource": { "type": "testdata", "uid": "PD8C576611E62080A" } } ], "starred": false, "createdAt": 1643630762, "comment": "debugging" } ]
-	Queries *simplejson.Json `json:"queries"`
+	Queries Queries `json:"queries"`
 }
 
 // PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history
