@@ -11,7 +11,6 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
   ScopedVars,
-  TimeRange,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -28,8 +27,6 @@ import { getSearchFilterScopedVar } from '../../../../features/variables/utils';
 import {
   DB,
   SQLQuery,
-  TableSchema,
-  ValidationResults,
   SQLOptions,
   SqlQueryForInterpolation,
   ResponseParser,
@@ -41,6 +38,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   id: any;
   name: any;
   interval: string;
+  db: DB;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -51,7 +49,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     this.id = instanceSettings.id;
     const settingsData = instanceSettings.jsonData || ({} as SQLOptions);
     this.interval = settingsData.timeInterval || '1m';
+    this.db = this.getDB();
   }
+
+  abstract getDB(dsID?: string): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 
@@ -238,53 +239,5 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   async fetchDatasets(): Promise<string[]> {
     return [];
-  }
-
-  getDB(dsID?: string): DB {
-    const empty: string[] = [];
-    return {
-      init: () => {
-        return Promise.resolve(true);
-      },
-      datasets: () => {
-        return Promise.resolve(empty);
-      },
-      tables: (dataset?: string) => {
-        return Promise.resolve(empty);
-      },
-      tableSchema: (query: SQLQuery | string) => {
-        const schema = {} as TableSchema;
-        return Promise.resolve(schema);
-      },
-      fields: (query: SQLQuery) => {
-        // handle "path" here: database.table
-        return Promise.resolve([]);
-      },
-      validateQuery: (query: SQLQuery, range?: TimeRange) => {
-        const results = {} as ValidationResults;
-        return Promise.resolve(results);
-      },
-      dsID: () => {
-        return this.id;
-      },
-      dispose: (dsID?: string) => {},
-      lookup: async (path?: string) => {
-        if (!path) {
-          const datasets = await this.fetchDatasets();
-          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
-        } else {
-          const parts = path.split('.').filter((s: string) => s);
-          if (parts.length > 2) {
-            return [];
-          }
-          if (parts.length === 1) {
-            const tables = await this.fetchTables(path[0]);
-            return tables.map((t) => ({ name: t, completion: `${t}\`` }));
-          } else {
-            return [];
-          }
-        }
-      },
-    };
   }
 }

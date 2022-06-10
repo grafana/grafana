@@ -17,8 +17,8 @@ type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
-  const { loading, error } = useAsync(async () => await datasource.getDB().init(datasource.id), [datasource]);
   const db = datasource.getDB();
+  const { loading, error } = useAsync(async () => await db.init(datasource.id), [datasource]);
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql.whereString,

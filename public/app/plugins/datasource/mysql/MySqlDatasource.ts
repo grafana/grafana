@@ -43,6 +43,9 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   getDB(dsID?: string): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
       init: () => {
         return Promise.resolve(true);

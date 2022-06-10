@@ -22,7 +22,7 @@ export function useSqlChange({ db, query, onQueryChange }: UseSqlChange) {
       }
       const rawSql = toRawSql({ sql, dataset: query.dataset, table: query.table } as SQLQuery);
       const newQuery: SQLQuery = { ...query, sql, rawSql };
-      // newQuery.rawSql = toRawSql(newQuery);
+      // newQuery.rawSql = toRawSql(newQuery);  // TODO: since this was a shallow copy is this mutating?
       onQueryChange(newQuery);
     },
     [init, onQueryChange, query]
