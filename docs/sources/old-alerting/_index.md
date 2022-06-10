@@ -8,9 +8,9 @@ weight: 114
 
 # Legacy Grafana alerts
 
-Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../unified-alerting/opt-in.md" >}}) feature.
+Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "../unified-alerting/opt-in/" >}}) feature.
 
-> **Note**: Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana alerting]({{< relref "../unified-alerting/_index.md" >}}) for all existing installations.
+> **Note**: Legacy dashboard alerts are deprecated and will be removed in Grafana 9. We encourage you to migrate to [Grafana alerting]({{< relref "../unified-alerting/" >}}) for all existing installations.
 
 Legacy dashboard alerts have two main components:
 
@@ -21,9 +21,9 @@ Legacy dashboard alerts have two main components:
 
 You can perform the following tasks for alerts:
 
-- [Create an alert rule]({{< relref "create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
-- [Add or edit an alert contact point]({{< relref "notifications.md" >}})
+- [Create an alert rule]({{< relref "create-alerts/" >}})
+- [View existing alert rules and their current state]({{< relref "view-alerts/" >}})
+- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts/" >}})
+- [Add or edit an alert contact point]({{< relref "notifications/" >}})
 
 {{< docs/shared "alerts/grafana-managed-alerts.md" >}}
