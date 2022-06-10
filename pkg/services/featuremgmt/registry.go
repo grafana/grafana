@@ -236,6 +236,7 @@ var (
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
+			Expression:  "true", // use legacy by default
 		},
 		{
 			Name:         "cloudMonitoringExperimentalUI",
