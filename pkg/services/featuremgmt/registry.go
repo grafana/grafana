@@ -73,11 +73,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "prometheus_azure_auth",
@@ -199,11 +198,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -237,6 +235,12 @@ var (
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

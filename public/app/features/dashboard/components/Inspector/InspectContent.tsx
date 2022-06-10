@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -90,6 +90,7 @@ export const InspectContent: React.FC<Props> = ({
           options={dataOptions}
           onOptionsChange={onDataOptionsChange}
           timeZone={dashboard.timezone}
+          app={CoreApp.Dashboard}
         />
       )}
       {data && activeTab === InspectTab.Meta && (

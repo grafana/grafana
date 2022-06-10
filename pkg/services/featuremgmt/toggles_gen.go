@@ -55,9 +55,9 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
-	// FlagLokiBackendMode
-	// Loki datasource works as backend datasource
-	FlagLokiBackendMode = "lokiBackendMode"
+	// FlagTempoApmTable
+	// Show APM table
+	FlagTempoApmTable = "tempoApmTable"
 
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
@@ -174,4 +174,8 @@ const (
 	// FlagUseLegacyHeatmapPanel
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
+
+	// FlagCloudMonitoringExperimentalUI
+	// Use grafana-experimental UI in Cloud Monitoring
+	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
 )
