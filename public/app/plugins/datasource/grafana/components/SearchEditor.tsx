@@ -44,7 +44,9 @@ export default function SearchEditor({ value, onChange }: Props) {
 
   const onSaveSearchJSON = (rawSearchJSON: string) => {
     try {
-      onChange(JSON.parse(rawSearchJSON) as SearchQuery);
+      const searchQuery = JSON.parse(rawSearchJSON) as SearchQuery;
+      onChange(searchQuery);
+      setQuery(searchQuery.query ?? '');
     } catch (ex) {
       console.log('UNABLE TO parse search', rawSearchJSON, ex);
     }
