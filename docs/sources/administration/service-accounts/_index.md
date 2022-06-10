@@ -57,7 +57,7 @@ The added benefits of service accounts to API keys include:
 - Service accounts resemble Grafana users and can be enabled/disabled, granted specific permissions, and remain active until they are deleted or disabled. API keys are only valid until their expiry date.
 - Service accounts can be associated with multiple tokens.
 - Unlike API keys, service account tokens are not associated with a specific user, which means that applications can be authenticated even if a Grafana user is deleted.
-- You can grant granular permissions to service accounts by leveraging [fine-grained access control]({{< relref "../../enterprise/access-control/" >}}). For more information about permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- You can grant granular permissions to service accounts by leveraging [fine-grained access control]({{< relref "../../enterprise/access-control/" >}}). For more information about permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ## Enable service accounts in Grafana
 
@@ -100,7 +100,7 @@ For more information about creating service accounts via the API, refer to [Crea
 ### Before you begin
 
 - Ensure you have added the feature toggle for service accounts `serviceAccounts`. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "enable-service-accounts/#" >}}).
-- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### To create a service account
 
@@ -122,7 +122,7 @@ You can create a service account token using the Grafana UI or via the API. For 
 ### Before you begin
 
 - Ensure you have added the `serviceAccounts` feature toggle to Grafana. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "enable-service-accounts/#" >}}).
-- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### To add a token to a service account
 

@@ -36,7 +36,7 @@ This topic shows you how to create an API key using the Grafana UI. You can also
 
 ### Before you begin:
 
-- Ensure you have permission to create and edit API keys. For more information about permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- Ensure you have permission to create and edit API keys. For more information about permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 **To create an API key:**
 

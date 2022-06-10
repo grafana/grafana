@@ -26,7 +26,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "../../administration/server-administration/configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
@@ -176,7 +176,7 @@ Directory where Grafana automatically scans and looks for plugins. For informati
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "../../administration/provisioning/" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
+Folder that contains [provisioning]({{< relref "../../administration/server-administration/provisioning/" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
 <hr />
 
@@ -1722,7 +1722,7 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugins/" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management/" >}}).
 
 ### plugin_admin_enabled
 
@@ -2000,4 +2000,4 @@ Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) 
 
 ## [rbac]
 
-Refer to [Role-based access control]({{< relref "../../administration/manage-users-and-permissions/access-control/about-rbac/" >}}) for more information.
+Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/about-rbac/" >}}) for more information.
