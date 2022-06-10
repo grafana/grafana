@@ -48,7 +48,7 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
 };
 
 export const publicDashboardPersisted = (publicDashboard: PublicDashboard): boolean => {
-  return publicDashboard.uid !== '';
+  return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
 };
 
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
