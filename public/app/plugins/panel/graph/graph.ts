@@ -571,9 +571,7 @@ class GraphElement {
       }
     } catch (e) {
       console.error('flotcharts error', e);
-      if (e instanceof Error) {
-        this.ctrl.error = e.message || 'Render Error';
-      }
+      this.ctrl.error = e instanceof Error ? e.message : 'Render Error';
       this.ctrl.renderError = true;
     }
 

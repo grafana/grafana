@@ -224,13 +224,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     } catch (ex) {
       return of({
         data: [],
-        error:
-          ex instanceof Error
-            ? ex
-            : {
-                message: 'Unknown error',
-                status: 500,
-              },
+        error: ex instanceof Error ? ex : new Error('Unkown error'),
       }).pipe(delay(100));
     }
   }
