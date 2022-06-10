@@ -200,14 +200,63 @@
      "additionalProperties": {
       "type": "string"
      },
+     "example": {
+      "runbook_url": "https://supercoolrunbook.com/page/13"
+     },
      "type": "object",
      "x-go-name": "Annotations"
     },
     "condition": {
+     "example": "A",
      "type": "string",
      "x-go-name": "Condition"
     },
     "data": {
+     "example": [
+      {
+       "datasourceUid": "-100",
+       "model": {
+        "conditions": [
+         {
+          "evaluator": {
+           "params": [
+            0,
+            0
+           ],
+           "type": "gt"
+          },
+          "operator": {
+           "type": "and"
+          },
+          "query": {
+           "params": []
+          },
+          "reducer": {
+           "params": [],
+           "type": "avg"
+          },
+          "type": "query"
+         }
+        ],
+        "datasource": {
+         "type": "__expr__",
+         "uid": "__expr__"
+        },
+        "expression": "1 == 1",
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A",
+        "type": "math"
+       },
+       "queryType": "",
+       "refId": "A",
+       "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+       }
+      }
+     ],
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
@@ -215,9 +264,18 @@
      "x-go-name": "Data"
     },
     "execErrState": {
-     "$ref": "#/definitions/ExecutionErrorState"
+     "description": "\nAlerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+     "enum": [
+      "Alerting",
+      "Error",
+      "OK"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+     "x-go-name": "ExecErrState"
     },
     "folderUID": {
+     "example": "project_x",
      "type": "string",
      "x-go-name": "FolderUID"
     },
@@ -233,11 +291,22 @@
      "additionalProperties": {
       "type": "string"
      },
+     "example": {
+      "team": "sre-team-1"
+     },
      "type": "object",
      "x-go-name": "Labels"
     },
     "noDataState": {
-     "$ref": "#/definitions/NoDataState"
+     "description": "\nAlerting Alerting\nNoData NoData\nOK OK",
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
+     "x-go-name": "NoDataState"
     },
     "orgID": {
      "format": "int64",
@@ -248,10 +317,16 @@
      "$ref": "#/definitions/Provenance"
     },
     "ruleGroup": {
+     "example": "eval_group_1",
+     "maxLength": 190,
+     "minLength": 1,
      "type": "string",
      "x-go-name": "RuleGroup"
     },
     "title": {
+     "example": "Always firing",
+     "maxLength": 190,
+     "minLength": 1,
      "type": "string",
      "x-go-name": "Title"
     },
@@ -261,10 +336,22 @@
     },
     "updated": {
      "format": "date-time",
+     "readOnly": true,
      "type": "string",
      "x-go-name": "Updated"
     }
    },
+   "required": [
+    "orgID",
+    "folderUID",
+    "ruleGroup",
+    "title",
+    "condition",
+    "data",
+    "noDataState",
+    "execErrState",
+    "for"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
@@ -673,15 +760,18 @@
    "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
    "properties": {
     "disableResolveMessage": {
+     "example": false,
      "type": "boolean",
      "x-go-name": "DisableResolveMessage"
     },
     "name": {
      "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+     "example": "webhook_1",
      "type": "string",
      "x-go-name": "Name"
     },
     "provenance": {
+     "readOnly": true,
      "type": "string",
      "x-go-name": "Provenance"
     },
@@ -689,15 +779,41 @@
      "$ref": "#/definitions/Json"
     },
     "type": {
+     "enum": [
+      "alertmanager",
+      " dingding",
+      " discord",
+      " email",
+      " googlechat",
+      " kafka",
+      " line",
+      " opsgenie",
+      " pagerduty",
+      " pushover",
+      " sensugo",
+      " slack",
+      " teams",
+      " telegram",
+      " threema",
+      " victorops",
+      " webhook",
+      " wecom"
+     ],
+     "example": "webhook",
      "type": "string",
      "x-go-name": "Type"
     },
     "uid": {
-     "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+     "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
+     "example": "my_external_reference",
      "type": "string",
      "x-go-name": "UID"
     }
    },
+   "required": [
+    "type",
+    "settings"
+   ],
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
@@ -748,10 +864,6 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "EvalQueriesResponse": {},
-  "ExecutionErrorState": {
-   "type": "string",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
-  },
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -1551,10 +1663,6 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-  },
-  "NoDataState": {
-   "type": "string",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "NotFound": {
    "type": "object",
@@ -3255,7 +3363,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3277,7 +3384,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
    "description": "AlertGroups alert groups",
@@ -3530,12 +3639,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3664,6 +3772,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3703,9 +3812,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "properties": {
@@ -5676,7 +5783,7 @@
     "operationId": "RouteDeleteContactpoints",
     "parameters": [
      {
-      "description": "ContactPointUID should be the contact point UID identifier",
+      "description": "UID should be the contact point unique identifier",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5709,7 +5816,7 @@
     "operationId": "RoutePutContactpoint",
     "parameters": [
      {
-      "description": "ContactPointUID should be the contact point UID identifier",
+      "description": "UID should be the contact point unique identifier",
       "in": "path",
       "name": "UID",
       "required": true,
