@@ -17,10 +17,6 @@ export interface DashboardResponse {
   meta: DashboardMeta;
 }
 
-export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
-  return variables.length > 0;
-};
-
 export const getPublicDashboardConfig = async (
   dashboardUid: string,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
@@ -46,6 +42,15 @@ export const savePublicDashboardConfig = async (
   setPublicDashboard(pdResp);
 };
 
-export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard) => {
+// Instance methods
+export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
+  return variables.length > 0;
+};
+
+export const publicDashboardPersisted = (publicDashboard: PublicDashboard): boolean => {
+  return publicDashboard.uid !== '';
+};
+
+export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
   return `/public-dashboards/${publicDashboard.uid}`;
 };
