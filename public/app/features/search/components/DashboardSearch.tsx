@@ -144,10 +144,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.background.canvas};
+      padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.up('md')} {
         left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
+        padding: ${theme.spacing(2)};
       }
     `,
     container: css`
@@ -155,11 +157,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1)};
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
-      margin-top: ${theme.spacing(4)};
-
       height: 100%;
 
       ${theme.breakpoints.up('md')} {
