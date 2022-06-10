@@ -10,6 +10,8 @@ weight: 101
 
 Grafana Alerting is enabled by default for new installations or existing installations whether or not legacy alerting is configured.
 
+>**Note**: We recommend that Grafana Enterprise customers with more than a dozen Grafana dashboard alert rules do not upgrade and remain on legacy alerting for now by [opting out]({{< relref "opt-out/" >}}). If you do want to upgrade to Grafana Alerting, contact customer support.
+
 Existing installations that do not use legacy alerting will have Grafana Alerting enabled by default unless alerting is disabled in the configuration.
 
 Likewise, existing installations that use legacy alerting will be automatically upgraded to Grafana Alerting unless you have [opted out]({{< relref "opt-out/" >}}) of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost.
