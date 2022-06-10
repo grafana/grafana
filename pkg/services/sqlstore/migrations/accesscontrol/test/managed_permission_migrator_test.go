@@ -127,7 +127,7 @@ DELETE FROM permission; DELETE FROM role`, acmig.ManagedPermissionsMigrationID)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
 			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
-			acmig.AddManagedPermissionsMigration(acmigrator)
+			acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID)
 
 			errRunningMig := acmigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)

@@ -8,12 +8,13 @@ import (
 	"mime/multipart"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -145,7 +146,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		pn.log.Error("Failed to send pushover notification", "error", err, "webhook", pn.Name)
+		pn.log.Error("failed to send pushover notification", "err", err, "webhook", pn.Name)
 		return false, err
 	}
 

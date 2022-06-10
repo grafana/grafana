@@ -28,6 +28,7 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
+		sdkhttpclient.ContextualMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}
