@@ -7373,20 +7373,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/interactions@npm:3.8.4, @react-aria/interactions@npm:^3.8.4":
-  version: 3.8.4
-  resolution: "@react-aria/interactions@npm:3.8.4"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/utils": ^3.12.0
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 0fae18cfd47e73fb92355312ff3fe54bc469e9b67b97e6d7d566b894433c95232128352c2ff439472a449f3097c866732ba6a7c658efa6f9391f02d3e0e977ef
-  languageName: node
-  linkType: hard
-
-"@react-aria/interactions@npm:^3.9.0":
+"@react-aria/interactions@npm:3.9.0, @react-aria/interactions@npm:^3.9.0":
   version: 3.9.0
   resolution: "@react-aria/interactions@npm:3.9.0"
   dependencies:
@@ -7396,6 +7383,19 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: 783d4fa59bda9329f4977d8e83c88555c3376c489e40d97c974c7725ebf286849ed149f8e20226fbab070bd45356e5ba01ace328d2ed785f0f40e28790e7b0d5
+  languageName: node
+  linkType: hard
+
+"@react-aria/interactions@npm:^3.8.4":
+  version: 3.8.4
+  resolution: "@react-aria/interactions@npm:3.8.4"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/utils": ^3.12.0
+    "@react-types/shared": ^3.12.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 0fae18cfd47e73fb92355312ff3fe54bc469e9b67b97e6d7d566b894433c95232128352c2ff439472a449f3097c866732ba6a7c658efa6f9391f02d3e0e977ef
   languageName: node
   linkType: hard
 
@@ -20731,7 +20731,7 @@ __metadata:
     "@react-aria/button": 3.4.4
     "@react-aria/dialog": 3.2.0
     "@react-aria/focus": 3.6.0
-    "@react-aria/interactions": 3.8.4
+    "@react-aria/interactions": 3.9.0
     "@react-aria/menu": 3.4.4
     "@react-aria/overlays": 3.8.2
     "@react-aria/utils": 3.12.0
