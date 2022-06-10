@@ -39,7 +39,7 @@ Templating allows you to drill down into your data, say, from all data to North 
 
 ## Configure Grafana
 
-If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../setup-grafana/configure-grafana/" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
+If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../setup-grafana/configure-grafana/" >}}) and the [Grafana CLI]({{< relref "../cli.md" >}}).
 
 Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 

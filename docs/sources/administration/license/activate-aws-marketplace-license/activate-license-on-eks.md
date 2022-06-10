@@ -46,7 +46,7 @@ Grafana requires that you configure a database to hold dashboards, users, and ot
 ### Before you begin
 
 - Ensure that you have a supported Grafana database available.
-  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../../enterprise/setup-grafana/installation/#supported-databases" >}}).
+  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../../setup-grafana/installation/#supported-databases" >}}).
   - For information about creating a database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
 - Review the information required to connect to the RDS DB instance. For more information, refer to [Connecting to an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
 

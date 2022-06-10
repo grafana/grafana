@@ -21,7 +21,7 @@ If you encounter an error or problem, then you can check the Grafana server log.
 
 You can enable more logging by changing log level in the Grafana configuration file.
 
-For more information, refer to [Enable debug logging in Grafana CLI]({{< relref "../administration/cli/#enable-debug-logging" >}}) and the [log section in Configuration]({{< relref "../setup-grafana/configure-grafana/#log" >}}).
+For more information, refer to [Enable debug logging in Grafana CLI]({{< relref "../cli/#enable-debug-logging" >}}) and the [log section in Configuration]({{< relref "../setup-grafana/configure-grafana/#log" >}}).
 
 ## Troubleshoot transformations
 
