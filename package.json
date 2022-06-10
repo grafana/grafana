@@ -269,7 +269,7 @@
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.3.1",
     "@popperjs/core": "2.11.5",
-    "@react-aria/button": "3.4.4",
+    "@react-aria/button": "3.5.0",
     "@react-aria/dialog": "3.2.0",
     "@react-aria/focus": "3.6.0",
     "@react-aria/interactions": "3.9.0",
