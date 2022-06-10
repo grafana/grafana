@@ -11,6 +11,9 @@ import (
 )
 
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 	cmd := models.CreateTempUserCommand{
 		OrgId:  2256,

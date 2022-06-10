@@ -29,8 +29,6 @@ load(
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
@@ -93,6 +91,7 @@ def pr_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
     ]
     test_steps = [
@@ -116,6 +115,7 @@ def pr_pipelines(edition):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -125,9 +125,6 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
-        verify_gen_cue_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
