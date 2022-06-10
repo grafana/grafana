@@ -106,12 +106,15 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 	for orgID, orgMap := range permissionMap {
 		for managedRole, permissions := range orgMap {
 			// ensure managed role exists, create and add to map if it doesn't
-			ok, err := sess.Get(&accesscontrol.Role{Name: managedRole, OrgID: orgID})
+			foundRole := &accesscontrol.Role{Name: managedRole, OrgID: orgID}
+			ok, err := sess.Get(foundRole)
 			if err != nil {
 				return err
 			}
 
-			if !ok {
+			if ok {
+				roleMap[orgID][managedRole] = foundRole.ID
+			} else {
 				uid, err := generateNewRoleUID(sess, orgID)
 				if err != nil {
 					return err
