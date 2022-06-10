@@ -2,11 +2,11 @@ import { css, cx } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { usePagination } from '../hooks/usePagination';
 
-import { PaginationWrapper } from './PaginationWrapper';
+import { AlertRulePagination } from './AlertRulePagination';
 
 interface DynamicTablePagination {
   itemsPerPage: number;
@@ -146,9 +146,13 @@ export const DynamicTable = <T extends object>({
         {footerRow && <div className={cx(styles.row, styles.footerRow)}>{footerRow}</div>}
       </div>
       {pagination && (
-        <PaginationWrapper className={paginationStyles}>
-          <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
-        </PaginationWrapper>
+        <AlertRulePagination
+          className={paginationStyles}
+          currentPage={page}
+          numberOfPages={numberOfPages}
+          onNavigate={onPageChange}
+          hideWhenSinglePage
+        />
       )}
     </>
   );

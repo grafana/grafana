@@ -3,14 +3,14 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
-import { PaginationWrapper } from '../PaginationWrapper';
+import { AlertRulePagination } from '../AlertRulePagination';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -64,9 +64,12 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
       })}
       {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
-      <PaginationWrapper>
-        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
-      </PaginationWrapper>
+      <AlertRulePagination
+        currentPage={page}
+        numberOfPages={numberOfPages}
+        onNavigate={onPageChange}
+        hideWhenSinglePage
+      />
     </section>
   );
 };

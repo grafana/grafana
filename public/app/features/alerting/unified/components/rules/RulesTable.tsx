@@ -91,6 +91,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.borderRadius()};
   `,
   pagination: css`
+    display: flex;
     margin: 0;
     padding-top: ${theme.spacing(1)};
     padding-bottom: ${theme.spacing(0.25)};

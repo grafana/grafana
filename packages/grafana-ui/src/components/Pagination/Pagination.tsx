@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -16,6 +16,7 @@ export interface Props {
   hideWhenSinglePage?: boolean;
   /** Small version only shows the current page and the navigation buttons. */
   showSmallVersion?: boolean;
+  className?: string;
 }
 
 export const Pagination: React.FC<Props> = ({
@@ -24,6 +25,7 @@ export const Pagination: React.FC<Props> = ({
   onNavigate,
   hideWhenSinglePage,
   showSmallVersion,
+  className,
 }) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
@@ -96,7 +98,7 @@ export const Pagination: React.FC<Props> = ({
   }
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, className)}>
       <ol>
         <li className={styles.item}>
           <Button
