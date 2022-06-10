@@ -19,7 +19,6 @@ interface Props {
   queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
-
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
