@@ -38,6 +38,9 @@ export const fieldClickCondition: ConditionInfo<FieldClickConditionOptions, Fiel
       </div>
     );
   },
+  getVariableName: (options: FieldClickConditionOptions) => {
+    return `field-click-${options.pattern}`;
+  },
 };
 
 export const conditionsRegistry = new Registry<ConditionInfo>();

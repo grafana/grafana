@@ -164,9 +164,8 @@ export class PanelQueryRunner {
             applyConditions = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
               for (let i = 0; i < conditions.length; i++) {
                 for (let j = 0; j < conditions[i]?.length; j++) {
-                  const fieldMatcher = conditionsRegistry
-                    .getIfExists(conditions[i][j].id)
-                    ?.evaluate(conditions[i][j].options);
+                  const conditionDef = conditionsRegistry.getIfExists(conditions[i][j].id);
+                  const fieldMatcher = conditionDef?.evaluate(conditions[i][j].options);
 
                   if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
                     return async (evt: any, origin: any) => {
@@ -175,7 +174,7 @@ export class PanelQueryRunner {
                       const key = getLastKey(state);
 
                       const rootStateKey = toStateKey(key);
-                      const id = '__drilldown-' + field.name;
+                      const id = conditionDef!.getVariableName(conditions[i][j].options);
                       const identifier: VariableIdentifier = { type: 'constant', id };
                       const global = false;
                       const index = getNewVariableIndex(rootStateKey, state);

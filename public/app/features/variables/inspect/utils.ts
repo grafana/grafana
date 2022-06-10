@@ -1,4 +1,10 @@
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { ConditionType, DataLinkBuiltInVars } from '@grafana/data';
+import {
+  ConditionalDataSource,
+  ConditionalDataSourceQuery,
+  CONDITIONAL_DATASOURCE_NAME,
+} from 'app/plugins/datasource/conditional/ConditionalDataSource';
+import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
@@ -316,6 +322,37 @@ export function getAffectedPanelIdsForVariable(variableId: string, panels: Panel
     if (repeatMatches?.length) {
       affectedPanelIds.push(panel.id);
       continue;
+    }
+
+    // detect if the panel uses the conditional variable...
+    if (panel.datasource?.uid === CONDITIONAL_DATASOURCE_NAME) {
+      // iterate over each target
+      for (let i = 0; i < panel.targets.length; i++) {
+        const target = panel.targets[i] as ConditionalDataSourceQuery;
+        if (!target.conditions) {
+          continue;
+        }
+        // iterate over each condition within a target
+        for (let j = 0; j < target.conditions.length; j++) {
+          const condition = target.conditions[j] as any;
+
+          const conditionDef = conditionsRegistry.getIfExists(target.conditions[j].id);
+
+          // detect if a condition is able to create a template variable
+          // TODO: generalize this
+          if (!conditionDef || conditionDef.type !== ConditionType.Field) {
+            continue;
+          }
+
+          // if so, generate a template variable name for such a dynamic template variable
+          const dynamicVariableId = conditionDef.getVariableName(condition.options);
+
+          // try matching the pottential template variable name against the privided variableID
+          if (dynamicVariableId === variableId) {
+            affectedPanelIds.push(panel.id);
+          }
+        }
+      }
     }
 
     const matches = panelAsJson.match(variableRegex);

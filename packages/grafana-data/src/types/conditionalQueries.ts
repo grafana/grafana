@@ -6,6 +6,7 @@ export interface ConditionInfo<TOptions = any, TArgs = any> extends RegistryItem
   type: ConditionType;
   evaluate: (options: TOptions) => (args: TArgs) => boolean;
   editor: React.ComponentType<ConditionUIProps<TOptions>>;
+  getVariableName: (options: TOptions) => string;
 }
 
 export interface FieldClickConditionOptions {

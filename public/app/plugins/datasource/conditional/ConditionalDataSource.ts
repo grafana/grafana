@@ -37,7 +37,7 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
     if (query.datasource?.uid !== CONDITIONAL_DATASOURCE_NAME) {
       const drilldownTplVars = getTemplateSrv()
         .getVariables()
-        .filter((arg) => (arg as ConstantVariableModel).id.includes('__drilldown'));
+        .filter((arg) => (arg as ConstantVariableModel).id.includes('field-click'));
 
       // Executing default (no conditions query)
       if (!query.conditions && drilldownTplVars.length === 0) {
@@ -55,7 +55,8 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
         if (
           drilldownTplVars.filter((arg) => {
             const result = (arg as ConstantVariableModel).name
-              .replace('__drilldown-', '')
+              // TODO: refactor this fixed string
+              .replace('field-click-', '')
               .match(query.conditions[j].options.field);
 
             return result;
@@ -75,7 +76,7 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
   getQueryScore = (query: ConditionalDataSourceQuery) => {
     const drilldownTplVars = getTemplateSrv()
       .getVariables()
-      .filter((arg) => (arg as ConstantVariableModel).id.includes('__drilldown'));
+      .filter((arg) => (arg as ConstantVariableModel).id.includes('field-click'));
 
     if (query.conditions) {
       let score = query.conditions.length;
@@ -84,7 +85,7 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
         for (let i = 0; i < drilldownTplVars.length; i++) {
           const variable = drilldownTplVars[i];
           const result = (variable as ConstantVariableModel).name
-            .replace('__drilldown-', '')
+            .replace('field-click-', '')
             .match(condition.options.pattern);
 
           if (result) {
