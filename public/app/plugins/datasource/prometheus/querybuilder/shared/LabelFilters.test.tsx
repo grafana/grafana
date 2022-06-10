@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { selectOptionInTest } from '../../../../../../../packages/grafana-ui';
 import { getLabelSelects } from '../testUtils';
 
 import { LabelFilters } from './LabelFilters';

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -472,8 +473,8 @@ func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) e
 		return models.ErrDashboardNotFound
 	}
 
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.Id,
 		ParentVersion: parentVersion,
 		RestoredFrom:  cmd.RestoredFrom,
 		Version:       dash.Version,
@@ -832,8 +833,8 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore
 	return nil
 }
 
-func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error) {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -852,6 +853,8 @@ func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDash
 		query.Result = &dashboard
 		return nil
 	})
+
+	return query.Result, err
 }
 
 func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
