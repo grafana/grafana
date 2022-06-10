@@ -237,5 +237,10 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
