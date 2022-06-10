@@ -21,7 +21,7 @@ import { Project } from '../index';
 import { GraphPeriod } from './../GraphPeriod';
 import { MQLQueryEditor } from './../MQLQueryEditor';
 import { AliasBy } from './AliasBy';
-import { VisualMetricQueryEditor as ExperimentalVisualMetricQueryEditor } from './VisualMetricQueryEditor';
+import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
   refId: string;
@@ -118,7 +118,7 @@ function Editor({
       />
 
       {editorMode === EditorMode.Visual && (
-        <ExperimentalVisualMetricQueryEditor
+        <VisualMetricQueryEditor
           refId={refId}
           labels={state.labels}
           variableOptionGroup={variableOptionGroup}
