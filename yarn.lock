@@ -4679,7 +4679,7 @@ __metadata:
     "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.4.4
-    "@react-aria/dialog": 3.1.9
+    "@react-aria/dialog": 3.2.0
     "@react-aria/focus": 3.6.0
     "@react-aria/menu": 3.4.4
     "@react-aria/overlays": 3.8.2
@@ -7311,22 +7311,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:3.1.9":
-  version: 3.1.9
-  resolution: "@react-aria/dialog@npm:3.1.9"
+"@react-aria/dialog@npm:3.2.0":
+  version: 3.2.0
+  resolution: "@react-aria/dialog@npm:3.2.0"
   dependencies:
     "@babel/runtime": ^7.6.2
-    "@react-aria/focus": ^3.5.5
-    "@react-aria/utils": ^3.12.0
-    "@react-stately/overlays": ^3.2.0
-    "@react-types/dialog": ^3.3.5
+    "@react-aria/focus": ^3.6.0
+    "@react-aria/utils": ^3.13.0
+    "@react-stately/overlays": ^3.3.0
+    "@react-types/dialog": ^3.4.0
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 6ce0f22d0804bb4cb86521c0da81024a52605490f0deb12162cc56f416544f4e4015d38c401dfed906d3101310a5b6c122d96ad2d506d444c671a29011c6df98
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: a62a7c71bf65fc28f7e863bd1f250977f16043097b0863583cebd235d8d5abfed40789a0d00af06fb398afe5d16219e1f694d017d0bd0ff0d8479fa041409f19
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.6.0":
+"@react-aria/focus@npm:3.6.0, @react-aria/focus@npm:^3.6.0":
   version: 3.6.0
   resolution: "@react-aria/focus@npm:3.6.0"
   dependencies:
@@ -7567,6 +7567,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-stately/overlays@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@react-stately/overlays@npm:3.3.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-stately/utils": ^3.5.0
+    "@react-types/overlays": ^3.6.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 19d4e9f2c9fb745704f9400d54a7b78766bd3f7592df9253ddf11a9231b2a21f6412166d714d7cea8ace28db33791989c092ac1ab7f566a8b53f3c9d17e9b18c
+  languageName: node
+  linkType: hard
+
 "@react-stately/selection@npm:^3.9.4":
   version: 3.9.4
   resolution: "@react-stately/selection@npm:3.9.4"
@@ -7654,15 +7667,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/dialog@npm:^3.3.5":
-  version: 3.3.5
-  resolution: "@react-types/dialog@npm:3.3.5"
+"@react-types/dialog@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@react-types/dialog@npm:3.4.0"
   dependencies:
-    "@react-types/overlays": ^3.5.5
-    "@react-types/shared": ^3.12.0
+    "@react-types/overlays": ^3.6.0
+    "@react-types/shared": ^3.13.0
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 50847ec5ccb6b4cffb62fb19fb7d026d3965cd02db293b247f415ace1e394e61291637dcd83159ec7de99749994a3a67ab45ec927a810e4677c2f4bdb7ed54bd
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 88d6ea76b345474e17d20e61d716151a254bcce7df5c0e86d23219db0dc4e970cc3a3c29488910bf48ec907282bbb67de99256082017aa97971dffe33f0b8ff4
   languageName: node
   linkType: hard
 
@@ -7686,6 +7699,17 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: f6ed716c2a7929b6825781b8db6a86043fc15e160ca68e2dbecedd84d040688bd4b1ad491e5fd92258e7bb73145ac623541ad692b034865768053f92ff66689f
+  languageName: node
+  linkType: hard
+
+"@react-types/overlays@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "@react-types/overlays@npm:3.6.0"
+  dependencies:
+    "@react-types/shared": ^3.13.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 9f6c773bcb4877c9847d79946e90286d335f5d0306e4f656be068bfeaa395bb685231614155282395356bf9acffc7a9086fc4aca8b117b4231e5985332cbe8fc
   languageName: node
   linkType: hard
 
@@ -20705,7 +20729,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.6
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.4.4
-    "@react-aria/dialog": 3.1.9
+    "@react-aria/dialog": 3.2.0
     "@react-aria/focus": 3.6.0
     "@react-aria/interactions": 3.8.4
     "@react-aria/menu": 3.4.4
