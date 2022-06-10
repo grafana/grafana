@@ -27,13 +27,15 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 	}
 
 	// Replace dashboard time range with pubdash time range
-	var pdcTimeSettings map[string]interface{}
-	err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
-	if err != nil {
-		return nil, err
-	}
+	if pdc.TimeSettings != "" {
+		var pdcTimeSettings map[string]interface{}
+		err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
+		if err != nil {
+			return nil, err
+		}
 
-	d.Data.Set("time", pdcTimeSettings)
+		d.Data.Set("time", pdcTimeSettings)
+	}
 
 	return d, nil
 }
