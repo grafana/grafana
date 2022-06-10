@@ -72,6 +72,7 @@ export type GrafanaManagedReceiverConfig = {
   name: string;
   updated?: string;
   created?: string;
+  provenance?: string;
 };
 
 export type Receiver = {

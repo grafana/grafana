@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -16,7 +16,7 @@ import {
   updateAlertManagerConfigAction,
 } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -108,10 +108,25 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     [config, existing]
   );
 
+  // if any receivers in the contact point have a "provenance", the entire contact point should be readOnly
+  const hasProvisionedItems = existing
+    ? existing.grafana_managed_receiver_configs?.some((item) => Boolean(item.provenance))
+    : false;
+
+  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || hasProvisionedItems;
+
   if (grafanaNotifiers.result) {
     return (
       <>
+        {hasProvisionedItems && (
+          <Alert title={'This contact point has been provisioned'} severity="info">
+            This contact point was added by config and cannot be modified using the UI. Please contact your server admin
+            to update this contact point.
+          </Alert>
+        )}
+
         <ReceiverForm<GrafanaChannelValues>
+          readOnly={readOnly}
           config={config}
           onSubmit={onSubmit}
           initialValues={existingValue}
