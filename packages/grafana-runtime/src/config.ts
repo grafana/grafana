@@ -154,16 +154,26 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    // Runtime override features from URL
-    const params = window.location.search.split('&');
-    for (const param of params) {
-      if (param.startsWith('__feature.')) {
-        const parts = param.split('=');
-        const key = parts[0].slice('__feature.'.length);
-        this.featureToggles[key] = 'false' !== parts[1];
+    overrideFeatureTogglesFromUrl(this);
+  }
+}
+
+function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
+  if (window.location.href.indexOf('__feature') === -1) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  params.forEach((value, key) => {
+    if (key.startsWith('__feature.')) {
+      const featureName = key.substring(10);
+      const toggleState = value === 'true';
+      if (toggleState !== config.featureToggles[key]) {
+        config.featureToggles[featureName] = toggleState;
+        console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
       }
     }
-  }
+  });
 }
 
 const bootData = (window as any).grafanaBootData || {
