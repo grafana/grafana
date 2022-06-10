@@ -9352,7 +9352,6 @@
       }
     },
     "DashboardVersionDTO": {
-      "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
       "type": "object",
       "properties": {
         "created": {
@@ -9448,7 +9447,7 @@
       }
     },
     "DataResponse": {
-      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
+      "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
@@ -9898,7 +9897,7 @@
           "type": "string"
         },
         "pathSeparator": {
-          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
           "type": "string"
         },
         "preferredVisualisationType": {

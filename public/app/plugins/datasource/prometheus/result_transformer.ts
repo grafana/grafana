@@ -19,7 +19,6 @@ import {
   DataQueryResponse,
   DataQueryRequest,
   PreferredVisualisationType,
-  CoreApp,
   DataFrameType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
@@ -48,10 +47,7 @@ interface TimeAndValue {
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   // We want to process vector and scalar results in Explore as table
-  if (
-    options.app === CoreApp.Explore &&
-    (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar')
-  ) {
+  if (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar') {
     return true;
   }
 

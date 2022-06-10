@@ -2,7 +2,7 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 )
 
 // swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersions
@@ -122,11 +122,11 @@ type GetDashboardVersionsParams struct {
 // swagger:response dashboardVersionsResponse
 type DashboardVersionsResponse struct {
 	// in: body
-	Body []*models.DashboardVersionDTO `json:"body"`
+	Body []*dashver.DashboardVersionDTO `json:"body"`
 }
 
 // swagger:response dashboardVersionResponse
 type DashboardVersionResponse struct {
 	// in: body
-	Body *models.DashboardVersionMeta `json:"body"`
+	Body *dashver.DashboardVersionMeta `json:"body"`
 }

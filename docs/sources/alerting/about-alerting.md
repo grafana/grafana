@@ -1,18 +1,18 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/about-alerting/
-description: A quick overview of Grafana alerting
+description: A quick overview of Grafana Alerting
 keywords:
   - grafana
   - alerting
   - overview
   - concepts
   - basics
-title: About Grafana alerting
+title: About Grafana Alerting
 weight: 100
 ---
 
-# About Grafana alerting
+# About Grafana Alerting
 
 Grafana Alerting consists of several individual concepts that are at the core of a flexible and powerful alerting engine.
 
@@ -24,9 +24,9 @@ We will also touch on various other concepts such as [silences]({{< relref "sile
 
 ## Overview
 
-{{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram.jpg" caption="Grafana alerting overview" >}}
+{{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram.jpg" caption="Grafana Alerting overview" >}}
 
-As shown in the diagram above, Grafana alerting uses [labels]({{< relref "fundamentals/annotation-label/how-to-use-labels/" >}}) to match an alert rule and its instances to a specific notification policy. This concept of labels and label matching is important and is also used in [silences]({{< relref "silences/" >}}).
+As shown in the diagram above, Grafana Alerting uses [labels]({{< relref "fundamentals/annotation-label/how-to-use-labels/" >}}) to match an alert rule and its instances to a specific notification policy. This concept of labels and label matching is important and is also used in [silences]({{< relref "silences/" >}}).
 
 Each notification policy specifies a set of [label matchers]({{< relref "fundamentals/annotation-label/labels-and-label-matchers/" >}}) to indicate what alerts they are responsible for.
 
