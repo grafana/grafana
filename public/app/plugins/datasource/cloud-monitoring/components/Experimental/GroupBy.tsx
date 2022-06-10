@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { MultiSelect } from '@grafana/ui';
 
-import { SELECT_WIDTH, SYSTEM_LABELS } from '../../constants';
+import { SYSTEM_LABELS } from '../../constants';
 import { labelsToGroupedOptions } from '../../functions';
 import { MetricDescriptor, MetricQuery } from '../../types';
 
@@ -42,7 +42,7 @@ export const GroupBy: FunctionComponent<Props> = ({
         >
           <MultiSelect
             inputId={`${refId}-group-by`}
-            width={SELECT_WIDTH}
+            width="auto"
             placeholder="Choose label"
             options={options}
             value={query.groupBys ?? []}
