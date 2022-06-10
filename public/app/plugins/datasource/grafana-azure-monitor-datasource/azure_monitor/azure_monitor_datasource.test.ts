@@ -34,51 +34,6 @@ describe('AzureMonitorDatasource', () => {
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
-  describe('When performing testDatasource', () => {
-    describe('and an error is returned', () => {
-      const error = {
-        data: {
-          error: {
-            code: 'InvalidApiVersionParameter',
-            message: `An error message.`,
-          },
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      };
-
-      beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockRejectedValue(error);
-      });
-
-      it('should return error status and a detailed error message', () => {
-        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('error');
-          expect(result.message).toEqual('Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message.');
-        });
-      });
-    });
-
-    describe('and a list of resource groups is returned', () => {
-      const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
-      };
-
-      beforeEach(() => {
-        ctx.instanceSettings.jsonData.tenantId = 'xxx';
-        ctx.instanceSettings.jsonData.clientId = 'xxx';
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ data: response, status: 200 });
-      });
-
-      it('should return success status', () => {
-        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('success');
-        });
-      });
-    });
-  });
-
   describe('When performing getMetricNamespaces', () => {
     const response = {
       value: [
