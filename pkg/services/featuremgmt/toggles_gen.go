@@ -55,6 +55,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagTempoApmTable
+	// Show APM table
+	FlagTempoApmTable = "tempoApmTable"
+
 	// FlagPrometheusAzureAuth
 	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
@@ -166,4 +170,20 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagCloudMonitoringExperimentalUI
+	// Use grafana-experimental UI in Cloud Monitoring
+	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
+
+	// FlagLogRequestsInstrumentedAsUnknown
+	// Logs the path for requests that are instrumented as unknown
+	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
+
+	// FlagDataConnectionsConsole
+	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	FlagDataConnectionsConsole = "dataConnectionsConsole"
+
+	// FlagInternationalization
+	// Enables work-in-progress internationalization
+	FlagInternationalization = "internationalization"
 )
