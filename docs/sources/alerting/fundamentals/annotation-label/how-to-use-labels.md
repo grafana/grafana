@@ -1,15 +1,17 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/how-to-use-labels/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana
   - alerting
   - guide
   - fundamentals
-title: Labels in Grafana alerting
+title: Labels in Grafana Alerting
 weight: 117
 ---
 
-# Labels in Grafana alerting
+# Labels in Grafana Alerting
 
 This topic explains why labels are a fundamental component of alerting.
 
