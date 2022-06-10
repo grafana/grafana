@@ -147,7 +147,7 @@ grafana-cli --config "/etc/configuration/" admin reset-admin-password mynewpassw
 
 ## Plugins commands
 
-Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "../plugins/installation/" >}}).
+Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "../plugins/" >}}).
 
 All listed commands apply to the Grafana default repositories and directories. You can override the defaults with [Global Options](#global-options).
 
