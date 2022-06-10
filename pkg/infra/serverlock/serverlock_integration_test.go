@@ -9,6 +9,9 @@ import (
 )
 
 func TestIntegrationServerLok(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sl := createTestableServerLock(t)
 
 	counter := 0

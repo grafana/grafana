@@ -59,4 +59,7 @@ export interface FeatureToggles {
   canvasPanelNesting?: boolean;
   useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
+  logRequestsInstrumentedAsUnknown?: boolean;
+  dataConnectionsConsole?: boolean;
+  internationalization?: boolean;
 }
