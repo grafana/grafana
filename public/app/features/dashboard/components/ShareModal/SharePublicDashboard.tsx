@@ -9,11 +9,12 @@ import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 
 import {
-  dashboardHasTemplateVariables,
   getPublicDashboardConfig,
   savePublicDashboardConfig,
   PublicDashboard,
   generatePublicDashboardUrl,
+  dashboardHasTemplateVariables,
+  publicDashboardPersisted,
 } from './SharePublicDashboardUtils';
 import { ShareModalTabProps } from './types';
 
@@ -26,11 +27,10 @@ interface Acknowledgements {
 }
 
 export const SharePublicDashboard = (props: Props) => {
-  const dashboardUid = props.dashboard.uid;
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
     uid: '',
-    dashboardUid,
+    dashboardUid: props.dashboard.uid,
   });
   const [dashboardVariables, setDashboardVariables] = useState<VariableModel[]>([]);
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
@@ -41,10 +41,9 @@ export const SharePublicDashboard = (props: Props) => {
   });
 
   useEffect(() => {
+    getPublicDashboardConfig(props.dashboard.uid, setPublicDashboardConfig).catch();
     setDashboardVariables(props.dashboard.getVariables());
-    getPublicDashboardConfig(dashboardUid, setPublicDashboardConfig).catch();
-    acknowledge(publicDashboard);
-  }, [props, publicDashboard, dashboardUid]);
+  }, [props]);
 
   const onSavePublicConfig = () => {
     if (dashboardHasTemplateVariables(dashboardVariables)) {
@@ -65,19 +64,6 @@ export const SharePublicDashboard = (props: Props) => {
     appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
-  // if no public dashboard exists, show acknowledgements
-  const showAcknowledgements = () => {
-    return publicDashboard.uid === '';
-  };
-
-  const acknowledge = (publicDashboard: PublicDashboard) => {
-    if (publicDashboard.uid !== '') {
-      setAcknowledgements({ public: true, datasources: true, variables: true, usage: true });
-    } else {
-      setAcknowledgements({ public: false, datasources: false, variables: false, usage: false });
-    }
-  };
-
   const onAcknowledge = useCallback(
     (field: string, checked: boolean) => {
       setAcknowledgements({ ...acknowledgements, [field]: checked });
@@ -95,6 +81,7 @@ export const SharePublicDashboard = (props: Props) => {
 
   return (
     <>
+      {console.log('rendered')}
       <p>Welcome to Grafana public dashboards alpha!</p>
       <p>
         To allow the current dashboard to be published publicly, toggle the switch. For now we do not support template
@@ -116,7 +103,7 @@ export const SharePublicDashboard = (props: Props) => {
         github discussion
       </a>
       <hr />
-      {showAcknowledgements() && (
+      {!publicDashboardPersisted(publicDashboard) && (
         <div>
           Before you click Save, please acknowledge the following information: <br />
           <FieldSet>
@@ -124,14 +111,14 @@ export const SharePublicDashboard = (props: Props) => {
               label="Your entire dashboard will be public"
               value={acknowledgements.public}
               onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
-            />{' '}
+            />
             <br />
             <Checkbox
               label="Publishing currently only works with a subset of datasources"
               value={acknowledgements.datasources}
               description="learn more about supported datasources"
               onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
-            />{' '}
+            />
             <br />
             <Checkbox
               label="Variables can be sensitive and are currently not recommended"
@@ -145,7 +132,7 @@ export const SharePublicDashboard = (props: Props) => {
               value={acknowledgements.usage}
               description="learn more about query caching"
               onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
-            />{' '}
+            />
             <br />
             <br />
           </FieldSet>
@@ -157,7 +144,7 @@ export const SharePublicDashboard = (props: Props) => {
           <FieldSet>
             Time Range
             <br />
-            <p style={{ padding: '5px' }}>
+            <div style={{ padding: '5px' }}>
               <Input
                 value={props.dashboard.time.from}
                 disabled={true}
@@ -172,7 +159,8 @@ export const SharePublicDashboard = (props: Props) => {
                   <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>To:</span>
                 }
               />
-            </p>
+            </div>
+            <br />
             <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
               <Switch
                 disabled={dashboardHasTemplateVariables(dashboardVariables)}
@@ -180,7 +168,7 @@ export const SharePublicDashboard = (props: Props) => {
                 onChange={() => setPublicDashboardConfig({ ...publicDashboard, isEnabled: !publicDashboard.isEnabled })}
               />
             </Field>
-            {publicDashboard?.dashboardUid && (
+            {publicDashboardPersisted(publicDashboard) && (
               <Field label="Link URL">
                 <Input
                   value={generatePublicDashboardUrl(publicDashboard)}
