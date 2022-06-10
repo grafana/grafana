@@ -307,6 +307,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
+	if c.OrgRole == models.ROLE_ADMIN && hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Storage",
+			Id:          "storage",
+			Description: "Manage file storage",
+			Icon:        "cube",
+			Url:         hs.Cfg.AppSubURL + "/org/storage",
+		})
+	}
+
 	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",

@@ -65,6 +65,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/serviceaccounts", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
 	r.Get("/org/serviceaccounts/:serviceAccountId", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
 	r.Get("/org/apikeys/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
+	r.Get("/org/storage/", reqOrgAdmin, hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
