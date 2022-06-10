@@ -54,7 +54,7 @@ As the license expiration date approaches, you will see a banner in Grafana that
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
-The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url">}}) configuration setting.
+The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) configuration setting.
 
 **Concurrent sessions limit**: As of Grafana Enterprise 7.5, users can initiate up to three concurrent sessions of Grafana.
 

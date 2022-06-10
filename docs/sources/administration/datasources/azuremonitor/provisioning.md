@@ -18,7 +18,7 @@ weight: 2
 
 # Configure the data source with provisioning
 
-You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [Provisioning documentation page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [Provisioning documentation page]({{< relref "../../../../datasources/administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

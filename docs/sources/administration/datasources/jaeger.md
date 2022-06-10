@@ -15,7 +15,7 @@ weight: 800
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../../../datasources/explore/" >}}).
 
 ## Add data source
 
@@ -34,7 +34,7 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki and Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../../../datasources/explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki and Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -68,7 +68,7 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 ## Query traces
 
-You can query and display traces from Jaeger via [Explore]({{< relref "../explore/" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../../../datasources/explore/" >}}).
 
 {{< figure src="/static/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
@@ -143,11 +143,11 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "loki/" >}}) documentation for details.
+You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "../../../datasources/jaeger/loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "../../../datasources/jaeger/loki/" >}}) documentation for details.
 
 ## Configure the data source with provisioning
 
-You can set up the data source via configuration files with Grafana's provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for more information on configuring various settings.
+You can set up the data source via configuration files with Grafana's provisioning system. Refer to [provisioning docs page]({{< relref "../../../datasources/administration/provisioning/#datasources" >}}) for more information on configuring various settings.
 
 Here is an example with basic auth and trace-to-logs field.
 

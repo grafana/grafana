@@ -16,7 +16,7 @@ weight: 800
 
 Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. This topic explains options, variables, querying, and other options specific to this data source.
 
-Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore/" >}}). Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../../../datasources/explore/" >}}). Refer to [Add a data source]({{< relref "../../../datasources/loki/add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Hosted Loki
 
@@ -43,7 +43,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-For example, you can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
+For example, you can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../../../datasources/explore/logs-integration/#labels-and-detected-fields" >}}).
 
 Each derived field consists of:
 
@@ -140,7 +140,7 @@ There are two types of LogQL queries:
 
 ### Log queries
 
-Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../../../datasources/explore/" >}}), and with the [logs panel]({{< relref "../../../datasources/visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
 
 #### Log context
 
@@ -150,7 +150,7 @@ log message you're interested in.
 
 #### Live tailing
 
-Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../../../datasources/explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
 
@@ -201,7 +201,7 @@ LogQL supports wrapping a log query with functions that allow for creating metri
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../../datasources/variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Query variable
 
@@ -220,16 +220,16 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../../../datasources/variables/variable-types/global-variables/" >}}).
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations/" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../../../datasources/dashboards/annotations/" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 ## Configure the data source with provisioning
 
 You can set up the data source via config files with Grafana's provisioning system.
-You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../../datasources/administration/provisioning/#datasources" >}})
 
 Here is an example:
 
