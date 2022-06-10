@@ -7,7 +7,7 @@ aliases:
   - /docs/grafana/latest/administration/change-home-dashboard/
   - /docs/grafana/latest/administration/preferences/change-home-dashboard/
 title: Organization preferences
-weight: 50
+weight: 500
 ---
 
 # Organization preferences

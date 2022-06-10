@@ -11,7 +11,7 @@ keywords:
   - Service accounts
 menuTitle: Service accounts
 title: Service accounts in Grafana
-weight: 300
+weight: 200
 ---
 
 # Service accounts in Grafana

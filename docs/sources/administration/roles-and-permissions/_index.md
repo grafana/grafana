@@ -5,11 +5,11 @@ aliases:
   - /docs/grafana/latest/permissions/
   - /docs/grafana/latest/permissions/organization_roles/
   - /docs/grafana/latest/permissions/overview/
-title: About users and permissions
-weight: 100
+title: Roles and permissions
+weight: 700
 ---
 
-# About users and permissions
+# Roles and permissions
 
 A _user_ is defined as any individual who can log in to Grafana. Each user is associated with a _role_ that includes _permissions_. Permissions determine the tasks a user can perform in the system. For example, the **Admin** role includes permissions for an administrator to create and delete users.
 

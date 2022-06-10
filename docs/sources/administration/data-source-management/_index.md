@@ -5,7 +5,7 @@ aliases:
   - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/sources/permissions/datasource_permissions/
 title: Data source management
-weight: 100
+weight: 900
 ---
 
 # Data source management

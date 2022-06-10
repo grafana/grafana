@@ -6,7 +6,7 @@ aliases:
   - /docs/grafana/latest/plugins/plugin-signature-verification/
   - /docs/grafana/latest/plugins/plugin-signatures/
 title: Plugins
-weight: 160
+weight: 400
 ---
 
 # Plugin management
