@@ -74,6 +74,13 @@ func TestManagedPermissionsMigration(t *testing.T) {
 						{Action: "teams:write", Scope: team1Scope},
 					},
 				},
+				3: {
+					"managed:builtins:editor:permissions": {
+						{Action: "teams.permissions:read", Scope: team1Scope},
+						{Action: "teams.permissions:write", Scope: team2Scope},
+					},
+					"managed:builtins:admin:permissions": {},
+				},
 			},
 			wantRolePerms: map[int64]map[string][]rawPermission{
 				1: {
@@ -109,6 +116,16 @@ func TestManagedPermissionsMigration(t *testing.T) {
 						{Action: "teams.permissions:read", Scope: team1Scope},
 						{Action: "teams.permissions:write", Scope: team2Scope},
 						{Action: "teams:write", Scope: team1Scope},
+					},
+				},
+				3: {
+					"managed:builtins:editor:permissions": {
+						{Action: "teams.permissions:read", Scope: team1Scope},
+						{Action: "teams.permissions:write", Scope: team2Scope},
+					},
+					"managed:builtins:admin:permissions": {
+						{Action: "teams.permissions:read", Scope: team1Scope},
+						{Action: "teams.permissions:write", Scope: team2Scope},
 					},
 				},
 			},
@@ -190,13 +207,15 @@ func putTestPermissions(t *testing.T, x *xorm.Engine, rolePerms map[int64]map[st
 			require.NoError(t, err)
 			require.Equal(t, int64(1), brCount)
 
-			permissions := []accesscontrol.Permission{}
-			for _, p := range perms {
-				permissions = append(permissions, p.toPermission(role.ID, now))
+			if len(perms) > 0 {
+				permissions := []accesscontrol.Permission{}
+				for _, p := range perms {
+					permissions = append(permissions, p.toPermission(role.ID, now))
+				}
+				permissionsCount, err := x.Insert(permissions)
+				require.NoError(t, err)
+				require.Equal(t, int64(len(perms)), permissionsCount)
 			}
-			permissionsCount, err := x.Insert(permissions)
-			require.NoError(t, err)
-			require.Equal(t, int64(len(perms)), permissionsCount)
 		}
 	}
 }
