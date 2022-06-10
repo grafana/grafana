@@ -15,7 +15,7 @@ title: 'Alerting Provisioning HTTP API '
 
 # Alerting provisioning API
 
-## Informations
+## Information
 
 ### Version
 
