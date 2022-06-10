@@ -65,7 +65,7 @@ export const TreeView = ({ node, selection, settings, index, parent, onToggle }:
   };
 
   return (
-    <Draggable key={UID} draggableId={UID.toString()} index={index}>
+    <Draggable key={UID} draggableId={UID.toString()} index={index} isDragDisabled={node.node instanceof FrameState}>
       {(provided, snapshot) => (
         <div
           key={UID}
