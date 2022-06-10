@@ -1,52 +1,28 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
   - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/sources/permissions/datasource_permissions/
-title: Data sources
-weight: 100
+description: Grafana Datasource Permissions Guide
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - datasource
+  - permissions
+  - users
+  - teams
+  - enterprise
+title: Data source permissions
+weight: 500
 ---
 
-# Data sources
-
-Grafana supports many different storage backends for your time series data (data source). Refer to [data sources]({{< relref "../../datasources/" >}}) for more information about using data source in Grafana. Only users with the organization admin role can add data sources.
-
-## Add a data source
-
-Before you can create your first dashboard, you need to add your data source.
-
-> **Note:** Only users with the organization Admin role can add data sources.
-
-To add a data source:
-
-1. Move your cursor to the cog icon on the side menu which will show the configuration options.
-
-   {{< figure src="/static/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
-
-1. Click on **Data sources**. The data sources page opens showing a list of previously configured data sources for the Grafana instance.
-
-1. Click **Add data source** to see a list of all supported data sources.
-
-   {{< figure src="/static/img/docs/v75/add-data-source-7-5.png" max-width="600px" class="docs-image--no-shadow">}}
-
-1. Search for a specific data source by entering the name in the search dialog. Or you can scroll through supported data sources grouped into time series, logging, tracing and other categories.
-
-1. Move the cursor over the data source you want to add.
-
-   {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
-
-1. Click **Select**. The data source configuration page opens.
-
-1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "." >}}) for links to configuration instructions for all supported data sources.
-
-## Data source permissions
+# Data source permissions
 
 Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../enterprise/enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
-### Enable data source permissions
+## Enable data source permissions
 
 {{< figure src="/static/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
@@ -65,7 +41,7 @@ When permissions are enabled for a data source in an organization, the user who 
 
 > **Caution:** Enabling permissions for the default data source makes users not listed in the permissions unable to invoke queries. Panels using default data source will return `Access denied to data source` error for those users.
 
-### Allow users and teams to query a data source
+## Allow users and teams to query a data source
 
 {{< figure src="/static/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_add.gif" >}}
 
@@ -81,7 +57,7 @@ After you have enabled permissions for a data source you can assign query permis
 
 <div class="clearfix"></div>
 
-### Disable data source permissions
+## Disable data source permissions
 
 {{< figure src="/static/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 

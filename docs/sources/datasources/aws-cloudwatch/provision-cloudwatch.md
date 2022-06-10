@@ -9,7 +9,7 @@ weight: 400
 
 # Provision CloudWatch data source
 
-You can configure the CloudWatch data source by customizing configuration files in Grafana's provisioning system. To know more about provisioning and learn about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../../../datasources/administration/provisioning/#datasources" >}}) topic.
+You can configure the CloudWatch data source by customizing configuration files in Grafana's provisioning system. To know more about provisioning and learn about available configuration options, refer to the [Provisioning Grafana]({{< relref "../../administration/provisioning/#datasources" >}}) topic.
 
 Here are some provisioning examples for this data source.
 

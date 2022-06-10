@@ -89,7 +89,7 @@ title: Grafana documentation
       <img src="/static/img/docs/logos/icon_elasticsearch.svg" >
       <h5>Elasticsearch</h5>
     </a>
-    <a href="{{< relref "administration/datasources/influxdb/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/influxdb/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_influxdb.svg" >
       <h5>InfluxDB</h5>
     </a>
@@ -97,15 +97,15 @@ title: Grafana documentation
       <img src="/static/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
-    <a href="{{< relref "administration/datasources/google-cloud-monitoring/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/google-cloud-monitoring/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_cloudmonitoring.svg">
       <h5>Google Cloud Monitoring</h5>
     </a>
-    <a href="{{< relref "administration/datasources/aws-cloudwatch/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/aws-cloudwatch/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "administration/datasources/azuremonitor/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azuremonitor/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>

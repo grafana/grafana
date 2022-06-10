@@ -81,7 +81,7 @@ When `X-Pack enabled` is active and the configured Elasticsearch version is high
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../../../datasources/explore/" >}}).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore/" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -128,7 +128,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../../datasources/variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -180,7 +180,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../../../datasources/dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
@@ -194,7 +194,7 @@ for annotation events.
 
 ## Querying Logs
 
-Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../../../datasources/explore/" >}}), and in the [logs panel]({{< relref "../../../datasources/visualizations/logs-panel/" >}}) in dashboards.
+Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore/" >}}), and in the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards.
 Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
 
 When switching from a Prometheus or Loki data source in Explore, your query is translated to an Elasticsearch log query with a correct Lucene filter.
@@ -211,7 +211,7 @@ Optionally enter a lucene query into the query field to filter the log messages.
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../../datasources/administration/provisioning/#datasources" >}})
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
@@ -262,8 +262,8 @@ For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws
 
 > **Note:** Only available in Grafana v7.3+.
 
-In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../../../datasources/setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
-Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{< relref "../../../datasources/elasticsearch/aws-cloudwatch/aws-authentication/" >}}) for more information about authentication options.
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{< relref "aws-cloudwatch/aws-authentication/" >}}) for more information about authentication options.
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
