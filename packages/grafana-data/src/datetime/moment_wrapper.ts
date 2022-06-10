@@ -123,7 +123,12 @@ export const dateTimeForTimeZone = (
 };
 
 export const getWeekdayIndex = (day: string) => {
-  return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
+  const prevLocale = getLocale();
+  setLocale('en');
+  const index = moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
+  setLocale(prevLocale);
+
+  return index;
 };
 
 export const setWeekStart = (weekStart?: string) => {
