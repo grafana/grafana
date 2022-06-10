@@ -12,7 +12,7 @@ export interface GraphiteQuery extends DataQuery {
 export type GraphiteEventsQuery = {
   fromAnnotations?: boolean;
   target?: string;
-  tags?: string;
+  tags?: string[];
 };
 
 export interface GraphiteOptions extends DataSourceJsonData {

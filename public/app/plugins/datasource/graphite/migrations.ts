@@ -12,7 +12,7 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation): GraphiteQuery => {
     eventsQuery: {
       fromAnnotations: true,
       target: json.target,
-      tags: json.tags,
+      tags: (json.tags || '').split(' '),
     },
   } as GraphiteQuery;
 };
@@ -24,7 +24,7 @@ export const prepareAnnotation = (json: any) => {
   // so, to migrate legacy annotations
   // we check that target is a string
   // or
-  // there is a tags attringbute with no target
+  // there is a tags attribute with no target
   const targetAnnotation = typeof json.target === 'string' || json.target instanceof String;
   const tagsAnnotation = json.tags && !json.target;
 
