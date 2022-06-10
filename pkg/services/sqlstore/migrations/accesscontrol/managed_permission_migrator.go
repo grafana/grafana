@@ -23,8 +23,8 @@ import (
 
 const ManagedPermissionsMigrationID = "managed permissions migration"
 
-func AddManagedPermissionsMigration(mg *migrator.Migrator) {
-	mg.AddMigration(ManagedPermissionsMigrationID, &managedPermissionMigrator{})
+func AddManagedPermissionsMigration(mg *migrator.Migrator, migrationID string) {
+	mg.AddMigration(migrationID, &managedPermissionMigrator{})
 }
 
 type managedPermissionMigrator struct {

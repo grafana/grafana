@@ -125,6 +125,7 @@ type AlertRule struct {
 }
 
 type SchedulableAlertRule struct {
+	Title           string
 	UID             string `xorm:"uid"`
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
@@ -374,4 +375,12 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.For == 0 {
 		ruleToPatch.For = existingRule.For
 	}
+}
+
+func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
+	if intervalSeconds%baseIntervalSeconds != 0 || intervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v",
+			ErrAlertRuleFailedValidation, time.Duration(intervalSeconds)*time.Second, baseIntervalSeconds)
+	}
+	return nil
 }
