@@ -30,8 +30,6 @@ const AmRoutes: FC = () => {
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
-  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : true;
-
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const fetchConfig = useCallback(() => {
@@ -56,6 +54,8 @@ const AmRoutes: FC = () => {
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
   ) as AmRouteReceiver[];
+
+  const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
@@ -109,6 +109,10 @@ const AmRoutes: FC = () => {
     );
   }
 
+  const readOnly = alertManagerSourceName
+    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
+    : true;
+
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker
@@ -121,10 +125,17 @@ const AmRoutes: FC = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
+      {isProvisioned && (
+        <Alert severity="info" title="These notification policies have been provisioned">
+          These notification policies were added by config and cannot be modified using the UI. Please contact your
+          server admin to update these notification policies.
+        </Alert>
+      )}
       {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
+            readOnly={readOnly}
             alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}
             onSave={handleSave}

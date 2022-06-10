@@ -107,6 +107,8 @@ export type Route = {
   repeat_interval?: string;
   routes?: Route[];
   mute_time_intervals?: string[];
+  /** only the root policy might have a provenance field defined */
+  provenance?: string;
 };
 
 export type InhibitRule = {
