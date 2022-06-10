@@ -12,7 +12,7 @@ Grafana Alerting is enabled by default for new installations or existing install
 
 Existing installations that do not use legacy alerting will have Grafana Alerting enabled by default unless alerting is disabled in the configuration.
 
-Likewise, existing installations that use legacy alerting will be automatically upgraded to Grafana Alerting unless you have [opted out]({{< relref "opt-out/" >}})of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost.
+Likewise, existing installations that use legacy alerting will be automatically upgraded to Grafana Alerting unless you have [opted out]({{< relref "opt-out/" >}}) of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost.
 
 Once the upgrade has taken place, you still have the option to roll back [roll back]({{< relref "roll-back/" >}}) to legacy alerting. However, we do not recommend choosing this option. If you do choose to roll back, Grafana will restore your alerts to the alerts you had at the point in time when the upgrade took place. All new alerts and changes made exclusively in Grafana Alerting will be deleted.
 
