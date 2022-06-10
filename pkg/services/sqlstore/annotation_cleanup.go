@@ -59,7 +59,7 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 	if cfg.MaxAge > 0 {
 		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, dialect.Limit(acs.batchSize))
+		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, acs.sqlstore.Dialect.Limit(acs.batchSize))
 
 		affected, err := acs.executeUntilDoneOrCancelled(ctx, sql)
 		totalAffected += affected
@@ -70,7 +70,7 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 
 	if cfg.MaxCount > 0 {
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
-		sql := fmt.Sprintf(deleteQuery, annotationType, dialect.LimitOffset(acs.batchSize, cfg.MaxCount))
+		sql := fmt.Sprintf(deleteQuery, annotationType, acs.sqlstore.Dialect.LimitOffset(acs.batchSize, cfg.MaxCount))
 		affected, err := acs.executeUntilDoneOrCancelled(ctx, sql)
 		totalAffected += affected
 		return totalAffected, err
@@ -81,7 +81,7 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 
 func (acs *AnnotationCleanupService) cleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
 	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
-	sql := fmt.Sprintf(deleteQuery, dialect.Limit(acs.batchSize))
+	sql := fmt.Sprintf(deleteQuery, acs.sqlstore.Dialect.Limit(acs.batchSize))
 	return acs.executeUntilDoneOrCancelled(ctx, sql)
 }
 

@@ -71,8 +71,8 @@ func (ss *SQLStore) GetTempUsersQuery(ctx context.Context, query *models.GetTemp
 									u.login						as invited_by_login,
 									u.name						as invited_by_name,
 									u.email						as invited_by_email
-	                FROM ` + dialect.Quote("temp_user") + ` as tu
-									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
+	                FROM ` + ss.Dialect.Quote("temp_user") + ` as tu
+									LEFT OUTER JOIN ` + ss.Dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
 									WHERE tu.status=?`
 		params := []interface{}{string(query.Status)}
 
@@ -111,8 +111,8 @@ func (ss *SQLStore) GetTempUserByCode(ctx context.Context, query *models.GetTemp
 									u.login						as invited_by_login,
 									u.name						as invited_by_name,
 									u.email						as invited_by_email
-	                FROM ` + dialect.Quote("temp_user") + ` as tu
-									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
+	                FROM ` + ss.Dialect.Quote("temp_user") + ` as tu
+									LEFT OUTER JOIN ` + ss.Dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
 	                WHERE tu.code=?`
 
 		var tempUser models.TempUserDTO

@@ -142,7 +142,7 @@ func (ss *SQLStore) GetAlertNotificationsWithUidToSend(ctx context.Context, quer
 		params = append(params, query.OrgId)
 
 		sql.WriteString(` AND ((alert_notification.is_default = ?)`)
-		params = append(params, dialect.BooleanStr(true))
+		params = append(params, ss.Dialect.BooleanStr(true))
 
 		if len(query.Uids) > 0 {
 			sql.WriteString(` OR alert_notification.uid IN (?` + strings.Repeat(",?", len(query.Uids)-1) + ")")
@@ -568,7 +568,7 @@ func (ss *SQLStore) GetOrCreateAlertNotificationState(ctx context.Context, cmd *
 		}
 
 		if _, err := sess.Insert(notificationState); err != nil {
-			if dialect.IsUniqueConstraintViolation(err) {
+			if ss.Dialect.IsUniqueConstraintViolation(err) {
 				exist, err = getAlertNotificationState(ctx, sess, cmd, nj)
 
 				if err != nil {

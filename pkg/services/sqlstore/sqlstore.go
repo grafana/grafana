@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	dialect migrator.Dialect
+	// dialect migrator.Dialect
 
 	sqlog log.Logger = log.New("sqlstore")
 )
@@ -99,8 +99,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
-	dialect = ss.Dialect
-
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
 	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner"), sqlstore: ss})
@@ -165,7 +163,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		var stats models.SystemUserCountStats
 		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
 		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
 			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}

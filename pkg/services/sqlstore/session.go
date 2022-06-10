@@ -15,6 +15,7 @@ type DBSession struct {
 	*xorm.Session
 	transactionOpen bool
 	events          []interface{}
+	ss              *SQLStore
 }
 
 type DBTransactionFunc func(sess *DBSession) error
@@ -79,14 +80,14 @@ func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransact
 func (sess *DBSession) InsertId(bean interface{}) (int64, error) {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
-	if err := dialect.PreInsertId(table, sess.Session); err != nil {
+	if err := sess.ss.Dialect.PreInsertId(table, sess.Session); err != nil {
 		return 0, err
 	}
 	id, err := sess.Session.InsertOne(bean)
 	if err != nil {
 		return 0, err
 	}
-	if err := dialect.PostInsertId(table, sess.Session); err != nil {
+	if err := sess.ss.Dialect.PostInsertId(table, sess.Session); err != nil {
 		return 0, err
 	}
 

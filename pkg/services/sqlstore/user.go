@@ -419,7 +419,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		org.name              as org_name,
 		org_user.role         as org_role,
 		org.id                as org_id
-		FROM ` + dialect.Quote("user") + ` as u
+		FROM ` + ss.Dialect.Quote("user") + ` as u
 		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
@@ -494,14 +494,14 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		sess := dbSess.Table("user").Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, dialect.BooleanStr(false))
+		whereParams = append(whereParams, ss.Dialect.BooleanStr(false))
 
 		// Join with only most recent auth module
 		joinCondition := `(
 		SELECT id from user_auth
 			WHERE user_auth.user_id = u.id
 			ORDER BY user_auth.created DESC `
-		joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
+		joinCondition = "user_auth.id=" + joinCondition + ss.Dialect.Limit(1) + ")"
 		sess.Join("LEFT", "user_auth", joinCondition)
 		if query.OrgId > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
@@ -519,7 +519,7 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		}
 
 		if query.Query != "" {
-			whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+			whereConditions = append(whereConditions, "(email "+ss.Dialect.LikeStr()+" ? OR name "+ss.Dialect.LikeStr()+" ? OR login "+ss.Dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
 
@@ -624,7 +624,7 @@ func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisa
 		}
 
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
-		disableSQL := "UPDATE " + dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+		disableSQL := "UPDATE " + ss.Dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
 
 		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
 		for _, v := range userIds {

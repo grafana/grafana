@@ -86,7 +86,7 @@ func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 		builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
 		if len(strings.TrimSpace(query.Query)) > 0 {
-			builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
+			builder.Write(" AND alert.name "+ss.Dialect.LikeStr()+" ?", "%"+query.Query+"%")
 		}
 
 		if len(query.DashboardIDs) > 0 {
@@ -125,7 +125,7 @@ func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 		builder.Write(" ORDER BY name ASC")
 
 		if query.Limit != 0 {
-			builder.Write(dialect.Limit(query.Limit))
+			builder.Write(ss.Dialect.Limit(query.Limit))
 		}
 
 		alerts := make([]*models.AlertListItemDTO, 0)

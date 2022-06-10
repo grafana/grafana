@@ -150,7 +150,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 				usr.login,
 				alert.name as alert_name
 			FROM annotation
-			LEFT OUTER JOIN ` + dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
+			LEFT OUTER JOIN ` + r.sql.Dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
 			LEFT OUTER JOIN alert on alert.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
@@ -202,10 +202,10 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			tags := models.ParseTagPairs(query.Tags)
 			for _, tag := range tags {
 				if tag.Value == "" {
-					keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ?)")
+					keyValueFilters = append(keyValueFilters, "(tag."+r.sql.Dialect.Quote("key")+" = ?)")
 					params = append(params, tag.Key)
 				} else {
-					keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ? AND tag."+dialect.Quote("value")+" = ?)")
+					keyValueFilters = append(keyValueFilters, "(tag."+r.sql.Dialect.Quote("key")+" = ? AND tag."+r.sql.Dialect.Quote("value")+" = ?)")
 					params = append(params, tag.Key, tag.Value)
 				}
 			}
@@ -242,7 +242,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 		}
 
 		// order of ORDER BY arguments match the order of a sql index for performance
-		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + dialect.Limit(query.Limit) + " ) dt on dt.id = annotation.id")
+		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.sql.Dialect.Limit(query.Limit) + " ) dt on dt.id = annotation.id")
 
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
@@ -331,8 +331,8 @@ func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.Tag
 
 		var sql bytes.Buffer
 		params := make([]interface{}, 0)
-		tagKey := `tag.` + dialect.Quote("key")
-		tagValue := `tag.` + dialect.Quote("value")
+		tagKey := `tag.` + r.sql.Dialect.Quote("key")
+		tagValue := `tag.` + r.sql.Dialect.Quote("value")
 
 		sql.WriteString(`
 		SELECT
@@ -346,12 +346,12 @@ func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.Tag
 		sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+		sql.WriteString(` AND (` + tagKey + ` ` + r.sql.Dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + r.sql.Dialect.LikeStr() + ` ?)`)
 		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
-		sql.WriteString(` ` + dialect.Limit(query.Limit))
+		sql.WriteString(` ` + r.sql.Dialect.Limit(query.Limit))
 
 		err := dbSession.SQL(sql.String(), params...).Find(&items)
 		return err

@@ -10,6 +10,7 @@ import (
 type SQLBuilder struct {
 	sql    bytes.Buffer
 	params []interface{}
+	ss     *SQLStore
 }
 
 func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
@@ -43,7 +44,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, 
 		okRoles = append(okRoles, models.ROLE_VIEWER)
 	}
 
-	falseStr := dialect.BooleanStr(false)
+	falseStr := sb.ss.Dialect.BooleanStr(false)
 
 	sb.sql.WriteString(` AND
 	(

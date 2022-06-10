@@ -35,10 +35,10 @@ func (ss *SQLStore) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOr
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s WHERE org_id=?",
-				dialect.Quote(query.Target))
+				ss.Dialect.Quote(query.Target))
 
 			if query.Target == dashboardTarget {
-				rawSQL += fmt.Sprintf(" AND is_folder=%s", dialect.BooleanStr(false))
+				rawSQL += fmt.Sprintf(" AND is_folder=%s", ss.Dialect.BooleanStr(false))
 			}
 
 			resp := make([]*targetCount, 0)
@@ -88,7 +88,7 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 			var used int64
 			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
-				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
+				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", ss.Dialect.Quote(q.Target))
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
 					return err
@@ -154,7 +154,7 @@ func (ss *SQLStore) GetUserQuotaByTarget(ctx context.Context, query *models.GetU
 		var used int64
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
-			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", ss.Dialect.Quote(query.Target))
 			resp := make([]*targetCount, 0)
 			if err := sess.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
 				return err
@@ -202,7 +202,7 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 			var used int64
 			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
-				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
+				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", ss.Dialect.Quote(q.Target))
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
 					return err
@@ -258,10 +258,10 @@ func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.Ge
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
-				dialect.Quote(query.Target))
+				ss.Dialect.Quote(query.Target))
 
 			if query.Target == dashboardTarget {
-				rawSQL += fmt.Sprintf(" WHERE is_folder=%s", dialect.BooleanStr(false))
+				rawSQL += fmt.Sprintf(" WHERE is_folder=%s", ss.Dialect.BooleanStr(false))
 			}
 
 			resp := make([]*targetCount, 0)
