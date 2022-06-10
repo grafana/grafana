@@ -5837,7 +5837,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Limit the number of returned results ",
+            "description": "Limit the number of returned results",
             "name": "limit",
             "in": "query"
           },
@@ -11862,26 +11862,7 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/QueryToMigrate"
-          },
-          "example": [
-            {
-              "comment": "debugging",
-              "createdAt": 1643630762,
-              "datasourceUid": "PE1C5CBDA0504A6A3",
-              "queries": [
-                {
-                  "datasource": {
-                    "type": "testdata",
-                    "uid": "PD8C576611E62080A"
-                  },
-                  "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
-                  "refId": "A",
-                  "scenarioId": "csv_content"
-                }
-              ],
-              "starred": false
-            }
-          ]
+          }
         }
       }
     },
