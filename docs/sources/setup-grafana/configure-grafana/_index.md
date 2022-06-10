@@ -2000,4 +2000,4 @@ Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) 
 
 ## [rbac]
 
-Refer to [Role-based access control]({{< relref "../../enterprise/access-control/about-rbac/" >}}) for more information.
+Refer to [Role-based access control]({{< relref "../../administration/manage-users-and-permissions/access-control/about-rbac/" >}}) for more information.

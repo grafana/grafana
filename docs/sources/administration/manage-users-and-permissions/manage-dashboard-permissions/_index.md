@@ -144,4 +144,4 @@ Dashboard permissions settings:
 
 Result: You receive an error message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions.
 
-> Refer to [Role-based access Control]({{< relref "../../../enterprise/access-control/" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
+> Refer to [Role-based access Control]({{< relref "../access-control/" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
