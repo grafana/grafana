@@ -83,7 +83,7 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   // when debouncing, we must use the callback form of react-select's loadOptions so we don't
-  // drop results for user input
+  // drop results for user input. This must not return a promise/use await.
   loadOptions = (query: string, callback: LoadOptionsCallback<number>): void => {
     this.searchFolders(query).then(callback);
   };
