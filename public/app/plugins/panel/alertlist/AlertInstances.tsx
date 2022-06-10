@@ -52,7 +52,7 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
           {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </div>
       )}
-      {displayInstances && <AlertInstancesTable instances={filteredAlerts} />}
+      {displayInstances && <AlertInstancesTable instances={filteredAlerts} pagination={{ itemsPerPage: 5 }} />}
     </div>
   );
 };

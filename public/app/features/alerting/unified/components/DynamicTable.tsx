@@ -32,6 +32,7 @@ export interface DynamicTableProps<T = unknown> {
 
   isExpandable?: boolean;
   pagination?: DynamicTablePagination;
+  paginationStyles?: string;
 
   // provide these to manually control expanded status
   onCollapse?: (item: DynamicTableItemProps<T>) => void;
@@ -50,6 +51,8 @@ export interface DynamicTableProps<T = unknown> {
     index: number,
     items: Array<DynamicTableItemProps<T>>
   ) => ReactNode;
+
+  footerRow?: JSX.Element;
 }
 
 export const DynamicTable = <T extends object>({
@@ -62,11 +65,12 @@ export const DynamicTable = <T extends object>({
   renderExpandedContent,
   testIdGenerator,
   pagination,
-
+  paginationStyles,
   // render a cell BEFORE expand icon for header/ each row.
   // currently use by RuleList to render guidelines
   renderPrefixCell,
   renderPrefixHeader,
+  footerRow,
 }: DynamicTableProps<T>) => {
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
     throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');
@@ -139,9 +143,10 @@ export const DynamicTable = <T extends object>({
             </div>
           );
         })}
+        {footerRow && <div className={cx(styles.row, styles.footerRow)}>{footerRow}</div>}
       </div>
       {pagination && (
-        <PaginationWrapper>
+        <PaginationWrapper className={paginationStyles}>
           <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
         </PaginationWrapper>
       )}
@@ -210,6 +215,10 @@ const getStyles = <T extends unknown>(
           `
           : ''}
       }
+    `,
+    footerRow: css`
+      display: flex;
+      padding: ${theme.spacing(1)};
     `,
     cell: css`
       align-items: center;

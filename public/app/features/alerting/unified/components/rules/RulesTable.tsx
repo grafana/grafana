@@ -70,6 +70,7 @@ export const RulesTable: FC<Props> = ({
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
         pagination={{ itemsPerPage: 20 }}
+        paginationStyles={styles.pagination}
       />
     </div>
   );
@@ -88,6 +89,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: auto;
     // background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
+  `,
+  pagination: css`
+    margin: 0;
+    padding-top: ${theme.spacing(1)};
+    padding-bottom: ${theme.spacing(0.25)};
+    justify-content: center;
+    border-left: 1px solid ${theme.colors.border.strong};
+    border-right: 1px solid ${theme.colors.border.strong};
+    border-bottom: 1px solid ${theme.colors.border.strong};
   `,
 });
 

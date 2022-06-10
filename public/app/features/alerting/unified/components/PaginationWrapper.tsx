@@ -1,13 +1,17 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useStyles2 } from '@grafana/ui/src';
 
-export const PaginationWrapper: FC = ({ children }) => {
+export const PaginationWrapper: FC<React.ComponentProps<'div'>> = ({ children, className, ...props }) => {
   const styles = useStyles2(getStyles);
 
-  return <div className={styles.wrapper}>{children}</div>;
+  return (
+    <div className={cx(styles.wrapper, className)} {...props}>
+      {children}
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

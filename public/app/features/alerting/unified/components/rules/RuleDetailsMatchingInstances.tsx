@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
+import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { LinkButton, useStyles } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import { AlertInstanceStateFilter } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, Rule } from 'app/types/unified-alerting';
+import { Alert, CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { isAlertingRule } from '../../utils/rules';
@@ -17,11 +18,34 @@ import { DetailsField } from '../DetailsField';
 import { AlertInstancesTable } from './AlertInstancesTable';
 
 type Props = {
-  promRule?: Rule;
+  rule: CombinedRule;
+  pagination?: { itemsPerPage: number };
+  itemsDisplayLimit?: number;
 };
 
+function ShowMoreInstances(props: { hiddenItemsCount: number; ruleViewPageLink: string }) {
+  const styles = useStyles(getStyles);
+
+  return (
+    <div className={styles.footerRow}>
+      <div>
+        +{props.hiddenItemsCount} more {pluralize('item', props.hiddenItemsCount)}...
+      </div>
+      {props.ruleViewPageLink && (
+        <LinkButton href={props.ruleViewPageLink} size="sm" variant="secondary">
+          Show all alert instances
+        </LinkButton>
+      )}
+    </div>
+  );
+}
+
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
-  const { promRule } = props;
+  const {
+    rule: { promRule, namespace },
+    itemsDisplayLimit,
+    pagination,
+  } = props;
 
   const [queryString, setQueryString] = useState<string>();
   const [alertState, setAlertState] = useState<GrafanaAlertState>();
@@ -44,6 +68,14 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
     return null;
   }
 
+  const visibleInstances = itemsDisplayLimit ? alerts.slice(0, itemsDisplayLimit) : alerts;
+  const hiddenItemsCount = alerts.length - visibleInstances.length;
+  const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
+
+  const footerRow = hiddenItemsCount ? (
+    <ShowMoreInstances hiddenItemsCount={hiddenItemsCount} ruleViewPageLink={ruleViewPageLink} />
+  ) : undefined;
+
   return (
     <DetailsField label="Matching instances" horizontal={true}>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
@@ -62,7 +94,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
         </div>
       </div>
 
-      <AlertInstancesTable instances={alerts} />
+      <AlertInstancesTable instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
     </DetailsField>
   );
 }
@@ -101,6 +133,14 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     rowChild: css`
       margin-right: ${theme.spacing.sm};
+    `,
+    footerRow: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing.sm};
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
     `,
   };
 };

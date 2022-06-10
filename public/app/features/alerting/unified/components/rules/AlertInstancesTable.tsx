@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Alert } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -13,12 +12,14 @@ import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   instances: Alert[];
+  pagination?: { itemsPerPage: number };
+  footerRow?: JSX.Element;
 }
 
 type AlertTableColumnProps = DynamicTableColumnProps<Alert>;
 type AlertTableItemProps = DynamicTableItemProps<Alert>;
 
-export const AlertInstancesTable: FC<Props> = ({ instances }) => {
+export const AlertInstancesTable: FC<Props> = ({ instances, pagination, footerRow }) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -34,31 +35,18 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
       isExpandable={true}
       items={items}
       renderExpandedContent={({ data }) => <AlertInstanceDetails instance={data} />}
-      pagination={{ itemsPerPage: 5 }}
+      pagination={pagination}
+      footerRow={footerRow}
     />
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
-  colExpand: css`
-    width: 36px;
-  `,
-  colState: css`
-    width: 110px;
-  `,
-  labelsCell: css`
-    padding-top: ${theme.spacing(0.5)} !important;
-    padding-bottom: ${theme.spacing(0.5)} !important;
-  `,
-  createdCell: css`
-    white-space: nowrap;
-  `,
-  table: css`
-    td {
-      vertical-align: top;
-      padding-top: ${theme.spacing(1)};
-      padding-bottom: ${theme.spacing(1)};
-    }
+export const getStyles = () => ({
+  footerRow: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   `,
 });
 
