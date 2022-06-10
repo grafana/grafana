@@ -13,7 +13,7 @@ type Options = {
 
 export function useColumns({ db, query, isOrderable = false }: Options) {
   const datasourceId = db.dsID();
-  const { value: apiClient } = useAsync(async () => await db.init(datasourceId), []);
+  const { value: init } = useAsync(async () => await db.init(datasourceId), []);
 
   const state = useAsync(async () => {
     const fields = await db.fields(query, isOrderable);
@@ -26,7 +26,7 @@ export function useColumns({ db, query, isOrderable = false }: Options) {
     });
 
     return columns;
-  }, [apiClient, query]);
+  }, [query.dataset, query.table, init]);
 
   return state;
 }

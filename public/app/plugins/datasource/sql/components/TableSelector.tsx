@@ -21,7 +21,7 @@ export const TableSelector: React.FC<TableSelectorProps> = ({ db, query, value, 
     }
     const tables = await db.tables(query.dataset);
     return tables.map(toOption);
-  }, [query]);
+  }, [query.dataset]);
 
   return (
     <Select
