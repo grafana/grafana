@@ -1,11 +1,14 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
+import { useObservable } from 'react-use';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
+import { Observable, of } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -19,12 +22,12 @@ export type SearchResultsProps = {
   response: QueryResponse;
   width: number;
   height: number;
-  highlightIndex: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
 };
 
 export type TableColumn = Column & {
@@ -43,18 +46,23 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
-    highlightIndex,
+    keyboardEvents,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
 
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
+    const urlsRef = useRef<Field>();
+    const highlightIndexRef = useRef<number>(-1);
+    const [highlightIndex, setHighlightIndex] = useState(-1);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
+
+      urlsRef.current = response.view.fields.url;
 
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
@@ -70,7 +78,34 @@ export const SearchResultsTable = React.memo(
       if (listRef.current) {
         listRef.current.scrollTo(0);
       }
+      highlightIndexRef.current = -1;
     }, [memoizedData]);
+
+    const keyEvent = useObservable(keyboardEvents ?? of());
+    useEffect(() => {
+      switch (keyEvent?.code) {
+        case 'ArrowDown': {
+          highlightIndexRef.current += 1;
+          setHighlightIndex(highlightIndexRef.current);
+          break;
+        }
+        case 'ArrowUp':
+          highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
+          setHighlightIndex(highlightIndexRef.current);
+          break;
+        case 'Enter':
+          if (highlightIndexRef.current >= 0 && urlsRef.current) {
+            const url = urlsRef.current.values?.get(highlightIndexRef.current) as string;
+            if (url) {
+              if (url.startsWith(config.appSubUrl)) {
+                window.location.href = url; // for now
+              } else {
+                locationService.push(url);
+              }
+            }
+          }
+      }
+    }, [keyEvent]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -103,7 +138,7 @@ export const SearchResultsTable = React.memo(
 
         const url = response.view.fields.url?.values.get(rowIndex);
         let className = styles.rowContainer;
-        if (rowIndex === highlightIndex) {
+        if (rowIndex === highlightIndex && rowIndex === highlightIndexRef.current) {
           className += ' ' + styles.selectedRow;
         }
         return (
@@ -123,7 +158,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, styles, highlightIndex, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
     );
 
     if (!rows.length) {

@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useDebounce, useLocalStorage } from 'react-use';
+import { Subject } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -34,6 +35,23 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
     includePanels = false;
   }
 
+  const keyboardEvents = useMemo(() => {
+    return new Subject<React.KeyboardEvent>();
+  }, []);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    switch (e.code) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'Enter':
+        keyboardEvents.next(e);
+      default:
+      // ignore
+    }
+  };
+
   const { isEditor } = contextSrv;
 
   const [inputValue, setInputValue] = useState(query.query ?? '');
@@ -50,6 +68,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
           <Input
             value={inputValue}
             onChange={onSearchQueryChange}
+            onKeyDown={onKeyDown}
             autoFocus
             spellCheck={false}
             placeholder={includePanels ? 'Search for dashboards and panels' : 'Search for dashboards'}
@@ -77,6 +96,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         hidePseudoFolders={true}
         includePanels={includePanels!}
         setIncludePanels={setIncludePanels}
+        keyboardEvents={keyboardEvents}
       />
     </>
   );

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import React, { FC, memo, useState } from 'react';
+import React, { FC, memo, useMemo, useState } from 'react';
 import { useDebounce, useLocalStorage } from 'react-use';
+import { Subject } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -31,6 +32,9 @@ export default function DashboardSearch({ onCloseSearch }: Props) {
 function DashboardSearchNew({ onCloseSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange } = useSearchQuery({});
+  const keyboardEvents = useMemo(() => {
+    return new Subject<React.KeyboardEvent>();
+  }, []);
 
   let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
   if (!config.featureToggles.panelTitleSearch) {
@@ -42,6 +46,18 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    switch (e.code) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'Enter':
+        keyboardEvents.next(e);
+      default:
+      // ignore
+    }
+  };
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
   return (
@@ -51,13 +67,14 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           <div>
             <input
               type="text"
-              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
+              placeholder={includePanels ? 'Search dashboards and panels by nameX' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
+              onKeyDown={onKeyDown}
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
-              autoFocus
+              autoFocus={true}
             />
           </div>
 
@@ -74,6 +91,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
             queryText={query.query}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
+            keyboardEvents={keyboardEvents}
           />
         </div>
       </div>

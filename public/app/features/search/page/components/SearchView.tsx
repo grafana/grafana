@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -32,6 +33,7 @@ type SearchViewProps = {
   onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
 };
 
 export const SearchView = ({
@@ -42,19 +44,18 @@ export const SearchView = ({
   hidePseudoFolders,
   includePanels,
   setIncludePanels,
+  keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
   const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
-  const [highlightIndex, setHighlightIndex] = useState(0);
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
   const responserRef = useRef<QueryResponse>();
-  const highlightIndexRef = useRef(0);
   const [listKey, setListKey] = useState(Date.now());
 
   const searchQuery = useMemo(() => {
@@ -105,7 +106,6 @@ export const SearchView = ({
 
   const results = useAsync(async () => {
     const res = await getGrafanaSearcher().search(searchQuery);
-    setHighlightIndex((highlightIndexRef.current = 0));
     responserRef.current = res;
     return res;
   }, [searchQuery]);
@@ -122,34 +122,6 @@ export const SearchView = ({
     },
     [searchSelection]
   );
-
-  const keyListener = useCallback((evt: KeyboardEvent) => {
-    switch (evt.code) {
-      case 'ArrowDown': {
-        highlightIndexRef.current++;
-        setHighlightIndex(highlightIndexRef.current);
-        break;
-      }
-      case 'ArrowUp':
-        highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
-        setHighlightIndex(highlightIndexRef.current);
-        break;
-      case 'Enter':
-        if (highlightIndexRef.current > 0 && responserRef.current) {
-          const url = responserRef.current.view?.fields?.url?.values?.get(highlightIndexRef.current - 1);
-          if (url) {
-            locationService.replace(url);
-          }
-        }
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('keydown', keyListener);
-    return () => {
-      document.removeEventListener('keydown', keyListener);
-    };
-  }, [keyListener]);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
@@ -240,7 +212,7 @@ export const SearchView = ({
               width: width,
               height: height,
               onTagSelected: onTagAdd,
-              highlightIndex: highlightIndex - 1,
+              keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
             };
 
