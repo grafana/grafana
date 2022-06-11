@@ -33,6 +33,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDatasource';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 
@@ -274,7 +275,11 @@ export const importQueries = (
 
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
-    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
+    if (targetDataSource.name === MIXED_DATASOURCE_NAME) {
+      importedQueries = queries.map((query) => {
+        return { ...query, datasource: sourceDataSource.getRef() };
+      });
+    } else if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
