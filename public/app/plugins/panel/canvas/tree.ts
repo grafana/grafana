@@ -8,25 +8,12 @@ export interface FlatElement {
   isOpen?: boolean;
 }
 
-function flattenElements(node: FrameState, array: FlatElement[], depth: number) {
-  for (let i = node.elements.length; i--; i >= 0) {
-    const child = node.elements[i];
-    const nodeDetails = { node: child, depth: depth + 1, ...(child instanceof FrameState && { isOpen: true }) };
-    array.push(nodeDetails);
-
-    if (child instanceof FrameState) {
-      flattenElements(child, array, depth + 1);
-    }
-  }
-}
-
-export function getFlatElements(root?: RootElement) {
-  const flat: FlatElement[] = [];
-  if (root) {
-    flattenElements(root, flat, 0);
-  }
-
-  return flat;
+export interface TreeNode {
+  key: number;
+  title: string;
+  selectable?: boolean;
+  children?: TreeNode[];
+  dataRef: ElementState | FrameState;
 }
 
 export function reorderElements(src: FlatElement, dest: FlatElement, elements: any[]) {
@@ -41,12 +28,34 @@ export function reorderElements(src: FlatElement, dest: FlatElement, elements: a
   return result;
 }
 
-export function collapseParent(node: FlatElement) {
-  node.isOpen = !node.isOpen;
+export function getTreeData(root?: RootElement) {
+  let elements: TreeNode[] = [];
+  if (root) {
+    root.elements.map((element: any) => {
+      elements.push({
+        key: element.UID,
+        title: element.getName(),
+        ...(element instanceof FrameState && { children: getChildren(element.elements) }),
+        selectable: true,
+        dataRef: element,
+      });
+    });
+  }
+
+  return elements;
 }
 
-export function getParent(node: FlatElement, nodes: FlatElement[]) {
-  return nodes.filter(function (el) {
-    return el.node.UID === node.node.parent?.UID;
-  })[0];
+function getChildren(elements: any[]) {
+  let children: TreeNode[] = [];
+  elements.map((element: any) => {
+    children.push({
+      key: element.UID,
+      title: element.getName(),
+      ...(element instanceof FrameState && { children: getChildren(element.elements) }),
+      selectable: true,
+      dataRef: element,
+    });
+  });
+
+  return children;
 }
