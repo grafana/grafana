@@ -1,20 +1,18 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
-import { useObservable } from 'react-use';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { Field, GrafanaTheme2, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { QueryResponse } from '../../service';
-import { SelectionChecker, SelectionToggle } from '../selection';
+import { SelectionChecker, SelectionToggle, useSearchTableKeyboardNavigation } from '../selection';
 
 import { generateColumns } from './columns';
 
@@ -50,19 +48,14 @@ export const SearchResultsTable = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
-
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const urlsRef = useRef<Field>();
-    const highlightIndexRef = useRef<number>(-1);
-    const [highlightIndex, setHighlightIndex] = useState(-1);
+    const { highlightIndex, highlightIndexRef } = useSearchTableKeyboardNavigation(keyboardEvents, response);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
         return [];
       }
-
-      urlsRef.current = response.view.fields.url;
 
       // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
       // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
@@ -78,30 +71,7 @@ export const SearchResultsTable = React.memo(
       if (listRef.current) {
         listRef.current.scrollTo(0);
       }
-      highlightIndexRef.current = -1;
     }, [memoizedData]);
-
-    const keyEvent = useObservable(keyboardEvents ?? of());
-    useEffect(() => {
-      switch (keyEvent?.code) {
-        case 'ArrowDown': {
-          highlightIndexRef.current += 1;
-          setHighlightIndex(highlightIndexRef.current);
-          break;
-        }
-        case 'ArrowUp':
-          highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
-          setHighlightIndex(highlightIndexRef.current);
-          break;
-        case 'Enter':
-          if (highlightIndexRef.current >= 0 && urlsRef.current) {
-            const url = urlsRef.current.values?.get(highlightIndexRef.current) as string;
-            if (url) {
-              locationService.push(locationUtil.stripBaseFromUrl(url));
-            }
-          }
-      }
-    }, [keyEvent]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -137,6 +107,7 @@ export const SearchResultsTable = React.memo(
         if (rowIndex === highlightIndex && rowIndex === highlightIndexRef.current) {
           className += ' ' + styles.selectedRow;
         }
+
         return (
           <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
@@ -154,7 +125,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, highlightIndexRef, styles, tableStyles]
     );
 
     if (!rows.length) {

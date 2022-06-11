@@ -147,3 +147,47 @@ export function useSearchGridKeyboardNavigation(
 
   return highlightIndex;
 }
+
+export function useSearchTableKeyboardNavigation(
+  keyboardEvents: Observable<React.KeyboardEvent>,
+  response: QueryResponse
+): { highlightIndex: number; highlightIndexRef: React.MutableRefObject<number> } {
+  const highlightIndexRef = useRef<number>(-1);
+  const [highlightIndex, setHighlightIndex] = useState<number>(-1);
+  const urlsRef = useRef<Field>();
+
+  // Scroll to the top and clear loader cache when the query results change
+  useEffect(() => {
+    urlsRef.current = response.view.fields.url;
+    highlightIndexRef.current = -1;
+  }, [response]);
+
+  useEffect(() => {
+    const sub = keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            highlightIndexRef.current += 1;
+            setHighlightIndex(highlightIndexRef.current);
+            break;
+          }
+          case 'ArrowUp':
+            highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
+            setHighlightIndex(highlightIndexRef.current);
+            break;
+          case 'Enter':
+            if (highlightIndexRef.current >= 0 && urlsRef.current) {
+              const url = urlsRef.current.values?.get(highlightIndexRef.current) as string;
+              if (url) {
+                locationService.push(locationUtil.stripBaseFromUrl(url));
+              }
+            }
+        }
+      },
+    });
+
+    return () => sub.unsubscribe();
+  }, [keyboardEvents]);
+
+  return { highlightIndex, highlightIndexRef };
+}

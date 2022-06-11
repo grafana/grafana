@@ -133,6 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   selectedItem: css`
+    background: red;
     box-shadow: inset 1px 1px 6px 6px ${theme.colors.primary.border};
   `,
 });
