@@ -5,7 +5,7 @@ import { FixedSizeGrid } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { of } from 'rxjs';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2, locationUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
@@ -99,11 +99,7 @@ export const SearchResultsGrid = ({
           const idx = highlightIndexRef.current.x * numColumns + highlightIndexRef.current.y;
           const url = urlsRef.current.values?.get(idx) as string;
           if (url) {
-            if (url.startsWith(config.appSubUrl)) {
-              window.location.href = url; // for now
-            } else {
-              locationService.push(url);
-            }
+            locationService.push(locationUtil.stripBaseFromUrl(url));
           }
         }
     }

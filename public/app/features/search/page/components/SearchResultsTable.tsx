@@ -7,8 +7,8 @@ import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable, of } from 'rxjs';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { Field, GrafanaTheme2, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
@@ -97,11 +97,7 @@ export const SearchResultsTable = React.memo(
           if (highlightIndexRef.current >= 0 && urlsRef.current) {
             const url = urlsRef.current.values?.get(highlightIndexRef.current) as string;
             if (url) {
-              if (url.startsWith(config.appSubUrl)) {
-                window.location.href = url; // for now
-              } else {
-                locationService.push(url);
-              }
+              locationService.push(locationUtil.stripBaseFromUrl(url));
             }
           }
       }
