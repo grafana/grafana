@@ -102,7 +102,7 @@ export const SearchView = ({
     [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
   );
 
-  const results = useAsync(async () => {
+  const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
