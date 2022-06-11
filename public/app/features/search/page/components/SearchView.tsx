@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -13,7 +12,7 @@ import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { useSearchQuery } from '../../hooks/useSearchQuery';
-import { getGrafanaSearcher, QueryResponse, SearchQuery } from '../../service';
+import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
 import { reportDashboardListViewed } from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
@@ -55,7 +54,6 @@ export const SearchView = ({
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
-  const responserRef = useRef<QueryResponse>();
   const [listKey, setListKey] = useState(Date.now());
 
   const searchQuery = useMemo(() => {
@@ -105,9 +103,7 @@ export const SearchView = ({
   );
 
   const results = useAsync(async () => {
-    const res = await getGrafanaSearcher().search(searchQuery);
-    responserRef.current = res;
-    return res;
+    return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
@@ -122,10 +118,6 @@ export const SearchView = ({
     },
     [searchSelection]
   );
-
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
 
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {

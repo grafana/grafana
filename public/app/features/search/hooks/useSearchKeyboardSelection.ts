@@ -39,7 +39,7 @@ export function useSearchKeyboardNavigation(
   const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: -1 });
   const urlsRef = useRef<Field>();
 
-  // Scroll to the top and clear loader cache when the query results change
+  // Clear selection when the search results change
   useEffect(() => {
     urlsRef.current = response.view.fields.url;
     highlightIndexRef.current.x = 0;
