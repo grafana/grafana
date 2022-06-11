@@ -27,6 +27,7 @@ hide_menu = true
 - **RBAC:** Make RBAC action names more consistent. [#49730](https://github.com/grafana/grafana/pull/49730), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **RBAC:** Make RBAC action names more consistent. (Enterprise)
 - **Settings:** Sunset non-duration based login lifetime config. [#49944](https://github.com/grafana/grafana/pull/49944), [@sakjur](https://github.com/sakjur)
+- **Tracing:** Deprecate opentracing. [#50058](https://github.com/grafana/grafana/pull/50058), [@idafurjes](https://github.com/idafurjes)
 - **[9.0.x] Alerting:** Update alert rule diff to not see difference between nil and empty map. [#50198](https://github.com/grafana/grafana/pull/50198), [@yuri-tceretian](https://github.com/yuri-tceretian)
 
 ### Bug fixes
@@ -86,7 +87,7 @@ to
 />
 ```
 
-Related Issue [#49847](https://github.com/grafana/grafana/issues/49847)
+Issue [#49847](https://github.com/grafana/grafana/issues/49847)
 
 The following RBAC action renames have been carried out:
 
