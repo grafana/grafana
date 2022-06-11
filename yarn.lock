@@ -10924,6 +10924,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/rc-tree@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@types/rc-tree@npm:3.0.0"
+  dependencies:
+    rc-tree: "*"
+  checksum: bf8e599c5a62c8f8d91fbecdc210119c4c2ad07bdfb8adecb4d1cce9cb967fd6856ad2940431b8fdc9993cd261f127c33588f2988bfc7bc6438993de1c6eeff3
+  languageName: node
+  linkType: hard
+
 "@types/react-beautiful-dnd@npm:13.1.2":
   version: 13.1.2
   resolution: "@types/react-beautiful-dnd@npm:13.1.2"
@@ -20794,6 +20803,7 @@ __metadata:
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
     "@types/rc-time-picker": 3.4.1
+    "@types/rc-tree": ^3.0.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -20934,6 +20944,7 @@ __metadata:
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
+    rc-tree: ^5.6.5
     re-resizable: 6.9.9
     react: 17.0.2
     react-beautiful-dnd: 13.1.0
@@ -30244,6 +30255,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rc-tree@npm:*, rc-tree@npm:^5.6.5":
+  version: 5.6.5
+  resolution: "rc-tree@npm:5.6.5"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: 2.x
+    rc-motion: ^2.0.1
+    rc-util: ^5.16.1
+    rc-virtual-list: ^3.4.8
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 107efb7dbf6d44faf11072c4c53277f234ecd8d0c5a5cb387d5d9ac18b96098fa9cef3312f52589930c5562fd708f4da50f3b7880b27b2405c6ac558dce9f037
+  languageName: node
+  linkType: hard
+
 "rc-tree@npm:~5.5.0":
   version: 5.5.0
   resolution: "rc-tree@npm:5.5.0"
@@ -30357,6 +30384,20 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: d80c212e1f670afd3ccb876ac47b6b1b242c99b41a7777504af867f26a7be840129ecc9ef4ed6de356c8f2391fc495750597da418d06ea760740e30292d7ffec
+  languageName: node
+  linkType: hard
+
+"rc-virtual-list@npm:^3.4.8":
+  version: 3.4.8
+  resolution: "rc-virtual-list@npm:3.4.8"
+  dependencies:
+    classnames: ^2.2.6
+    rc-resize-observer: ^1.0.0
+    rc-util: ^5.15.0
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 946fcd43daeadd41429475d9945747f5b60bbed6d7b94ae042242504c5caa27a3a3512c96139a65571d9163d9f0f2a3105220e6289bc1191306536c7b5444216
   languageName: node
   linkType: hard
 
