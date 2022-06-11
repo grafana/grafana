@@ -92,7 +92,7 @@ describe('Heatmap transformer', () => {
             "C",
           ],
         },
-        "type": "heatmap-scanlines",
+        "type": "heatmap-cells",
       }
     `);
     expect(heatmap.fields[1].values.toArray()).toMatchInlineSnapshot(`
