@@ -222,6 +222,12 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
