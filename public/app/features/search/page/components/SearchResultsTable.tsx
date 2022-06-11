@@ -27,7 +27,7 @@ export type SearchResultsProps = {
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
-  keyboardEvents?: Observable<React.KeyboardEvent>;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export type TableColumn = Column & {

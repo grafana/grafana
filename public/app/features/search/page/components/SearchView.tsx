@@ -33,7 +33,7 @@ type SearchViewProps = {
   onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
-  keyboardEvents?: Observable<React.KeyboardEvent>;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export const SearchView = ({

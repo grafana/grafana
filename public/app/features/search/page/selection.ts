@@ -1,3 +1,11 @@
+import { useEffect, useRef, useState } from 'react';
+import { Observable } from 'rxjs';
+
+import { Field, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
+import { QueryResponse } from '../service';
+
 // Using '*' for uid will return true if anything is selected
 export type SelectionChecker = (kind: string, uid: string) => boolean;
 export type SelectionToggle = (kind: string, uid: string) => void;
@@ -67,4 +75,75 @@ export function updateSearchSelection(
       return Boolean(items.get(kind)?.has(uid));
     },
   };
+}
+interface ItemSelection {
+  x: number;
+  y: number;
+}
+
+export function useSearchGridKeyboardNavigation(
+  keyboardEvents: Observable<React.KeyboardEvent>,
+  numColumns: number,
+  response: QueryResponse
+): ItemSelection {
+  const highlightIndexRef = useRef<ItemSelection>({ x: 0, y: -1 });
+  const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: 0 });
+  const urlsRef = useRef<Field>();
+
+  // Scroll to the top and clear loader cache when the query results change
+  useEffect(() => {
+    urlsRef.current = response.view.fields.url;
+  }, [response]);
+
+  useEffect(() => {
+    const sub = keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            highlightIndexRef.current.y++;
+            setHighlightIndex({
+              y: highlightIndexRef.current.y,
+              x: highlightIndexRef.current.x,
+            });
+            break;
+          }
+          case 'ArrowUp':
+            highlightIndexRef.current.y = Math.max(0, highlightIndexRef.current.y - 1);
+            setHighlightIndex({
+              y: highlightIndexRef.current.y,
+              x: highlightIndexRef.current.x,
+            });
+            break;
+          case 'ArrowRight': {
+            highlightIndexRef.current.x = Math.min(numColumns, highlightIndexRef.current.x + 1);
+            setHighlightIndex({
+              y: highlightIndexRef.current.y,
+              x: highlightIndexRef.current.x,
+            });
+            break;
+          }
+          case 'ArrowLeft': {
+            highlightIndexRef.current.x = Math.max(0, highlightIndexRef.current.x - 1);
+            setHighlightIndex({
+              y: highlightIndexRef.current.y,
+              x: highlightIndexRef.current.x,
+            });
+            break;
+          }
+          case 'Enter':
+            if (highlightIndexRef.current.y >= 0 && urlsRef.current) {
+              const idx = highlightIndexRef.current.x * numColumns + highlightIndexRef.current.y;
+              const url = urlsRef.current.values?.get(idx) as string;
+              if (url) {
+                locationService.push(locationUtil.stripBaseFromUrl(url));
+              }
+            }
+        }
+      },
+    });
+
+    return () => sub.unsubscribe();
+  }, [keyboardEvents, numColumns]);
+
+  return highlightIndex;
 }

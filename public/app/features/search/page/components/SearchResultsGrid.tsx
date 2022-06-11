@@ -1,23 +1,17 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
-import { useObservable } from 'react-use';
+import React from 'react';
 import { FixedSizeGrid } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
-import { of } from 'rxjs';
 
-import { Field, GrafanaTheme2, locationUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
+import { useSearchGridKeyboardNavigation } from '../selection';
 
 import { SearchResultsProps } from './SearchResultsTable';
-
-interface ItemSelection {
-  x: number;
-  y: number;
-}
 
 export const SearchResultsGrid = ({
   response,
@@ -29,15 +23,6 @@ export const SearchResultsGrid = ({
   keyboardEvents,
 }: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
-
-  const highlightIndexRef = useRef<ItemSelection>({ x: 0, y: -1 });
-  const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: 0 });
-  const urlsRef = useRef<Field>();
-
-  // Scroll to the top and clear loader cache when the query results change
-  useEffect(() => {
-    urlsRef.current = response.view.fields.url;
-  }, [response]);
 
   // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
   const itemProps = {
@@ -53,57 +38,12 @@ export const SearchResultsGrid = ({
   };
 
   const itemCount = response.totalRows ?? response.view.length;
-
   const view = response.view;
   const numColumns = Math.ceil(width / 320);
   const cellWidth = width / numColumns;
   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
   const numRows = Math.ceil(itemCount / numColumns);
-
-  const keyEvent = useObservable(keyboardEvents ?? of());
-  useEffect(() => {
-    switch (keyEvent?.code) {
-      case 'ArrowDown': {
-        highlightIndexRef.current.y++;
-        setHighlightIndex({
-          y: highlightIndexRef.current.y,
-          x: highlightIndexRef.current.x,
-        });
-        break;
-      }
-      case 'ArrowUp':
-        highlightIndexRef.current.y = Math.max(0, highlightIndexRef.current.y - 1);
-        setHighlightIndex({
-          y: highlightIndexRef.current.y,
-          x: highlightIndexRef.current.x,
-        });
-        break;
-      case 'ArrowRight': {
-        highlightIndexRef.current.x = Math.min(numColumns, highlightIndexRef.current.x + 1);
-        setHighlightIndex({
-          y: highlightIndexRef.current.y,
-          x: highlightIndexRef.current.x,
-        });
-        break;
-      }
-      case 'ArrowLeft': {
-        highlightIndexRef.current.x = Math.max(0, highlightIndexRef.current.x - 1);
-        setHighlightIndex({
-          y: highlightIndexRef.current.y,
-          x: highlightIndexRef.current.x,
-        });
-        break;
-      }
-      case 'Enter':
-        if (highlightIndexRef.current.y >= 0 && urlsRef.current) {
-          const idx = highlightIndexRef.current.x * numColumns + highlightIndexRef.current.y;
-          const url = urlsRef.current.values?.get(idx) as string;
-          if (url) {
-            locationService.push(locationUtil.stripBaseFromUrl(url));
-          }
-        }
-    }
-  }, [keyEvent, numColumns]);
+  const highlightIndex = useSearchGridKeyboardNavigation(keyboardEvents, numColumns, response);
 
   return (
     <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>

@@ -46,6 +46,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     switch (e.code) {
       case 'ArrowDown':
@@ -58,6 +59,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
       // ignore
     }
   };
+
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
   return (
@@ -67,7 +69,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
           <div>
             <input
               type="text"
-              placeholder={includePanels ? 'Search dashboards and panels by nameX' : 'Search dashboards by name'}
+              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
               onKeyDown={onKeyDown}
