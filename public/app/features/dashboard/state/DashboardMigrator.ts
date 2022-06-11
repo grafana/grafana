@@ -784,7 +784,7 @@ export class DashboardMigrator {
           // alpha flavor
           panel.type = 'heatmap';
           // other options changes?
-        } else if (type === 'heatmap' && Object.keys(panel?.options).length < 1) {
+        } else if (type === 'heatmap' && panel?.options && Object.keys(panel.options).length < 1) {
           delete panel.pluginVersion; // this will kick off standard panel migration path
         }
         return panel;

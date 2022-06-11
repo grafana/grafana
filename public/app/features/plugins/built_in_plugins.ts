@@ -125,7 +125,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
+  'app/plugins/panel/heatmap/module': config.featureToggles.useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,
   'app/plugins/panel/news/module': newsPanel,
