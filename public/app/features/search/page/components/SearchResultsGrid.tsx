@@ -8,8 +8,8 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
+import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
-import { useSearchKeyboardNavigation } from '../selection';
 
 import { SearchResultsProps } from './SearchResultsTable';
 

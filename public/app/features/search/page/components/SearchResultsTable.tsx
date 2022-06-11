@@ -11,8 +11,9 @@ import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
+import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { QueryResponse } from '../../service';
-import { SelectionChecker, SelectionToggle, useSearchKeyboardNavigation } from '../selection';
+import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
