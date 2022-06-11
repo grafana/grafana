@@ -97,6 +97,7 @@ import (
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -265,6 +266,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
+	userimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(
