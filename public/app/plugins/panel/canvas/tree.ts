@@ -8,11 +8,11 @@ export interface FlatElement {
   isOpen?: boolean;
 }
 
-export interface TreeNode {
+export interface TreeElement {
   key: number;
   title: string;
   selectable?: boolean;
-  children?: TreeNode[];
+  children?: TreeElement[];
   dataRef: ElementState | FrameState;
 }
 
@@ -29,7 +29,7 @@ export function reorderElements(src: FlatElement, dest: FlatElement, elements: a
 }
 
 export function getTreeData(root?: RootElement) {
-  let elements: TreeNode[] = [];
+  let elements: TreeElement[] = [];
   if (root) {
     root.elements.map((element: any) => {
       elements.push({
@@ -46,7 +46,7 @@ export function getTreeData(root?: RootElement) {
 }
 
 function getChildren(elements: any[]) {
-  let children: TreeNode[] = [];
+  let children: TreeElement[] = [];
   elements.map((element: any) => {
     children.push({
       key: element.UID,
