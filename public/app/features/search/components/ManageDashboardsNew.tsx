@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useDebounce, useLocalStorage } from 'react-use';
-import { Subject } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -10,6 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -23,6 +23,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   // since we don't use "query" from use search... it is not actually loaded from the URL!
   const { query, onQueryChange } = useSearchQuery({});
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   // TODO: we need to refactor DashboardActions to use folder.uid instead
   const folderId = folder?.id;
@@ -34,23 +35,6 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   if (!config.featureToggles.panelTitleSearch) {
     includePanels = false;
   }
-
-  const keyboardEvents = useMemo(() => {
-    return new Subject<React.KeyboardEvent>();
-  }, []);
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    switch (e.code) {
-      case 'ArrowDown':
-      case 'ArrowUp':
-      case 'ArrowLeft':
-      case 'ArrowRight':
-      case 'Enter':
-        keyboardEvents.next(e);
-      default:
-      // ignore
-    }
-  };
 
   const { isEditor } = contextSrv;
 
