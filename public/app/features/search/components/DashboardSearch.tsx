@@ -62,7 +62,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
-              autoFocus={true}
+              autoFocus
             />
           </div>
 
