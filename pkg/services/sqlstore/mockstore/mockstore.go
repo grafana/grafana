@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type OrgListResponse []struct {
@@ -16,7 +17,7 @@ type SQLStoreMock struct {
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
 	LatestUserId            int64
 
-	ExpectedUser                   *models.User
+	ExpectedUser                   *user.User
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting

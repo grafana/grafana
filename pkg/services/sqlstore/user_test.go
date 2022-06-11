@@ -102,7 +102,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, query.Result.Rands, 10)
 		require.Len(t, query.Result.Salt, 10)
 		require.False(t, query.Result.IsDisabled)
-		require.Equal(t, query.Result.OrgId, orgCmd.Result.Id)
+		require.Equal(t, query.Result.OrgID, orgCmd.Result.Id)
 
 		const nonExistingOrgID = 10000
 		cmd = models.CreateUserCommand{

@@ -12,7 +12,7 @@ var (
 )
 
 type Org struct {
-	ID      int64
+	ID      int64 `xorm:"pk autoincr 'id'"`
 	Version int
 	Name    string
 

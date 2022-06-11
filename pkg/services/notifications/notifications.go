@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -181,7 +182,7 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
 func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)

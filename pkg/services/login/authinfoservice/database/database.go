@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var GetTime = time.Now
@@ -35,13 +36,13 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 		return err
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.ID}
 	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
 	query.Result = &models.ExternalUserInfo{
-		UserId:     userQuery.Result.Id,
+		UserId:     userQuery.Result.ID,
 		Login:      userQuery.Result.Login,
 		Email:      userQuery.Result.Email,
 		Name:       userQuery.Result.Name,
@@ -218,7 +219,7 @@ func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAu
 	})
 }
 
-func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*models.User, error) {
+func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
 	query := models.GetUserByIdQuery{Id: id}
 	if err := s.sqlStore.GetUserById(ctx, &query); err != nil {
 		return nil, err
@@ -227,7 +228,7 @@ func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*models.User
 	return query.Result, nil
 }
 
-func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
 	query := models.GetUserByLoginQuery{LoginOrEmail: login}
 	if err := s.sqlStore.GetUserByLogin(ctx, &query); err != nil {
 		return nil, err
@@ -236,7 +237,7 @@ func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*mode
 	return query.Result, nil
 }
 
-func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
 	query := models.GetUserByEmailQuery{Email: email}
 	if err := s.sqlStore.GetUserByEmail(ctx, &query); err != nil {
 		return nil, err

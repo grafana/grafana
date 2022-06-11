@@ -177,7 +177,7 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	user := &models.GetUserByIdQuery{Id: 2}
 	err = store.GetUserById(context.Background(), user)
 	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgId, int64(1))
+	require.Equal(t, user.Result.OrgID, int64(1))
 
 	// remove the user org
 	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
@@ -191,7 +191,7 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	user = &models.GetUserByIdQuery{Id: 2}
 	err = store.GetUserById(context.Background(), user)
 	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgId, int64(0))
+	require.Equal(t, user.Result.OrgID, int64(0))
 }
 
 func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {

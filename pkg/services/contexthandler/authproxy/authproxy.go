@@ -246,7 +246,7 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // loginViaHeader logs in user from the header only
@@ -305,7 +305,7 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName

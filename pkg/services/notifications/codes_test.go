@@ -3,7 +3,7 @@ package notifications
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ func TestEmailCodes(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EmailCodeValidMinutes = 120
 
-		user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
+		user := &user.User{ID: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 		code, err := createUserEmailCode(cfg, user, nil)
 		require.NoError(t, err)
 

@@ -44,12 +44,12 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			// By ID
-			id := user.Id
+			id := user.ID
 
 			user, err = srv.LookupByOneOf(context.Background(), id, "", "")
 
 			require.Nil(t, err)
-			require.Equal(t, user.Id, id)
+			require.Equal(t, user.ID, id)
 
 			// By Email
 			email := "user1@test.com"
@@ -93,7 +93,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			// get with non-matching id
-			id := user.Id
+			id := user.ID
 
 			query.UserId = id + 1
 			user, err = srv.LookupAndUpdate(context.Background(), query)
@@ -110,7 +110,7 @@ func TestUserAuth(t *testing.T) {
 
 			// remove user
 			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.ID)
 				return err
 			})
 			require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			cmd := &models.UpdateAuthInfoCommand{
-				UserId:     user.Id,
+				UserId:     user.ID,
 				AuthId:     query.AuthId,
 				AuthModule: query.AuthModule,
 				OAuthToken: token,
@@ -154,7 +154,7 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = srv.authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -205,7 +205,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -214,14 +214,14 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test2")
 
 			// "log in" again with the first auth module
-			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1"}
+			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.ID, AuthModule: "test1", AuthId: "test1"}
 			err = authInfoStore.UpdateAuthInfo(context.Background(), updateAuthCmd)
 
 			require.Nil(t, err)
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery = &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -268,7 +268,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -280,7 +280,7 @@ func TestUserAuth(t *testing.T) {
 			database.GetTime = func() time.Time { return fixedTime }
 
 			// add oauth info to auth_info to make sure update date does not overwrite it
-			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1", OAuthToken: &oauth2.Token{
+			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.ID, AuthModule: "test1", AuthId: "test1", OAuthToken: &oauth2.Token{
 				AccessToken:  "access_token",
 				TokenType:    "token_type",
 				RefreshToken: "refresh_token",
@@ -312,7 +312,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Ensure test 1 did not have its entry modified
 			getAuthQueryUnchanged := &models.GetAuthInfoQuery{
-				UserId:     user.Id,
+				UserId:     user.ID,
 				AuthModule: "test1",
 			}
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQueryUnchanged)

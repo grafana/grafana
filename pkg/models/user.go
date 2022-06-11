@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -114,17 +116,17 @@ type SetUsingOrgCommand struct {
 
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
-	Result       *User
+	Result       *user.User
 }
 
 type GetUserByEmailQuery struct {
 	Email  string
-	Result *User
+	Result *user.User
 }
 
 type GetUserByIdQuery struct {
 	Id     int64
-	Result *User
+	Result *user.User
 }
 
 type GetSignedInUserQuery struct {

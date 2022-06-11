@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -146,7 +147,7 @@ func notServiceAccountFilter(ss *SQLStore) string {
 
 func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		user := new(models.User)
+		user := new(user.User)
 
 		has, err := sess.ID(query.Id).
 			Where(notServiceAccountFilter(ss)).
@@ -172,8 +173,8 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 
 		// Try and find the user by login first.
 		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		usr := &user.User{Login: query.LoginOrEmail}
+		has, err := sess.Where(notServiceAccountFilter(ss)).Get(usr)
 
 		if err != nil {
 			return err
@@ -182,8 +183,8 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 		if !has && strings.Contains(query.LoginOrEmail, "@") {
 			// If the user wasn't found, and it contains an "@" fallback to finding the
 			// user by email.
-			user = &models.User{Email: query.LoginOrEmail}
-			has, err = sess.Get(user)
+			usr = &user.User{Email: query.LoginOrEmail}
+			has, err = sess.Get(usr)
 		}
 
 		if err != nil {
@@ -192,7 +193,7 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			return models.ErrUserNotFound
 		}
 
-		query.Result = user
+		query.Result = usr
 
 		return nil
 	})
@@ -204,7 +205,7 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			return models.ErrUserNotFound
 		}
 
-		user := &models.User{Email: query.Email}
+		user := &user.User{Email: query.Email}
 		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
 
 		if err != nil {

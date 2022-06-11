@@ -5,7 +5,7 @@ import "time"
 type HelpFlags1 uint64
 
 type User struct {
-	ID            int64
+	ID            int64 `xorm:"pk autoincr 'id'"`
 	Version       int
 	Email         string
 	Name          string
@@ -21,7 +21,7 @@ type User struct {
 
 	IsAdmin          bool
 	IsServiceAccount bool
-	OrgID            int64
+	OrgID            int64 `xorm:"org_id"`
 
 	Created    time.Time
 	Updated    time.Time
@@ -42,4 +42,14 @@ type CreateUserCommand struct {
 	SkipOrgSetup     bool
 	DefaultOrgRole   string
 	IsServiceAccount bool
+}
+
+func (u *User) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }

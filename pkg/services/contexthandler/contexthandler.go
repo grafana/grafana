@@ -348,11 +348,11 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 	user := authQuery.User
 
-	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: user.ID, OrgId: orgID}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
-			"id", user.Id,
+			"id", user.ID,
 			"org", orgID,
 		)
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)

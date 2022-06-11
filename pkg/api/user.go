@@ -63,13 +63,13 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 	}
 	user := query.Result
 	result := models.UserProfileDTO{
-		Id:             user.Id,
+		Id:             user.ID,
 		Name:           user.Name,
 		Email:          user.Email,
 		Login:          user.Login,
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
-		OrgId:          user.OrgId,
+		OrgId:          user.OrgID,
 		UpdatedAt:      user.Updated,
 		CreatedAt:      user.Created,
 	}

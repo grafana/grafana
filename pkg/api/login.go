@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -120,7 +121,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
 		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
-			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			user := &user.User{ID: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
 				c.Handle(hs.Cfg, 500, "Failed to sign in user", err)
@@ -179,7 +180,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
 	}
 	authModule := ""
-	var user *models.User
+	var user *user.User
 	var resp *response.NormalResponse
 
 	defer func() {
@@ -260,7 +261,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
+func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) error {
 	if user == nil {
 		return errors.New("could not login user")
 	}
