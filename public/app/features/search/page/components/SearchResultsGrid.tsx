@@ -9,7 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
-import { useSearchGridKeyboardNavigation } from '../selection';
+import { useSearchKeyboardNavigation } from '../selection';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -43,7 +43,7 @@ export const SearchResultsGrid = ({
   const cellWidth = width / numColumns;
   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
   const numRows = Math.ceil(itemCount / numColumns);
-  const highlightIndex = useSearchGridKeyboardNavigation(keyboardEvents, numColumns, response);
+  const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, numColumns, response);
 
   return (
     <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>

@@ -76,23 +76,27 @@ export function updateSearchSelection(
     },
   };
 }
+
 interface ItemSelection {
   x: number;
   y: number;
 }
 
-export function useSearchGridKeyboardNavigation(
+export function useSearchKeyboardNavigation(
   keyboardEvents: Observable<React.KeyboardEvent>,
   numColumns: number,
   response: QueryResponse
 ): ItemSelection {
   const highlightIndexRef = useRef<ItemSelection>({ x: 0, y: -1 });
-  const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: 0 });
+  const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: -1 });
   const urlsRef = useRef<Field>();
 
   // Scroll to the top and clear loader cache when the query results change
   useEffect(() => {
     urlsRef.current = response.view.fields.url;
+    highlightIndexRef.current.x = 0;
+    highlightIndexRef.current.y = -1;
+    setHighlightIndex({ ...highlightIndexRef.current });
   }, [response]);
 
   useEffect(() => {
@@ -101,42 +105,41 @@ export function useSearchGridKeyboardNavigation(
         switch (keyEvent?.code) {
           case 'ArrowDown': {
             highlightIndexRef.current.y++;
-            setHighlightIndex({
-              y: highlightIndexRef.current.y,
-              x: highlightIndexRef.current.x,
-            });
+            setHighlightIndex({ ...highlightIndexRef.current });
             break;
           }
           case 'ArrowUp':
             highlightIndexRef.current.y = Math.max(0, highlightIndexRef.current.y - 1);
-            setHighlightIndex({
-              y: highlightIndexRef.current.y,
-              x: highlightIndexRef.current.x,
-            });
+            setHighlightIndex({ ...highlightIndexRef.current });
             break;
           case 'ArrowRight': {
-            highlightIndexRef.current.x = Math.min(numColumns, highlightIndexRef.current.x + 1);
-            setHighlightIndex({
-              y: highlightIndexRef.current.y,
-              x: highlightIndexRef.current.x,
-            });
+            if (numColumns > 0) {
+              highlightIndexRef.current.x = Math.min(numColumns, highlightIndexRef.current.x + 1);
+              setHighlightIndex({ ...highlightIndexRef.current });
+            }
             break;
           }
           case 'ArrowLeft': {
-            highlightIndexRef.current.x = Math.max(0, highlightIndexRef.current.x - 1);
-            setHighlightIndex({
-              y: highlightIndexRef.current.y,
-              x: highlightIndexRef.current.x,
-            });
+            if (numColumns > 0) {
+              highlightIndexRef.current.x = Math.max(0, highlightIndexRef.current.x - 1);
+              setHighlightIndex({ ...highlightIndexRef.current });
+            }
             break;
           }
           case 'Enter':
-            if (highlightIndexRef.current.y >= 0 && urlsRef.current) {
-              const idx = highlightIndexRef.current.x * numColumns + highlightIndexRef.current.y;
-              const url = urlsRef.current.values?.get(idx) as string;
-              if (url) {
-                locationService.push(locationUtil.stripBaseFromUrl(url));
-              }
+            if (!urlsRef.current) {
+              break;
+            }
+            const idx = highlightIndexRef.current.x * numColumns + highlightIndexRef.current.y;
+            if (idx < 0) {
+              highlightIndexRef.current.x = 0;
+              highlightIndexRef.current.y = 0;
+              setHighlightIndex({ ...highlightIndexRef.current });
+              break;
+            }
+            const url = urlsRef.current.values?.get(idx) as string;
+            if (url) {
+              locationService.push(locationUtil.stripBaseFromUrl(url));
             }
         }
       },
@@ -146,48 +149,4 @@ export function useSearchGridKeyboardNavigation(
   }, [keyboardEvents, numColumns]);
 
   return highlightIndex;
-}
-
-export function useSearchTableKeyboardNavigation(
-  keyboardEvents: Observable<React.KeyboardEvent>,
-  response: QueryResponse
-): { highlightIndex: number; highlightIndexRef: React.MutableRefObject<number> } {
-  const highlightIndexRef = useRef<number>(-1);
-  const [highlightIndex, setHighlightIndex] = useState<number>(-1);
-  const urlsRef = useRef<Field>();
-
-  // Scroll to the top and clear loader cache when the query results change
-  useEffect(() => {
-    urlsRef.current = response.view.fields.url;
-    highlightIndexRef.current = -1;
-  }, [response]);
-
-  useEffect(() => {
-    const sub = keyboardEvents.subscribe({
-      next: (keyEvent) => {
-        switch (keyEvent?.code) {
-          case 'ArrowDown': {
-            highlightIndexRef.current += 1;
-            setHighlightIndex(highlightIndexRef.current);
-            break;
-          }
-          case 'ArrowUp':
-            highlightIndexRef.current = Math.max(0, highlightIndexRef.current - 1);
-            setHighlightIndex(highlightIndexRef.current);
-            break;
-          case 'Enter':
-            if (highlightIndexRef.current >= 0 && urlsRef.current) {
-              const url = urlsRef.current.values?.get(highlightIndexRef.current) as string;
-              if (url) {
-                locationService.push(locationUtil.stripBaseFromUrl(url));
-              }
-            }
-        }
-      },
-    });
-
-    return () => sub.unsubscribe();
-  }, [keyboardEvents]);
-
-  return { highlightIndex, highlightIndexRef };
 }

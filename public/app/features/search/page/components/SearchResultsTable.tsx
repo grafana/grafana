@@ -12,7 +12,7 @@ import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { QueryResponse } from '../../service';
-import { SelectionChecker, SelectionToggle, useSearchTableKeyboardNavigation } from '../selection';
+import { SelectionChecker, SelectionToggle, useSearchKeyboardNavigation } from '../selection';
 
 import { generateColumns } from './columns';
 
@@ -50,7 +50,7 @@ export const SearchResultsTable = React.memo(
     const tableStyles = useStyles2(getTableStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const listRef = useRef<FixedSizeList>(null);
-    const { highlightIndex, highlightIndexRef } = useSearchTableKeyboardNavigation(keyboardEvents, response);
+    const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -104,7 +104,7 @@ export const SearchResultsTable = React.memo(
 
         const url = response.view.fields.url?.values.get(rowIndex);
         let className = styles.rowContainer;
-        if (rowIndex === highlightIndex && rowIndex === highlightIndexRef.current) {
+        if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
         }
 
@@ -125,7 +125,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, highlightIndexRef, styles, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
     );
 
     if (!rows.length) {
