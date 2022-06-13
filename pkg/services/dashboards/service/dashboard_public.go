@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -68,6 +67,10 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		return dtos.MetricRequest{}, err
 	}
 
+	if !dashboard.IsPublic {
+		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
+	}
+
 	var timeSettings struct {
 		From string `json:"from"`
 		To   string `json:"to"`
@@ -80,7 +83,7 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
-		return dtos.MetricRequest{}, fmt.Errorf("no panel with ID %d", panelId)
+		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
 	}
 
 	return dtos.MetricRequest{

@@ -144,6 +144,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true)
 
 	service := &DashboardServiceImpl{
 		log:            log.New("test.logger"),
@@ -164,6 +165,22 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	}
 
 	pdc, err := service.SavePublicDashboardConfig(context.Background(), dto)
+	require.NoError(t, err)
+
+	nonPublicDto := &dashboards.SavePublicDashboardConfigDTO{
+		DashboardUid: nonPublicDashboard.Uid,
+		OrgId:        nonPublicDashboard.OrgId,
+		PublicDashboardConfig: &models.PublicDashboardConfig{
+			IsPublic: false,
+			PublicDashboard: models.PublicDashboard{
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+				TimeSettings: `{"from": "FROM", "to": "TO"}`,
+			},
+		},
+	}
+
+	nonPublicPdc, err := service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
@@ -207,7 +224,16 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			pdc.PublicDashboard.Uid,
 			49,
 		)
-		require.ErrorContains(t, err, "ID 49")
+		require.ErrorContains(t, err, "Panel not found")
+	})
+
+	t.Run("returns an error when dashboard not public", func(t *testing.T) {
+		_, err := service.BuildPublicDashboardMetricRequest(
+			context.Background(),
+			nonPublicPdc.PublicDashboard.Uid,
+			2,
+		)
+		require.ErrorContains(t, err, "Public dashboard not found")
 	})
 }
 
