@@ -265,7 +265,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	status := backend.HealthStatusOk
-	message := ""
+	metricsLog := "Successfully connected to Azure Monitor endpoint."
+	logAnalyticsLog := "Successfully connected to Azure Log Analytics endpoint."
+	graphLog := "Successfully connected to Azure Resource Graph endpoint."
 
 	metricsRes, err := checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil || metricsRes.StatusCode != 200 {
@@ -273,15 +275,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		} else {
 			body, err := io.ReadAll(metricsRes.Body)
+			fmt.Println("here", body, err)
 			if err != nil {
 				return nil, err
 			}
 			backend.Logger.Error(string(body))
 		}
 		status = backend.HealthStatusError
-		message = "1. Error connecting to Azure Monitor endpoint."
-	} else {
-		message = "1. Successfully connected to Azure Monitor endpoint."
+		metricsLog = "Error connecting to Azure Monitor endpoint."
 	}
 
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo)
@@ -296,9 +297,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			backend.Logger.Error(string(body))
 		}
 		status = backend.HealthStatusError
-		message = fmt.Sprintf("%v\n 2. Error connecting to Azure Log Analytics endpoint.", message)
-	} else {
-		message = fmt.Sprintf("%v\n 2. Successfully connected to Azure Log Analytics endpoint.", message)
+		logAnalyticsLog = "Error connecting to Azure Log Analytics endpoint."
 	}
 
 	resourceGraphRes, err := checkAzureMonitorGraphHealth(dsInfo)
@@ -313,9 +312,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			backend.Logger.Error(string(body))
 		}
 		status = backend.HealthStatusError
-		message = fmt.Sprintf("%v\n 3. Error connecting to Azure Resource Graph endpoint.", message)
-	} else {
-		message = fmt.Sprintf("%v\n 3. Successfully connected to Azure Resource Graph endpoint.", message)
+		graphLog = "Error connecting to Azure Resource Graph endpoint."
 	}
 
 	defer func() {
@@ -332,6 +329,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	return &backend.CheckHealthResult{
 		Status:  status,
-		Message: message,
+		Message: fmt.Sprintf("1. %s\n2. %s\n3. %s", metricsLog, logAnalyticsLog, graphLog),
 	}, nil
 }
