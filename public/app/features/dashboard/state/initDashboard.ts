@@ -209,22 +209,20 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // yay we are done
     dashboard.panels.forEach((panel) => {
-      if (panel.datasource?.type === 'grafana-azure-monitor-datasource' || panel.datasource?.uid === '-- Mixed --') {
-        panel.targets.forEach((target) => {
-          let dsSpecific = {};
-          if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
-            dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
-          }
-          reportInteraction('dashboard_loaded', {
-            dashboard_id: dashDTO.dashboard.uid,
-            hidden: target.hide,
-            datasource: target.datasource?.type,
-            grafana_version: config.buildInfo.version,
-            //plugin_version: ???
-            ...dsSpecific,
-          });
+      panel.targets.forEach((target) => {
+        let dsSpecific = {};
+        if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
+          dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
+        }
+        reportInteraction('dashboard_loaded', {
+          dashboard_id: dashDTO.dashboard.uid,
+          hidden: target.hide,
+          datasource: target.datasource?.type,
+          grafana_version: config.buildInfo.version,
+          //plugin_version: ???
+          ...dsSpecific,
         });
-      }
+      });
     });
     dispatch(dashboardInitCompleted(dashboard));
   };
