@@ -221,8 +221,16 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 		defaultWorkspaceId = target.Value[0].Properties.CustomerId
 	}
 
-	workspaceUrl := fmt.Sprintf("%v/v1/workspaces/%v/metadata", dsInfo.Routes["Azure Log Analytics"].URL, defaultWorkspaceId)
-	workspaceReq, err := http.NewRequest(http.MethodGet, workspaceUrl, nil)
+	body, err := json.Marshal(map[string]interface{}{
+		"query": "AzureActivity | limit 1",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceUrl := fmt.Sprintf("%v/v1/workspaces/%v/query", dsInfo.Routes["Azure Log Analytics"].URL, defaultWorkspaceId)
+	workspaceReq, err := http.NewRequest(http.MethodPost, workspaceUrl, bytes.NewBuffer(body))
+	workspaceReq.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}
