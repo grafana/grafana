@@ -43,7 +43,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
 
     // Remove possible duplicated values
-    return uniqBy([...labelValues, ...selectedOptions], 'value');
+    return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
 
   return (
