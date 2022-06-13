@@ -95,7 +95,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: plugins.NewCfg(),
+			cfg: config.NewCfg(),
 			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
