@@ -181,10 +181,11 @@ This is a partial list of notable breaking changes. For the complete list, see o
 
 Fine-grained access control is now called "Role-based access control". As part of the Grafana 9.0 release, the service is generally available, and there are several breaking changes:
 
-Built-in roles are now called basic roles, and they now consist of permissions, not roles
-The Terraform builtin_role_assignment resource is going away.
-Grafana provisioning has a new schema, please refer to the documentation for more information.
-Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Built-in roles are now called basic roles. They now consist of permissions, not roles.
+- The Terraform builtin_role_assignment resource is going away.
+- Grafana provisioning has a new schema. Please refer to the documentation for more information.
+- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Several role-based access control actions have been renamed. All the database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
 ### Loki: logs data format changed
 
@@ -214,6 +215,25 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 ### Transformations: Allow more complex regex expressions in rename by regex
 
 The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+
+### Clock Panel
+
+We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it Compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
+
+### Plugins: Most relevant breaking changes
+
+- `getColorForTheme` was removed, use `theme.visualization.getColorByName` instead [PR #49519](https://github.com/grafana/grafana/pull/49519)
+- `TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead [PR #49705](https://github.com/grafana/grafana/pull/49705)
+- We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods) [PR #47493](https://github.com/grafana/grafana/pull/47493)
+- We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead [PR #49945](https://github.com/grafana/grafana/pull/49945)
+- We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use `/api/ds/query` instead [PR #49916](https://github.com/grafana/grafana/pull/49916)
+
+You can find the complete list of breaking changes in the links below. Please check them out for more details and see if there is anything affecting your plugin
+
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta1/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0
 
 ## A note on Grafana Enterprise licensing
 

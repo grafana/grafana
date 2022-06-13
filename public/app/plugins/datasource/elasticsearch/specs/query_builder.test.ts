@@ -763,16 +763,12 @@ describe('ElasticQueryBuilder', () => {
                 extended_bounds: { max: '$timeTo', min: '$timeFrom' },
                 field: '@timestamp',
                 format: 'epoch_millis',
-                interval: '$__interval',
+                fixed_interval: '$__interval',
                 min_doc_count: 0,
               },
             },
           };
 
-          if (gte(builder.esVersion, '8.0.0')) {
-            expectedAggs['1'].date_histogram.fixed_interval = expectedAggs['1'].date_histogram.interval;
-            delete expectedAggs['1'].date_histogram.interval;
-          }
           expect(query.aggs).toMatchObject(expectedAggs);
         });
 
@@ -959,7 +955,7 @@ describe('ElasticQueryBuilder', () => {
         });
 
         describe('interval parameter', () => {
-          it('should use interval if Elasticsearch version <8.0.0', () => {
+          it('should use fixed_interval', () => {
             const query = builder77.build({
               refId: 'A',
               metrics: [{ type: 'count', id: '1' }],
@@ -974,8 +970,7 @@ describe('ElasticQueryBuilder', () => {
               ],
             });
 
-            expect(query.aggs['2'].date_histogram.interval).toBe('1d');
-            expect(query.aggs['2'].date_histogram.fixed_interval).toBeUndefined();
+            expect(query.aggs['2'].date_histogram.fixed_interval).toBe('1d');
           });
         });
 
