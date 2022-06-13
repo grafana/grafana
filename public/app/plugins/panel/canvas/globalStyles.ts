@@ -199,11 +199,11 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
         //   background: rgba(0, 0, 0, 0.1);
         // }
       }
-      // &-node-selected {
-      //   background-color: #ffe6b0;
-      //   box-shadow: 0 0 0 1px #ffb951;
-      //   opacity: 0.8;
-      // }
+      &-node-selected {
+        background-color: ${theme.colors.border.medium};
+        // box-shadow: 0 0 0 1px #ffb951;
+        opacity: 0.8;
+      }
       &-icon__open {
         margin-right: 2px;
         vertical-align: top;
