@@ -86,6 +86,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		toAPIError(c, err)
+		return
 	}
 	p.proxyDatasourceRequest(c, ds)
 }
