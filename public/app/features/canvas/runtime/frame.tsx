@@ -75,10 +75,10 @@ export class FrameState extends ElementState {
   }
 
   // used for tree view
-  reorderTree(src: ElementState, dest: ElementState) {
+  reorderTree(src: ElementState, dest: ElementState, firstPosition = false) {
     const result = Array.from(this.elements);
     const srcIndex = this.elements.indexOf(src);
-    const destIndex = this.elements.indexOf(dest);
+    const destIndex = firstPosition ? this.elements.length - 1 : this.elements.indexOf(dest);
 
     const [removed] = result.splice(srcIndex, 1);
     result.splice(destIndex, 0, removed);

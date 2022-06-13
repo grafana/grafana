@@ -14,6 +14,7 @@ export interface TreeElement {
   selectable?: boolean;
   children?: TreeElement[];
   dataRef: ElementState | FrameState;
+  style?: any;
 }
 
 export function reorderElements(src: FlatElement, dest: FlatElement, elements: any[]) {
@@ -28,34 +29,33 @@ export function reorderElements(src: FlatElement, dest: FlatElement, elements: a
   return result;
 }
 
-export function getTreeData(root?: RootElement) {
+export function getTreeData(root?: RootElement | FrameState, selection?: string[], color?: string) {
   let elements: TreeElement[] = [];
   if (root) {
-    root.elements.map((element: any) => {
-      elements.push({
-        key: element.UID,
-        title: element.getName(),
-        ...(element instanceof FrameState && { children: getChildren(element.elements) }),
+    for (let i = root.elements.length; i--; i >= 0) {
+      const item = root.elements[i];
+      const element: TreeElement = {
+        key: item.UID,
+        title: item.getName(),
         selectable: true,
-        dataRef: element,
-      });
-    });
+        dataRef: item,
+      };
+
+      const isSelected = isItemSelected(item, selection);
+      if (isSelected) {
+        element.style = { backgroundColor: color };
+      }
+
+      if (item instanceof FrameState) {
+        element.children = getTreeData(item, selection, color);
+      }
+      elements.push(element);
+    }
   }
 
   return elements;
 }
 
-function getChildren(elements: any[]) {
-  let children: TreeElement[] = [];
-  elements.map((element: any) => {
-    children.push({
-      key: element.UID,
-      title: element.getName(),
-      ...(element instanceof FrameState && { children: getChildren(element.elements) }),
-      selectable: true,
-      dataRef: element,
-    });
-  });
-
-  return children;
+function isItemSelected(item: ElementState, selection: string[] | undefined) {
+  return Boolean(selection?.includes(item.getName()));
 }
