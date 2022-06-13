@@ -146,6 +146,8 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
   mute_time_intervals?: MuteTimeInterval[];
+  /** { [name]: provenance } */
+  muteTimeProvenances?: Record<string, string>;
 };
 
 export type Matcher = {
@@ -302,6 +304,7 @@ export interface TimeInterval {
 export type MuteTimeInterval = {
   name: string;
   time_intervals: TimeInterval[];
+  provenance?: string;
 };
 
 export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };

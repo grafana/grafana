@@ -28,6 +28,7 @@ import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 interface Props {
   muteTiming?: MuteTimeInterval;
   showError?: boolean;
+  provenance?: string;
 }
 
 const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
@@ -56,7 +57,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   }, [muteTiming]);
 };
 
-const MuteTimingForm = ({ muteTiming, showError }: Props) => {
+const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   const dispatch = useDispatch();
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -109,11 +110,17 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
         disabled
         dataSources={alertManagers}
       />
+      {provenance && (
+        <Alert title={'This mute timing has been provisioned'} severity="info">
+          This mute timing was added by config and cannot be modified using the UI. Please contact your server admin to
+          update this mute timing.
+        </Alert>
+      )}
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
             {showError && <Alert title="No matching mute timing found" />}
-            <FieldSet label={'Create mute timing'}>
+            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance)}>
               <Field
                 required
                 label="Name"
