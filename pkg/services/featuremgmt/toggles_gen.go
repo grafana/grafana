@@ -87,6 +87,10 @@ const (
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
+	// FlagLokiDataframeApi
+	// use experimental loki api for websocket streaming (early prototype)
+	FlagLokiDataframeApi = "lokiDataframeApi"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"

@@ -72,7 +72,7 @@ Migration should just be a matter of going from
 
 to
 
-````tsx
+```tsx
 <ClipboardButton
   {/* other props... */}
   onClipboardCopy={(copiedText) => {

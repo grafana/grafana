@@ -34,7 +34,6 @@ type RuleStore interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
-	UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error
 	UpdateAlertRules(ctx context.Context, rule []store.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 }
