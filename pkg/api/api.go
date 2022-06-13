@@ -2,6 +2,7 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
@@ -306,6 +307,7 @@ func (hs *HTTPServer) registerRoutes() {
 			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
 		})
 
+		fmt.Println("this is a dummy update")
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
