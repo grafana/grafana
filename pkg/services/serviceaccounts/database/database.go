@@ -417,7 +417,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 
 // AddServiceAccountToTeam adds a service account to a team
 func (s *ServiceAccountsStoreImpl) AddServiceAccountToTeam(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountToTeamCommand) error {
-	return s.sqlStore.AddTeamMember(serviceAccountID, cmd.OrgId, cmd.TeamId, false, models.PERMISSION_ADMIN)
+	return s.sqlStore.AddTeamMember(serviceAccountID, cmd.OrgId, cmd.TeamId, false, models.PERMISSION_VIEW)
 }
 
 func contains(s []int64, e int64) bool {
