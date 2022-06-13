@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -38,19 +39,11 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   };
 
   const getOptions = (): SelectableValue[] => {
-    const allOptions = state.labelValues ? [...state.labelValues] : [];
+    const labelValues = state.labelValues ? [...state.labelValues] : [];
     const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
 
-    // Add selectedOptions to allOptions only if they are created
-    selectedOptions.forEach((option) => {
-      if (state.labelValues?.find((value) => value.label === option.label)) {
-        return;
-      } else {
-        allOptions.unshift(option);
-      }
-    });
-
-    return allOptions;
+    // Remove possible duplicated values
+    return uniqBy([...labelValues, ...selectedOptions], 'value');
   };
 
   return (
