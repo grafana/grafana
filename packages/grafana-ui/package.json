@@ -122,7 +122,7 @@
     "@testing-library/user-event": "14.2.0",
     "@types/classnames": "2.3.0",
     "@types/common-tags": "^1.8.0",
-    "@types/d3": "7.1.0",
+    "@types/d3": "7.4.0",
     "@types/enzyme": "3.10.12",
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
