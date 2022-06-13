@@ -7568,18 +7568,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.4.5":
-  version: 3.4.5
-  resolution: "@react-types/button@npm:3.4.5"
-  dependencies:
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 2955a7ff2deb320ad14b3a569a4d7e44b1bd5c42fc3d1ecee4b175297485eb216a7335e75d2ef01d771f89ed8f884d38f8a01464f59733f5aeedbf791e3ad927
-  languageName: node
-  linkType: hard
-
-"@react-types/button@npm:^3.5.0":
+"@react-types/button@npm:3.5.0, @react-types/button@npm:^3.5.0":
   version: 3.5.0
   resolution: "@react-types/button@npm:3.5.0"
   dependencies:
@@ -20675,7 +20664,7 @@ __metadata:
     "@react-stately/collections": 3.4.0
     "@react-stately/menu": 3.3.0
     "@react-stately/tree": 3.3.0
-    "@react-types/button": 3.4.5
+    "@react-types/button": 3.5.0
     "@react-types/menu": 3.5.3
     "@react-types/overlays": 3.6.0
     "@react-types/shared": 3.12.0
