@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';

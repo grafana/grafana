@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
+import { AzureDataSourceJsonData, AzureQueryType } from '../types';
 
 const templateSrv = new TemplateSrv();
 
