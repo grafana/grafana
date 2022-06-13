@@ -70,7 +70,7 @@ type DeleteAPIkeyParams struct {
 type GetAPIkeyResponse struct {
 	// The response message
 	// in: body
-	Body []*models.ApiKeyDTO `json:"body"`
+	Body []*dtos.ApiKeyDTO `json:"body"`
 }
 
 // swagger:response postAPIkeyResponse

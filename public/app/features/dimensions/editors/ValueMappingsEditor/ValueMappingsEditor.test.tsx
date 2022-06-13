@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
+import React from 'react';
+
 import { MappingType } from '@grafana/data';
+
+import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
 
 const setup = (spy?: any, propOverrides?: object) => {
   const props: Props = {

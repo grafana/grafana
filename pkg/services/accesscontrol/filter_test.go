@@ -141,11 +141,23 @@ func TestFilter_Datasources(t *testing.T) {
 			expectedDataSources: []string{"ds:3", "ds:7"},
 			expectErr:           false,
 		},
+		{
+			desc:    "expect to be filtered by uids",
+			sqlID:   "data_source.uid",
+			prefix:  "datasources:uid:",
+			actions: []string{"datasources:read"},
+			permissions: map[string][]string{
+				"datasources:read": {"datasources:uid:uid3", "datasources:uid:uid7"},
+			},
+			expectedDataSources: []string{"ds:3", "ds:7"},
+			expectErr:           false,
+		},
 	}
 
 	// set sqlIDAcceptList before running tests
 	restore := accesscontrol.SetAcceptListForTest(map[string]struct{}{
-		"data_source.id": {},
+		"data_source.id":  {},
+		"data_source.uid": {},
 	})
 	defer restore()
 
@@ -158,7 +170,7 @@ func TestFilter_Datasources(t *testing.T) {
 
 			// seed 10 data sources
 			for i := 1; i <= 10; i++ {
-				err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i)})
+				err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
 				require.NoError(t, err)
 			}
 

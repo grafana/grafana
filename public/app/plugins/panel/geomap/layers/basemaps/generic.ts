@@ -1,7 +1,8 @@
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
-import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
+import XYZ from 'ol/source/XYZ';
+
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 
 export interface XYZConfig {
   url: string;
@@ -19,6 +20,7 @@ export const defaultXYZConfig: XYZConfig = {
 export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
+  description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
   create: async (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({

@@ -1,18 +1,21 @@
-import React, { FC, memo, useState } from 'react';
 import { css } from '@emotion/css';
-import { FilterInput, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import React, { FC, memo, useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
-import { contextSrv } from 'app/core/services/context_srv';
+import { FilterInput, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { FolderDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { FolderDTO, AccessControlAction } from 'app/types';
+
 import { useManageDashboards } from '../hooks/useManageDashboards';
-import { SearchLayout } from '../types';
-import { ConfirmDeleteModal } from './ConfirmDeleteModal';
-import { MoveToFolderModal } from './MoveToFolderModal';
 import { useSearchQuery } from '../hooks/useSearchQuery';
-import { SearchResultsFilter } from './SearchResultsFilter';
-import { SearchResults } from './SearchResults';
+import { SearchLayout } from '../types';
+
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { DashboardActions } from './DashboardActions';
+import { MoveToFolderModal } from './MoveToFolderModal';
+import { SearchResults } from './SearchResults';
+import { SearchResultsFilter } from './SearchResultsFilter';
 
 export interface Props {
   folder?: FolderDTO;
@@ -50,10 +53,10 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     results,
     loading,
     initialLoading,
-    canSave,
     allChecked,
     hasEditPermissionInFolders,
     canMove,
+    canSave,
     canDelete,
     onToggleSection,
     onToggleChecked,
@@ -98,7 +101,14 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
         <div className="gf-form gf-form--grow m-r-2">
           <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
         </div>
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        <DashboardActions
+          folderId={folderId}
+          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
+          canCreateDashboards={contextSrv.hasAccess(
+            AccessControlAction.DashboardsCreate,
+            hasEditPermissionInFolders || !!canSave
+          )}
+        />
       </div>
 
       <div className={styles.results}>

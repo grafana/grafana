@@ -1,5 +1,7 @@
-import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { FetchError, FetchResponse } from 'src/services';
+
+import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
+
 import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
 const resp = {
@@ -298,10 +300,12 @@ describe('Query Response parser', () => {
       };
     });
 
-    test('adds notice for responses with X-Cache: HIT header', () => {
+    test('adds notice and cached boolean for responses with X-Cache: HIT header', () => {
       const queries: DataQuery[] = [{ refId: 'A' }];
       resp.headers.set('X-Cache', 'HIT');
-      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([cachedResponseNotice]);
+      const meta = toDataQueryResponse(resp, queries).data[0].meta;
+      expect(meta.notices).toStrictEqual([cachedResponseNotice]);
+      expect(meta.isCachedResponse).toBeTruthy();
     });
 
     test('does not remove existing notices', () => {
@@ -314,10 +318,11 @@ describe('Query Response parser', () => {
       ]);
     });
 
-    test('does not add notice for responses with X-Cache: MISS header', () => {
+    test('does not add notice or cached response boolean for responses with X-Cache: MISS header', () => {
       const queries: DataQuery[] = [{ refId: 'A' }];
       resp.headers.set('X-Cache', 'MISS');
       expect(toDataQueryResponse(resp, queries).data[0].meta?.notices).toBeUndefined();
+      expect(toDataQueryResponse(resp, queries).data[0].meta?.isCachedResponse).toBeUndefined();
     });
 
     test('does not add notice for responses without X-Cache header', () => {

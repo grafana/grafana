@@ -1,6 +1,8 @@
 import { isNumber } from 'lodash';
-import { DashboardModel } from '../../state/DashboardModel';
+
 import { getBackendSrv } from '@grafana/runtime';
+
+import { DashboardModel } from '../../state/DashboardModel';
 
 export interface HistoryListOpts {
   limit: number;

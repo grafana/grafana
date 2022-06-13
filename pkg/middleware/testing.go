@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -34,7 +36,9 @@ type scenarioContext struct {
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
 	sqlStore             sqlstore.Store
+	mockSQLStore         *mockstore.SQLStoreMock
 	contextHandler       *contexthandler.ContextHandler
+	loginService         *loginservice.LoginServiceMock
 
 	req *http.Request
 }

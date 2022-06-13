@@ -1,14 +1,21 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, UsersListPage } from './UsersListPage';
-import { Invitee, OrgUser } from 'app/types';
-// import { getMockUser } from './__mocks__/userMocks';
-import { NavModel } from '@grafana/data';
+import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { NavModel } from '@grafana/data';
+import { Invitee, OrgUser } from 'app/types';
+
+import { Props, UsersListPage } from './UsersListPage';
 import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1 },
+  },
 }));
 
 const setup = (propOverrides?: object) => {

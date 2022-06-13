@@ -1,10 +1,12 @@
-import { migrateVariablesDatasourceNameToRef } from './actions';
-import { adHocBuilder, queryBuilder } from '../shared/testing/builders';
 import { DataSourceRef } from '@grafana/data/src';
-import { changeVariableProp } from './sharedReducer';
-import { toKeyedAction } from './keyedVariablesReducer';
-import { getPreloadedState } from './helpers';
+
+import { adHocBuilder, queryBuilder } from '../shared/testing/builders';
 import { toVariablePayload } from '../utils';
+
+import { migrateVariablesDatasourceNameToRef } from './actions';
+import { getPreloadedState } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
+import { changeVariableProp } from './sharedReducer';
 
 function getTestContext(ds: DataSourceRef, dsInstance?: { uid: string; type: string }) {
   jest.clearAllMocks();

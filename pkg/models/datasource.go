@@ -46,16 +46,18 @@ type DataSource struct {
 	OrgId   int64 `json:"orgId"`
 	Version int   `json:"version"`
 
-	Name              string            `json:"name"`
-	Type              string            `json:"type"`
-	Access            DsAccess          `json:"access"`
-	Url               string            `json:"url"`
-	Password          string            `json:"password"`
-	User              string            `json:"user"`
-	Database          string            `json:"database"`
-	BasicAuth         bool              `json:"basicAuth"`
-	BasicAuthUser     string            `json:"basicAuthUser"`
-	BasicAuthPassword string            `json:"basicAuthPassword"`
+	Name   string   `json:"name"`
+	Type   string   `json:"type"`
+	Access DsAccess `json:"access"`
+	Url    string   `json:"url"`
+	// swagger:ignore
+	Password      string `json:"-"`
+	User          string `json:"user"`
+	Database      string `json:"database"`
+	BasicAuth     bool   `json:"basicAuth"`
+	BasicAuthUser string `json:"basicAuthUser"`
+	// swagger:ignore
+	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
@@ -67,26 +69,36 @@ type DataSource struct {
 	Updated time.Time `json:"updated"`
 }
 
+// AllowedCookies parses the jsondata.keepCookies and returns a list of
+// allowed cookies, otherwise an empty list.
+func (ds DataSource) AllowedCookies() []string {
+	if ds.JsonData != nil {
+		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
+			return keepCookies.MustStringArray()
+		}
+	}
+
+	return []string{}
+}
+
 // ----------------------
 // COMMANDS
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name              string            `json:"name" binding:"Required"`
-	Type              string            `json:"type" binding:"Required"`
-	Access            DsAccess          `json:"access" binding:"Required"`
-	Url               string            `json:"url"`
-	Password          string            `json:"password"`
-	Database          string            `json:"database"`
-	User              string            `json:"user"`
-	BasicAuth         bool              `json:"basicAuth"`
-	BasicAuthUser     string            `json:"basicAuthUser"`
-	BasicAuthPassword string            `json:"basicAuthPassword"`
-	WithCredentials   bool              `json:"withCredentials"`
-	IsDefault         bool              `json:"isDefault"`
-	JsonData          *simplejson.Json  `json:"jsonData"`
-	SecureJsonData    map[string]string `json:"secureJsonData"`
-	Uid               string            `json:"uid"`
+	Name            string            `json:"name" binding:"Required"`
+	Type            string            `json:"type" binding:"Required"`
+	Access          DsAccess          `json:"access" binding:"Required"`
+	Url             string            `json:"url"`
+	Database        string            `json:"database"`
+	User            string            `json:"user"`
+	BasicAuth       bool              `json:"basicAuth"`
+	BasicAuthUser   string            `json:"basicAuthUser"`
+	WithCredentials bool              `json:"withCredentials"`
+	IsDefault       bool              `json:"isDefault"`
+	JsonData        *simplejson.Json  `json:"jsonData"`
+	SecureJsonData  map[string]string `json:"secureJsonData"`
+	Uid             string            `json:"uid"`
 
 	OrgId                   int64             `json:"-"`
 	UserId                  int64             `json:"-"`
@@ -98,22 +110,20 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Name              string            `json:"name" binding:"Required"`
-	Type              string            `json:"type" binding:"Required"`
-	Access            DsAccess          `json:"access" binding:"Required"`
-	Url               string            `json:"url"`
-	Password          string            `json:"password"`
-	User              string            `json:"user"`
-	Database          string            `json:"database"`
-	BasicAuth         bool              `json:"basicAuth"`
-	BasicAuthUser     string            `json:"basicAuthUser"`
-	BasicAuthPassword string            `json:"basicAuthPassword"`
-	WithCredentials   bool              `json:"withCredentials"`
-	IsDefault         bool              `json:"isDefault"`
-	JsonData          *simplejson.Json  `json:"jsonData"`
-	SecureJsonData    map[string]string `json:"secureJsonData"`
-	Version           int               `json:"version"`
-	Uid               string            `json:"uid"`
+	Name            string            `json:"name" binding:"Required"`
+	Type            string            `json:"type" binding:"Required"`
+	Access          DsAccess          `json:"access" binding:"Required"`
+	Url             string            `json:"url"`
+	User            string            `json:"user"`
+	Database        string            `json:"database"`
+	BasicAuth       bool              `json:"basicAuth"`
+	BasicAuthUser   string            `json:"basicAuthUser"`
+	WithCredentials bool              `json:"withCredentials"`
+	IsDefault       bool              `json:"isDefault"`
+	JsonData        *simplejson.Json  `json:"jsonData"`
+	SecureJsonData  map[string]string `json:"secureJsonData"`
+	Version         int               `json:"version"`
+	Uid             string            `json:"uid"`
 
 	OrgId                   int64             `json:"-"`
 	Id                      int64             `json:"-"`

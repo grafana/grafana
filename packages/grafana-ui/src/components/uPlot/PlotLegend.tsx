@@ -1,18 +1,24 @@
 import React from 'react';
+
 import {
   DataFrame,
+  DisplayProcessor,
   DisplayValue,
   fieldReducers,
+  getDisplayProcessor,
   getFieldDisplayName,
   getFieldSeriesColor,
   reduceField,
+  ReducerID,
 } from '@grafana/data';
-import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { VizLegendItem } from '../VizLegend/types';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+
+import { useTheme2 } from '../../themes';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { useTheme2 } from '../../themes';
+import { VizLegendItem } from '../VizLegend/types';
+
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -63,6 +69,8 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
           }
 
           const fmt = field.display ?? defaultFormatter;
+          let countFormatter: DisplayProcessor | null = null;
+
           const fieldCalcs = reduceField({
             field,
             reducers: calcs,
@@ -70,9 +78,43 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
           return calcs.map<DisplayValue>((reducerId) => {
             const fieldReducer = fieldReducers.get(reducerId);
+            let formatter = fmt;
+
+            if (fieldReducer.id === ReducerID.diffperc) {
+              formatter = getDisplayProcessor({
+                field: {
+                  ...field,
+                  config: {
+                    ...field.config,
+                    unit: 'percent',
+                  },
+                },
+                theme,
+              });
+            }
+
+            if (
+              fieldReducer.id === ReducerID.count ||
+              fieldReducer.id === ReducerID.changeCount ||
+              fieldReducer.id === ReducerID.distinctCount
+            ) {
+              if (!countFormatter) {
+                countFormatter = getDisplayProcessor({
+                  field: {
+                    ...field,
+                    config: {
+                      ...field.config,
+                      unit: 'none',
+                    },
+                  },
+                  theme,
+                });
+              }
+              formatter = countFormatter;
+            }
 
             return {
-              ...fmt(fieldCalcs[reducerId]),
+              ...formatter(fieldCalcs[reducerId]),
               title: fieldReducer.name,
               description: fieldReducer.description,
             };

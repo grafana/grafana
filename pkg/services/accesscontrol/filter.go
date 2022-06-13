@@ -9,15 +9,15 @@ import (
 )
 
 var sqlIDAcceptList = map[string]struct{}{
-	"org_user.user_id":    {},
-	"role.id":             {},
-	"t.id":                {},
-	"team.id":             {},
-	"u.id":                {},
-	"\"user\".\"id\"":     {}, // For Postgres
-	"`user`.`id`":         {}, // For MySQL and SQLite
-	"dashboard.id":        {},
-	"dashboard.folder_id": {},
+	"id":               {},
+	"org_user.user_id": {},
+	"role.uid":         {},
+	"t.id":             {},
+	"team.id":          {},
+	"u.id":             {},
+	"\"user\".\"id\"":  {}, // For Postgres
+	"`user`.`id`":      {}, // For MySQL and SQLite
+	"dashboard.uid":    {},
 }
 
 var (
@@ -44,7 +44,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgId][a])
 		if hasWildcard {
 			wildcards += 1
 			continue
@@ -85,7 +85,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
 	ids = make(map[interface{}]struct{})
 
 	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
@@ -94,7 +94,7 @@ func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, 
 	}
 
 	parser := parseStringAttribute
-	if strings.HasSuffix(prefix, "id:") {
+	if strings.HasSuffix(prefix, ":id:") {
 		parser = parseIntAttribute
 	}
 

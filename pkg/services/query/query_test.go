@@ -2,6 +2,7 @@ package query_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -12,18 +13,29 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
 	t.Run("it attaches custom headers to the request", func(t *testing.T) {
-		tc := setup()
+		tc := setup(t)
 		tc.dataSourceCache.ds.JsonData = simplejson.NewFromAny(map[string]interface{}{"httpHeaderName1": "foo", "httpHeaderName2": "bar"})
-		tc.secretService.decryptedJson = map[string]string{"httpHeaderValue1": "test-header", "httpHeaderValue2": "test-header2"}
 
-		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
+		secureJsonData, err := json.Marshal(map[string]string{"httpHeaderValue1": "test-header", "httpHeaderValue2": "test-header2"})
+		require.NoError(t, err)
+
+		err = tc.secretStore.Set(context.Background(), tc.dataSourceCache.ds.OrgId, tc.dataSourceCache.ds.Name, "datasource", string(secureJsonData))
+		require.NoError(t, err)
+
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
 		require.Nil(t, err)
 
 		require.Equal(t, map[string]string{"foo": "test-header", "bar": "test-header2"}, tc.pluginContext.req.Headers)
@@ -36,7 +48,7 @@ func TestQueryData(t *testing.T) {
 		}
 		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
 
-		tc := setup()
+		tc := setup(t)
 		tc.oauthTokenService.passThruEnabled = true
 		tc.oauthTokenService.token = token
 
@@ -49,28 +61,68 @@ func TestQueryData(t *testing.T) {
 		}
 		require.Equal(t, expected, tc.pluginContext.req.Headers)
 	})
+
+	t.Run("it doesn't add cookie header to the request when keepCookies configured and no cookies provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Empty(t, tc.pluginContext.req.Headers)
+	})
+
+	t.Run("it adds cookie header to the request when keepCookies configured and cookie provided", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		httpReq.AddCookie(&http.Cookie{Name: "a"})
+		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
+		httpReq.AddCookie(&http.Cookie{Name: "b"})
+		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
+		httpReq.AddCookie(&http.Cookie{Name: "c"})
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
+	})
 }
 
-func setup() *testContext {
+func setup(t *testing.T) *testContext {
 	pc := &fakePluginClient{}
-	sc := &fakeSecretsService{}
 	dc := &fakeDataSourceCache{ds: &models.DataSource{}}
 	tc := &fakeOAuthTokenService{}
 	rv := &fakePluginRequestValidator{}
 
+	ss := kvstore.SetupTestService(t)
+	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+
 	return &testContext{
 		pluginContext:          pc,
-		secretService:          sc,
+		secretStore:            ss,
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, nil, rv, sc, pc, tc),
+		queryService:           query.ProvideService(nil, dc, nil, rv, ds, pc, tc),
 	}
 }
 
 type testContext struct {
 	pluginContext          *fakePluginClient
-	secretService          *fakeSecretsService
+	secretStore            kvstore.SecretsKVStore
 	dataSourceCache        *fakeDataSourceCache
 	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
@@ -106,16 +158,6 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 
 func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
 	return ts.passThruEnabled
-}
-
-type fakeSecretsService struct {
-	secrets.Service
-
-	decryptedJson map[string]string
-}
-
-func (s *fakeSecretsService) DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error) {
-	return s.decryptedJson, nil
 }
 
 type fakeDataSourceCache struct {

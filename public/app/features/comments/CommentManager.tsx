@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
+import { Unsubscribable } from 'rxjs';
+
 import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Unsubscribable } from 'rxjs';
 
 import { CommentView } from './CommentView';
 import { Message, MessagePacket } from './types';

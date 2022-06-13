@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
@@ -32,8 +31,8 @@ func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 	}, retry)
 }
 
-func inTransactionWithRetry(callback DBTransactionFunc, retry int) error {
-	return inTransactionWithRetryCtx(context.Background(), x, callback, retry)
+func inTransactionWithRetry(callback DBTransactionFunc, engine *xorm.Engine, retry int) error {
+	return inTransactionWithRetryCtx(context.Background(), engine, callback, retry)
 }
 
 func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc, retry int) error {
@@ -63,17 +62,17 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	var sqlError sqlite3.Error
 	if errors.As(err, &sqlError) && retry < 5 && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
 		if rollErr := sess.Rollback(); rollErr != nil {
-			return errutil.Wrapf(err, "Rolling back transaction due to error failed: %s", rollErr)
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
 		sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
-		return inTransactionWithRetry(callback, retry+1)
+		return inTransactionWithRetry(callback, engine, retry+1)
 	}
 
 	if err != nil {
 		if rollErr := sess.Rollback(); rollErr != nil {
-			return errutil.Wrapf(err, "Rolling back transaction due to error failed: %s", rollErr)
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
 		return err
 	}
@@ -90,12 +89,4 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	}
 
 	return nil
-}
-
-func inTransaction(callback DBTransactionFunc) error {
-	return inTransactionWithRetry(callback, 0)
-}
-
-func inTransactionCtx(ctx context.Context, callback DBTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, x, callback, 0)
 }

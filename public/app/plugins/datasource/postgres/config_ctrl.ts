@@ -1,10 +1,12 @@
 import { find } from 'lodash';
+
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';

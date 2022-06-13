@@ -16,21 +16,20 @@ import (
 
 var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	models.PERMISSION_VIEW: {
-		ac.ActionDashboardsRead,
+		dashboards.ActionDashboardsRead,
 	},
 	models.PERMISSION_EDIT: {
-		ac.ActionDashboardsRead,
-		ac.ActionDashboardsWrite,
-		ac.ActionDashboardsCreate,
-		ac.ActionDashboardsDelete,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsDelete,
 	},
 	models.PERMISSION_ADMIN: {
-		ac.ActionDashboardsRead,
-		ac.ActionDashboardsWrite,
-		ac.ActionDashboardsCreate,
-		ac.ActionDashboardsDelete,
-		ac.ActionDashboardsPermissionsRead,
-		ac.ActionDashboardsPermissionsWrite,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsCreate,
+		dashboards.ActionDashboardsDelete,
+		dashboards.ActionDashboardsPermissionsRead,
+		dashboards.ActionDashboardsPermissionsWrite,
 	},
 }
 
@@ -39,15 +38,14 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 		dashboards.ActionFoldersRead,
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
+		dashboards.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersCreate,
 		dashboards.ActionFoldersDelete,
 	}...),
 	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersCreate,
 		dashboards.ActionFoldersDelete,
 		dashboards.ActionFoldersPermissionsRead,
 		dashboards.ActionFoldersPermissionsWrite,
@@ -56,6 +54,8 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 
 func AddDashboardPermissionsMigrator(mg *migrator.Migrator) {
 	mg.AddMigration("dashboard permissions", &dashboardPermissionsMigrator{})
+	mg.AddMigration("dashboard permissions uid scopes", &dashboardUidPermissionMigrator{})
+	mg.AddMigration("drop managed folder create actions", &managedFolderCreateAction{})
 }
 
 var _ migrator.CodeMigration = new(dashboardPermissionsMigrator)
@@ -129,7 +129,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 
 	var allRoles []*ac.Role
 	rolesToCreate := []*ac.Role{}
-	assignments := map[int64]map[string]struct{}{}
 	for orgID, roles := range permissionMap {
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
@@ -138,10 +137,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 			}
 			if role.ID == 0 {
 				rolesToCreate = append(rolesToCreate, &ac.Role{OrgID: orgID, Name: name})
-				if _, ok := assignments[orgID]; !ok {
-					assignments[orgID] = map[string]struct{}{}
-				}
-				assignments[orgID][name] = struct{}{}
 			} else {
 				allRoles = append(allRoles, &role)
 			}
@@ -153,16 +148,11 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return err
 	}
 
-	rolesToAssign := map[int64]map[string]*ac.Role{}
 	for i := range createdRoles {
-		if _, ok := rolesToAssign[createdRoles[i].OrgID]; !ok {
-			rolesToAssign[createdRoles[i].OrgID] = map[string]*ac.Role{}
-		}
-		rolesToAssign[createdRoles[i].OrgID][createdRoles[i].Name] = createdRoles[i]
 		allRoles = append(allRoles, createdRoles[i])
 	}
 
-	if err := m.bulkAssignRoles(rolesToAssign, assignments); err != nil {
+	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return err
 	}
 
@@ -228,4 +218,203 @@ func getRoleName(p models.DashboardAcl) string {
 		return fmt.Sprintf("managed:teams:%d:permissions", p.TeamID)
 	}
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(string(*p.Role)))
+}
+
+var _ migrator.CodeMigration = new(dashboardUidPermissionMigrator)
+
+type dashboardUidPermissionMigrator struct {
+	migrator.MigrationBase
+}
+
+func (d *dashboardUidPermissionMigrator) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (d *dashboardUidPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	if err := d.migrateWildcards(sess); err != nil {
+		return err
+	}
+	return d.migrateIdScopes(sess)
+}
+
+func (d *dashboardUidPermissionMigrator) migrateWildcards(sess *xorm.Session) error {
+	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'dashboards:create' AND scope LIKE 'dashboards%'"); err != nil {
+		return err
+	}
+	if _, err := sess.Exec("UPDATE permission SET scope = 'dashboards:uid:*' WHERE scope = 'dashboards:id:*'"); err != nil {
+		return err
+	}
+	if _, err := sess.Exec("UPDATE permission SET scope = 'folders:uid:*' WHERE scope = 'folders:id:*'"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *dashboardUidPermissionMigrator) migrateIdScopes(sess *xorm.Session) error {
+	type dashboard struct {
+		ID       int64  `xorm:"id"`
+		UID      string `xorm:"uid"`
+		IsFolder bool
+	}
+	var dashboards []dashboard
+	if err := sess.SQL("SELECT id, uid, is_folder FROM dashboard").Find(&dashboards); err != nil {
+		return err
+	}
+
+	for _, d := range dashboards {
+		var idScope string
+		var uidScope string
+
+		if d.IsFolder {
+			idScope = ac.Scope("folders", "id", strconv.FormatInt(d.ID, 10))
+			uidScope = ac.Scope("folders", "uid", d.UID)
+		} else {
+			idScope = ac.Scope("dashboards", "id", strconv.FormatInt(d.ID, 10))
+			uidScope = ac.Scope("dashboards", "uid", d.UID)
+		}
+
+		if _, err := sess.Exec("UPDATE permission SET scope = ? WHERE scope = ?", uidScope, idScope); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type managedFolderCreateAction struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderCreateAction) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderCreateAction) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'folders:create' AND scope LIKE 'folders:uid:%'"); err != nil {
+		return err
+	}
+	return nil
+}
+
+const managedFolderAlertActionsMigratorID = "managed folder permissions alert actions migration"
+
+func AddManagedFolderAlertActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsMigratorID, &managedFolderAlertActionsMigrator{})
+}
+
+type managedFolderAlertActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderAlertActionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var ids []interface{}
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			if hasFolderView(p) {
+				toAdd = append(toAdd, ac.Permission{
+					RoleID:  id,
+					Updated: now,
+					Created: now,
+					Scope:   scope,
+					Action:  ac.ActionAlertingRuleRead,
+				})
+			}
+
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				toAdd = append(
+					toAdd,
+					ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleCreate,
+					},
+					ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleDelete,
+					},
+					ac.Permission{
+						RoleID:  id,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAlertingRuleUpdate,
+					},
+				)
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err := batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hasFolderAdmin(permissions []ac.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
+}
+
+func hasFolderEdit(permissions []ac.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
+}
+
+func hasFolderView(permissions []ac.Permission) bool {
+	return hasActions(folderPermissionTranslation[models.PERMISSION_VIEW], permissions)
+}
+
+func hasActions(actions []string, permissions []ac.Permission) bool {
+	var contains int
+	for _, action := range actions {
+		for _, p := range permissions {
+			if action == p.Action {
+				contains++
+				break
+			}
+		}
+	}
+	return contains >= len(actions)
 }

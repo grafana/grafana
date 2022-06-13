@@ -1,8 +1,11 @@
 import React, { FunctionComponent, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
-import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
+
 import { getAlignmentPickerData } from '../functions';
+import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
+
 import { QueryEditorRow } from '.';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };

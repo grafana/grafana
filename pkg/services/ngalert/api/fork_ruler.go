@@ -26,7 +26,7 @@ func NewForkedRuler(datasourceCache datasources.CacheService, lotex *LotexRuler,
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -39,7 +39,7 @@ func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqCont
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -52,7 +52,7 @@ func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) 
 }
 
 func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -65,7 +65,7 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext
 }
 
 func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -78,7 +78,7 @@ func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) re
 }
 
 func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -91,7 +91,7 @@ func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) respons
 }
 
 func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
-	backendType, err := backendType(ctx, f.DatasourceCache)
+	backendType, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -110,11 +110,11 @@ func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, co
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
+	return f.GrafanaRuler.RouteDeleteAlertRules(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
+	return f.GrafanaRuler.RouteDeleteAlertRules(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
@@ -122,7 +122,7 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.Req
 }
 
 func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
+	return f.GrafanaRuler.RouteGetRulesGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {

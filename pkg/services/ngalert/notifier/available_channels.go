@@ -190,6 +190,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					PropertyName: "message",
 				},
+				{ // New in 9.0.
+					Label:        "Subject",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated subject of the email",
+					PropertyName: "subject",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
 			},
 		},
 		{
@@ -383,7 +391,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 					PropertyName: "recipient",
 					Required:     true,
-					DependsOn:    "secureSettings.url",
+					DependsOn:    "url",
 				},
 				// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 				// However, since the UI doesn't allow to say that a field is required or not depending on another field,
@@ -397,7 +405,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "token",
 					Secure:       true,
 					Required:     true,
-					DependsOn:    "secureSettings.url",
+					DependsOn:    "url",
 				},
 				{
 					Label:        "Username",
@@ -463,7 +471,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "url",
 					Secure:       true,
 					Required:     true,
-					DependsOn:    "secureSettings.token",
+					DependsOn:    "token",
 				},
 				{ // New in 8.4.
 					Label:        "Endpoint URL",
@@ -561,6 +569,21 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "Teams incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated title of the Teams message.",
+					PropertyName: "title",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
+				{
+					Label:        "Section Title",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Section title for the Teams message. Leave blank for none.",
+					PropertyName: "sectiontitle",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
@@ -839,6 +862,20 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "https://api.opsgenie.com/v2/alerts",
 					PropertyName: "apiUrl",
 					Required:     true,
+				},
+				{
+					Label:        "Message",
+					Description:  "Alert text limited to 130 characters.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.title" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "description",
 				},
 				{
 					Label:        "Auto close incidents",

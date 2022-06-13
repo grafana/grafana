@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import { css } from '@emotion/css';
-import { LegendPlacement } from '@grafana/schema';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { getFocusStyles } from '../../themes/mixins';
+import { LegendPlacement } from '@grafana/schema';
+
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 /**
  * @beta
@@ -66,6 +68,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       if (legendMeasure) {
         size = { width: width - legendMeasure.width, height };
       }
+
+      if (legend.props.width) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
+      }
       break;
   }
 
@@ -113,6 +120,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
+  width?: number;
 }
 
 /**

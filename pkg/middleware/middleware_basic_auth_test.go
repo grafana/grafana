@@ -1,14 +1,13 @@
 package middleware
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -28,10 +27,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -44,27 +40,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
-		const salt = "Salt"
 		const orgID int64 = 2
 
-		bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-			t.Log("Handling LoginUserQuery")
-			encoded, err := util.EncodePassword(password, salt)
-			if err != nil {
-				return err
-			}
-			query.User = &models.User{
-				Password: encoded,
-				Salt:     salt,
-			}
-			return nil
-		})
-
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			t.Log("Handling GetSignedInUserQuery")
-			query.Result = &models.SignedInUser{OrgId: orgID, UserId: id}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: id}
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -78,25 +56,12 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		login.Init()
+		encoded, err := util.EncodePassword(password, salt)
+		require.NoError(t, err)
 
-		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-			encoded, err := util.EncodePassword(password, salt)
-			if err != nil {
-				return err
-			}
-			query.Result = &models.User{
-				Password: encoded,
-				Id:       id,
-				Salt:     salt,
-			}
-			return nil
-		})
-
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{UserId: query.UserId}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -107,6 +72,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()
@@ -119,10 +85,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		bus.AddHandler("user-query", func(ctx context.Context, loginUserQuery *models.GetUserByLoginQuery) error {
-			return nil
-		})
-
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
 		sc.exec()

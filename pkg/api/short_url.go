@@ -47,7 +47,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 		URL: url,
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {

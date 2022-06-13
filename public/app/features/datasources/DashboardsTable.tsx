@@ -1,6 +1,8 @@
 import React, { FC } from 'react';
-import { PluginDashboard } from '../../types';
+
 import { Button, Icon } from '@grafana/ui';
+
+import { PluginDashboard } from '../../types';
 
 export interface Props {
   dashboards: PluginDashboard[];
@@ -40,7 +42,13 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
                   </Button>
                 )}
                 {dashboard.imported && (
-                  <Button icon="trash-alt" variant="destructive" size="sm" onClick={() => onRemove(dashboard)} />
+                  <Button
+                    aria-label="Delete dashboard"
+                    icon="trash-alt"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onRemove(dashboard)}
+                  />
                 )}
               </td>
             </tr>

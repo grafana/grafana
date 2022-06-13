@@ -1,8 +1,11 @@
+import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
-import { Select } from '@grafana/ui';
+
 import { SelectableValue, toOption } from '@grafana/data';
-import { QueryBuilderLabelFilter } from './types';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
+
+import { QueryBuilderLabelFilter } from './types';
 
 export interface Props {
   defaultOp: string;
@@ -15,8 +18,8 @@ export interface Props {
 
 export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
   const [state, setState] = useState<{
-    labelNames?: Array<SelectableValue<any>>;
-    labelValues?: Array<SelectableValue<any>>;
+    labelNames?: SelectableValue[];
+    labelValues?: SelectableValue[];
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
@@ -25,22 +28,22 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     return item.op === operators[0].label;
   };
 
-  const getValue = (item: any) => {
-    if (item && item.value) {
-      if (item.value.indexOf('|') > 0) {
-        return item.value.split('|').map((x: any) => ({ label: x, value: x }));
+  const getSelectOptionsFromString = (item?: string): string[] => {
+    if (item) {
+      if (item.indexOf('|') > 0) {
+        return item.split('|');
       }
-      return toOption(item.value);
+      return [item];
     }
-    return null;
+    return [];
   };
 
-  const getOptions = () => {
-    if (!state.labelValues && item && item.value && item.value.indexOf('|') > 0) {
-      return getValue(item);
-    }
+  const getOptions = (): SelectableValue[] => {
+    const labelValues = state.labelValues ? [...state.labelValues] : [];
+    const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
 
-    return state.labelValues;
+    // Remove possible duplicated values
+    return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
 
   return (
@@ -83,7 +86,11 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
         <Select
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
-          value={getValue(item)}
+          value={
+            isMultiSelect()
+              ? getSelectOptionsFromString(item?.value).map(toOption)
+              : getSelectOptionsFromString(item?.value).map(toOption)[0]
+          }
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });

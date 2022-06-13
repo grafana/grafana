@@ -1,6 +1,7 @@
 import React from 'react';
-import { Icon } from '../../../Icon/Icon';
 import { components, OptionProps } from 'react-select';
+
+import { Icon } from '../../../Icon/Icon';
 
 // https://github.com/JedWatson/react-select/issues/3038
 export interface ExtendedOptionProps extends OptionProps<any, any> {

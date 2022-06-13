@@ -1,8 +1,9 @@
-import { FormEvent, useCallback, useReducer } from 'react';
 import { debounce } from 'lodash';
+import { FormEvent, useCallback, useReducer } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
+
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -11,7 +12,9 @@ import {
   SET_TAGS,
   TOGGLE_SORT,
   TOGGLE_STARRED,
+  DATASOURCE_CHANGE,
 } from '../reducers/actionTypes';
+import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters, parseRouteParams } from '../utils';
 
@@ -22,15 +25,20 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   const initialState = { ...defaultQuery, ...defaults, ...queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
-  const onQueryChange = (query: string) => {
+  const onQueryChange = useCallback((query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
     updateLocation({ query });
-  };
+  }, []);
 
-  const onTagFilterChange = (tags: string[]) => {
+  const onTagFilterChange = useCallback((tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
     updateLocation({ tag: tags });
-  };
+  }, []);
+
+  const onDatasourceChange = useCallback((datasource?: string) => {
+    dispatch({ type: DATASOURCE_CHANGE, payload: datasource });
+    updateLocation({ datasource });
+  }, []);
 
   const onTagAdd = useCallback(
     (tag: string) => {
@@ -40,30 +48,30 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     [query.tag]
   );
 
-  const onClearFilters = () => {
+  const onClearFilters = useCallback(() => {
     dispatch({ type: CLEAR_FILTERS });
     updateLocation(defaultQueryParams);
-  };
+  }, []);
 
-  const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
+  const onStarredFilterChange = useCallback((e: FormEvent<HTMLInputElement>) => {
     const starred = (e.target as HTMLInputElement).checked;
     dispatch({ type: TOGGLE_STARRED, payload: starred });
     updateLocation({ starred: starred || null });
-  };
+  }, []);
 
-  const onSortChange = (sort: SelectableValue | null) => {
+  const onSortChange = useCallback((sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
     updateLocation({ sort: sort?.value, layout: SearchLayout.List });
-  };
+  }, []);
 
-  const onLayoutChange = (layout: SearchLayout) => {
+  const onLayoutChange = useCallback((layout: SearchLayout) => {
     dispatch({ type: LAYOUT_CHANGE, payload: layout });
     if (layout === SearchLayout.Folders) {
       updateLocation({ layout, sort: null });
       return;
     }
     updateLocation({ layout });
-  };
+  }, []);
 
   return {
     query,
@@ -75,5 +83,6 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onTagAdd,
     onSortChange,
     onLayoutChange,
+    onDatasourceChange,
   };
 };

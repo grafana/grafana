@@ -22,13 +22,15 @@ type DashAlertExtractor interface {
 type DashAlertExtractorService struct {
 	datasourcePermissionsService permissions.DatasourcePermissionsService
 	datasourceService            datasources.DataSourceService
+	alertStore                   AlertStore
 	log                          log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, alertStore AlertStore) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
 		datasourcePermissionsService: datasourcePermissionsService,
 		datasourceService:            datasourceService,
+		alertStore:                   alertStore,
 		log:                          log.New("alerting.extractor"),
 	}
 }
@@ -231,7 +233,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 		alert.Settings = jsonAlert
 
 		// validate
-		_, err = NewRuleFromDBAlert(ctx, alert, logTranslationFailures)
+		_, err = NewRuleFromDBAlert(ctx, e.alertStore, alert, logTranslationFailures)
 		if err != nil {
 			return nil, err
 		}

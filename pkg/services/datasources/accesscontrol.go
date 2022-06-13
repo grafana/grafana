@@ -3,7 +3,8 @@ package datasources
 import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
-	ScopeRoot = "datasources"
+	ScopeRoot   = "datasources"
+	ScopePrefix = ScopeRoot + ":uid:"
 
 	ActionRead             = "datasources:read"
 	ActionQuery            = "datasources:query"
@@ -36,7 +37,6 @@ var (
 	NewPageAccess = accesscontrol.EvalAll(
 		accesscontrol.EvalPermission(ActionRead),
 		accesscontrol.EvalPermission(ActionCreate),
-		accesscontrol.EvalPermission(ActionWrite),
 	)
 
 	// EditPageAccess is used to protect the "Configure > Data sources > Edit" page access

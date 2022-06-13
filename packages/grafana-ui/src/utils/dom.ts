@@ -1,5 +1,5 @@
 // Node.closest() polyfill
-if ('Element' in window && !Element.prototype.closest) {
+if (typeof window !== 'undefined' && 'Element' in window && !Element.prototype.closest) {
   Element.prototype.closest = function (this: any, s: string) {
     const matches = (this.document || this.ownerDocument).querySelectorAll(s);
     let el = this;
@@ -37,5 +37,5 @@ export function getNextCharacter(global?: any) {
   const range = selection.getRangeAt(0);
   const text = selection.anchorNode.textContent;
   const offset = range.startOffset;
-  return text!.substr(offset, 1);
+  return text!.slice(offset, offset + 1);
 }

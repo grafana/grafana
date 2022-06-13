@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -41,7 +42,9 @@ type Options struct {
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
 ) (*Server, error) {
+	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
@@ -118,10 +121,10 @@ func (s *Server) init() error {
 		return err
 	}
 
-	login.Init()
+	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
 	social.ProvideService(s.cfg)
 
-	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {
+	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
 		return err
 	}
 

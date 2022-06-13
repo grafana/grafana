@@ -1,5 +1,6 @@
 import { DataFrame, FieldConfig, FieldSparkline, IndexVector } from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
+
 import { applyNullInsertThreshold } from '../GraphNG/nullInsertThreshold';
 
 /** @internal
@@ -13,14 +14,16 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
   };
 
   return applyNullInsertThreshold({
-    refId: 'sparkline',
-    fields: [
-      sparkline.x ?? IndexVector.newField(length),
-      {
-        ...sparkline.y,
-        config: yFieldConfig,
-      },
-    ],
-    length,
+    frame: {
+      refId: 'sparkline',
+      fields: [
+        sparkline.x ?? IndexVector.newField(length),
+        {
+          ...sparkline.y,
+          config: yFieldConfig,
+        },
+      ],
+      length,
+    },
   });
 }

@@ -1,10 +1,13 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import React from 'react';
 import SVG from 'react-inlinesvg';
+
+import { GrafanaTheme } from '@grafana/data';
+
+import { useTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { IconName, IconType, IconSize } from '../../types/icon';
+
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 import { getIconSubDir, getSvgSize } from './utils';
 
@@ -17,14 +20,15 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    // line-height: 0; is needed for correct icon alignment in Safari
     container: css`
       label: Icon;
       display: inline-block;
+      line-height: 0;
     `,
     icon: css`
       vertical-align: middle;
       display: inline-block;
-      margin-bottom: ${theme.spacing.xxs};
       fill: currentColor;
     `,
     orange: css`

@@ -6,11 +6,17 @@ export enum RuleFormType {
   cloudRecording = 'cloud-recording',
 }
 
+export interface RuleForm {
+  title: string;
+  id: number;
+}
+
 export interface RuleFormValues {
   // common
   name: string;
   type?: RuleFormType;
   dataSourceName: string | null;
+  group: string;
 
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;
@@ -20,13 +26,12 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: { title: string; id: number } | null;
+  folder: RuleForm | null;
   evaluateEvery: string;
   evaluateFor: string;
 
   // cortex / loki rules
   namespace: string;
-  group: string;
   forTime: number;
   forTimeUnit: string;
   expression: string;

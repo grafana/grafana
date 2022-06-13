@@ -1,5 +1,6 @@
-import { parseAtomFeed } from './atom';
 import fs from 'fs';
+
+import { parseAtomFeed } from './atom';
 
 describe('Atom feed parser', () => {
   it('should successfully parse an atom feed', async () => {

@@ -24,14 +24,6 @@
 // swagger:meta
 package definitions
 
-// swagger:model
-type ValidationError struct {
-	Msg string `json:"msg"`
-}
-
-// swagger:model
-type Ack struct{}
-
 type Backend int
 
 const (

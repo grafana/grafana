@@ -1,3 +1,4 @@
+import { binaryScalarOperations } from './binaryScalarOperations';
 import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   defaultAddOperationHandler,
@@ -15,7 +16,6 @@ import {
   VisualQueryModeller,
 } from './shared/types';
 import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
-import { binaryScalarOperations } from './binaryScalarOperations';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
@@ -154,12 +154,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({
       id: PromOperationId.Cosh,
       category: PromVisualQueryOperationCategory.Trigonometric,
-    }),
-    createFunction({
-      id: PromOperationId.CountValues,
-      params: [{ name: 'Identifier', type: 'string' }],
-      defaultParams: ['count'],
-      renderer: functionRendererLeft,
     }),
     createFunction({
       id: PromOperationId.DayOfMonth,

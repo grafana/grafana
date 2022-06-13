@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -26,18 +26,23 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 		dashboardStore := &dashboards.FakeDashboardStore{}
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil, nil)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
 		mockSQLStore := mockstore.NewSQLStoreMock()
+		ac := accesscontrolmock.New()
+		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 		hs := &HTTPServer{
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
 			dashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 			),
+			AccessControl: accesscontrolmock.New().WithDisabled(),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
@@ -47,12 +52,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-
-			getDashboardQueryResult := models.NewDashboard("Dash")
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = getDashboardQueryResult
-			mockSQLStore.ExpectedError = nil
-			hs.SQLStore = mockSQLStore
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc, hs)
@@ -95,10 +94,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
 				},
 			})
-
-			mockSQLStore := mockstore.NewSQLStoreMock()
-			mockSQLStore.ExpectedDashboard = models.NewDashboard("Dash")
-			hs.SQLStore = mockSQLStore
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {

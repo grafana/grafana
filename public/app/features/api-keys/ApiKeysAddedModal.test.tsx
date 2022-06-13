@@ -1,26 +1,41 @@
-﻿import React from 'react';
-import { shallow } from 'enzyme';
+﻿import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { ApiKeysAddedModal, Props } from './ApiKeysAddedModal';
 
-const setup = (propOverrides?: object) => {
+describe('ApiKeysAddedModal', () => {
   const props: Props = {
     onDismiss: jest.fn(),
-    apiKey: 'api key test',
+    apiKey: 'myApiKey',
     rootPath: 'test/path',
   };
 
-  Object.assign(props, propOverrides);
+  it('should render without throwing', () => {
+    expect(() => render(<ApiKeysAddedModal {...props} />)).not.toThrow();
+  });
 
-  const wrapper = shallow(<ApiKeysAddedModal {...props} />);
+  it('displays the apiKey in a readOnly input', () => {
+    render(<ApiKeysAddedModal {...props} />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue(props.apiKey);
+    expect(input).toHaveAttribute('readonly');
+  });
 
-  return {
-    wrapper,
-  };
-};
+  it('has a `Copy to clipboard` button', () => {
+    render(<ApiKeysAddedModal {...props} />);
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+  });
 
-describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
-    expect(wrapper).toMatchSnapshot();
+  it('displays the correct curl path', () => {
+    render(<ApiKeysAddedModal {...props} />);
+    expect(
+      screen.getByText('curl -H "Authorization: Bearer myApiKey" test/path/api/dashboards/home')
+    ).toBeInTheDocument();
+  });
+
+  it('calls onDismiss when the modal is closed', () => {
+    render(<ApiKeysAddedModal {...props} />);
+    screen.getByRole('button', { name: 'Close dialogue' }).click();
+    expect(props.onDismiss).toHaveBeenCalled();
   });
 });

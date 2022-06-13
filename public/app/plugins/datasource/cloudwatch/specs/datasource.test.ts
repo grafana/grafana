@@ -1,4 +1,7 @@
 import { interval, lastValueFrom, of, throwError } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
+
 import {
   DataFrame,
   DataQueryErrorType,
@@ -6,10 +9,14 @@ import {
   dateMath,
   getFrameDisplayName,
 } from '@grafana/data';
-
-import * as redux from 'app/store/store';
-import { CloudWatchDatasource } from '../datasource';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import * as redux from 'app/store/store';
+
+import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
+import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
+import { CloudWatchDatasource } from '../datasource';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -19,14 +26,7 @@ import {
   MetricEditorMode,
   MetricQueryType,
 } from '../types';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
-import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
-import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
-
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -506,35 +506,6 @@ describe('CloudWatchDatasource', () => {
         });
       });
     });
-    describe('when regions query is used', () => {
-      describe('and region param is left out', () => {
-        it('should use the default region', async () => {
-          const { ds, instanceSettings } = getTestContext();
-          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
-
-          await ds.metricFindQuery('metrics(testNamespace)');
-
-          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
-            namespace: 'testNamespace',
-            region: instanceSettings.jsonData.defaultRegion,
-          });
-        });
-      });
-
-      describe('and region param is defined by user', () => {
-        it('should use the user defined region', async () => {
-          const { ds } = getTestContext();
-          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
-
-          await ds.metricFindQuery('metrics(testNamespace2, custom-region)');
-
-          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
-            namespace: 'testNamespace2',
-            region: 'custom-region',
-          });
-        });
-      });
-    });
   });
 
   describe('When query region is "default"', () => {
@@ -608,19 +579,23 @@ describe('CloudWatchDatasource', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      // We interpolate `expression` and `region` in CloudWatchLogsQuery
+      // We interpolate `region` in CloudWatchLogsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(2);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(1);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
-      const templateSrv: any = { replace: jest.fn(), getVariables: () => [] };
+      const templateSrv: any = {
+        replace: jest.fn(),
+        getVariables: () => [],
+        getVariableName: jest.fn((name: string) => name),
+      };
       const { ds } = getTestContext({ templateSrv });
       const variableName = 'someVar';
       const logQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
         id: 'someId',
         refId: 'someRefId',
-        queryMode: 'Metrics',
         expression: `$${variableName}`,
         region: `$${variableName}`,
         period: `$${variableName}`,
@@ -637,9 +612,12 @@ describe('CloudWatchDatasource', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(9);
+      expect(templateSrv.replace).toHaveBeenCalledTimes(7);
+
+      expect(templateSrv.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
+      expect(templateSrv.getVariableName).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -1,6 +1,7 @@
+import tinycolor from 'tinycolor2';
+
 import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
-import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
   panelCtrl: any;
   panel: any;

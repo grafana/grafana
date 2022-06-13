@@ -1,10 +1,18 @@
-import { TraceSpan } from './trace';
 import React from 'react';
+
+import { TraceSpan } from './trace';
 
 export type SpanLinkDef = {
   href: string;
   onClick?: (event: any) => void;
   content: React.ReactNode;
+  title?: string;
 };
 
-export type SpanLinkFunc = (span: TraceSpan) => SpanLinkDef | undefined;
+export type SpanLinks = {
+  logLinks?: SpanLinkDef[];
+  traceLinks?: SpanLinkDef[];
+  metricLinks?: SpanLinkDef[];
+};
+
+export type SpanLinkFunc = (span: TraceSpan) => SpanLinks | undefined;

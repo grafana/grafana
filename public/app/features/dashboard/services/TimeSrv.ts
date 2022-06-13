@@ -1,4 +1,5 @@
 import { cloneDeep, extend, isString } from 'lodash';
+
 import {
   dateMath,
   dateTime,
@@ -9,14 +10,15 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
-import { config } from 'app/core/config';
-import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 import { locationService } from '@grafana/runtime';
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
-import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
+import { config } from 'app/core/config';
+import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+
+import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
 import { TimeModel } from '../state/TimeModel';
+import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {
   time: any;
@@ -167,14 +169,9 @@ export class TimeSrv {
       }
     }
 
-    let paramsJSON: Record<string, string> = {};
-    params.forEach(function (value, key) {
-      paramsJSON[key] = value;
-    });
-
     // but if refresh explicitly set then use that
     this.refresh = getRefreshFromUrl({
-      params: paramsJSON,
+      urlRefresh: params.get('refresh'),
       currentRefresh: this.refresh,
       refreshIntervals: Array.isArray(this.timeModel?.timepicker?.refresh_intervals)
         ? this.timeModel?.timepicker?.refresh_intervals
@@ -201,7 +198,7 @@ export class TimeSrv {
       if (from !== urlRange.from || to !== urlRange.to) {
         // issue update
         this.initTimeFromUrl();
-        this.setTime(this.time, true);
+        this.setTime(this.time, false);
       }
     } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);

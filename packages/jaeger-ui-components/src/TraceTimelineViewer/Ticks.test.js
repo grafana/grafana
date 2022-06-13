@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
 
 import Ticks from './Ticks';
 
 describe('<Ticks>', () => {
   it('renders without exploding', () => {
-    const wrapper = shallow(<Ticks endTime={200} numTicks={5} showLabels startTime={100} />);
-    expect(wrapper).toBeDefined();
+    expect(() => render(<Ticks endTime={200} numTicks={5} showLabels startTime={100} />)).not.toThrow();
   });
 });

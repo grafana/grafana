@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
-import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
-import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
-import { AngularEditorLoader } from './AngularEditorLoader';
+
+import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
+import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+
+import { DashboardModel } from '../../state/DashboardModel';
+
+import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   editIdx: number;

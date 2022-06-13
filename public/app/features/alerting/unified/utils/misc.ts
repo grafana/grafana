@@ -1,14 +1,20 @@
+import { sortBy } from 'lodash';
+
 import { urlUtil, UrlQueryMap, Labels } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
+import {
+  GrafanaAlertState,
+  PromAlertingRuleState,
+  mapStateWithReasonToBaseState,
+} from 'app/types/unified-alerting-dto';
+
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
-import * as ruleId from './rule-id';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
-import { sortBy } from 'lodash';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { getMatcherQueryParams } from './matchers';
+import * as ruleId from './rule-id';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -124,7 +130,10 @@ const alertStateSortScore = {
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   // Make sure to handle tie-breaks because API returns alert instances in random order every time
   if (sortOrder === SortOrder.Importance) {
-    return sortBy(alerts, (alert) => [alertStateSortScore[alert.state], alertInstanceKey(alert).toLocaleLowerCase()]);
+    return sortBy(alerts, (alert) => [
+      alertStateSortScore[mapStateWithReasonToBaseState(alert.state)],
+      alertInstanceKey(alert).toLocaleLowerCase(),
+    ]);
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(alerts, (alert) => [
       new Date(alert.activeAt) || new Date(),

@@ -38,11 +38,12 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
   }
 };
 
-export const updateUserRoles = (roleUids: string[], userId: number, orgId?: number) => {
+export const updateUserRoles = (roles: Role[], userId: number, orgId?: number) => {
   let userRolesUrl = `/api/access-control/users/${userId}/roles`;
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
+  const roleUids = roles.flatMap((x) => x.uid);
   return getBackendSrv().put(userRolesUrl, {
     orgId,
     roleUids,
@@ -66,11 +67,13 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
   }
 };
 
-export const updateTeamRoles = (roleUids: string[], teamId: number, orgId?: number) => {
+export const updateTeamRoles = (roles: Role[], teamId: number, orgId?: number) => {
   let teamRolesUrl = `/api/access-control/teams/${teamId}/roles`;
   if (orgId) {
     teamRolesUrl += `?targetOrgId=${orgId}`;
   }
+  const roleUids = roles.flatMap((x) => x.uid);
+
   return getBackendSrv().put(teamRolesUrl, {
     orgId,
     roleUids,

@@ -3,7 +3,6 @@ package testinfra
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -13,15 +12,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 // StartGrafana starts a Grafana server.
@@ -35,6 +36,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	t.Helper()
 	ctx := context.Background()
 
+	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
@@ -93,15 +95,11 @@ func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 }
 
 // CreateGrafDir creates the Grafana directory.
+// The log by default is muted in the regression test, to activate it, pass option EnableLog = true
 func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	t.Helper()
 
-	tmpDir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		err := os.RemoveAll(tmpDir)
-		assert.NoError(t, err)
-	})
+	tmpDir := t.TempDir()
 
 	// Search upwards in directory tree for project root
 	var rootDir string
@@ -125,7 +123,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
-	err = os.MkdirAll(cfgDir, 0750)
+	err := os.MkdirAll(cfgDir, 0750)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
 	// nolint:gosec
@@ -183,6 +181,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	logSect, err := cfg.NewSection("log")
 	require.NoError(t, err)
+
 	_, err = logSect.NewKey("level", "debug")
 	require.NoError(t, err)
 
@@ -293,6 +292,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
+		if !o.EnableLog {
+			logSection, err := getOrCreateSection("log")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -321,4 +326,5 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	EnableLog                             bool
 }

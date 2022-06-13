@@ -1,17 +1,46 @@
-import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { shallow } from 'enzyme';
-import { CloudWatchLogsQueryField } from './LogsQueryField';
-import { ExploreId } from '../../../../types';
-import { DescribeLogGroupsRequest } from '../types';
+import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-scope
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+import { openMenu, select } from 'react-select-event';
+
 import { SelectableValue } from '@grafana/data';
-// eslint-disable-next-line lodash/import-scope
-import _, { Cancelable } from 'lodash';
+
+import { ExploreId } from '../../../../types';
+import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import { DescribeLogGroupsRequest } from '../types';
+
+import { CloudWatchLogsQueryField } from './LogsQueryField';
 
 jest
   .spyOn(_, 'debounce')
-  .mockImplementation((func: (...args: any) => any, wait?: number) => func as typeof func & Cancelable);
+  .mockImplementation((func: (...args: any) => any, wait?: number) => func as DebouncedFunc<typeof func>);
 
 describe('CloudWatchLogsQueryField', () => {
+  it('runs onRunQuery on blur of Log Groups', async () => {
+    const onRunQuery = jest.fn();
+    const ds = setupMockedDataSource();
+
+    render(
+      <CloudWatchLogsQueryField
+        absoluteRange={{ from: 1, to: 10 }}
+        exploreId={ExploreId.left}
+        datasource={ds.datasource}
+        query={{} as any}
+        onRunQuery={onRunQuery}
+        onChange={() => {}}
+      />
+    );
+
+    const multiSelect = screen.getByLabelText('Log Groups');
+    await act(async () => {
+      fireEvent.blur(multiSelect);
+    });
+    expect(onRunQuery).toHaveBeenCalled();
+  });
+
   it('updates upstream query log groups on region change', async () => {
     const onChange = jest.fn();
     const wrapper = shallow(
@@ -42,6 +71,7 @@ describe('CloudWatchLogsQueryField', () => {
                 return Promise.resolve(['log_group_2']);
               }
             },
+            getVariables: jest.fn().mockReturnValue([]),
           } as any
         }
         query={{} as any}
@@ -174,6 +204,7 @@ describe('CloudWatchLogsQueryField', () => {
                 .slice(0, Math.max(params.limit ?? 50, 50));
               return Promise.resolve(theLogGroups);
             },
+            getVariables: jest.fn().mockReturnValue([]),
           } as any
         }
         query={{} as any}
@@ -207,5 +238,34 @@ describe('CloudWatchLogsQueryField', () => {
         .map((logGroup) => logGroup.value)
         .concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3', 'VelvetGroup', 'VelvetGroup2', 'VelvetGroup3'])
     );
+  });
+
+  it('should render template variables a selectable option', async () => {
+    const { datasource } = setupMockedDataSource();
+    const onChange = jest.fn();
+
+    render(
+      <CloudWatchLogsQueryField
+        history={[]}
+        absoluteRange={{ from: 1, to: 10 }}
+        exploreId={ExploreId.left}
+        datasource={datasource}
+        query={{} as any}
+        onRunQuery={() => {}}
+        onChange={onChange}
+      />
+    );
+
+    const logGroupSelector = await screen.findByLabelText('Log Groups');
+    expect(logGroupSelector).toBeInTheDocument();
+
+    await openMenu(logGroupSelector);
+    const templateVariableSelector = await screen.findByText('Template Variables');
+    expect(templateVariableSelector).toBeInTheDocument();
+
+    userEvent.click(templateVariableSelector);
+    await select(await screen.findByLabelText('Select option'), 'test');
+
+    expect(await screen.findByText('test')).toBeInTheDocument();
   });
 });

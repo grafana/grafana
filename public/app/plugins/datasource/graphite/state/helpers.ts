@@ -1,10 +1,12 @@
-import { GraphiteQueryEditorState } from './store';
 import { clone } from 'lodash';
-import { dispatch } from '../../../../store/store';
-import { notifyApp } from '../../../../core/reducers/appNotification';
+
 import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
+import { dispatch } from '../../../../store/store';
 import { FuncInstance } from '../gfunc';
 import { GraphiteQuery, GraphiteTagOperator } from '../types';
+
+import { GraphiteQueryEditorState } from './store';
 
 /**
  * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.

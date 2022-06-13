@@ -3,7 +3,6 @@ package resourcepermissions
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -167,16 +167,7 @@ func TestApi_getPermissions(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -426,70 +417,6 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-type uidSolverTestCase struct {
-	desc           string
-	uid            string
-	resourceID     string
-	expectedStatus int
-}
-
-func TestApi_UidSolver(t *testing.T) {
-	tests := []uidSolverTestCase{
-		{
-			desc:           "expect uid to be mapped to id",
-			uid:            "resourceUID",
-			resourceID:     "1",
-			expectedStatus: http.StatusOK,
-		},
-		{
-			desc:           "expect 404 when uid is not mapped to an id",
-			uid:            "notfound",
-			resourceID:     "1",
-			expectedStatus: http.StatusNotFound,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			userPermissions := []*accesscontrol.Permission{
-				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-			}
-
-			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
-				1: accesscontrol.GroupScopesByAction(userPermissions),
-			}}, service)
-
-			seedPermissions(t, tt.resourceID, sql, service)
-
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
-
-			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
-			} else {
-				assert.Equal(t, tt.expectedStatus, recorder.Code)
-			}
-		})
-	}
-}
-
-func withSolver(options Options, solver UidSolver) Options {
-	options.UidSolver = solver
-	return options
-}
-
 func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
@@ -512,7 +439,7 @@ func contextProvider(tc *testContext) web.Handler {
 			SkipCache:    true,
 			Logger:       log.New("test"),
 		}
-		c.Map(reqCtx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }
 
@@ -528,13 +455,6 @@ var testOptions = Options{
 		"View": {"dashboards:read"},
 		"Edit": {"dashboards:read", "dashboards:write", "dashboards:delete"},
 	},
-}
-
-var testSolver = func(ctx context.Context, orgID int64, uid string) (int64, error) {
-	if uid == "resourceUID" {
-		return 1, nil
-	}
-	return 0, errors.New("not found")
 }
 
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
@@ -559,6 +479,19 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
+	assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
+	for _, p := range permissions {
+		if p.UserID != 0 {
+			assert.Equal(t, "View", p.Permission)
+		} else if p.TeamID != 0 {
+			assert.Equal(t, "Edit", p.Permission)
+		} else {
+			assert.Equal(t, "Edit", p.Permission)
+		}
+	}
 }
 
 func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {

@@ -1,8 +1,10 @@
-+++
-title = "Add a Grafana library panel to a dashboard"
-weight = 30
-aliases = ["/docs/sources/panels/library-panels/add-library-panel/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/library-panels/add-library-panel/
+  - /docs/sources/panels/library-panels/add-library-panel/
+title: Add a Grafana library panel to a dashboard
+weight: 30
+---
 
 # Add a Grafana library panel to a dashboard
 
@@ -10,11 +12,11 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 
 ## Before you begin
 
-- [Create a library panel]({{< relref "../library-panels/create-library-panel.md" >}}).
+- [Create a library panel]({{< relref "create-library-panel/" >}}).
 
 **To add a library panel to a dashboard**:
 
-1. Hover over the **+** option on the left menu, then select **Create** from the drop-down options.
+1. Hover over the **Dashboards** option on the left menu, then select **New dashboard** from the drop-down options.
 
    The **Add** panel dialog opens.
    {{< figure src="/static/img/docs/library-panels/add-library-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}

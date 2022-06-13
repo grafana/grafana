@@ -8,74 +8,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
-
-	bus.AddHandler("sql", ss.GetUserById)
-	bus.AddHandler("sql", ss.UpdateUser)
-	bus.AddHandler("sql", ss.ChangeUserPassword)
-	bus.AddHandler("sql", ss.GetUserByLogin)
-	bus.AddHandler("sql", ss.GetUserByEmail)
-	bus.AddHandler("sql", ss.SetUsingOrg)
-	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
-	bus.AddHandler("sql", ss.GetUserProfile)
-	bus.AddHandler("sql", ss.SearchUsers)
-	bus.AddHandler("sql", ss.GetUserOrgList)
-	bus.AddHandler("sql", ss.DisableUser)
-	bus.AddHandler("sql", ss.BatchDisableUsers)
-	bus.AddHandler("sql", ss.DeleteUser)
-	bus.AddHandler("sql", ss.SetUserHelpFlag)
-}
-
-func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
-	if cmd.SkipOrgSetup {
-		return -1, nil
-	}
-
-	if setting.AutoAssignOrg && cmd.OrgId != 0 {
-		err := verifyExistingOrg(sess, cmd.OrgId)
-		if err != nil {
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
+		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
 			return -1, err
 		}
-		return cmd.OrgId, nil
-	}
-
-	orgName := cmd.OrgName
-	if len(orgName) == 0 {
-		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
-	}
-
-	return getOrCreateOrg(sess, orgName)
-}
-
-type userCreationArgs struct {
-	Login          string
-	Email          string
-	Name           string
-	Company        string
-	Password       string
-	IsAdmin        bool
-	IsDisabled     bool
-	EmailVerified  bool
-	OrgID          int64
-	OrgName        string
-	DefaultOrgRole string
-}
-
-func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (int64, error) {
-	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
-		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
-			return -1, err
-		}
-		return args.OrgID, nil
+		return args.OrgId, nil
 	}
 
 	orgName := args.OrgName
@@ -87,10 +31,10 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 }
 
 // createUser creates a user in the database
-func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
+func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models.CreateUserCommand) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		var err error
 		orgID, err = ss.getOrgIDForNewUser(sess, args)
 		if err != nil {
@@ -123,7 +67,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 		Created:          time.Now(),
 		Updated:          time.Now(),
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: false,
+		IsServiceAccount: args.IsServiceAccount,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -160,7 +104,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	})
 
 	// create org user link
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  user.Id,
@@ -186,101 +130,12 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 }
 
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
-	var user *models.User
-	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(sess, cmd)
-		if err != nil {
-			return err
-		}
-
-		if cmd.Email == "" {
-			cmd.Email = cmd.Login
-		}
-
-		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
-		if err != nil {
-			return err
-		}
-		if exists {
-			return models.ErrUserAlreadyExists
-		}
-
-		// create user
-		user = &models.User{
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			Login:            cmd.Login,
-			Company:          cmd.Company,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			OrgId:            orgId,
-			EmailVerified:    cmd.EmailVerified,
-			Created:          time.Now(),
-			Updated:          time.Now(),
-			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-			IsServiceAccount: cmd.IsServiceAccount,
-		}
-
-		salt, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Salt = salt
-		rands, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Rands = rands
-
-		if len(cmd.Password) > 0 {
-			encodedPassword, err := util.EncodePassword(cmd.Password, user.Salt)
-			if err != nil {
-				return err
-			}
-			user.Password = encodedPassword
-		}
-
-		sess.UseBool("is_admin")
-
-		if _, err := sess.Insert(user); err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.UserCreated{
-			Timestamp: user.Created,
-			Id:        user.Id,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		// create org user link
-		if !cmd.SkipOrgSetup {
-			orgUser := models.OrgUser{
-				OrgId:   orgId,
-				UserId:  user.Id,
-				Role:    models.ROLE_ADMIN,
-				Created: time.Now(),
-				Updated: time.Now(),
-			}
-
-			if setting.AutoAssignOrg && !user.IsAdmin {
-				if len(cmd.DefaultOrgRole) > 0 {
-					orgUser.Role = models.RoleType(cmd.DefaultOrgRole)
-				} else {
-					orgUser.Role = models.RoleType(setting.AutoAssignOrgRole)
-				}
-			}
-
-			if _, err = sess.Insert(&orgUser); err != nil {
-				return err
-			}
-		}
-
-		return nil
+	var user models.User
+	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
+		user, err = ss.createUser(ctx, sess, cmd)
+		return
 	})
-
-	return user, err
+	return &user, createErr
 }
 
 func notServiceAccountFilter(ss *SQLStore) string {
@@ -445,6 +300,16 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
+func removeUserOrg(sess *DBSession, userID int64) error {
+	user := models.User{
+		Id:    userID,
+		OrgId: 0,
+	}
+
+	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
+	return err
+}
+
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var user models.User
@@ -499,7 +364,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		query.Result = make([]*models.UserOrgDTO, 0)
 		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
-		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
 		sess.Where(notServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
@@ -540,18 +405,22 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		var rawSQL = `SELECT
-		u.id             as user_id,
-		u.is_admin       as is_grafana_admin,
-		u.email          as email,
-		u.login          as login,
-		u.name           as name,
-		u.help_flags1    as help_flags1,
-		u.last_seen_at   as last_seen_at,
+		u.id                  as user_id,
+		u.is_admin            as is_grafana_admin,
+		u.email               as email,
+		u.login               as login,
+		u.name                as name,
+		u.is_disabled         as is_disabled,
+		u.help_flags1         as help_flags1,
+		u.last_seen_at        as last_seen_at,
 		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
-		org.name         as org_name,
-		org_user.role    as org_role,
-		org.id           as org_id
+		user_auth.auth_module as external_auth_module,
+		user_auth.auth_id     as external_auth_id,
+		org.name              as org_name,
+		org_user.role         as org_role,
+		org.id                as org_id
 		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
@@ -579,7 +448,24 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			user.OrgName = "Org missing"
 		}
 
-		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+		if user.ExternalAuthModule != "oauth_grafana_com" {
+			user.ExternalAuthId = ""
+		}
+
+		// tempUser is used to retrieve the teams for the signed in user for internal use.
+		tempUser := &models.SignedInUser{
+			OrgId: user.OrgId,
+			Permissions: map[int64]map[string][]string{
+				user.OrgId: {
+					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+				},
+			},
+		}
+		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+			OrgId:        user.OrgId,
+			UserId:       user.UserId,
+			SignedInUser: tempUser,
+		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 		if err != nil {
 			return err
@@ -620,6 +506,16 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		if query.OrgId > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
 			whereParams = append(whereParams, query.OrgId)
+		}
+
+		// user only sees the users for which it has read permissions
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "u.id", "global.users:id:", ac.ActionUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
 		}
 
 		if query.Query != "" {

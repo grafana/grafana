@@ -1,4 +1,6 @@
+import { isNumber } from 'lodash';
 import React, { PureComponent } from 'react';
+
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
@@ -11,13 +13,12 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-
-import { config } from 'app/core/config';
-import { BarGaugeOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
-import { isNumber } from 'lodash';
+import { config } from 'app/core/config';
 
-export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
+import { PanelOptions } from './models.gen';
+
+export class BarGaugePanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
@@ -102,7 +103,8 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         renderCounter={renderCounter}
         width={width}
         height={height}
-        minVizHeight={10}
+        minVizWidth={options.minVizWidth}
+        minVizHeight={options.minVizHeight}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
@@ -41,23 +42,28 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 // StartRendererFunc callback function called when a renderer plugin is started.
 type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
 
+// StartSecretsManagerFunc callback function called when a secrets manager plugin is started.
+type StartSecretsManagerFunc func(pluginID string, secretsmanager secretsmanagerplugin.SecretsManagerPlugin, logger log.Logger) error
+
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
-	pluginID         string
-	executablePath   string
-	managed          bool
-	versionedPlugins map[int]goplugin.PluginSet
-	startRendererFn  StartRendererFunc
+	pluginID              string
+	executablePath        string
+	managed               bool
+	versionedPlugins      map[int]goplugin.PluginSet
+	startRendererFn       StartRendererFunc
+	startSecretsManagerFn StartSecretsManagerFunc
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
 func getV2PluginSet() goplugin.PluginSet {
 	return goplugin.PluginSet{
-		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":    &grpcplugin.ResourceGRPCPlugin{},
-		"data":        &grpcplugin.DataGRPCPlugin{},
-		"stream":      &grpcplugin.StreamGRPCPlugin{},
-		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+		"diagnostics":    &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":       &grpcplugin.ResourceGRPCPlugin{},
+		"data":           &grpcplugin.DataGRPCPlugin{},
+		"stream":         &grpcplugin.StreamGRPCPlugin{},
+		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
+		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
 	}
 }
 
@@ -83,5 +89,18 @@ func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFun
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startRendererFn: startFn,
+	})
+}
+
+// NewSecetsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
+func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecretsManagerFunc) backendplugin.PluginFactoryFunc {
+	return newPlugin(PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        false,
+		versionedPlugins: map[int]goplugin.PluginSet{
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
+		},
+		startSecretsManagerFn: startFn,
 	})
 }

@@ -1,21 +1,22 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { Input, InlineField } from '@grafana/ui';
+
+import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
   rangeUtil,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConnectionConfig } from '@grafana/aws-sdk';
-
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { store } from 'app/store/store';
+import { Input, InlineField } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { store } from 'app/store/store';
 
-import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
+
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;

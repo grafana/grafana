@@ -378,17 +378,6 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 0,
-          "y": 29
-        },
-        "id": 30,
-        "title": "Panel list",
-        "type": "pluginlist"
-      },
-      {
-        "gridPos": {
-          "h": 8,
-          "w": 12,
           "x": 12,
           "y": 29
         },

@@ -271,7 +271,13 @@ func setDefaultNavURL(p *plugins.Plugin) {
 			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
 		}
 		if include.Type == "dashboard" {
-			p.DefaultNavURL = path.Join("/dashboard/db/", include.Slug)
+			dboardURL := include.DashboardURLPath()
+			if dboardURL == "" {
+				p.Logger().Warn("Included dashboard is missing a UID field")
+				continue
+			}
+
+			p.DefaultNavURL = dboardURL
 		}
 	}
 }

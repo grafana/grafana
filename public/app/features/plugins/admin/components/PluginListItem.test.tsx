@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
-import { PluginListItem } from './PluginListItem';
+
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
+
+import { PluginListItem } from './PluginListItem';
 
 /**
  * The whole Icon component needs to be mock

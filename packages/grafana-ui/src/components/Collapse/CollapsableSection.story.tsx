@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { CollapsableSection } from './CollapsableSection';
 import mdx from './CollapsableSection.mdx';
 
