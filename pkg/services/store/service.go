@@ -43,8 +43,10 @@ type StorageService interface {
 
 	Delete(ctx context.Context, user *models.SignedInUser, path string) error
 
-	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest) validationResult
-	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error
+	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult
+
+	// transformUploadRequest sanitizes the upload request and converts it into a command accepted by the FileStorage API
+	transformUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (error, *filestorage.UpsertFileCommand)
 }
 
 type standardStorageService struct {
@@ -140,25 +142,20 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		return ErrUnsupportedStorage
 	}
 
-	validationResult := s.validateUploadRequest(ctx, user, req)
+	storagePath := strings.TrimPrefix(req.Path, RootUpload)
+	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
 		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
 		return ErrValidationFailed
 	}
 
-	if err := s.sanitizeUploadRequest(ctx, user, req); err != nil {
-		grafanaStorageLogger.Warn("failed while sanitizing upload request", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
+	err, upsertCommand := s.transformUploadRequest(ctx, user, req, storagePath)
+	if err != nil {
+		grafanaStorageLogger.Error("failed while transforming the upload request", "filetype", req.MimeType, "path", req.Path, "error", err)
 		return ErrUploadInternalError
 	}
 
 	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
-
-	storagePath := strings.TrimPrefix(req.Path, RootUpload)
-
-	if err := filestorage.ValidatePath(storagePath); err != nil {
-		grafanaStorageLogger.Info("uploading file failed due to invalid path", "filetype", req.MimeType, "path", req.Path, "err", err)
-		return ErrInvalidPath
-	}
 
 	if !req.OverwriteExistingFile {
 		file, err := upload.Get(ctx, storagePath)
@@ -172,16 +169,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		}
 	}
 
-	err := upload.Upsert(ctx, &filestorage.UpsertFileCommand{
-		Path:               storagePath,
-		Contents:           req.Contents,
-		MimeType:           req.MimeType,
-		CacheControl:       req.CacheControl,
-		ContentDisposition: req.ContentDisposition,
-		Properties:         req.Properties,
-	})
-
-	if err != nil {
+	if err := upload.Upsert(ctx, upsertCommand); err != nil {
 		grafanaStorageLogger.Error("failed while uploading the file", "err", err, "path", req.Path)
 		return ErrUploadInternalError
 	}

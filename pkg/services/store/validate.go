@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -44,7 +45,7 @@ func fail(reason string) validationResult {
 }
 
 func (s *standardStorageService) detectMimeType(ctx context.Context, user *models.SignedInUser, uploadRequest *UploadRequest) string {
-	// TODO: implement a spoofing-proof MimeType detection based on the contents - do not use 'http.DetectContentType'
+	// TODO: implement a spoofing-proof MimeType detection based on the contents
 	return uploadRequest.MimeType
 }
 
@@ -62,10 +63,14 @@ func (s *standardStorageService) validateImage(ctx context.Context, user *models
 	return success()
 }
 
-func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest) validationResult {
+func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult {
 	// TODO: validateSize
-	// TODO: validatePath
 	// TODO: validateProperties
+
+	if err := filestorage.ValidatePath(storagePath); err != nil {
+		grafanaStorageLogger.Info("uploading file failed due to invalid path", "filetype", req.MimeType, "path", req.Path, "err", err)
+		return fail("path validation failed: " + err.Error())
+	}
 
 	switch req.EntityType {
 	case EntityTypeFolder:
