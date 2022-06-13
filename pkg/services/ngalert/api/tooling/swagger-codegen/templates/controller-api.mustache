@@ -20,7 +20,7 @@ type {{classname}}ForkingService interface { {{#operation}}
 {{#operations}}{{#operation}}
 func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
 	{{#pathParams}}
-	path{{baseName}}:= web.Params(ctx.Req)[":{{baseName}}"]
+	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]
 	{{/pathParams}}
 	{{#bodyParams}}
 	conf := apimodels.{{dataType}}{}
