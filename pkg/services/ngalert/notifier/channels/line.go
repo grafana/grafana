@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -32,7 +33,7 @@ func LineFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewLineNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewLineNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewLineConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*LineConfig, error) {
@@ -47,7 +48,7 @@ func NewLineConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedVa
 }
 
 // NewLineNotifier is the constructor for the LINE notifier
-func NewLineNotifier(config *LineConfig, ns notifications.WebhookSender, t *template.Template) *LineNotifier {
+func NewLineNotifier(config *LineConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *LineNotifier {
 	return &LineNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -56,10 +57,11 @@ func NewLineNotifier(config *LineConfig, ns notifications.WebhookSender, t *temp
 			DisableResolveMessage: config.DisableResolveMessage,
 			Settings:              config.Settings,
 		}),
-		Token: config.Token,
-		log:   log.New("alerting.notifier.line"),
-		ns:    ns,
-		tmpl:  t,
+		Token:  config.Token,
+		log:    log.New("alerting.notifier.line"),
+		images: images,
+		ns:     ns,
+		tmpl:   t,
 	}
 }
 
@@ -67,10 +69,11 @@ func NewLineNotifier(config *LineConfig, ns notifications.WebhookSender, t *temp
 // alert notifications to LINE.
 type LineNotifier struct {
 	*Base
-	Token string
-	log   log.Logger
-	ns    notifications.WebhookSender
-	tmpl  *template.Template
+	Token  string
+	log    log.Logger
+	images ImageStore
+	ns     notifications.WebhookSender
+	tmpl   *template.Template
 }
 
 // Notify send an alert notification to LINE
@@ -94,6 +97,20 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 
 	form := url.Values{}
 	form.Add("message", body)
+
+	_ = withStoredImages(ctx, ln.log, ln.images,
+		func(index int, image ngmodels.Image) error {
+			// If there is an image for this alert and the image has been uploaded
+			// to a public URL then add it to the request. We cannot add more than
+			// one image per request.
+			if image.URL != "" {
+				form.Add("imageThumbnail", image.URL)
+				form.Add("imageFullsize", image.URL)
+				return ErrImagesDone
+			}
+			return nil
+		},
+		as...)
 
 	cmd := &models.SendWebhookSync{
 		Url:        LineNotifyURL,

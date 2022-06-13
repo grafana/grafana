@@ -18,6 +18,8 @@ import (
 func TestLineNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
+	images := newFakeImageStore(2)
+
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
@@ -32,7 +34,7 @@ func TestLineNotifier(t *testing.T) {
 		expMsgError  error
 	}{
 		{
-			name:     "One alert",
+			name:     "A single alert",
 			settings: `{"token": "sometoken"}`,
 			alerts: []*types.Alert{
 				{
@@ -71,6 +73,46 @@ func TestLineNotifier(t *testing.T) {
 			expMsg:      "message=%5BFIRING%3A2%5D++%0Ahttp%3A%2Flocalhost%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval1%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val2%0AAnnotations%3A%0A+-+ann1+%3D+annv2%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval2%0A",
 			expMsgError: nil,
 		}, {
+			name:     "A single alert with an image",
+			settings: `{"token": "sometoken"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-1"},
+					},
+				},
+			},
+			expHeaders: map[string]string{
+				"Authorization": "Bearer sometoken",
+				"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
+			},
+			expMsg:      "imageFullsize=https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg&imageThumbnail=https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg&message=%5BFIRING%3A1%5D++%28val1%29%0Ahttp%3A%2Flocalhost%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval1%0ADashboard%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%0APanel%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%3FviewPanel%3Defgh%0A",
+			expMsgError: nil,
+		}, {
+			name:     "Multiple alerts with an image",
+			settings: `{"token": "sometoken"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-1"},
+					},
+				},
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert2", "lbl2": "val2"},
+						Annotations: model.LabelSet{"ann2": "annv2", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-2"},
+					},
+				},
+			},
+			expHeaders: map[string]string{
+				"Authorization": "Bearer sometoken",
+				"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
+			},
+			expMsg:      "imageFullsize=https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg&imageThumbnail=https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg&message=%5BFIRING%3A2%5D++%0Ahttp%3A%2Flocalhost%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval1%0ADashboard%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%0APanel%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%3FviewPanel%3Defgh%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert2%0A+-+lbl2+%3D+val2%0AAnnotations%3A%0A+-+ann2+%3D+annv2%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert2%26matcher%3Dlbl2%253Dval2%0ADashboard%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%0APanel%3A+http%3A%2F%2Flocalhost%2Fd%2Fabcd%3FviewPanel%3Defgh%0A",
+			expMsgError: nil,
+		}, {
 			name:         "Token missing",
 			settings:     `{}`,
 			expInitError: `could not find token in settings`,
@@ -103,7 +145,7 @@ func TestLineNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewLineNotifier(cfg, webhookSender, tmpl)
+			pn := NewLineNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
