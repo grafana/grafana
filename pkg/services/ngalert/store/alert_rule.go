@@ -46,8 +46,6 @@ type RuleStore interface {
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	// UpdateRuleGroup will update the interval for all rules in the group.
-	UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	// InsertAlertRules will insert all alert rules passed into the function
@@ -298,16 +296,6 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 			return ErrAlertRuleGroupNotFound
 		}
 		interval = ruleGroups[0].IntervalSeconds
-		return err
-	})
-}
-
-func (st DBstore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Update(
-			ngmodels.AlertRule{IntervalSeconds: interval},
-			ngmodels.AlertRule{OrgID: orgID, RuleGroup: ruleGroup, NamespaceUID: namespaceUID},
-		)
 		return err
 	})
 }
