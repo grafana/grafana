@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type ProvisioningSrv struct {
@@ -294,8 +293,4 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
-}
-
-func pathParam(c *models.ReqContext, param string) string {
-	return web.Params(c.Req)[param]
 }
