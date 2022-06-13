@@ -192,11 +192,12 @@ function getPrimaryText(files: DropzoneFile[], options?: DropzoneOptions) {
 }
 
 function getAcceptedFileTypeText(options: DropzoneOptions) {
-  if (Array.isArray(options.accept)) {
-    return `Accepted file types: ${options.accept.join(', ')}`;
-  }
-
-  return `Accepted file type: ${options.accept}`;
+  const fileTypes = Object.values(options.accept ?? {}).reduce((prev, current) => {
+    return [...prev, ...current];
+  }, []);
+  // Remove duplicates
+  const uniqueFileTypes = [...new Set([...fileTypes])];
+  return `Accepted file types: ${uniqueFileTypes.join(', ')}`;
 }
 
 function mapToCustomFile(file: File): DropzoneFile {
