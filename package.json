@@ -318,7 +318,7 @@
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
     "immer": "9.0.14",
-    "immutable": "4.0.0",
+    "immutable": "4.1.0",
     "jquery": "3.6.0",
     "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
