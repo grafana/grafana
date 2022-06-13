@@ -19,8 +19,8 @@ import {
   DataQueryResponse,
   DataQueryRequest,
   PreferredVisualisationType,
-  CoreApp,
   DataFrameType,
+  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 

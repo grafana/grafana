@@ -296,7 +296,7 @@ export const getStandardOptionEditors = () => {
   const fieldName: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
     id: 'field-name',
     name: 'Field name',
-    description: 'Time zone selection',
+    description: 'Allows selecting a field name from a data frame',
     editor: FieldNamePicker as any,
   };
 

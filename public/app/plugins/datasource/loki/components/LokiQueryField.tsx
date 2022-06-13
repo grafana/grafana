@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import { Plugin, Node } from 'slate';
 
 import { QueryEditorProps } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -145,6 +146,16 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   onClickChooserButton = () => {
+    if (!this.state.labelBrowserVisible) {
+      reportInteraction('grafana_loki_log_browser_opened', {
+        app: this.props.app,
+      });
+    } else {
+      reportInteraction('grafana_loki_log_browser_closed', {
+        app: this.props.app,
+        closeType: 'logBrowserButton',
+      });
+    }
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
@@ -170,6 +181,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     const {
       ExtraFieldElement,
       query,
+      app,
       datasource,
       placeholder = 'Enter a Loki query (run with Shift+Enter)',
     } = this.props;
@@ -221,6 +233,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    app={app}
                   />
                 </div>
               )}
