@@ -16,7 +16,7 @@ weight: 100
 
 Grafana Alerting consists of several individual concepts that are at the core of a flexible and powerful alerting engine.
 
-This topic explains how to create [alert rules]({{< relref "fundamentals/alert-rules/" >}}), their relationship with [alert instances]({{< relref "fundamentals/alert-rules/alert-instances/" >}}) and the various alert rule [states and transitions]({{< relref "fundamentals/state-and-health/" >}}), [notification policies]({{< relref "notifications/" >}}) and [contact points]({{< relref "contact-points/" >}}).
+This page explains how to create [alert rules]({{< relref "fundamentals/alert-rules/" >}}), their relationship with [alert instances]({{< relref "fundamentals/alert-rules/alert-instances/" >}}) and the various alert rule [states and transitions]({{< relref "fundamentals/state-and-health/" >}}), [notification policies]({{< relref "notifications/" >}}) and [contact points]({{< relref "contact-points/" >}}).
 
 These three individual concepts are the minimum necessities to successfully create alerts and receive notifications.
 
