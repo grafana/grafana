@@ -15,8 +15,8 @@ import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, u
 import { ExploreGraph } from './ExploreGraph';
 
 type Props = {
-  oldVersionData?: DataQueryResponse;
-  oldVersionVisibleRange?: AbsoluteTimeRange;
+  logLinesBasedData?: DataQueryResponse;
+  logLinesBasedDataVisibleRange?: AbsoluteTimeRange;
   logsVolumeData?: DataQueryResponse;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -58,31 +58,31 @@ function ErrorAlert(props: { error: DataQueryError }) {
 
 type MergedInfo = {
   logsVolumeData?: DataQueryResponse;
-  oldMode: boolean;
+  logLinesBased: boolean;
   range: AbsoluteTimeRange;
 };
 
-function mergeOldAndNewVersion(
-  oldVersion: DataQueryResponse | undefined,
-  oldVersionVisibleRange: AbsoluteTimeRange | undefined,
-  newVersion: DataQueryResponse | undefined,
+function mergeFullRangeAndLogsBasedData(
+  logLinesBased: DataQueryResponse | undefined,
+  logLinesBasedVisibleRange: AbsoluteTimeRange | undefined,
+  fullRangeData: DataQueryResponse | undefined,
   absoluteRange: AbsoluteTimeRange
 ): MergedInfo {
-  const oldFrames = oldVersion?.data;
-  if (oldFrames && oldFrames.length) {
+  const logLinesFrames = logLinesBased?.data;
+  if (logLinesFrames && logLinesFrames.length) {
     return {
       logsVolumeData: {
-        data: oldFrames,
-        state: oldVersion?.state,
+        data: logLinesFrames,
+        state: logLinesBased?.state,
       },
-      oldMode: true,
-      range: oldVersionVisibleRange || absoluteRange,
+      logLinesBased: true,
+      range: logLinesBasedVisibleRange || absoluteRange,
     };
   }
 
   return {
-    logsVolumeData: newVersion,
-    oldMode: false,
+    logsVolumeData: fullRangeData,
+    logLinesBased: false,
     range: absoluteRange,
   };
 }
@@ -94,9 +94,9 @@ export function LogsVolumePanel(props: Props) {
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
-  const { logsVolumeData, oldMode, range } = mergeOldAndNewVersion(
-    props.oldVersionData,
-    props.oldVersionVisibleRange,
+  const { logsVolumeData, logLinesBased, range } = mergeFullRangeAndLogsBasedData(
+    props.logLinesBasedData,
+    props.logLinesBasedDataVisibleRange,
     props.logsVolumeData,
     props.absoluteRange
   );
@@ -132,7 +132,7 @@ export function LogsVolumePanel(props: Props) {
   }
 
   let extraInfo;
-  if (oldMode) {
+  if (logLinesBased) {
     extraInfo = (
       <div className={styles.oldInfoText}>
         This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
