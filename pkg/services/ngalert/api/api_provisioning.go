@@ -258,6 +258,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.ID = createdAlertRule.ID
@@ -275,6 +278,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.Updated = updatedAlertRule.Updated
@@ -295,6 +301,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	folderUID := pathParam(c, folderUIDPathParam)
 	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
