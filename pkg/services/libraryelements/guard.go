@@ -23,7 +23,7 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	}
 }
 
-func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return nil
 	}
@@ -44,6 +44,43 @@ func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, 
 	}
 	if !canEdit {
 		return models.ErrFolderAccessDenied
+	}
+
+	return nil
+}
+
+func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
+	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
+		return nil
+	}
+
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	if err != nil {
+		return err
+	}
+
+	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+
+	canView, err := g.CanView()
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return models.ErrFolderAccessDenied
+	}
+
+	return nil
+}
+
+func (l *LibraryElementService) requireEditPermissionsOnDashboard(ctx context.Context, user *models.SignedInUser, dashboardID int64) error {
+	g := guardian.New(ctx, dashboardID, user.OrgId, user)
+
+	canEdit, err := g.CanEdit()
+	if err != nil {
+		return err
+	}
+	if !canEdit {
+		return models.ErrDashboardUpdateAccessDenied
 	}
 
 	return nil
