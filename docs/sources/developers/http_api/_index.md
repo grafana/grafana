@@ -38,6 +38,7 @@ dashboards, creating users, and updating data sources.
 - [Playlists API]({{< relref "playlist/" >}})
 - [Preferences API]({{< relref "preferences/" >}})
 - [Short URL API]({{< relref "short_url/" >}})
+- [Query history API]({{< relref "query_history/" >}})
 - [Snapshot API]({{< relref "snapshot/" >}})
 - [Team API]({{< relref "team/" >}})
 - [User API]({{< relref "user/" >}})

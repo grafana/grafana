@@ -118,6 +118,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -220,6 +225,12 @@ var (
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "prometheusWideSeries",
