@@ -356,7 +356,6 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -378,7 +377,14 @@ export const runQueries = (
       newQuerySub = of(cachedValue)
         .pipe(
           mergeMap((data: PanelData) =>
-            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+            )
           )
         )
         .subscribe((data) => {
@@ -436,7 +442,7 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
-              !!getState().explore[exploreId]!.logsVolumeDataProvider
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
         )
