@@ -8,6 +8,7 @@ import { SqlDatasource } from '../sql/datasource/SqlDatasource';
 import { DB, ResponseParser, SQLOptions, SQLQuery, TableSchema, ValidationResults } from '../sql/types';
 
 import MySqlResponseParser from './MySqlResponseParser';
+import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -37,9 +38,13 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   async fetchFields(query: SQLQuery) {
+    if (!query.dataset || !query.table) {
+      return [];
+    }
     const queryString = buildColumnQuery(this.getQueryModel(query), query.table!);
     const frame = await this.runSql(queryString);
-    return frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1] }));
+    const fields = frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1], label: f[0] }));
+    return mapFieldsToTypes(fields);
   }
 
   getDB(dsID?: string): DB {

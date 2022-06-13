@@ -1,31 +1,27 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { SelectableValue } from '@grafana/data';
+
 import { QueryWithDefaults } from '../../defaults';
-import { DB, SQLExpression, SQLQuery, SQLSelectableValue } from '../../types';
-import { mapColumnTypeToIcon } from '../../utils/useColumns';
+import { SQLExpression, SQLQuery } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { Config } from './AwesomeQueryBuilder';
 import { WhereRow } from './WhereRow';
 
 interface WhereRowProps {
-  db: DB;
   query: QueryWithDefaults;
+  fields: SelectableValue[];
   onQueryChange: (query: SQLQuery) => void;
 }
 
-export function SQLWhereRow({ db, query, onQueryChange }: WhereRowProps) {
+export function SQLWhereRow({ query, fields, onQueryChange }: WhereRowProps) {
   const state = useAsync(async () => {
-    // TODO - move check to db.fields impl.  big query etc will need to check project etc
-    if (!query.dataset || !query.table) {
-      return;
-    }
-    const fields = await db.fields(query);
-    return getFields(fields);
-  }, [db, query.dataset, query.table]);
+    return mapFieldsToTypes(fields);
+  }, [fields]);
 
-  const { onSqlChange } = useSqlChange({ db, query, onQueryChange });
+  const { onSqlChange } = useSqlChange({ query, onQueryChange });
 
   return (
     <WhereRow
@@ -40,58 +36,14 @@ export function SQLWhereRow({ db, query, onQueryChange }: WhereRowProps) {
   );
 }
 
-// TODO - move type mappings to db interface since it will vary per dbms
-function getFields(columns: SQLSelectableValue[]) {
+// needed for awesome query builder
+function mapFieldsToTypes(columns: SelectableValue[]) {
   const fields: Config['fields'] = {};
   for (const col of columns) {
-    let type = 'text';
-    switch (col.type) {
-      case 'BOOLEAN':
-      case 'BOOL': {
-        type = 'boolean';
-        break;
-      }
-      case 'BYTES': {
-        type = 'text';
-        break;
-      }
-      case 'FLOAT':
-      case 'FLOAT64':
-      case 'INTEGER':
-      case 'INT64':
-      case 'NUMERIC':
-      case 'BIGNUMERIC': {
-        type = 'number';
-        break;
-      }
-      case 'DATE': {
-        type = 'date';
-        break;
-      }
-      case 'DATETIME': {
-        type = 'datetime';
-        break;
-      }
-      case 'TIME': {
-        type = 'time';
-        break;
-      }
-      case 'TIMESTAMP': {
-        type = 'datetime';
-        break;
-      }
-      case 'GEOGRAPHY': {
-        type = 'text';
-        break;
-      }
-      default:
-        break;
-    }
-
     fields[col.value] = {
-      type: col.raqbFieldType || type,
+      type: col.type,
       valueSources: ['value'],
-      mainWidgetProps: { customProps: { icon: col.icon || mapColumnTypeToIcon(col.type?.toUpperCase()) } },
+      mainWidgetProps: { customProps: { icon: col.icon } },
     };
   }
   return fields;

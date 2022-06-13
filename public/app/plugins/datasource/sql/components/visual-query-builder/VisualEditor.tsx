@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAsync } from 'react-use';
 
 import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 
@@ -25,29 +26,34 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
   onValidate,
   range,
 }) => {
+  const state = useAsync(async () => {
+    const fields = await db.fields(query);
+    return fields;
+  }, [db, query.dataset, query.table]);
+
   return (
     <>
       <EditorRows>
         <EditorRow>
-          <SQLSelectRow db={db} query={query} onQueryChange={onChange} />
+          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} />
         </EditorRow>
         {queryRowFilter.filter && (
           <EditorRow>
             <EditorField label="Filter by column value" optional>
-              <SQLWhereRow db={db} query={query} onQueryChange={onChange} />
+              <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} />
             </EditorField>
           </EditorRow>
         )}
         {queryRowFilter.group && (
           <EditorRow>
             <EditorField label="Group by column">
-              <SQLGroupByRow db={db} query={query} onQueryChange={onChange} />
+              <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} />
             </EditorField>
           </EditorRow>
         )}
         {queryRowFilter.order && (
           <EditorRow>
-            <SQLOrderByRow db={db} query={query} onQueryChange={onChange} />
+            <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
           </EditorRow>
         )}
         {queryRowFilter.preview && query.rawSql && (

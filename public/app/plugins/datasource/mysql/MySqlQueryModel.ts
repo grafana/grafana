@@ -42,7 +42,7 @@ export default class MySQLQueryModel {
     // }
 
     // give interpolateQueryStr access to this
-    this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
+    // this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
 
   // remove identifier quoting from identifier to use in metadata queries
@@ -77,7 +77,7 @@ export default class MySQLQueryModel {
     return false;
   }
 
-  interpolateQueryStr(value: string, variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
+  interpolateQueryStr = (value: string, variable: { multi: any; includeAll: any }, defaultFormatFn: any) => {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return this.escapeLiteral(value);
@@ -89,7 +89,7 @@ export default class MySQLQueryModel {
 
     const escapedValues = map(value, this.quoteLiteral);
     return escapedValues.join(',');
-  }
+  };
 
   render(interpolate?: boolean) {
     const target = this.target;
