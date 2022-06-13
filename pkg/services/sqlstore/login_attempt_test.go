@@ -16,6 +16,9 @@ func mockTime(mock time.Time) time.Time {
 }
 
 func TestIntegrationLoginAttempts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
 	var sqlStore *SQLStore
 	user := "user"

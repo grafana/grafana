@@ -1871,7 +1871,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "ContactPointUID should be the contact point UID identifier",
+            "description": "UID should be the contact point unique identifier",
             "name": "UID",
             "in": "path",
             "required": true
@@ -1912,7 +1912,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "ContactPointUID should be the contact point UID identifier",
+            "description": "UID should be the contact point unique identifier",
             "name": "UID",
             "in": "path",
             "required": true
@@ -2591,31 +2591,100 @@
     },
     "AlertRule": {
       "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
       "properties": {
         "annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "x-go-name": "Annotations"
+          "x-go-name": "Annotations",
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
         },
         "condition": {
           "type": "string",
-          "x-go-name": "Condition"
+          "x-go-name": "Condition",
+          "example": "A"
         },
         "data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
           },
-          "x-go-name": "Data"
+          "x-go-name": "Data",
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
         },
         "execErrState": {
-          "$ref": "#/definitions/ExecutionErrorState"
+          "description": "\nAlerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ],
+          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+          "x-go-name": "ExecErrState"
         },
         "folderUID": {
           "type": "string",
-          "x-go-name": "FolderUID"
+          "x-go-name": "FolderUID",
+          "example": "project_x"
         },
         "for": {
           "$ref": "#/definitions/Duration"
@@ -2630,10 +2699,21 @@
           "additionalProperties": {
             "type": "string"
           },
-          "x-go-name": "Labels"
+          "x-go-name": "Labels",
+          "example": {
+            "team": "sre-team-1"
+          }
         },
         "noDataState": {
-          "$ref": "#/definitions/NoDataState"
+          "description": "\nAlerting Alerting\nNoData NoData\nOK OK",
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
+          "x-go-name": "NoDataState"
         },
         "orgID": {
           "type": "integer",
@@ -2645,11 +2725,17 @@
         },
         "ruleGroup": {
           "type": "string",
-          "x-go-name": "RuleGroup"
+          "maxLength": 190,
+          "minLength": 1,
+          "x-go-name": "RuleGroup",
+          "example": "eval_group_1"
         },
         "title": {
           "type": "string",
-          "x-go-name": "Title"
+          "maxLength": 190,
+          "minLength": 1,
+          "x-go-name": "Title",
+          "example": "Always firing"
         },
         "uid": {
           "type": "string",
@@ -2658,7 +2744,8 @@
         "updated": {
           "type": "string",
           "format": "date-time",
-          "x-go-name": "Updated"
+          "x-go-name": "Updated",
+          "readOnly": true
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -3068,31 +3155,60 @@
     "EmbeddedContactPoint": {
       "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
       "type": "object",
+      "required": [
+        "type",
+        "settings"
+      ],
       "properties": {
         "disableResolveMessage": {
           "type": "boolean",
-          "x-go-name": "DisableResolveMessage"
+          "x-go-name": "DisableResolveMessage",
+          "example": false
         },
         "name": {
           "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
           "type": "string",
-          "x-go-name": "Name"
+          "x-go-name": "Name",
+          "example": "webhook_1"
         },
         "provenance": {
           "type": "string",
-          "x-go-name": "Provenance"
+          "x-go-name": "Provenance",
+          "readOnly": true
         },
         "settings": {
           "$ref": "#/definitions/Json"
         },
         "type": {
           "type": "string",
-          "x-go-name": "Type"
+          "enum": [
+            "alertmanager",
+            " dingding",
+            " discord",
+            " email",
+            " googlechat",
+            " kafka",
+            " line",
+            " opsgenie",
+            " pagerduty",
+            " pushover",
+            " sensugo",
+            " slack",
+            " teams",
+            " telegram",
+            " threema",
+            " victorops",
+            " webhook",
+            " wecom"
+          ],
+          "x-go-name": "Type",
+          "example": "webhook"
         },
         "uid": {
-          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+          "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
           "type": "string",
-          "x-go-name": "UID"
+          "x-go-name": "UID",
+          "example": "my_external_reference"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -3145,10 +3261,6 @@
     },
     "EvalQueriesResponse": {
       "$ref": "#/definitions/EvalQueriesResponse"
-    },
-    "ExecutionErrorState": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
     "ExtendedReceiver": {
       "type": "object",
@@ -3950,10 +4062,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-    },
-    "NoDataState": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
     "NotFound": {
       "type": "object",
@@ -5654,7 +5762,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5677,6 +5784,8 @@
           "$ref": "#/definitions/receiver"
         }
       },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
@@ -5934,12 +6043,11 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {
@@ -6069,6 +6177,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6109,8 +6218,6 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
