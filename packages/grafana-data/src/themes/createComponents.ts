@@ -90,7 +90,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
     },
     sidemenu: {
-      width: 48,
+      width: 57,
     },
     menuTabs: {
       height: 41,

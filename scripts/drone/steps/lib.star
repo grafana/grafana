@@ -69,6 +69,9 @@ def wire_install_step():
         'commands': [
             'make gen-go',
         ],
+        'depends_on': [
+            'verify-gen-cue',
+        ],
     }
 
 
@@ -203,13 +206,13 @@ def enterprise_downstream_step(edition, ver_mode):
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
-                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
     }
 
     if ver_mode == 'pr':
         step.update({ 'failure': 'ignore' })
+        step['settings']['params'].append('OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}')
 
     return step
 
@@ -499,16 +502,28 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
-    return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl test-backend --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'oss':
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                './bin/grabpl test-backend --edition {}'.format(edition),
+            ],
+        }
 
 def test_backend_integration_step(edition):
     if edition == 'oss':

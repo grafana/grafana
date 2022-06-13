@@ -360,7 +360,13 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   let funcName = getString(expr, nameNode);
 
   const grouping = node.getChild('Grouping');
-  const labels: string[] = [];
+  const params = [];
+
+  const numberNode = node.getChild('Number');
+
+  if (numberNode) {
+    params.push(Number(getString(expr, numberNode)));
+  }
 
   if (grouping) {
     const byModifier = grouping.getChild(`By`);
@@ -373,11 +379,11 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, grouping, 'Identifier'));
+    params.push(...getAllByType(expr, grouping, 'Identifier'));
   }
 
   const metricExpr = node.getChild('MetricExpr');
-  const op: QueryBuilderOperation = { id: funcName, params: labels };
+  const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
     handleExpression(expr, metricExpr, context);

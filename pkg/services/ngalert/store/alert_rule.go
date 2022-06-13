@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -49,8 +48,6 @@ type RuleStore interface {
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	// UpdateRuleGroup will update the interval for all rules in the group.
-	UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	// InsertAlertRules will insert all alert rules passed into the function
@@ -324,14 +321,6 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	})
 }
 
-func (st DBstore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		updated := TimeNow()
-		_, err := sess.Query("UPDATE alert_rule SET interval_seconds = ?, updated = ?, version = version + 1 WHERE org_id = ? AND rule_group = ? AND namespace_uid = ?", interval, updated, orgID, ruleGroup, namespaceUID)
-		return err
-	})
-}
-
 // GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
@@ -447,8 +436,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
-		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.BaseInterval.Seconds())); err != nil {
+		return err
 	}
 
 	// enfore max name length in SQLite
