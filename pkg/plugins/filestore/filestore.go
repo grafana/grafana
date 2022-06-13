@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/logger"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
@@ -38,12 +37,12 @@ func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, plugin
 	*ExtractedPluginArchive, error) {
 	pluginDir, err := s.extractFiles(ctx, pluginArchive, pluginID, pluginsPath)
 	if err != nil {
-		return nil, errutil.Wrap("failed to extract plugin archive", err)
+		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
 	res, err := toPluginDTO(pluginID, pluginDir)
 	if err != nil {
-		return nil, errutil.Wrap("failed to convert to plugin DTO", err)
+		return nil, fmt.Errorf("%v: %w", "failed to convert to plugin DTO", err)
 	}
 
 	s.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
@@ -131,7 +130,7 @@ func (s *Service) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser,
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return "", errutil.Wrap("failed to create directory to extract plugin files", err)
+			return "", fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
 		}
 
 		if isSymlink(zf) {
@@ -144,7 +143,7 @@ func (s *Service) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser,
 				continue
 			}
 		} else if err := extractFile(zf, dstPath); err != nil {
-			return "", errutil.Wrap("failed to extract file", err)
+			return "", fmt.Errorf("%v: %w", "failed to extract file", err)
 		}
 	}
 
@@ -159,14 +158,14 @@ func extractSymlink(file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
 	if _, err := io.Copy(buf, src); err != nil {
-		return errutil.Wrap("failed to copy symlink contents", err)
+		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
+		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
 }
@@ -193,7 +192,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
 		}
 
-		return errutil.Wrap("failed to open file", err)
+		return fmt.Errorf("%v: %w", "failed to open file", err)
 	}
 	defer func() {
 		err = dst.Close()
@@ -201,7 +200,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	src, err := file.Open()
 	if err != nil {
-		return errutil.Wrap("failed to extract file", err)
+		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	defer func() {
 		err = src.Close()

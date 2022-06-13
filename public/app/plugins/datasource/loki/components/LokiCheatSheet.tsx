@@ -2,6 +2,7 @@ import { shuffle } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { QueryEditorHelpProps } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import LokiLanguageProvider from '../language_provider';
 import { LokiQuery } from '../types';
@@ -43,6 +44,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
 
   componentDidMount() {
     this.scheduleUserLabelChecking();
+    reportInteraction('grafana_loki_cheatsheet_opened', {});
   }
 
   componentWillUnmount() {
@@ -73,9 +75,13 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
 
   renderExpression(expr: string) {
     const { onClickExample } = this.props;
+    const onClick = (query: LokiQuery) => {
+      onClickExample(query);
+      reportInteraction('grafana_loki_cheatsheet_example_clicked', {});
+    };
 
     return (
-      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClickExample({ refId: 'A', expr })}>
+      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClick({ refId: 'A', expr })}>
         <code>{expr}</code>
       </div>
     );

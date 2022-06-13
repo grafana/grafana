@@ -9,6 +9,9 @@ import (
 )
 
 func TestIntegrationPlaylistDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 
 	t.Run("Can create playlist", func(t *testing.T) {

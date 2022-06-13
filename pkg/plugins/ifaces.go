@@ -16,6 +16,9 @@ type Store interface {
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+}
+
+type Manager interface {
 	// Add adds a plugin from the repository to the store.
 	Add(ctx context.Context, pluginID, version string, repo repository.Service, opts CompatabilityOpts) error
 	// Remove removes a plugin from the store.
@@ -26,10 +29,8 @@ type CompatabilityOpts struct {
 	GrafanaVersion string
 }
 
-// Loader is responsible for loading plugins from the file system.
-type Loader interface {
-	// Load will return a list of plugins found in the provided file system paths.
-	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
+type UpdateInfo struct {
+	PluginZipURL string
 }
 
 // Client is used to communicate with backend plugin implementations.
@@ -49,6 +50,11 @@ type BackendFactoryProvider interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
+}
+
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager() *Plugin
 }
 
 type StaticRouteResolver interface {

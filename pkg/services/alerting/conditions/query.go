@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func init() {
@@ -221,8 +220,8 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 			for _, frame := range frames {
 				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
-					return nil, errutil.Wrapf(err,
-						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice`, frame.Name)
+					return nil, fmt.Errorf(
+						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice: %w`, frame.Name, err)
 				}
 				result = append(result, ss...)
 			}
@@ -399,8 +398,8 @@ func FrameToSeriesSlice(frame *data.Frame) (legacydata.DataTimeSeriesSlice, erro
 		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ { // for each value in the field, make a TimePoint
 			val, err := field.FloatAt(rowIdx)
 			if err != nil {
-				return nil, errutil.Wrapf(err,
-					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float", field.At(rowIdx))
+				return nil, fmt.Errorf(
+					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float: %w", field.At(rowIdx), err)
 			}
 			ts.Points[rowIdx] = legacydata.DataTimePoint{
 				null.FloatFrom(val),

@@ -42,7 +42,7 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Respons
 	qs.Set("end", formatTime(tr.End))
 	qs.Set("step", strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64))
 
-	return c.fetch(ctx, u, qs)
+	return c.fetch(ctx, c.method, u, qs)
 }
 
 func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
@@ -60,7 +60,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 		qs.Set("time", formatTime(tr.End))
 	}
 
-	return c.fetch(ctx, u, qs)
+	return c.fetch(ctx, c.method, u, qs)
 }
 
 func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
@@ -77,20 +77,31 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 	qs.Set("start", formatTime(tr.Start))
 	qs.Set("end", formatTime(tr.End))
 
-	return c.fetch(ctx, u, qs)
+	return c.fetch(ctx, c.method, u, qs)
 }
 
-func (c *Client) fetch(ctx context.Context, u *url.URL, qs url.Values) (*http.Response, error) {
-	if strings.ToUpper(c.method) == http.MethodGet {
-		u.RawQuery = qs.Encode()
-	}
-
-	r, err := http.NewRequestWithContext(ctx, c.method, u.String(), nil)
+func (c *Client) QueryResource(ctx context.Context, method string, p string, qs url.Values) (*http.Response, error) {
+	u, err := url.ParseRequestURI(c.baseUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	if strings.ToUpper(c.method) == http.MethodPost {
+	u.Path = path.Join(u.Path, p)
+
+	return c.fetch(ctx, method, u, qs)
+}
+
+func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Values) (*http.Response, error) {
+	if strings.ToUpper(method) == http.MethodGet {
+		u.RawQuery = qs.Encode()
+	}
+
+	r, err := http.NewRequestWithContext(ctx, method, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.ToUpper(method) == http.MethodPost {
 		r.Body = ioutil.NopCloser(strings.NewReader(qs.Encode()))
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}

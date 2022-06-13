@@ -19,7 +19,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -442,6 +442,11 @@ export const runQueries = (
         )
         .subscribe({
           next(data) {
+            if (data.logsResult !== null) {
+              reportInteraction('grafana_explore_logs_result_displayed', {
+                datasourceType: datasourceInstance.type,
+              });
+            }
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
