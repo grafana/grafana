@@ -357,8 +357,8 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.setState({ refreshWhenInView: false });
       }
       panel.runAllPanelQueries(
-        this.props.dashboard.id,
-        this.props.dashboard.getTimezone(),
+        dashboard.id,
+        dashboard.getTimezone(),
         timeData,
         width,
         dashboard.meta.publicDashboardUid
