@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegrationDashboardProvisioningTest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 

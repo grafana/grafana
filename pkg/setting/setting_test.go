@@ -489,7 +489,7 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when legacy alerting is enabled and unified is invalid (or not defined) [OSS]",
+			desc:                   "when legacy alerting is enabled and unified is not defined [OSS]",
 			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
@@ -507,7 +507,24 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when legacy alerting is enabled and unified is invalid (or not defined) [Enterprise]",
+			desc:                   "when legacy alerting is enabled and unified is invalid [OSS]",
+			legacyAlertingEnabled:  "true",
+			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is enabled and unified is not defined [Enterprise]",
 			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
@@ -525,9 +542,26 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when legacy alerting is disabled and unified is invalid (or not defined) [OSS]",
-			legacyAlertingEnabled:  "false",
+			desc:                   "when legacy alerting is enabled and unified is invalid [Enterprise]",
+			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is not defined [OSS]",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
@@ -543,9 +577,26 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when legacy alerting is disabled and unified is invalid (or not defined) [Enterprise]",
+			desc:                   "when legacy alerting is disabled and unified is invalid [OSS]",
 			legacyAlertingEnabled:  "false",
 			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when legacy alerting is disabled and unified is not defined [Enterprise]",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
@@ -561,9 +612,26 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when both are invalid (or not defined) [OSS]",
-			legacyAlertingEnabled:  "invalid",
+			desc:                   "when legacy alerting is disabled and unified is invalid [Enterprise]",
+			legacyAlertingEnabled:  "false",
 			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when both are not defined [OSS]",
+			legacyAlertingEnabled:  "",
+			unifiedAlertingEnabled: "",
 			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
@@ -578,9 +646,26 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when both are invalid (or not defined) [Enterprise]",
+			desc:                   "when both are not invalid [OSS]",
 			legacyAlertingEnabled:  "invalid",
 			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when both are not defined [Enterprise]",
+			legacyAlertingEnabled:  "",
+			unifiedAlertingEnabled: "",
 			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
@@ -592,6 +677,23 @@ func TestAlertingEnabled(t *testing.T) {
 				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
 				assert.True(t, *cfg.UnifiedAlerting.Enabled)
 				assert.Nil(t, AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when both are not invalid [Enterprise]",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           false,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				assert.EqualError(t, err, "failed to read unified alerting enabled setting: invalid value invalid, should be either true or false")
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, false, *AlertingEnabled)
 			},
 		},
 		{

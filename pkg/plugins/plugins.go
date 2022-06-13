@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/manifest"
 	"github.com/grafana/grafana/pkg/plugins/signature"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,9 +47,10 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	Renderer       pluginextensionv2.RendererPlugin
+	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
+	client         backendplugin.Plugin
+	log            log.Logger
 }
 
 type PluginDTO struct {
@@ -142,7 +144,7 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (Datasource + Renderer)
+	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 }
 
@@ -527,6 +529,10 @@ func (p *Plugin) IsRenderer() bool {
 	return p.Type == "renderer"
 }
 
+func (p *Plugin) IsSecretsManager() bool {
+	return p.Type == "secretsmanager"
+}
+
 func (p *Plugin) IsDataSource() bool {
 	return p.Type == "datasource"
 }
@@ -564,20 +570,22 @@ var PluginTypes = []Type{
 	Panel,
 	App,
 	Renderer,
+	SecretsManager,
 }
 
 type Type string
 
 const (
-	DataSource Type = "datasource"
-	Panel      Type = "panel"
-	App        Type = "app"
-	Renderer   Type = "renderer"
+	DataSource     Type = "datasource"
+	Panel          Type = "panel"
+	App            Type = "app"
+	Renderer       Type = "renderer"
+	SecretsManager Type = "secretsmanager"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer:
+	case DataSource, Panel, App, Renderer, SecretsManager:
 		return true
 	}
 	return false
