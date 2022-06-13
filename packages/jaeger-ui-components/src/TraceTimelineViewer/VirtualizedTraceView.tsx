@@ -88,7 +88,6 @@ type TVirtualizedTraceViewOwnProps = {
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
-  focusSpan: (uiFind: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
@@ -479,7 +478,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailToggle,
       spanNameColumnWidth,
       trace,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -514,7 +512,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           span={span}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}
-          focusSpan={focusSpan}
           hoverIndentGuideIds={hoverIndentGuideIds}
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}

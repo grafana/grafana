@@ -14,6 +14,12 @@ import {
   BrowserProps,
 } from './LokiLabelBrowser';
 
+// we have to mock out reportInteraction, otherwise it crashes the test.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 describe('buildSelector()', () => {
   it('returns an empty selector for no labels', () => {
     expect(buildSelector([])).toEqual('{}');

@@ -116,7 +116,6 @@ type SpanDetailProps = {
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
-  focusSpan: (uiFind: string) => void;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
@@ -137,7 +136,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTracesToggle,
     referencesToggle,
     referenceItemToggle,
-    focusSpan,
     createSpanLink,
     createFocusSpanLink,
     topOfViewRefType,
@@ -284,7 +282,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             openedItems={referencesState.openedItems}
             onToggle={() => referencesToggle(spanID)}
             onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            focusSpan={focusSpan}
+            createFocusSpanLink={createFocusSpanLink}
           />
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (

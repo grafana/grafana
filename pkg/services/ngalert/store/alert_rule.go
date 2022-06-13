@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -386,7 +385,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "err", err)
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
@@ -445,8 +444,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
-		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.BaseInterval.Seconds())); err != nil {
+		return err
 	}
 
 	// enfore max name length in SQLite

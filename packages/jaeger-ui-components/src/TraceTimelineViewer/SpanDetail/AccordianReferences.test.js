@@ -63,7 +63,7 @@ describe('<AccordianReferences>', () => {
     highContrast: false,
     isOpen: false,
     onToggle: jest.fn(),
-    focusSpan: jest.fn(),
+    createFocusSpanLink: jest.fn(),
   };
 
   beforeEach(() => {
@@ -88,7 +88,7 @@ describe('<References>', () => {
 
   const props = {
     data: references,
-    focusSpan: jest.fn(),
+    createFocusSpanLink: jest.fn(),
   };
 
   beforeEach(() => {

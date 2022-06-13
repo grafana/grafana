@@ -17,7 +17,7 @@ import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -103,6 +103,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     serviceName: css`
       margin-right: 8px;
     `,
+    title: css`
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    `,
   };
 };
 
@@ -114,7 +119,7 @@ type AccordianReferencesProps = {
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
   onToggle?: null | (() => void);
-  focusSpan: (uiFind: string) => void;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 type ReferenceItemProps = {
@@ -122,20 +127,20 @@ type ReferenceItemProps = {
   interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
-  focusSpan: (uiFind: string) => void;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 // export for test
 export function References(props: ReferenceItemProps) {
-  const { data, focusSpan, openedItems, onItemToggle, interactive } = props;
+  const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
-        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={reference.spanID}>
+        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
           <div className={styles.item} key={`${reference.spanID}`}>
-            <ReferenceLink reference={reference} focusSpan={focusSpan}>
+            <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
               <span className={styles.itemContent}>
                 {reference.span ? (
                   <span>
@@ -145,7 +150,7 @@ export function References(props: ReferenceItemProps) {
                     <small className="endpoint-name">{reference.span.operationName}</small>
                   </span>
                 ) : (
-                  <span className="span-svc-name">
+                  <span className={cx('span-svc-name', styles.title)}>
                     View Linked Span <Icon name="external-link-alt" />
                   </span>
                 )}
@@ -187,7 +192,7 @@ const AccordianReferences: React.FC<AccordianReferencesProps> = ({
   onToggle,
   onItemToggle,
   openedItems,
-  focusSpan,
+  createFocusSpanLink,
 }) => {
   const isEmpty = !Array.isArray(data) || !data.length;
   let arrow: React.ReactNode | null = null;
@@ -217,7 +222,7 @@ const AccordianReferences: React.FC<AccordianReferencesProps> = ({
         <References
           data={data}
           openedItems={openedItems}
-          focusSpan={focusSpan}
+          createFocusSpanLink={createFocusSpanLink}
           onItemToggle={onItemToggle}
           interactive={interactive}
         />
