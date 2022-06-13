@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/visualizations/time-series/change-axis-display/
+  - /docs/grafana/latest/visualizations/time-series/change-axis-display/
 keywords:
   - grafana
   - time series panel

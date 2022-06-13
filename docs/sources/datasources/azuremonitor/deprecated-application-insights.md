@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/
 description: Template to provision the Azure Monitor data source
 keywords:
   - grafana

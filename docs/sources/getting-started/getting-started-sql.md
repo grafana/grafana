@@ -1,7 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/gettingstarted
-  - /docs/grafana/latest/guides/getting_started
+  - /docs/grafana/latest/getting-started/getting-started-sql/
+  - /docs/grafana/latest/guides/getting_started/
+  - /docs/grafana/latest/guides/gettingstarted/
 description: Guide for getting started with Grafana and MS SQL Server
 draft: true
 keywords:

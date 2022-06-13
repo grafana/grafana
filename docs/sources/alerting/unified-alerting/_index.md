@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/metrics/
+  - /docs/grafana/latest/alerting/unified-alerting/
 title: Grafana alerts
 weight: 113
 ---

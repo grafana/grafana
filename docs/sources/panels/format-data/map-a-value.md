@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/format-data/map-a-value/
   - /docs/sources/panels/format-data/map-a-value/
 title: Map a value
 weight: 20

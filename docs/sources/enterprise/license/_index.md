@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/license/
 description: Enterprise license
 keywords:
   - grafana

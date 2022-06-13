@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/specify-thresholds/
   - /docs/grafana/next/panels/thresholds/
   - /docs/sources/panels/specify-thresholds/
 title: Modify visualization text and background colors

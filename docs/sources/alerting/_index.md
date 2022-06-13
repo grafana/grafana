@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/
 title: Alerts
 weight: 110
 ---

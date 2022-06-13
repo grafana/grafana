@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/dashboards/scripted-dashboards/
   - /docs/grafana/latest/reference/scripting/
 keywords:
   - grafana

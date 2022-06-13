@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/image-rendering/monitoring/
 description: Image rendering monitoring
 keywords:
   - grafana

@@ -1,5 +1,6 @@
 ---
-aliases: []
+aliases:
+  - /docs/grafana/latest/http_api/alerting_notification_channels/
 description: Grafana Alerting Notification Channel HTTP API
 keywords:
   - grafana

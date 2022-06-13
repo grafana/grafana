@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
 description: Silences alert notifications
 keywords:
   - grafana

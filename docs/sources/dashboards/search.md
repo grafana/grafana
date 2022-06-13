@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/dashboards/search/
   - /docs/grafana/latest/reference/search/
 keywords:
   - grafana

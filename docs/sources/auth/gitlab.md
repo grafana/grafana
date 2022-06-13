@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/auth/gitlab/
 description: 'Grafana OAuthentication Guide '
 keywords:
   - grafana

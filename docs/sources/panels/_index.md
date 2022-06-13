@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/features/panels/panels/
+  - /docs/grafana/latest/panels/
   - /docs/sources/panels/
 description: Panels
 title: Panels

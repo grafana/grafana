@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/
 description: Activate Enterprise license purchased through AWS Marketplace
 keywords:
   - grafana

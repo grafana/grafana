@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/linking/data-links/
   - /docs/grafana/latest/reference/datalinks/
 keywords:
   - grafana

@@ -1,7 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/url-variables.md
-  - /docs/grafana/latest/variables/variable-types/url-variables.md
+  - /docs/grafana/latest/linking/data-link-variables/
+  - /docs/grafana/latest/variables/url-variables.md/
+  - /docs/grafana/latest/variables/variable-types/url-variables.md/
 keywords:
   - grafana
   - url variables

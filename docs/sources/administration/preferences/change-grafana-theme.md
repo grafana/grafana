@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/preferences/change-grafana-theme/
 description: How to set the Grafana UI theme
 keywords:
   - grafana

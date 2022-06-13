@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/explore/
   - /docs/grafana/latest/features/explore/
 keywords:
   - explore

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/view-server/
 title: View server
 weight: 100
 ---

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/recorded-queries/
 description: Grafana Enterprise recorded queries
 keywords:
   - grafana

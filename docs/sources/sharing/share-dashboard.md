@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/dashboards/share-dashboard/
   - /docs/grafana/latest/reference/share_dashboard/
+  - /docs/grafana/latest/sharing/share-dashboard/
 keywords:
   - grafana
   - dashboard

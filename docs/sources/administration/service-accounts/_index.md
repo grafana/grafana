@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/service-accounts/
 description: This page contains information about service accounts in Grafana
 keywords:
   - API keys

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/developers/angular_deprecation/
 keywords:
   - grafana
   - documentation

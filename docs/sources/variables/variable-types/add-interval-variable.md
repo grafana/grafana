@@ -1,6 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-interval-variable.md
+  - /docs/grafana/latest/variables/add-interval-variable.md/
+  - /docs/grafana/latest/variables/variable-types/add-interval-variable/
 title: Add an interval variable
 weight: 600
 ---

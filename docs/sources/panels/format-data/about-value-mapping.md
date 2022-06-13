@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/format-data/about-value-mapping/
   - /docs/sources/panels/format-data/about-value-mapping/
 title: About value mapping
 weight: 10

@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/auth/azuread/
 description: 'Grafana Azure AD OAuth Guide '
 keywords:
   - grafana

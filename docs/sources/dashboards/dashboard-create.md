@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/dashboards/dashboard-create/
   - /docs/grafana/latest/features/dashboard/dashboards/
 title: Create dashboards
 weight: 7

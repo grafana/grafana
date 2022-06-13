@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/override-field-values/edit-field-override/
   - /docs/sources/panels/override-field-values/edit-field-override/
 title: Edit a field overrides
 weight: 40

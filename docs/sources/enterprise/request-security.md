@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/request-security/
 description: Grafana Enterprise request security
 keywords:
   - grafana

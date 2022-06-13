@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/api-keys/create-api-key/
 description: How to create an API key in Grafana
 keywords:
   - API keys

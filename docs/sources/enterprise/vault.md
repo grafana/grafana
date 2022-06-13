@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/vault/
 description: ''
 keywords:
   - grafana

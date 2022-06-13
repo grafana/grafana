@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 description: Create Grafana Mimir or Loki managed recording rule
 keywords:
   - grafana

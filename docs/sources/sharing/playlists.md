@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/sharing/playlists/
 draft: 'true'
 keywords:
   - grafana

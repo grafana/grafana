@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/visualizations/status-history/
+  - /docs/grafana/latest/visualizations/status-history/
 description: Status history visualization
 keywords:
   - grafana

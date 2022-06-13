@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/specify-thresholds/about-thresholds/
   - /docs/sources/panels/specify-thresholds/about-thresholds/
 title: About thresholds
 weight: 10

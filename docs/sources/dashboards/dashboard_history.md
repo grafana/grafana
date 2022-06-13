@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/dashboards/dashboard_history/
   - /docs/grafana/latest/reference/dashboard_history/
 keywords:
   - grafana

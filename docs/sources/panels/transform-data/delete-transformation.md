@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/transform-data/delete-transformation/
   - /docs/sources/panels/transform-data/delete-transformation/
 title: Delete a transformation
 weight: 40

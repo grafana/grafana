@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/
 keywords:
   - grafana
   - plugins

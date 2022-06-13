@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/enterprise/access-control/permissions/
 description: Understand fine-grained access control permissions
 keywords:
   - grafana

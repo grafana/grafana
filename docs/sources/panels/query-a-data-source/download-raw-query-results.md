@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/download-raw-query-results/
   - /docs/sources/panels/query-a-data-source/download-raw-query-results/
 title: Download raw query results
 weight: 70

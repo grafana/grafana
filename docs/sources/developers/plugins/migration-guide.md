@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/developers/plugins/migration-guide/
 title: Plugin migration guide
 ---
 

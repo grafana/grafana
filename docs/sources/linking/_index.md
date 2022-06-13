@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/linking/
 title: Linking
 weight: 120
 ---

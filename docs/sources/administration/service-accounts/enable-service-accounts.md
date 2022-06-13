@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/administration/service-accounts/enable-service-accounts/
 description: This topic shows you how to to enable the service accounts feature in
   Grafana
 keywords:

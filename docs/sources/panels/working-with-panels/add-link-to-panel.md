@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
   - /docs/sources/panels/working-with-panels/add-link-to-panel/
 title: Add a link to a panel
 weight: 60

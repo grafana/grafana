@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/explore/logs-integration/
 description: Logs in Explore
 keywords:
   - explore

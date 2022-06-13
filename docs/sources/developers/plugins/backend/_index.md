@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/developers/plugins/backend/
   - /docs/grafana/latest/plugins/developing/backend-plugins-guide/
 keywords:
   - grafana
