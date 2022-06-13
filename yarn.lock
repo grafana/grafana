@@ -4683,7 +4683,7 @@ __metadata:
     "@react-aria/focus": 3.6.0
     "@react-aria/menu": 3.5.0
     "@react-aria/overlays": 3.8.2
-    "@react-stately/menu": 3.2.7
+    "@react-stately/menu": 3.3.0
     "@rollup/plugin-alias": ^3.1.9
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
@@ -7593,19 +7593,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/collections@npm:3.3.8, @react-stately/collections@npm:^3.3.8":
-  version: 3.3.8
-  resolution: "@react-stately/collections@npm:3.3.8"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: c93d344f8ed9a856945a1663b2d39d0807c1a6d774740d0e3ebee23ce61b06c4ff7b5c35a554c0e46546b415608b5b2d2d9037d0afddbae48fb1e54b61137bcd
-  languageName: node
-  linkType: hard
-
-"@react-stately/collections@npm:^3.4.0":
+"@react-stately/collections@npm:3.4.0, @react-stately/collections@npm:^3.4.0":
   version: 3.4.0
   resolution: "@react-stately/collections@npm:3.4.0"
   dependencies:
@@ -7617,22 +7605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/menu@npm:3.2.7":
-  version: 3.2.7
-  resolution: "@react-stately/menu@npm:3.2.7"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-stately/overlays": ^3.2.0
-    "@react-stately/utils": ^3.4.1
-    "@react-types/menu": ^3.5.3
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: c498e0d30bf7afd0383b3b83062acab7004edd3e8490cb142fef079167faf960051d9ff7c15a9fa1c6c0e7688880741b1cc7eb443696fc5e3adf9901cf6aae34
-  languageName: node
-  linkType: hard
-
-"@react-stately/menu@npm:^3.3.0":
+"@react-stately/menu@npm:3.3.0, @react-stately/menu@npm:^3.3.0":
   version: 3.3.0
   resolution: "@react-stately/menu@npm:3.3.0"
   dependencies:
@@ -7687,20 +7660,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/selection@npm:^3.9.4":
-  version: 3.9.4
-  resolution: "@react-stately/selection@npm:3.9.4"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-stately/collections": ^3.3.8
-    "@react-stately/utils": ^3.4.1
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: c0ac97943cbe29767e235a527bdd486097bf6f52452e51b040cdcf4f3f0bb85e6379f64314e6a58e12fee692b8370334ac5dd11fefae64453565b3b3091eca15
-  languageName: node
-  linkType: hard
-
 "@react-stately/toggle@npm:^3.3.0":
   version: 3.3.0
   resolution: "@react-stately/toggle@npm:3.3.0"
@@ -7715,22 +7674,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/tree@npm:3.2.4":
-  version: 3.2.4
-  resolution: "@react-stately/tree@npm:3.2.4"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-stately/collections": ^3.3.8
-    "@react-stately/selection": ^3.9.4
-    "@react-stately/utils": ^3.4.1
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 688bf50634849f0264484cc0221de80846a59fa29945986413e54cfc99414e52aa7cd6a2d1f4b07e8c0574d27b7d15a298861a6f21af4bcfe2602314c71c6f26
-  languageName: node
-  linkType: hard
-
-"@react-stately/tree@npm:^3.3.0":
+"@react-stately/tree@npm:3.3.0, @react-stately/tree@npm:^3.3.0":
   version: 3.3.0
   resolution: "@react-stately/tree@npm:3.3.0"
   dependencies:
@@ -7812,7 +7756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.5.3, @react-types/menu@npm:^3.5.3":
+"@react-types/menu@npm:3.5.3":
   version: 3.5.3
   resolution: "@react-types/menu@npm:3.5.3"
   dependencies:
@@ -20880,9 +20824,9 @@ __metadata:
     "@react-aria/menu": 3.5.0
     "@react-aria/overlays": 3.8.2
     "@react-aria/utils": 3.12.0
-    "@react-stately/collections": 3.3.8
-    "@react-stately/menu": 3.2.7
-    "@react-stately/tree": 3.2.4
+    "@react-stately/collections": 3.4.0
+    "@react-stately/menu": 3.3.0
+    "@react-stately/tree": 3.3.0
     "@react-types/button": 3.4.5
     "@react-types/menu": 3.5.3
     "@react-types/overlays": 3.5.5
