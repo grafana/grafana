@@ -11,7 +11,7 @@ var (
 		Status:     "not-found",
 	}
 	ErrPublicDashboardPanelNotFound = DashboardErr{
-		Reason:     "Panel not found in public dashboard not found",
+		Reason:     "Panel not found in dashboard",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
