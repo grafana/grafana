@@ -5,15 +5,12 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 import { GraphiteDatasource } from './datasource';
 
 export interface GraphiteQuery extends DataQuery {
-  target?: string;
-  eventsQuery?: GraphiteEventsQuery;
-}
-
-export type GraphiteEventsQuery = {
-  fromAnnotations?: boolean;
+  queryType?: string;
+  textEditor?: boolean;
   target?: string;
   tags?: string[];
-};
+  fromAnnotations?: boolean;
+}
 
 export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;

@@ -3,20 +3,30 @@ import React, { useState } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel, Input, TagsInput } from '@grafana/ui';
 
-import { GraphiteQuery, GraphiteEventsQuery, GraphiteOptions } from '../types';
+import { GraphiteQuery, GraphiteOptions } from '../types';
 
 import { GraphiteDatasource } from './../datasource';
 
 export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>) => {
   const { query, onChange } = props;
-  const [target, setTarget] = useState<string>(query?.eventsQuery?.target || '');
-  const [tags, setTags] = useState<string[]>(query?.eventsQuery?.tags || []);
-  const updateValue = <K extends keyof GraphiteEventsQuery, V extends GraphiteEventsQuery[K]>(key: K, val: V) => {
-    onChange({
-      ...query,
-      queryType: 'events',
-      eventsQuery: { ...query?.eventsQuery, [key]: val, fromAnnotations: true },
-    });
+  const [target, setTarget] = useState<string>(query?.target || '');
+  const [tags, setTags] = useState<string[]>(query?.tags || []);
+  const updateValue = <K extends keyof GraphiteQuery, V extends GraphiteQuery[K]>(key: K, val: V) => {
+    if (key === 'tags') {
+      onChange({
+        ...query,
+        [key]: val,
+        fromAnnotations: true,
+        queryType: key,
+      });
+    } else {
+      onChange({
+        ...query,
+        [key]: val,
+        fromAnnotations: true,
+        textEditor: true,
+      });
+    }
   };
 
   const onTagsChange = (tagsInput: string[]) => {
