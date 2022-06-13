@@ -129,6 +129,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
             return fetchStatus(alertManagerSourceName).then((status) => ({
               alertmanager_config: status.config,
               template_files: {},
+              template_file_provenances: result.template_file_provenances,
             }));
           }
           return result;

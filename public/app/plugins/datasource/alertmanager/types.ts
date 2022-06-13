@@ -5,6 +5,8 @@ import { DataSourceJsonData } from '@grafana/data';
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
+  /** { [name]: provenance } */
+  template_file_provenances?: Record<string, string>;
 };
 
 export type TLSConfig = {
