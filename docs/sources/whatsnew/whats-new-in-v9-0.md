@@ -237,7 +237,7 @@ You can find the complete list of breaking changes in the links below. Please ch
 
 ### Envelope encryption enabled by default
 
-Since v8.3, a new kind of encryption called "envelope encryption" was added, for the secrets stored into the Grafana
+Since v8.3, a new kind of encryption called "envelope encryption" was added, for those secrets stored into the Grafana
 database (data source credentials, alerting notification channel credentials, oauth tokens, etc), behind a feature
 toggle named `envelopeEncryption`.
 
@@ -245,10 +245,10 @@ So, now this feature toggle has been replaced in favor of `disableEnvelopeEncryp
 the encryption mechanism used by default.
 
 Therefore, any secret created or updated with Grafana v9.0 won't be decryptable by any previous Grafana version unless the
-feature toggle `envelopeEncryption` is enabled (only since v8.3), which is something that needs to be considered in
-high availability setups, progressive rollouts or in case of need to roll back for any reason.
+feature toggle `envelopeEncryption` is enabled (only available since v8.3). That is something that needs to be particularly
+considered in high availability setups, progressive rollouts or in case of need to roll back for any reason.
 
-The recommendation here is to enable `envelopeEncryption` in that case, or alternatively enable `disableEnvelopeEncryption`
+The recommendation here is to enable `envelopeEncryption` for older versions, or alternatively enable `disableEnvelopeEncryption`
 before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
 encourage to move on with envelope encryption.
 
