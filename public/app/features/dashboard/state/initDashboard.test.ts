@@ -26,6 +26,13 @@ import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 
+jest.mock('app/plugins/datasource/grafana-azure-monitor-datasource/utils/logging.ts', () => {
+  return {
+    getAzureMonitorEvent: () => ({
+      query_type: 'foo',
+    }),
+  };
+});
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
   const original = jest.requireActual('app/features/dashboard/services/TimeSrv');
@@ -84,8 +91,21 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
               id: 2,
               targets: [
                 {
+                  datasource: {
+                    type: 'grafana-azure-monitor-datasource',
+                    uid: 'ABCD',
+                    name: 'azMonitor',
+                  },
                   refId: 'A',
                   expr: 'old expr',
+                },
+                {
+                  datasource: {
+                    type: 'cloudwatch',
+                    uid: '1234',
+                    name: 'Cloud Watch',
+                  },
+                  refId: 'B',
                 },
               ],
             },
@@ -197,8 +217,8 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
-  it('should log dashboard_loaded event', () => {
-    expect(reportInteraction).toBeCalledTimes(1);
+  it('should not log dashboard_loaded event', () => {
+    expect(reportInteraction).not.toBeCalled();
   });
 });
 
@@ -274,6 +294,25 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should initialize redux variables if newVariables is enabled', () => {
     expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+  });
+
+  it('should log dashboard_loaded event', () => {
+    expect(reportInteraction).toBeCalledTimes(2);
+    expect(reportInteraction).toBeCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 2,
+      hidden: false,
+      datasource: 'grafana-azure-monitor-datasource',
+      query_type: 'foo',
+      grafana_version: '1.0',
+    });
+    expect(reportInteraction).toBeCalledWith('grafana_dashboard_loaded', {
+      dashboard_id: DASH_UID,
+      panel_id: 2,
+      hidden: false,
+      datasource: 'cloudwatch',
+      grafana_version: '1.0',
+    });
   });
 });
 

@@ -208,22 +208,25 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
-    dashboard.panels.forEach((panel) => {
-      panel.targets.forEach((target) => {
-        let dsSpecific = {};
-        if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
-          dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
-        }
-        reportInteraction('grafana_dashboard_loaded', {
-          dashboard_id: dashDTO.dashboard.uid,
-          hidden: !!target.hide,
-          datasource: target.datasource?.type,
-          grafana_version: config.buildInfo.version,
-          //plugin_version: ???
-          ...dsSpecific,
+    if (dashDTO.dashboard.uid) {
+      dashboard.panels.forEach((panel) => {
+        panel.targets.forEach((target) => {
+          let dsSpecific = {};
+          if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
+            dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
+          }
+          reportInteraction('grafana_dashboard_loaded', {
+            dashboard_id: dashDTO.dashboard.uid,
+            panel_id: panel.id,
+            hidden: !!target.hide,
+            datasource: target.datasource?.type,
+            grafana_version: config.buildInfo.version,
+            //plugin_version: ???
+            ...dsSpecific,
+          });
         });
       });
-    });
+    }
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
