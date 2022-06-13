@@ -118,6 +118,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,

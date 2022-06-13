@@ -36,6 +36,7 @@ export interface FeatureToggles {
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
+  lokiDataframeApi?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
