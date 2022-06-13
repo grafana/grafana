@@ -212,7 +212,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       if (panel.datasource?.type === 'grafana-azure-monitor-datasource' || panel.datasource?.uid === '-- Mixed --') {
         panel.targets.forEach((target) => {
           if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
-            logAzureMonitorEvent(target as AzureMonitorQuery, 'dashboard_load');
+            logAzureMonitorEvent(target as AzureMonitorQuery, dashDTO.dashboard.uid, 'dashboard_loaded');
           }
         });
       }

@@ -78,7 +78,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      logAzureMonitorEvent(target, 'grafana_query');
+      logAzureMonitorEvent(target, '-', 'grafana_query_sent');
 
       // Initialize the list of queries
       if (!byType.has(target.queryType)) {

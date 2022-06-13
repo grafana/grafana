@@ -1,8 +1,8 @@
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { AzureMonitorQuery, AzureQueryType } from '../types';
 
-export const logAzureMonitorEvent = (target: AzureMonitorQuery, eventName: string) => {
+export const logAzureMonitorEvent = (target: AzureMonitorQuery, dashboardId: string, eventName: string) => {
   let typeSpecific;
   switch (target.queryType) {
     case AzureQueryType.AzureMonitor:
@@ -27,18 +27,15 @@ export const logAzureMonitorEvent = (target: AzureMonitorQuery, eventName: strin
   }
 
   const event = {
-    event: eventName,
+    dashboard_id: dashboardId,
     datasource: target.datasource?.type,
-    hide: target.hide,
-    queryType: target.queryType,
+    grafana_version: config.buildInfo.version,
+    // plugin_version: not sure how to get the datasource version - maybe we can get it from joining with another bigquery table?
+    hidden: target.hide,
+    query_type: target.queryType,
     ...typeSpecific,
   };
 
   console.log(event);
-  reportInteraction(eventName, {
-    datasource: target.datasource?.type,
-    hide: target.hide,
-    queryType: target.queryType,
-    ...typeSpecific,
-  });
+  reportInteraction(eventName, event);
 };
