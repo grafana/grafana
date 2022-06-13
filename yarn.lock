@@ -7602,19 +7602,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.5.3":
-  version: 3.5.3
-  resolution: "@react-types/menu@npm:3.5.3"
-  dependencies:
-    "@react-types/overlays": ^3.5.5
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: b1428f28d7239750f108a923acb993fb78f3b8f7a93624f2534bea90724de34a22ea89a2167a31cfb9f24b2ac9e1f01cba52810c4336c5bbdbd38587d8319492
-  languageName: node
-  linkType: hard
-
-"@react-types/menu@npm:^3.6.0":
+"@react-types/menu@npm:3.6.0, @react-types/menu@npm:^3.6.0":
   version: 3.6.0
   resolution: "@react-types/menu@npm:3.6.0"
   dependencies:
@@ -7637,18 +7625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:^3.5.5":
-  version: 3.5.5
-  resolution: "@react-types/overlays@npm:3.5.5"
-  dependencies:
-    "@react-types/shared": ^3.12.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: f6ed716c2a7929b6825781b8db6a86043fc15e160ca68e2dbecedd84d040688bd4b1ad491e5fd92258e7bb73145ac623541ad692b034865768053f92ff66689f
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:3.12.0, @react-types/shared@npm:^3.12.0":
+"@react-types/shared@npm:3.12.0":
   version: 3.12.0
   resolution: "@react-types/shared@npm:3.12.0"
   peerDependencies:
@@ -20665,7 +20642,7 @@ __metadata:
     "@react-stately/menu": 3.3.0
     "@react-stately/tree": 3.3.0
     "@react-types/button": 3.5.0
-    "@react-types/menu": 3.5.3
+    "@react-types/menu": 3.6.0
     "@react-types/overlays": 3.6.0
     "@react-types/shared": 3.12.0
     "@reduxjs/toolkit": 1.8.1
