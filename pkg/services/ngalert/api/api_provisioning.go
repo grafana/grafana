@@ -16,13 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const (
-	namePathParam      = ":name"
-	uidPathParam       = ":UID"
-	groupPathParam     = ":Group"
-	folderUIDPathParam = ":FolderUID"
-)
-
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService

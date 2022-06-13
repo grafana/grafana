@@ -152,7 +152,6 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				withURLParams(rc, namePathParam, "test")
 				tmpl := definitions.MessageTemplateContent{Template: ""}
 
 				response := sut.RoutePutTemplate(&rc, tmpl, "test")
@@ -181,7 +180,6 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				withURLParams(rc, namePathParam, "interval")
 				mti := createInvalidMuteTiming()
 
 				response := sut.RoutePutMuteTiming(&rc, mti, "interval")
@@ -195,7 +193,6 @@ func TestProvisioningApi(t *testing.T) {
 		t.Run("are missing, PUT returns 404", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			withURLParams(rc, namePathParam, "does not exist")
 			mti := definitions.MuteTimeInterval{}
 
 			response := sut.RoutePutMuteTiming(&rc, mti, "does not exist")
@@ -282,12 +279,6 @@ func createTestRequestCtx() gfcore.ReqContext {
 			OrgId: 1,
 		},
 	}
-}
-
-func withURLParams(rc gfcore.ReqContext, key, value string) {
-	params := web.Params(rc.Req)
-	params[key] = value
-	rc.Req = web.SetURLParams(rc.Req, params)
 }
 
 type fakeNotificationPolicyService struct {
