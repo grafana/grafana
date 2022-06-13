@@ -308,7 +308,6 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		fmt.Println("this is a dummy update")
-		fmt.Println("and another one")
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
