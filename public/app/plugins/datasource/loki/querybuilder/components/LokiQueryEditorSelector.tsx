@@ -79,25 +79,21 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
-        {editorMode === QueryEditorMode.Builder && (
-          <>
-            <InlineSelect
-              value={null}
-              placeholder="Query patterns"
-              allowCustomValue
-              onChange={({ value }) => {
-                const result = buildVisualQueryFromString(query.expr || '');
-                result.query.operations = value?.operations!;
-                onChange({
-                  ...query,
-                  expr: lokiQueryModeller.renderQuery(result.query),
-                });
-              }}
-              options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-            />
-            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
-          </>
-        )}
+        <InlineSelect
+          value={null}
+          placeholder="Query patterns"
+          allowCustomValue
+          onChange={({ value }) => {
+            const result = buildVisualQueryFromString(query.expr || '');
+            result.query.operations = value?.operations!;
+            onChange({
+              ...query,
+              expr: lokiQueryModeller.renderQuery(result.query),
+            });
+          }}
+          options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
+        />
+        <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && (
           <Button
