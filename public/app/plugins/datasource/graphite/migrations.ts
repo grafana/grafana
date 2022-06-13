@@ -1,5 +1,3 @@
-import { GraphiteQuery } from './types';
-
 type LegacyAnnotation = {
   target?: string;
   tags?: string;

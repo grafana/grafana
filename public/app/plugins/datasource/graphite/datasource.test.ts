@@ -8,7 +8,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import GraphiteQuery from './graphite_query';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
