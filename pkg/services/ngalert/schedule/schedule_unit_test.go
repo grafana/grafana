@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -858,7 +859,9 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
 			require.False(t, info.update())
-			require.False(t, info.eval(time.Now(), 1))
+			success, dropped := info.eval(time.Now(), 1)
+			require.False(t, success)
+			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 			require.False(t, sch.registry.exists(key))
 		})
 		t.Run("should remove controller from registry", func(t *testing.T) {
@@ -868,7 +871,9 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			info.stop()
 			sch.DeleteAlertRule(key)
 			require.False(t, info.update())
-			require.False(t, info.eval(time.Now(), 1))
+			success, dropped := info.eval(time.Now(), 1)
+			require.False(t, success)
+			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 			require.False(t, sch.registry.exists(key))
 		})
 	})
@@ -926,7 +931,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock(), &dashboards.FakeDashboardService{})
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock(), &dashboards.FakeDashboardService{}, &image.NoopImageService{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

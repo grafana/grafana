@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/", "/docs/grafana/latest/reference/share_dashboard/", "/docs/grafana/latest/sharing/share-dashboard/"]
-keywords = ["grafana", "dashboard", "documentation", "sharing"]
-title = "Share a dashboard"
-weight = 6
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/share-dashboard/
+  - /docs/grafana/latest/reference/share_dashboard/
+  - /docs/grafana/latest/sharing/share-dashboard/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - sharing
+title: Share a dashboard
+weight: 6
+---
 
 # Share a dashboard
 
@@ -44,6 +51,6 @@ In case you created a snapshot by mistake, click **delete snapshot** to remove t
 
 ## Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import.md" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import/" >}}).
 
 ![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)

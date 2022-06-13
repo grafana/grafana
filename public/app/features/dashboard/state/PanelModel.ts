@@ -163,6 +163,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
+  autoMigrateFrom?: string;
+
   // non persisted
   isViewing = false;
   isEditing = false;
@@ -220,6 +222,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
+    }
+
+    // Special 'graph' migration logic
+    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
+      this.autoMigrateFrom = this.type;
+      this.type = 'timeseries';
     }
 
     // defaults
@@ -368,6 +376,18 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.plugin = plugin;
     const version = getPluginVersion(plugin);
 
+    if (this.autoMigrateFrom) {
+      const wasAngular = this.autoMigrateFrom === 'graph';
+      this.callPanelTypeChangeHandler(
+        plugin,
+        this.autoMigrateFrom,
+        this.getOptionsToRemember(), // old options
+        wasAngular
+      );
+
+      delete this.autoMigrateFrom;
+    }
+
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
@@ -401,6 +421,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     };
   }
 
+  // Let panel plugins inspect options from previous panel and keep any that it can use
+  private callPanelTypeChangeHandler(
+    newPlugin: PanelPlugin,
+    oldPluginId: string,
+    oldOptions: any,
+    wasAngular: boolean
+  ) {
+    if (newPlugin.onPanelTypeChanged) {
+      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, this.fieldConfig));
+    }
+  }
+
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
@@ -415,11 +448,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.clearPropertiesBeforePluginChange();
     this.restorePanelOptions(pluginId);
 
-    // Let panel plugins inspect options from previous panel and keep any that it can use
-    if (newPlugin.onPanelTypeChanged) {
-      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, prevFieldConfig));
-    }
+    // Potentially modify current options
+    this.callPanelTypeChangeHandler(newPlugin, oldPluginId, oldOptions, wasAngular);
 
     // switch
     this.type = pluginId;

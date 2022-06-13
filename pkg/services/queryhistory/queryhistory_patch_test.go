@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -10,7 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPatchQueryCommentInQueryHistory(t *testing.T) {
+func TestIntegrationPatchQueryCommentInQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "When user tries to patch comment of query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.patchCommentHandler(sc.reqContext)

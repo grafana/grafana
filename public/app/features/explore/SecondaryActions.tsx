@@ -7,6 +7,7 @@ import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
+  richHistoryRowButtonHidden?: boolean;
   richHistoryButtonActive?: boolean;
   queryInspectorButtonActive?: boolean;
 
@@ -19,6 +20,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     containerMargin: css`
       margin-top: ${theme.spacing(2)};
+    `,
+    exploreActiveButton: css`
+      box-shadow: ${theme.shadows.z1};
+      border: 1px solid ${theme.colors.warning.border};
+      color: ${theme.colors.warning.text};
     `,
   };
 };
@@ -39,19 +45,21 @@ export function SecondaryActions(props: Props) {
             Add query
           </Button>
         )}
-        <Button
-          variant="secondary"
-          aria-label="Rich history button"
-          className={cx({ ['explore-active-button']: props.richHistoryButtonActive })}
-          onClick={props.onClickRichHistoryButton}
-          icon="history"
-        >
-          Query history
-        </Button>
+        {!props.richHistoryRowButtonHidden && (
+          <Button
+            variant="secondary"
+            aria-label="Rich history button"
+            className={cx({ [styles.exploreActiveButton]: props.richHistoryButtonActive })}
+            onClick={props.onClickRichHistoryButton}
+            icon="history"
+          >
+            Query history
+          </Button>
+        )}
         <Button
           variant="secondary"
           aria-label="Query inspector button"
-          className={cx({ ['explore-active-button']: props.queryInspectorButtonActive })}
+          className={cx({ [styles.exploreActiveButton]: props.queryInspectorButtonActive })}
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >

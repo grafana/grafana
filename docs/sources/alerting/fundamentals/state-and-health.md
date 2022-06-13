@@ -1,30 +1,63 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/fundamentals/state-and-health/", "/docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/"]
-description = "State and Health of alerting rules"
-keywords = ["grafana", "alerting", "guide", "state"]
-title = "State and health of alerting rules"
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/fundamentals/state-and-health/
+  - /docs/grafana/llatest/alerting/unified-alerting/alerting-rules/state-and-health/
+description: State and Health of alerting rules
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - state
+title: State and health of alerting rules
+---
 
 # State and health of alerting rules
 
-The state and health of alerting rules help you understand several key status indicators about your alerts. There are three key components: alert state, alerting rule state, and alerting rule health. Although related, each component conveys subtly different information.
+The state and health of alerting rules help you understand several key status indicators about your alerts.
 
-## Alerting rule state
+There are three key components: [alert rule state](#alert-rule-state), [alert instance state](#alert-instance-state), and [alert rule health](#alert-rule-health). Although related, each component conveys subtly different information.
 
-- **Normal**: None of the time series returned by the evaluation engine is in a Pending or Firing state.
-- **Pending**: At least one time series returned by the evaluation engine is Pending.
-- **Firing**: At least one time series returned by the evaluation engine is Firing.
+## Alert rule state
 
-## Alert state
+An alert rule can be in either of the following states:
 
-- **Normal**: Condition for the alerting rule is **false** for every time series returned by the evaluation engine.
-- **Alerting**: Condition of the alerting rule is **true** for at least one time series returned by the evaluation engine. The duration for which the condition must be true before an alert fires, if set, is met or has exceeded.
-- **Pending**: Condition of the alerting rule is **true** for at least one time series returned by the evaluation engine. The duration for which the condition must be true before an alert fires, if set, **has not** been met.
-- **NoData**: the alerting rule has not returned a time series, all values for the time series are null, or all values for the time series are zero.
-- **Error**: Error when attempting to evaluate an alerting rule.
+| State       | Description                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| **Normal**  | None of the time series returned by the evaluation engine is in a `Pending` or `Firing` state. |
+| **Pending** | At least one time series returned by the evaluation engine is `Pending`.                       |
+| **Firing**  | At least one time series returned by the evaluation engine is `Firing`.                        |
 
-## Alerting rule health
+> **Note:** Alerts will transition first to `pending` and then `firing`, thus it will take at least two evaluation cycles before an alert is fired.
 
-- **Ok**: No error when evaluating an alerting rule.
-- **Error**: Error when evaluating an alerting rule.
-- **NoData**: The absence of data in at least one time series returned during a rule evaluation.
+## Alert instance state
+
+An alert instance can be in either of the following states:
+
+| State        | Description                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| **Normal**   | The state of an alert that is neither firing nor pending, everything is working correctly.    |
+| **Pending**  | The state of an alert that has been active for less than the configured threshold duration.   |
+| **Alerting** | The state of an alert that has been active for longer than the configured threshold duration. |
+| **NoData**   | No data has been received for the configured time window.                                     |
+| **Error**    | The error that occurred when attempting to evaluate an alerting rule.                         |
+
+## Alert rule health
+
+An alert rule can have one the following health statuses:
+
+| State      | Description                                                                        |
+| ---------- | ---------------------------------------------------------------------------------- |
+| **Ok**     | No error when evaluating an alerting rule.                                         |
+| **Error**  | An error occurred when evaluating an alerting rule.                                |
+| **NoData** | The absence of data in at least one time series returned during a rule evaluation. |
+
+## Special alerts for `NoData` and `Error`
+
+When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana Alerting will generate alert instances that have the following additional labels:
+
+| Label              | Description                                                            |
+| ------------------ | ---------------------------------------------------------------------- |
+| **alertname**      | Either `DatasourceNoData` or `DatasourceError` depending on the state. |
+| **datasource_uid** | The UID of the data source that caused the state.                      |
+
+You can handle these alerts the same way as regular alerts by adding a silence, route to a contact point, and so on.

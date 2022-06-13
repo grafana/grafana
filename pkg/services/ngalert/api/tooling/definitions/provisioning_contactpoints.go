@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-// swagger:route GET /api/provisioning/contact-points provisioning RouteGetContactpoints
+// swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
 //
 // Get all the contact points.
 //
@@ -15,7 +15,7 @@ import (
 //       200: Route
 //       400: ValidationError
 
-// swagger:route POST /api/provisioning/contact-points provisioning RoutePostContactpoints
+// swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -23,10 +23,10 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
 
-// swagger:route PUT /api/provisioning/contact-points/{ID} provisioning RoutePutContactpoint
+// swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -34,10 +34,10 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/contact-points/{ID} provisioning RouteDeleteContactpoints
+// swagger:route DELETE /api/v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
@@ -45,8 +45,15 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Accepted
+//       202: Ack
 //       400: ValidationError
+
+// swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
+type ContactPointUIDReference struct {
+	// UID should be the contact point unique identifier
+	// in:path
+	UID string
+}
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint
 type ContactPointPayload struct {
@@ -57,16 +64,24 @@ type ContactPointPayload struct {
 // EmbeddedContactPoint is the contact point type that is used
 // by grafanas embedded alertmanager implementation.
 type EmbeddedContactPoint struct {
-	// UID is the unique identifier of the contact point. This will be
-	// automatically set be the Grafana.
+	// UID is the unique identifier of the contact point. The UID can be
+	// set by the user.
+	// example: my_external_reference
 	UID string `json:"uid"`
 	// Name is used as grouping key in the UI. Contact points with the
 	// same name will be grouped in the UI.
-	Name                  string           `json:"name" binding:"required"`
-	Type                  string           `json:"type" binding:"required"`
-	Settings              *simplejson.Json `json:"settings" binding:"required"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Provenance            string           `json:"provenance"`
+	// example: webhook_1
+	Name string `json:"name" binding:"required"`
+	// required: true
+	// example: webhook
+	// enum: alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, slack, teams, telegram, threema, victorops, webhook, wecom
+	Type string `json:"type" binding:"required"`
+	// required: true
+	Settings *simplejson.Json `json:"settings" binding:"required"`
+	// example: false
+	DisableResolveMessage bool `json:"disableResolveMessage"`
+	// readonly: true
+	Provenance string `json:"provenance,omitempty"`
 }
 
 const RedactedValue = "[REDACTED]"
@@ -85,7 +100,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
 		Settings: e.Settings,
 		Type:     e.Type,
-	}, nil, decryptFunc, nil)
+	}, nil, decryptFunc, nil, nil)
 	if _, err := factory(cfg); err != nil {
 		return err
 	}

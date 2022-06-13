@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import classNames from 'classnames';
+import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon } from '@grafana/ui';
+import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
+import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleForm, RuleFormType, RuleFormValues } from '../../types/rule-form';
 
 import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleFolderPicker, Folder } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
@@ -21,7 +25,11 @@ const recordingRuleNameValidationPattern = {
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 };
 
-export const DetailsStep: FC = () => {
+interface DetailsStepProps {
+  initialFolder: RuleForm | null;
+}
+
+export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
   const {
     register,
     watch,
@@ -33,6 +41,8 @@ export const DetailsStep: FC = () => {
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
   const type = watch('type');
+
+  const folderFilter = useRuleFolderFilter(initialFolder);
 
   return (
     <RuleEditorSection
@@ -75,7 +85,7 @@ export const DetailsStep: FC = () => {
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
-        <div className={styles.flexRow}>
+        <div className={classNames([styles.flexRow, styles.alignBaseline])}>
           <Field
             label={
               <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
@@ -102,7 +112,13 @@ export const DetailsStep: FC = () => {
           >
             <InputControl
               render={({ field: { ref, ...field } }) => (
-                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
+                <RuleFolderPicker
+                  inputId="folder"
+                  {...field}
+                  enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                  enableReset={true}
+                  filter={folderFilter}
+                />
               )}
               name="folder"
               rules={{
@@ -131,14 +147,45 @@ export const DetailsStep: FC = () => {
         </div>
       )}
       {type !== RuleFormType.cloudRecording && <AnnotationsField />}
-      <LabelsField />
     </RuleEditorSection>
   );
 };
 
+const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
+  const isSearchHitAvailable = useCallback(
+    (hit: DashboardSearchHit) => {
+      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
+
+      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
+        AccessControlAction.AlertingRuleCreate,
+        hit,
+        rbacDisabledFallback
+      );
+
+      const canUpdateInCurrentFolder =
+        existingRuleForm &&
+        hit.folderId === existingRuleForm.id &&
+        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
+
+      return canCreateRuleInFolder || canUpdateInCurrentFolder;
+    },
+    [existingRuleForm]
+  );
+
+  return useCallback<FolderPickerFilter>(
+    (folderHits) => folderHits.filter(isSearchHitAvailable),
+    [isSearchHitAvailable]
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
+  alignBaseline: css`
+    align-items: baseline;
+    margin-bottom: ${theme.spacing(3)};
+  `,
   formInput: css`
-    width: 330px;
+    width: 275px;
+
     & + & {
       margin-left: ${theme.spacing(3)};
     }

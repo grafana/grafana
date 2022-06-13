@@ -14,19 +14,24 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+import (
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+)
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.SingleStatBaseOptions
-                    showThresholdLabels: bool
-                    showThresholdMarkers: bool
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "gauge"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.SingleStatBaseOptions
+						showThresholdLabels:  bool | *false
+						showThresholdMarkers: bool | *true
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

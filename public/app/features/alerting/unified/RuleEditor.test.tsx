@@ -3,11 +3,11 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
@@ -98,6 +98,7 @@ describe('RuleEditor', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
   });
 
   disableRBAC();
@@ -147,18 +148,20 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-
     await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    await userEvent.click(await ui.buttons.lotexAlert.get());
+
+    await userEvent.click(await ui.buttons.lotexAlert.find());
+
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
+
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
+
+    await userEvent.type(ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
-
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
     await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
@@ -352,7 +355,7 @@ describe('RuleEditor', () => {
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });

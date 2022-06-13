@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/migration-guide/"]
-title = "Plugin migration guide"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/migration-guide/
+title: Plugin migration guide
+---
 
 # Plugin migration guide
 
@@ -322,7 +323,7 @@ import { cx, css } from '@emotion/css';
 
 ### Update needed for app plugins using dashboards
 
-To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata.md#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
 
 **`plugin.json`**
 

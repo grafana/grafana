@@ -42,7 +42,13 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
                   </Button>
                 )}
                 {dashboard.imported && (
-                  <Button icon="trash-alt" variant="destructive" size="sm" onClick={() => onRemove(dashboard)} />
+                  <Button
+                    aria-label="Delete dashboard"
+                    icon="trash-alt"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onRemove(dashboard)}
+                  />
                 )}
               </td>
             </tr>

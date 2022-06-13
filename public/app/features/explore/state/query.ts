@@ -19,6 +19,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -355,7 +356,6 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -377,7 +377,14 @@ export const runQueries = (
       newQuerySub = of(cachedValue)
         .pipe(
           mergeMap((data: PanelData) =>
-            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+            )
           )
         )
         .subscribe((data) => {
@@ -435,12 +442,17 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
-              !!getState().explore[exploreId]!.logsVolumeDataProvider
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
         )
         .subscribe({
           next(data) {
+            if (data.logsResult !== null) {
+              reportInteraction('grafana_explore_logs_result_displayed', {
+                datasourceType: datasourceInstance.type,
+              });
+            }
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -834,7 +846,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -844,7 +857,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }

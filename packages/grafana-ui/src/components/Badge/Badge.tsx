@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { HTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
@@ -44,7 +44,7 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, class
 Badge.displayName = 'Badge';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
-  let sourceColor = getColorForTheme(color, theme);
+  let sourceColor = theme.visualization.getColorByName(color);
   let borderColor = '';
   let bgColor = '';
   let textColor = '';

@@ -75,12 +75,8 @@ export function ExploreGraph({
 
   const previousData = usePrevious(data);
   const structureChangesRef = useRef(0);
-
-  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
-    structureChangesRef.current++;
-  }
-
   const structureRev = baseStructureRev + structureChangesRef.current;
+  const prevStructureRev = usePrevious(structureRev);
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
@@ -95,6 +91,14 @@ export function ExploreGraph({
     },
     overrides: [],
   });
+
+  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
+    structureChangesRef.current++;
+
+    if (prevStructureRev === structureRev) {
+      setFieldConfig({ ...fieldConfig, overrides: [] });
+    }
+  }
 
   const style = useStyles2(getStyles);
   const timeRange = {

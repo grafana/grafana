@@ -12,20 +12,27 @@ interface Props {
   labelWidth: number;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
+  onRunQuery: () => void;
 }
 
 const mathPlaceholder =
   'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' +
   'The sum of two scalar values: $A + $B > 10';
 
-export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
-  const [showHelp, toggleShowHelp] = useToggle(true);
+export const Math: FC<Props> = ({ labelWidth, onChange, query, onRunQuery }) => {
+  const [showHelp, toggleShowHelp] = useToggle(false);
 
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ ...query, expression: event.target.value });
   };
 
   const styles = useStyles2((theme) => getStyles(theme, showHelp));
+
+  const executeQuery = () => {
+    if (query.expression) {
+      onRunQuery();
+    }
+  };
 
   return (
     <Stack direction="row">
@@ -40,8 +47,14 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
         `}
       >
         <>
-          <TextArea value={query.expression} onChange={onExpressionChange} rows={5} placeholder={mathPlaceholder} />
-          <Button color="primary" size="sm" onClick={() => toggleShowHelp()}>
+          <TextArea
+            value={query.expression}
+            onChange={onExpressionChange}
+            rows={5}
+            placeholder={mathPlaceholder}
+            onBlur={executeQuery}
+          />
+          <Button variant="secondary" size="sm" onClick={toggleShowHelp}>
             {showHelp === false ? 'Show' : 'Hide'} help
           </Button>
         </>
