@@ -204,9 +204,8 @@ function initEchoSrv() {
       })
     );
   }
-  console.log(config);
   if (config.grafanaJavascriptAgent.enabled) {
-    console.log(config.grafanaJavascriptAgent);
+    console.log('Registering GrafanaJavascriptAgentBackend');
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,
@@ -215,6 +214,10 @@ function initEchoSrv() {
           environment: config.buildInfo.env,
         },
         buildInfo: config.buildInfo,
+        user: {
+          id: String(config.bootData.user?.id),
+          email: config.bootData.user?.email,
+        },
       })
     );
   }

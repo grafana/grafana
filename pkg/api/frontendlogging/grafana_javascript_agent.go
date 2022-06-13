@@ -37,17 +37,29 @@ func KeyValToInterfaceMap(kv *KeyVal) map[string]interface{} {
 	}
 	return retv
 }
-func (event *FrontendGrafanaJavascriptAgentEvent) ToGrafanJavascriptAgentLogContext() []interface{} {
-	var ctx = CtxVector{}
+func (event *FrontendGrafanaJavascriptAgentEvent) AddMetaToContext(ctx CtxVector) []interface{} {
 	for k, v := range KeyValToInterfaceMap(event.Meta.KeyVal()) {
 		ctx = append(ctx, k, v)
 	}
+	return ctx
+}
 
-	//@FIXME - deal with multiple exceptions
+func (event *FrontendGrafanaJavascriptAgentEvent) AddExceptionToContext(ctx CtxVector) []interface{} {
 	for _, exception := range event.Exceptions {
 		transformedException := TransformException(&exception)
 		ctx = append(ctx, "exception", transformedException)
 	}
-
 	return ctx
+}
+
+func (event *FrontendGrafanaJavascriptAgentEvent) ConvertMeasurementsToInterfaceMap() map[string]interface{} {
+	interfaceMap := make(map[string]interface{})
+	if event.Measurements != nil && len(event.Measurements) > 0 {
+		for _, measurement := range event.Measurements {
+			if measurement.Type != "" {
+				interfaceMap[measurement.Type] = KeyValToInterfaceSlice(measurement.KeyVal())
+			}
+		}
+	}
+	return interfaceMap
 }

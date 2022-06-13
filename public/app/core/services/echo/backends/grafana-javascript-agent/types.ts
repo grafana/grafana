@@ -1,3 +1,4 @@
+import { CurrentUserDTO } from '@grafana/data';
 import { EchoEvent, EchoEventType } from '@grafana/runtime';
 
 export interface BaseTransport {
@@ -6,8 +7,6 @@ export interface BaseTransport {
 
 export type GrafanaJavascriptAgentEchoEvent = EchoEvent<EchoEventType.GrafanaJavascriptAgent>;
 
-export interface User {
-  email: string;
-  id: number;
-  orgId: number;
+export interface User extends Pick<CurrentUserDTO, 'email'> {
+  id: string;
 }

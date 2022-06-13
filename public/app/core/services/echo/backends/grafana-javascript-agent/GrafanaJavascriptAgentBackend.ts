@@ -1,30 +1,30 @@
-import { initializeAgent, BrowserConfig, ErrorsInstrumentation } from '@grafana/agent-web';
+import {
+  initializeAgent,
+  BrowserConfig,
+  ErrorsInstrumentation,
+  ConsoleInstrumentation,
+  LogLevel,
+  WebVitalsInstrumentation,
+} from '@grafana/agent-web';
 import { BuildInfo } from '@grafana/data';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
-import { GrafanaJavascriptAgentEchoEvent } from './types';
+import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
+  user: User;
 }
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
 {
-  supportedEvents = [EchoEventType.Sentry];
+  supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
   private agentInstance;
 
-  // transports: BaseTransport[];
-
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
-    //  set up transports to post events to grafana backend and/or Sentry
-    // this.transports = [];
-    // if (options.customEndpoint) {
-    //   this.transports.push(new CustomEndpointTransport({ endpoint: options.customEndpoint }));
-    // }
-
-    // initialize Sentry so it can set up it's hooks and start collecting errors
+    // initialize GrafanaJavascriptAgent so it can set up it's hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       app: {
         version: options.buildInfo.version,
@@ -33,20 +33,19 @@ export class GrafanaJavascriptAgentBackend
       url: options.customEndpoint || '/log',
       instrumentations: [
         new ErrorsInstrumentation(),
-        // new ConsoleInstrumentation({
-        //   disabledLevels: [LogLevel.TRACE, LogLevel.ERROR] // console.log will be captured
-        // })
+        new ConsoleInstrumentation({
+          disabledLevels: [LogLevel.TRACE, LogLevel.ERROR], // console.log will be captured
+        }),
+        new WebVitalsInstrumentation(),
       ],
     };
-
-    /*if (options.user) {
-      sentrySetUser({
-        email: options.user.email,
-        id: String(options.user.id),
-      });
-    }*/
-
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
+    if (options.user) {
+      this.agentInstance.api.setUser({
+        email: options.user.email,
+        id: options.user.id,
+      });
+    }
   }
 
   addEvent = (e: EchoEvent) => {

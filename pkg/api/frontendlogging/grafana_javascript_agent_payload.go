@@ -248,9 +248,10 @@ type Measurement struct {
 	Values    map[string]float64 `json:"values,omitempty"`
 	Timestamp time.Time          `json:"timestamp,omitempty"`
 	Trace     TraceContext       `json:"trace,omitempty"`
+	Type      string             `json:"type,omitempty"`
 }
 
-// KeyVal representation of the exception object
+// KeyVal representation of the Measurement object
 func (m Measurement) KeyVal() *KeyVal {
 	kv := NewKeyVal()
 

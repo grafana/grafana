@@ -54,14 +54,28 @@ func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
 		if err := web.Bind(c.Req, &event); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
-		var msg = "unknown"
+		var ctx = frontendlogging.CtxVector{}
+		ctx = event.AddMetaToContext(ctx)
 
-		var ctx = event.ToGrafanJavascriptAgentLogContext()
-		if event.Exceptions != nil && len(event.Exceptions) > 0 {
-			msg = event.Exceptions[0].Message()
-			ctx = append(ctx, "exception_timestamp", event.Exceptions[0].Timestamp)
+		if event.Logs != nil && len(event.Logs) > 0 {
+			ctx = append(ctx, "original_timestamp", event.Logs[0].Timestamp)
+			grafanaJavascriptAgentLogger.Info(event.Logs[0].Message, ctx...)
 		}
-		grafanaJavascriptAgentLogger.Info(msg, ctx...)
+
+		if event.Measurements != nil && len(event.Measurements) > 0 {
+			for _, measurementEntry := range event.Measurements {
+				for measurementName, measurementValue := range measurementEntry.Values {
+					ctx = append(ctx, measurementName, measurementValue)
+					ctx = append(ctx, "original_timestamp", measurementEntry.Timestamp)
+					grafanaJavascriptAgentLogger.Info("Measurement: "+measurementEntry.Type, ctx...)
+				}
+			}
+		}
+		if event.Exceptions != nil && len(event.Exceptions) > 0 {
+			event.AddExceptionToContext(ctx)
+			ctx = append(ctx, "original_timestamp", event.Exceptions[0].Timestamp)
+			grafanaJavascriptAgentLogger.Info(event.Exceptions[0].Message(), ctx...)
+		}
 		return response.Success("ok")
 	}
 }
