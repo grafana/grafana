@@ -180,9 +180,10 @@ func TestPluginManager_Installer(t *testing.T) {
 			pm.cfg.PluginsPath = testDir
 			pm.pluginLoader = l
 			pm.pluginFs = fsm
+			pm.pluginRepo = repo
 		})
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", repo, plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, repo.downloadCount)
@@ -208,7 +209,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0", repo, plugins.CompatabilityOpts{})
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
 			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -231,8 +232,9 @@ func TestPluginManager_Installer(t *testing.T) {
 					Version: "1.2.0",
 				}, nil
 			}
+			//pm.pluginRepo = repo
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0", repo, plugins.CompatabilityOpts{})
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatabilityOpts{})
 			assert.NoError(t, err)
 
 			assert.Equal(t, 2, repo.downloadCount)
@@ -276,8 +278,6 @@ func TestPluginManager_Installer(t *testing.T) {
 			mockedLoadedPlugins: []*plugins.Plugin{p},
 		}
 
-		repo := &fakePluginRepo{}
-
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.pluginLoader = loader
 		})
@@ -296,7 +296,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", repo, plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -332,7 +332,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "1.0.0", &fakePluginRepo{}, plugins.CompatabilityOpts{})
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatabilityOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/repository"
 )
 
 // Store is the storage for plugins.
@@ -20,7 +19,7 @@ type Store interface {
 
 type Manager interface {
 	// Add adds a plugin from the repository to the store.
-	Add(ctx context.Context, pluginID, version string, repo repository.Service, opts CompatabilityOpts) error
+	Add(ctx context.Context, pluginID, version string, opts CompatabilityOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
 }

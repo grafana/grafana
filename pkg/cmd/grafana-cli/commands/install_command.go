@@ -14,7 +14,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cockroachdb/errors/errutil"
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -96,7 +95,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 		d, err := repo.GetPluginArchive(ctx, dep.ID, dep.Version,
 			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion})
 		if err != nil {
-			return errutil.Wrapf(err, "failed to download plugin %s from repository", dep.ID)
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
 		_, err = pluginFs.Add(ctx, d.File, dep.ID, pluginsPath)

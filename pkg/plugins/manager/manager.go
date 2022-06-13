@@ -13,9 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var _ plugins.Manager = (*PluginManager)(nil)
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
@@ -26,6 +28,7 @@ type PluginManager struct {
 	cfg            *plugins.Cfg
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
+	pluginRepo     repository.Service
 	pluginsMu      sync.RWMutex
 	pluginSources  []PluginSource
 	pluginFs       filestore.Manager
