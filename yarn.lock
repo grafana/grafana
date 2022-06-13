@@ -7434,17 +7434,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/ssr@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "@react-aria/ssr@npm:3.1.2"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 86ba84fa3a7197b04cfbbd2d2f60d45d07345bd2a48d0d10b303d1bad98a652b58bf76b9d820f7b4dce063531e65ed268eb55cd974e11a5b4d125d28e638ba8b
-  languageName: node
-  linkType: hard
-
 "@react-aria/ssr@npm:^3.2.0":
   version: 3.2.0
   resolution: "@react-aria/ssr@npm:3.2.0"
@@ -7456,22 +7445,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/utils@npm:3.12.0":
-  version: 3.12.0
-  resolution: "@react-aria/utils@npm:3.12.0"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/ssr": ^3.1.2
-    "@react-stately/utils": ^3.4.1
-    "@react-types/shared": ^3.12.0
-    clsx: ^1.1.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 8dbcecbc84828e6a76f2509405e9cc500c51a9b25ac795b1f723fde99a0de3a08f8733468d6c5f667f65d94adf9b05c7d345f7fd754057d09481907b2073fdbf
-  languageName: node
-  linkType: hard
-
-"@react-aria/utils@npm:^3.13.0":
+"@react-aria/utils@npm:3.13.0, @react-aria/utils@npm:^3.13.0":
   version: 3.13.0
   resolution: "@react-aria/utils@npm:3.13.0"
   dependencies:
@@ -7580,17 +7554,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: 724d5833c2ca262f7b07c659d787df6deb0a871b58e067a92813175272f3a6333bb26dedcf997bda4cf950afa152223b635dc253d299514dd0918161948ed9b1
-  languageName: node
-  linkType: hard
-
-"@react-stately/utils@npm:^3.4.1":
-  version: 3.4.1
-  resolution: "@react-stately/utils@npm:3.4.1"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: a6494720dc6ca7fbe9986f407f6e62988b45f51747fb655b4ec87289896fe96e560c60270f1e987ddeca1749fa255c521550fda777f185fc7e66b8324f182f1e
   languageName: node
   linkType: hard
 
@@ -20708,7 +20671,7 @@ __metadata:
     "@react-aria/interactions": 3.9.0
     "@react-aria/menu": 3.5.0
     "@react-aria/overlays": 3.9.0
-    "@react-aria/utils": 3.12.0
+    "@react-aria/utils": 3.13.0
     "@react-stately/collections": 3.4.0
     "@react-stately/menu": 3.3.0
     "@react-stately/tree": 3.3.0
