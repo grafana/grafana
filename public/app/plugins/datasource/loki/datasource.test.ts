@@ -24,7 +24,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { isMetricsQuery, LokiDatasource } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 const rawRange = {
   from: toUtc('2018-04-25 10:00'),
@@ -757,6 +757,15 @@ describe('LokiDatasource', () => {
       });
 
       expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+
+    it('does not create provider if there is only an instant logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value', refId: 'A', queryType: LokiQueryType.Instant }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
     });
   });
 
