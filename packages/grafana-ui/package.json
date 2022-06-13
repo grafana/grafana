@@ -114,7 +114,7 @@
     "@storybook/manager-webpack5": "6.4.21",
     "@storybook/react": "6.4.21",
     "@storybook/theming": "6.4.21",
-    "@swc/helpers": "0.3.13",
+    "@swc/helpers": "0.4.0",
     "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "12.1.4",
