@@ -36,11 +36,11 @@ var unnamedHandlers = []struct {
 	pathPattern *regexp.Regexp
 	handler     string
 }{
-	{handler: "/metrics", pathPattern: regexp.MustCompile("/metrics")},
-	{handler: "/healthz", pathPattern: regexp.MustCompile("/healthz")},
-	{handler: "/robots.txt", pathPattern: regexp.MustCompile("/robots.txt")},
+	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
+	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
+	{handler: "/robots.txt", pathPattern: regexp.MustCompile("^/robots.txt$")},
 	// bundle all pprof endpoints under the same handler name
-	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("/debug/pprof/.+")},
+	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
 }
 
 // routeOperationName receives the route operation name from context, if set.
