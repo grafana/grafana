@@ -206,6 +206,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.R
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt definitions.MuteTimeInterval) response.Response {
+	mt.Provenance = alerting_models.ProvenanceAPI
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.OrgId)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
@@ -219,6 +220,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt definit
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	name := pathParam(c, namePathParam)
 	mt.Name = name
+	mt.Provenance = alerting_models.ProvenanceAPI
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgId)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
