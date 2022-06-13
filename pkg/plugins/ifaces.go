@@ -25,7 +25,7 @@ type Manager interface {
 }
 
 type ManagerExecutor interface {
-	// Execute uses the Service to execute some workload
+	// Execute uses the Manager to execute some workload
 	Execute(ctx context.Context, pluginManager Manager) error
 }
 
