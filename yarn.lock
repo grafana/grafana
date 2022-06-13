@@ -18461,6 +18461,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react-hooks@npm:4.5.0":
+  version: 4.5.0
+  resolution: "eslint-plugin-react-hooks@npm:4.5.0"
+  peerDependencies:
+    eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0
+  checksum: 0389377de635dd9b769f6f52e2c9e6ab857a0cdfecc3734c95ce81676a752e781bb5c44fd180e01953a03a77278323d90729776438815557b069ceb988ab1f9f
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react@npm:7.28.0":
   version: 7.28.0
   resolution: "eslint-plugin-react@npm:7.28.0"
@@ -20759,7 +20768,7 @@ __metadata:
     eslint-plugin-jsdoc: 39.3.0
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.29.4
-    eslint-plugin-react-hooks: 4.3.0
+    eslint-plugin-react-hooks: 4.5.0
     eslint-webpack-plugin: 3.1.1
     eventemitter3: 4.0.7
     expose-loader: 4.0.0
@@ -20841,7 +20850,7 @@ __metadata:
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
-    react-refresh: 0.11.0
+    react-refresh: 0.13.0
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
@@ -30846,7 +30855,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-refresh@npm:0.11.0, react-refresh@npm:^0.11.0":
+"react-refresh@npm:0.13.0":
+  version: 0.13.0
+  resolution: "react-refresh@npm:0.13.0"
+  checksum: 1cf2b87ed99e1d388aa3923078bc30cd3ce43ee86e8936944e961d3643c6e85da41ebed6a0996e8bdad75a0d2ce3b7e10638b45018231380d4a174f63a451f75
+  languageName: node
+  linkType: hard
+
+"react-refresh@npm:^0.11.0":
   version: 0.11.0
   resolution: "react-refresh@npm:0.11.0"
   checksum: 112178a05b1e0ffeaf5d9fb4e56b4410a34a73adeb04dbf13abdc50d9ac9df2ada83e81485156cca0b3fa296aa3612751b3d6cd13be4464642a43679b819cbc7
