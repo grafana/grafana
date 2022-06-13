@@ -104,9 +104,9 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   showLocation?: boolean;
 
   /**
-   * Show transparency controls in UI (for non-basemaps)
+   * Hide transparency controls in UI
    */
-  showOpacity?: boolean;
+  hideOpacity?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer
