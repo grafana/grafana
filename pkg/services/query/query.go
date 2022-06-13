@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 const (
@@ -136,6 +138,13 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		Queries: []backend.DataQuery{},
 	}
 
+	middlewares := []httpclient.Middleware{}
+	if parsedReq.httpRequest != nil {
+		middlewares = append(middlewares,
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+		)
+	}
+
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
@@ -144,6 +153,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 			if ok && idToken != "" {
 				req.Headers["X-ID-Token"] = idToken
 			}
+			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
 		}
 	}
 
@@ -161,6 +171,8 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	for _, q := range parsedReq.parsedQueries {
 		req.Queries = append(req.Queries, q.query)
 	}
+
+	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 
 	return s.pluginClient.QueryData(ctx, req)
 }
