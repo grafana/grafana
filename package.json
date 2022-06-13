@@ -359,7 +359,7 @@
     "react-moveable": "0.32.7",
     "react-popper": "2.3.0",
     "react-popper-tooltip": "^4.3.1",
-    "react-redux": "7.2.6",
+    "react-redux": "8.0.2",
     "react-resizable": "3.0.4",
     "react-reverse-portal": "^2.0.1",
     "react-router-dom": "^5.2.0",
