@@ -2,7 +2,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { locationService, setEchoSrv } from '@grafana/runtime';
+import { locationService, reportInteraction, setEchoSrv } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -42,6 +42,13 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 variableAdapters.register(createConstantVariableAdapter());
 const mockStore = configureMockStore([thunk]);
@@ -188,6 +195,10 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+  });
+
+  it('should log dashboard_loaded event', () => {
+    expect(reportInteraction).toBeCalledTimes(1);
   });
 });
 
