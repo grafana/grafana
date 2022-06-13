@@ -89,6 +89,7 @@ if (config.featureToggles.useLegacyHeatmapPanel) {
   legacy.state = heatmap.state;
   config.panels['heatmap'] = legacy;
 }
+delete config.panels['heatmap-old'];
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
