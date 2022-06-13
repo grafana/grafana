@@ -192,6 +192,9 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
     // remove scopedVars
     panel.scopedVars = undefined;
 
+    // ignore pluginVersion changes
+    delete panel.pluginVersion;
+
     // ignore panel legend sort
     if (panel.legend) {
       delete panel.legend.sort;

@@ -1,3 +1,5 @@
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+
 import { setContextSrv } from '../../../../core/services/context_srv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
@@ -13,6 +15,7 @@ function getDefaultDashboardModel(): DashboardModel {
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
         legend: { sortDesc: false },
+        pluginVersion: '8.5.0',
       },
       {
         id: 2,
@@ -80,6 +83,12 @@ describe('DashboardPrompt', () => {
   it('Should ignore panel repeats', () => {
     const { original, dash } = getTestContext();
     dash.panels.push(new PanelModel({ repeatPanelId: 10 }));
+    expect(hasChanges(dash, original)).toBe(false);
+  });
+
+  it('Should ignore panel pluginVersion change', () => {
+    const { original, dash } = getTestContext();
+    dash.panels[0].pluginVersion = '9.0.0';
     expect(hasChanges(dash, original)).toBe(false);
   });
 
