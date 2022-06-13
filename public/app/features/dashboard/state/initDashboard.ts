@@ -214,9 +214,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
           dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
         }
-        reportInteraction('dashboard_loaded', {
+        reportInteraction('grafana_dashboard_loaded', {
           dashboard_id: dashDTO.dashboard.uid,
-          hidden: target.hide,
+          hidden: !!target.hide,
           datasource: target.datasource?.type,
           grafana_version: config.buildInfo.version,
           //plugin_version: ???
