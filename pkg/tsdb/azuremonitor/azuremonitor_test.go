@@ -1,8 +1,12 @@
 package azuremonitor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -66,12 +71,14 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 type fakeInstance struct {
+	cloud    string
 	routes   map[string]types.AzRoute
 	services map[string]types.DatasourceService
 }
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
+		Cloud:    f.cloud,
 		Routes:   f.routes,
 		Services: f.services,
 	}, nil
@@ -157,4 +164,99 @@ func Test_newMux(t *testing.T) {
 			}
 		})
 	}
+}
+
+// RoundTripFunc .
+type RoundTripFunc func(req *http.Request) *http.Response
+
+// RoundTrip .
+func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req), nil
+}
+
+//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
+func NewTestClient(fn RoundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: RoundTripFunc(fn),
+	}
+}
+
+func TestCheckHealth(t *testing.T) {
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		if strings.Contains(req.URL.String(), "workspaces") {
+			workspaceRes := struct {
+				Value []types.LogAnalyticsWorkspaceResponse
+			}{
+				Value: []types.LogAnalyticsWorkspaceResponse{
+					{
+						Id:       "abcd-1234",
+						Location: "location",
+						Name:     "fake-workspace",
+						Properties: types.LogAnalyticsWorkspaceProperties{
+							CreatedDate: "date",
+							CustomerId:  "grafana",
+							Features: types.LogAnalyticsWorkspaceFeatures{
+								EnableLogAccessUsingOnlyResourcePermissions: false,
+								Legacy:        0,
+								SearchVersion: 0,
+							},
+						},
+						ProvisioningState:               "provisioned",
+						PublicNetworkAccessForIngestion: "enabled",
+						PublicNetworkAccessForQuery:     "disabled",
+						RetentionInDays:                 365,
+					},
+				},
+			}
+			body, err := json.Marshal(workspaceRes)
+			if err != nil {
+				t.Errorf("Could not marshal workspace response")
+			}
+			return &http.Response{
+				StatusCode: 200,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(body)),
+				Header:     make(http.Header),
+			}
+		}
+		return &http.Response{
+			StatusCode: 200,
+			// Send response to be tested
+			Body: ioutil.NopCloser(bytes.NewBufferString("OK")),
+			// Must be set to non-nil value or it panics
+			Header: make(http.Header),
+		}
+	})
+	cloud := "AzureCloud"
+	s := &Service{
+		im: &fakeInstance{
+			cloud:  cloud,
+			routes: routes[cloud],
+			services: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: client,
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: client,
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: client,
+				},
+			},
+		},
+	}
+	t.Run("Successfully queries all endpoints", func(t *testing.T) {
+		res, err := s.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}})
+
+		assert.NoError(t, err)
+		assert.Equal(t, &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "1. Successfully connected to Azure monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Successfully connected to Azure Resource Graph endpoint.",
+		}, res)
+	})
 }
