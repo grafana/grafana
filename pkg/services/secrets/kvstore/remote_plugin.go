@@ -19,7 +19,7 @@ type secretsKVStorePlugin struct {
 
 // Get an item from the store
 func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	req := &smp.SecretsGetRequest{
+	req := &smp.GetSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -28,9 +28,9 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	}
 	res, err := kv.secretsPlugin.Get(ctx, req)
 	if err != nil {
-		return "", false, wrapSecretError(err)
-	} else if res.Error != "" {
-		err = fmt.Errorf(res.Error)
+		return "", false, err
+	} else if res.UserFriendlyError != "" {
+		err = fmt.Errorf(res.UserFriendlyError)
 	}
 
 	return res.DecryptedValue, res.Exists, wrapSecretError(err)
@@ -38,7 +38,7 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 
 // Set an item in the store
 func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
-	req := &smp.SecretsSetRequest{
+	req := &smp.SetSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -48,8 +48,8 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 	}
 
 	res, err := kv.secretsPlugin.Set(ctx, req)
-	if err == nil && res.Error != "" {
-		err = fmt.Errorf(res.Error)
+	if err == nil && res.UserFriendlyError != "" {
+		err = fmt.Errorf(res.UserFriendlyError)
 	}
 
 	return wrapSecretError(err)
@@ -57,7 +57,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 
 // Del deletes an item from the store.
 func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
-	req := &smp.SecretsDelRequest{
+	req := &smp.DelSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -66,8 +66,8 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 	}
 
 	res, err := kv.secretsPlugin.Del(ctx, req)
-	if err == nil && res.Error != "" {
-		err = fmt.Errorf(res.Error)
+	if err == nil && res.UserFriendlyError != "" {
+		err = fmt.Errorf(res.UserFriendlyError)
 	}
 
 	return wrapSecretError(err)
@@ -76,7 +76,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 // Keys get all keys for a given namespace. To query for all
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
 func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
-	req := &smp.SecretsKeysRequest{
+	req := &smp.ListSecretsRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -87,9 +87,9 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 
 	res, err := kv.secretsPlugin.Keys(ctx, req)
 	if err != nil {
-		return nil, wrapSecretError(err)
-	} else if res.Error != "" {
-		err = fmt.Errorf(res.Error)
+		return nil, err
+	} else if res.UserFriendlyError != "" {
+		err = fmt.Errorf(res.UserFriendlyError)
 	}
 
 	return parseKeys(res.Keys), wrapSecretError(err)
@@ -97,7 +97,7 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 
 // Rename an item in the store
 func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
-	req := &smp.SecretsRenameRequest{
+	req := &smp.RenameSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -107,8 +107,8 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 	}
 
 	res, err := kv.secretsPlugin.Rename(ctx, req)
-	if err == nil && res.Error != "" {
-		err = fmt.Errorf(res.Error)
+	if err == nil && res.UserFriendlyError != "" {
+		err = fmt.Errorf(res.UserFriendlyError)
 	}
 
 	return wrapSecretError(err)

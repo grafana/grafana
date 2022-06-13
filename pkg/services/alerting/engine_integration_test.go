@@ -18,6 +18,9 @@ import (
 )
 
 func TestIntegrationEngineTimeouts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)

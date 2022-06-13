@@ -20,6 +20,7 @@ import {
   DataQueryRequest,
   PreferredVisualisationType,
   DataFrameType,
+  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -47,7 +48,10 @@ interface TimeAndValue {
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
   // We want to process vector and scalar results in Explore as table
-  if (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar') {
+  if (
+    options.app === CoreApp.Explore &&
+    (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar')
+  ) {
     return true;
   }
 
@@ -554,7 +558,7 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
       ...frames[0],
       meta: {
         ...frames[0].meta,
-        type: DataFrameType.HeatmapBuckets,
+        type: DataFrameType.HeatmapRows,
       },
       fields: [timeField!, ...countFields],
     },
