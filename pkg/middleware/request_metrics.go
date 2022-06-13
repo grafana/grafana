@@ -64,7 +64,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
 			handler = routeOperation
 		} else {
 			// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
-			if status == 404 {
+			if status == http.StatusNotFound {
 				handler = "notfound"
 			} else {
 				// log requests where we could not identify handler so we can register them.
