@@ -19,7 +19,7 @@ export interface BatchedQueries {
   targets: DataQuery[];
 }
 
-export class MixedDatasource extends DataSourceApi<DataQuery> {
+export class MixedDatasource<T extends DataQuery = DataQuery> extends DataSourceApi<T> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }

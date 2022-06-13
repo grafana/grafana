@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
-  ConditionID,
+  QueryConditionID,
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
@@ -10,15 +10,14 @@ import {
   EventBusExtended,
   HistoryItem,
   PanelData,
-  SelectableValue,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { ValuePicker } from '@grafana/ui';
 import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
+import { QueryConditionsEditor } from 'app/plugins/datasource/conditional/QueryConditionsEditor';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -136,21 +135,26 @@ export class QueryEditorRows extends PureComponent<Props> {
     });
   };
 
-  onAddCondition = (index: number, conditionId: ConditionID) => {
+  onAddCondition = (queryIdx: number) => (conditionId: QueryConditionID) => {
     const { queries, onQueriesChange } = this.props;
+    const conditionDef = conditionsRegistry.getIfExists(conditionId);
 
-    const q = queries[index] as ConditionalDataSourceQuery;
+    if (!conditionDef) {
+      console.error(`Could not find condition definition for ${conditionId}`);
+    }
+
+    const q = queries[queryIdx] as ConditionalDataSourceQuery;
     q.conditions = q.conditions
-      ? [...q.conditions, { id: conditionId, options: { pattern: 'field name' } }]
-      : [{ id: conditionId, options: { pattern: 'field name' } }];
+      ? [...q.conditions, { id: conditionId, options: { ...conditionDef!.defaultOptions } }]
+      : [{ id: conditionId, options: { ...conditionDef!.defaultOptions } }];
 
     const nextQueries = [...queries];
-    nextQueries[index] = q;
+    nextQueries[queryIdx] = q;
 
     onQueriesChange(nextQueries);
   };
 
-  onQueryConditionChange = (queryIdx: number, conditionIdx: number) => (options: any) => {
+  onQueryConditionChange = (queryIdx: number) => (conditionIdx: number, options: any) => {
     const { queries, onQueriesChange } = this.props;
 
     const q = queries[queryIdx] as ConditionalDataSourceQuery;
@@ -164,39 +168,11 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   renderConditionsEditor(q: ConditionalDataSourceQuery, queryIdx: number) {
     return (
-      <>
-        {q.conditions?.map((c, i) => {
-          const conditionItem = conditionsRegistry.getIfExists(c.id);
-          if (!conditionItem) {
-            throw new Error('No condition definition for ID ' + c.id);
-          }
-          const EditorComponent = conditionItem.editor;
-
-          return (
-            <div key={i}>
-              <EditorComponent onChange={this.onQueryConditionChange(queryIdx, i)} options={c.options} />
-            </div>
-          );
-        })}
-
-        <ValuePicker
-          icon="plus"
-          label="Add query condition"
-          variant="secondary"
-          menuPlacement="auto"
-          isFullWidth={true}
-          size="md"
-          options={conditionsRegistry
-            .list()
-            .filter((o) => !o.excludeFromPicker)
-            .map<SelectableValue<ConditionID>>((i) => ({
-              label: i.name,
-              value: i.id as ConditionID,
-              description: i.description,
-            }))}
-          onChange={(value) => this.onAddCondition(queryIdx, value.value!)}
-        />
-      </>
+      <QueryConditionsEditor
+        conditions={q.conditions}
+        onChange={this.onQueryConditionChange(queryIdx)}
+        onAddCondition={this.onAddCondition(queryIdx)}
+      />
     );
   }
 

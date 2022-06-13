@@ -201,8 +201,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         context.replaceVariables,
         options.timeZone,
         (field, frame) => {
-          if (options.applyConditionalDataLinksFc && options.data) {
-            return options.applyConditionalDataLinksFc(field, frame, options.data);
+          if (options.getConditionalDataLinks && options.data) {
+            return options.getConditionalDataLinks(field, frame, options.data);
           }
 
           return undefined;
@@ -360,15 +360,15 @@ export const getLinksSupplier =
     const links: Array<LinkModel<Field>> = [];
 
     if (getConditionalDataLinks) {
-      const getConditionalDataLinksSupplier = getConditionalDataLinks(field, frame);
+      const conditionalDataLinksProvider = getConditionalDataLinks(field, frame);
 
-      if (getConditionalDataLinksSupplier) {
+      if (conditionalDataLinksProvider) {
         links.push({
           href: '',
           title: 'drilldown',
           target: undefined,
           onClick: (evt, origin) => {
-            getConditionalDataLinksSupplier(evt, origin);
+            conditionalDataLinksProvider(evt, origin);
           },
           origin: field,
         });

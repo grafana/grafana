@@ -30,9 +30,9 @@ import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
-  applyConditionalDataLinks,
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
+  getConditionalDataLinksSupplier,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
@@ -145,16 +145,14 @@ export class PanelQueryRunner {
           // Apply field defaults and overrides
           let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
+          // Try applying any data links privided by ConditionalDataSource
           const dataSourceRef = this.dataConfigSource.getDataSourceRef();
-          let applyConditionalDataLinksFc = undefined;
+          let getConditionalDataLinks = undefined;
 
           if (dataSourceRef && dataSourceRef.uid === CONDITIONAL_DATASOURCE_NAME && data.request) {
-            applyConditionalDataLinksFc = applyConditionalDataLinks(
+            getConditionalDataLinks = getConditionalDataLinksSupplier(
               data.request.targets as ConditionalDataSourceQuery[]
             );
-          }
-
-          if (data.request?.targets.some((target) => (target as ConditionalDataSourceQuery).conditions?.length)) {
           }
 
           if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
@@ -165,7 +163,7 @@ export class PanelQueryRunner {
                 timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
                 ...fieldConfig!,
-                applyConditionalDataLinksFc,
+                getConditionalDataLinks,
               }),
             };
             isFirstPacket = false;

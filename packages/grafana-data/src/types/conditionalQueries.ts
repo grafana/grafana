@@ -1,22 +1,19 @@
 import { RegistryItemWithOptions } from '../utils/Registry';
 
-import { DataFrame, Field } from './dataFrame';
+import { VariableModel } from './templateVars';
+import { TimeRange } from './time';
+
+export interface QueryConditionExecutionContext {
+  timeRange: TimeRange;
+  variables: VariableModel[];
+}
 
 export interface ConditionInfo<TOptions = any, TArgs = any> extends RegistryItemWithOptions {
-  type: ConditionType;
+  type: QueryConditionType;
+  execute: (options: TOptions, context: QueryConditionExecutionContext) => boolean;
   evaluate: (options: TOptions) => (args: TArgs) => boolean;
   editor: React.ComponentType<ConditionUIProps<TOptions>>;
   getVariableName: (options: TOptions) => string;
-}
-
-export interface FieldClickConditionOptions {
-  pattern: string;
-}
-
-export interface FieldClickArgs {
-  field: Field;
-  frame: DataFrame;
-  allFrames: DataFrame[];
 }
 
 export interface ConditionUIProps<TOptions = any> {
@@ -24,15 +21,19 @@ export interface ConditionUIProps<TOptions = any> {
   onChange: (options: TOptions) => void;
 }
 
-export enum ConditionID {
-  FieldClick = 'field-click',
+export enum QueryConditionID {
+  ValueClick = 'value-click',
+  TimeRange = 'time-range',
 }
 
-export enum ConditionType {
+export enum QueryConditionType {
   Field = 'field',
+  TimeRange = 'time-range',
 }
 
-export type QueryConditions = Array<{
-  id: ConditionID;
+export type QueryConditionConfig = {
+  id: QueryConditionID;
   options: any;
-}>;
+};
+
+export type QueryConditions = QueryConditionConfig[];

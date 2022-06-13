@@ -119,7 +119,7 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
-  applyConditionalDataLinksFc?: (
+  getConditionalDataLinks?: (
     field: Field,
     frame: DataFrame,
     allFrames: DataFrame[]

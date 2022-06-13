@@ -1,127 +1,95 @@
-import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 import {
-  ConditionID,
-  ConditionType,
+  QueryConditionType,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   Field,
-  LoadingState,
+  QueryConditionConfig,
+  QueryConditionExecutionContext,
 } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
 import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
-import { ConstantVariableModel } from 'app/features/variables/types';
 import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
 import { store } from 'app/store/store';
+
+import { MixedDatasource } from '../mixed/MixedDataSource';
 
 import { conditionsRegistry } from './ConditionsRegistry';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 
-export interface BatchedQueries {
-  datasource: Promise<DataSourceApi>;
-  targets: DataQuery[];
-}
-
 export interface ConditionalDataSourceQuery extends DataQuery {
-  conditions: Array<{
-    id: ConditionID;
-    options: any;
-  }>;
+  conditions: QueryConditionConfig[];
 }
 
-export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQuery> {
+export class ConditionalDataSource extends MixedDatasource<ConditionalDataSourceQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
-  filterQuery(query: ConditionalDataSourceQuery) {
+  filterQueries(
+    query: ConditionalDataSourceQuery,
+    context: QueryConditionExecutionContext
+  ): { applicable: boolean; score: number | null } {
     if (query.datasource?.uid !== CONDITIONAL_DATASOURCE_NAME) {
-      const drilldownTplVars = getTemplateSrv()
-        .getVariables()
-        .filter((arg) => (arg as ConstantVariableModel).id.includes('field-click'));
-
-      // Executing default (no conditions query)
-      if (!query.conditions && drilldownTplVars.length === 0) {
-        return true;
+      if (!query.conditions) {
+        return { applicable: true, score: 0 };
       }
 
-      // Skipping default (no conditions query) if there are template variables applied
-      if (!query.conditions && drilldownTplVars.length !== 0) {
-        return false;
-      }
+      let queryScore = query.conditions.length;
 
       let isCorrectTarget = true;
 
       for (let j = 0; j < query.conditions?.length; j++) {
-        if (
-          drilldownTplVars.filter((arg) => {
-            const result = (arg as ConstantVariableModel).name
-              // TODO: refactor this fixed string
-              .replace('field-click-', '')
-              .match(query.conditions[j].options.field);
+        const condition = query.conditions[j];
+        const conditionDef = conditionsRegistry.getIfExists(condition.id);
 
-            return result;
-          }).length === 0
-        ) {
+        if (!conditionDef) {
+          throw new Error(`Unknown condition type: ${condition.id}`);
+        }
+
+        if (!conditionDef.execute(condition.options, context)) {
           isCorrectTarget = false;
           break;
+        } else {
+          queryScore--;
         }
       }
 
-      return isCorrectTarget;
+      return { applicable: isCorrectTarget, score: queryScore };
     } else {
-      return false;
+      return { applicable: false, score: null };
     }
   }
 
-  getQueryScore = (query: ConditionalDataSourceQuery) => {
-    const drilldownTplVars = getTemplateSrv()
-      .getVariables()
-      .filter((arg) => (arg as ConstantVariableModel).id.includes('field-click'));
-
-    if (query.conditions) {
-      let score = query.conditions.length;
-      for (let j = 0; j < query.conditions.length; j++) {
-        const condition = query.conditions[j];
-        for (let i = 0; i < drilldownTplVars.length; i++) {
-          const variable = drilldownTplVars[i];
-          const result = (variable as ConstantVariableModel).name
-            .replace('field-click-', '')
-            .match(condition.options.pattern);
-
-          if (result) {
-            score--;
-          }
-        }
-      }
-
-      return score;
-    }
-
-    return undefined;
-  };
-
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const queries = (request.targets as ConditionalDataSourceQuery[]).filter(this.filterQuery);
+    const queryScores: Array<number | null> = [];
 
-    let runnableQueries = [];
-    const queryScores = queries.map((query) => {
-      return this.getQueryScore(query);
+    const context = {
+      timeRange: request.range,
+      variables: getTemplateSrv().getVariables(),
+    };
+
+    const queries = (request.targets as ConditionalDataSourceQuery[]).filter((q) => {
+      const result = this.filterQueries(q, context);
+      if (result.applicable) {
+        queryScores.push(result.score);
+      }
+      return result.applicable;
     });
 
-    const notScoredQueries = queryScores.filter((score) => score === undefined);
+    let runnableQueries = [];
+
+    const notScoredQueries = queryScores.filter((score) => score === null);
 
     if (notScoredQueries.length === queryScores.length) {
       runnableQueries = queries;
@@ -147,106 +115,8 @@ export class ConditionalDataSource extends DataSourceApi<ConditionalDataSourceQu
       runnableQueries = findQueryWithHighestNumberOfConditions(runnableQueries as ConditionalDataSourceQuery[]);
     }
 
-    if (!runnableQueries.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
-    }
-
-    // Build groups of queries to run in parallel
-    const sets: { [key: string]: ConditionalDataSourceQuery[] } = groupBy(
-      runnableQueries as ConditionalDataSourceQuery[],
-      'datasource.uid'
-    );
-    const mixed: BatchedQueries[] = [];
-
-    for (const key in sets) {
-      const targets = sets[key];
-
-      mixed.push({
-        datasource: getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
-        targets,
-      });
-    }
-
-    // Missing UIDs?
-    if (!mixed.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
-    }
-
-    return this.batchQueries(mixed, request);
+    return super.query({ ...request, targets: runnableQueries });
   }
-
-  batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const runningQueries = mixed.filter(this.isQueryable).map((query, i) =>
-      from(query.datasource).pipe(
-        mergeMap((api: DataSourceApi) => {
-          const dsRequest = cloneDeep(request);
-          dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
-          dsRequest.targets = query.targets;
-
-          return from(api.query(dsRequest)).pipe(
-            map((response) => {
-              return {
-                ...response,
-                data: response.data || [],
-                state: LoadingState.Loading,
-                key: `mixed-${i}-${response.key || ''}`,
-              } as DataQueryResponse;
-            }),
-            toArray(),
-            catchError((err) => {
-              err = toDataQueryError(err);
-              err.message = `${api.name}: ${err.message}`;
-
-              return of<DataQueryResponse[]>([
-                {
-                  data: [],
-                  state: LoadingState.Error,
-                  error: err,
-                  key: `mixed-${i}-${dsRequest.requestId || ''}`,
-                },
-              ]);
-            })
-          );
-        })
-      )
-    );
-
-    return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
-  }
-
-  testDatasource() {
-    return Promise.resolve({});
-  }
-
-  private isQueryable(query: BatchedQueries): boolean {
-    return query && Array.isArray(query.targets) && query.targets.length > 0;
-  }
-
-  private finalizeResponses(responses: DataQueryResponse[]): DataQueryResponse[] {
-    const { length } = responses;
-
-    if (length === 0) {
-      return responses;
-    }
-
-    const error = responses.find((response) => response.state === LoadingState.Error);
-    if (error) {
-      responses.push(error); // adds the first found error entry so error shows up in the panel
-    } else {
-      responses[length - 1].state = LoadingState.Done;
-    }
-
-    return responses;
-  }
-}
-
-function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
-  return reduce((all: DataQueryResponse[], current) => {
-    return current.reduce((innerAll, innerCurrent) => {
-      innerAll.push.apply(innerAll, innerCurrent);
-      return innerAll;
-    }, all);
-  }, []);
 }
 
 function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[]) {
@@ -254,17 +124,24 @@ function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[])
 
   for (let i = 0; i < q.length; i++) {
     const query = q[i];
-    if (query.conditions.length > maxNoConditions) {
+    if (query.conditions?.length > maxNoConditions) {
       maxNoConditions = query.conditions.length;
     }
   }
 
-  return q.filter((query) => query.conditions.length === maxNoConditions);
+  return q.filter((query) => {
+    if (!query.conditions && maxNoConditions === 0) {
+      return query;
+    }
+    return query.conditions?.length === maxNoConditions;
+  });
 }
 
-export function applyConditionalDataLinks(targets: ConditionalDataSourceQuery[]) {
+export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQuery[]) {
   const conditions = targets.map((target) =>
-    target.conditions?.filter((condition) => conditionsRegistry.getIfExists(condition.id)?.type === ConditionType.Field)
+    target.conditions?.filter(
+      (condition) => conditionsRegistry.getIfExists(condition.id)?.type === QueryConditionType.Field
+    )
   );
 
   return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {

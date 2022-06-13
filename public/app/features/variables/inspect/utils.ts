@@ -1,6 +1,5 @@
-import { ConditionType, DataLinkBuiltInVars } from '@grafana/data';
+import { QueryConditionType, DataLinkBuiltInVars } from '@grafana/data';
 import {
-  ConditionalDataSource,
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
@@ -340,7 +339,7 @@ export function getAffectedPanelIdsForVariable(variableId: string, panels: Panel
 
           // detect if a condition is able to create a template variable
           // TODO: generalize this
-          if (!conditionDef || conditionDef.type !== ConditionType.Field) {
+          if (!conditionDef || conditionDef.type !== QueryConditionType.Field) {
             continue;
           }
 
