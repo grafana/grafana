@@ -189,8 +189,7 @@ export class GraphiteDatasource
     for (const target of options.targets) {
       if (target.hide) {
         continue;
-      } else if (target.queryType === 'events' && target.eventsQuery?.fromAnnotations) {
-        // handle the events that are annotations
+      } else if (target.fromAnnotations) {
         streams.push(
           new Observable((subscriber) => {
             this.annotationEvents(options.range, target)
@@ -360,10 +359,10 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  annotationEvents(range: any, target: GraphiteQuery) {
-    if (target.eventsQuery?.target) {
+  annotationEvents(range: any, target: any) {
+    if (target.target) {
       // Graphite query as target as annotation
-      const targetAnnotation = this.templateSrv.replace(target.eventsQuery?.target, {}, 'glob');
+      const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
       const graphiteQuery = {
         range: range,
         targets: [{ target: targetAnnotation }],
@@ -388,7 +387,7 @@ export class GraphiteDatasource
                 }
 
                 list.push({
-                  annotation: target.eventsQuery,
+                  annotation: target,
                   time,
                   title: target.name,
                 });
@@ -401,7 +400,7 @@ export class GraphiteDatasource
       );
     } else {
       // Graphite event/tag as annotation
-      const tags = this.templateSrv.replace(target.eventsQuery?.tags?.join(' '));
+      const tags = this.templateSrv.replace(target.tags?.join(' '));
       return this.events({ range: range, tags: tags }).then((results: any) => {
         const list = [];
         if (!isArray(results.data)) {
@@ -417,7 +416,7 @@ export class GraphiteDatasource
           }
 
           list.push({
-            annotation: target.eventsQuery,
+            annotation: target,
             time: e.when * 1000,
             title: e.what,
             tags: tags,
