@@ -122,7 +122,7 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 
 type UploadRequest struct {
 	Contents           []byte
-	MimeType           string
+	MimeType           string // TODO: remove MimeType from the struct once we can infer it from file contents
 	Path               string
 	CacheControl       string
 	ContentDisposition string
