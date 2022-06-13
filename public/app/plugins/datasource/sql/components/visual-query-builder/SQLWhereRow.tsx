@@ -1,10 +1,8 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
-
 import { QueryWithDefaults } from '../../defaults';
-import { DB, SQLExpression, SQLQuery } from '../../types';
+import { DB, SQLExpression, SQLQuery, SQLSelectableValue } from '../../types';
 import { mapColumnTypeToIcon } from '../../utils/useColumns';
 import { useSqlChange } from '../../utils/useSqlChange';
 
@@ -43,7 +41,7 @@ export function SQLWhereRow({ db, query, onQueryChange }: WhereRowProps) {
 }
 
 // TODO - move type mappings to db interface since it will vary per dbms
-function getFields(columns: SelectableValue[]) {
+function getFields(columns: SQLSelectableValue[]) {
   const fields: Config['fields'] = {};
   for (const col of columns) {
     let type = 'text';
@@ -91,9 +89,9 @@ function getFields(columns: SelectableValue[]) {
     }
 
     fields[col.value] = {
-      type,
+      type: col.raqbFieldType || type,
       valueSources: ['value'],
-      mainWidgetProps: { customProps: { icon: mapColumnTypeToIcon(col.type.toUpperCase()) } },
+      mainWidgetProps: { customProps: { icon: col.icon || mapColumnTypeToIcon(col.type?.toUpperCase()) } },
     };
   }
   return fields;

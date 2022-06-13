@@ -19,9 +19,9 @@ export function useColumns({ db, query, isOrderable = false }: Options) {
     const fields = await db.fields(query, isOrderable);
     const columns: SelectableValue[] = fields.map((f) => {
       return {
-        value: f.name,
-        label: f.name,
-        icon: mapColumnTypeToIcon(f.type.toUpperCase()),
+        value: f.value,
+        label: f.label,
+        icon: f.icon || mapColumnTypeToIcon(f.type?.toUpperCase()),
       };
     });
 
@@ -32,7 +32,7 @@ export function useColumns({ db, query, isOrderable = false }: Options) {
 }
 
 // TODO - move type mappings to db interface since they will vary per dbms
-export function mapColumnTypeToIcon(type: string) {
+export function mapColumnTypeToIcon(type?: string) {
   switch (type) {
     case 'TIME':
     case 'DATETIME':

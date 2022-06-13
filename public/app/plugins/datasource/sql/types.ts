@@ -108,13 +108,20 @@ export interface ResourceSelectorProps {
   className?: string;
   applyDefault?: boolean;
 }
+// React Awesome Query builder field types.
+// These are responsible for rendering the correct UI for the field.
+export type RAQBFieldTypes = 'text' | 'number' | 'boolean' | 'datetime' | 'date' | 'time';
 
+export interface SQLSelectableValue extends SelectableValue {
+  type?: string;
+  raqbFieldType?: RAQBFieldTypes;
+}
 export interface DB {
   init: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
   tableSchema: (query: SQLQuery | string) => Promise<TableSchema>;
-  fields: (query: SQLQuery, order?: boolean) => Promise<SelectableValue[]>;
+  fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => string;
   dispose: (dsID?: string) => void;
