@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -28,7 +29,10 @@ export function DashboardSearch({ onCloseSearch }: Props) {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -40,6 +44,7 @@ export function DashboardSearch({ onCloseSearch }: Props) {
               placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
+              onKeyDown={onKeyDown}
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
@@ -60,6 +65,7 @@ export function DashboardSearch({ onCloseSearch }: Props) {
             queryText={query.query}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
+            keyboardEvents={keyboardEvents}
           />
         </div>
       </div>

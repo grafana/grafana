@@ -143,7 +143,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
 
     let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    let countFieldIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
+    let countFieldIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
     // TODO -- better would be to get the range from the real color scale!
