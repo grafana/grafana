@@ -24,7 +24,7 @@ import (
 )
 
 var datasourcesLogger = log.New("datasources")
-var secretsPluginError *models.ErrDatasourceSecretsPlugin
+var secretsPluginError *models.ErrDatasourceSecretsPluginUserFriendly
 
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}

@@ -125,6 +125,6 @@ func parseKeys(keys []*smp.Key) []Key {
 	return newKeys
 }
 
-func wrapUserFriendlySecretError(ufe string) models.ErrDatasourceSecretsPlugin {
-	return models.ErrDatasourceSecretsPlugin{Err: errors.New(ufe)}
+func wrapUserFriendlySecretError(ufe string) models.ErrDatasourceSecretsPluginUserFriendly {
+	return models.ErrDatasourceSecretsPluginUserFriendly{Err: errors.New(ufe)}
 }
