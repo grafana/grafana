@@ -35,7 +35,7 @@ type UpdateRule struct {
 
 var (
 	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
-	ErrOptimisticLock         = errors.New("error while updating a record in database with optimistic locking")
+	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
 
 // RuleStore is the interface for persisting alert rules and instances
