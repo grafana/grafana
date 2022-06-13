@@ -17,6 +17,9 @@ import (
 )
 
 func TestIntegrationDashboardService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
