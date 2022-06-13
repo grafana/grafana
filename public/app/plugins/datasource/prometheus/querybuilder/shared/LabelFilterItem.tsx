@@ -38,7 +38,19 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
   };
 
   const getOptions = (): SelectableValue[] => {
-    return [...getSelectOptionsFromString(item?.value).map(toOption), ...(state.labelValues ?? [])];
+    const allOptions = state.labelValues ? [...state.labelValues] : [];
+    const selectedOptions = getSelectOptionsFromString(item?.value).map(toOption);
+
+    // Add selectedOptions to allOptions only if they are created
+    selectedOptions.forEach((option) => {
+      if (state.labelValues?.find((value) => value.label === option.label)) {
+        return;
+      } else {
+        allOptions.unshift(option);
+      }
+    });
+
+    return allOptions;
   };
 
   return (
