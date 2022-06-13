@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -108,6 +109,31 @@ func Test_teamSync(t *testing.T) {
 			require.Error(t, err)
 		})
 	})
+}
+
+func Test_upsertUser_loginUserStats(t *testing.T) {
+	authInfoMock := &logintest.AuthInfoServiceFake{}
+	UsageStatsMock := &usagestats.UsageStatsMock{}
+
+	store := &mockstore.SQLStoreMock{
+		ExpectedUserOrgList:     createUserOrgDTO(),
+		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
+	}
+
+	login := Implementation{
+		QuotaService:      &quota.QuotaService{},
+		AuthInfoService:   authInfoMock,
+		SQLStore:          store,
+		UsageStatsService: &UsageStatsMock,
+	}
+
+	upsertCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
+	err := login.UpsertUser(context.Background(), upsertCmd)
+	require.NoError(t, err)
+	upsertCmd2 := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@EXAMPLE.org"}}
+	err = login.UpsertUser(context.Background(), upsertCmd2)
+	require.NoError(t, err)
+	// TODO: check usagestats for duplicate email users
 }
 
 func createSimpleUser() models.User {

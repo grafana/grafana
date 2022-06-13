@@ -7,6 +7,7 @@ type SystemStats struct {
 	ActiveUsers               int64
 	DailyActiveUsers          int64
 	MonthlyActiveUsers        int64
+	DuplicateUsers            int64
 	Orgs                      int64
 	Playlists                 int64
 	Alerts                    int64

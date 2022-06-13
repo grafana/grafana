@@ -28,6 +28,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), query.Result.LibraryPanels)
 		assert.Equal(t, int64(0), query.Result.LibraryVariables)
 		assert.Equal(t, int64(1), query.Result.APIKeys)
+		assert.Equal(t, int64(1), query.Result.DuplicateUsers)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -130,5 +131,27 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	// add 1st api key
 	addAPIKeyCmd := &models.AddApiKeyCommand{OrgId: org.Id, Name: "Test key 1", Key: "secret-key", Role: models.ROLE_VIEWER}
 	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
+	require.NoError(t, err)
+
+
+	// TODO: make it possible for the duplicate user to bypass the sqlLite tests
+	// add additional user with duplicate email where DOMAIN is upper case
+	dupUserEmailcmd := models.CreateUserCommand{
+		Email:   "usertest1@TEST.com",
+		Name:    "user name 1",
+		Login:   "user_test_1_login",
+		OrgName: "Org 1",
+	}
+	_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+	require.NoError(t, err)
+
+	// add additional user with duplicate login where DOMAIN is upper case
+	dupUserLogincmd := models.CreateUserCommand{
+		Email:   "usertest1@test.com",
+		Name:    "user name 1",
+		Login:   "USER_TEST_1_LOGIN",
+		OrgName: "Org 1",
+	}
+	_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 	require.NoError(t, err)
 }
