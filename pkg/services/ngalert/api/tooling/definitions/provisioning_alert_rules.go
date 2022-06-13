@@ -54,21 +54,43 @@ type AlertRulePayload struct {
 }
 
 type AlertRule struct {
-	ID           int64                      `json:"id"`
-	UID          string                     `json:"uid"`
-	OrgID        int64                      `json:"orgID"`
-	FolderUID    string                     `json:"folderUID"`
-	RuleGroup    string                     `json:"ruleGroup"`
-	Title        string                     `json:"title"`
-	Condition    string                     `json:"condition"`
-	Data         []models.AlertQuery        `json:"data"`
-	Updated      time.Time                  `json:"updated,omitempty"`
-	NoDataState  models.NoDataState         `json:"noDataState"`
+	ID  int64  `json:"id"`
+	UID string `json:"uid"`
+	// required: true
+	OrgID int64 `json:"orgID"`
+	// required: true
+	// example: project_x
+	FolderUID string `json:"folderUID"`
+	// required: true
+	// minLength: 1
+	// maxLength: 190
+	// example: eval_group_1
+	RuleGroup string `json:"ruleGroup"`
+	// required: true
+	// minLength: 1
+	// maxLength: 190
+	// example: Always firing
+	Title string `json:"title"`
+	// required: true
+	// example: A
+	Condition string `json:"condition"`
+	// required: true
+	// example: [{"refId":"A","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}]
+	Data []models.AlertQuery `json:"data"`
+	// readonly: true
+	Updated time.Time `json:"updated,omitempty"`
+	// required: true
+	NoDataState models.NoDataState `json:"noDataState"`
+	// required: true
 	ExecErrState models.ExecutionErrorState `json:"execErrState"`
-	For          time.Duration              `json:"for"`
-	Annotations  map[string]string          `json:"annotations,omitempty"`
-	Labels       map[string]string          `json:"labels,omitempty"`
-	Provenance   models.Provenance          `json:"provenance,omitempty"`
+	// required: true
+	For time.Duration `json:"for"`
+	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
+	Annotations map[string]string `json:"annotations,omitempty"`
+	// example: {"team": "sre-team-1"}
+	Labels map[string]string `json:"labels,omitempty"`
+	// readonly: true
+	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
 func (a *AlertRule) UpstreamModel() models.AlertRule {

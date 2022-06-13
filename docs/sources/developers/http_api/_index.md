@@ -22,8 +22,7 @@ dashboards, creating users, and updating data sources.
 ## HTTP APIs
 
 - [Admin API]({{< relref "admin/" >}})
-- [Alerting Notification Channels API]({{< relref "alerting_notification_channels/" >}})
-- [Alerting API]({{< relref "alerting/" >}})
+- [Alerting Provisioning API]({{< relref "alerting_provisioning/" >}})
 - [Annotations API]({{< relref "annotations/" >}})
 - [Authentication API]({{< relref "auth/" >}})
 - [Dashboard API]({{< relref "dashboard/" >}})
@@ -39,9 +38,15 @@ dashboards, creating users, and updating data sources.
 - [Playlists API]({{< relref "playlist/" >}})
 - [Preferences API]({{< relref "preferences/" >}})
 - [Short URL API]({{< relref "short_url/" >}})
+- [Query history API]({{< relref "query_history/" >}})
 - [Snapshot API]({{< relref "snapshot/" >}})
 - [Team API]({{< relref "team/" >}})
 - [User API]({{< relref "user/" >}})
+
+## Deprecated HTTP APIs
+
+- [Alerting Notification Channels API]({{< relref "alerting_notification_channels/" >}})
+- [Alerting API]({{< relref "alerting/" >}})
 
 ## Grafana Enterprise HTTP APIs
 
