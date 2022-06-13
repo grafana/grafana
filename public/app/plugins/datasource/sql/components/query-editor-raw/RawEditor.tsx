@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -25,52 +25,55 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>();
 
-  const getColumns = useCallback(
-    async (q: SQLQuery) => {
-      if (!db) {
-        return [];
-      }
+  // const getColumns = useCallback(
+  //   async (q: SQLQuery) => {
+  //     if (!db) {
+  //       return [];
+  //     }
 
-      const cols = await db.fields(q);
-      if (cols.length > 0) {
-        return cols.map((c) => {
-          return { name: c.value, type: c.value, description: c.value };
-        });
-      } else {
-        return [];
-      }
-    },
-    [db]
-  );
+  //     const cols = await db.fields(q);
+  //     if (cols.length > 0) {
+  //       return cols.map((c) => {
+  //         return { name: c.value, type: c.value, description: c.value };
+  //       });
+  //     } else {
+  //       return [];
+  //     }
+  //   },
+  //   [db]
+  // );
 
-  const getTables = useCallback(
-    async (p?: string) => {
-      if (!db) {
-        return [];
-      }
+  // const getTables = useCallback(
+  //   async (p?: string) => {
+  //     if (!db) {
+  //       return [];
+  //     }
 
-      return db.lookup(p);
-    },
-    [db]
-  );
+  //     return db.lookup(p);
+  //   },
+  //   [db]
+  // );
 
-  const getTableSchema = useCallback(
-    async (path: string) => {
-      if (!db) {
-        return null;
-      }
+  // const getTableSchema = useCallback(
+  //   async (path: string) => {
+  //     if (!db) {
+  //       return null;
+  //     }
 
-      return db.tableSchema(path);
-    },
-    [db]
-  );
+  //     return db.tableSchema(path);
+  //   },
+  //   [db]
+  // );
+
+  // const completionProvider = useMemo(() => db.getSqlCompletionProvider()), []);
 
   const renderQueryEditor = (width?: number, height?: number) => {
     return (
       <QueryEditorRaw
-        getTables={getTables}
-        getColumns={getColumns}
-        getTableSchema={getTableSchema}
+        completionProvider={db.getSqlCompletionProvider()}
+        // getTables={getTables}
+        // getColumns={getColumns}
+        // getTableSchema={getTableSchema}
         query={query}
         width={width}
         height={height ? height - toolboxMeasure.height : undefined}

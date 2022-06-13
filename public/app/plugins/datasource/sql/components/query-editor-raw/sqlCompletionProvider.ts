@@ -1,170 +1,183 @@
-import {
-  ColumnDefinition,
-  CompletionItemKind,
-  CompletionItemPriority,
-  LanguageCompletionProvider,
-  LinkedToken,
-  StatementPlacementProvider,
-  StatementPosition,
-  SuggestionKindProvider,
-  TableDefinition,
-  TokenType,
-} from '@grafana/experimental';
+// TODO: remove - unless we can extend this
 
-import { AGGREGATE_FNS, OPERATORS } from '../../constants';
-import { SQLQuery, TableSchema } from '../../types';
+// import {
+//   ColumnDefinition,
+//   CompletionItemKind,
+//   CompletionItemPriority,
+//   LanguageCompletionProvider,
+//   LinkedToken,
+//   StatementPlacementProvider,
+//   StatementPosition,
+//   SuggestionKindProvider,
+//   TableDefinition,
+//   TokenType,
+// } from '@grafana/experimental';
 
-interface CompletionProviderGetterArgs {
-  getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
-  getTables: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
-  getTableSchema: React.MutableRefObject<(p: string, d: string, t: string) => Promise<TableSchema | null>>;
-}
+// import { AGGREGATE_FNS, OPERATORS } from '../../constants';
+// import { DB, SQLQuery } from '../../types';
 
-export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
-  ({ getColumns, getTables, getTableSchema }) =>
-  () => ({
-    triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
-    tables: {
-      resolve: async () => {
-        return await getTables.current();
-      },
-      parseName: (token: LinkedToken) => {
-        let processedToken = token;
-        let tablePath = processedToken.value;
+// interface CompletionProviderGetterArgs {
+//   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
+//   getTables: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
+//   // getTableSchema: React.MutableRefObject<(p: string, d: string, t: string) => Promise<TableSchema | null>>;
+// }
 
-        while (processedToken.next && processedToken?.next?.value !== '`') {
-          tablePath += processedToken.next.value;
-          processedToken = processedToken.next;
-        }
+// export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
+//   ({ getColumns, getTables }) =>
+//   () => ({
+//     triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
+//     tables: {
+//       resolve: async () => {
+//         return await getTables.current();
+//       },
+//       parseName: (token: LinkedToken) => {
+//         let processedToken = token;
+//         let tablePath = processedToken.value;
 
-        if (tablePath.trim().startsWith('`')) {
-          return tablePath.slice(1);
-        }
+//         while (processedToken.next && processedToken?.next?.value !== '`') {
+//           tablePath += processedToken.next.value;
+//           processedToken = processedToken.next;
+//         }
 
-        return tablePath;
-      },
-    },
+//         if (tablePath.trim().startsWith('`')) {
+//           return tablePath.slice(1);
+//         }
 
-    columns: {
-      resolve: async (t: string) => {
-        // TODO - seems like a limitation in experimental since we may need database and table to get columns
-        // use . as delimiter?
-        return await getColumns.current({ table: t } as SQLQuery);
-      },
-    },
-    supportedFunctions: () => AGGREGATE_FNS,
-    supportedOperators: () => OPERATORS,
-    customSuggestionKinds: customSuggestionKinds(getTables, getTableSchema),
-    customStatementPlacement,
-  });
+//         return tablePath;
+//       },
+//     },
 
-export enum CustomStatementPlacement {
-  AfterDataset = 'afterDataset',
-}
+//     columns: {
+//       resolve: async (t: string) => {
+//         // TODO - seems like a limitation in experimental since we may need database and table to get columns
+//         // use . as delimiter?
+//         return await getColumns.current({ table: t } as SQLQuery);
+//       },
+//     },
+//     supportedFunctions: () => AGGREGATE_FNS,
+//     supportedOperators: () => OPERATORS,
+//     customSuggestionKinds: customSuggestionKinds(getTables),
+//     customStatementPlacement,
+//   });
 
-export enum CustomSuggestionKind {
-  TablesWithinDataset = 'tablesWithinDataset',
-  Partition = 'partition',
-}
+// export enum CustomStatementPlacement {
+//   AfterDataset = 'afterDataset',
+// }
 
-export const customStatementPlacement: StatementPlacementProvider = () => [
-  {
-    id: CustomStatementPlacement.AfterDataset,
-    resolve: (currentToken, previousKeyword) => {
-      return Boolean(
-        currentToken?.is(TokenType.Delimiter, '.') ||
-          (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          (currentToken?.isNumber() && currentToken.value.endsWith('.')) || // number with dot at the end like "projectname-21342."
-          (currentToken?.value === '`' && isTypingTableIn(currentToken))
-      );
-    },
-  },
-  // Overriding default behaviour of AfterFrom resolver
-  {
-    id: StatementPosition.AfterFrom,
-    overrideDefault: true,
-    resolve: (currentToken) => {
-      const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
-      if (!untilFrom) {
-        return false;
-      }
-      let q = '';
-      for (let i = untilFrom?.length - 1; i >= 0; i--) {
-        q += untilFrom[i].value;
-      }
+// export enum CustomSuggestionKind {
+//   TablesWithinDataset = 'tablesWithinDataset',
+//   Partition = 'partition',
+// }
 
-      return q.startsWith('`') && q.endsWith('`');
-    },
-  },
-];
+// export const customStatementPlacement: StatementPlacementProvider = () => [
+//   {
+//     id: CustomStatementPlacement.AfterDataset,
+//     resolve: (currentToken, previousKeyword) => {
+//       return Boolean(
+//         currentToken?.is(TokenType.Delimiter, '.') ||
+//           (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+//           (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+//           (currentToken?.isNumber() && currentToken.value.endsWith('.')) || // number with dot at the end like "projectname-21342."
+//           (currentToken?.value === '`' && isTypingTableIn(currentToken))
+//       );
+//     },
+//   },
+//   // Overriding default behaviour of AfterFrom resolver
+//   {
+//     id: StatementPosition.AfterFrom,
+//     overrideDefault: true,
+//     resolve: (currentToken) => {
+//       const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
+//       if (!untilFrom) {
+//         return false;
+//       }
+//       let q = '';
+//       for (let i = untilFrom?.length - 1; i >= 0; i--) {
+//         q += untilFrom[i].value;
+//       }
 
-export const customSuggestionKinds: (
-  getTables: CompletionProviderGetterArgs['getTables'],
-  getTableSchema: CompletionProviderGetterArgs['getTableSchema']
-) => SuggestionKindProvider = (getTables, getTableSchema) => () =>
-  [
-    {
-      id: CustomSuggestionKind.TablesWithinDataset,
-      applyTo: [CustomStatementPlacement.AfterDataset],
-      suggestionsResolver: async (ctx) => {
-        const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
-        const t = await getTables.current(tablePath);
+//       return q.startsWith('`') && q.endsWith('`');
+//     },
+//   },
+// ];
 
-        return t.map((table) => ({
-          label: table.name,
-          insertText: table.completion ?? table.name,
-          command: { id: 'editor.action.triggerSuggest', title: '' },
-          kind: CompletionItemKind.Field,
-          sortText: CompletionItemPriority.High,
-          range: {
-            ...ctx.range,
-            startColumn: ctx.range.endColumn,
-            endColumn: ctx.range.endColumn,
-          },
-        }));
-      },
-    },
-  ];
+// export const customSuggestionKinds: (
+//   getTables: CompletionProviderGetterArgs['getTables'],
+//   // getTableSchema: CompletionProviderGetterArgs['getTableSchema']
+// ) => SuggestionKindProvider = (getTables) => () =>
+//   [
+//     {
+//       id: CustomSuggestionKind.TablesWithinDataset,
+//       applyTo: [CustomStatementPlacement.AfterDataset],
+//       suggestionsResolver: async (ctx) => {
+//         const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
+//         const t = await getTables.current(tablePath);
 
-export function getTablePath(token: LinkedToken) {
-  let processedToken = token;
-  let tablePath = '';
-  while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
-    tablePath = processedToken.value + tablePath;
-    processedToken = processedToken.previous;
-  }
+//         return t.map((table) => ({
+//           label: table.name,
+//           insertText: table.completion ?? table.name,
+//           command: { id: 'editor.action.triggerSuggest', title: '' },
+//           kind: CompletionItemKind.Field,
+//           sortText: CompletionItemPriority.High,
+//           range: {
+//             ...ctx.range,
+//             startColumn: ctx.range.endColumn,
+//             endColumn: ctx.range.endColumn,
+//           },
+//         }));
+//       },
+//     },
+//   ];
 
-  tablePath = tablePath.trim();
+// export function getTablePath(token: LinkedToken) {
+//   let processedToken = token;
+//   let tablePath = '';
+//   while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
+//     tablePath = processedToken.value + tablePath;
+//     processedToken = processedToken.previous;
+//   }
 
-  if (tablePath.startsWith('`')) {
-    tablePath = tablePath.slice(1);
-  }
+//   tablePath = tablePath.trim();
 
-  if (tablePath.endsWith('`')) {
-    tablePath = tablePath.slice(0, -1);
-  }
+//   if (tablePath.startsWith('`')) {
+//     tablePath = tablePath.slice(1);
+//   }
 
-  return tablePath;
-}
+//   if (tablePath.endsWith('`')) {
+//     tablePath = tablePath.slice(0, -1);
+//   }
 
-function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
-  if (!token) {
-    return false;
-  }
-  const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
-  if (!tokens) {
-    return false;
-  }
+//   return tablePath;
+// }
 
-  let path = '';
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    path += tokens[i].value;
-  }
+// function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
+//   if (!token) {
+//     return false;
+//   }
+//   const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
+//   if (!tokens) {
+//     return false;
+//   }
 
-  if (path.startsWith('`')) {
-    path = path.slice(1);
-  }
+//   let path = '';
+//   for (let i = tokens.length - 1; i >= 0; i--) {
+//     path += tokens[i].value;
+//   }
 
-  return path.split('.').length === 2;
-}
+//   if (path.startsWith('`')) {
+//     path = path.slice(1);
+//   }
+
+//   return path.split('.').length === 2;
+// }
+
+// export async function fetchColumns(db: DB, q: SQLQuery) {
+//   const cols = await db.fields(q);
+//   if (cols.length > 0) {
+//     return cols.map((c) => {
+//       return { name: c.value, type: c.value, description: c.value };
+//     });
+//   } else {
+//     return [];
+//   }
+// }

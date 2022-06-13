@@ -1,6 +1,7 @@
 import { map as _map } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
+import { LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
@@ -10,13 +11,17 @@ import { DB, ResponseParser, SQLOptions, SQLQuery, TableSchema, ValidationResult
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
+import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { MySQLQuery } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
   responseParser: MySqlResponseParser;
+  completionProvider: LanguageCompletionProvider | undefined;
 
   constructor(instanceSettings: DataSourceInstanceSettings<SQLOptions>) {
     super(instanceSettings);
     this.responseParser = new MySqlResponseParser();
+    this.completionProvider = undefined;
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
@@ -25,6 +30,18 @@ export class MySqlDatasource extends SqlDatasource {
 
   getResponseParser(): ResponseParser {
     return this.responseParser;
+  }
+
+  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
+    if (this.completionProvider !== undefined) {
+      return this.completionProvider;
+    }
+    const args = {
+      getColumns: { current: (query: MySQLQuery) => fetchColumns(db, query) },
+      getTables: { current: (dataset?: string) => fetchTables(db, { dataset } as SQLQuery) },
+    };
+    this.completionProvider = getSqlCompletionProvider(args);
+    return this.completionProvider;
   }
 
   async fetchDatasets(): Promise<string[]> {
@@ -86,6 +103,9 @@ export class MySqlDatasource extends SqlDatasource {
             return [];
           }
         }
+      },
+      getSqlCompletionProvider: () => {
+        return this.getSqlCompletionProvider(this.db);
       },
     };
   }

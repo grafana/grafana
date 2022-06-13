@@ -10,7 +10,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { EditorMode } from '@grafana/experimental';
+import { EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 import { BackendDataSourceResponse } from '@grafana/runtime';
 
 import { QueryWithDefaults } from './defaults';
@@ -126,6 +126,7 @@ export interface DB {
   dsID: () => string;
   dispose: (dsID?: string) => void;
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
+  getSqlCompletionProvider: () => LanguageCompletionProvider;
 }
 
 export interface QueryEditorProps {
