@@ -336,10 +336,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 
 			scheduler.AssertNotCalled(t, "DeleteAlertRule")
@@ -358,10 +356,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 		})
@@ -382,11 +378,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-				":Groupname": groupName,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore, scheduler)
 		})
@@ -409,10 +402,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := svc.RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := svc.RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
 		})
@@ -430,10 +421,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
 
 			ac := acMock.New()
-			request := createRequestContext(orgID, "None", map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, "None", nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 
 			scheduler.AssertNotCalled(t, "DeleteAlertRule")
@@ -453,11 +442,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 			})
@@ -479,11 +466,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := svc.RouteDeleteAlertRules(request)
+				response := svc.RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
 			})
@@ -504,11 +489,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInFolder))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore, scheduler)
 			})
@@ -531,11 +514,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInGroup))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-					":Groupname": groupName,
-				})
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				request := createRequestContext(orgID, "None", nil)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInGroup, ruleStore, scheduler)
 			})
@@ -555,9 +535,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 			ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
 
-			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, "", map[string]string{
-				":Namespace": folder.Title,
-			}))
+			req := createRequestContext(orgID, "", nil)
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
 			result := &apimodels.NamespaceConfigResponse{}
@@ -591,9 +570,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.PutRule(context.Background(), expectedRules...)
 			ac := acMock.New().WithDisabled()
 
-			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-				":Namespace": folder.Title,
-			}))
+			req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
 			result := &apimodels.NamespaceConfigResponse{}
@@ -635,9 +613,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		response := svc.RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-			":Namespace": folder.Title,
-		}))
+		req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+		response := svc.RouteGetNamespaceRulesConfig(req, folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -671,9 +648,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		ruleStore.PutRule(context.Background(), expectedRules...)
 		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-			":Namespace": folder.Title,
-		}))
+		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -806,13 +781,13 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 
 			t.Run("and return 401 if user does not have access one of rules", func(t *testing.T) {
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules[1:]))
-				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
+				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 				require.Equal(t, http.StatusUnauthorized, response.Status())
 			})
 
 			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
-				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
+				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 
 				require.Equal(t, http.StatusAccepted, response.Status())
 				result := &apimodels.RuleGroupConfigResponse{}
@@ -1079,7 +1054,9 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
 	}}
-	ctx.Req = web.SetURLParams(ctx.Req, params)
+	if params != nil {
+		ctx.Req = web.SetURLParams(ctx.Req, params)
+	}
 
 	return &models2.ReqContext{
 		IsSignedIn: true,
