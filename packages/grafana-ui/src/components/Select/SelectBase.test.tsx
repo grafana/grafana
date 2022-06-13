@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
+
 import { SelectBase } from './SelectBase';
-import { selectOptionInTest } from './test-utils';
 
 describe('SelectBase', () => {
   const onChangeHandler = () => jest.fn();
