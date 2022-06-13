@@ -421,6 +421,6 @@ Example of a configuration file:
 ...
 [security]
 csrf_trusted_origins = https://grafana.example.com
-csrf_additional_headers = X-Forwarded-Host Referer
+csrf_additional_headers = X-Forwarded-Host
 ...
 ```
