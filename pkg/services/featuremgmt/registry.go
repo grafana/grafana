@@ -237,5 +237,10 @@ var (
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
