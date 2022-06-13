@@ -215,7 +215,6 @@ abstract class DataSourceApi<
     this.type = instanceSettings.type;
     this.meta = instanceSettings.meta;
     this.uid = instanceSettings.uid;
-    this.defaultQuery = {};
   }
 
   /**
@@ -347,7 +346,10 @@ abstract class DataSourceApi<
     | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
     | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
 
-  defaultQuery: Partial<TQuery>;
+  /*
+   * Optionally, use this method to set default values for a query
+   */
+  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
 export interface MetadataInspectorProps<
