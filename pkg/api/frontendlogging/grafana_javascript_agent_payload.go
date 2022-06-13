@@ -1,3 +1,7 @@
+/* This file is mostly copied over from https://github.com/grafana/agent/tree/main/pkg/integrations/v2/app_agent_receiver,
+as soon as we can use agent as a dependency this can be refactored
+*/
+
 package frontendlogging
 
 import (

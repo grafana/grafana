@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -58,7 +57,10 @@ func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
 		var msg = "unknown"
 
 		var ctx = event.ToGrafanJavascriptAgentLogContext()
-		grafanaJavascriptAgentLogger.Info(spew.Sdump(event))
+		if event.Exceptions != nil && len(event.Exceptions) > 0 {
+			msg = event.Exceptions[0].Message()
+			ctx = append(ctx, "exception_timestamp", event.Exceptions[0].Timestamp)
+		}
 		grafanaJavascriptAgentLogger.Info(msg, ctx...)
 		return response.Success("ok")
 	}
